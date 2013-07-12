@@ -7,4 +7,4 @@ Created on Jul 9, 2013
 from app.core import HttpResponse
 
 def index(request):
-    return HttpResponse('Hello World')
+    return HttpResponse('Hello World 2.0v')

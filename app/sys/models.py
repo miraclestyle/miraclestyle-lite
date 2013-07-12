@@ -6,8 +6,7 @@ Created on Jul 9, 2013
 '''
 
 from app import models
- 
-
+  
 class User(models.Model, models.Workflow):
     
     OBJECT_TYPE = 1
