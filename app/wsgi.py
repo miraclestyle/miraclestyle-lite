@@ -16,7 +16,6 @@ import os
 # file. This includes Django's development server, if the WSGI_APPLICATION
 # setting points here.
 from django.core.wsgi import get_wsgi_application
-from django.core import management
-
+#from django.core import management
 #management.call_command('inspectdb')
 app = get_wsgi_application()

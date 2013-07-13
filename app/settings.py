@@ -13,19 +13,21 @@ import os
 
 ROOT_URLCONF = 'app.urls'
   
-INSTALLED_APPS = (  
-    'app.sys',   
+INSTALLED_APPS = ( 
+    'app.sys',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
+    'debug_toolbar',
+    
 ) 
-
+INTERNAL_IPS = ('127.0.0.1', '::1',)
 ALLOWED_HOSTS = []
  
 # (os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') and os.getenv('SETTINGS_MODE') == 'prod') 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 TRANSACTIONS_MANAGED = False
-#SESSION_ENGINE = "gae_backends.sessions.cached_db"
+SESSION_ENGINE = "gae_backends.sessions.cached_db"
 EMAIL_BACKEND = "gae_backends.mail.EmailBackend"
 CACHES = {
     'default': {
@@ -48,18 +50,35 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+
 TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 )
+ 
 
 MIDDLEWARE_CLASSES = (
+    'app.middleware.Current',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    
 )
 
-if DEBUG:
+DEBUG_TOOLBAR_PANELS = (
+    'debug_toolbar.panels.version.VersionDebugPanel',
+    'debug_toolbar.panels.timer.TimerDebugPanel',
+    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
+    'debug_toolbar.panels.headers.HeaderDebugPanel',
+    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
+    'debug_toolbar.panels.template.TemplateDebugPanel',
+    'debug_toolbar.panels.sql.SQLDebugPanel',
+    'debug_toolbar.panels.signals.SignalDebugPanel',
+    'debug_toolbar.panels.logger.LoggingPanel',
+)
+
+if not DEBUG:
     # Running on production App Engine, so use a Google Cloud SQL database.
     DATABASES = {
         'default': {
