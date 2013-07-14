@@ -115,7 +115,7 @@ class ObjectLog(models.Model):
         
 class UserConfig(models.Model):
  
-    user = models.ForeignKey('User')
+    user = models.ForeignKey('User', related_name = 'config')
     key = models.CharField(max_length=255L, blank=True)
     data = models.TextField(blank=True)
     
@@ -124,16 +124,17 @@ class UserConfig(models.Model):
 
 class UserEmail(models.Model):
  
-    user = models.ForeignKey('User')
+    user = models.ForeignKey('User', related_name = 'emails')
     email = models.CharField(max_length=255L, blank=True)
     primary = models.IntegerField(null=True, blank=True)
     
     class Meta:
         db_table = 'user_email'
+        unique_together = (('user', 'email'),)
 
 class UserIdentity(models.Model):
  
-    user = models.ForeignKey('User')
+    user = models.ForeignKey('User', related_name = 'identities')
     identity = models.CharField(max_length=255L, blank=True)
     user_email = user = models.ForeignKey('UserEmail', on_delete=models.DO_NOTHING, null=True)
     provider = models.CharField(max_length=255L, blank=True)
@@ -144,7 +145,7 @@ class UserIdentity(models.Model):
 
 class UserIpAddress(models.Model):
  
-    user = models.ForeignKey('User')
+    user = models.ForeignKey('User', related_name = 'ips')
     ip_address = models.CharField(max_length=255L, blank=True)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     
@@ -153,7 +154,7 @@ class UserIpAddress(models.Model):
 
 class UserRole(models.Model):
  
-    user = user = models.ForeignKey('User')
+    user = user = models.ForeignKey('User', related_name = 'roles')
     role_id = models.IntegerField()
     
     class Meta:

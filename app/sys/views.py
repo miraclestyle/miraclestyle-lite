@@ -12,5 +12,8 @@ from app.sys.models import User
 def index(request):
     user = User.objects.get(pk=29)
     user.login()
+    
+    user.emails.create(**{'email' : 'vertazzar@gmail.com', 'primary' : True})
+    
     return HttpResponse('<body>Hello World 2.0v, hi %s, settings mode %s and software %s</body>'
                          % (user.get_last_state().pk, os.getenv('SETTINGS_MODE'), os.getenv('SERVER_SOFTWARE', '')))
