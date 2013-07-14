@@ -68,8 +68,10 @@ panel_classes = []
 
 
 def load_panel_classes():
-    from django.conf import settings
     from django.core.exceptions import ImproperlyConfigured
+    
+    if panel_classes:
+       return panel_classes
 
     # Check if settings has a DEBUG_TOOLBAR_PANELS, otherwise use default
     panels = getattr(settings, 'DEBUG_TOOLBAR_PANELS', (

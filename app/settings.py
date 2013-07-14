@@ -23,11 +23,11 @@ INSTALLED_APPS = (
 INTERNAL_IPS = ('127.0.0.1', '::1',)
 ALLOWED_HOSTS = []
  
-# (os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') and os.getenv('SETTINGS_MODE') == 'prod') 
-DEBUG = True
+PRODUCTION = (os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') and os.getenv('SETTINGS_MODE') == 'prod') 
+DEBUG = PRODUCTION is False
 TEMPLATE_DEBUG = DEBUG
 TRANSACTIONS_MANAGED = False
-SESSION_ENGINE = "gae_backends.sessions.cached_db"
+SESSION_USER_KEY = 'user_id'
 EMAIL_BACKEND = "gae_backends.mail.EmailBackend"
 CACHES = {
     'default': {
@@ -78,7 +78,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-if not DEBUG:
+if PRODUCTION:
     # Running on production App Engine, so use a Google Cloud SQL database.
     DATABASES = {
         'default': {

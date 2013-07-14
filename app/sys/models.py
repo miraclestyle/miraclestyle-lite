@@ -4,7 +4,7 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-
+from django.conf import settings
 from app import models
 from app.middleware import Current
 
@@ -29,11 +29,9 @@ class Workflow():
           if save:
              if new:
                 self.new_state(self.OBJECT_STATES[1], event=self.OBJECT_EVENTS[1])
-          
-             
-    
+           
       @property
-      def get_state(self):
+      def show_state(self):
           return self.OBJECT_STATES[self.state]
       
       def get_last_state(self):
@@ -42,9 +40,14 @@ class Workflow():
       def new_state(self, **kwargs):
           get_return = ObjectLog.objects.create(object_id=self.pk, object_type=self.OBJECT_TYPE, **kwargs)
           self.state = get_return.state
-          react = 'react_on_state_%s' % self.state
+          react = 'react_on_state_%s' % get_return.state
+          react2 = 'react_on_event_%s' % get_return.event
+          
           if hasattr(self, react):
              getattr(self, react)()
+             
+          if hasattr(self, react2):
+             getattr(self, react2)()
           
           return self.save()
 
@@ -59,30 +62,35 @@ class Role(models.Model):
 class User(models.Model, Workflow):
     
     OBJECT_TYPE = 1
-    OBJECT_STATES = {
-      1 : 'Created',               
-      2 : 'Active',
-      3 : 'Disabled',
-      4 : 'Banned'
+    OBJECT_STATES = {           
+      1 : 'Active',
+      2 : 'Disabled',
+      3 : 'Banned'
     }
     
     OBJECT_EVENTS = {
         1 : 'Create',
-        2 : 'Update'
+        2 : 'Update',
+        3 : 'Logged In',
     }
-    
-    #id = models.IntegerField(primary_key=True)
+     
     state = models.IntegerField(null=True, blank=True)
     
-    # on create state
-    def react_on_state_1(self):
+    def react_on_event_3(self):
         pass
-        
-    def login(self, request):
-        pass
+  
+    def login(self):
+        req = Current.get_request()
+        if not req.session.get(settings.SESSION_USER_KEY):
+               req.session[settings.SESSION_USER_KEY] = self.pk
+               self.new_state(state=1, event=3, user=self)
  
-    def logout(self, request):
-        pass
+    def logout(self):
+        req = Current.get_request()
+        try:
+          del req.session[settings.SESSION_USER_KEY]
+        except KeyError:
+          pass
     
     class Meta:
         db_table = 'user'
@@ -125,9 +133,9 @@ class UserEmail(models.Model):
 
 class UserIdentity(models.Model):
  
-    user = models.ForeignKey('UserEmail')
+    user = models.ForeignKey('User')
     identity = models.CharField(max_length=255L, blank=True)
-    user_email = user = models.ForeignKey('User')
+    user_email = user = models.ForeignKey('UserEmail', on_delete=models.DO_NOTHING, null=True)
     provider = models.CharField(max_length=255L, blank=True)
     associated = models.BooleanField(default=0)
     

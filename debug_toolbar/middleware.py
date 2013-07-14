@@ -11,7 +11,7 @@ from django.utils.encoding import smart_unicode
 from django.utils.importlib import import_module
 
 import debug_toolbar.urls
-from debug_toolbar.toolbar.loader import DebugToolbar
+from debug_toolbar.toolbar.loader import DebugToolbar, load_panel_classes
  
 _HTML_TYPES = ('text/html', 'application/xhtml+xml')
 threading._DummyThread._Thread__stop = lambda x: 1  # Handles python threading module bug - http://bugs.python.org/issue14308
@@ -74,6 +74,9 @@ class DebugToolbarMiddleware(object):
         return remote_addr in settings.INTERNAL_IPS and bool(settings.DEBUG)
 
     def process_request(self, request):
+        
+        load_panel_classes()
+        
         __traceback_hide__ = True
         if self.show_toolbar(request):
             urlconf = getattr(request, 'urlconf', settings.ROOT_URLCONF)
