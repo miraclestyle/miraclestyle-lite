@@ -4,11 +4,11 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app.core import RequestHandler
+from app.request import Handler
 from app.template import render_template
 from app.kernel.models import User
  
-class Home(RequestHandler):
+class Home(Handler):
       def get(self):
           
           users = User.all()
