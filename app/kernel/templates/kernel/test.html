@@ -1,0 +1,12 @@
+<h1>{{l('Hello World,')}} {{ sess }}</h1>
+<div>
+	The users,
+	<table>
+		{% for user in users %}
+		<tr>
+			<td>{{ user.key() }}</td>
+			<td>{{ user.state }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+</div>

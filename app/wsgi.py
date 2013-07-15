@@ -30,4 +30,7 @@ ROUTES = tuple(ROUTES)
 
 logging.info('Webapp2 started')
 
-app = webapp2.WSGIApplication(ROUTES)
+config = {}
+config.update(settings.WEBAPP2_EXTRAS)
+
+app = webapp2.WSGIApplication(ROUTES, debug=settings.DEBUG, config=config)

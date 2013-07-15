@@ -6,7 +6,11 @@ Created on Jul 12, 2013
 '''
 import sys
 import logging
-from webapp2 import RequestHandler
+import webapp2
+
+from webapp2_extras import sessions
+from webapp2_extras import i18n
+ 
 
 def _resolve_name(name, package, level):
     """Return the absolute name of the module to be imported."""
@@ -51,6 +55,25 @@ def module_exists(module_name):
     else:
         return module
 
- 
-class RequestHandler(RequestHandler):
-      pass
+class RequestHandler(webapp2.RequestHandler):
+    
+    def dispatch(self):
+        
+        locale = 'en_US'
+        i18n.get_i18n().set_locale(locale)
+  
+        # Get a session store for this request.
+        self.session_store = sessions.get_store(request=self.request)
+
+        try:
+            # Dispatch the request.
+            webapp2.RequestHandler.dispatch(self)
+        finally:
+            # Save all sessions.
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def session(self):
+        # Returns a session using the default cookie key.
+        return self.session_store.get_session(backend='memcache')
+    

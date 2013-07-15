@@ -21,3 +21,13 @@ if DEBUG:
 APPLICATIONS_INSTALLED = (
      'app.kernel',
 )
+
+WEBAPP2_EXTRAS = {
+    'webapp2_extras.sessions' : {
+        'secret_key': 'd212k19f0k09sdkf009kfewwdw',
+    },
+    'webapp2_extras.i18n' : {
+    'translations_path': os.path.join(os.path.abspath(__file__), 'locale'),
+    }
+}
+

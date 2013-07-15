@@ -6,7 +6,13 @@ Created on Jul 15, 2013
 '''
 from app.core import RequestHandler
 from app.template import render_template
-
+from app.kernel.models import User
+ 
 class Home(RequestHandler):
       def get(self):
-          self.response.write(render_template('sys/test.html'))
+          
+          users = User.all()
+          
+          session = self.session.get('user')
+  
+          self.response.write(render_template('kernel/test.html', {'users' : users, 'sess' : session}))

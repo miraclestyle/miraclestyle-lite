@@ -13,7 +13,8 @@ from jinja2 import FileSystemLoader, Environment
 
 from app import settings
 from app.core import import_module
-
+from webapp2_extras import i18n
+  
 # At compile time, cache the directories to search.
 if not six.PY3:
     fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
@@ -35,6 +36,7 @@ env = Environment(loader=FileSystemLoader(app_template_dirs), autoescape=True, c
 
 env.globals['settings'] = settings
 env.globals['uri_for'] = uri_for
+env.globals['l'] = i18n.gettext
 
 def render_template(f, data=None):
     if not data:
