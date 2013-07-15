@@ -282,6 +282,44 @@ class StoreCarrierLinePricelist(db.Model):
     amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
 
 
+class BuyerAddress(db.Model):
+    
+    user = db.ReferenceProperty(User, collection_name='users', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    country = db.ReferenceProperty(Country, collection_name='countries')
+    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
+    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities')
+    postal_code = db.StringProperty(multiline=False, required=True)
+    street_address = db.StringProperty(multiline=False, required=True)
+    street_address2 = db.StringProperty(multiline=False, required=True)
+    email = db.EmailProperty(required=True)
+    telephone = db.PhoneNumberProperty(required=True) # ne znam kakva se korist moze imati od PostalAddressProperty 
+    default_shipping = db.BooleanProperty(default=True, required=True)
+    default_billing = db.BooleanProperty(default=True, required=True)
+
+
+class BuyerCollection(db.Model):
+    
+    user = db.ReferenceProperty(User, collection_name='users', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    notifications = db.BooleanProperty(default=True, required=True)
+
+
+class BuyerCollectionStore(db.Model):
+    
+    buyer_collection = db.ReferenceProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
+
+
+class BuyerCollectionProductCategory(db.Model):
+    
+    buyer_collection = db.ReferenceProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories')
+
+
+
+
+
 
 
 
