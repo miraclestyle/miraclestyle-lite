@@ -18,7 +18,7 @@ from google.appengine.ext import webapp
 
 class ObjectLog(db.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)
+    reference = db.ReferenceProperty(None, collection_name='reference', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name), i mozda nam bude trebao reference type da bi znali o cemu se radi...
     agent = db.ReferenceProperty(User, collection_name='agents', required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
     event = db.IntegerProperty(required=True)
@@ -112,7 +112,7 @@ class ProductUOM(db.Model):
     rate = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     factor = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     rounding = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    display_digits = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    display_digits = db.IntegerProperty(required=True)
     active = db.BooleanProperty(default=False, required=True)
 
 
@@ -212,8 +212,8 @@ class StoreShippingExclusion(db.Model):
     country = db.ReferenceProperty(Country, collection_name='countries')
     region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
     city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False, required=True)
-    postal_code_to = db.StringProperty(multiline=False, required=True)
+    postal_code_from = db.StringProperty(multiline=False)
+    postal_code_to = db.StringProperty(multiline=False)
 
 
 class StoreTax(db.Model):
@@ -233,8 +233,8 @@ class StoreTaxLocation(db.Model):
     country = db.ReferenceProperty(Country, collection_name='countries')
     region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
     city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False, required=True)
-    postal_code_to = db.StringProperty(multiline=False, required=True)
+    postal_code_from = db.StringProperty(multiline=False)
+    postal_code_to = db.StringProperty(multiline=False)
 
 
 class StoreTaxApplication(db.Model):
@@ -267,8 +267,8 @@ class StoreCarrierLineLocation(db.Model):
     country = db.ReferenceProperty(Country, collection_name='countries')
     region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
     city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False, required=True)
-    postal_code_to = db.StringProperty(multiline=False, required=True)
+    postal_code_from = db.StringProperty(multiline=False)
+    postal_code_to = db.StringProperty(multiline=False)
 
 
 class StoreCarrierLinePricelist(db.Model):
@@ -286,14 +286,14 @@ class BuyerAddress(db.Model):
     
     user = db.ReferenceProperty(User, collection_name='users', required=True)
     name = db.StringProperty(multiline=False, required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities')
+    country = db.ReferenceProperty(Country, collection_name='countries', required=True)
+    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions', required=True)
+    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities', required=True)
     postal_code = db.StringProperty(multiline=False, required=True)
     street_address = db.StringProperty(multiline=False, required=True)
     street_address2 = db.StringProperty(multiline=False, required=True)
-    email = db.EmailProperty(required=True)
-    telephone = db.PhoneNumberProperty(required=True) # ne znam kakva se korist moze imati od PostalAddressProperty 
+    email = db.EmailProperty()
+    telephone = db.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty 
     default_shipping = db.BooleanProperty(default=True, required=True)
     default_billing = db.BooleanProperty(default=True, required=True)
 
@@ -350,7 +350,7 @@ class Order(db.Model):
     untaxed_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     tax_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     total_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    comment = db.TextProperty(required=True)
+    comment = db.TextProperty()
     state = db.IntegerProperty(required=True)
 
 
@@ -363,16 +363,16 @@ class OrderRefenrece(db.Model):
 class OrderAddress(db.Model):
     
     order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    location_country = db.StringProperty(multiline=False, required=True)
-    location_country_code = db.StringProperty(multiline=False, required=True)
-    location_region = db.StringProperty(multiline=False, required=True)
-    location_city = db.StringProperty(multiline=False, required=True)
-    location_postal_code = db.StringProperty(multiline=False, required=True)
-    location_street_address = db.StringProperty(multiline=False, required=True)
-    location_street_address2 = db.StringProperty(multiline=False, required=True)
+    country = db.StringProperty(multiline=False, required=True)
+    country_code = db.StringProperty(multiline=False, required=True)
+    region = db.StringProperty(multiline=False, required=True)
+    city = db.StringProperty(multiline=False, required=True)
+    postal_code = db.StringProperty(multiline=False, required=True)
+    street_address = db.StringProperty(multiline=False, required=True)
+    street_address2 = db.StringProperty(multiline=False, required=True)
     name = db.StringProperty(multiline=False, required=True)
-    email = db.EmailProperty(required=True)
-    telephone = db.PhoneNumberProperty(required=True) # ne znam kakva se korist moze imati od PostalAddressProperty
+    email = db.EmailProperty()
+    telephone = db.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty
     address_type = db.IntegerProperty(required=True)# ne mogu da koristim samo type posto je python keyword
 
 
@@ -419,8 +419,8 @@ class OrderLineTaxRefenrece(db.Model):
 
 class PayPalTransaction(db.Model):
     
-    txn_id = db.StringProperty(multiline=False, required=True)
     order = db.ReferenceProperty(Order, collection_name='orders', required=True)
+    txn_id = db.StringProperty(multiline=False, required=True)
     ipn_message = db.TextProperty(required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
 
@@ -429,7 +429,7 @@ class BillingLog(db.Model):
     
     store = db.ReferenceProperty(Store, collection_name='stores', required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)
+    reference = db.ReferenceProperty(None, collection_name='reference', required=True)# ne znam da li treba i uvesti reference_type?
     amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     balance = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
 
@@ -451,6 +451,8 @@ class StoreBuyerOrderFeedback(db.Model):
     buyer = db.ReferenceProperty(User, collection_name='buyers', required=True)
     order = db.ReferenceProperty(Order, collection_name='orders', required=True)
     state = db.IntegerProperty(required=True)
+
+
 
 
 
