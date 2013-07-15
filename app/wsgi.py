@@ -8,14 +8,26 @@ Created on Oct 15, 2012
 @module wsgi.py
 
 '''
-import os
+import logging
+import webapp2
+ 
+from app.core import import_module
+from app import settings
+ 
+ROUTES = []
+  
+for a in settings.APPLICATIONS_INSTALLED:
+    module_urls = import_module('%s.%s' % (a, 'urls'))
+    patts = None
+    if module_urls:
+        patts = getattr(module_urls, 'ROUTES')
+        if patts:
+           ROUTES += patts
+            
+           
+# It won't change, so convert it to a tuple to save memory.           
+ROUTES = tuple(ROUTES)
 
-#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
+logging.info('Webapp2 started')
 
-# This application object is used by any WSGI server configured to use this
-# file. This includes Django's development server, if the WSGI_APPLICATION
-# setting points here.
-from django.core.wsgi import get_wsgi_application
-#from django.core import management
-#management.call_command('inspectdb')
-app = get_wsgi_application()
+app = webapp2.WSGIApplication(ROUTES)

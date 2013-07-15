@@ -1,10 +1,10 @@
 eclipse.preferences.version=1
 encoding//app/core.py=utf-8
-encoding//app/middleware.py=utf-8
+encoding//app/kernel/controller.py=utf-8
+encoding//app/kernel/models.py=utf-8
+encoding//app/kernel/urls.py=utf-8
 encoding//app/models.py=utf-8
+encoding//app/routes.py=utf-8
 encoding//app/settings.py=utf-8
-encoding//app/sys/models.py=utf-8
-encoding//app/sys/urls.py=utf-8
-encoding//app/sys/views.py=utf-8
-encoding//app/urls.py=utf-8
+encoding//app/template.py=utf-8
 encoding//app/wsgi.py=utf-8

@@ -4,9 +4,4 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-
-# Google Appengine Datastore
-from google.appengine.ext.db import *
-
-class Model(Model):
-      pass
+ 

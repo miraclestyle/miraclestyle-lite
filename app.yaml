@@ -9,15 +9,18 @@ handlers:
   script: app.wsgi.app
   
 libraries:
- 
+
 - name: django
-  version: "1.5"
+  version: latest  
+
+- name: webapp2
+  version: latest 
+ 
+- name: jinja2
+  version: latest
 
 - name: PIL
   version: latest
-
-env_variables:
-  DJANGO_SETTINGS_MODULE: 'app.settings'
   
-builtins:
-- appstats: on
+#builtins:
+#- appstats: on
