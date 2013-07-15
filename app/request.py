@@ -8,12 +8,12 @@ import webapp2
 from webapp2_extras import sessions, i18n
  
 class Handler(webapp2.RequestHandler):
-  
+ 
     def dispatch(self):
 
         locale = 'en_US'
         i18n.get_i18n().set_locale(locale)
- 
+  
         # Get a session store for this request.
         self.session_store = sessions.get_store(request=self.request)
 

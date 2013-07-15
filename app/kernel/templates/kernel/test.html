@@ -1,4 +1,10 @@
-<h1>{{_('Hello World,')}} {{ sess }}</h1>
+<h1>{{_('Hello World,')}} {{ sess }}, {{ title }}</h1>
+<form action="" method="POST">
+    <p>{{ form.password.label }}: {{ form.password }}</p>
+    <p>{{ form.password.errors }}</p>
+
+    <input type="submit" value="Login">
+</form>
 <div>
 	The users,
 	<table>

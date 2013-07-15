@@ -27,7 +27,7 @@ WEBAPP2_EXTRAS = {
         'secret_key': 'd212k19f0k09sdkf009kfewwdw',
     },
     'webapp2_extras.i18n' : {
-    'translations_path': os.path.join(os.path.abspath(__file__), 'locale'),
+    'translations_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'locale'),
     },
     'webapp2_extras.jinja2': {
              'template_path': 'templates',

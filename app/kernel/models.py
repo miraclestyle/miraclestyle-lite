@@ -7,7 +7,6 @@ Created on Jul 9, 2013
 from app import db
 
 class Workflow():
-    
       def new_state(self, **kwargs): pass
       def new_event(self, **kwargs): pass
 
