@@ -12,597 +12,626 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext.webapp import util
 from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.ext import webapp
 
 # koristim drugaciju konvenciju imenovanja polja, ne znam kakve su implikacije na django, ako bude neophodno rename cemo polja da odgovaraju django konvenciji...
 
-class ObjectLog(db.Model):
+'''
+Ovo su zabranjena imena propertija:
+
+all
+app
+copy
+delete
+entity
+entity_type
+fields
+from_entity
+get
+gql
+instance_properties
+is_saved
+key
+key_name
+kind
+parent
+parent_key
+properties
+put
+setdefault
+to_xml
+update
+'''
+
+class ObjectLog(ndb.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name), i mozda nam bude trebao reference type da bi znali o cemu se radi...
-    agent = db.ReferenceProperty(User, collection_name='agents', required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
-    event = db.IntegerProperty(required=True)
-    state = db.IntegerProperty(required=True)
-    message = db.TextProperty(required=True)
-    note = db.TextProperty(required=True)
-    log = db.BlobProperty(required=True) # ne znam da li bi i ovde trebalo TextProperty umesto BlobProperty
+    reference = ndb.KeyProperty(required=True)# collection_name is the name of the property to give to the referenced model class. The value of the property is a Query for all entities that reference the entity.
+    type = ndb.IntegerProperty(required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name)
+    agent = ndb.KeyProperty(kind=User, required=True)
+    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    event = ndb.IntegerProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
+    message = ndb.TextProperty(required=True)
+    note = ndb.TextProperty(required=True)
+    log = ndb.TextProperty(required=True)
 
 
-class Notification(db.Model):
+class Notification(ndb.Model):
     
-    creator = db.ReferenceProperty(User, collection_name='creators', required=True)
-    created = db.DateTimeProperty(auto_now_add=True, required=True)
-    message = db.TextProperty(required=True)
+    creator = ndb.KeyProperty(kind=User, required=True)
+    created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    message = ndb.TextProperty(required=True)
 
 
-class NotificationRecipient(db.Model):
+class NotificationRecipient(ndb.Model):
     
-    notification = db.ReferenceProperty(Notification, collection_name='notifications', required=True)
-    recipient = db.ReferenceProperty(User, collection_name='recipients', required=True)
+    notification = ndb.KeyProperty(kind=Notification, required=True)
+    recipient = ndb.KeyProperty(kind=User, required=True)
 
 
-class NotificationRecipientOutlet(db.Model):
+class NotificationRecipientOutlet(ndb.Model):
     
-    notification_recepient = db.ReferenceProperty(NotificationRecipient, collection_name='notification_recepients', required=True)
-    outlet = db.IntegerProperty(required=True) # ovde bi mogao i CategoryProperty, sta je vec bolje od to dvoje
-    notified = db.DateTimeProperty()
+    notification_recepient = ndb.KeyProperty(kind=NotificationRecipient, required=True)
+    outlet = ndb.IntegerProperty(required=True)
+    notified = ndb.DateTimeProperty()# jos ne znamo hocemo li ovde upisivati datum, ili cemo ovo pretvoriti u boolean polje, ili expandirati ovaj model...
 
 
-class FeedbackRequest(db.Model):
+class FeedbackRequest(ndb.Model):
     
-    reference = db.LinkProperty(required=True)
-    state = db.IntegerProperty(required=True)
+    reference = ndb.StringProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
 
 
-class SupportRequest(db.Model):
+class SupportRequest(ndb.Model):
     
-    reference = db.LinkProperty(required=True) # mislim da je LinkProperty bolji od  StringProperty
-    state = db.IntegerProperty(required=True)
+    reference = ndb.StringProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
 
 
-class Content(db.Model):
+class Content(ndb.Model):
     
-    title = db.StringProperty(multiline=False, required=True)
-    category = db.CategoryProperty(required=True) # ovde bi mogao i IntegerProperty, sta je vec bolje od to dvoje
-    published = db.BooleanProperty(default=False, required=True)
-    active_revision = db.ReferenceProperty(ContentRevision, collection_name='active_revisions', required=True)
-    sequence = db.IntegerProperty(required=True)
+    title = ndb.StringProperty(required=True)
+    category = ndb.IntegerProperty(required=True)
+    published = ndb.BooleanProperty(required=True)
+    active_revision = ndb.KeyProperty(kind=ContentRevision, required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class ContentRevision(db.Model):
+class ContentRevision(ndb.Model):
     
-    content = db.ReferenceProperty(Content, collection_name='contents')
-    body = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True, required=True)
+    content = ndb.KeyProperty(kind=Content, required=True)
+    body = ndb.TextProperty(required=True)
+    created = ndb.DateTimeProperty(auto_now_add=True, required=True)
 
 
-class Country(db.Model):
+class Country(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
-    code = db.StringProperty(multiline=False, required=True)
+    name = ndb.StringProperty(required=True)
+    code = ndb.StringProperty(required=True)
 
 
-class CountrySubdivision(db.Model):
+class CountrySubdivision(ndb.Model):
     
-    parent_record = db.SelfReferenceProperty(collection_name='parent_records', required=True) # ovo je valjda ok
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    name = db.StringProperty(multiline=False, required=True)
-    code = db.StringProperty(multiline=False, required=True)
-    category = db.CategoryProperty(required=True) # ovde bi mogao i IntegerProperty, sta je vec bolje od to dvoje
+    parent_record = ndb.KeyProperty(kind=CountrySubdivision)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
+    country = ndb.KeyProperty(kind=Country, required=True)
+    name = ndb.StringProperty(required=True)
+    code = ndb.StringProperty(required=True)
+    type = ndb.IntegerProperty(required=True)
 
 
-class ProductCategory(db.Model):
+class ProductCategory(ndb.Model):
     
-    parent_record = db.SelfReferenceProperty(collection_name='parent_records', required=True) # ovo je valjda ok
-    name = db.StringProperty(multiline=False, required=True)
-    sequence = db.IntegerProperty(required=True)
-    state = db.IntegerProperty(required=True)
+    parent_record = ndb.KeyProperty(kind=ProductCategory)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
+    name = ndb.StringProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
 
 
-class ProductUOMCategory(db.Model):
+class ProductUOMCategory(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
+    name = ndb.StringProperty(required=True)
 
 
-class ProductUOM(db.Model):
+class ProductUOM(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
-    symbol = db.StringProperty(multiline=False, required=True)
-    product_uom_category = db.ReferenceProperty(ProductUOMCategory, collection_name='product_uom_categories') # ovo bi mozda moglo da bude CategoryProperty, i da se time izbaci ProductUOMCategory model??
-    rate = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    factor = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    rounding = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    display_digits = db.IntegerProperty(required=True)
-    active = db.BooleanProperty(default=False, required=True)
+    name = ndb.StringProperty(required=True)
+    symbol = ndb.StringProperty(required=True)
+    product_uom_category = ndb.KeyProperty(kind=ProductUOMCategory, required=True)# ovo bi mozda moglo da bude CategoryProperty, i da se time izbaci ProductUOMCategory model??
+    rate = ndb.FloatProperty(required=True)# ovde ide custom decimal property
+    factor = ndb.FloatProperty(required=True)# ovde ide custom decimal property
+    rounding = ndb.FloatProperty(required=True)# ovde ide custom decimal property
+    display_digits = ndb.IntegerProperty(required=True)
+    active = ndb.BooleanProperty(required=True)
 
 
-class User(db.Model):
+class User(ndb.Model):
     
-    state = db.IntegerProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
 
 
-class UserConfig(db.Model):
+class UserConfig(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    key_value = db.StringProperty(multiline=False, required=True)
-    data = db.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
+    user = ndb.KeyProperty(kind=User, required=True)
+    attribute = ndb.StringProperty(required=True)
+    attribute_value = ndb.TextProperty(required=True)
 
 
-class UserEmail(db.Model):
+class UserEmail(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    email = db.EmailProperty(required=True)
-    primary = db.BooleanProperty(default=False, required=True) 
+    user = ndb.KeyProperty(kind=User, required=True)
+    email = ndb.StringProperty(required=True)
+    primary = ndb.BooleanProperty(required=True)
 
 
-class UserIdentity(db.Model):
+class UserIdentity(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    user_email = db.ReferenceProperty(UserEmail, collection_name='user_emails', required=True)
-    identity = db.StringProperty(multiline=False, required=True)
-    provider = db.StringProperty(multiline=False, required=True)
-    associated = db.BooleanProperty(default=True, required=True)
+    user = ndb.KeyProperty(kind=User, required=True)
+    user_email = ndb.KeyProperty(kind=UserEmail, required=True)
+    identity = ndb.StringProperty(required=True)
+    provider = ndb.StringProperty(required=True)
+    associated = ndb.BooleanProperty(required=True)
 
 
-class UserIPAddress(db.Model):
+class UserIPAddress(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    ip_address = db.StringProperty(multiline=False, required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
+    user = ndb.KeyProperty(kind=User, required=True)
+    ip_address = ndb.StringProperty(required=True)
+    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
 
 
-class UserRole(db.Model):
+class UserRole(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    role = db.ReferenceProperty(Role, collection_name='roles', required=True)
+    user = ndb.KeyProperty(kind=User, required=True)
+    role = ndb.KeyProperty(kind=Role, required=True)
 
 
-class Role(db.Model):
+class Role(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
-    readonly = db.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty(required=True)
+    readonly = ndb.BooleanProperty(required=True)
 
 
-class AgregateUserPermissions(db.Model):# ovo je za sada useless, osim ako odlucimo da ukinemo AgregateUserStorePermissions
+class AgregateUserPermissions(ndb.Model):# ovo je za sada useless, osim ako odlucimo da ukinemo AgregateUserStorePermissions
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)
-    permissions = db.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
+    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    reference = ndb.KeyProperty(None, collection_name='references', required=True)
+    permissions = ndb.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
 
 
-class AgregateUserStorePermissions(db.Model):# mislim da bi se moglo ovako uraditi, ili da se jos bolje resi
+class AgregateUserStorePermissions(ndb.Model):# mislim da bi se moglo ovako uraditi, ili da se jos bolje resi
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    permissions = db.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
+    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    permissions = ndb.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
 
 
-class Store(db.Model):#mozda ce trebati agregate tabela za roles tab
+class Store(ndb.Model):#mozda ce trebati agregate tabela za roles tab
     
-    name = db.StringProperty(multiline=False, required=True)
-    logo = blobstore.BlobReferenceProperty()
-    state = db.IntegerProperty(required=True)
+    name = ndb.StringProperty(required=True)
+    logo = blobstore.BlobKeyProperty()
+    state = ndb.IntegerProperty(required=True)
 
 
-class StoreConfig(db.Model):
+class StoreConfig(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    key_value = db.StringProperty(multiline=False, required=True)
-    data = db.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    key_value = ndb.StringProperty(required=True)
+    data = ndb.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
 
 
-class StoreContent(db.Model):
+class StoreContent(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    title = db.StringProperty(multiline=False, required=True)
-    body = db.TextProperty(required=True)
-    sequence = db.IntegerProperty(required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    title = ndb.StringProperty(required=True)
+    body = ndb.TextProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class StorePermission(db.Model):
+class StorePermission(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    role = db.ReferenceProperty(Role, collection_name='roles', required=True)
-    permission = db.StringProperty(multiline=False, required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    role = ndb.KeyProperty(Role, collection_name='roles', required=True)
+    permission = ndb.StringProperty(required=True)
 
 
-class StoreShippingExclusion(db.Model):
+class StoreShippingExclusion(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False)
-    postal_code_to = db.StringProperty(multiline=False)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    country = ndb.KeyProperty(Country, collection_name='countries')
+    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
+    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
+    postal_code_from = ndb.StringProperty(multiline=False)
+    postal_code_to = ndb.StringProperty(multiline=False)
 
 
-class StoreTax(db.Model):
+class StoreTax(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    sequence = db.IntegerProperty(required=True)
-    tax_type = db.IntegerProperty(required=True)# ne mogu da koristim samo type posto je python keyword
-    amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-    location_exclusion = db.BooleanProperty(default=True, required=True)
-    active = db.BooleanProperty(default=True, required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    name = ndb.StringProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
+    type = ndb.IntegerProperty(required=True)
+    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    location_exclusion = ndb.BooleanProperty(default=True, required=True)
+    active = ndb.BooleanProperty(default=True, required=True)
 
 
-class StoreTaxLocation(db.Model):
+class StoreTaxLocation(ndb.Model):
     
-    store_tax = db.ReferenceProperty(StoreTax, collection_name='store_taxes', required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False)
-    postal_code_to = db.StringProperty(multiline=False)
+    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
+    country = ndb.KeyProperty(Country, collection_name='countries')
+    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
+    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
+    postal_code_from = ndb.StringProperty(multiline=False)
+    postal_code_to = ndb.StringProperty(multiline=False)
 
 
-class StoreTaxApplication(db.Model):
+class StoreTaxApplication(ndb.Model):
     
-    store_tax = db.ReferenceProperty(StoreTax, collection_name='store_taxes', required=True)
-    application = db.IntegerProperty(required=True)
-    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories')
-    store_carrier = db.ReferenceProperty(StoreCarrier, collection_name='store_carriers')
+    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
+    application = ndb.IntegerProperty(required=True)
+    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories')
+    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers')
 
 
-class StoreCarrier(db.Model):
+class StoreCarrier(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    active = db.BooleanProperty(default=True, required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    name = ndb.StringProperty(required=True)
+    active = ndb.BooleanProperty(default=True, required=True)
 
 
-class StoreCarrierLine(db.Model):
+class StoreCarrierLine(ndb.Model):
     
-    store_carrier = db.ReferenceProperty(StoreCarrier, collection_name='store_carriers', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    sequence = db.IntegerProperty(required=True)
-    location_exclusion = db.BooleanProperty(default=True, required=True)
-    active = db.BooleanProperty(default=True, required=True)
+    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers', required=True)
+    name = ndb.StringProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
+    location_exclusion = ndb.BooleanProperty(default=True, required=True)
+    active = ndb.BooleanProperty(default=True, required=True)
 
 
-class StoreCarrierLineLocation(db.Model):
+class StoreCarrierLineLocation(ndb.Model):
     
-    store_carrier_line = db.ReferenceProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False)
-    postal_code_to = db.StringProperty(multiline=False)
+    store_carrier_line = ndb.KeyProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
+    country = ndb.KeyProperty(Country, collection_name='countries')
+    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
+    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
+    postal_code_from = ndb.StringProperty(multiline=False)
+    postal_code_to = ndb.StringProperty(multiline=False)
 
 
-class StoreCarrierLinePricelist(db.Model):
+class StoreCarrierLinePricelist(ndb.Model):
     
-    store_carrier_line = db.ReferenceProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
-    condition_type = db.IntegerProperty(required=True)
-    condition_operator = db.IntegerProperty(required=True)
-    condition_value = db.IntegerProperty(required=True)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
-    price_type = db.IntegerProperty(required=True)
-    price_type_factor = db.IntegerProperty(required=True)
-    amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    store_carrier_line = ndb.KeyProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
+    condition_type = ndb.IntegerProperty(required=True)
+    condition_operator = ndb.IntegerProperty(required=True)
+    condition_value = ndb.IntegerProperty(required=True)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
+    price_type = ndb.IntegerProperty(required=True)
+    price_type_factor = ndb.IntegerProperty(required=True)
+    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
 
 
-class BuyerAddress(db.Model):
+class BuyerAddress(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries', required=True)
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions', required=True)
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities', required=True)
-    postal_code = db.StringProperty(multiline=False, required=True)
-    street_address = db.StringProperty(multiline=False, required=True)
-    street_address2 = db.StringProperty(multiline=False, required=True)
-    email = db.EmailProperty()
-    telephone = db.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty 
-    default_shipping = db.BooleanProperty(default=True, required=True)
-    default_billing = db.BooleanProperty(default=True, required=True)
+    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    name = ndb.StringProperty(required=True)
+    country = ndb.KeyProperty(Country, collection_name='countries', required=True)
+    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions', required=True)
+    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities', required=True)
+    postal_code = ndb.StringProperty(required=True)
+    street_address = ndb.StringProperty(required=True)
+    street_address2 = ndb.StringProperty(required=True)
+    email = ndb.EmailProperty()
+    telephone = ndb.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty 
+    default_shipping = ndb.BooleanProperty(default=True, required=True)
+    default_billing = ndb.BooleanProperty(default=True, required=True)
 
 
-class BuyerCollection(db.Model):# za buyer collection tablee treba agregate tablea za filtriranje kataloga
+class BuyerCollection(ndb.Model):# za buyer collection tablee treba agregate tablea za filtriranje kataloga
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    notifications = db.BooleanProperty(default=True, required=True)
+    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    name = ndb.StringProperty(required=True)
+    notifications = ndb.BooleanProperty(default=True, required=True)
 
 
-class BuyerCollectionStore(db.Model):
+class BuyerCollectionStore(ndb.Model):
     
-    buyer_collection = db.ReferenceProperty(BuyerCollection, collection_name='buyer_collections', required=True)
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
+    buyer_collection = ndb.KeyProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
 
 
-class BuyerCollectionProductCategory(db.Model):
+class BuyerCollectionProductCategory(ndb.Model):
     
-    buyer_collection = db.ReferenceProperty(BuyerCollection, collection_name='buyer_collections', required=True)
-    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories', required=True)
+    buyer_collection = ndb.KeyProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
 
 
-class Currency(db.Model):
+class Currency(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
-    symbol = db.StringProperty(multiline=False, required=True)
-    code = db.StringProperty(multiline=False, required=True)
-    numeric_code = db.StringProperty(multiline=False, required=True)
-    rounding = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    digits = db.IntegerProperty(required=True)
-    active = db.BooleanProperty(default=True, required=True)
-    grouping = db.StringProperty(multiline=False, required=True)
-    decimal_separator = db.StringProperty(multiline=False, required=True)
-    thousands_separator = db.StringProperty(multiline=False, required=True)
-    positive_sign_position = db.IntegerProperty(required=True)
-    negative_sign_position = db.IntegerProperty(required=True)
-    positive_sign = db.StringProperty(multiline=False, required=True)
-    negative_sign = db.StringProperty(multiline=False, required=True)
-    positive_currency_symbol_precedes = db.BooleanProperty(default=True, required=True)
-    negative_currency_symbol_precedes = db.BooleanProperty(default=True, required=True)
-    positive_separate_by_space = db.BooleanProperty(default=True, required=True)
-    negative_separate_by_space = db.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty(required=True)
+    symbol = ndb.StringProperty(required=True)
+    code = ndb.StringProperty(required=True)
+    numeric_code = ndb.StringProperty(required=True)
+    rounding = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    digits = ndb.IntegerProperty(required=True)
+    active = ndb.BooleanProperty(default=True, required=True)
+    grouping = ndb.StringProperty(required=True)
+    decimal_separator = ndb.StringProperty(required=True)
+    thousands_separator = ndb.StringProperty(required=True)
+    positive_sign_position = ndb.IntegerProperty(required=True)
+    negative_sign_position = ndb.IntegerProperty(required=True)
+    positive_sign = ndb.StringProperty(required=True)
+    negative_sign = ndb.StringProperty(required=True)
+    positive_currency_symbol_precedes = ndb.BooleanProperty(default=True, required=True)
+    negative_currency_symbol_precedes = ndb.BooleanProperty(default=True, required=True)
+    positive_separate_by_space = ndb.BooleanProperty(default=True, required=True)
+    negative_separate_by_space = ndb.BooleanProperty(default=True, required=True)
 
 
-class Order(db.Model):
+class Order(ndb.Model):
     
-    reference = db.StringProperty(multiline=False, required=True)
-    order_date = db.DateTimeProperty(auto_now_add=True, required=True)
-    company_address = db.ReferenceProperty(OrderAddress, collection_name='company_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    invoice_address = db.ReferenceProperty(OrderAddress, collection_name='invoice_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    shipping_address = db.ReferenceProperty(OrderAddress, collection_name='shipping_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    currency = db.ReferenceProperty(Currency, collection_name='currencies', required=True)
-    untaxed_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    tax_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    total_amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    comment = db.TextProperty()
-    state = db.IntegerProperty(required=True)
+    reference = ndb.StringProperty(required=True)
+    order_date = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    company_address = ndb.KeyProperty(OrderAddress, collection_name='company_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
+    invoice_address = ndb.KeyProperty(OrderAddress, collection_name='invoice_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
+    shipping_address = ndb.KeyProperty(OrderAddress, collection_name='shipping_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
+    currency = ndb.KeyProperty(Currency, collection_name='currencies', required=True)
+    untaxed_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    tax_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    total_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    comment = ndb.TextProperty()
+    state = ndb.IntegerProperty(required=True)
 
 
-class OrderRefenrece(db.Model):
+class OrderRefenrece(ndb.Model):
     
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    store_carrier = db.ReferenceProperty(StoreCarrier, collection_name='store_carriers', required=True)
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers', required=True)
 
 
-class OrderAddress(db.Model):
+class OrderAddress(ndb.Model):
     
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    country = db.StringProperty(multiline=False, required=True)
-    country_code = db.StringProperty(multiline=False, required=True)
-    region = db.StringProperty(multiline=False, required=True)
-    city = db.StringProperty(multiline=False, required=True)
-    postal_code = db.StringProperty(multiline=False, required=True)
-    street_address = db.StringProperty(multiline=False, required=True)
-    street_address2 = db.StringProperty(multiline=False, required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    email = db.EmailProperty()
-    telephone = db.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty
-    address_type = db.IntegerProperty(required=True)# ne mogu da koristim samo type posto je python keyword
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    country = ndb.StringProperty(required=True)
+    country_code = ndb.StringProperty(required=True)
+    region = ndb.StringProperty(required=True)
+    city = ndb.StringProperty(required=True)
+    postal_code = ndb.StringProperty(required=True)
+    street_address = ndb.StringProperty(required=True)
+    street_address2 = ndb.StringProperty(required=True)
+    name = ndb.StringProperty(required=True)
+    email = ndb.EmailProperty()
+    telephone = ndb.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty
+    type = ndb.IntegerProperty(required=True)
 
 
-class OrderAddressRefenrece(db.Model):
+class OrderAddressRefenrece(ndb.Model):
     
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    buyer_address = db.ReferenceProperty(BuyerAddress, collection_name='buyer_addresses', required=True)
-    address_type = db.IntegerProperty(required=True)# ne mogu da koristim samo type posto je python keyword
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    buyer_address = ndb.KeyProperty(BuyerAddress, collection_name='buyer_addresses', required=True)
+    type = ndb.IntegerProperty(required=True)
 
 
-class OrderLine(db.Model):
+class OrderLine(ndb.Model):
     
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    description = db.TextProperty(required=True)
-    quantity = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    product_uom = db.ReferenceProperty(ProductUOM, collection_name='product_uoms', required=True)
-    unit_price = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    discount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    sequence = db.IntegerProperty(required=True)
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    description = ndb.TextProperty(required=True)
+    quantity = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    product_uom = ndb.KeyProperty(ProductUOM, collection_name='product_uoms', required=True)
+    unit_price = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    discount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class OrderLineTax(db.Model):
+class OrderLineTax(ndb.Model):
     
-    order_line = db.ReferenceProperty(OrderLine, collection_name='order_lines', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    sequence = db.IntegerProperty(required=True)
-    tax_type = db.IntegerProperty(required=True)# ne mogu da koristim samo type posto je python keyword
-    amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
+    name = ndb.StringProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
+    type = ndb.IntegerProperty(required=True)
+    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
 
 
-class OrderLineRefenrece(db.Model):
+class OrderLineRefenrece(ndb.Model):
     
-    order_line = db.ReferenceProperty(OrderLine, collection_name='order_lines', required=True)
-    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories', required=True)
-    catalog_pricetag = db.ReferenceProperty(CatalogPricetag, collection_name='catalog_pricetags', required=True)
-    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
+    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
+    catalog_pricetag = ndb.KeyProperty(CatalogPricetag, collection_name='catalog_pricetags', required=True)
+    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
 
 
-class OrderLineTaxRefenrece(db.Model):
+class OrderLineTaxRefenrece(ndb.Model):
     
-    order_line = db.ReferenceProperty(OrderLine, collection_name='order_lines', required=True)
-    store_tax = db.ReferenceProperty(StoreTax, collection_name='store_taxes', required=True)
+    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
+    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
 
 
-class PayPalTransaction(db.Model):
+class PayPalTransaction(ndb.Model):
     
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    txn_id = db.StringProperty(multiline=False, required=True)
-    ipn_message = db.TextProperty(required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    txn_id = ndb.StringProperty(required=True)
+    ipn_message = ndb.TextProperty(required=True)
+    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
 
 
-class BillingLog(db.Model):
+class BillingLog(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)# ne znam da li treba i uvesti reference_type?
-    amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    balance = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    reference = ndb.KeyProperty(None, collection_name='references', required=True)# ne znam da li treba i uvesti reference_type?
+    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    balance = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
 
 
-class BillingCreditAdjustment(db.Model):
+class BillingCreditAdjustment(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    agent = db.ReferenceProperty(User, collection_name='agents', required=True)
-    adjusted = db.DateTimeProperty(auto_now_add=True, required=True)
-    amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    message = db.TextProperty(required=True)
-    note = db.TextProperty(required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    agent = ndb.KeyProperty(User, collection_name='agents', required=True)
+    adjusted = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    message = ndb.TextProperty(required=True)
+    note = ndb.TextProperty(required=True)
 
 
-class StoreBuyerOrderFeedback(db.Model):
+class StoreBuyerOrderFeedback(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    store_name = db.StringProperty(multiline=False, required=True)
-    buyer = db.ReferenceProperty(User, collection_name='buyers', required=True)
-    order = db.ReferenceProperty(Order, collection_name='orders', required=True)
-    state = db.IntegerProperty(required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    store_name = ndb.StringProperty(required=True)
+    buyer = ndb.KeyProperty(User, collection_name='buyers', required=True)
+    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
+    state = ndb.IntegerProperty(required=True)
 
 
-class Catalog(db.Model):
+class Catalog(ndb.Model):
     
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    publish = db.DateTimeProperty(required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
-    discontinue = db.DateTimeProperty(required=True)
-    cover = blobstore.BlobReferenceProperty()
-    cost = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    state = db.IntegerProperty(required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    name = ndb.StringProperty(required=True)
+    publish = ndb.DateTimeProperty(required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
+    discontinue = ndb.DateTimeProperty(required=True)
+    cover = blobstore.BlobKeyProperty()
+    cost = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    state = ndb.IntegerProperty(required=True)
 
 
-class CatalogImage(db.Model):
+class CatalogImage(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    image = blobstore.BlobReferenceProperty()
-    sequence = db.IntegerProperty(required=True)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    image = blobstore.BlobKeyProperty()
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class CatalogStoreContent(db.Model):
+class CatalogStoreContent(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    title = db.StringProperty(multiline=False, required=True)
-    body = db.TextProperty(required=True)
-    sequence = db.IntegerProperty(required=True)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    title = ndb.StringProperty(required=True)
+    body = ndb.TextProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class CatalogStoreShippingExclusion(db.Model):
+class CatalogStoreShippingExclusion(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    country = db.ReferenceProperty(Country, collection_name='countries')
-    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
-    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = db.StringProperty(multiline=False)
-    postal_code_to = db.StringProperty(multiline=False)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    country = ndb.KeyProperty(Country, collection_name='countries')
+    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
+    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
+    postal_code_from = ndb.StringProperty(multiline=False)
+    postal_code_to = ndb.StringProperty(multiline=False)
 
 
-class CatalogPricetag(db.Model):
+class CatalogPricetag(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_image = db.ReferenceProperty(CatalogImage, collection_name='catalog_images', required=True)
-    source_width = db.FloatProperty(required=True)
-    source_height = db.FloatProperty(required=True)
-    source_position_top = db.FloatProperty(required=True)
-    source_position_left = db.FloatProperty(required=True)
-    pricetag_value = db.StringProperty(multiline=False)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_image = ndb.KeyProperty(CatalogImage, collection_name='catalog_images', required=True)
+    source_width = ndb.FloatProperty(required=True)
+    source_height = ndb.FloatProperty(required=True)
+    source_position_top = ndb.FloatProperty(required=True)
+    source_position_left = ndb.FloatProperty(required=True)
+    pricetag_value = ndb.StringProperty(multiline=False)
 
 
-class CatalogProductTemplate(db.Model):
+class CatalogProductTemplate(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    description = db.TextProperty(required=True)
-    product_uom = db.ReferenceProperty(ProductUOM, collection_name='product_uoms', required=True)
-    unit_price = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    active = db.BooleanProperty(default=True, required=True)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
+    name = ndb.StringProperty(required=True)
+    description = ndb.TextProperty(required=True)
+    product_uom = ndb.KeyProperty(ProductUOM, collection_name='product_uoms', required=True)
+    unit_price = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    active = ndb.BooleanProperty(default=True, required=True)
 
 
-class CatalogProductVariantType(db.Model):
+class CatalogProductVariantType(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    description = db.TextProperty()
-    allow_custom_value = db.BooleanProperty(default=False, required=True)
-    mandatory_variant_type = db.BooleanProperty(default=True, required=True)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    name = ndb.StringProperty(required=True)
+    description = ndb.TextProperty()
+    allow_custom_value = ndb.BooleanProperty(default=False, required=True)
+    mandatory_variant_type = ndb.BooleanProperty(default=True, required=True)
 
 
-class CatalogProductVariantOption(db.Model):
+class CatalogProductVariantOption(ndb.Model):
     
-    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    name = db.StringProperty(multiline=False, required=True)
-    sequence = db.IntegerProperty(required=True)
+    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    name = ndb.StringProperty(required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class CatalogProductTemplateProductVariantType(db.Model):
+class CatalogProductTemplateProductVariantType(ndb.Model):
     
-    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    sequence = db.IntegerProperty(required=True)
+    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class CatalogProductVariantValue(db.Model):
+class CatalogProductVariantValue(ndb.Model):
     
-    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    catalog_product_varinat_option = db.ReferenceProperty(CatalogProductVariantOption, collection_name='catalog_product_varinat_options', required=True)
+    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    catalog_product_varinat_option = ndb.KeyProperty(CatalogProductVariantOption, collection_name='catalog_product_varinat_options', required=True)
 
 
-class CatalogProductInstanceProductVariantValue(db.Model):
+class CatalogProductInstanceProductVariantValue(ndb.Model):
     
-    catalog_product_varinat_value = db.ReferenceProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
-    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    catalog_product_varinat_value = ndb.KeyProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
+    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
 
 
-class CatalogProductInstance(db.Model):
+class CatalogProductInstance(ndb.Model):
     
-    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    code = db.StringProperty(multiline=False, required=True)
-    description = db.TextProperty()
-    unit_price = db.FloatProperty() # ili StringProperty, sta je vec bolje    
-    active = db.BooleanProperty(default=True, required=True)
+    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    code = ndb.StringProperty(required=True)
+    description = ndb.TextProperty()
+    unit_price = ndb.FloatProperty() # ili StringProperty, sta je vec bolje    
+    active = ndb.BooleanProperty(default=True, required=True)
 
 
-class CatalogProductInstanceStock(db.Model):
+class CatalogProductInstanceStock(ndb.Model):
     
-    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-    product_instance_type = db.IntegerProperty(required=True)
-    low_stock_notify = db.BooleanProperty(default=True, required=True)
-    low_stock_quantity = db.FloatProperty() # ili StringProperty, sta je vec bolje
+    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    type = ndb.IntegerProperty(required=True)
+    low_stock_notify = ndb.BooleanProperty(default=True, required=True)
+    low_stock_quantity = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
 
 
-class CatalogProductInstanceInventory(db.Model):
+class CatalogProductInstanceInventory(ndb.Model):
     
-    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-    updated = db.DateTimeProperty(required=True)
-    reference = db.ReferenceProperty(None, collection_name='references')
-    quantity = db.FloatProperty() # ili StringProperty, sta je vec bolje
-    balance = db.FloatProperty() # ili StringProperty, sta je vec bolje
+    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    updated = ndb.DateTimeProperty(required=True)
+    reference = ndb.KeyProperty(None, collection_name='references')
+    quantity = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
+    balance = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
 
 
-class CatalogProductImage(db.Model):
+class CatalogProductImage(ndb.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)
-    image = blobstore.BlobReferenceProperty()
-    sequence = db.IntegerProperty(required=True)
+    reference = ndb.KeyProperty(None, collection_name='references', required=True)
+    image = blobstore.BlobKeyProperty()
+    sequence = ndb.IntegerProperty(required=True)
 
 
-class CatalogProductContent(db.Model):
+class CatalogProductContent(ndb.Model):
     
-    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
-    title = db.StringProperty(multiline=False, required=True)
-    body = db.TextProperty(required=True)
+    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    title = ndb.StringProperty(required=True)
+    body = ndb.TextProperty(required=True)
 
 
-class CatalogProductProductContent(db.Model):
+class CatalogProductProductContent(ndb.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)
-    catalog_product_content = db.ReferenceProperty(CatalogProductContent, collection_name='catalog_product_contents', required=True)
-    sequence = db.IntegerProperty(required=True)
+    reference = ndb.KeyProperty(None, collection_name='references', required=True)
+    catalog_product_content = ndb.KeyProperty(CatalogProductContent, collection_name='catalog_product_contents', required=True)
+    sequence = ndb.IntegerProperty(required=True)
 
-class CatalogProductMeasurements(db.Model):
+class CatalogProductMeasurements(ndb.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='references', required=True)
-    weight = db.FloatProperty() # ili StringProperty, sta je vec bolje
-    weight_uom = db.ReferenceProperty(ProductUOM, collection_name='weight_uoms', required=True)
-    volume = db.FloatProperty() # ili StringProperty, sta je vec bolje
-    volume_uom = db.ReferenceProperty(ProductUOM, collection_name='volume_uoms', required=True)
+    reference = ndb.KeyProperty(None, collection_name='references', required=True)
+    weight = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
+    weight_uom = ndb.KeyProperty(ProductUOM, collection_name='weight_uoms', required=True)
+    volume = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
+    volume_uom = ndb.KeyProperty(ProductUOM, collection_name='volume_uoms', required=True)
 
 
 
