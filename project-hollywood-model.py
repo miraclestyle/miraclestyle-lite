@@ -18,7 +18,7 @@ from google.appengine.ext import webapp
 
 class ObjectLog(db.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name), i mozda nam bude trebao reference type da bi znali o cemu se radi...
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name), i mozda nam bude trebao reference type da bi znali o cemu se radi...
     agent = db.ReferenceProperty(User, collection_name='agents', required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
     event = db.IntegerProperty(required=True)
@@ -166,7 +166,7 @@ class Role(db.Model):
 class AgregateUserPermissions(db.Model):# ovo je za sada useless, osim ako odlucimo da ukinemo AgregateUserStorePermissions
     
     user = db.ReferenceProperty(User, collection_name='users', required=True)
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)
     permissions = db.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
 
 
@@ -429,7 +429,7 @@ class BillingLog(db.Model):
     
     store = db.ReferenceProperty(Store, collection_name='stores', required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)# ne znam da li treba i uvesti reference_type?
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)# ne znam da li treba i uvesti reference_type?
     amount = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     balance = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
 
@@ -453,7 +453,156 @@ class StoreBuyerOrderFeedback(db.Model):
     state = db.IntegerProperty(required=True)
 
 
+class Catalog(db.Model):
+    
+    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    publish = db.DateTimeProperty(required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
+    discontinue = db.DateTimeProperty(required=True)
+    cover = blobstore.BlobReferenceProperty()
+    cost = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    state = db.IntegerProperty(required=True)
 
+
+class CatalogImage(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    image = blobstore.BlobReferenceProperty()
+    sequence = db.IntegerProperty(required=True)
+
+
+class CatalogStoreContent(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
+    title = db.StringProperty(multiline=False, required=True)
+    body = db.TextProperty(required=True)
+    sequence = db.IntegerProperty(required=True)
+
+
+class CatalogStoreShippingExclusion(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    store = db.ReferenceProperty(Store, collection_name='stores', required=True)
+    country = db.ReferenceProperty(Country, collection_name='countries')
+    region = db.ReferenceProperty(CountrySubdivision, collection_name='regions')
+    city = db.ReferenceProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
+    postal_code_from = db.StringProperty(multiline=False)
+    postal_code_to = db.StringProperty(multiline=False)
+
+
+class CatalogPricetag(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_image = db.ReferenceProperty(CatalogImage, collection_name='catalog_images', required=True)
+    source_width = db.FloatProperty(required=True)
+    source_height = db.FloatProperty(required=True)
+    source_position_top = db.FloatProperty(required=True)
+    source_position_left = db.FloatProperty(required=True)
+    pricetag_value = db.StringProperty(multiline=False)
+
+
+class CatalogProductTemplate(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    product_category = db.ReferenceProperty(ProductCategory, collection_name='product_categories', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    description = db.TextProperty(required=True)
+    product_uom = db.ReferenceProperty(ProductUOM, collection_name='product_uoms', required=True)
+    unit_price = db.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    active = db.BooleanProperty(default=True, required=True)
+
+
+class CatalogProductVariantType(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    description = db.TextProperty()
+    allow_custom_value = db.BooleanProperty(default=False, required=True)
+    mandatory_variant_type = db.BooleanProperty(default=True, required=True)
+
+
+class CatalogProductVariantOption(db.Model):
+    
+    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    name = db.StringProperty(multiline=False, required=True)
+    sequence = db.IntegerProperty(required=True)
+
+
+class CatalogProductTemplateProductVariantType(db.Model):
+    
+    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    sequence = db.IntegerProperty(required=True)
+
+
+class CatalogProductVariantValue(db.Model):
+    
+    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    catalog_product_varinat_type = db.ReferenceProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
+    catalog_product_varinat_option = db.ReferenceProperty(CatalogProductVariantOption, collection_name='catalog_product_varinat_options', required=True)
+
+
+class CatalogProductInstanceProductVariantValue(db.Model):
+    
+    catalog_product_varinat_value = db.ReferenceProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
+    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+
+
+class CatalogProductInstance(db.Model):
+    
+    catalog_product_template = db.ReferenceProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
+    code = db.StringProperty(multiline=False, required=True)
+    description = db.TextProperty()
+    unit_price = db.FloatProperty() # ili StringProperty, sta je vec bolje    
+    active = db.BooleanProperty(default=True, required=True)
+
+
+class CatalogProductInstanceStock(db.Model):
+    
+    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    product_instance_type = db.IntegerProperty(required=True)
+    low_stock_notify = db.BooleanProperty(default=True, required=True)
+    low_stock_quantity = db.FloatProperty() # ili StringProperty, sta je vec bolje
+
+
+class CatalogProductInstanceInventory(db.Model):
+    
+    catalog_product_instance = db.ReferenceProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    updated = db.DateTimeProperty(required=True)
+    reference = db.ReferenceProperty(None, collection_name='references')
+    quantity = db.FloatProperty() # ili StringProperty, sta je vec bolje
+    balance = db.FloatProperty() # ili StringProperty, sta je vec bolje
+
+
+class CatalogProductImage(db.Model):
+    
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)
+    image = blobstore.BlobReferenceProperty()
+    sequence = db.IntegerProperty(required=True)
+
+
+class CatalogProductContent(db.Model):
+    
+    catalog = db.ReferenceProperty(Catalog, collection_name='catalogs', required=True)
+    title = db.StringProperty(multiline=False, required=True)
+    body = db.TextProperty(required=True)
+
+
+class CatalogProductProductContent(db.Model):
+    
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)
+    catalog_product_content = db.ReferenceProperty(CatalogProductContent, collection_name='catalog_product_contents', required=True)
+    sequence = db.IntegerProperty(required=True)
+
+class CatalogProductMeasurements(db.Model):
+    
+    reference = db.ReferenceProperty(None, collection_name='references', required=True)
+    weight = db.FloatProperty() # ili StringProperty, sta je vec bolje
+    weight_uom = db.ReferenceProperty(ProductUOM, collection_name='weight_uoms', required=True)
+    volume = db.FloatProperty() # ili StringProperty, sta je vec bolje
+    volume_uom = db.ReferenceProperty(ProductUOM, collection_name='volume_uoms', required=True)
 
 
 
