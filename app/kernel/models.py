@@ -16,8 +16,11 @@ class Workflow():
       OBJECT_DEFAULT_STATE = 1
       OBJECT_TRANSITIONS = {}
       
-      def new_state(self, **kwargs): pass
-      def new_event(self, **kwargs): pass
+      def new_state(self, state, **kwargs):
+          return ObjectLog(state=state, reference=self, reference_type=self.OBJECT_TYPE, **kwargs).put()
+          
+      def new_event(self, event, **kwargs):
+          return ObjectLog(event=event, reference=self, reference_type=self.OBJECT_TYPE, **kwargs).put()
 
 class User(db.Model, Workflow):
     
@@ -35,28 +38,25 @@ class User(db.Model, Workflow):
     
     state = db.IntegerProperty(default=1, required=True)
     
-    @staticmethod
-    def get_google_authorization_url(redirect_to):
-        return '%s' % webapp2.uri_for('login', segment='exchange', provider='google')
-    
-    @staticmethod
-    def get_facebook_authorization_url(redirect_to):
-        return '%s' % webapp2.uri_for('login', segment='exchange', provider='facebook')
-    
-    def login(self):
-        pass
+    def new_state(self, state, **kwargs):
+        return super(User, self).new_state(state, agent=self, **kwargs)
+        
+    def new_event(self, event, **kwargs):
+        return super(User, self).new_event(event, agent=self, **kwargs)    
     
      
 class ObjectLog(db.Model):
+    
     reference = db.ReferenceProperty(None, collection_name='reference', required=True)
+    reference_type = db.IntegerProperty(default=0)
     agent = db.ReferenceProperty(User, collection_name='agents', required=True)
     logged = db.DateTimeProperty(auto_now_add=True, required=True)
     event = db.IntegerProperty(required=True)
     state = db.IntegerProperty(required=True)
-    message = db.TextProperty(required=True)
-    note = db.TextProperty(required=True)
-    log = db.BlobProperty(required=True) # ne znam da li bi i ovde trebalo TextProperty umesto BlobProperty
-    
+    message = db.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
+    note = db.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
+    log = db.JSONProperty(default={})
+
 
 class UserConfig(db.Model):
     
@@ -77,7 +77,7 @@ class UserIdentity(db.Model):
     user = db.ReferenceProperty(User, collection_name='user_identities', required=True)
     user_email = db.ReferenceProperty(UserEmail, required=True)
     identity = db.StringProperty(multiline=False, required=True)
-    provider = db.StringProperty(multiline=False, required=True)
+    provider = db.IntegerProperty(default=0, required=True)
     associated = db.BooleanProperty(default=True, required=True)
 
 

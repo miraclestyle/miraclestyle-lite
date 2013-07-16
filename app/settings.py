@@ -22,6 +22,13 @@ APPLICATIONS_INSTALLED = (
      'app.kernel',
 )
 
+USER_SESSION_KEY = 'user_key'
+
+MAP_IDENTITIES = {
+    'google' : 1,
+    'facebook' : 2,
+}
+
 GOOGLE_OAUTH2 = {
    'client_id'    : '283384992095.apps.googleusercontent.com',
    'client_secret': '5MJ6bqGPbyD_bt2hYKFqShE2',              
