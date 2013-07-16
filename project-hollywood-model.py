@@ -46,150 +46,150 @@ update
 
 class ObjectLog(ndb.Model):
     
-    reference = ndb.KeyProperty(required=True)# collection_name is the name of the property to give to the referenced model class. The value of the property is a Query for all entities that reference the entity.
-    type = ndb.IntegerProperty(required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name)
-    agent = ndb.KeyProperty(kind=User, required=True)
-    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    event = ndb.IntegerProperty(required=True)
-    state = ndb.IntegerProperty(required=True)
-    message = ndb.TextProperty(required=True)
-    note = ndb.TextProperty(required=True)
-    log = ndb.TextProperty(required=True)
+    reference = ndb.KeyProperty('1',required=True)# collection_name is the name of the property to give to the referenced model class. The value of the property is a Query for all entities that reference the entity.
+    type = ndb.IntegerProperty('2', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name)
+    agent = ndb.KeyProperty('3', kind=User, required=True)
+    logged = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    event = ndb.IntegerProperty('5', required=True)
+    state = ndb.IntegerProperty('6', required=True)
+    message = ndb.TextProperty('7', required=True)
+    note = ndb.TextProperty('8', required=True)
+    log = ndb.TextProperty('9', required=True)
 
 
 class Notification(ndb.Model):
     
-    creator = ndb.KeyProperty(kind=User, required=True)
-    created = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    message = ndb.TextProperty(required=True)
+    creator = ndb.KeyProperty('1', kind=User, required=True)
+    created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    message = ndb.TextProperty('3', required=True)
 
 
 class NotificationRecipient(ndb.Model):
     
-    notification = ndb.KeyProperty(kind=Notification, required=True)
-    recipient = ndb.KeyProperty(kind=User, required=True)
+    notification = ndb.KeyProperty('1', kind=Notification, required=True)
+    recipient = ndb.KeyProperty('2', kind=User, required=True)
 
 
 class NotificationRecipientOutlet(ndb.Model):
     
-    notification_recepient = ndb.KeyProperty(kind=NotificationRecipient, required=True)
-    outlet = ndb.IntegerProperty(required=True)
-    notified = ndb.DateTimeProperty()# jos ne znamo hocemo li ovde upisivati datum, ili cemo ovo pretvoriti u boolean polje, ili expandirati ovaj model...
+    notification_recepient = ndb.KeyProperty('1', kind=NotificationRecipient, required=True)
+    outlet = ndb.IntegerProperty('2', required=True)
+    notified = ndb.DateTimeProperty('3')# jos ne znamo hocemo li ovde upisivati datum, ili cemo ovo pretvoriti u boolean polje, ili expandirati ovaj model...
 
 
 class FeedbackRequest(ndb.Model):
     
-    reference = ndb.StringProperty(required=True)
-    state = ndb.IntegerProperty(required=True)
+    reference = ndb.StringProperty('1', required=True)
+    state = ndb.IntegerProperty('2', required=True)
 
 
 class SupportRequest(ndb.Model):
     
-    reference = ndb.StringProperty(required=True)
-    state = ndb.IntegerProperty(required=True)
+    reference = ndb.StringProperty('1', required=True)
+    state = ndb.IntegerProperty('2', required=True)
 
 
 class Content(ndb.Model):
     
-    title = ndb.StringProperty(required=True)
-    category = ndb.IntegerProperty(required=True)
-    published = ndb.BooleanProperty(required=True)
-    active_revision = ndb.KeyProperty(kind=ContentRevision, required=True)
-    sequence = ndb.IntegerProperty(required=True)
+    title = ndb.StringProperty('1', required=True)
+    category = ndb.IntegerProperty('2', required=True)
+    published = ndb.BooleanProperty('3', required=True)
+    active_revision = ndb.KeyProperty('4', kind=ContentRevision, required=True)
+    sequence = ndb.IntegerProperty('5', required=True)
 
 
 class ContentRevision(ndb.Model):
     
-    content = ndb.KeyProperty(kind=Content, required=True)
-    body = ndb.TextProperty(required=True)
-    created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    content = ndb.KeyProperty('1', kind=Content, required=True)
+    body = ndb.TextProperty('2', required=True)
+    created = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
 
 
 class Country(ndb.Model):
     
-    name = ndb.StringProperty(required=True)
-    code = ndb.StringProperty(required=True)
+    name = ndb.StringProperty('1', required=True)
+    code = ndb.StringProperty('2', required=True)
 
 
 class CountrySubdivision(ndb.Model):
     
-    parent_record = ndb.KeyProperty(kind=CountrySubdivision)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
-    country = ndb.KeyProperty(kind=Country, required=True)
-    name = ndb.StringProperty(required=True)
-    code = ndb.StringProperty(required=True)
-    type = ndb.IntegerProperty(required=True)
+    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
+    country = ndb.KeyProperty('2', kind=Country, required=True)
+    name = ndb.StringProperty('3', required=True)
+    code = ndb.StringProperty('4', required=True)
+    type = ndb.IntegerProperty('5', required=True)
 
 
 class ProductCategory(ndb.Model):
     
-    parent_record = ndb.KeyProperty(kind=ProductCategory)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
-    name = ndb.StringProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-    state = ndb.IntegerProperty(required=True)
+    parent_record = ndb.KeyProperty('1', kind=ProductCategory)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
+    name = ndb.StringProperty('2', required=True)
+    sequence = ndb.IntegerProperty('3', required=True)
+    state = ndb.IntegerProperty('4', required=True)
 
 
 class ProductUOMCategory(ndb.Model):
     
-    name = ndb.StringProperty(required=True)
+    name = ndb.StringProperty('1', required=True)
 
 
 class ProductUOM(ndb.Model):
     
-    name = ndb.StringProperty(required=True)
-    symbol = ndb.StringProperty(required=True)
-    product_uom_category = ndb.KeyProperty(kind=ProductUOMCategory, required=True)# ovo bi mozda moglo da bude CategoryProperty, i da se time izbaci ProductUOMCategory model??
-    rate = ndb.FloatProperty(required=True)# ovde ide custom decimal property
-    factor = ndb.FloatProperty(required=True)# ovde ide custom decimal property
-    rounding = ndb.FloatProperty(required=True)# ovde ide custom decimal property
-    display_digits = ndb.IntegerProperty(required=True)
-    active = ndb.BooleanProperty(required=True)
+    name = ndb.StringProperty('1', required=True)
+    symbol = ndb.StringProperty('2', required=True)
+    product_uom_category = ndb.KeyProperty('3', kind=ProductUOMCategory, required=True)# ovo bi mozda moglo da bude CategoryProperty, i da se time izbaci ProductUOMCategory model??
+    rate = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property
+    factor = ndb.FloatProperty('5', required=True)# ovde ide custom decimal property
+    rounding = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
+    display_digits = ndb.IntegerProperty('7', required=True)
+    active = ndb.BooleanProperty('8', required=True)
 
 
 class User(ndb.Model):
     
-    state = ndb.IntegerProperty(required=True)
+    state = ndb.IntegerProperty('1', required=True)
 
 
 class UserConfig(ndb.Model):
     
-    user = ndb.KeyProperty(kind=User, required=True)
-    attribute = ndb.StringProperty(required=True)
-    attribute_value = ndb.TextProperty(required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    attribute = ndb.StringProperty('2', required=True)
+    attribute_value = ndb.TextProperty('3', required=True)
 
 
 class UserEmail(ndb.Model):
     
-    user = ndb.KeyProperty(kind=User, required=True)
-    email = ndb.StringProperty(required=True)
-    primary = ndb.BooleanProperty(required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    email = ndb.StringProperty('2', required=True)
+    primary = ndb.BooleanProperty('3', required=True)
 
 
 class UserIdentity(ndb.Model):
     
-    user = ndb.KeyProperty(kind=User, required=True)
-    user_email = ndb.KeyProperty(kind=UserEmail, required=True)
-    identity = ndb.StringProperty(required=True)
-    provider = ndb.StringProperty(required=True)
-    associated = ndb.BooleanProperty(required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    user_email = ndb.KeyProperty('2', kind=UserEmail, required=True)
+    identity = ndb.StringProperty('3', required=True)
+    provider = ndb.StringProperty('4', required=True)
+    associated = ndb.BooleanProperty('5', required=True)
 
 
 class UserIPAddress(ndb.Model):
     
-    user = ndb.KeyProperty(kind=User, required=True)
-    ip_address = ndb.StringProperty(required=True)
-    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    ip_address = ndb.StringProperty('2', required=True)
+    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
 
 
 class UserRole(ndb.Model):
     
-    user = ndb.KeyProperty(kind=User, required=True)
-    role = ndb.KeyProperty(kind=Role, required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    role = ndb.KeyProperty('2', kind=Role, required=True)
 
 
 class Role(ndb.Model):
     
-    name = ndb.StringProperty(required=True)
-    readonly = ndb.BooleanProperty(required=True)
+    name = ndb.StringProperty('1', required=True)
+    readonly = ndb.BooleanProperty('2', required=True)
 
 
 class AgregateUserPermissions(ndb.Model):# ovo je za sada useless, osim ako odlucimo da ukinemo AgregateUserStorePermissions
