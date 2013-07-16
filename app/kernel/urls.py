@@ -7,5 +7,6 @@ Created on Jul 15, 2013
 from app.routes import register
 
 ROUTES = register('app.kernel.controller',
-     (r'/', 'Home', 'index'),
+     (r'/login/<segment>', 'Login', 'login'),
+     (r'/login/<segment>/<provider>', 'Login', 'login'),
 )

@@ -22,6 +22,30 @@ APPLICATIONS_INSTALLED = (
      'app.kernel',
 )
 
+GOOGLE_OAUTH2 = {
+   'client_id'    : '283384992095.apps.googleusercontent.com',
+   'client_secret': '5MJ6bqGPbyD_bt2hYKFqShE2',              
+   'scope'        : ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+   'auth_uri'     : 'https://accounts.google.com/o/oauth2/auth',
+   'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
+   'redirect_uri' : False,
+
+}
+
+GOOGLE_OAUTH2_USERINFO = 'https://www.googleapis.com/oauth2/v1/userinfo'
+ 
+FACEBOOK_OAUTH2 = {
+   'client_id'    : '125702284258635',
+   'client_secret': 'f5bcbcfa1bec6166bedb703d69911d43',              
+   'scope'        : ['email'],
+   'auth_uri'     : 'https://www.facebook.com/dialog/oauth',
+   'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
+   'redirect_uri' : False,
+}
+
+FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'
+ 
+
 WEBAPP2_EXTRAS = {
     'webapp2_extras.sessions' : {
         'secret_key': 'd212k19f0k09sdkf009kfewwdw',

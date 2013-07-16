@@ -9,4 +9,6 @@ Created on Jul 9, 2013
 from google.appengine.ext.db import *
 
 class Model(Model):
-      pass
+    
+      def loaded(self):
+          return self.has_key()

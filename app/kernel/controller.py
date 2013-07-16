@@ -4,28 +4,57 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app.request import Handler
-from app.template import render_template
+from app import settings
+from app.request import Segments
 from app.kernel.models import User
 from webapp2_extras.i18n import _
 
-from app.kernel.forms import LoginForm
+from oauth2client.client import OAuth2WebServerFlow
  
-class Home(Handler):
+class Login(Segments):
     
-      def post(self):
-          self.get()
- 
-      def get(self):
+      providers = ['facebook', 'google']
+      
+      @property
+      def get_flows(self):
+          flows = {}
+          for p in self.providers:
+              conf = getattr(settings, '%s_OAUTH2' % p.upper())
+              if conf:
+                   if conf['redirect_uri'] == False:
+                      conf['redirect_uri'] = self.uri_for('login', provider=p, segment='exchange', _full=True)
+              flows[p] = OAuth2WebServerFlow(**conf)
+          return flows
+      
+      def before(self):
+          provider = self.request.route_kwargs.get('provider', None)
+          if not provider:
+             return
+         
+          if provider not in self.providers:
+             self.abort(403)
+      
+      def segment_exchange(self, provider):
           
-          users = User.all()
+          flow = self.get_flows[provider]
+          code = self.request.GET.get('code')
+          error = self.request.GET.get('error')
+          keyx = 'oauth2_%s' % provider
           
-          session = self.session.get('user')
+          if self.session.has_key(keyx):
+             self.response.write(self.session[keyx].access_token)
+             return
           
-          loginform = LoginForm()
-          
-          if self.request.method == 'POST':
-              loginform = LoginForm(self.request.POST)
-              loginform.validate()
-   
-          self.response.write(render_template('kernel/test.html', {'users' : users, 'form' : loginform, 'title' : _('A cool way to die hard'), 'sess' : session}))
+          if error:
+             self.response.write(_('You rejected access to your account.'))
+          elif code:
+             creds = flow.step2_exchange(code)
+             self.session[keyx] = creds
+          else:
+            return self.redirect(flow.step1_get_authorize_url())
+           
+      def segment_authorize(self, provider=''):
+          for p, v in self.get_flows.items():
+              self._common[p] = v.step1_get_authorize_url()
+           
+          return self.render('user/authorize.html', self._common)
