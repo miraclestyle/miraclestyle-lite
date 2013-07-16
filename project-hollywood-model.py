@@ -84,7 +84,7 @@ class Country(db.Model):
 
 class CountrySubdivision(db.Model):
     
-    parent = db.SelfReferenceProperty(collection_name='parents', required=True) # ovo je valjda ok
+    parent_record = db.SelfReferenceProperty(collection_name='parent_records', required=True) # ovo je valjda ok
     country = db.ReferenceProperty(Country, collection_name='countries')
     name = db.StringProperty(multiline=False, required=True)
     code = db.StringProperty(multiline=False, required=True)
@@ -93,7 +93,7 @@ class CountrySubdivision(db.Model):
 
 class ProductCategory(db.Model):
     
-    parent = db.SelfReferenceProperty(collection_name='parents', required=True) # ovo je valjda ok
+    parent_record = db.SelfReferenceProperty(collection_name='parent_records', required=True) # ovo je valjda ok
     name = db.StringProperty(multiline=False, required=True)
     sequence = db.IntegerProperty(required=True)
     state = db.IntegerProperty(required=True)
@@ -124,7 +124,7 @@ class User(db.Model):
 class UserConfig(db.Model):
     
     user = db.ReferenceProperty(User, collection_name='users', required=True)
-    key = db.StringProperty(multiline=False, required=True)
+    key_value = db.StringProperty(multiline=False, required=True)
     data = db.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
 
 
@@ -187,7 +187,7 @@ class Store(db.Model):#mozda ce trebati agregate tabela za roles tab
 class StoreConfig(db.Model):
     
     store = db.ReferenceProperty(Store, collection_name='stores', required=True)
-    key = db.StringProperty(multiline=False, required=True)
+    key_value = db.StringProperty(multiline=False, required=True)
     data = db.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
 
 
