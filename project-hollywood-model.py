@@ -186,24 +186,37 @@ class UserRole(ndb.Model):
     role = ndb.KeyProperty('2', kind=Role, required=True)
 
 
+# ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
-    name = ndb.StringProperty('1', required=True)
-    readonly = ndb.BooleanProperty('2', required=True)
+    reference = ndb.KeyProperty('1',required=True)# ovde se za sada cuva key store-a kojem pripada ova rola
+    name = ndb.StringProperty('2', required=True)
+    permissions = ndb.StringProperty('3', repeated=True)
+    readonly = ndb.BooleanProperty('4', required=True)
 
 
-class AgregateUserPermissions(ndb.Model):# ovo je za sada useless, osim ako odlucimo da ukinemo AgregateUserStorePermissions
+'''
+Primer skalabilne verzije implementacije permission sistema
+class Role(ndb.Model):
     
-    user = ndb.KeyProperty(User, collection_name='users', required=True)
-    reference = ndb.KeyProperty(None, collection_name='references', required=True)
-    permissions = ndb.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
+    app = ndb.KeyProperty('1', kind=app, required=True)# ovde se cuva key aplikacije (user space-a) kojoj pripada ova rola
+    name = ndb.StringProperty('2', required=True)
+    permissions = ndb.StructuredProperty(Permission, '3', repeated=True)
+    readonly = ndb.BooleanProperty('4', required=True)
 
 
-class AgregateUserStorePermissions(ndb.Model):# mislim da bi se moglo ovako uraditi, ili da se jos bolje resi
+class Permission(ndb.Model):
     
-    user = ndb.KeyProperty(User, collection_name='users', required=True)
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    permissions = ndb.StringListProperty()# mozda da ovo bude samo StringProperty i da nosi jednu vrednost?
+    reference = ndb.KeyProperty('1',required=True)# ovde se cuva key objekta na kojeg se permisije odnose kojem pripada ova rola
+    permissions = ndb.StringProperty('2', repeated=True)
+'''
+
+# ovo je agregaciona tabela radi optimizacije
+class AggregateUserPermissions(ndb.Model):
+    
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    reference = ndb.KeyProperty('2',required=True)
+    permissions = ndb.StringProperty('3', repeated=True)
 
 
 class Store(ndb.Model):#mozda ce trebati agregate tabela za roles tab
@@ -226,13 +239,6 @@ class StoreContent(ndb.Model):
     title = ndb.StringProperty(required=True)
     body = ndb.TextProperty(required=True)
     sequence = ndb.IntegerProperty(required=True)
-
-
-class StorePermission(ndb.Model):
-    
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    role = ndb.KeyProperty(Role, collection_name='roles', required=True)
-    permission = ndb.StringProperty(required=True)
 
 
 class StoreShippingExclusion(ndb.Model):
