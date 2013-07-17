@@ -46,19 +46,25 @@ update
 
 class ObjectLog(ndb.Model):
     
-    reference = ndb.KeyProperty('1',required=True)# collection_name is the name of the property to give to the referenced model class. The value of the property is a Query for all entities that reference the entity.
-    type = ndb.IntegerProperty('2', required=True)# mozda nam bude trebalo name polje u koje ce se kopirati name objekta ili njegov key (ako nema name)
-    agent = ndb.KeyProperty('3', kind=User, required=True)
-    logged = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
-    event = ndb.IntegerProperty('5', required=True)
-    state = ndb.IntegerProperty('6', required=True)
-    message = ndb.TextProperty('7', required=True)
-    note = ndb.TextProperty('8', required=True)
-    log = ndb.TextProperty('9', required=True)
+    # root
+    reference = ndb.KeyProperty('1',required=True)# kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    agent = ndb.KeyProperty('2', kind=User, required=True)
+    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
+    event = ndb.IntegerProperty('4', required=True)
+    state = ndb.IntegerProperty('5', required=True)
+    message = ndb.TextProperty('6', required=True)
+    note = ndb.TextProperty('7', required=True)
+    log = ndb.TextProperty('8', required=True)
+    
+    # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
+    @classmethod
+    def _get_kind(cls):
+      return 'OL'
 
-
+# mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo...
 class Notification(ndb.Model):
     
+    # root
     creator = ndb.KeyProperty('1', kind=User, required=True)
     created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
     message = ndb.TextProperty('3', required=True)
@@ -66,31 +72,35 @@ class Notification(ndb.Model):
 
 class NotificationRecipient(ndb.Model):
     
-    notification = ndb.KeyProperty('1', kind=Notification, required=True)
-    recipient = ndb.KeyProperty('2', kind=User, required=True)
+    # ancestor Notification
+    recipient = ndb.KeyProperty('1', kind=User, required=True)
+    outlets = ndb.StructuredProperty(NotificationOutlet, '2', repeated=True)
 
 
-class NotificationRecipientOutlet(ndb.Model):
+class NotificationOutlet(ndb.Model):
     
-    notification_recepient = ndb.KeyProperty('1', kind=NotificationRecipient, required=True)
-    outlet = ndb.IntegerProperty('2', required=True)
-    notified = ndb.DateTimeProperty('3')# jos ne znamo hocemo li ovde upisivati datum, ili cemo ovo pretvoriti u boolean polje, ili expandirati ovaj model...
+    # StructuredProperty model
+    outlet = ndb.IntegerProperty('1', required=True)
+    notified = ndb.BooleanProperty('2', required=True)
 
 
 class FeedbackRequest(ndb.Model):
     
+    # root
     reference = ndb.StringProperty('1', required=True)
     state = ndb.IntegerProperty('2', required=True)
 
 
 class SupportRequest(ndb.Model):
     
+    # root
     reference = ndb.StringProperty('1', required=True)
     state = ndb.IntegerProperty('2', required=True)
 
 
 class Content(ndb.Model):
     
+    # root
     title = ndb.StringProperty('1', required=True)
     category = ndb.IntegerProperty('2', required=True)
     published = ndb.BooleanProperty('3', required=True)
@@ -100,29 +110,31 @@ class Content(ndb.Model):
 
 class ContentRevision(ndb.Model):
     
-    content = ndb.KeyProperty('1', kind=Content, required=True)
-    body = ndb.TextProperty('2', required=True)
-    created = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
+    # ancestor Content
+    body = ndb.TextProperty('1', required=True)
+    created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 class Country(ndb.Model):
     
-    name = ndb.StringProperty('1', required=True)
-    code = ndb.StringProperty('2', required=True)
+    # root
+    code = ndb.StringProperty('1', required=True)
+    name = ndb.StringProperty('2', required=True)
 
 
 class CountrySubdivision(ndb.Model):
     
-    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
-    country = ndb.KeyProperty('2', kind=Country, required=True)
-    name = ndb.StringProperty('3', required=True)
-    code = ndb.StringProperty('4', required=True)
-    type = ndb.IntegerProperty('5', required=True)
+    # ancestor Country
+    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision)
+    name = ndb.StringProperty('2', required=True)
+    code = ndb.StringProperty('3', required=True)
+    type = ndb.IntegerProperty('4', required=True)
 
 
 class ProductCategory(ndb.Model):
     
-    parent_record = ndb.KeyProperty('1', kind=ProductCategory)# ne znam da li record moze referencirati samog sebe, ako moze onda se treba ukljuciti required=True
+    # root
+    parent_record = ndb.KeyProperty('1', kind=ProductCategory)
     name = ndb.StringProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
@@ -130,58 +142,63 @@ class ProductCategory(ndb.Model):
 
 class ProductUOMCategory(ndb.Model):
     
+    # root
     name = ndb.StringProperty('1', required=True)
 
 
 class ProductUOM(ndb.Model):
     
+    # ancestor ProductUOMCategory
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True)
-    product_uom_category = ndb.KeyProperty('3', kind=ProductUOMCategory, required=True)# ovo bi mozda moglo da bude CategoryProperty, i da se time izbaci ProductUOMCategory model??
-    rate = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property
-    factor = ndb.FloatProperty('5', required=True)# ovde ide custom decimal property
-    rounding = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
-    display_digits = ndb.IntegerProperty('7', required=True)
-    active = ndb.BooleanProperty('8', required=True)
+    rate = ndb.FloatProperty('3', required=True)# ovde ide custom decimal property
+    factor = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property
+    rounding = ndb.FloatProperty('5', required=True)# ovde ide custom decimal property
+    digits = ndb.IntegerProperty('6', required=True)
+    active = ndb.BooleanProperty('7', required=True)
 
 
 class User(ndb.Model):
     
+    # root
     state = ndb.IntegerProperty('1', required=True)
 
-
+# da li ima potrebe ovo stavljati da je Expando?
 class UserConfig(ndb.Model):
     
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    attribute = ndb.StringProperty('2', required=True)
-    attribute_value = ndb.TextProperty('3', required=True)
+    # ancestor User
+    #_default_indexed = False
+    #pass
+    attribute = ndb.StringProperty('1', required=True)
+    attribute_value = ndb.TextProperty('2', required=True)
 
 
 class UserEmail(ndb.Model):
     
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    email = ndb.StringProperty('2', required=True)
-    primary = ndb.BooleanProperty('3', required=True)
+    # ancestor User
+    email = ndb.StringProperty('1', required=True)
+    primary = ndb.BooleanProperty('2', required=True)
 
 
 class UserIdentity(ndb.Model):
     
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    user_email = ndb.KeyProperty('2', kind=UserEmail, required=True)
-    identity = ndb.StringProperty('3', required=True)
-    provider = ndb.StringProperty('4', required=True)
-    associated = ndb.BooleanProperty('5', required=True)
+    # ancestor User
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True)
+    identity = ndb.StringProperty('2', required=True)
+    provider = ndb.StringProperty('3', required=True)
+    associated = ndb.BooleanProperty('4', required=True)
 
-
+# moze li ovo snimati GAE log ?
 class UserIPAddress(ndb.Model):
     
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    ip_address = ndb.StringProperty('2', required=True)
-    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
+    # ancestor User
+    ip_address = ndb.StringProperty('1', required=True)
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 class UserRole(ndb.Model):
     
+    # splice
     user = ndb.KeyProperty('1', kind=User, required=True)
     role = ndb.KeyProperty('2', kind=Role, required=True)
 
@@ -189,53 +206,57 @@ class UserRole(ndb.Model):
 # ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
-    reference = ndb.KeyProperty('1',required=True)# ovde se za sada cuva key store-a kojem pripada ova rola
-    name = ndb.StringProperty('2', required=True)
-    permissions = ndb.StringProperty('3', repeated=True)
-    readonly = ndb.BooleanProperty('4', required=True)
+    # ancestor Store (Any?)
+    name = ndb.StringProperty('1', required=True)
+    permissions = ndb.StringProperty('2', indexed=False, repeated=True)
+    readonly = ndb.BooleanProperty('3', required=True)
 
 
 '''
 Primer skalabilne verzije implementacije permission sistema
 class Role(ndb.Model):
     
-    app = ndb.KeyProperty('1', kind=app, required=True)# ovde se cuva key aplikacije (user space-a) kojoj pripada ova rola
-    name = ndb.StringProperty('2', required=True)
-    permissions = ndb.StructuredProperty(Permission, '3', repeated=True)
-    readonly = ndb.BooleanProperty('4', required=True)
+    # ancestor App
+    name = ndb.StringProperty('1', required=True)
+    permissions = ndb.StructuredProperty(Permission, '2', required=True)
+    readonly = ndb.BooleanProperty('3', required=True)
 
 
 class Permission(ndb.Model):
     
-    reference = ndb.KeyProperty('1',required=True)# ovde se cuva key objekta na kojeg se permisije odnose kojem pripada ova rola
-    permissions = ndb.StringProperty('2', repeated=True)
+    # ancestor Object - Any
+    permissions = ndb.StringProperty('1', indexed=False, repeated=True)
 '''
 
 # ovo je agregaciona tabela radi optimizacije
 class AggregateUserPermissions(ndb.Model):
     
+    # splice
     user = ndb.KeyProperty('1', kind=User, required=True)
     reference = ndb.KeyProperty('2',required=True)
-    permissions = ndb.StringProperty('3', repeated=True)
+    permissions = ndb.StringProperty('3', indexed=False, repeated=True)
 
 
 class Store(ndb.Model):#mozda ce trebati agregate tabela za roles tab
     
+    # root
     name = ndb.StringProperty(required=True)
-    logo = blobstore.BlobKeyProperty()
+    logo = blobstore.BlobKeyProperty(required=True)# verovatno je i dalje ovaj property od klase blobstore
     state = ndb.IntegerProperty(required=True)
 
-
+# da li ima potrebe ovo stavljati da je Expando?
 class StoreConfig(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    key_value = ndb.StringProperty(required=True)
-    data = ndb.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
+    # ancestor Store
+    #_default_indexed = False
+    #pass
+    attribute = ndb.StringProperty('1', required=True)
+    attribute_value = ndb.TextProperty('2', required=True)
 
 
 class StoreContent(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    # ancestor Store
     title = ndb.StringProperty(required=True)
     body = ndb.TextProperty(required=True)
     sequence = ndb.IntegerProperty(required=True)
@@ -243,7 +264,7 @@ class StoreContent(ndb.Model):
 
 class StoreShippingExclusion(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    # ancestor Store
     country = ndb.KeyProperty(Country, collection_name='countries')
     region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
     city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
@@ -253,7 +274,7 @@ class StoreShippingExclusion(ndb.Model):
 
 class StoreTax(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    # ancestor Store
     name = ndb.StringProperty(required=True)
     sequence = ndb.IntegerProperty(required=True)
     type = ndb.IntegerProperty(required=True)
@@ -264,7 +285,7 @@ class StoreTax(ndb.Model):
 
 class StoreTaxLocation(ndb.Model):
     
-    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
+    # ancestor StoreTax
     country = ndb.KeyProperty(Country, collection_name='countries')
     region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
     city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
@@ -274,7 +295,7 @@ class StoreTaxLocation(ndb.Model):
 
 class StoreTaxApplication(ndb.Model):
     
-    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
+    # ancestor StoreTax
     application = ndb.IntegerProperty(required=True)
     product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories')
     store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers')
@@ -282,14 +303,14 @@ class StoreTaxApplication(ndb.Model):
 
 class StoreCarrier(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    # ancestor Store
     name = ndb.StringProperty(required=True)
     active = ndb.BooleanProperty(default=True, required=True)
 
 
 class StoreCarrierLine(ndb.Model):
     
-    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers', required=True)
+    # ancestor StoreCarrier
     name = ndb.StringProperty(required=True)
     sequence = ndb.IntegerProperty(required=True)
     location_exclusion = ndb.BooleanProperty(default=True, required=True)
@@ -298,7 +319,7 @@ class StoreCarrierLine(ndb.Model):
 
 class StoreCarrierLineLocation(ndb.Model):
     
-    store_carrier_line = ndb.KeyProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
+    # ancestor StoreCarrierLine
     country = ndb.KeyProperty(Country, collection_name='countries')
     region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
     city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
@@ -308,7 +329,7 @@ class StoreCarrierLineLocation(ndb.Model):
 
 class StoreCarrierLinePricelist(ndb.Model):
     
-    store_carrier_line = ndb.KeyProperty(StoreCarrierLine, collection_name='store_carrier_lines', required=True)
+    # ancestor StoreCarrierLine
     condition_type = ndb.IntegerProperty(required=True)
     condition_operator = ndb.IntegerProperty(required=True)
     condition_value = ndb.IntegerProperty(required=True)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
@@ -319,7 +340,7 @@ class StoreCarrierLinePricelist(ndb.Model):
 
 class BuyerAddress(ndb.Model):
     
-    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    # ancestor User
     name = ndb.StringProperty(required=True)
     country = ndb.KeyProperty(Country, collection_name='countries', required=True)
     region = ndb.KeyProperty(CountrySubdivision, collection_name='regions', required=True)
@@ -335,25 +356,26 @@ class BuyerAddress(ndb.Model):
 
 class BuyerCollection(ndb.Model):# za buyer collection tablee treba agregate tablea za filtriranje kataloga
     
-    user = ndb.KeyProperty(User, collection_name='users', required=True)
+    # ancestor User
     name = ndb.StringProperty(required=True)
     notifications = ndb.BooleanProperty(default=True, required=True)
 
 
 class BuyerCollectionStore(ndb.Model):
     
-    buyer_collection = ndb.KeyProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    # ancestor BuyerCollection
     store = ndb.KeyProperty(Store, collection_name='stores', required=True)
 
 
 class BuyerCollectionProductCategory(ndb.Model):
     
-    buyer_collection = ndb.KeyProperty(BuyerCollection, collection_name='buyer_collections', required=True)
+    # ancestor BuyerCollection
     product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
 
 
 class Currency(ndb.Model):
     
+    # root
     name = ndb.StringProperty(required=True)
     symbol = ndb.StringProperty(required=True)
     code = ndb.StringProperty(required=True)
@@ -543,7 +565,7 @@ class CatalogProductTemplate(ndb.Model):
     catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
     product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
     name = ndb.StringProperty(required=True)
-    description = ndb.TextProperty(required=True)
+    description = ndb.TextProperty(required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
     product_uom = ndb.KeyProperty(ProductUOM, collection_name='product_uoms', required=True)
     unit_price = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     active = ndb.BooleanProperty(default=True, required=True)
