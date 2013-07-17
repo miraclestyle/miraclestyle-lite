@@ -22,6 +22,8 @@ APPLICATIONS_INSTALLED = (
      'app.kernel',
 )
 
+SESSION_STORAGE = 'memcache'
+
 USER_SESSION_KEY = 'user_key'
 
 MAP_IDENTITIES = {

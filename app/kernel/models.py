@@ -4,9 +4,13 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import logging
 import webapp2
 from webapp2_extras.i18n import _
-from app import db
+from webapp2_extras import sessions
+
+from app import settings
+from app import ndb
 
 class Workflow():
     
@@ -17,12 +21,12 @@ class Workflow():
       OBJECT_TRANSITIONS = {}
       
       def new_state(self, state, **kwargs):
-          return ObjectLog(state=state, reference=self, reference_type=self.OBJECT_TYPE, **kwargs).put()
+          return ObjectLog(state=state, reference=self.key, reference_type=self.OBJECT_TYPE, **kwargs).put()
           
       def new_event(self, event, **kwargs):
-          return ObjectLog(event=event, reference=self, reference_type=self.OBJECT_TYPE, **kwargs).put()
+          return ObjectLog(event=event, reference=self.key, reference_type=self.OBJECT_TYPE, **kwargs).put()
 
-class User(db.Model, Workflow):
+class User(ndb.Model, Workflow):
     
     OBJECT_TYPE = 1
     OBJECT_STATES = {
@@ -36,66 +40,77 @@ class User(db.Model, Workflow):
 
     }
     
-    state = db.IntegerProperty(default=1, required=True)
+    state = ndb.IntegerProperty(default=1)
+    
+    @classmethod
+    @webapp2.cached_property
+    def get_current_user(cls):
+        logging.info('get_current_user')
+        sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)
+        if sess.has_key(settings.USER_SESSION_KEY):
+           return sess[settings.USER_SESSION_KEY].get()
+        return None
+    
+    
     
     def new_state(self, state, **kwargs):
-        return super(User, self).new_state(state, agent=self, **kwargs)
+        return super(User, self).new_state(state, agent=self.key, **kwargs)
         
     def new_event(self, event, **kwargs):
-        return super(User, self).new_event(event, agent=self, **kwargs)    
+        return super(User, self).new_event(event, agent=self.key, **kwargs)    
     
      
-class ObjectLog(db.Model):
+class ObjectLog(ndb.Model):
     
-    reference = db.ReferenceProperty(None, collection_name='reference', required=True)
-    reference_type = db.IntegerProperty(default=0)
-    agent = db.ReferenceProperty(User, collection_name='agents', required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
-    event = db.IntegerProperty(required=True)
-    state = db.IntegerProperty(required=True)
-    message = db.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
-    note = db.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
-    log = db.JSONProperty(default={})
+    reference = ndb.KeyProperty()
+    reference_type = ndb.IntegerProperty(default=0)
+    agent = ndb.KeyProperty(kind=User)
+    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    event = ndb.IntegerProperty(required=True)
+    state = ndb.IntegerProperty(required=True)
+    message = ndb.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
+    note = ndb.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
+    log = ndb.JsonProperty(default={})
 
 
-class UserConfig(db.Model):
+class UserConfig(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='user_configs', required=True)
-    code = db.StringProperty(multiline=False, required=True)
-    data = db.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
+    #user = ndb.KeyProperty(kind=User)
+    code = ndb.StringProperty(required=True)
+    data = ndb.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
 
 
-class UserEmail(db.Model):
+class UserEmail(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='user_emails', required=True)
-    email = db.EmailProperty(required=True)
-    primary = db.BooleanProperty(default=False, required=True) 
+    user = ndb.KeyProperty(kind=User)
+    email = ndb.StringProperty()
+    primary = ndb.BooleanProperty(default=False) 
 
 
-class UserIdentity(db.Model):
+class UserIdentity(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='user_identities', required=True)
-    user_email = db.ReferenceProperty(UserEmail, required=True)
-    identity = db.StringProperty(multiline=False, required=True)
-    provider = db.IntegerProperty(default=0, required=True)
-    associated = db.BooleanProperty(default=True, required=True)
+    user = ndb.KeyProperty(kind=User)
+    user_email = ndb.KeyProperty(kind=UserEmail)
+    identity = ndb.StringProperty(required=True)
+    provider = ndb.IntegerProperty(default=0)
+    associated = ndb.BooleanProperty(default=True)
 
 
-class UserIPAddress(db.Model):
+class UserIPAddress(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='user_ips', required=True)
-    ip_address = db.StringProperty(multiline=False, required=True)
-    logged = db.DateTimeProperty(auto_now_add=True, required=True)
+    user = ndb.KeyProperty(kind=User)
+    ip_address = ndb.StringProperty(required=True)
+    logged = ndb.DateTimeProperty(auto_now_add=True)
 
 
-class Role(db.Model):
+class Role(ndb.Model):
     
-    name = db.StringProperty(multiline=False, required=True)
-    readonly = db.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty(required=True)
+    readonly = ndb.BooleanProperty(default=True)
 
 
-class UserRole(db.Model):
+class UserRole(ndb.Model):
     
-    user = db.ReferenceProperty(User, collection_name='users', required=True)
-    role = db.ReferenceProperty(Role, collection_name='roles', required=True)
+    user = ndb.KeyProperty(kind=User)
+    role = ndb.KeyProperty(kind=Role)
     

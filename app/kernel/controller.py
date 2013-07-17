@@ -6,12 +6,13 @@ Created on Jul 15, 2013
 '''
 import urllib2
 import json
+import logging
 
-from app import db
+from app import ndb
 
 from app import settings
 from app.request import Segments
-from app.kernel.models import User, UserIdentity, UserEmail
+from app.kernel.models import User, UserIdentity, UserEmail, UserConfig
 from webapp2_extras.i18n import _
 
 from oauth2client.client import OAuth2WebServerFlow
@@ -50,13 +51,56 @@ class Login(Segments):
          
           if provider not in self.providers:
              self.abort(403)
-      
+             
+      def segment_tests(self):
+          
+          if self.request.get('put'):
+             user = User(state=int(self.request.get('put')))
+             user.put()
+          
+          if self.request.get('del_all'):
+             user = ndb.Key(urlsafe=str(self.request.get('del_all')))
+             for i in UserConfig.query(ancestor=user).fetch(keys_only=True):
+                 i.delete()
+             
+          if self.request.get('delete'):
+             user = ndb.Key(urlsafe=str(self.request.get('delete')))
+             user.delete()
+              
+          if self.request.get('wat') and self.request.get('hown'):
+              user = ndb.Key(urlsafe=str(self.request.get('wat')))
+               
+              def run_trans():
+                  for i in range(0, int(self.request.get('hown'))):
+                      user_config = UserConfig(parent=user, code='test %s' % i, data='data %s' % i)
+                      user_config.put()
+                      
+              if (self.request.get('trans')):        
+                 ndb.transaction(run_trans)
+                 self.response.write('ran in transaction, %s insert into UserConfig' % self.request.get('hown'))
+              else:
+                  run_trans()
+                 
+          k = self.request.get('k')
+          if k:
+                  s = ndb.Key(urlsafe=str(k))
+                  self.response.write(UserConfig.query(ancestor=s).get()) 
+          else:
+                  for a in User.query():
+                      self.response.write('<div><b>User Object #%s</b> - <a href="?del_all=%s">Delete all</a></div>' % (a.key.urlsafe(), a.key.urlsafe()))
+                      b = UserConfig.query(ancestor=a.key).iter()
+                      for x in b:
+                          self.response.write('<div style="padding-left:20px;">key: %s, code: %s, data: %s, <a href="?delete=%s">Delete</a></div>' % (x.key.urlsafe(), x.code, x.data, x.key.urlsafe()))
+                      self.response.write('<form><div>Write into entity with key <input type="text" name="wat" /> this <input type="text" name="hown" /> amount of times. Transaction? <input type="checkbox" name="trans" value="1" /> entities of kind UserConfig as ancestor to User</div><input type="submit" /></form>')
+                             
       def segment_exchange(self, provider):
           
           flow = self.get_flows[provider]
           code = self.request.GET.get('code')
           error = self.request.GET.get('error')
           keyx = 'oauth2_%s' % provider
+          
+          provider_id = settings.MAP_IDENTITIES[provider]
           
           if self.session.has_key(keyx):
              
@@ -66,52 +110,53 @@ class Login(Segments):
               
              try:
                  data = getattr(self, '_login_%s_get_creds' % provider)(self.session[keyx].access_token)
-             except urllib2.HTTPError:
+             except urllib2.HTTPError, e:
+                 logging.exception(e)
                  del self.session[keyx]
              else:
-                 relate = UserIdentity.all().filter('identity =', data.get('id')).get()
-                 relate2 = UserEmail.all().filter('email =', data.get('email')).get()
+                 relate = UserIdentity.query(UserIdentity.identity==data.get('id'), UserIdentity.provider==provider_id).get()
+                 relate2 = UserEmail.query(UserEmail.email==data.get('email')).get()
                  user_is_new = False
                  try:
                     if not (relate and relate2):
                          user = User(state=1)
                          user.put()
+                       
                          user_is_new = True
                          user.new_state(1, event=0)
                          user.new_event(1, state=1)
                     else:
                          user = None
                          if relate:
-                            user = relate.user
+                            user = relate.user.get()
                          if relate2 and not user:
-                            user = relate2.user
+                            user = relate2.user.get()
                             
-                 except Exception, e:
+                 except KeyError, e:
                      raise e
                  else:
-                     @db.transactional(xg=True)
+                     @ndb.transactional(xg=True)
                      def run_save(user, user_is_new, relate, relate2):
                          
                              if user_is_new:
-                                 user_email = UserEmail(user=user, primary=True, email=data.get('email')).put()
-                                 UserIdentity(user=user, identity=data.get('id'), user_email=user_email, provider=settings.MAP_IDENTITIES[provider]).put()      
+                                 user_email = UserEmail(user=user.key, primary=True, email=data.get('email'))
+                                 user_email.put()
+                                 UserIdentity(user=user.key, identity=data.get('id'), user_email=user_email.key, provider=provider_id).put()      
                                  
                              if relate:
-                                user = relate.user
                                 if not relate2:
-                                   UserEmail(user=user, email=data.get('email')).put()
+                                   UserEmail(user=user.key, email=data.get('email')).put()
                                    
                              if relate2:
-                                user = relate2.user
                                 if not relate:
-                                   UserIdentity(user=user, identity=data.get('id'), user_email=relate2, provider=settings.MAP_IDENTITIES[provider]).put()      
+                                   UserIdentity(user=user.key, identity=data.get('id'), user_email=relate2.key, provider=provider_id).put()      
                              
                              user.new_event(2, state=user.state)
                              
                              return user
                              
                      user = run_save(user, user_is_new, relate, relate2)
-                     self.session[settings.USER_SESSION_KEY] = user.key()
+                     self.session[settings.USER_SESSION_KEY] = user.key
                      self.response.write('Successfully logged in')
                      return
                 
@@ -130,6 +175,13 @@ class Login(Segments):
              return self.redirect(flow.step1_get_authorize_url())
            
       def segment_authorize(self, provider=''):
+          
+          current = User.get_current_user
+          current2 = User.get_current_user
+          
+          logging.info(current)
+       
+          
           for p, v in self.get_flows.items():
               self._common[p] = v.step1_get_authorize_url()
            

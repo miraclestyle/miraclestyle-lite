@@ -7,16 +7,16 @@ Created on Jul 15, 2013
 import webapp2
 from webapp2_extras import sessions, i18n
 
+from app import settings
 from app.template import render_template
  
 class Handler(webapp2.RequestHandler):
     
     _USE_SESSION = True
-    _LOAD_USER = False
     _LOAD_TRANSLATIONS = False
     
     _common = {}
-    
+  
     def render(self, tpl, data=None):
         return self.response.write(render_template(tpl, data))
     
@@ -34,6 +34,7 @@ class Handler(webapp2.RequestHandler):
         
     def respond(self, *args, **kwargs):
         self.abort(404)
+        self.response.write('Not found')
  
     def dispatch(self):
         
@@ -45,7 +46,8 @@ class Handler(webapp2.RequestHandler):
       
         if self._USE_SESSION:
             # Get a session store for this request.
-            self.session_store = sessions.get_store(request=self.request)
+            # request=self.request
+            self.session_store = sessions.get_store()
 
         try:
             # Dispatch the request.
@@ -59,7 +61,7 @@ class Handler(webapp2.RequestHandler):
     @webapp2.cached_property
     def session(self):
         # Returns a session using the default cookie key.
-        return self.session_store.get_session(backend='memcache')
+        return self.session_store.get_session(backend=settings.SESSION_STORAGE)
     
     
 class Segments(Handler):
