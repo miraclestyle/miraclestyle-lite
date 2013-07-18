@@ -81,7 +81,7 @@ class NotificationOutlet(ndb.Model):
     
     # StructuredProperty model
     outlet = ndb.IntegerProperty('1', required=True)
-    notified = ndb.BooleanProperty('2', required=True)
+    notified = ndb.BooleanProperty('2', default=False)
 
 
 class FeedbackRequest(ndb.Model):
@@ -103,7 +103,7 @@ class Content(ndb.Model):
     # root
     title = ndb.StringProperty('1', required=True)
     category = ndb.IntegerProperty('2', required=True)
-    published = ndb.BooleanProperty('3', required=True)
+    published = ndb.BooleanProperty('3', default=False)
     active_revision = ndb.KeyProperty('4', kind=ContentRevision, required=True)
     sequence = ndb.IntegerProperty('5', required=True)
 
@@ -114,6 +114,12 @@ class ContentRevision(ndb.Model):
     body = ndb.TextProperty('1', required=True)
     created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
+
+class Image(ndb.Model):
+    
+    # ancestor Any Object
+    image = blobstore.BlobKeyProperty('1', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    sequence = ndb.IntegerProperty('2', required=True)
 
 class Country(ndb.Model):
     
@@ -129,6 +135,16 @@ class CountrySubdivision(ndb.Model):
     name = ndb.StringProperty('2', required=True)
     code = ndb.StringProperty('3', required=True)
     type = ndb.IntegerProperty('4', required=True)
+
+
+class Location(ndb.Model):
+    
+    # ancestor Any Object (Store, StoreTax, StoreCarrierLine, Catalog...)
+    country = ndb.KeyProperty('1', kind=Country, required=True)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision)
+    city = ndb.KeyProperty('3', kind=CountrySubdivision)# ne znam da li ce ovo postojati??
+    postal_code_from = ndb.StringProperty('4')
+    postal_code_to = ndb.StringProperty('5')
 
 
 class ProductCategory(ndb.Model):
@@ -155,7 +171,7 @@ class ProductUOM(ndb.Model):
     factor = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property
     rounding = ndb.FloatProperty('5', required=True)# ovde ide custom decimal property
     digits = ndb.IntegerProperty('6', required=True)
-    active = ndb.BooleanProperty('7', required=True)
+    active = ndb.BooleanProperty('7', default=True)
 
 
 class User(ndb.Model):
@@ -177,7 +193,7 @@ class UserEmail(ndb.Model):
     
     # ancestor User
     email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', required=True)
+    primary = ndb.BooleanProperty('2', default=True)
 
 
 class UserIdentity(ndb.Model):
@@ -186,7 +202,7 @@ class UserIdentity(ndb.Model):
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True)
     identity = ndb.StringProperty('2', required=True)
     provider = ndb.StringProperty('3', required=True)
-    associated = ndb.BooleanProperty('4', required=True)
+    associated = ndb.BooleanProperty('4', default=True)
 
 # moze li ovo snimati GAE log ?
 class UserIPAddress(ndb.Model):
@@ -209,7 +225,7 @@ class Role(ndb.Model):
     # ancestor Store (Any?)
     name = ndb.StringProperty('1', required=True)
     permissions = ndb.StringProperty('2', indexed=False, repeated=True)
-    readonly = ndb.BooleanProperty('3', required=True)
+    readonly = ndb.BooleanProperty('3', default=True)
 
 
 '''
@@ -219,7 +235,7 @@ class Role(ndb.Model):
     # ancestor App
     name = ndb.StringProperty('1', required=True)
     permissions = ndb.StructuredProperty(Permission, '2', required=True)
-    readonly = ndb.BooleanProperty('3', required=True)
+    readonly = ndb.BooleanProperty('3', default=True)
 
 
 class Permission(ndb.Model):
@@ -229,6 +245,7 @@ class Permission(ndb.Model):
 '''
 
 # ovo je agregaciona tabela radi optimizacije
+#mozda ce trebati agregate tabela za roles tab u Store
 class AggregateUserPermissions(ndb.Model):
     
     # splice
@@ -237,12 +254,12 @@ class AggregateUserPermissions(ndb.Model):
     permissions = ndb.StringProperty('3', indexed=False, repeated=True)
 
 
-class Store(ndb.Model):#mozda ce trebati agregate tabela za roles tab
+class Store(ndb.Model):
     
     # root
-    name = ndb.StringProperty(required=True)
-    logo = blobstore.BlobKeyProperty(required=True)# verovatno je i dalje ovaj property od klase blobstore
-    state = ndb.IntegerProperty(required=True)
+    name = ndb.StringProperty('1', required=True)
+    logo = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    state = ndb.IntegerProperty('3', required=True)
 
 # da li ima potrebe ovo stavljati da je Expando?
 class StoreConfig(ndb.Model):
@@ -256,121 +273,87 @@ class StoreConfig(ndb.Model):
 
 class StoreContent(ndb.Model):
     
-    # ancestor Store
-    title = ndb.StringProperty(required=True)
-    body = ndb.TextProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
+    # ancestor Store, Catalog (kesiranje)
+    title = ndb.StringProperty('1', required=True)
+    body = ndb.TextProperty('2', required=True)
+    sequence = ndb.IntegerProperty('3', required=True)
 
 
-class StoreShippingExclusion(ndb.Model):
+class StoreTax(ndb.Expando):
     
     # ancestor Store
-    country = ndb.KeyProperty(Country, collection_name='countries')
-    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
-    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = ndb.StringProperty(multiline=False)
-    postal_code_to = ndb.StringProperty(multiline=False)
-
-
-class StoreTax(ndb.Model):
-    
-    # ancestor Store
-    name = ndb.StringProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-    type = ndb.IntegerProperty(required=True)
-    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-    location_exclusion = ndb.BooleanProperty(default=True, required=True)
-    active = ndb.BooleanProperty(default=True, required=True)
-
-
-class StoreTaxLocation(ndb.Model):
-    
-    # ancestor StoreTax
-    country = ndb.KeyProperty(Country, collection_name='countries')
-    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
-    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = ndb.StringProperty(multiline=False)
-    postal_code_to = ndb.StringProperty(multiline=False)
-
-
-class StoreTaxApplication(ndb.Model):
-    
-    # ancestor StoreTax
-    application = ndb.IntegerProperty(required=True)
-    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories')
-    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers')
+    name = ndb.StringProperty('1', required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+    type = ndb.IntegerProperty('3', required=True)
+    amount = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    location_exclusion = ndb.BooleanProperty('5', default=False)
+    active = ndb.BooleanProperty('6', default=True)
+    #product_category = ndb.KeyProperty('7', kind=ProductCategory)
+    #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier)
 
 
 class StoreCarrier(ndb.Model):
     
     # ancestor Store
-    name = ndb.StringProperty(required=True)
-    active = ndb.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty('1', required=True)
+    active = ndb.BooleanProperty('2', default=True)
 
 
 class StoreCarrierLine(ndb.Model):
     
     # ancestor StoreCarrier
-    name = ndb.StringProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-    location_exclusion = ndb.BooleanProperty(default=True, required=True)
-    active = ndb.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty('1', required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+    location_exclusion = ndb.BooleanProperty('3', default=False)
+    active = ndb.BooleanProperty('4', default=True)
+    pricelists = ndb.StructuredProperty(StoreCarrierPricelist, '5', repeated=True)
 
-
-class StoreCarrierLineLocation(ndb.Model):
+# jos je upitno da li cemo ovo ovako zadrzati, to sve zavizi od querija i indexa...
+class StoreCarrierPricelist(ndb.Model):
     
-    # ancestor StoreCarrierLine
-    country = ndb.KeyProperty(Country, collection_name='countries')
-    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
-    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = ndb.StringProperty(multiline=False)
-    postal_code_to = ndb.StringProperty(multiline=False)
-
-
-class StoreCarrierLinePricelist(ndb.Model):
-    
-    # ancestor StoreCarrierLine
-    condition_type = ndb.IntegerProperty(required=True)
-    condition_operator = ndb.IntegerProperty(required=True)
-    condition_value = ndb.IntegerProperty(required=True)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
-    price_type = ndb.IntegerProperty(required=True)
-    price_type_factor = ndb.IntegerProperty(required=True)
-    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    # StructuredProperty model
+    condition_type = ndb.IntegerProperty('1', required=True)
+    condition_operator = ndb.IntegerProperty('2', required=True)
+    condition_value = ndb.FloatProperty('3', required=True)# ovde ide custom decimal property - verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
+    price_type = ndb.IntegerProperty('4', required=True)
+    price_type_factor = ndb.IntegerProperty('5', required=True)
+    amount = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
 
 
 class BuyerAddress(ndb.Model):
     
     # ancestor User
-    name = ndb.StringProperty(required=True)
-    country = ndb.KeyProperty(Country, collection_name='countries', required=True)
-    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions', required=True)
-    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities', required=True)
-    postal_code = ndb.StringProperty(required=True)
-    street_address = ndb.StringProperty(required=True)
-    street_address2 = ndb.StringProperty(required=True)
-    email = ndb.EmailProperty()
-    telephone = ndb.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty 
-    default_shipping = ndb.BooleanProperty(default=True, required=True)
-    default_billing = ndb.BooleanProperty(default=True, required=True)
+    name = ndb.StringProperty('1', required=True)
+    country = ndb.KeyProperty('2', kind=Country, required=True)
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True)
+    city = ndb.KeyProperty('4', kind=CountrySubdivision, required=True)# mozda bude string ??
+    postal_code = ndb.StringProperty('5', required=True)
+    street_address = ndb.StringProperty('6', required=True)
+    street_address2 = ndb.StringProperty('7')
+    email = ndb.StringProperty('8')
+    telephone = ndb.StringProperty('9')
+    default_shipping = ndb.BooleanProperty('10', default=True)
+    default_billing = ndb.BooleanProperty('11', default=True)
 
-
-class BuyerCollection(ndb.Model):# za buyer collection tablee treba agregate tablea za filtriranje kataloga
+# bice potrebna verovatno i aggregate tabela neka
+class BuyerCollection(ndb.Model):
     
     # ancestor User
-    name = ndb.StringProperty(required=True)
-    notifications = ndb.BooleanProperty(default=True, required=True)
+    # kad budemo skontali querije i indexe onda mozda ovde ubacimo store i product_categories propertije
+    name = ndb.StringProperty('1', required=True)
+    notifications = ndb.BooleanProperty('2', default=False)
 
 
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor BuyerCollection
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
+    store = ndb.KeyProperty('1', kind=Store, required=True)
 
 
 class BuyerCollectionProductCategory(ndb.Model):
     
     # ancestor BuyerCollection
-    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
+    product_categories = ndb.KeyProperty('1', kind=ProductCategory, required=True)
 
 
 class Currency(ndb.Model):
@@ -382,7 +365,7 @@ class Currency(ndb.Model):
     numeric_code = ndb.StringProperty(required=True)
     rounding = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
     digits = ndb.IntegerProperty(required=True)
-    active = ndb.BooleanProperty(default=True, required=True)
+    active = ndb.BooleanProperty(default=True)
     grouping = ndb.StringProperty(required=True)
     decimal_separator = ndb.StringProperty(required=True)
     thousands_separator = ndb.StringProperty(required=True)
@@ -512,86 +495,100 @@ class StoreBuyerOrderFeedback(ndb.Model):
 
 class Catalog(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    name = ndb.StringProperty(required=True)
-    publish = ndb.DateTimeProperty(required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
-    discontinue = ndb.DateTimeProperty(required=True)
-    cover = blobstore.BlobKeyProperty()
-    cost = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    state = ndb.IntegerProperty(required=True)
+    # root
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    name = ndb.StringProperty('2', required=True)
+    publish = ndb.DateTimeProperty('3', required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
+    discontinue = ndb.DateTimeProperty('4', required=True)
+    cover = blobstore.BlobKeyProperty('5', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    cost = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
+    state = ndb.IntegerProperty('7', required=True)
 
 
-class CatalogImage(ndb.Model):
+class CatalogContent(ndb.Model):
     
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    image = blobstore.BlobKeyProperty()
-    sequence = ndb.IntegerProperty(required=True)
-
-
-class CatalogStoreContent(ndb.Model):
-    
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    title = ndb.StringProperty(required=True)
-    body = ndb.TextProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-
-
-class CatalogStoreShippingExclusion(ndb.Model):
-    
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    country = ndb.KeyProperty(Country, collection_name='countries')
-    region = ndb.KeyProperty(CountrySubdivision, collection_name='regions')
-    city = ndb.KeyProperty(CountrySubdivision, collection_name='cities') # ne znam da li ce ovo postojati??
-    postal_code_from = ndb.StringProperty(multiline=False)
-    postal_code_to = ndb.StringProperty(multiline=False)
+    # ancestor Catalog
+    title = ndb.StringProperty('1', required=True)
+    body = ndb.TextProperty('2', required=True)
 
 
 class CatalogPricetag(ndb.Model):
     
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_image = ndb.KeyProperty(CatalogImage, collection_name='catalog_images', required=True)
-    source_width = ndb.FloatProperty(required=True)
-    source_height = ndb.FloatProperty(required=True)
-    source_position_top = ndb.FloatProperty(required=True)
-    source_position_left = ndb.FloatProperty(required=True)
-    pricetag_value = ndb.StringProperty(multiline=False)
+    # ancestor Catalog
+    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
+    container_image = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    source_width = ndb.FloatProperty('3', required=True)
+    source_height = ndb.FloatProperty('4', required=True)
+    source_position_top = ndb.FloatProperty('5', required=True)
+    source_position_left = ndb.FloatProperty('6', required=True)
+    value = ndb.StringProperty('7', required=True)
 
 
-class CatalogProductTemplate(ndb.Model):
+class ProductTemplate(ndb.Expando):
     
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
-    name = ndb.StringProperty(required=True)
-    description = ndb.TextProperty(required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
-    product_uom = ndb.KeyProperty(ProductUOM, collection_name='product_uoms', required=True)
-    unit_price = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    active = ndb.BooleanProperty(default=True, required=True)
+    # ancestor Catalog
+    product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
+    name = ndb.StringProperty('2', required=True)
+    description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
+    product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)
+    unit_price = ndb.FloatProperty('5', required=True) # custom decimal property
+    active = ndb.BooleanProperty('6', default=True)
+    #Expando
+    #weight = ndb.FloatProperty('7')# custom decimal
+    #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    #volume = ndb.FloatProperty('9')# custom decimal
+    #volume_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
 
 
-class CatalogProductVariantType(ndb.Model):
+class ProductInstance(ndb.Expando):
     
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
+    # ancestor ProductTemplate
+    code = ndb.StringProperty('1', required=True)
+    active = ndb.BooleanProperty('2', default=True)
+    #Expando
+    #description = ndb.TextProperty('3', required=True)
+    #unit_price = ndb.FloatProperty('4', required=True) # custom decimal property
+    #managed_stock = ndb.BooleanProperty('5', default=False)
+    #low_stock_notify = ndb.BooleanProperty('6', default=True)
+    #low_stock_quantity = ndb.FloatProperty('7', default=0.00)# custom decimal
+    #weight = ndb.FloatProperty('8')# custom decimal
+    #weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    #volume = ndb.FloatProperty('10')# custom decimal
+    #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+
+
+class ProductInstanceInventory(ndb.Model):
+    
+    # ancestor ProductInstance
+    updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    # ? reference = ndb.KeyProperty(None, collection_name='references')
+    quantity = ndb.FloatProperty('3', required=True)# custom decimal
+    balance = ndb.FloatProperty('4', required=True)# custom decimal
+
+
+class ProductContent(ndb.Model):
+    
+    # ancestor ProductTemplate, ProductInstance
+    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+
+
+class ProductVariant(ndb.Model):
+    
+    #ancestor Catalog
     name = ndb.StringProperty(required=True)
     description = ndb.TextProperty()
-    allow_custom_value = ndb.BooleanProperty(default=False, required=True)
-    mandatory_variant_type = ndb.BooleanProperty(default=True, required=True)
+    options = ndb.StringProperty(repeated=True)
+    allow_custom_value = ndb.BooleanProperty(default=False)
+    mandatory_variant_type = ndb.BooleanProperty(default=True)
 
 
-class CatalogProductVariantOption(ndb.Model):
+class ProductTemplateVariant(ndb.Model):
     
-    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    name = ndb.StringProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-
-
-class CatalogProductTemplateProductVariantType(ndb.Model):
-    
-    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    sequence = ndb.IntegerProperty(required=True)
+    # splice
+    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
+    product_variant = ndb.KeyProperty('2', kind=ProductVariant, required=True)
+    sequence = ndb.IntegerProperty('3', required=True)
 
 
 class CatalogProductVariantValue(ndb.Model):
@@ -605,62 +602,6 @@ class CatalogProductInstanceProductVariantValue(ndb.Model):
     
     catalog_product_varinat_value = ndb.KeyProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
     catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-
-
-class CatalogProductInstance(ndb.Model):
-    
-    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    code = ndb.StringProperty(required=True)
-    description = ndb.TextProperty()
-    unit_price = ndb.FloatProperty() # ili StringProperty, sta je vec bolje    
-    active = ndb.BooleanProperty(default=True, required=True)
-
-
-class CatalogProductInstanceStock(ndb.Model):
-    
-    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-    type = ndb.IntegerProperty(required=True)
-    low_stock_notify = ndb.BooleanProperty(default=True, required=True)
-    low_stock_quantity = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
-
-
-class CatalogProductInstanceInventory(ndb.Model):
-    
-    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-    updated = ndb.DateTimeProperty(required=True)
-    reference = ndb.KeyProperty(None, collection_name='references')
-    quantity = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
-    balance = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
-
-
-class CatalogProductImage(ndb.Model):
-    
-    reference = ndb.KeyProperty(None, collection_name='references', required=True)
-    image = blobstore.BlobKeyProperty()
-    sequence = ndb.IntegerProperty(required=True)
-
-
-class CatalogProductContent(ndb.Model):
-    
-    catalog = ndb.KeyProperty(Catalog, collection_name='catalogs', required=True)
-    title = ndb.StringProperty(required=True)
-    body = ndb.TextProperty(required=True)
-
-
-class CatalogProductProductContent(ndb.Model):
-    
-    reference = ndb.KeyProperty(None, collection_name='references', required=True)
-    catalog_product_content = ndb.KeyProperty(CatalogProductContent, collection_name='catalog_product_contents', required=True)
-    sequence = ndb.IntegerProperty(required=True)
-
-class CatalogProductMeasurements(ndb.Model):
-    
-    reference = ndb.KeyProperty(None, collection_name='references', required=True)
-    weight = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
-    weight_uom = ndb.KeyProperty(ProductUOM, collection_name='weight_uoms', required=True)
-    volume = ndb.FloatProperty() # ili StringProperty, sta je vec bolje
-    volume_uom = ndb.KeyProperty(ProductUOM, collection_name='volume_uoms', required=True)
-
 
 
 class MainHandler(webapp2.RequestHandler):
