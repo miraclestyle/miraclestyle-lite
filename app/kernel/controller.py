@@ -22,6 +22,8 @@ class UnitTests(Handler):
     
       def respond(self):
           localss = globals()
+          
+          io = []
      
           choices2 = ['UserEmail', 'UserConfig', 'UserIPAddress']
           choices = [(f, f) for f in choices2]
@@ -51,29 +53,46 @@ class UnitTests(Handler):
               f.models.choices = choices
               f.mode.data = user.urlsafe()
               
+              io.append('Init user with key %s' % user.urlsafe())
+              
               data = {'user' : user, 'form' : f}
               factory = []
               
-              for c in choices2:
-                  gets = localss.get(c)
-                 
-                  if f.models.data and c in f.models.data and is_post and f.remove_all.data:
-                         ndb.delete_multi(gets.query(ancestor=user).iter(keys_only=True))
-                 
-                  def run_query():
-                      if is_post and c in f.models.data and f.times.data and not f.remove_all.data:
-                         for itx in range(0, f.times.data):
-                             if f.cause_error.data and int(f.cause_error.data) == itx:
-                                 raise Exception('foobar')
-                             ax = gets(parent=user)
-                             ax.populate(**pop(ax, itx))
-                             ax.put()
-                             
-                  if f.transaction.data:
-                     ndb.transaction(run_query)
-                  else:
-                     run_query()
+              def run_query():
+                  for c in choices2:
+                      gets = localss.get(c)
+                      
+                      io.append('Model %s ready for factory' % c)
+                     
+                      if f.models.data and c in f.models.data and is_post and f.remove_all.data:
+                             ndb.delete_multi(gets.query(ancestor=user).iter(keys_only=True))
+                             io.append('Delete all from user %s in model %s' % (user.urlsafe(), c))
+                     
+                      if is_post:
+                          io.append('Running query for %s %s times' % (c, f.times.data))
+                          if is_post and c in f.models.data and f.times.data and not f.remove_all.data:
+                             for itx in range(0, f.times.data):
+                                 if f.cause_error.data and int(f.cause_error.data) == itx:
+                                     raise Exception('foobar')
+                                 ax = gets(parent=user)
+                                 ax.populate(**pop(ax, itx))
+                                 pk = ax.put()
+                                 io.append('Wrote model %s, to User, iteration %s, got id %s' % (c, itx, pk.integer_id()))
+                
+                            
+              if f.transaction.data:
+                         io.append('Started runnig in transaction')
+                         ndb.transaction(run_query)
+                         io.append('Completed running transaction')
+              else:
+                         io.append('Run query without transaction')
+                         run_query()
+                         io.append('Complete query without transaction')
+                     
                   
+              for c in choices2:
+                  io.append('Querying results for %s' % c)
+                  gets = localss.get(c)
                   items = gets.query(ancestor=user).iter()
                   factory.append({'title' : c, 'children' : items})
                   
@@ -83,6 +102,7 @@ class UnitTests(Handler):
                   
               
           self._common['users'] = userss
+          self._common['io'] = io
           self.render('tests/index.html')
  
 class Login(Segments):

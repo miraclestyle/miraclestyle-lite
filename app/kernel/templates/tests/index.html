@@ -1,6 +1,11 @@
 {% extends base %}
 {% block content %}
 {% for u in users %}
+<pre style="line-height:1em;font-size:12px;">Log:
+{% for ix in io %}
+{{ix}}
+{% endfor %}
+</pre>
 <form method="post">
 	{% for f in u.form %}
 	<div>
