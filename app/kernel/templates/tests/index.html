@@ -1,0 +1,33 @@
+{% extends base %}
+{% block content %}
+{% for u in users %}
+<form method="post">
+	{% for f in u.form %}
+	<div>
+		<label>{{f.label}}</label>
+		<div>{{f}}</div>
+	    {% if f.errors %}	
+		<ul>
+			{% for e in f.errors %}
+			<li>{{e}}</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+	{% endfor %}
+</form>
+<br />
+
+	{% for k in u.children %}
+	<h2>{{k.title}}</h2>
+	<ul>
+	{% for i in k.children %}
+		<li>{{i.key.urlsafe()}} {% for f in i._properties %} {{f}}: {{i[f]}}, {% endfor %}</li>
+	{% endfor %}
+	</ul>
+	
+	{% endfor %}
+
+
+{% endfor %}
+{% endblock %}

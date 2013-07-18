@@ -11,11 +11,79 @@ import logging
 from app import ndb
 
 from app import settings
-from app.request import Segments
-from app.kernel.models import User, UserIdentity, UserEmail, UserConfig
+from app.request import Segments, Handler
+from app.kernel.models import User, UserIdentity, UserEmail, UserConfig, UserIPAddress
+from app.kernel.forms import TestForm
 from webapp2_extras.i18n import _
 
 from oauth2client.client import OAuth2WebServerFlow
+
+class UnitTests(Handler):
+    
+      def respond(self):
+          localss = globals()
+     
+          choices2 = ['UserEmail', 'UserConfig', 'UserIPAddress']
+          choices = [(f, f) for f in choices2]
+          
+          if self.request.get('put'):
+             User(state=1).put()
+          
+          users = [User.query().get(keys_only=True)]
+          userss = []
+          
+          is_post = True if self.request.method == 'POST' else False
+          
+          def pop(ax, i):
+              dictx = {}
+              for k, v in ax._properties.items():
+                  print k
+                  if isinstance(v, ndb.StringProperty):
+                     i = str(i)
+                  
+                  if isinstance(v, (ndb.StringProperty, ndb.TextProperty, ndb.IntegerProperty)):
+                     dictx[k.__str__()] = i
+          
+              return dictx
+          
+          for user in users:
+              f = TestForm(self.request.POST)
+              f.models.choices = choices
+              f.mode.data = user.urlsafe()
+              
+              data = {'user' : user, 'form' : f}
+              factory = []
+              
+              for c in choices2:
+                  gets = localss.get(c)
+                 
+                  if f.models.data and c in f.models.data and is_post and f.remove_all.data:
+                         ndb.delete_multi(gets.query(ancestor=user).iter(keys_only=True))
+                 
+                  def run_query():
+                      if is_post and c in f.models.data and f.times.data and not f.remove_all.data:
+                         for itx in range(0, f.times.data):
+                             if f.cause_error.data and int(f.cause_error.data) == itx:
+                                 raise Exception('foobar')
+                             ax = gets(parent=user)
+                             ax.populate(**pop(ax, itx))
+                             ax.put()
+                             
+                  if f.transaction.data:
+                     ndb.transaction(run_query)
+                  else:
+                     run_query()
+                  
+                  items = gets.query(ancestor=user).iter()
+                  factory.append({'title' : c, 'children' : items})
+                  
+              data['children'] = factory
+              userss.append(data)
+                  
+                  
+              
+          self._common['users'] = userss
+          self.render('tests/index.html')
  
 class Login(Segments):
     
@@ -60,8 +128,10 @@ class Login(Segments):
           
           if self.request.get('del_all'):
              user = ndb.Key(urlsafe=str(self.request.get('del_all')))
-             for i in UserConfig.query(ancestor=user).fetch(keys_only=True):
-                 i.delete()
+             ndb.delete_multi(UserConfig.query(ancestor=user).iter(keys_only = True))
+             
+             #for i in UserConfig.query(ancestor=user).fetch(keys_only=True):
+             #    i.delete()
              
           if self.request.get('delete'):
              user = ndb.Key(urlsafe=str(self.request.get('delete')))

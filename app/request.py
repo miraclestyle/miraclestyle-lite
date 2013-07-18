@@ -15,10 +15,14 @@ class Handler(webapp2.RequestHandler):
     _USE_SESSION = True
     _LOAD_TRANSLATIONS = False
     
-    _common = {}
+    _common = {'base' : 'index.html'}
   
     def render(self, tpl, data=None):
-        return self.response.write(render_template(tpl, data))
+        if data == None:
+           data = {}
+           
+        self._common.update(data)
+        return self.response.write(render_template(tpl, self._common))
     
     def before(self):
         pass
