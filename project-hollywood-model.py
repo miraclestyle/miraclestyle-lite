@@ -1,21 +1,10 @@
 #coding=UTF-8
 
-import webapp2
-import os
-from google.appengine.ext.webapp import template
-import settings
-import urllib
-import time
-import datetime
-from google.appengine.api import images
-from google.appengine.ext import blobstore
-from google.appengine.ext.webapp import blobstore_handlers
-from google.appengine.ext.webapp import util
-from google.appengine.ext import db
-from google.appengine.ext import ndb
-from google.appengine.ext import webapp
+#MASTER MODEL FILE
 
-# koristim drugaciju konvenciju imenovanja polja, ne znam kakve su implikacije na django, ako bude neophodno rename cemo polja da odgovaraju django konvenciji...
+from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
+from decimal import *
 
 '''
 Ovo su zabranjena imena propertija:
@@ -44,22 +33,37 @@ to_xml
 update
 '''
 
+datastore_key_kinds = {'ObjectLog': 1,}
+
+
+class DecimalProperty(ndb.StringProperty):
+  def _validate(self, value):
+    if not isinstance(value, (decimal.Decimal)):
+      raise TypeError('expected an decimal, got %s' % repr(value))
+
+  def _to_base_type(self, value):
+    return str(value) # Doesn't matter if it's an int or a long
+
+  def _from_base_type(self, value):
+    return decimal.Decimal(value)  # Always return a long
+
+
 class ObjectLog(ndb.Model):
     
-    # root
-    reference = ndb.KeyProperty('1',required=True)# kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    # ancestor Any
+    # kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
-    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
-    event = ndb.IntegerProperty('4', required=True)
-    state = ndb.IntegerProperty('5', required=True)
-    message = ndb.TextProperty('6', required=True)
-    note = ndb.TextProperty('7', required=True)
-    log = ndb.TextProperty('8', required=True)
+    event = ndb.IntegerProperty('3', required=True)
+    state = ndb.IntegerProperty('4', required=True)
+    message = ndb.TextProperty('5', required=True)
+    note = ndb.TextProperty('6', required=True)
+    log = ndb.TextProperty('7', required=True)
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
     def _get_kind(cls):
-      return 'OL'
+      return '1'
 
 # mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo...
 class Notification(ndb.Model):
@@ -179,19 +183,12 @@ class ProductUOM(ndb.Model):
     active = ndb.BooleanProperty('7', default=True)
 
 
-class User(ndb.Model):
+class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
-
-# da li ima potrebe ovo stavljati da je Expando?
-class UserConfig(ndb.Model):
-    
-    # ancestor User
-    #_default_indexed = False
-    #pass
-    attribute = ndb.StringProperty('1', required=True)
-    attribute_value = ndb.TextProperty('2', required=True)
+    _default_indexed = False
+    pass
 
 
 class UserEmail(ndb.Model):
@@ -259,21 +256,14 @@ class AggregateUserPermissions(ndb.Model):
     permissions = ndb.StringProperty('3', indexed=False, repeated=True)
 
 
-class Store(ndb.Model):
+class Store(ndb.Expando):
     
     # root
     name = ndb.StringProperty('1', required=True)
     logo = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
     state = ndb.IntegerProperty('3', required=True)
-
-# da li ima potrebe ovo stavljati da je Expando?
-class StoreConfig(ndb.Model):
-    
-    # ancestor Store
-    #_default_indexed = False
-    #pass
-    attribute = ndb.StringProperty('1', required=True)
-    attribute_value = ndb.TextProperty('2', required=True)
+    _default_indexed = False
+    pass
 
 
 class StoreContent(ndb.Model):
@@ -364,141 +354,143 @@ class BuyerCollectionProductCategory(ndb.Model):
 class Currency(ndb.Model):
     
     # root
-    name = ndb.StringProperty(required=True)
-    symbol = ndb.StringProperty(required=True)
-    code = ndb.StringProperty(required=True)
-    numeric_code = ndb.StringProperty(required=True)
-    rounding = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    digits = ndb.IntegerProperty(required=True)
-    active = ndb.BooleanProperty(default=True)
-    grouping = ndb.StringProperty(required=True)
-    decimal_separator = ndb.StringProperty(required=True)
-    thousands_separator = ndb.StringProperty(required=True)
-    positive_sign_position = ndb.IntegerProperty(required=True)
-    negative_sign_position = ndb.IntegerProperty(required=True)
-    positive_sign = ndb.StringProperty(required=True)
-    negative_sign = ndb.StringProperty(required=True)
-    positive_currency_symbol_precedes = ndb.BooleanProperty(default=True, required=True)
-    negative_currency_symbol_precedes = ndb.BooleanProperty(default=True, required=True)
-    positive_separate_by_space = ndb.BooleanProperty(default=True, required=True)
-    negative_separate_by_space = ndb.BooleanProperty(default=True, required=True)
+    #http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    name = ndb.StringProperty('1', required=True)
+    symbol = ndb.StringProperty('2', required=True)
+    code = ndb.StringProperty('3', required=True)
+    numeric_code = ndb.StringProperty('4')
+    rounding = ndb.FloatProperty('5', required=True)# custom decimal
+    digits = ndb.IntegerProperty('6', required=True)
+    active = ndb.BooleanProperty('7', default=True)
+    #formating
+    grouping = ndb.StringProperty('8', required=True)
+    decimal_separator = ndb.StringProperty('9', required=True)
+    thousands_separator = ndb.StringProperty('10')
+    positive_sign_position = ndb.IntegerProperty('11', required=True)
+    negative_sign_position = ndb.IntegerProperty('12', required=True)
+    positive_sign = ndb.StringProperty('13')
+    negative_sign = ndb.StringProperty('14')
+    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True)
+    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True)
+    positive_separate_by_space = ndb.BooleanProperty('17', default=True)
+    negative_separate_by_space = ndb.BooleanProperty('18', default=True)
 
 
-class Order(ndb.Model):
+class Order(ndb.Expando):
     
-    reference = ndb.StringProperty(required=True)
-    order_date = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    company_address = ndb.KeyProperty(OrderAddress, collection_name='company_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    invoice_address = ndb.KeyProperty(OrderAddress, collection_name='invoice_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    shipping_address = ndb.KeyProperty(OrderAddress, collection_name='shipping_addresses', required=True)# videcemo hocemo li ovako ili cemo iz OrderAddress samo reference uzimati
-    currency = ndb.KeyProperty(Currency, collection_name='currencies', required=True)
-    untaxed_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    tax_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    total_amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    comment = ndb.TextProperty()
-    state = ndb.IntegerProperty(required=True)
+    # root
+    reference = ndb.StringProperty('1', required=True)
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    currency = ndb.KeyProperty('3', kind=Currency, required=True)
+    untaxed_amount = ndb.FloatProperty('4', required=True)# custom decimal
+    tax_amount = ndb.FloatProperty('5', required=True)# custom decimal
+    total_amount = ndb.FloatProperty('6', required=True)# custom decimal
+    comment = ndb.TextProperty('7')
+    state = ndb.IntegerProperty('8', required=True)
+    _default_indexed = False
+    pass
 
 
-class OrderRefenrece(ndb.Model):
+class OrderReference(ndb.Model):
     
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    store_carrier = ndb.KeyProperty(StoreCarrier, collection_name='store_carriers', required=True)
+    # ancestor Order
+    billing_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
+    shipping_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
+    carrier = ndb.KeyProperty('1', kind=StoreCarrier, required=True)
 
 
 class OrderAddress(ndb.Model):
     
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    country = ndb.StringProperty(required=True)
-    country_code = ndb.StringProperty(required=True)
-    region = ndb.StringProperty(required=True)
-    city = ndb.StringProperty(required=True)
-    postal_code = ndb.StringProperty(required=True)
-    street_address = ndb.StringProperty(required=True)
-    street_address2 = ndb.StringProperty(required=True)
-    name = ndb.StringProperty(required=True)
-    email = ndb.EmailProperty()
-    telephone = ndb.PhoneNumberProperty() # ne znam kakva se korist moze imati od PostalAddressProperty
-    type = ndb.IntegerProperty(required=True)
+    # ancestor Order
+    name = ndb.StringProperty('1', required=True)
+    country = ndb.StringProperty('2', required=True)
+    country_code = ndb.StringProperty('3', required=True)
+    region = ndb.StringProperty('4', required=True)
+    city = ndb.StringProperty('5', required=True)
+    postal_code = ndb.StringProperty('6', required=True)
+    street_address = ndb.StringProperty('7', required=True)
+    street_address2 = ndb.StringProperty('8')
+    email = ndb.StringProperty('9')
+    telephone = ndb.StringProperty('10')
+    type = ndb.IntegerProperty('11', required=True)
 
 
-class OrderAddressRefenrece(ndb.Model):
+class OrderLine(ndb.Expando):
     
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    buyer_address = ndb.KeyProperty(BuyerAddress, collection_name='buyer_addresses', required=True)
-    type = ndb.IntegerProperty(required=True)
+    # ancestor Order
+    description = ndb.TextProperty('1', required=True)
+    quantity = ndb.FloatProperty('2', required=True)# custom decimal
+    product_uom = ndb.KeyProperty('3', kind=ProductUOM, required=True)
+    unit_price = ndb.FloatProperty('4', required=True)# custom decimal
+    discount = ndb.FloatProperty('5', default=0.00)# custom decimal
+    sequence = ndb.IntegerProperty('6', required=True)
+    taxes = ndb.StructuredProperty(OrderLineTax, '7', repeated=True)
+    _default_indexed = False
+    pass
+    #Expando
+    #product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
 
 
-class OrderLine(ndb.Model):
+class OrderLineReference(ndb.Expando):
     
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    description = ndb.TextProperty(required=True)
-    quantity = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    product_uom = ndb.KeyProperty(ProductUOM, collection_name='product_uoms', required=True)
-    unit_price = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    discount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    sequence = ndb.IntegerProperty(required=True)
+    # ancestor OrderLine
+    catalog_pricetag = ndb.KeyProperty('1', kind=CatalogPricetag, required=True)
+    product_instance = ndb.KeyProperty('2', kind=ProductInstance, required=True)
+    taxes = ndb.KeyProperty('3', kind=StoreTax, repeated=True)
 
 
 class OrderLineTax(ndb.Model):
     
-    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
-    name = ndb.StringProperty(required=True)
-    sequence = ndb.IntegerProperty(required=True)
-    type = ndb.IntegerProperty(required=True)
-    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-
-
-class OrderLineRefenrece(ndb.Model):
-    
-    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
-    product_category = ndb.KeyProperty(ProductCategory, collection_name='product_categories', required=True)
-    catalog_pricetag = ndb.KeyProperty(CatalogPricetag, collection_name='catalog_pricetags', required=True)
-    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-
-
-class OrderLineTaxRefenrece(ndb.Model):
-    
-    order_line = ndb.KeyProperty(OrderLine, collection_name='order_lines', required=True)
-    store_tax = ndb.KeyProperty(StoreTax, collection_name='store_taxes', required=True)
+    # StructuredProperty model
+    # ovde vazi isto, ovo se moze izmeniti kada budemo optimize query/index..
+    # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
+    name = ndb.StringProperty('1', required=True)
+    type = ndb.IntegerProperty('2', required=True)
+    amount = ndb.FloatProperty('3', required=True) # custom decimal - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    #sequence = ndb.IntegerProperty('4', required=True)
 
 
 class PayPalTransaction(ndb.Model):
     
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    txn_id = ndb.StringProperty(required=True)
-    ipn_message = ndb.TextProperty(required=True)
-    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
+    # ancestor Order
+    txn_id = ndb.StringProperty('1', required=True)
+    ipn_message = ndb.TextProperty('2', required=True)
+    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
 
 
 class BillingLog(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    reference = ndb.KeyProperty(None, collection_name='references', required=True)# ne znam da li treba i uvesti reference_type?
-    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    balance = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
+    # ancestor Store
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    reference = ndb.KeyProperty('2',required=True)
+    amount = ndb.FloatProperty('3', required=True)# custom decimal
+    balance = ndb.FloatProperty('4', required=True)# custom decimal
 
 
 class BillingCreditAdjustment(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    agent = ndb.KeyProperty(User, collection_name='agents', required=True)
-    adjusted = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    amount = ndb.FloatProperty(required=True) # ili StringProperty, sta je vec bolje
-    message = ndb.TextProperty(required=True)
-    note = ndb.TextProperty(required=True)
+    # ancestor Store
+    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    agent = ndb.KeyProperty('2', kind=User, required=True)
+    amount = ndb.FloatProperty('3', required=True)# custom decimal
+    message = ndb.TextProperty('4', required=True)
+    note = ndb.TextProperty('5', required=True)
 
 
-class StoreBuyerOrderFeedback(ndb.Model):
+class OrderFeedback(ndb.Model):
     
-    store = ndb.KeyProperty(Store, collection_name='stores', required=True)
-    store_name = ndb.StringProperty(required=True)
-    buyer = ndb.KeyProperty(User, collection_name='buyers', required=True)
-    order = ndb.KeyProperty(Order, collection_name='orders', required=True)
-    state = ndb.IntegerProperty(required=True)
+    # ancestor Order
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    store_name = ndb.StringProperty('2', required=True)
+    buyer = ndb.KeyProperty('3', kind=User, required=True)
+    state = ndb.IntegerProperty('4', required=True)
+    order_reference = ndb.StringProperty('5', required=True)
+    order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+    total_amount = ndb.FloatProperty('7', required=True)# custom decimal
+    order_state = ndb.IntegerProperty('8', required=True)
 
 
-class Catalog(ndb.Model):
+class Catalog(ndb.Expando):
     
     # root
     store = ndb.KeyProperty('1', kind=Store, required=True)
@@ -506,8 +498,10 @@ class Catalog(ndb.Model):
     publish = ndb.DateTimeProperty('3', required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
     discontinue = ndb.DateTimeProperty('4', required=True)
     cover = blobstore.BlobKeyProperty('5', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    cost = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
+    cost = ndb.FloatProperty('6', required=True)# custom decimal
     state = ndb.IntegerProperty('7', required=True)
+    _default_indexed = False
+    pass
 
 
 class CatalogContent(ndb.Model):
@@ -583,7 +577,7 @@ class ProductVariant(ndb.Model):
     #ancestor Catalog
     name = ndb.StringProperty(required=True)
     description = ndb.TextProperty()
-    options = ndb.StringProperty(repeated=True)
+    options = ndb.StringProperty(repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
     allow_custom_value = ndb.BooleanProperty(default=False)
     mandatory_variant_type = ndb.BooleanProperty(default=True)
 
@@ -607,18 +601,3 @@ class CatalogProductInstanceProductVariantValue(ndb.Model):
     
     catalog_product_varinat_value = ndb.KeyProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
     catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
-
-
-class MainHandler(webapp2.RequestHandler):
-  def get(self):
-    template_values = {
-      'name': "World",
-    }
-
-    path = os.path.join(os.path.dirname(__file__), 'index.html')
-    self.response.out.write(template.render(path, template_values))
-
-
-app = webapp2.WSGIApplication([
-  ('/.*', MainHandler),
-], debug=True)
