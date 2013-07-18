@@ -89,6 +89,11 @@ class FeedbackRequest(ndb.Model):
     # root
     reference = ndb.StringProperty('1', required=True)
     state = ndb.IntegerProperty('2', required=True)
+    
+    # primer helper funkcije u slucajevima gde se ne koristi ancestor mehanizam za pristup relacijama
+    @property
+    def logs(self):
+      return ObjectLog.gql("WHERE reference = :1", self.key())
 
 
 class SupportRequest(ndb.Model):
