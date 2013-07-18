@@ -22,7 +22,7 @@
 	<h2>{{k.title}}</h2>
 	<ul>
 	{% for i in k.children %}
-		<li>{{i.key.urlsafe()}} {% for f in i._properties %} {{f}}: {{i[f]}}, {% endfor %}</li>
+		<li><strong>ENTITY ID:</strong> {{i.key.integer_id()}} <strong>PARENT ID:</strong> {{i.key.parent().integer_id()}} {% for f in i._properties %} <strong>{{f}}:</strong> {{i[f]}}, {% endfor %}</li>
 	{% endfor %}
 	</ul>
 	
