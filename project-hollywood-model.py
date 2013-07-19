@@ -531,7 +531,9 @@ class ProductTemplate(ndb.Expando):
     description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)
     unit_price = ndb.FloatProperty('5', required=True) # custom decimal property
-    active = ndb.BooleanProperty('6', default=True)
+    active = ndb.BooleanProperty('6', default=True)#?
+    _default_indexed = False
+    pass
     #Expando
     #weight = ndb.FloatProperty('7')# custom decimal
     #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
@@ -542,8 +544,16 @@ class ProductTemplate(ndb.Expando):
 class ProductInstance(ndb.Expando):
     
     # ancestor ProductTemplate
+    #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
+    #key name ce se graditi tako sto se uradi MD5 na variant_signature
+    #query ce se graditi tako sto se prvo izgradi variant_signature vrednost na osnovu odabira od strane krajnjeg korisnika a potom se ta vrednost hesira u MD5 i koristi kao key identifier
+    #mana ove metode je ta sto se uvek mora izgraditi kompletan variant_signature, tj moraju se sve varijacije odabrati (svaka varianta mora biti mandatory_variant_type)
+    #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
+    #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
     code = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)
+    active = ndb.BooleanProperty('2', default=True)#?
+    _default_indexed = False
+    pass
     #Expando
     #description = ndb.TextProperty('3', required=True)
     #unit_price = ndb.FloatProperty('4', required=True) # custom decimal property
@@ -554,13 +564,14 @@ class ProductInstance(ndb.Expando):
     #weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
     #volume = ndb.FloatProperty('10')# custom decimal
     #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    #variant_signature = ndb.TextProperty('12', required=True)
 
 
 class ProductInstanceInventory(ndb.Model):
     
     # ancestor ProductInstance
     updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    # ? reference = ndb.KeyProperty(None, collection_name='references')
+    # ? reference = ndb.KeyProperty('2', required=True)
     quantity = ndb.FloatProperty('3', required=True)# custom decimal
     balance = ndb.FloatProperty('4', required=True)# custom decimal
 
@@ -575,29 +586,15 @@ class ProductContent(ndb.Model):
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog
-    name = ndb.StringProperty(required=True)
-    description = ndb.TextProperty()
-    options = ndb.StringProperty(repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
-    allow_custom_value = ndb.BooleanProperty(default=False)
-    mandatory_variant_type = ndb.BooleanProperty(default=True)
+    name = ndb.StringProperty('1', required=True)
+    description = ndb.TextProperty('2')
+    options = ndb.StringProperty('3', repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
+    allow_custom_value = ndb.BooleanProperty('4', default=False)#?
+    mandatory_variant_type = ndb.BooleanProperty('5', default=True)#?
 
 
 class ProductTemplateVariant(ndb.Model):
     
-    # splice
-    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
-    product_variant = ndb.KeyProperty('2', kind=ProductVariant, required=True)
-    sequence = ndb.IntegerProperty('3', required=True)
-
-
-class CatalogProductVariantValue(ndb.Model):
-    
-    catalog_product_template = ndb.KeyProperty(CatalogProductTemplate, collection_name='catalog_product_templates', required=True)
-    catalog_product_varinat_type = ndb.KeyProperty(CatalogProductVariantType, collection_name='catalog_product_varinat_types', required=True)
-    catalog_product_varinat_option = ndb.KeyProperty(CatalogProductVariantOption, collection_name='catalog_product_varinat_options', required=True)
-
-
-class CatalogProductInstanceProductVariantValue(ndb.Model):
-    
-    catalog_product_varinat_value = ndb.KeyProperty(CatalogProductVariantValue, collection_name='catalog_product_varinat_values', required=True)
-    catalog_product_instance = ndb.KeyProperty(CatalogProductInstance, collection_name='catalog_product_instances', required=True)
+    # ancestor ProductTemplate
+    product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
