@@ -39,7 +39,7 @@ class UnitTests(Handler):
           def pop(ax, i):
               dictx = {}
               for k, v in ax._properties.items():
-                  print k
+      
                   if isinstance(v, ndb.StringProperty):
                      i = str(i)
                   
@@ -267,11 +267,9 @@ class Login(Segments):
       def segment_authorize(self, provider=''):
           
           current = User.get_current_user
-          current2 = User.get_current_user
-          
+ 
           logging.info(current)
-       
-          
+        
           for p, v in self.get_flows.items():
               self._common[p] = v.step1_get_authorize_url()
            

@@ -9,6 +9,5 @@ encoding//app/ndb.py=utf-8
 encoding//app/request.py=utf-8
 encoding//app/routes.py=utf-8
 encoding//app/settings.py=utf-8
-encoding//app/template.py=utf-8
 encoding//app/wsgi.py=utf-8
 encoding/appengine_config.py=utf-8

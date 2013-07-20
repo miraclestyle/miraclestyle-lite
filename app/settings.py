@@ -61,10 +61,6 @@ WEBAPP2_EXTRAS = {
     },
     'webapp2_extras.i18n' : {
     'translations_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'locale'),
-    },
-    'webapp2_extras.jinja2': {
-             'template_path': 'templates',
-             'environment_args': { 'extensions': ['jinja2.ext.i18n'] }
-     }      
+    }
 }
 

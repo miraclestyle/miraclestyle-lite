@@ -43,7 +43,6 @@ class User(ndb.Model, Workflow):
     state = ndb.IntegerProperty(default=1)
     
     @classmethod
-    @webapp2.cached_property
     def get_current_user(cls):
         logging.info('get_current_user')
         sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)

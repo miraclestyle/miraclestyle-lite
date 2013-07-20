@@ -5,10 +5,9 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import webapp2
-from webapp2_extras import sessions, i18n
+from webapp2_extras import sessions, i18n, jinja2
 
 from app import settings
-from app.template import render_template
  
 class Handler(webapp2.RequestHandler):
     
@@ -16,13 +15,22 @@ class Handler(webapp2.RequestHandler):
     _LOAD_TRANSLATIONS = False
     
     _common = {'base' : 'index.html'}
+    
+    @webapp2.cached_property
+    def jinja2(self):
+        # Returns a Jinja2 renderer cached in the app registry.
+        return jinja2.get_jinja2(app=self.app)
+    
+    def render_response(self, _template, **context):
+        # Renders a template and writes the result to the response.
+        rv = self.jinja2.render_template(_template, **context)
+        self.response.write(rv) 
   
     def render(self, tpl, data=None):
         if data == None:
            data = {}
-           
         self._common.update(data)
-        return self.response.write(render_template(tpl, self._common))
+        return self.render_response(tpl, **self._common)
     
     def before(self):
         pass

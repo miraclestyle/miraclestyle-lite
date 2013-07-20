@@ -7,6 +7,7 @@ Created on Jul 9, 2013
 
 import decimal
 import time
+import hashlib
 
 # Google Appengine Datastore
 from google.appengine.ext.ndb import *
