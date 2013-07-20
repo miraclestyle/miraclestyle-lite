@@ -21,12 +21,16 @@ class Workflow():
       OBJECT_TRANSITIONS = {}
       
       def new_state(self, state, **kwargs):
-          return ObjectLog(state=state, reference=self.key, reference_type=self.OBJECT_TYPE, **kwargs).put()
+          return ObjectLog(state=state, parent=self.key, **kwargs).put()
           
       def new_event(self, event, **kwargs):
-          return ObjectLog(event=event, reference=self.key, reference_type=self.OBJECT_TYPE, **kwargs).put()
+          return ObjectLog(event=event, parent=self.key, **kwargs).put()
+      
+      @property
+      def logs(self):
+          return ObjectLog.query(ancestor=self.key)
 
-class User(ndb.Model, Workflow):
+class User(ndb.BaseModel, Workflow):
     
     OBJECT_TYPE = 1
     OBJECT_STATES = {
@@ -40,18 +44,33 @@ class User(ndb.Model, Workflow):
 
     }
     
-    state = ndb.IntegerProperty(default=1)
+    state = ndb.IntegerProperty('1', required=True)
+    _default_indexed = False
+  
+    @staticmethod
+    def is_guest():
+        return User.get_current_user() == 2
     
-    @classmethod
-    def get_current_user(cls):
-        logging.info('get_current_user')
-        sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)
-        if sess.has_key(settings.USER_SESSION_KEY):
-           return sess[settings.USER_SESSION_KEY].get()
-        return None
-    
-    
-    
+    @staticmethod
+    def is_logged():
+        return User.is_guest() == False
+         
+    @staticmethod
+    def get_current_user():
+        u = getattr(webapp2._local, 'user', 1)
+        if u == 1:
+            logging.info('get_current_user')
+            sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)
+            if sess.has_key(settings.USER_SESSION_KEY):
+               u = sess[settings.USER_SESSION_KEY].get()
+               if not u:
+                  u = 2
+            else:
+               u = 2
+            webapp2._local.user = u
+             
+        return u
+     
     def new_state(self, state, **kwargs):
         return super(User, self).new_state(state, agent=self.key, **kwargs)
         
@@ -59,57 +78,60 @@ class User(ndb.Model, Workflow):
         return super(User, self).new_event(event, agent=self.key, **kwargs)    
     
      
-class ObjectLog(ndb.Model):
+class ObjectLog(ndb.BaseModel):
     
-    reference = ndb.KeyProperty()
-    reference_type = ndb.IntegerProperty(default=0)
-    agent = ndb.KeyProperty(kind=User)
-    logged = ndb.DateTimeProperty(auto_now_add=True, required=True)
-    event = ndb.IntegerProperty(required=True)
-    state = ndb.IntegerProperty(required=True)
-    message = ndb.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
-    note = ndb.TextProperty(default=None) # stavljam u none, jer nema smisla da bude ovo required, bezze se bloata informacijama object log
-    log = ndb.JsonProperty(default={})
-
-
-class UserConfig(ndb.Model):
+    # ancestor Any
+    # kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    agent = ndb.KeyProperty('2', kind=User, required=True)
+    event = ndb.IntegerProperty('3', required=True)
+    state = ndb.IntegerProperty('4', required=True)
+    message = ndb.TextProperty('5') # nema potrebe da bude ovo required
+    note = ndb.TextProperty('6') # nema potrebe da bude ovo required
+    log = ndb.TextProperty('7') # nema potrebe da bude ovo required
     
-    #user = ndb.KeyProperty(kind=User)
-    code = ndb.StringProperty(required=True)
-    data = ndb.TextProperty(required=True) # ne znam da li bi i ovde trebalo nesto drugo umesto TextProperty
+    # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
+    @classmethod
+    def _get_kind(cls):
+      return '1'
+ 
 
-
-class UserEmail(ndb.Model):
+class UserEmail(ndb.BaseModel):
     
-    user = ndb.KeyProperty(kind=User)
-    email = ndb.StringProperty()
-    primary = ndb.BooleanProperty(default=False) 
+    # ancestor User
+    email = ndb.StringProperty('1', required=True)
+    primary = ndb.BooleanProperty('2', default=True)
 
 
-class UserIdentity(ndb.Model):
+class UserIdentity(ndb.BaseModel):
     
-    user = ndb.KeyProperty(kind=User)
-    user_email = ndb.KeyProperty(kind=UserEmail)
-    identity = ndb.StringProperty(required=True)
-    provider = ndb.IntegerProperty(default=0)
-    associated = ndb.BooleanProperty(default=True)
+    # ancestor User
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True)
+    identity = ndb.StringProperty('2', required=True)
+    provider = ndb.StringProperty('3', required=True)
+    associated = ndb.BooleanProperty('4', default=True)
 
-
-class UserIPAddress(ndb.Model):
+# moze li ovo snimati GAE log ?
+class UserIPAddress(ndb.BaseModel):
     
-    user = ndb.KeyProperty(kind=User)
-    ip_address = ndb.StringProperty(required=True)
-    logged = ndb.DateTimeProperty(auto_now_add=True)
+    # ancestor User
+    ip_address = ndb.StringProperty('1', required=True)
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
-
-class Role(ndb.Model):
+# ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
+class Role(ndb.BaseModel):
     
-    name = ndb.StringProperty(required=True)
-    readonly = ndb.BooleanProperty(default=True)
+    # ancestor Store (Any?)
+    name = ndb.StringProperty('1', required=True)
+    permissions = ndb.StringProperty('2', indexed=False, repeated=True)
+    readonly = ndb.BooleanProperty('3', default=True)
 
-
-class UserRole(ndb.Model):
+class UserRole(ndb.BaseModel):
     
-    user = ndb.KeyProperty(kind=User)
-    role = ndb.KeyProperty(kind=Role)
+    # splice
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    role = ndb.KeyProperty('2', kind=Role, required=True)
+
+
+
     

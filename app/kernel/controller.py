@@ -12,12 +12,18 @@ from app import ndb
 
 from app import settings
 from app.request import Segments, Handler
-from app.kernel.models import User, UserIdentity, UserEmail, UserConfig, UserIPAddress
+from app.kernel.models import User, UserIdentity, UserEmail, UserIPAddress
 from app.kernel.forms import TestForm
 from webapp2_extras.i18n import _
 
 from oauth2client.client import OAuth2WebServerFlow
 
+class UnitTests2(Handler):
+      
+      def respond(self):
+          pass
+      
+      
 class UnitTests(Handler):
     
       def respond(self):
@@ -139,50 +145,7 @@ class Login(Segments):
          
           if provider not in self.providers:
              self.abort(403)
-             
-      def segment_tests(self):
-          
-          if self.request.get('put'):
-             user = User(state=int(self.request.get('put')))
-             user.put()
-          
-          if self.request.get('del_all'):
-             user = ndb.Key(urlsafe=str(self.request.get('del_all')))
-             ndb.delete_multi(UserConfig.query(ancestor=user).iter(keys_only = True))
-             
-             #for i in UserConfig.query(ancestor=user).fetch(keys_only=True):
-             #    i.delete()
-             
-          if self.request.get('delete'):
-             user = ndb.Key(urlsafe=str(self.request.get('delete')))
-             user.delete()
-              
-          if self.request.get('wat') and self.request.get('hown'):
-              user = ndb.Key(urlsafe=str(self.request.get('wat')))
-               
-              def run_trans():
-                  for i in range(0, int(self.request.get('hown'))):
-                      user_config = UserConfig(parent=user, code='test %s' % i, data='data %s' % i)
-                      user_config.put()
-                      
-              if (self.request.get('trans')):        
-                 ndb.transaction(run_trans)
-                 self.response.write('ran in transaction, %s insert into UserConfig' % self.request.get('hown'))
-              else:
-                  run_trans()
-                 
-          k = self.request.get('k')
-          if k:
-                  s = ndb.Key(urlsafe=str(k))
-                  self.response.write(UserConfig.query(ancestor=s).get()) 
-          else:
-                  for a in User.query():
-                      self.response.write('<div><b>User Object #%s</b> - <a href="?del_all=%s">Delete all</a></div>' % (a.key.urlsafe(), a.key.urlsafe()))
-                      b = UserConfig.query(ancestor=a.key).iter()
-                      for x in b:
-                          self.response.write('<div style="padding-left:20px;">key: %s, code: %s, data: %s, <a href="?delete=%s">Delete</a></div>' % (x.key.urlsafe(), x.code, x.data, x.key.urlsafe()))
-                      self.response.write('<form><div>Write into entity with key <input type="text" name="wat" /> this <input type="text" name="hown" /> amount of times. Transaction? <input type="checkbox" name="trans" value="1" /> entities of kind UserConfig as ancestor to User</div><input type="submit" /></form>')
-                             
+   
       def segment_exchange(self, provider):
           
           flow = self.get_flows[provider]
@@ -192,35 +155,32 @@ class Login(Segments):
           
           provider_id = settings.MAP_IDENTITIES[provider]
           
-          if self.session.has_key(keyx):
-             
-             if self.session.has_key(settings.USER_SESSION_KEY):
-                self.response.write('Already logged in %s' % self.session[settings.USER_SESSION_KEY]) 
+          if provider_id and self.session.has_key(keyx):
+             if User.is_logged():
+                self.response.write('Already logged in %s' % User.get_current_user().key.urlsafe()) 
                 return
-              
+          
              try:
                  data = getattr(self, '_login_%s_get_creds' % provider)(self.session[keyx].access_token)
              except urllib2.HTTPError, e:
                  logging.exception(e)
                  del self.session[keyx]
              else:
-                 relate = UserIdentity.query(UserIdentity.identity==data.get('id'), UserIdentity.provider==provider_id).get()
+                 relate = UserIdentity.md5_get_by_id(identity=data.get('id'), provider=provider_id)
                  relate2 = UserEmail.query(UserEmail.email==data.get('email')).get()
-                 user_is_new = False
+                 user_is_new = True
+                 
                  try:
-                    if not (relate and relate2):
-                         user = User(state=1)
-                         user.put()
-                       
-                         user_is_new = True
-                         user.new_state(1, event=0)
-                         user.new_event(1, state=1)
-                    else:
-                         user = None
-                         if relate:
-                            user = relate.user.get()
-                         if relate2 and not user:
-                            user = relate2.user.get()
+                    user = None
+                    if relate and relate2:
+                        
+                       if relate:
+                          user = relate.key.parent().get()
+                       if relate2 and not user:
+                          user = relate2.key.parent().get()
+                          
+                       if user is not None:
+                          user_is_new = False
                             
                  except KeyError, e:
                      raise e
@@ -228,19 +188,47 @@ class Login(Segments):
                      @ndb.transactional(xg=True)
                      def run_save(user, user_is_new, relate, relate2):
                          
-                             if user_is_new:
-                                 user_email = UserEmail(user=user.key, primary=True, email=data.get('email'))
-                                 user_email.put()
-                                 UserIdentity(user=user.key, identity=data.get('id'), user_email=user_email.key, provider=provider_id).put()      
-                                 
-                             if relate:
-                                if not relate2:
-                                   UserEmail(user=user.key, email=data.get('email')).put()
-                                   
-                             if relate2:
-                                if not relate:
-                                   UserIdentity(user=user.key, identity=data.get('id'), user_email=relate2.key, provider=provider_id).put()      
+                             put_identity = False
+                             put_ipaddress = False
+                             put_email = False
                              
+                             if user_is_new:
+                                 user = User(state=1)
+                                 user.put()
+                               
+                                 user_is_new = True
+                                 user.new_state(1, event=0)
+                                 user.new_event(1, state=1)
+                                 
+                                 put_email = True
+                                 put_identity = True
+                                 put_ipaddress = True
+                                 
+                             else:
+                                 put_ipaddress = UserIPAddress.query(UserIPAddress.ip_address==self.request.remote_addr, ancestor=user.key).get(keys_only=True)
+                                 
+                                 if relate:
+                                    if not relate2:
+                                       put_email = True  
+                                       
+                                 if relate2:
+                                    if not relate:
+                                       put_identity = True
+                                       user_email = relate2
+                                 
+                             if put_email:
+                                user_email = UserEmail(parent=user.key, primary=user_is_new, email=data.get('email'))
+                                user_email.put()
+                                    
+                             if put_identity:
+                                ident = UserIdentity(parent=user.key, id=UserIdentity.md5_create_key(identity=data.get('id'), provider=provider_id), identity=str(data.get('id')), provider=str(provider_id))
+                                if put_email or relate2:
+                                   ident.user_email = user_email.key
+                                ident.put()
+                                 
+                             if put_ipaddress:
+                                UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
+                                
                              user.new_event(2, state=user.state)
                              
                              return user
@@ -249,7 +237,6 @@ class Login(Segments):
                      self.session[settings.USER_SESSION_KEY] = user.key
                      self.response.write('Successfully logged in')
                      return
-                
              finally:
                  pass
  
@@ -266,8 +253,8 @@ class Login(Segments):
            
       def segment_authorize(self, provider=''):
           
-          current = User.get_current_user
- 
+          current = User.get_current_user()
+    
           logging.info(current)
         
           for p, v in self.get_flows.items():

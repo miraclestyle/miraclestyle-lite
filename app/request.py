@@ -5,6 +5,9 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import webapp2
+import time
+
+from webapp2_extras.i18n import _
 from webapp2_extras import sessions, i18n, jinja2
 
 from app import settings
@@ -12,7 +15,7 @@ from app import settings
 class Handler(webapp2.RequestHandler):
     
     _USE_SESSION = True
-    _LOAD_TRANSLATIONS = False
+    _LOAD_TRANSLATIONS = True
     
     _common = {'base' : 'index.html'}
     
@@ -32,6 +35,12 @@ class Handler(webapp2.RequestHandler):
         self._common.update(data)
         return self.render_response(tpl, **self._common)
     
+    def before_before(self):
+        pass
+    
+    def after_after(self):
+        pass
+    
     def before(self):
         pass
     
@@ -46,29 +55,33 @@ class Handler(webapp2.RequestHandler):
         
     def respond(self, *args, **kwargs):
         self.abort(404)
-        self.response.write('Not found')
+        self.response.write(_('Not found'))
  
     def dispatch(self):
         
-        self.before()
+        self.before_before()
 
         if self._LOAD_TRANSLATIONS:
-            locale = 'en_US'
-            i18n.get_i18n().set_locale(locale)
+            i18n.get_i18n().set_locale('en_US')
       
         if self._USE_SESSION:
             # Get a session store for this request.
             # request=self.request
             self.session_store = sessions.get_store()
+            
+        self.before()
 
         try:
             # Dispatch the request.
             webapp2.RequestHandler.dispatch(self)
+            
+            self.after()
+            
         finally:
             # Save all sessions.
             if self._USE_SESSION:
                self.session_store.save_sessions(self.response)
-            self.after()
+            self.after_after()
 
     @webapp2.cached_property
     def session(self):

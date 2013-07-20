@@ -10,4 +10,5 @@ ROUTES = register('app.kernel.controller',
      (r'/login/<segment>', 'Login', 'login'),
      (r'/login/<segment>/<provider>', 'Login', 'login'),
      (r'/tests', 'UnitTests', 'tests'),
+     (r'/tests2', 'UnitTests2', 'tests2')
 )

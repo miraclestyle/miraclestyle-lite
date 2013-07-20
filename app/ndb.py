@@ -12,7 +12,7 @@ import hashlib
 # Google Appengine Datastore
 from google.appengine.ext.ndb import *
  
-class Model(Model):
+class BaseModel(Model):
     
   saved = False  # class variable provides default value
 
@@ -25,6 +25,18 @@ class Model(Model):
 
   def _post_put_hook(self, future):
     self.saved = True
+    
+  @classmethod
+  def md5_create_key(cls, **kwargs):
+      _data = [cls._get_kind()]
+      for k in kwargs:
+          _data.append(unicode(kwargs.get(k)))
+      # treba utvrditi koji separator ide za ovo md5 keyovanje    
+      return hashlib.md5(u"-".join(_data)).hexdigest()
+  
+  @classmethod
+  def md5_get_by_id(cls, **kwargs):
+      return cls.get_by_id(cls.md5_create_key(**kwargs))
      
     
 class ReferenceProperty(KeyProperty):
