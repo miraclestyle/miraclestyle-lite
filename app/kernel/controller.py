@@ -18,15 +18,12 @@ from webapp2_extras.i18n import _
 
 from oauth2client.client import OAuth2WebServerFlow
 
-class UnitTests2(Handler):
-      
-      def respond(self):
-          pass
-      
-      
+
 class UnitTests(Handler):
     
       def respond(self):
+          
+          
           localss = globals()
           
           io = []
@@ -167,7 +164,7 @@ class Login(Segments):
                  del self.session[keyx]
              else:
                  relate = UserIdentity.md5_get_by_id(identity=data.get('id'), provider=provider_id)
-                 relate2 = UserEmail.query(UserEmail.email==data.get('email')).get()
+                 relate2 = UserEmail.md5_get_by_id(email=data.get('email'))
                  user_is_new = True
                  
                  try:
@@ -189,7 +186,7 @@ class Login(Segments):
                      def run_save(user, user_is_new, relate, relate2):
                          
                              put_identity = False
-                             put_ipaddress = False
+                             put_ipaddress = True
                              put_email = False
                              
                              if user_is_new:
@@ -202,11 +199,8 @@ class Login(Segments):
                                  
                                  put_email = True
                                  put_identity = True
-                                 put_ipaddress = True
                                  
                              else:
-                                 put_ipaddress = UserIPAddress.query(UserIPAddress.ip_address==self.request.remote_addr, ancestor=user.key).get(keys_only=True)
-                                 
                                  if relate:
                                     if not relate2:
                                        put_email = True  
@@ -217,7 +211,7 @@ class Login(Segments):
                                        user_email = relate2
                                  
                              if put_email:
-                                user_email = UserEmail(parent=user.key, primary=user_is_new, email=data.get('email'))
+                                user_email = UserEmail(parent=user.key, id=UserEmail.md5_create_key(email=data.get('email')), primary=user_is_new, email=data.get('email'))
                                 user_email.put()
                                     
                              if put_identity:
@@ -235,7 +229,7 @@ class Login(Segments):
                              
                      user = run_save(user, user_is_new, relate, relate2)
                      self.session[settings.USER_SESSION_KEY] = user.key
-                     self.response.write('Successfully logged in')
+                     self.response.write('Successfully logged in, %s' % user.key.urlsafe())
                      return
              finally:
                  pass
