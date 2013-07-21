@@ -33,7 +33,60 @@ to_xml
 update
 '''
 
-datastore_key_kinds = {'ObjectLog': '1',}
+datastore_key_kinds = {
+    'ObjectLog':1,
+    'Notification':1,
+    'NotificationRecipient':1,
+    'NotificationOutlet':1,
+    'FeedbackRequest':1,
+    'SupportRequest':1,
+    'Content':1,
+    'ContentRevision':1,
+    'Image':1,
+    'Country':1,
+    'CountrySubdivision':1,
+    'Location':1,
+    'ProductCategory':1,
+    'ProductUOMCategory':1,
+    'ProductUOM':1,
+    'User':'0',
+    'UserEmail':'01',
+    'UserIdentity':'02',
+    'UserIPAddress':'03',
+    'UserRole':'04',
+    'Role':'05',
+    'AggregateUserPermissions':1,
+    'Store':1,
+    'StoreContent':1,
+    'StoreTax':1,
+    'StoreCarrier':1,
+    'StoreCarrierLine':1,
+    'StoreCarrierPricelist':1,
+    'BuyerAddress':1,
+    'BuyerCollection':1,
+    'BuyerCollectionStore':1,
+    'BuyerCollectionProductCategory':1,
+    'Currency':1,
+    'Order':1,
+    'OrderReference':1,
+    'OrderAddress':1,
+    'OrderLine':1,
+    'OrderLineReference':1,
+    'OrderLineTax':1,
+    'PayPalTransaction':1,
+    'BillingLog':1,
+    'BillingCreditAdjustment':1,
+    'OrderFeedback':1,
+    'Catalog':1,
+    'CatalogContent':1,
+    'CatalogPricetag':1,
+    'ProductTemplate':1,
+    'ProductInstance':1,
+    'ProductInstanceInventory':1,
+    'ProductContent':1,
+    'ProductVariant':1,
+    'ProductTemplateVariant':1,
+}
 
 
 class DecimalProperty(ndb.StringProperty):
@@ -63,7 +116,7 @@ class ObjectLog(ndb.Model):
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
     def _get_kind(cls):
-      return '1'
+      return datastore_key_kinds.ObjectLog
 
 # mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo...
 class Notification(ndb.Model):
