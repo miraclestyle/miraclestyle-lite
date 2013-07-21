@@ -58,5 +58,4 @@ config['webapp2_extras.jinja2'] = {
                'cache_size' : settings.TEMPLATE_CACHE
      }
 }   
-
 app = webapp2.WSGIApplication(ROUTES, debug=settings.DEBUG, config=config)

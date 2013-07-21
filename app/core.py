@@ -6,7 +6,14 @@ Created on Jul 12, 2013
 '''
 import sys
 import logging
+import webapp2
 
+def get_temp_memory(k, d=None):
+    return getattr(webapp2._local, k, d)
+
+def set_temp_memory(k, v):
+    setattr(webapp2._local, k, v)
+       
 
 def _resolve_name(name, package, level):
     """Return the absolute name of the module to be imported."""

@@ -7,7 +7,7 @@ Created on Jul 15, 2013
 import urllib2
 import json
 import logging
-
+ 
 from app import ndb
 
 from app import settings
@@ -17,6 +17,15 @@ from app.kernel.forms import TestForm
 from webapp2_extras.i18n import _
 
 from oauth2client.client import OAuth2WebServerFlow
+
+class Tests(Segments):
+      
+      def segment_test(self):
+          user = User.get_current_user()
+          User.get_current_user()
+          User.get_current_user()
+          
+          self.response.write('Test')
 
 
 class UnitTests(Handler):
