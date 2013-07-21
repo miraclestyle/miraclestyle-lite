@@ -28,7 +28,7 @@ class BaseModel(Model):
     
   @classmethod
   def md5_create_key(cls, **kwargs):
-      _data = [cls._get_kind()]
+      _data = []
       for k in kwargs:
           _data.append(unicode(kwargs.get(k)))
       # treba utvrditi koji separator ide za ovo md5 keyovanje    
@@ -37,6 +37,18 @@ class BaseModel(Model):
   @classmethod
   def md5_get_by_id(cls, **kwargs):
       return cls.get_by_id(cls.md5_create_key(**kwargs))
+  
+  
+class DecimalProperty(StringProperty):
+  def _validate(self, value):
+    if not isinstance(value, (decimal.Decimal)):
+      raise TypeError('expected an decimal, got %s' % repr(value))
+
+  def _to_base_type(self, value):
+    return str(value) # Doesn't matter if it's an int or a long
+
+  def _from_base_type(self, value):
+    return decimal.Decimal(value)  # Always return a long  
      
     
 class ReferenceProperty(KeyProperty):

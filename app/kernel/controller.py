@@ -169,7 +169,7 @@ class Login(Segments):
                  
                  try:
                     user = None
-                    if relate and relate2:
+                    if relate or relate2:
                         
                        if relate:
                           user = relate.key.parent().get()
@@ -192,8 +192,7 @@ class Login(Segments):
                              if user_is_new:
                                  user = User(state=1)
                                  user.put()
-                               
-                                 user_is_new = True
+                                
                                  user.new_state(1, event=0)
                                  user.new_event(1, state=1)
                                  
