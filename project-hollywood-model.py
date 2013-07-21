@@ -33,7 +33,7 @@ to_xml
 update
 '''
 
-datastore_key_kinds = {'ObjectLog': 1,}
+datastore_key_kinds = {'ObjectLog': '1',}
 
 
 class DecimalProperty(ndb.StringProperty):
