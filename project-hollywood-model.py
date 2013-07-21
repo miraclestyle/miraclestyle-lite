@@ -34,6 +34,13 @@ update
 '''
 
 datastore_key_kinds = {
+    'User':'0',
+    'UserEmail':'1',
+    'UserIdentity':'2',
+    'UserIPAddress':'3',
+    'UserRole':'4',
+    'Role':'5',
+    'AggregateUserPermission':'6',
     'ObjectLog':1,
     'Notification':1,
     'NotificationRecipient':1,
@@ -49,13 +56,6 @@ datastore_key_kinds = {
     'ProductCategory':1,
     'ProductUOMCategory':1,
     'ProductUOM':1,
-    'User':'0',
-    'UserEmail':'01',
-    'UserIdentity':'02',
-    'UserIPAddress':'03',
-    'UserRole':'04',
-    'Role':'05',
-    'AggregateUserPermissions':1,
     'Store':1,
     'StoreContent':1,
     'StoreTax':1,
@@ -265,7 +265,7 @@ class UserIdentity(ndb.Model):
     identity = ndb.StringProperty('3', required=True, indexed=False)
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
-# moze li ovo snimati GAE log ?
+
 class UserIPAddress(ndb.Model):
     
     # ancestor User
@@ -275,18 +275,24 @@ class UserIPAddress(ndb.Model):
 
 class UserRole(ndb.Model):
     
-    # splice
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    role = ndb.KeyProperty('2', kind=Role, required=True)
+    # ancestor User
+    role = ndb.KeyProperty('1', kind=Role, required=True)
 
 
 # ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
-    # ancestor Store (Any?)
-    name = ndb.StringProperty('1', required=True)
-    permissions = ndb.StringProperty('2', indexed=False, repeated=True)
-    readonly = ndb.BooleanProperty('3', default=True)
+    # ancestor Store (Any)
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+
+
+class AggregateUserPermission(ndb.Model):
+    
+    # ancestor User
+    reference = ndb.KeyProperty('1',required=True)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
 
 
 '''
@@ -304,15 +310,6 @@ class Permission(ndb.Model):
     # ancestor Object - Any
     permissions = ndb.StringProperty('1', indexed=False, repeated=True)
 '''
-
-# ovo je agregaciona tabela radi optimizacije
-#mozda ce trebati agregate tabela za roles tab u Store
-class AggregateUserPermissions(ndb.Model):
-    
-    # splice
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    reference = ndb.KeyProperty('2',required=True)
-    permissions = ndb.StringProperty('3', indexed=False, repeated=True)
 
 
 class Store(ndb.Expando):
