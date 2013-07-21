@@ -128,7 +128,11 @@ class Image(ndb.Model):
     
     # ancestor Any Object
     image = blobstore.BlobKeyProperty('1', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    sequence = ndb.IntegerProperty('2', required=True)
+    content_type = ndb.StringProperty('2', required=True)
+    size = ndb.FloatProperty('3', required=True)
+    width = ndb.IntegerProperty('4', required=True)
+    height = ndb.IntegerProperty('5', required=True)
+    sequence = ndb.IntegerProperty('6', required=True)
 
 class Country(ndb.Model):
     
@@ -387,6 +391,10 @@ class Order(ndb.Expando):
     total_amount = ndb.FloatProperty('6', required=True)# custom decimal
     comment = ndb.TextProperty('7')
     state = ndb.IntegerProperty('8', required=True)
+    #Expando
+    company_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
+    billing_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
+    shipping_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
     _default_indexed = False
     pass
 
@@ -394,14 +402,15 @@ class Order(ndb.Expando):
 class OrderReference(ndb.Model):
     
     # ancestor Order
-    billing_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
-    shipping_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
-    carrier = ndb.KeyProperty('1', kind=StoreCarrier, required=True)
+    company_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
+    billing_address = ndb.KeyProperty('2', kind=BuyerAddress, required=True)
+    shipping_address = ndb.KeyProperty('3', kind=BuyerAddress, required=True)
+    carrier = ndb.KeyProperty('4', kind=StoreCarrier, required=True)
 
 
-class OrderAddress(ndb.Model):
+class OrderAddress(ndb.Expando):
     
-    # ancestor Order
+    # StructuredProperty model
     name = ndb.StringProperty('1', required=True)
     country = ndb.StringProperty('2', required=True)
     country_code = ndb.StringProperty('3', required=True)
@@ -412,7 +421,7 @@ class OrderAddress(ndb.Model):
     street_address2 = ndb.StringProperty('8')
     email = ndb.StringProperty('9')
     telephone = ndb.StringProperty('10')
-    type = ndb.IntegerProperty('11', required=True)
+    type = ndb.IntegerProperty('11', required=True)# ?
 
 
 class OrderLine(ndb.Expando):
@@ -431,7 +440,7 @@ class OrderLine(ndb.Expando):
     #product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
 
 
-class OrderLineReference(ndb.Expando):
+class OrderLineReference(ndb.Model):
     
     # ancestor OrderLine
     catalog_pricetag = ndb.KeyProperty('1', kind=CatalogPricetag, required=True)
@@ -460,7 +469,7 @@ class PayPalTransaction(ndb.Model):
 
 class BillingLog(ndb.Model):
     
-    # ancestor Store
+    # ancestor Billing Object (Store)
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True)
     amount = ndb.FloatProperty('3', required=True)# custom decimal
@@ -469,7 +478,7 @@ class BillingLog(ndb.Model):
 
 class BillingCreditAdjustment(ndb.Model):
     
-    # ancestor Store
+    # ancestor Billing Object (Store)
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     amount = ndb.FloatProperty('3', required=True)# custom decimal
@@ -484,10 +493,10 @@ class OrderFeedback(ndb.Model):
     store_name = ndb.StringProperty('2', required=True)
     buyer = ndb.KeyProperty('3', kind=User, required=True)
     state = ndb.IntegerProperty('4', required=True)
-    order_reference = ndb.StringProperty('5', required=True)
-    order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
-    total_amount = ndb.FloatProperty('7', required=True)# custom decimal
-    order_state = ndb.IntegerProperty('8', required=True)
+    order_reference = ndb.StringProperty('5', required=True)# ? mozda async 
+    order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)#? mozda async
+    total_amount = ndb.FloatProperty('7', required=True)# custom decimal ? mozda async
+    order_state = ndb.IntegerProperty('8', required=True)# ? mozda async
 
 
 class Catalog(ndb.Expando):
