@@ -39,8 +39,8 @@ datastore_key_kinds = {
     'UserIdentity':'2',
     'UserIPAddress':'3',
     'UserRole':'4',
-    'Role':'5',
-    'AggregateUserPermission':'6',
+    'AggregateUserPermission':'5',
+    'Role':'6',
     'ObjectLog':1,
     'Notification':1,
     'NotificationRecipient':1,
@@ -279,6 +279,13 @@ class UserRole(ndb.Model):
     role = ndb.KeyProperty('1', kind=Role, required=True)
 
 
+class AggregateUserPermission(ndb.Model):
+    
+    # ancestor User
+    reference = ndb.KeyProperty('1',required=True)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
+
+
 # ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
@@ -286,13 +293,6 @@ class Role(ndb.Model):
     name = ndb.StringProperty('1', required=True, indexed=False)
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
-
-
-class AggregateUserPermission(ndb.Model):
-    
-    # ancestor User
-    reference = ndb.KeyProperty('1',required=True)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
 
 
 '''
