@@ -198,23 +198,23 @@ class User(ndb.Expando):
 class UserEmail(ndb.Model):
     
     # ancestor User
-    email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', default=True)
+    email = ndb.StringProperty('1', required=True, indexed=False)
+    primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
 
 class UserIdentity(ndb.Model):
     
     # ancestor User
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True)
-    identity = ndb.StringProperty('2', required=True)
-    provider = ndb.StringProperty('3', required=True)
-    associated = ndb.BooleanProperty('4', default=True)
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
+    provider = ndb.StringProperty('2', required=True, indexed=False)
+    identity = ndb.StringProperty('3', required=True, indexed=False)
+    associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
 # moze li ovo snimati GAE log ?
 class UserIPAddress(ndb.Model):
     
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True)
+    ip_address = ndb.StringProperty('1', required=True, indexed=False)
     logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
