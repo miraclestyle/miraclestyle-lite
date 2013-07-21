@@ -191,13 +191,14 @@ class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
-    _default_indexed = False
-    pass
+    #_default_indexed = False
+    #pass
 
 
 class UserEmail(ndb.Model):
     
     # ancestor User
+    # key is MD5 of email + salt
     email = ndb.StringProperty('1', required=True, indexed=False)
     primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
@@ -205,6 +206,7 @@ class UserEmail(ndb.Model):
 class UserIdentity(ndb.Model):
     
     # ancestor User
+    # key is MD5 of provider + identity + salt
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
     provider = ndb.StringProperty('2', required=True, indexed=False)
     identity = ndb.StringProperty('3', required=True, indexed=False)
