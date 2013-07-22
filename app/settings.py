@@ -15,7 +15,7 @@ import os
 # - however changing this, automatically corrupts data (keys) and renders them unusable and undecryptable
 SALT = u'salt'
 # Separator for hashing, for example 
-# Model.md5_create_key(key=value, key2=value2)
+# Model.hash_create_key(key=value, key2=value2)
 # with HASH_BINDER "-" would produce plaintext:
 # {SALT}-value-value2
 HASH_BINDER = u'-'

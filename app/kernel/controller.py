@@ -187,8 +187,8 @@ class Login(Segments):
                  if user is None:
                      user_is_new = True
                      
-                 relate = UserIdentity.md5_get_by_id(identity=data.get('id'), provider=provider_id)
-                 relate2 = UserEmail.md5_get_by_id(email=email)    
+                 relate = UserIdentity.hash_get_by_id(identity=data.get('id'), provider=provider_id)
+                 relate2 = UserEmail.hash_get_by_id(email=email)    
                
                  if (relate or relate2) and user_is_new:
                      if relate:
@@ -232,11 +232,11 @@ class Login(Segments):
                                        user_email = relate2
                                  
                              if put_email:
-                                user_email = UserEmail(parent=user.key, id=UserEmail.md5_create_key(email=email), primary=user_is_new, email=data.get('email'))
+                                user_email = UserEmail(parent=user.key, id=UserEmail.hash_create_key(email=email), primary=user_is_new, email=data.get('email'))
                                 user_email.put()
                                     
                              if put_identity:
-                                ident = UserIdentity(parent=user.key, id=UserIdentity.md5_create_key(identity=data.get('id'), provider=provider_id), identity=str(data.get('id')), provider=str(provider_id))
+                                ident = UserIdentity(parent=user.key, id=UserIdentity.hash_create_key(identity=data.get('id'), provider=provider_id), identity=str(data.get('id')), provider=str(provider_id))
                                 if put_email or relate2:
                                    ident.user_email = user_email.key
                                 ident.put()

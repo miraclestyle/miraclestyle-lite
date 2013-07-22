@@ -15,19 +15,19 @@ from google.appengine.ext.ndb import *
 class _BaseModel:
   
   @classmethod
-  def md5_create_key(cls, **kwargs):
+  def hash_create_key(cls, **kwargs):
       _data = [settings.SALT]
       for k in kwargs:
           _data.append(unicode(kwargs.get(k)))
-      return hashlib.md5(settings.HASH_BINDER.join(_data)).hexdigest()
+      return hashlib.sha512(settings.HASH_BINDER.join(_data)).hexdigest()
   
   @classmethod
-  def md5_get_by_id(cls, **kwargs):
-      return cls.get_by_id(cls.md5_create_key(**kwargs))
+  def hash_get_by_id(cls, **kwargs):
+      return cls.get_by_id(cls.hash_create_key(**kwargs))
   
   @classmethod
-  def md5_get_by_id_async(cls, **kwargs):
-      return cls.get_by_id_async(cls.md5_create_key(**kwargs))
+  def hash_get_by_id_async(cls, **kwargs):
+      return cls.get_by_id_async(cls.hash_create_key(**kwargs))
   
   @classmethod
   def _get_kind(cls):
