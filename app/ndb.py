@@ -19,7 +19,7 @@ class _BaseModel:
       _data = [settings.SALT]
       for k in kwargs:
           _data.append(unicode(kwargs.get(k)))
-      return hashlib.sha512(settings.HASH_BINDER.join(_data)).hexdigest()
+      return hashlib.sha1(settings.HASH_BINDER.join(_data)).hexdigest()
   
   @classmethod
   def hash_get_by_id(cls, **kwargs):
