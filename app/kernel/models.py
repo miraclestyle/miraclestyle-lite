@@ -10,13 +10,10 @@ from webapp2_extras import sessions
 
 from app import settings
 from app import ndb
-from app.core import get_temp_memory, set_temp_memory
-
-from google.appengine.api import memcache
+from app.memcache import smart_cache, get_temp_memory, set_temp_memory
  
 class Workflow():
-    
-      OBJECT_TYPE = 0
+ 
       OBJECT_STATES = {}
       OBJECT_EVENTS = {}
       OBJECT_DEFAULT_STATE = 1
@@ -33,8 +30,7 @@ class Workflow():
           return ObjectLog.query(ancestor=self.key)
 
 class User(ndb.BaseExpando, Workflow):
-    
-    OBJECT_TYPE = 1
+ 
     OBJECT_STATES = {
         1 : _('Active'),
         2 : _('Banned'),
@@ -46,29 +42,47 @@ class User(ndb.BaseExpando, Workflow):
 
     }
     
+    OBJECT_TRANSITIONS = {
+        1 : [2],
+        2 : [1],
+    }
+    
     state = ndb.IntegerProperty('1', required=True)
     _default_indexed = False
+    
+    @property
+    def get_email(self):
+        k = 'ue-%s' % self.key.id()
+        ref = self
+        def callback():
+            return UserEmail.query(ancestor=ref.key).fetch()
+        
+        ret = smart_cache.get(k, None, callback)
+        return ret
   
     @staticmethod
-    def is_guest():
-        return User.get_current_user() == 2
+    def current_user_is_guest():
+        u = User.get_current_user()
+        return u == 0 or u == None
     
     @staticmethod
-    def is_logged():
-        return User.is_guest() == False
+    def current_user_is_logged():
+        return User.current_user_is_guest() == False
+    
+    is_logged = current_user_is_logged
          
     @staticmethod
     def get_current_user():
-        u = get_temp_memory('user', 1)
-        if u == 1:
+        u = get_temp_memory('user', None)
+        if u == None:
             logging.info('get_current_user')
             sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)
             if sess.has_key(settings.USER_SESSION_KEY):
                u = sess[settings.USER_SESSION_KEY].get()
                if not u:
-                  u = 2
+                  u = 0
             else:
-               u = 2
+               u = 0
             set_temp_memory('user', u)
              
         return u
@@ -81,12 +95,16 @@ class User(ndb.BaseExpando, Workflow):
     
     def has_permission(self, obj, permission_name=None, strict=False):
         """
+        
+        Params
+        `obj` = Entity.key or Entity
+        `permission_name` = list, tuple or str
+        `strict` = require that all provided permissions need to be checked
+        
         Usage...
         
         user = User.get_current_user()
-        
-        if permission_name none return list of permissions
-        
+ 
         if user.has_permission(store_key, 'store_edit') 
         
         or multiple (if any found)
@@ -98,30 +116,25 @@ class User(ndb.BaseExpando, Workflow):
         if user.has_permission(store_key, ['catalog_create', 'catalog_publish'], True)
         
         this could also be done by choosing between tuple () and [] to determine if it will be strict, but thats debatable
- 
-         
+  
         """
         if not isinstance(obj, ndb.Key):
            obj = obj.key
         
         # aup = agregate user permission
         k = 'aup-%s' % self.key.id()
+        
+        memory = smart_cache.get(k, -1)
  
-        memory = get_temp_memory(k, -1)
         if memory == -1:
-           memory = memcache.get(k, -1)
-           if memory != -1:
-              set_temp_memory(k, memory)
-           else:
-              memory = {}
+           memory = {}
          
         obj_id = obj.id()
               
         if not memory.has_key(obj_id):
            ag_ = AggregateUserPermission.query(AggregateUserPermission.reference==obj, ancestor=self.key).get(projection=[AggregateUserPermission.permissions])
            ag = memory[obj_id] = ag_.permissions
-           set_temp_memory(k, memory)
-           memcache.set(k, memory)
+           smart_cache.set(k, memory)
         else:
            ag = memory.get(obj_id)
             

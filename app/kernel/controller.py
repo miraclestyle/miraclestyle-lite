@@ -8,31 +8,35 @@ import urllib2
 import json
 import logging
  
+from webapp2_extras.i18n import _ 
+from oauth2client.client import OAuth2WebServerFlow
+ 
 from app import ndb
 
 from app import settings
 from app.request import Segments, Handler
 from app.kernel.models import User, UserIdentity, UserEmail, UserIPAddress
 from app.kernel.forms import TestForm
-from webapp2_extras.i18n import _
-
-from oauth2client.client import OAuth2WebServerFlow
-
+ 
 class Tests(Segments):
-      
+    
       def segment_test(self):
-          user = User.get_current_user()
-          User.get_current_user()
-          User.get_current_user()
           
+          user = User.get_current_user()
+          
+          if not user:
+             self.response.write('Please login')
+          else:
+             self.response.write('Hello %s' % user.get_email)
+          
+          self.response.write(User._get_kind() + '<br />')   
           self.response.write('Test')
 
 
 class UnitTests(Handler):
     
       def respond(self):
-          
-          
+           
           localss = globals()
           
           io = []
@@ -158,38 +162,42 @@ class Login(Segments):
           code = self.request.GET.get('code')
           error = self.request.GET.get('error')
           keyx = 'oauth2_%s' % provider
+          user = None
+          save_in_session = True
+          record_login_event = True
+          user_is_new = False
           
           provider_id = settings.MAP_IDENTITIES[provider]
           
           if provider_id and self.session.has_key(keyx):
-             if User.is_logged():
+             if User.current_user_is_logged():
                 self.response.write('Already logged in %s' % User.get_current_user().key.urlsafe()) 
-                return
+                user = User.get_current_user()
+                save_in_session = False
+                record_login_event = False
           
              try:
                  data = getattr(self, '_login_%s_get_creds' % provider)(self.session[keyx].access_token)
+                 email = data.get('email').lower()
+                 self.response.write(data)
              except urllib2.HTTPError, e:
                  logging.exception(e)
                  del self.session[keyx]
              else:
+                 if user is None:
+                     user_is_new = True
+                     
                  relate = UserIdentity.md5_get_by_id(identity=data.get('id'), provider=provider_id)
-                 relate2 = UserEmail.md5_get_by_id(email=data.get('email'))
-                 user_is_new = True
-                 
-                 try:
-                    user = None
-                    if relate or relate2:
-                        
-                       if relate:
+                 relate2 = UserEmail.md5_get_by_id(email=email)    
+               
+                 if (relate or relate2) and user_is_new:
+                     if relate:
                           user = relate.key.parent().get()
-                       if relate2 and not user:
+                     if relate2 and not user:
                           user = relate2.key.parent().get()
                           
-                       if user is not None:
+                     if user is not None:
                           user_is_new = False
-                            
-                 except KeyError, e:
-                     raise e
                  else:
                      @ndb.transactional(xg=True)
                      def run_save(user, user_is_new, relate, relate2):
@@ -209,6 +217,11 @@ class Login(Segments):
                                  put_identity = True
                                  
                              else:
+                                 
+                                 if not relate and not relate2:
+                                    put_email = True
+                                    put_identity = True
+                                 
                                  if relate:
                                     if not relate2:
                                        put_email = True  
@@ -219,7 +232,7 @@ class Login(Segments):
                                        user_email = relate2
                                  
                              if put_email:
-                                user_email = UserEmail(parent=user.key, id=UserEmail.md5_create_key(email=data.get('email')), primary=user_is_new, email=data.get('email'))
+                                user_email = UserEmail(parent=user.key, id=UserEmail.md5_create_key(email=email), primary=user_is_new, email=data.get('email'))
                                 user_email.put()
                                     
                              if put_identity:
@@ -228,15 +241,17 @@ class Login(Segments):
                                    ident.user_email = user_email.key
                                 ident.put()
                                  
-                             if put_ipaddress:
+                             if put_ipaddress and record_login_event:
                                 UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
-                                
-                             user.new_event(2, state=user.state)
+                             
+                             if record_login_event:   
+                                user.new_event(2, state=user.state)
                              
                              return user
                              
                      user = run_save(user, user_is_new, relate, relate2)
-                     self.session[settings.USER_SESSION_KEY] = user.key
+                     if save_in_session:
+                        self.session[settings.USER_SESSION_KEY] = user.key
                      self.response.write('Successfully logged in, %s' % user.key.urlsafe())
                      return
              finally:

@@ -6,14 +6,13 @@ Created on Jul 9, 2013
 '''
 
 import decimal
-import time
 import hashlib
 from app import settings
 
 # Google Appengine Datastore
 from google.appengine.ext.ndb import *
  
-class BaseModel(Model):
+class _BaseModel:
   
   @classmethod
   def md5_create_key(cls, **kwargs):
@@ -37,20 +36,18 @@ class BaseModel(Model):
     This defaults to cls.__name__; users may overrid this to give a
     class a different on-disk name than its class name.
     """
-    # it doesnt use .get() in order to prevent from returning unexisting model Kind ID
-    return str(settings.DATASTORE_KINDS.get(cls.__name__, cls.__name__))
-
-class BaseExpando(Expando):
     
-  @classmethod
-  def _get_kind(cls):
-    """Return the kind name for this class.
+    if not settings.DATASTORE_KINDS:
+       return cls.__name__
+    
+    # this may cause KeyError if we havent defined model inside settings - this is to prevent bad kind names
+    return str(settings.DATASTORE_KINDS[cls.__name__])
 
-    This defaults to cls.__name__; users may overrid this to give a
-    class a different on-disk name than its class name.
-    """
-    # it doesnt use .get() in order to prevent from returning unexisting model Kind ID
-    return str(settings.DATASTORE_KINDS.get(cls.__name__, cls.__name__))
+class BaseModel(_BaseModel, Model):
+    pass
+
+class BaseExpando(_BaseModel, Expando):
+    pass
  
 class DecimalProperty(StringProperty):
   def _validate(self, value):
