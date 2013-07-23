@@ -1,0 +1,6 @@
+total_storage_limit: 120M
+
+queue:
+- name: notify
+  rate: 20/s
+  bucket_size: 40
