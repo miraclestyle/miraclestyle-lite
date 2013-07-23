@@ -118,27 +118,26 @@ class ObjectLog(ndb.Model):
     def _get_kind(cls):
       return datastore_key_kinds.ObjectLog
 
-# mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo...
-class Notification(ndb.Model):
+# mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo... 
+# mora se zvati drugacije, i nece biti core za notification engine, posto ce notification engine da bude implementiran kroz task queue
+# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta 
+class MessageLog(ndb.Model):
     
     # root
-    creator = ndb.KeyProperty('1', kind=User, required=True)
-    created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
-    message = ndb.TextProperty('3', required=True)
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    agent = ndb.KeyProperty('2', kind=User, required=True)
+    outlet = ndb.IntegerProperty('3', required=True)
+    group = ndb.IntegerProperty('4', required=True)
+    reference = ndb.StringProperty('5', required=True)
+    message = ndb.TextProperty('6', required=True)
+    note = ndb.TextProperty('7', required=True)
 
 
-class NotificationRecipient(ndb.Model):
+class UserMessage(ndb.Model):
     
-    # ancestor Notification
-    recipient = ndb.KeyProperty('1', kind=User, required=True)
-    outlets = ndb.StructuredProperty(NotificationOutlet, '2', repeated=True)
-
-
-class NotificationOutlet(ndb.Model):
-    
-    # StructuredProperty model
-    outlet = ndb.IntegerProperty('1', required=True)
-    notified = ndb.BooleanProperty('2', default=False)
+    # ancestor User
+    message = ndb.KeyProperty('1', kind=MessageLog, required=True)
+    received = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 class FeedbackRequest(ndb.Model):
