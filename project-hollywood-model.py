@@ -105,6 +105,7 @@ class ObjectLog(ndb.Model):
     
     # ancestor Any
     # kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    # mozda staviti da je ovo expando i da se message i note upisuju po potrebi ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     event = ndb.IntegerProperty('3', required=True)
@@ -118,25 +119,22 @@ class ObjectLog(ndb.Model):
     def _get_kind(cls):
       return datastore_key_kinds.ObjectLog
 
+
 # mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo... 
 # mora se zvati drugacije, i nece biti core za notification engine, posto ce notification engine da bude implementiran kroz task queue
 # ovo ce biti sistem za slanje poruka userima preko odredjenog outleta 
-class MessageLog(ndb.Model):
+class Message(ndb.Model):
     
     # root
-    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    agent = ndb.KeyProperty('2', kind=User, required=True)
-    outlet = ndb.IntegerProperty('3', required=True)
-    group = ndb.IntegerProperty('4', required=True)
-    reference = ndb.StringProperty('5', required=True)
-    message = ndb.TextProperty('6', required=True)
-    note = ndb.TextProperty('7', required=True)
+    outlet = ndb.IntegerProperty('1', required=True)
+    group = ndb.IntegerProperty('2', required=True)
+    state = ndb.IntegerProperty('3', required=True)
 
 
 class UserMessage(ndb.Model):
     
     # ancestor User
-    message = ndb.KeyProperty('1', kind=MessageLog, required=True)
+    message = ndb.KeyProperty('1', kind=Message, required=True)
     received = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
@@ -530,11 +528,8 @@ class BillingLog(ndb.Model):
 class BillingCreditAdjustment(ndb.Model):
     
     # ancestor Billing Object (Store)
-    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    agent = ndb.KeyProperty('2', kind=User, required=True)
-    amount = ndb.FloatProperty('3', required=True)# custom decimal
-    message = ndb.TextProperty('4', required=True)
-    note = ndb.TextProperty('5', required=True)
+    amount = ndb.FloatProperty('1', required=True)# custom decimal
+    state = ndb.IntegerProperty('2', required=True)
 
 
 class OrderFeedback(ndb.Model):
@@ -544,6 +539,7 @@ class OrderFeedback(ndb.Model):
     store_name = ndb.StringProperty('2', required=True)
     buyer = ndb.KeyProperty('3', kind=User, required=True)
     state = ndb.IntegerProperty('4', required=True)
+    
     order_reference = ndb.StringProperty('5', required=True)# ? mozda async 
     order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)#? mozda async
     total_amount = ndb.FloatProperty('7', required=True)# custom decimal ? mozda async
