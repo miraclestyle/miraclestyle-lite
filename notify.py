@@ -12,7 +12,9 @@ class NotifyEngine(webapp2.RequestHandler):
         notify_sender = self.request.get('notify_sender')
         notify_to = self.request.get('notify_to')
         notify_subject = self.request.get('notify_subject')
+        notify_outlet = self.request.get('notify_outlet')
         def notify():
+          if (notify_outlet == 'email'):
             object_log = ObjectLog.get_by_id(object_log_key)
             mail.send_mail(sender=notify_sender, to=notify_to, subject=notify_subject, body=object_log.message)
         db.run_in_transaction(notify)
