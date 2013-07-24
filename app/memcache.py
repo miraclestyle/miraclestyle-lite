@@ -5,14 +5,20 @@ Created on Jul 22, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import webapp2
+import logging
+ 
 from google.appengine.api import memcache
+
+from app import settings
 
 class smart_cache:
     """
-    Smart cache combines in-memory webapp2._local and google memcache to maximize performance
+    Smart cache combines in-memory webapp2._local and google memcache to maximize performance as well some goddies
     """
+  
     @staticmethod
     def get(k, d=None, callback=None, **kwargs):
+        
         """
         `k` = identifier for cache
         `d` = what not to expect
@@ -28,8 +34,10 @@ class smart_cache:
         if tmp != d:
            return tmp
         else:
-           tmp = memcache.get(k, d)
-           if tmp == d:
+           tmp = memcache.get(k)
+           if settings.DO_LOGS:
+              logging.info('cache get %s, got: %s' % (k, tmp))
+           if tmp == None:
               if callback:
                  v = callback()
                  smart_cache.set(k, v)
@@ -40,9 +48,10 @@ class smart_cache:
            return tmp        
     
     @staticmethod
-    def set(k, v):
+    def set(k, v, expire=0):
+         logging.info('cache set %s' % k)
          set_temp_memory(k, v)
-         memcache.set(k, v)        
+         memcache.set(k, v, expire)        
     
     @staticmethod
     def delete(k):

@@ -10,7 +10,7 @@ from webapp2_extras import sessions
 
 from app import settings
 from app import ndb
-from app.memcache import smart_cache, get_temp_memory, set_temp_memory
+from app.memcache import get_temp_memory, set_temp_memory
  
 class Workflow():
  
@@ -50,15 +50,36 @@ class User(ndb.BaseExpando, Workflow):
     state = ndb.IntegerProperty('1', required=True)
     _default_indexed = False
     
-    @property
-    def get_email(self):
-        k = 'ue-%s' % self.key.id()
-        ref = self
-        def callback():
-            return UserEmail.query(ancestor=ref.key).fetch()
+    def logout(self):
+        self._self_clear_memcache()
         
-        ret = smart_cache.get(k, None, callback)
-        return ret
+    
+    @property
+    def primary_email(self):
+        b = self._self_from_memory('primary_email', -1)
+        if b == -1:
+           a = {} 
+           lia = []
+           for e in self.emails.fetch():
+               if e.primary == True:
+                  a['primary_email'] = e
+                  b = e
+                  lia.append(e)
+                  
+           a['emails'] = lia
+           self._self_make_memory(a) 
+           
+        if isinstance(b, UserEmail):
+           return b.email
+        else:
+           return 'N/A'
+    
+    @property
+    def emails(self):
+        """
+          Returns Query iterator for user emails entity
+        """
+        return UserEmail.query(ancestor=self.key)
   
     @staticmethod
     def current_user_is_guest():
@@ -94,7 +115,13 @@ class User(ndb.BaseExpando, Workflow):
         return super(User, self).new_event(event, agent=self.key, **kwargs)  
     
     def has_permission(self, obj, permission_name=None, strict=False):
+        return self._has_permission(self, obj, permission_name, strict)
+    
+    @classmethod
+    def _has_permission(cls, user, obj, permission_name=None, strict=False):
         """
+        
+        Can be called as `User._has_permission(user_key....)` as well
         
         Params
         `obj` = Entity.key or Entity
@@ -117,26 +144,39 @@ class User(ndb.BaseExpando, Workflow):
         
         this could also be done by choosing between tuple () and [] to determine if it will be strict, but thats debatable
   
+        returns mixed, depending on permission_name==None
         """
         if not isinstance(obj, ndb.Key):
            obj = obj.key
-        
-        # aup = agregate user permission
-        k = 'aup-%s' % self.key.id()
-        
-        memory = smart_cache.get(k, -1)
- 
-        if memory == -1:
+            
+        if isinstance(user, basestring):
+           user = ndb.Key(user)
+           
+        if isinstance(user, int):
+           user = ndb.Key(cls, user)
+           
+        if isinstance(user, ndb.Key):
+           raise Exception('Not instance of ndb.Key')
+   
+        memory = User._get_from_memory(user.id())
+  
+        if memory == None:
            memory = {}
          
         obj_id = obj.id()
+        
+        if not memory.has_key('permissions'):
+           memory['permissions'] = {}
               
-        if not memory.has_key(obj_id):
-           ag_ = AggregateUserPermission.query(AggregateUserPermission.reference==obj, ancestor=self.key).get(projection=[AggregateUserPermission.permissions])
-           ag = memory[obj_id] = ag_.permissions
-           smart_cache.set(k, memory)
+        if not memory['permissions'].has_key(obj_id):
+           ag_ = AggregateUserPermission.query(AggregateUserPermission.reference==obj, ancestor=user).get(projection=[AggregateUserPermission.permissions])
+           ag = memory['permissions'][obj_id] = ag_.permissions
+           User._make_memory(user, memory)
         else:
-           ag = memory.get(obj_id)
+           ag = memory['permissions'].get(obj_id)
+           
+        # free variable
+        del memory
             
         if not ag:
            return False
@@ -175,18 +215,17 @@ class ObjectLog(ndb.BaseModel):
 class UserEmail(ndb.BaseModel):
     
     # ancestor User
-    # key is MD5 of email + salt
-    email = ndb.StringProperty('1', required=True, indexed=False)
+    email = ndb.StringProperty('1', required=True)
     primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
 
 class UserIdentity(ndb.BaseModel):
     
     # ancestor User
-    # key is MD5 of provider + identity + salt
+    # composite index provider + identity
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    provider = ndb.StringProperty('2', required=True, indexed=False)
-    identity = ndb.StringProperty('3', required=True, indexed=False)
+    provider = ndb.IntegerProperty('2', required=True, indexed=False)# ?
+    identity = ndb.StringProperty('3', required=True, indexed=False)# ?
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
 

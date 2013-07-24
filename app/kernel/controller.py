@@ -24,13 +24,42 @@ class Tests(Segments):
           
           user = User.get_current_user()
           
-          if not user:
-             self.response.write('Please login')
-          else:
-             self.response.write('Hello %s' % user.get_email)
           
-          self.response.write(User._get_kind() + '<br />')   
-          self.response.write('Test')
+          relate = UserIdentity.hash_get_by_id_async(identity='112466835144358559240', provider=1)
+          relate2 = UserEmail.hash_get_by_id(email='edis.sehalic@gmail.com')
+          if user:
+             relate4 = UserEmail.get_by_id(UserEmail.hash_create_key(email='edis.sehalic@gmail.com'), parent=user.key)
+          relate3 = UserEmail.hash_get_by_id_async(email='vertazzar@gmail.com')
+         
+          def retrieve(t):
+             if hasattr(t, 'get_result'):
+                return t.get_result()
+             return t
+         
+          relate = retrieve(relate) 
+          relate2 = retrieve(relate2) 
+          relate3 = retrieve(relate3) 
+      
+          if user:
+             relate4 = retrieve(relate4) 
+          else:
+             relate4 = None
+ 
+                 
+          logging.info([relate, relate2, relate3, relate4])
+     
+          if self.request.get('a'):
+             user.logout()
+             del self.session[settings.USER_SESSION_KEY]
+             user = False
+          
+          if not user:
+             self.response.write('Please login<br />')
+          else:
+             self.response.write('Hello %s' % user.primary_email)
+             self.response.write('<br /><a href="?a=1">Logout</a><br />')
+  
+          self.response.write('<br />Test')
 
 
 class UnitTests(Handler):
@@ -170,9 +199,10 @@ class Login(Segments):
           provider_id = settings.MAP_IDENTITIES[provider]
           
           if provider_id and self.session.has_key(keyx):
-             if User.current_user_is_logged():
+             
+             user = User.get_current_user() 
+             if isinstance(user, User):
                 self.response.write('Already logged in %s' % User.get_current_user().key.urlsafe()) 
-                user = User.get_current_user()
                 save_in_session = False
                 record_login_event = False
           
@@ -184,76 +214,89 @@ class Login(Segments):
                  logging.exception(e)
                  del self.session[keyx]
              else:
-                 if user is None:
-                     user_is_new = True
-                     
-                 relate = UserIdentity.hash_get_by_id(identity=data.get('id'), provider=provider_id)
-                 relate2 = UserEmail.hash_get_by_id(email=email)    
+                 relate = None
+                 relate2 = None
+                 
+                 # IN ORDER TO QUERY READ http://stackoverflow.com/a/10306658/376238
+                 # PARENT / ANCESTOR IS NEEDED HERE
+     
+                 relate = UserIdentity.hash_get_by_id_async(identity=data.get('id'), provider=provider_id)
+                 relate2 = UserEmail.hash_get_by_id_async(email=email)
+                 
+                 relate = relate.get_result() 
+                 relate2 = relate2.get_result() 
+                 
+                 logging.info([relate, relate2])
                
-                 if (relate or relate2) and user_is_new:
+                 if (relate or relate2):
                      if relate:
-                          user = relate.key.parent().get()
-                     if relate2 and not user:
-                          user = relate2.key.parent().get()
+                         user = relate.key.parent().get()
                           
-                     if user is not None:
-                          user_is_new = False
+                     if relate2 and not user:
+                         user = relate2.key.parent().get()
+                          
+                 if user:
+                    user_is_new = False
                  else:
-                     @ndb.transactional(xg=True)
-                     def run_save(user, user_is_new, relate, relate2):
+                    user_is_new = True
+                 
+                 logging.info([user_is_new, user, relate, relate2]) 
+                 @ndb.transactional
+                 def run_save(user, user_is_new, relate, relate2):
                          
-                             put_identity = False
-                             put_ipaddress = True
-                             put_email = False
-                             
-                             if user_is_new:
-                                 user = User(state=1)
-                                 user.put()
-                                
-                                 user.new_state(1, event=0)
-                                 user.new_event(1, state=1)
-                                 
-                                 put_email = True
-                                 put_identity = True
-                                 
-                             else:
-                                 
-                                 if not relate and not relate2:
-                                    put_email = True
-                                    put_identity = True
-                                 
-                                 if relate:
-                                    if not relate2:
-                                       put_email = True  
-                                       
-                                 if relate2:
-                                    if not relate:
-                                       put_identity = True
-                                       user_email = relate2
-                                 
-                             if put_email:
-                                user_email = UserEmail(parent=user.key, id=UserEmail.hash_create_key(email=email), primary=user_is_new, email=data.get('email'))
-                                user_email.put()
-                                    
-                             if put_identity:
-                                ident = UserIdentity(parent=user.key, id=UserIdentity.hash_create_key(identity=data.get('id'), provider=provider_id), identity=str(data.get('id')), provider=str(provider_id))
-                                if put_email or relate2:
-                                   ident.user_email = user_email.key
-                                ident.put()
-                                 
-                             if put_ipaddress and record_login_event:
-                                UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
-                             
-                             if record_login_event:   
-                                user.new_event(2, state=user.state)
-                             
-                             return user
-                             
-                     user = run_save(user, user_is_new, relate, relate2)
-                     if save_in_session:
-                        self.session[settings.USER_SESSION_KEY] = user.key
-                     self.response.write('Successfully logged in, %s' % user.key.urlsafe())
-                     return
+                     put_identity = False
+                     put_ipaddress = True
+                     put_email = False
+                     
+                     if user_is_new:
+                         user = User(state=1)
+                         user.put()
+                        
+                         user.new_state(1, event=0)
+                         user.new_event(1, state=1)
+                         
+                         put_email = True
+                         put_identity = True
+                         
+                     else:
+                         
+                         if not relate and not relate2:
+                            put_email = True
+                            put_identity = True
+                         
+                         if relate:
+                            if not relate2:
+                               put_email = True  
+                               
+                         if relate2:
+                            if not relate:
+                               put_identity = True
+                               user_email = relate2
+                         
+                     if put_email:
+                        user_email = UserEmail(parent=user.key, id=UserEmail.hash_create_key(email=email), primary=user_is_new, email=data.get('email'))
+                        user_email.put()
+                            
+                     if put_identity:
+                        ident = UserIdentity(parent=user.key, id=UserIdentity.hash_create_key(identity=data.get('id'), provider=provider_id), identity=str(data.get('id')), provider=provider_id)
+                        if put_email or relate2:
+                           ident.user_email = user_email.key
+                        ident.put()
+                         
+                     if put_ipaddress and record_login_event:
+                        UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
+                
+                     if record_login_event:   
+                        user.new_event(2, state=user.state)
+                     
+                     return user
+                      
+                 user = run_save(user, user_is_new, relate, relate2)
+                 if save_in_session:
+                     self.session[settings.USER_SESSION_KEY] = user.key
+                 self.response.write('Successfully logged in, %s' % user.key.urlsafe())
+                 return
+             
              finally:
                  pass
  
