@@ -17,7 +17,11 @@ class NotifyEngine(webapp2.RequestHandler):
           object_log_future = ndb.Key(object_log_key).get_async()
           if (notify_outlet == 'email' | notify_outlet == None):
             object_log = object_log_future.get_result()
-            mail.send_mail(sender=notify_sender, to=notify_to, subject=notify_subject, body=object_log.message)
+            if (isinstance(notify_to, list)):
+              for send_to in notify_to:
+                mail.send_mail(sender=notify_sender, to=send_to, subject=notify_subject, body=object_log.message)
+            elif(isinstance(notify_to, str)):
+              mail.send_mail(sender=notify_sender, to=notify_to, subject=notify_subject, body=object_log.message)
         db.run_in_transaction(notify)
 
 
