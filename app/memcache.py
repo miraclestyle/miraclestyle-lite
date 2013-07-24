@@ -60,8 +60,7 @@ class smart_cache:
             del webapp2.local[k]
         except:
             pass   
-    
-
+     
 def get_temp_memory(k, d=None):
     return getattr(webapp2._local, k, d)
 

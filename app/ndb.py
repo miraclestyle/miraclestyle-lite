@@ -52,23 +52,27 @@ class _BaseModel:
       return hashed
   
   @classmethod
-  def hash_get_by_id(cls, **kwargs):
-      # parent=None, app=None, namespace=None, **ctx_options
+  def _hash_get_by_id(cls, async=False, **kwargs):
+      
       parent = kwargs.pop('_parent', None)
       app = kwargs.pop('_app', None)
       namespace = kwargs.pop('_namespace', None)
       ctx_options = kwargs.pop('_ctx_options', {})
+      ke = cls.hash_create_key(**kwargs)
       
-      return cls.get_by_id(cls.hash_create_key(**kwargs), parent, app, namespace, **ctx_options)
+      if async:
+         return cls.get_by_id_async(ke, parent, app, namespace, **ctx_options)
+      else:
+         return cls.get_by_id(ke, parent, app, namespace, **ctx_options)
+      
+  
+  @classmethod
+  def hash_get_by_id(cls, **kwargs):
+      return cls._hash_get_by_id(False, **kwargs)
   
   @classmethod
   def hash_get_by_id_async(cls, **kwargs):
-      parent = kwargs.pop('_parent', None)
-      app = kwargs.pop('_app', None)
-      namespace = kwargs.pop('_namespace', None)
-      ctx_options = kwargs.pop('_ctx_options', {})
-      
-      return cls.get_by_id_async(cls.hash_create_key(**kwargs), parent, app, namespace, **ctx_options)
+      return cls._hash_get_by_id(True, **kwargs)
   
   @classmethod
   def _get_kind(cls):
@@ -77,7 +81,6 @@ class _BaseModel:
     This defaults to cls.__name__; users may overrid this to give a
     class a different on-disk name than its class name.
     """
-    
     if not settings.DATASTORE_KINDS:
        return cls.__name__
     
