@@ -95,10 +95,10 @@ class DecimalProperty(ndb.StringProperty):
       raise TypeError('expected an decimal, got %s' % repr(value))
 
   def _to_base_type(self, value):
-    return str(value) # Doesn't matter if it's an int or a long
+    return str(value) # Doesn't matter if it's a decimal or string
 
   def _from_base_type(self, value):
-    return decimal.Decimal(value)  # Always return a long
+    return decimal.Decimal(value)  # Always return a decimal
 
 
 class ObjectLog(ndb.Model):
