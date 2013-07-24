@@ -258,8 +258,8 @@ class UserIdentity(ndb.Model):
     # ancestor User
     # composite index provider + identity
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    provider = ndb.StringProperty('2', required=True)# indexed=False ?
-    identity = ndb.StringProperty('3', required=True)# indexed=False ?
+    provider = ndb.StringProperty('2', required=True, indexed=False)# ?
+    identity = ndb.StringProperty('3', required=True, indexed=False)# ?
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
 
