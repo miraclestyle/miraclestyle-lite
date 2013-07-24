@@ -184,6 +184,7 @@ class Image(ndb.Model):
     height = ndb.IntegerProperty('5', required=True)
     sequence = ndb.IntegerProperty('6', required=True)
 
+
 class Country(ndb.Model):
     
     # root
@@ -248,18 +249,17 @@ class User(ndb.Expando):
 class UserEmail(ndb.Model):
     
     # ancestor User
-    # key is MD5 of email + salt
-    email = ndb.StringProperty('1', required=True, indexed=False)
+    email = ndb.StringProperty('1', required=True)
     primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
 
 class UserIdentity(ndb.Model):
     
     # ancestor User
-    # key is MD5 of provider + identity + salt
+    # composite index provider + identity
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    provider = ndb.StringProperty('2', required=True, indexed=False)
-    identity = ndb.StringProperty('3', required=True, indexed=False)
+    provider = ndb.StringProperty('2', required=True)# indexed=False ?
+    identity = ndb.StringProperty('3', required=True)# indexed=False ?
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
 
