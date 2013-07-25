@@ -253,7 +253,6 @@ class UserIdentity(ndb.BaseModel):
     # ancestor User
     # index identity only
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    # provider = ndb.IntegerProperty('2', required=True, indexed=False)# ? ovo nam vise ne treba ja mislim, jer cu da spojim identity-<identity-id> fuck it..
     identity = ndb.StringProperty('3', required=True, indexed=True)# ?
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
