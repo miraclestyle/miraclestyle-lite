@@ -241,7 +241,7 @@ class ProductUOM(ndb.Model):
 class User(ndb.Expando):
     
     # root
-    state = ndb.IntegerProperty('1', required=True)
+    state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
     #_default_indexed = False
     #pass
 
@@ -249,47 +249,45 @@ class User(ndb.Expando):
 class UserEmail(ndb.Model):
     
     # ancestor User
-    email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', default=True, indexed=False)
+    email = ndb.StringProperty('1', required=True, verbose_name=u'Email')
+    primary = ndb.BooleanProperty('2', default=True, indexed=False, verbose_name=u'Primary Email')
 
 
 class UserIdentity(ndb.Model):
     
     # ancestor User
-    # composite index provider + identity
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    provider = ndb.StringProperty('2', required=True, indexed=False)# ?
-    identity = ndb.StringProperty('3', required=True, indexed=False)# ?
-    associated = ndb.BooleanProperty('4', default=True, indexed=False)
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
+    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')
+    associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
 
 
 class UserIPAddress(ndb.Model):
     
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True, indexed=False)
-    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    ip_address = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'IP Address')
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True, verbose_name=u'Logged On')
 
 
 class UserRole(ndb.Model):
     
     # ancestor User
-    role = ndb.KeyProperty('1', kind=Role, required=True)
+    role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
 
 
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
-    reference = ndb.KeyProperty('1',required=True)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
+    reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')
 
 
 # ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
     # ancestor Store (Any)
-    name = ndb.StringProperty('1', required=True, indexed=False)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
 
 
 '''
