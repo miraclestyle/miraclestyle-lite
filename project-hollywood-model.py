@@ -257,7 +257,7 @@ class UserIdentity(ndb.Model):
     
     # ancestor User
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
-    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')
+    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa io-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
 
 
