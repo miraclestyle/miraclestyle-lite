@@ -23,8 +23,7 @@ HASH_BINDER = u'-'
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
 DO_LOGS = True
-
-
+ 
 DATASTORE_KINDS = False
 
 if not DEBUG:
@@ -84,6 +83,29 @@ if not DEBUG:
         'ProductContent':1,
         'ProductVariant':1,
         'ProductTemplateVariant':1,
+}
+    
+OBJECT_STATES = {
+    'User' : {
+        1 : 'Active',
+        2 : 'Banned',
+    }
+}
+OBJECT_TRANSITIONS = {
+    'User' : {
+        # State 1 can go only to state 2      
+        1 : [2],
+        # State 2 can only go to state 1
+        2 : [1],
+    }
+}
+OBJECT_EVENTS = {
+    'User' : {
+        1 : 'Registered',
+        2 : 'Logged in',
+        3 : 'Logged out',
+        4 : 'Updated',
+    }
 }
  
 TEMPLATE_CACHE = 3600

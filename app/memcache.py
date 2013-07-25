@@ -56,13 +56,17 @@ class smart_cache:
     @staticmethod
     def delete(k):
         memcache.delete(k)
-        try:
-            del webapp2.local[k]
-        except:
-            pass   
+        delete_temp_memory(k)
+        
      
 def get_temp_memory(k, d=None):
     return getattr(webapp2._local, k, d)
 
 def set_temp_memory(k, v):
     setattr(webapp2._local, k, v)
+    
+def delete_temp_memory(k):
+    try:
+      del webapp2._local[k]
+    except:
+      pass   

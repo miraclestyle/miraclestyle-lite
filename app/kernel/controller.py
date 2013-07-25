@@ -21,7 +21,7 @@ from app.kernel.models import User, UserIdentity, UserEmail, UserIPAddress
 class Tests(Segments):
     
       def segment_test(self):
-          
+ 
           user = User.get_current_user()
   
           if self.request.get('a'):
@@ -110,10 +110,11 @@ class Login(Segments):
                  relate = None
                  relate2 = None
                  
-                 # something too look at http://stackoverflow.com/questions/17433607/is-it-possible-to-set-two-fields-as-indexes-on-an-entity-in-ndb
- 
-                 relate = UserIdentity.query(UserIdentity.identity==data.get('id'), UserIdentity.provider==provider_id).get_async()
-                 relate2 = UserEmail.query(UserEmail.email==data.get('email')).get_async()
+                 the_id = '%s-%s' % (data.get('id'), provider_id)   
+                 email = data.get('email')
+                 
+                 relate = UserIdentity.query(UserIdentity.identity==the_id).get_async()
+                 relate2 = UserEmail.query(UserEmail.email==email).get_async()
                  
                  relate = relate.get_result() 
                  relate2 = relate2.get_result() 
@@ -162,11 +163,11 @@ class Login(Segments):
                                user_email = relate2
                          
                      if put_email:
-                        user_email = UserEmail(parent=user.key, primary=user_is_new, email=data.get('email'))
+                        user_email = UserEmail(parent=user.key, primary=user_is_new, email=email)
                         user_email.put()
                             
                      if put_identity:
-                        ident = UserIdentity(parent=user.key, identity=str(data.get('id')), provider=provider_id)
+                        ident = UserIdentity(parent=user.key, identity=the_id)
                         if put_email or relate2:
                            ident.user_email = user_email.key
                         ident.put()

@@ -11,19 +11,64 @@ from webapp2_extras import sessions
 from app import settings
 from app import ndb
 from app.memcache import get_temp_memory, set_temp_memory
+
+class WorkflowTransitionError(Exception):
+      pass
+  
+class WorkflowStateError(Exception):
+      pass
+  
+class WorkflowEventError(Exception):
+      pass
  
 class Workflow():
- 
-      OBJECT_STATES = {}
-      OBJECT_EVENTS = {}
-      OBJECT_DEFAULT_STATE = 1
-      OBJECT_TRANSITIONS = {}
+    
+      @classmethod
+      def _resolve_event_code(cls, event_code):
+          if not settings.OBJECT_EVENTS.has_key(cls.__name__):
+             raise WorkflowEventError('This model does not have any events defined, check settings.OBJECT_EVENTS for reference.' % settings.OBJECT_STATES)
+          
+          codes = settings.OBJECT_EVENTS[cls.__name__]
+          code = codes.get(event_code)
+          if not code:
+             raise WorkflowEventError('This model does not have event code %s, while available %s' % (event_code, codes))
+          
+          return code
+    
+      @classmethod
+      def _resolve_state_code(cls, state_code):
+          if not settings.OBJECT_STATES.has_key(cls.__name__):
+             raise WorkflowStateError('This model does not have any states defined, check settings.OBJECT_STATES for reference' % settings.OBJECT_STATES)
+          
+          codes = settings.OBJECT_STATES[cls.__name__]
+          code = codes.get(state_code)
+          if not code:
+             raise WorkflowStateError('This model does not have state code %s, while available %s' % (state_code, codes))
+          
+          return code
       
+      def _resolve_state(self, new_state_code):
+          code = self._resolve_state_code(new_state_code)
+          state = self.state
+          
+          # if the state is changing
+          if code != new_state_code:
+             transitions = settings.OBJECT_TRANSITIONS[self.__name__]
+             transition = transitions.get(code)
+             if new_state_code not in transition:
+                raise WorkflowTransitionError('You cannot move this object from state %s to %s according to %s transition config.' % (state, new_state_code, transitions))
+             else:
+                return new_state_code
+          return code
+            
+      def _resolve_event(self, new_event_code):
+          return self._resolve_event_code(new_event_code)
+            
       def new_state(self, state, **kwargs):
-          return ObjectLog(state=state, parent=self.key, **kwargs).put()
+          return ObjectLog(state=self._resolve_state(state), parent=self.key, **kwargs).put()
           
       def new_event(self, event, **kwargs):
-          return ObjectLog(event=event, parent=self.key, **kwargs).put()
+          return ObjectLog(event=self._resolve_event(event), parent=self.key, **kwargs).put()
       
       @property
       def logs(self):
@@ -31,22 +76,6 @@ class Workflow():
 
 class User(ndb.BaseExpando, Workflow):
  
-    OBJECT_STATES = {
-        1 : _('Active'),
-        2 : _('Banned'),
-    }
-    OBJECT_EVENTS = {
-        1 : _('Registered'),
-        2 : _('Logged in'),
-        3 : _('Logged out'),
-
-    }
-    
-    OBJECT_TRANSITIONS = {
-        1 : [2],
-        2 : [1],
-    }
-    
     state = ndb.IntegerProperty('1', required=True)
     _default_indexed = False
     
@@ -222,10 +251,10 @@ class UserEmail(ndb.BaseModel):
 class UserIdentity(ndb.BaseModel):
     
     # ancestor User
-    # composite index provider + identity
+    # index identity only
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    provider = ndb.IntegerProperty('2', required=True, indexed=False)# ?
-    identity = ndb.StringProperty('3', required=True, indexed=False)# ?
+    # provider = ndb.IntegerProperty('2', required=True, indexed=False)# ? ovo nam vise ne treba ja mislim, jer cu da spojim identity-<identity-id> fuck it..
+    identity = ndb.StringProperty('3', required=True, indexed=True)# ?
     associated = ndb.BooleanProperty('4', default=True, indexed=False)
 
 
