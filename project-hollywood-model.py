@@ -281,30 +281,13 @@ class AggregateUserPermission(ndb.Model):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')
 
 
-# ovo je pojednostavljena verzija permisija, ispod ovog modela je skalabilna verzija koja se moze prilagoditi i upotrebiti umesto ove 
 class Role(ndb.Model):
     
-    # ancestor Store (Any)
+    # ancestor Store (Application, in the future) with permissions that affect store and related entities
+    # or root with global permissions to mstyle
     name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
-
-
-'''
-Primer skalabilne verzije implementacije permission sistema
-class Role(ndb.Model):
-    
-    # ancestor App
-    name = ndb.StringProperty('1', required=True)
-    permissions = ndb.StructuredProperty(Permission, '2', required=True)
-    readonly = ndb.BooleanProperty('3', default=True)
-
-
-class Permission(ndb.Model):
-    
-    # ancestor Object - Any
-    permissions = ndb.StringProperty('1', indexed=False, repeated=True)
-'''
 
 
 class Store(ndb.Expando):
