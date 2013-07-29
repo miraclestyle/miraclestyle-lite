@@ -88,7 +88,7 @@ datastore_key_kinds = {
     'ProductTemplateVariant':1,
 }
 
-
+# devtable test
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
