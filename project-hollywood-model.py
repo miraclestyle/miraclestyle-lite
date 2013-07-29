@@ -110,8 +110,8 @@ class ObjectLog(ndb.Model):
     agent = ndb.KeyProperty('2', kind=User, required=True)
     event = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
-    message = ndb.TextProperty('5', required=True)
-    note = ndb.TextProperty('6', required=True)
+    message = ndb.TextProperty('5', required=True)# max size 64kb - to determine char count
+    note = ndb.TextProperty('6', required=True)# max size 64kb - to determine char count
     log = ndb.TextProperty('7', required=True)
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
@@ -257,7 +257,7 @@ class UserIdentity(ndb.Model):
     
     # ancestor User
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
-    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa io-jem
+    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa id-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
 
 
@@ -277,14 +277,14 @@ class UserRole(ndb.Model):
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
-    reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')
+    reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
 
 
 class Role(ndb.Model):
     
-    # ancestor Store (Application, in the future) with permissions that affect store and related entities
-    # or root with global permissions to mstyle
+    # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
+    # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
     name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
