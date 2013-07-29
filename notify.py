@@ -12,7 +12,9 @@ class NotifyEngine(webapp2.RequestHandler):
         notify_to = self.request.get('to')# max size 500 chars
         notify_subject = self.request.get('subject')# max size 500 chars
         notify_message = self.request.get('message')# max size 64kb
-        if (notify_outlet == 'email' | notify_outlet == None):
+        if (notify_outlet == 'email'):
+          mail.send_mail(sender=notify_sender, to=notify_to, subject=notify_subject, body=notify_message)
+        elif(notify_outlet == 'all'):# ovaj validator treba da pusti poruku na sve outlete (treba jos o ovome odluciti??)
           mail.send_mail(sender=notify_sender, to=notify_to, subject=notify_subject, body=notify_message)
         else:
           pass

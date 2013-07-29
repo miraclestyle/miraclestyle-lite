@@ -160,24 +160,19 @@ class SupportRequest(ndb.Model):
 class Content(ndb.Model):
     
     # root
-    title = ndb.StringProperty('1', required=True)
-    category = ndb.IntegerProperty('2', required=True)
-    published = ndb.BooleanProperty('3', default=False)
-    active_revision = ndb.KeyProperty('4', kind=ContentRevision, required=True)
+    # ContentRevision je ukinut posto cemo svakako logovati sve informacije u ObjectLog
+    updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
+    title = ndb.StringProperty('2', required=True)
+    category = ndb.IntegerProperty('3', required=True)
+    body = ndb.TextProperty('4', required=True)
     sequence = ndb.IntegerProperty('5', required=True)
-
-
-class ContentRevision(ndb.Model):
-    
-    # ancestor Content
-    body = ndb.TextProperty('1', required=True)
-    created = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    state = ndb.IntegerProperty('6', required=True)# published/unpublished
 
 
 class Image(ndb.Model):
     
     # ancestor Any Object
-    image = blobstore.BlobKeyProperty('1', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    image = blobstore.BlobKeyProperty('1', required=True)# verovatno je i dalje ovaj property od klase blobstore - blob ce se implementirati na GCS
     content_type = ndb.StringProperty('2', required=True)
     size = ndb.FloatProperty('3', required=True)
     width = ndb.IntegerProperty('4', required=True)
