@@ -169,8 +169,9 @@ class Content(ndb.Model):
     
     # root
     # composite index category+state+sequence
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
-    title = ndb.StringProperty('2', required=True, indexed=False)# u slucaju da implementiramo pretrage po title-u trebace nam jos jedan composite index: title+category+state+sequence
+    title = ndb.StringProperty('2', required=True, indexed=False)
     category = ndb.IntegerProperty('3', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     body = ndb.TextProperty('4', required=True)
     sequence = ndb.IntegerProperty('5', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
@@ -192,8 +193,9 @@ class Country(ndb.Model):
     
     # root
     # u slucaju da ostane index za code, trebace nam composit index code+name
-    code = ndb.StringProperty('1', required=True)# ovde neka za sada ostane index ukljucen, pa kad budemo pravili UI znacemo da li da ga izbacimo ili ne..
-    name = ndb.StringProperty('2', required=True)
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    code = ndb.StringProperty('1', required=True, indexed=False)
+    name = ndb.StringProperty('2', required=True, indexed=False)
 
 
 class CountrySubdivision(ndb.Model):
@@ -201,9 +203,10 @@ class CountrySubdivision(ndb.Model):
     # ancestor Country
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
     # u slucaju da ostane index za code, trebace nam composit index code+name
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
-    name = ndb.StringProperty('2', required=True)
-    code = ndb.StringProperty('3', required=True)# ovde neka za sada ostane index ukljucen, pa kad budemo pravili UI znacemo da li da ga izbacimo ili ne..
+    name = ndb.StringProperty('2', required=True, indexed=False)
+    code = ndb.StringProperty('3', required=True, indexed=False)#
     type = ndb.IntegerProperty('4', required=True, indexed=False)
 
 
@@ -220,10 +223,11 @@ class Location(ndb.Model):
 class ProductCategory(ndb.Model):
     
     # root
-    parent_record = ndb.KeyProperty('1', kind=ProductCategory)
-    name = ndb.StringProperty('2', required=True)
-    sequence = ndb.IntegerProperty('3', required=True)
-    state = ndb.IntegerProperty('4', required=True)
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
+    name = ndb.StringProperty('2', required=True, indexed=False)
+    complete_name = ndb.TextProperty('3', required=True, indexed=False)
+    state = ndb.IntegerProperty('4', required=True, indexed=False)
 
 
 class ProductUOMCategory(ndb.Model):
