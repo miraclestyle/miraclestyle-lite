@@ -227,25 +227,27 @@ class ProductCategory(ndb.Model):
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
     complete_name = ndb.TextProperty('3', required=True, indexed=False)
-    state = ndb.IntegerProperty('4', required=True, indexed=False)
+    state = ndb.IntegerProperty('4', required=True)
 
 
 class ProductUOMCategory(ndb.Model):
     
     # root
-    name = ndb.StringProperty('1', required=True)
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    name = ndb.StringProperty('1', required=True, indexed=False)
 
 
 class ProductUOM(ndb.Model):
     
     # ancestor ProductUOMCategory
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True)
-    rate = ndb.FloatProperty('3', required=True)# ovde ide custom decimal property
-    factor = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property
-    rounding = ndb.FloatProperty('5', required=True)# ovde ide custom decimal property
-    digits = ndb.IntegerProperty('6', required=True)
-    active = ndb.BooleanProperty('7', default=True)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)
+    rate = ndb.FloatProperty('3', required=True, indexed=False)# ovde ide custom decimal property
+    factor = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property
+    rounding = ndb.FloatProperty('5', required=True, indexed=False)# ovde ide custom decimal property
+    digits = ndb.IntegerProperty('6', required=True, indexed=False)
+    state = ndb.IntegerProperty('7', required=True)
 
 
 class User(ndb.Expando):
