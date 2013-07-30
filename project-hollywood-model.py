@@ -88,7 +88,7 @@ datastore_key_kinds = {
     'ProductTemplateVariant':1,
 }
 
-# devtable test
+
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
@@ -140,9 +140,10 @@ class UserMessage(ndb.Model):
 
 class FeedbackRequest(ndb.Model):
     
-    # root
+    # root - morace da se na neki nacin poveze sa korisnikom koji je kreirao request, jer je ovako tlacno da se query uvek obejct log za kreatora ??
     reference = ndb.StringProperty('1', required=True)
     state = ndb.IntegerProperty('2', required=True)
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)# ?
     
     # primer helper funkcije u slucajevima gde se ne koristi ancestor mehanizam za pristup relacijama
     @property
@@ -152,9 +153,10 @@ class FeedbackRequest(ndb.Model):
 
 class SupportRequest(ndb.Model):
     
-    # root
+    # root - morace da se na neki nacin poveze sa korisnikom koji je kreirao request, jer je ovako tlacno da se query uvek obejct log za kreatora ??
     reference = ndb.StringProperty('1', required=True)
     state = ndb.IntegerProperty('2', required=True)
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)# ?
 
 
 class Content(ndb.Model):
