@@ -2,6 +2,9 @@
 
 #MASTER MODEL FILE
 
+# NAPOMENA!!! - Sve mapirane informacije koje se koriste u aplikaciji trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
+# u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
+
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
@@ -101,18 +104,20 @@ class DecimalProperty(ndb.StringProperty):
     return decimal.Decimal(value)  # Always return a decimal
 
 
-class ObjectLog(ndb.Model):
+class ObjectLog(ndb.Expando):
     
     # ancestor Any
     # kind izvlacimo iz kljuca pomocu key.kind() funkcije
-    # mozda staviti da je ovo expando i da se message i note upisuju po potrebi ???
+    # posible composite indexes ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     event = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
-    message = ndb.TextProperty('5', required=True)# max size 64kb - to determine char count
-    note = ndb.TextProperty('6', required=True)# max size 64kb - to determine char count
-    log = ndb.TextProperty('7', required=True)
+    #_default_indexed = False
+    #pass
+    #message / m = ndb.TextProperty('5')# max size 64kb - to determine char count
+    #note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
+    #log / l = ndb.TextProperty('7')
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
@@ -120,9 +125,8 @@ class ObjectLog(ndb.Model):
       return datastore_key_kinds.ObjectLog
 
 
-# mislim da je ovaj notification sistem neefikasan, moramo prostudirati ovo... 
-# mora se zvati drugacije, i nece biti core za notification engine, posto ce notification engine da bude implementiran kroz task queue
-# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta 
+# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
+# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
 class Message(ndb.Model):
     
     # root
@@ -131,19 +135,20 @@ class Message(ndb.Model):
     state = ndb.IntegerProperty('3', required=True)
 
 
-class UserMessage(ndb.Model):
+class MessageRecepient(ndb.Model):
     
-    # ancestor User
-    message = ndb.KeyProperty('1', kind=Message, required=True)
-    received = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    # ancestor Message
+    recepient = ndb.KeyProperty('1', kind=User, required=True)
+    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 class FeedbackRequest(ndb.Model):
     
-    # root - morace da se na neki nacin poveze sa korisnikom koji je kreirao request, jer je ovako tlacno da se query uvek obejct log za kreatora ??
-    reference = ndb.StringProperty('1', required=True)
+    # ancestor User
+    reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
-    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)# ?
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
     
     # primer helper funkcije u slucajevima gde se ne koristi ancestor mehanizam za pristup relacijama
     @property
@@ -153,49 +158,53 @@ class FeedbackRequest(ndb.Model):
 
 class SupportRequest(ndb.Model):
     
-    # root - morace da se na neki nacin poveze sa korisnikom koji je kreirao request, jer je ovako tlacno da se query uvek obejct log za kreatora ??
-    reference = ndb.StringProperty('1', required=True)
+    # ancestor User
+    reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
-    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)# ?
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
 
 
 class Content(ndb.Model):
     
     # root
-    # ContentRevision je ukinut posto cemo svakako logovati sve informacije u ObjectLog
+    # composite index category+state+sequence
     updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
-    title = ndb.StringProperty('2', required=True)
-    category = ndb.IntegerProperty('3', required=True)
+    title = ndb.StringProperty('2', required=True, indexed=False)# u slucaju da implementiramo pretrage po title-u trebace nam jos jedan composite index: title+category+state+sequence
+    category = ndb.IntegerProperty('3', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     body = ndb.TextProperty('4', required=True)
-    sequence = ndb.IntegerProperty('5', required=True)
-    state = ndb.IntegerProperty('6', required=True)# published/unpublished
+    sequence = ndb.IntegerProperty('5', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    state = ndb.IntegerProperty('6', required=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class Image(ndb.Model):
     
     # ancestor Any Object
-    image = blobstore.BlobKeyProperty('1', required=True)# verovatno je i dalje ovaj property od klase blobstore - blob ce se implementirati na GCS
-    content_type = ndb.StringProperty('2', required=True)
-    size = ndb.FloatProperty('3', required=True)
-    width = ndb.IntegerProperty('4', required=True)
-    height = ndb.IntegerProperty('5', required=True)
+    image = blobstore.BlobKeyProperty('1', required=True, indexed=False)# verovatno je i dalje ovaj property od klase blobstore - blob ce se implementirati na GCS
+    content_type = ndb.StringProperty('2', required=True, indexed=False)
+    size = ndb.FloatProperty('3', required=True, indexed=False)
+    width = ndb.IntegerProperty('4', required=True, indexed=False)
+    height = ndb.IntegerProperty('5', required=True, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
 
 
 class Country(ndb.Model):
     
     # root
-    code = ndb.StringProperty('1', required=True)
+    # u slucaju da ostane index za code, trebace nam composit index code+name
+    code = ndb.StringProperty('1', required=True)# ovde neka za sada ostane index ukljucen, pa kad budemo pravili UI znacemo da li da ga izbacimo ili ne..
     name = ndb.StringProperty('2', required=True)
 
 
 class CountrySubdivision(ndb.Model):
     
     # ancestor Country
-    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision)
+    # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
+    # u slucaju da ostane index za code, trebace nam composit index code+name
+    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
     name = ndb.StringProperty('2', required=True)
-    code = ndb.StringProperty('3', required=True)
-    type = ndb.IntegerProperty('4', required=True)
+    code = ndb.StringProperty('3', required=True)# ovde neka za sada ostane index ukljucen, pa kad budemo pravili UI znacemo da li da ga izbacimo ili ne..
+    type = ndb.IntegerProperty('4', required=True, indexed=False)
 
 
 class Location(ndb.Model):
