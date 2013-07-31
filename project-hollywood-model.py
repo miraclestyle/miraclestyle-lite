@@ -107,7 +107,7 @@ class DecimalProperty(ndb.StringProperty):
 
 class ObjectLog(ndb.Expando):
     
-    # ancestor Any
+    # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, ukljucujuci i njegovu hiejrarhiju - napr: 'User-UserLog-ObjectLog'
     # reference i type izvlacimo iz kljuca - key.parent()
     # posible composite indexes ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
@@ -367,16 +367,16 @@ class BuyerAddress(ndb.Model):
     
     # ancestor User
     name = ndb.StringProperty('1', required=True)
-    country = ndb.KeyProperty('2', kind=Country, required=True)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True)
-    city = ndb.StringProperty('4', required=True)
-    postal_code = ndb.StringProperty('5', required=True)
-    street_address = ndb.StringProperty('6', required=True)
-    street_address2 = ndb.StringProperty('7')
-    email = ndb.StringProperty('8')
-    telephone = ndb.StringProperty('9')
-    default_shipping = ndb.BooleanProperty('10', default=True)
-    default_billing = ndb.BooleanProperty('11', default=True)
+    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)
+    city = ndb.StringProperty('4', required=True, indexed=False)
+    postal_code = ndb.StringProperty('5', required=True, indexed=False)
+    street_address = ndb.StringProperty('6', required=True, indexed=False)
+    street_address2 = ndb.StringProperty('7', indexed=False)
+    email = ndb.StringProperty('8', indexed=False)
+    telephone = ndb.StringProperty('9', indexed=False)
+    default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
+    default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
 
 # bice potrebna verovatno i aggregate tabela neka
 class BuyerCollection(ndb.Model):
