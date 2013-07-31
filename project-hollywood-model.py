@@ -368,7 +368,7 @@ class BuyerAddress(ndb.Model):
     # ancestor User
     name = ndb.StringProperty('1', required=True)
     country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
     city = ndb.StringProperty('4', required=True, indexed=False)
     postal_code = ndb.StringProperty('5', required=True, indexed=False)
     street_address = ndb.StringProperty('6', required=True, indexed=False)
