@@ -369,7 +369,7 @@ class BuyerAddress(ndb.Model):
     name = ndb.StringProperty('1', required=True)
     country = ndb.KeyProperty('2', kind=Country, required=True)
     region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True)
-    city = ndb.KeyProperty('4', kind=CountrySubdivision, required=True)# mozda bude string ??
+    city = ndb.StringProperty('4', required=True)
     postal_code = ndb.StringProperty('5', required=True)
     street_address = ndb.StringProperty('6', required=True)
     street_address2 = ndb.StringProperty('7')
@@ -382,23 +382,10 @@ class BuyerAddress(ndb.Model):
 class BuyerCollection(ndb.Model):
     
     # ancestor User
-    # kad budemo skontali querije i indexe onda mozda ovde ubacimo store i product_categories propertije
     name = ndb.StringProperty('1', required=True)
-    notifications = ndb.BooleanProperty('2', default=False)
-    store = ndb.KeyProperty('3', kind=Store, repeated=True)
-    product_category = ndb.KeyProperty('4', kind=ProductCategory, repeated=True)
-
-
-class BuyerCollectionStore(ndb.Model):
-    
-    # ancestor BuyerCollection
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-
-
-class BuyerCollectionProductCategory(ndb.Model):
-    
-    # ancestor BuyerCollection
-    product_categories = ndb.KeyProperty('1', kind=ProductCategory, required=True)
+    notifications = ndb.BooleanProperty('2', default=False, indexed=False)
+    store = ndb.KeyProperty('3', kind=Store, repeated=True, indexed=False)
+    product_category = ndb.KeyProperty('4', kind=ProductCategory, repeated=True, indexed=False)
 
 
 class Currency(ndb.Model):
