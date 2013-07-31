@@ -37,28 +37,29 @@ update
 '''
 
 datastore_key_kinds = {
-    'User':'0',
-    'UserEmail':'1',
-    'UserIdentity':'2',
-    'UserIPAddress':'3',
-    'UserRole':'4',
-    'AggregateUserPermission':'5',
-    'Role':'6',
-    'ObjectLog':1,
+    'ObjectLog':0,
+    'User':1,
+    'UserEmail':2,
+    'UserIdentity':3,
+    'UserIPAddress':4,
+    'UserRole':5,
+    'AggregateUserPermission':6,
+    'Role':7,
+    'Country':8,
+    'CountrySubdivision':9,
+    'Content':10,
+    'SupportRequest':11,
+    'FeedbackRequest':12,
+    'Image':13,
+    'ProductCategory':14,
+    'ProductUOMCategory':15,
+    'ProductUOM':16,
+    
+    
     'Notification':1,
     'NotificationRecipient':1,
     'NotificationOutlet':1,
-    'FeedbackRequest':1,
-    'SupportRequest':1,
-    'Content':1,
-    'ContentRevision':1,
-    'Image':1,
-    'Country':1,
-    'CountrySubdivision':1,
     'Location':1,
-    'ProductCategory':1,
-    'ProductUOMCategory':1,
-    'ProductUOM':1,
     'Store':1,
     'StoreContent':1,
     'StoreTax':1,
@@ -107,11 +108,11 @@ class DecimalProperty(ndb.StringProperty):
 class ObjectLog(ndb.Expando):
     
     # ancestor Any
-    # kind izvlacimo iz kljuca pomocu key.kind() funkcije
+    # reference i type izvlacimo iz kljuca - key.parent()
     # posible composite indexes ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
-    event = ndb.IntegerProperty('3', required=True)
+    action = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
     #_default_indexed = False
     #pass
@@ -206,7 +207,7 @@ class CountrySubdivision(ndb.Model):
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True, indexed=False)#
+    code = ndb.StringProperty('3', required=True, indexed=False)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
 
 
@@ -284,6 +285,7 @@ class UserRole(ndb.Model):
     
     # ancestor User
     role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
+    state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
 class AggregateUserPermission(ndb.Model):
@@ -383,6 +385,8 @@ class BuyerCollection(ndb.Model):
     # kad budemo skontali querije i indexe onda mozda ovde ubacimo store i product_categories propertije
     name = ndb.StringProperty('1', required=True)
     notifications = ndb.BooleanProperty('2', default=False)
+    store = ndb.KeyProperty('3', kind=Store, repeated=True)
+    product_category = ndb.KeyProperty('4', kind=ProductCategory, repeated=True)
 
 
 class BuyerCollectionStore(ndb.Model):
