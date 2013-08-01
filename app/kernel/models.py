@@ -10,7 +10,7 @@ from webapp2_extras import sessions
 
 from app import settings
 from app import ndb
-from app.memcache import get_temp_memory, set_temp_memory
+from app.memcache import get_temp_memory, set_temp_memory, smart_cache
 from app.core import logger
 
 class WorkflowTransitionError(Exception):
@@ -39,9 +39,15 @@ class PermissionBadValue(Exception):
  
 class Workflow():
     
+      OBJECT_DEFAULT_STATE = False
       OBJECT_STATES = {}
       OBJECT_TRANSITIONS = {}
       OBJECT_ACTIONS = {}
+      
+      @classmethod
+      def default_state(cls):
+        # returns default state for this model
+        return cls._resolve_state_code_by_name(cls.OBJECT_DEFAULT_STATE)[0]
   
       @classmethod
       def _resolve_state_code_by_name(cls, state_code):
@@ -139,6 +145,11 @@ class Workflow():
           
           actions = self.OBJECT_ACTIONS.keys()
           
+          if self.has_complete_key():
+             state = self.state
+          else:
+             state = self.default_state()
+          
           for p in permission:
               if p not in actions:
                  raise PermissionBadValue('Provided permission `%s` not common with object `%s`, possible permissions are `%s`' % (p, self.__class__.__name__, actions))
@@ -146,7 +157,7 @@ class Workflow():
           repack = []
           for p in permission:
               # permission (action)_state_model
-              repack.append('%s_%s_%s' % (p, self._resolve_state_name_by_code(self.state), self.__class__.__name__.lower()))
+              repack.append('%s_%s_%s' % (p, self._resolve_state_name_by_code(state), self.__class__.__name__.lower()))
               
           return tuple(repack)
           
@@ -157,6 +168,8 @@ class Workflow():
 class User(ndb.BaseExpando, Workflow):
     
     _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'active'
   
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)         
@@ -189,16 +202,82 @@ class User(ndb.BaseExpando, Workflow):
     state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
     _default_indexed = False
     
+    @classmethod
+    def _auth_or_anon_role(cls, what):
+        k = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
+        return Role.get_by_id(k, use_memcache=True, use_cache=True)
+        
+    @classmethod
+    def _auth_or_anon(cls, what):
+        k = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
+        u = cls._get_from_memory(ndb.Key(User, k).urlsafe())
+        dic = isinstance(u, dict)
+        
+        if not u or not u.has_key('self'):
+           # renew the cache
+           u = cls.get_by_id(k)
+           if u:
+              u.aggregate_user_permissions()
+              u._self_make_memory({}, True)
+              return u
+            
+           # anon or auth user does not exist? create it (install sequence) 
+           @ndb.transactional(xg=True)
+           def trans(ob, k, what): 
+               u = ob(state=ob.default_state(), id=k)
+               u.put()
+               
+               perms = getattr(settings, 'USER_%s_PERMISSIONS' % what.upper())
+               role = Role(permissions=perms, id=k, name='%s Users' % what.lower().capitalize())
+               role.put()
+               
+               user_role = UserRole(parent=u.key, role=role.key, state=UserRole._resolve_state_code_by_name('accepted')[0])
+               user_role.put()
+               
+               return u
+           
+           user = trans(cls, k, what)
+           user.aggregate_user_permissions()
+           
+           up = {}
+           if dic:
+              up = user
+           user._self_make_memory(up, True)
+           return user
+       
+        return u['self']
+    
+    # DRY
+      
+    @classmethod
+    def authenticated_user(cls):
+        return cls._auth_or_anon('AUTHENTICATED')
+    
+    @classmethod
+    def anonymous_user(cls):
+        return cls._auth_or_anon('ANONYMOUS')
+    
+    @classmethod
+    def authenticated_user_role(cls):
+        return cls._auth_or_anon_role('AUTHENTICATED')
+    
+    @classmethod
+    def anonymous_user_role(cls):
+        return cls._auth_or_anon_role('ANONYMOUS')
+    
     def aggregate_user_permissions(self):
         return self._aggregate_user_permissions(self)
  
     @classmethod
     def _aggregate_user_permissions(cls, user):
+        
         # aggregates user permissions based on `user`, accepts user.key or user as param
         if not isinstance(user, ndb.Key):
            user = user.key
-           
-        roles_ = UserRole.query(UserRole.state==UserRole._resolve_state_code_by_name('accepted'), ancestor=user)
+            
+        roles_ = UserRole.query(UserRole.state==UserRole._resolve_state_code_by_name('accepted')[0], ancestor=user)
+        
+        logger('aggregate user perms %s, roles: %s' % (user, roles_))  
         
         @ndb.tasklet
         def callback(user_role):
@@ -210,7 +289,10 @@ class User(ndb.BaseExpando, Workflow):
         permission_makeup = {}
         for r in roles:
             role = r[1]
-            reference_key = role.key.parent().urlsafe()
+            rparent = role.key.parent()
+            if not rparent:
+               rparent = role.key
+            reference_key = rparent.urlsafe()
             perms = role.permissions
             aperms = permission_makeup.get(reference_key)
             if aperms:
@@ -250,12 +332,7 @@ class User(ndb.BaseExpando, Workflow):
                ndb.delete_multi(to_delete)
                
         puts_all(puts, to_delete)
-              
-    @classmethod
-    def default_state(cls):
-        # returns default state for this model
-        return cls._resolve_state_code_by_name('active')[0]
-    
+               
     def logout(self):
         self._self_clear_memcache()
        
@@ -289,18 +366,27 @@ class User(ndb.BaseExpando, Workflow):
     @staticmethod
     def current_user_is_guest():
         u = User.get_current_user()
-        return u == 0 or u == None
+        return u.is_guest
     
     @staticmethod
     def current_user_is_logged():
         return User.current_user_is_guest() == False
-    
-    
+     
     # some shorthand aliases
-    is_logged = current_user_is_logged
-    is_guest = current_user_is_guest
+    @property
+    def is_logged(self):
+        return self.key.id() != settings.USER_ANONYMOUS_KEYNAME
+    
+    @property
+    def is_guest(self):
+        return self.key.id() == settings.USER_ANONYMOUS_KEYNAME
 
     # but can use all other methods
+    
+    @staticmethod
+    def set_current_user(u):
+        logger('setting new user %s' % u)
+        set_temp_memory('user', u)
          
     @staticmethod
     def get_current_user():
@@ -314,9 +400,9 @@ class User(ndb.BaseExpando, Workflow):
             if sess.has_key(settings.USER_SESSION_KEY):
                u = sess[settings.USER_SESSION_KEY].get()
                if not u:
-                  u = 0
+                  u = User.anonymous_user()
             else:
-               u = 0
+               u = User.anonymous_user()
             set_temp_memory('user', u)
              
         return u
@@ -330,7 +416,7 @@ class User(ndb.BaseExpando, Workflow):
         return self._has_permission(self, obj, permission_name, strict, _raise)
     
     @classmethod
-    def _has_permission(cls, user, obj, permission_name=None, strict=False, _raise=False):
+    def _has_permission(cls, user, obj, permission_name=None, strict=False, _raise=False, **kwargs):
         """
         
         Can be called as `User._has_permission(user_key....)` as well
@@ -358,26 +444,53 @@ class User(ndb.BaseExpando, Workflow):
   
         returns mixed, depending on permission_name==None
         """
+          
+        # to prevent recursion
+        auth = kwargs.get('_check_authenticated', False)
+        guest = kwargs.get('_check_guest', False)
         
-        if not isinstance(user, ndb.Key):
-           user = user.key
+        if not user:
+           raise Exception('Invalid user provided')
+       
+        if not obj:
+           raise Exception('Invalid object provided')
         
+        if user.is_logged and not auth: 
+           response = cls._has_permission(User.authenticated_user(), obj, permission_name, strict, False, _check_authenticated=True)
+           if response == True:
+              return True
+          
+        if user.is_guest and not guest:
+           response = cls._has_permission(User.anonymous_user(), obj, permission_name, strict, _raise, _check_guest=True)
+           return response
+          
         if hasattr(obj, 'format_permission'):
            permission_name = obj.format_permission(permission_name)
         else:
            raise PermissionError('obj `%s` provided, is not instance of `Workflow`' % obj)
        
-        ex = PermissionDenied('Not allowed, because you do not have permissions: `%s`' % permission_name)
+        ex = PermissionDenied('Not allowed, because you do not have permission(s): `%s`' % permission_name)  
+        
+        if not isinstance(user, ndb.Key):
+           user = user.key
+        
+        # make sure we get the correct permissions for authenticated specific and guest specific
+        if auth or guest:
+           if auth:
+              obj = User.authenticated_user_role()
+           if guest:
+              obj = User.anonymous_user_role()
+        
         obj = obj.key
  
-        logger('checking if user %s has permissions %s' %  (user.id(), permission_name))
+        logger('checking if user %s has permissions %s upon object %s' %  (user.id(), permission_name, obj.urlsafe()))
    
-        memory = User._get_from_memory(user.id())
+        memory = User._get_from_memory(user.urlsafe())
   
         if memory == None:
            memory = {}
          
-        obj_id = obj.id()
+        obj_id = obj.urlsafe()
         
         if not memory.has_key('permissions'):
            memory['permissions'] = {}
@@ -505,6 +618,8 @@ class UserRole(ndb.Model, Workflow):
     
     _KIND = 4
     # ancestor User
+    
+    OBJECT_DEFAULT_STATE = 'invited'
 
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)         
@@ -534,12 +649,8 @@ class UserRole(ndb.Model, Workflow):
     }    
     
     role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
-    state = ndb.IntegerProperty('1', required=True)# invited/accepted
-    
-    @classmethod
-    def default_state(cls):
-        # returns default state for this model
-        return cls._resolve_state_code_by_name('invited')[0]
+    state = ndb.IntegerProperty('2', required=True)# invited/accepted
+ 
 
 class AggregateUserPermission(ndb.BaseModel):
     

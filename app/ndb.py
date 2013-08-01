@@ -25,12 +25,12 @@ class _BaseModel:
   
   def _memcache_key(self):
       # memcache generator for this model
-      return self._return_memcache_key(self.key.id())
+      return self._return_memcache_key(self.key.urlsafe())
   
   _memcache_key = _memcache_key
    
   def _self_clear_memcache(self):
-      self._clear_memcache(self.key.id())
+      self._clear_memcache(self.key.urlsafe())
       
   def _self_make_memory(self, structure=None, include_self=None):
       if structure == None:
@@ -42,7 +42,7 @@ class _BaseModel:
       self._make_memory(self.key, structure)
        
   def _self_from_memory(self, segment=None, empty=None):
-      return self._get_from_memory(self.key.id(), segment, empty)    
+      return self._get_from_memory(self.key.urlsafe(), segment, empty)    
   
   @classmethod
   def hash_create_key(cls, **kwargs):
@@ -95,7 +95,9 @@ class _BaseModel:
   
   @classmethod
   def _return_memcache_key(cls, kid):
-      return str('mc-%s-%s' % (cls._get_kind(), kid))
+      ## now we are using urlsafe complete encoded key for ABSOLUTE consistency
+      return str('m-%s' % str(kid))
+      #return str('mc-%s-%s' % (cls._get_kind(), kid))
    
   @classmethod
   def _clear_memcache(cls, kid):
@@ -105,7 +107,7 @@ class _BaseModel:
   def _make_memory(cls, user, structure, expire=0):
       if not isinstance(structure, dict):
          raise Exception('_make_memory allows only dicts as values')
-      smart_cache.set(cls._return_memcache_key(user.id()), structure, expire)
+      smart_cache.set(cls._return_memcache_key(user.urlsafe()), structure, expire)
   
   @classmethod    
   def _get_from_memory(cls, kid, segment=None, empty=None):

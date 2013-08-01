@@ -33,6 +33,9 @@ class Tests(Segments):
                  user._self_clear_memcache()
              else:
                  self.response.write(user.has_permission(user, 'update'))
+                 
+          else:
+               self.response.write(user.has_permission(user, 'update'))
     
       def segment_test4(self):
           user = User.get_current_user()
@@ -176,10 +179,13 @@ class Login(Segments):
           
           if provider_id and self.session.has_key(keyx):
              user = User.get_current_user()
-             if user:
+             if user.is_logged:
                 self.response.write('Already logged in %s' % user.key.urlsafe()) 
                 save_in_session = False
                 record_login_event = False
+                
+             else:
+                user = False
           
              try:
                  data = getattr(self, '_login_%s_get_creds' % provider)(self.session[keyx].access_token)
@@ -267,6 +273,7 @@ class Login(Segments):
                  user = run_save(user, user_is_new, relate, relate2)
                  if save_in_session:
                      self.session[settings.USER_SESSION_KEY] = user.key
+                     User.set_current_user(user)
                  self.response.write('Successfully logged in, %s' % user.key.urlsafe())
                  return
              finally:

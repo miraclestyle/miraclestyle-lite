@@ -8,13 +8,37 @@ import webapp2
 
 from google.appengine.api import memcache
 
-from app import settings
 from app.core import logger
 
 class smart_cache:
     """
     Smart cache combines in-memory webapp2._local and google memcache to maximize performance as well some goddies
     """
+    @staticmethod
+    def decorator_tempcached(func, k=None, d=None):
+        if k == None:
+           k = func.__name__
+           
+        def dec(*args, **kwargs):
+            v = get_temp_memory(k, d)
+            if v == d:
+               v = func() 
+               set_temp_memory(k, v)
+            return v
+        return dec
+    
+    @staticmethod
+    def decorator_memcached(func, k=None, d=None):
+        if k == None:
+           k = func.__name__
+            
+        def dec(*args, **kwargs):
+            v = smart_cache.get(k, d)
+            if v == d:
+               v = func() 
+               smart_cache.set(k, v)
+            return v
+        return dec
   
     @staticmethod
     def get(k, d=None, callback=None, **kwargs):

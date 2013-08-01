@@ -38,6 +38,17 @@ APPLICATIONS_INSTALLED = (
 SESSION_STORAGE = 'memcache'
 
 USER_SESSION_KEY = 'user_key'
+USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
+USER_ANONYMOUS_KEYNAME = 'anonymous_user'
+
+# PERMISSIONS - these are installation permissions
+USER_AUTHENTICATED_PERMISSIONS = (
+    'create_active_store',
+    'create_unpublished_catalog'
+)
+USER_ANONYMOUS_PERMISSIONS = (
+    'view_published_catalog',
+)
 
 MAP_IDENTITIES = {
     'google' : 1,
