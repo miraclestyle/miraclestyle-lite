@@ -36,3 +36,8 @@
 {"ts":1375384105321,"patch":[[{"diffs":[[0,"tate"],[-1," a mozd"],[0,"\n   "]],"start1":16609,"start2":16609,"length1":15,"length2":8}]],"length":27643,"saved":false}
 {"ts":1375384191540,"patch":[[{"diffs":[[0,".py#l14\n"],[1,"    # \n"],[0,"    # ht"]],"start1":15981,"start2":15981,"length1":16,"length2":23}]],"length":27650,"saved":false}
 {"ts":1375384246810,"patch":[[{"diffs":[[0,"4\n    # "],[1,"http://en.wikipedia.org/wiki/ISO_4217"],[0,"\n    # h"]],"start1":15987,"start2":15987,"length1":16,"length2":53}]],"length":27687,"saved":false}
+{"ts":1375384442743,"patch":[[{"diffs":[[0,"', required=True"],[1,"http://en.wikipedia.org/wiki/ISO_4217"],[0,")\n    symbol = n"]],"start1":16256,"start2":16256,"length1":32,"length2":69}]],"length":27724,"saved":false}
+{"ts":1375384455108,"patch":[[{"diffs":[[0,"True"],[-1,"http://en.wikipedia.org/wiki/ISO_4217"],[0,")\n  "]],"start1":16268,"start2":16268,"length1":45,"length2":8}]],"length":27687,"saved":false}
+{"ts":1375384456604,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    symbol = n"]],"start1":16256,"start2":16256,"length1":32,"length2":47}]],"length":27702,"saved":false}
+{"ts":1375384460971,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    code = ndb"]],"start1":16323,"start2":16323,"length1":32,"length2":47}]],"length":27717,"saved":false}
+{"ts":1375384478820,"patch":[[{"diffs":[[0,", required=True)"],[1,"# ? mozda bude state"],[0,"\n\n\nclass User(nd"]],"start1":10210,"start2":10210,"length1":32,"length2":52}]],"length":27737,"saved":false}

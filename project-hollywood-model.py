@@ -264,7 +264,7 @@ class ProductUOM(ndb.Model):
     factor = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property
     rounding = ndb.FloatProperty('5', required=True, indexed=False)# ovde ide custom decimal property
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    state = ndb.IntegerProperty('7', required=True)
+    state = ndb.IntegerProperty('7', required=True)# ? mozda bude state
 
 
 class User(ndb.Expando):
@@ -411,8 +411,8 @@ class Currency(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True)
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True)
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
