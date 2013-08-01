@@ -54,6 +54,8 @@ datastore_key_kinds = {
     'ProductCategory':14,
     'ProductUOMCategory':15,
     'ProductUOM':16,
+    'BuyerAddress':17,
+    'BuyerCollection':18,
     
     
     'Notification':1,
@@ -66,10 +68,7 @@ datastore_key_kinds = {
     'StoreCarrier':1,
     'StoreCarrierLine':1,
     'StoreCarrierPricelist':1,
-    'BuyerAddress':1,
-    'BuyerCollection':1,
-    'BuyerCollectionStore':1,
-    'BuyerCollectionProductCategory':1,
+    
     'Currency':1,
     'Order':1,
     'OrderReference':1,
@@ -154,7 +153,7 @@ class FeedbackRequest(ndb.Model):
     # primer helper funkcije u slucajevima gde se ne koristi ancestor mehanizam za pristup relacijama
     @property
     def logs(self):
-      return ObjectLog.gql("WHERE reference = :1", self.key())
+      return ObjectLog.query(ancestor = self.key())
 
 
 class SupportRequest(ndb.Model):
@@ -182,7 +181,7 @@ class Content(ndb.Model):
 class Image(ndb.Model):
     
     # ancestor Any Object
-    image = blobstore.BlobKeyProperty('1', required=True, indexed=False)# verovatno je i dalje ovaj property od klase blobstore - blob ce se implementirati na GCS
+    image = blobstore.BlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
     content_type = ndb.StringProperty('2', required=True, indexed=False)
     size = ndb.FloatProperty('3', required=True, indexed=False)
     width = ndb.IntegerProperty('4', required=True, indexed=False)
@@ -197,6 +196,7 @@ class Country(ndb.Model):
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     code = ndb.StringProperty('1', required=True, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
+    state = ndb.IntegerProperty('3', required=True)# active/inactive - proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class CountrySubdivision(ndb.Model):
@@ -209,6 +209,7 @@ class CountrySubdivision(ndb.Model):
     name = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True, indexed=False)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
+    state = ndb.IntegerProperty('5', required=True)# active/inactive - proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class Location(ndb.Model):
@@ -254,7 +255,7 @@ class ProductUOM(ndb.Model):
 class User(ndb.Expando):
     
     # root
-    state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
+    state = ndb.IntegerProperty('1', required=True)
     #_default_indexed = False
     #pass
 
@@ -262,46 +263,46 @@ class User(ndb.Expando):
 class UserEmail(ndb.Model):
     
     # ancestor User
-    email = ndb.StringProperty('1', required=True, verbose_name=u'Email')
-    primary = ndb.BooleanProperty('2', default=True, indexed=False, verbose_name=u'Primary Email')
+    email = ndb.StringProperty('1', required=True)
+    primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
 
 class UserIdentity(ndb.Model):
     
     # ancestor User
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
-    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa id-jem
-    associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
+    identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
+    associated = ndb.BooleanProperty('3', default=True, indexed=False)
 
 
 class UserIPAddress(ndb.Model):
     
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'IP Address')
-    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True, verbose_name=u'Logged On')
+    ip_address = ndb.StringProperty('1', required=True, indexed=False)
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 class UserRole(ndb.Model):
     
     # ancestor User
-    role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
+    role = ndb.KeyProperty('1', kind=Role, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
-    reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
+    reference = ndb.KeyProperty('1',required=True)# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
 
 
 class Role(ndb.Model):
     
     # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
     # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
-    name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
 
 
 class Store(ndb.Expando):
