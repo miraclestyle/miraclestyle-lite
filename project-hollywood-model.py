@@ -401,6 +401,7 @@ class Currency(ndb.Model):
     
     # root
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True)
