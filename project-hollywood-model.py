@@ -225,6 +225,9 @@ class Location(ndb.Model):
 class ProductCategory(ndb.Model):
     
     # root
+    # http://hg.tryton.org/modules/product/file/tip/category.py#l8
+    # https://support.google.com/merchants/answer/1705911
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
@@ -235,6 +238,8 @@ class ProductCategory(ndb.Model):
 class ProductUOMCategory(ndb.Model):
     
     # root
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True, indexed=False)
 
@@ -242,6 +247,9 @@ class ProductUOMCategory(ndb.Model):
 class ProductUOM(ndb.Model):
     
     # ancestor ProductUOMCategory
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
+    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
@@ -392,7 +400,8 @@ class BuyerCollection(ndb.Model):
 class Currency(ndb.Model):
     
     # root
-    #http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True)
     code = ndb.StringProperty('3', required=True)
