@@ -408,27 +408,28 @@ class Currency(ndb.Model):
     
     # root
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True)
     code = ndb.StringProperty('3', required=True)
-    numeric_code = ndb.StringProperty('4')
-    rounding = ndb.FloatProperty('5', required=True)# custom decimal
-    digits = ndb.IntegerProperty('6', required=True)
-    active = ndb.BooleanProperty('7', default=True)
+    numeric_code = ndb.StringProperty('4', indexed=False)
+    rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    digits = ndb.IntegerProperty('6', required=True, indexed=False)
+    active = ndb.BooleanProperty('7', default=True)# ? mozda bude state
     #formating
-    grouping = ndb.StringProperty('8', required=True)
-    decimal_separator = ndb.StringProperty('9', required=True)
-    thousands_separator = ndb.StringProperty('10')
-    positive_sign_position = ndb.IntegerProperty('11', required=True)
-    negative_sign_position = ndb.IntegerProperty('12', required=True)
-    positive_sign = ndb.StringProperty('13')
-    negative_sign = ndb.StringProperty('14')
-    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True)
-    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True)
-    positive_separate_by_space = ndb.BooleanProperty('17', default=True)
-    negative_separate_by_space = ndb.BooleanProperty('18', default=True)
+    grouping = ndb.StringProperty('8', required=True, indexed=False)
+    decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
+    thousands_separator = ndb.StringProperty('10', indexed=False)
+    positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
+    negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
+    positive_sign = ndb.StringProperty('13', indexed=False)
+    negative_sign = ndb.StringProperty('14', indexed=False)
+    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
+    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
+    positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
+    negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
 
 
 class Order(ndb.Expando):
