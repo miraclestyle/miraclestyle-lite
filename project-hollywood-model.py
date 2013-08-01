@@ -192,6 +192,10 @@ class Image(ndb.Model):
 class Country(ndb.Model):
     
     # root
+    # http://hg.tryton.org/modules/country/file/tip/country.py#l8
+    # http://en.wikipedia.org/wiki/ISO_3166
+    # http://hg.tryton.org/modules/country/file/tip/country.xml
+    # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # u slucaju da ostane index za code, trebace nam composit index code+name
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     code = ndb.StringProperty('1', required=True, indexed=False)
