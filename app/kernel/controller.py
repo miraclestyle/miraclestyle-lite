@@ -6,6 +6,7 @@ Created on Jul 15, 2013
 '''
 import json
 import logging
+import random
 
 from google.appengine.api import urlfetch
  
@@ -15,10 +16,56 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from app import ndb
 
 from app import settings
-from app.request import Segments, Handler
-from app.kernel.models import User, UserIdentity, UserEmail, UserIPAddress
+from app.request import Segments
+from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog)
  
 class Tests(Segments):
+    
+      def segment_test2(self):
+          
+          if self.request.get('cr'):
+              u = User(state=1)
+              u.put()
+              
+              self.response.write('user key: %s<br />' % u.key.urlsafe())
+              
+              ue = UserEmail(parent=u.key, email='test%s@example.com' % str(random.random()).replace('.', '_'))
+              ue.put()
+              
+              oblog = ObjectLog(parent=ue.key, agent=u.key, action=1, state=1)
+              
+              oblog.put()
+          else:
+              #oblog = ndb.Key(ObjectLog, str(self.request.get('k'))).get()
+              #oblog = ObjectLog.get(self.request.get('k'))
+              if self.request.get('cstate'):
+                 u = ndb.Key(urlsafe=str(self.request.get('uk'))) 
+                 """ue = UserEmail(parent=u, email='test%s@example.com' % str(random.random()).replace('.', '_'))
+                 ue.put() 
+                 oblog = ObjectLog(parent=ue.key, agent=u, action=2, state=2)
+                 oblog.put()"""
+                 oblog = ObjectLog(parent=u, agent=u, action=2, state=2)
+                 oblog.put()
+                 
+              lista = ObjectLog.query(ancestor=ndb.Key(urlsafe=str(self.request.get('uk')))).fetch()
+              for a in lista:
+                  self.response.write(a)
+                  self.response.write('<br /><br />')
+              return
+              oblog = ndb.Key(urlsafe=str(self.request.get('k')))
+              pa = oblog.parent()
+              self.response.write(pa.get())
+              iter = 50
+              while pa:
+                  pa = pa.parent()
+                  if not pa:
+                     break
+            
+                  self.response.write(pa.get())
+                  self.response.write('<br /><br />')
+                  
+          
+          self.response.write('object log: %s<br />' % oblog.key.urlsafe())
     
       def segment_test(self):
  
@@ -26,6 +73,7 @@ class Tests(Segments):
   
           if self.request.get('a'):
              user.logout()
+             user.new_state(None, 'logout', log=[user])
              del self.session[settings.USER_SESSION_KEY]
              user = False
           
@@ -88,7 +136,6 @@ class Login(Segments):
           provider_id = settings.MAP_IDENTITIES[provider]
           
           if provider_id and self.session.has_key(keyx):
-             
              user = User.get_current_user()
              if user:
                 self.response.write('Already logged in %s' % user.key.urlsafe()) 
@@ -101,15 +148,12 @@ class Login(Segments):
              except (AssertionError, TypeError), e:
                  del self.session[keyx]
              except Exception, e:
-                 logging.info(e)
-                 try:
-                   del self.session[keyx]
-                 except:
-                     pass
+                 logging.exception(e)
+                 del self.session[keyx]
              else:
                  relate = None
                  relate2 = None
-                 
+                 # build virtual composite key
                  the_id = '%s-%s' % (data.get('id'), provider_id)   
                  email = data.get('email')
                  
@@ -139,12 +183,11 @@ class Login(Segments):
                      put_email = False
                      
                      if user_is_new:
-                         user = User(state=1)
+                         user = User(state=User.default_state())
                          user.put()
                         
-                         user.new_state(1, event=0)
-                         user.new_event(1, state=1)
-                         
+                         user.new_state('active', 'register')
+
                          put_email = True
                          put_identity = True
                      else:
@@ -173,10 +216,10 @@ class Login(Segments):
                         ident.put()
                          
                      if put_ipaddress and record_login_event:
-                        UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
+                        ip = UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
                 
                      if record_login_event:   
-                        user.new_event(2, state=user.state)
+                        user.new_state(None, 'login', log=[user, ip])
                      
                      return user
                       

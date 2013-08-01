@@ -21,6 +21,8 @@ contx.set_memcache_policy(False)
  
 class _BaseModel:
     
+  _KIND = -1  
+    
   def _memcache_key(self):
       # memcache generator for this model
       return self._return_memcache_key(self.key.id())
@@ -30,11 +32,12 @@ class _BaseModel:
   def _self_clear_memcache(self):
       self._clear_memcache(self.key.id())
       
-  def _self_make_memory(self, structure=None):
+  def _self_make_memory(self, structure=None, include_self=None):
       if structure == None:
          structure = {}
-         
-      structure['self'] = self
+      
+      if include_self != None:   
+         structure['self'] = self
       
       self._make_memory(self.key, structure)
        
@@ -81,11 +84,13 @@ class _BaseModel:
     This defaults to cls.__name__; users may overrid this to give a
     class a different on-disk name than its class name.
     """
-    if not settings.DATASTORE_KINDS:
+    if settings.DEBUG:
        return cls.__name__
-    
-    # this may cause KeyError if we havent defined model inside settings - this is to prevent bad kind names
-    return str(settings.DATASTORE_KINDS[cls.__name__])
+   
+    if cls.__name__ not in ('BaseModel', 'BaseExpando'):
+       if cls._KIND < 0:
+          raise TypeError('Invalid _KIND ID') 
+    return str(cls._KIND)
 
   # helper memcache tools
   
@@ -131,7 +136,12 @@ class BaseModel(_BaseModel, Model):
     pass
 
 class BaseExpando(_BaseModel, Expando):
-    pass
+    
+    def set_virtual_field(self, value, alias, prop):
+        prop._code_name = alias
+        self._properties[alias] = prop
+        prop._set_value(self, value)
+        return self
  
 class DecimalProperty(StringProperty):
   def _validate(self, value):

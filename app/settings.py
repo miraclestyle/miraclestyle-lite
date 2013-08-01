@@ -21,92 +21,10 @@ SALT = u'salt'
 HASH_BINDER = u'-'
 
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
+# will still hold this as debug until full production
 DEBUG = True
 DO_LOGS = True
- 
-DATASTORE_KINDS = False
 
-if not DEBUG:
-    DATASTORE_KINDS = {
-        'BaseModel' : -1,
-        'BaseExpando' : -2,            
-        'User': 0,
-        'UserEmail': 1,
-        'UserIdentity': 2,
-        'UserIPAddress': 3,
-        'UserRole': 4,
-        'AggregateUserPermission': 5,
-        'Role': 6,
-        'ObjectLog': 7,
-        
-        'Notification':1,
-        'NotificationRecipient':1,
-        'NotificationOutlet':1,
-        'FeedbackRequest':1,
-        'SupportRequest':1,
-        'Content':1,
-        'ContentRevision':1,
-        'Image':1,
-        'Country':1,
-        'CountrySubdivision':1,
-        'Location':1,
-        'ProductCategory':1,
-        'ProductUOMCategory':1,
-        'ProductUOM':1,
-        'Store':1,
-        'StoreContent':1,
-        'StoreTax':1,
-        'StoreCarrier':1,
-        'StoreCarrierLine':1,
-        'StoreCarrierPricelist':1,
-        'BuyerAddress':1,
-        'BuyerCollection':1,
-        'BuyerCollectionStore':1,
-        'BuyerCollectionProductCategory':1,
-        'Currency':1,
-        'Order':1,
-        'OrderReference':1,
-        'OrderAddress':1,
-        'OrderLine':1,
-        'OrderLineReference':1,
-        'OrderLineTax':1,
-        'PayPalTransaction':1,
-        'BillingLog':1,
-        'BillingCreditAdjustment':1,
-        'OrderFeedback':1,
-        'Catalog':1,
-        'CatalogContent':1,
-        'CatalogPricetag':1,
-        'ProductTemplate':1,
-        'ProductInstance':1,
-        'ProductInstanceInventory':1,
-        'ProductContent':1,
-        'ProductVariant':1,
-        'ProductTemplateVariant':1,
-}
-    
-OBJECT_STATES = {
-    'User' : {
-        1 : 'Active',
-        2 : 'Banned',
-    }
-}
-OBJECT_TRANSITIONS = {
-    'User' : {
-        # State 1 can go only to state 2      
-        1 : [2],
-        # State 2 can only go to state 1
-        2 : [1],
-    }
-}
-OBJECT_EVENTS = {
-    'User' : {
-        1 : 'Registered',
-        2 : 'Logged in',
-        3 : 'Logged out',
-        4 : 'Updated',
-    }
-}
  
 TEMPLATE_CACHE = 3600
 

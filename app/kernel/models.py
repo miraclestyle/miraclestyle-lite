@@ -23,28 +23,16 @@ class WorkflowEventError(Exception):
  
 class Workflow():
     
-      @classmethod
-      def _resolve_event_code(cls, event_code):
-          if not settings.OBJECT_EVENTS.has_key(cls.__name__):
-             raise WorkflowEventError('This model does not have any events defined, check settings.OBJECT_EVENTS for reference.' % settings.OBJECT_STATES)
-          
-          codes = settings.OBJECT_EVENTS[cls.__name__]
-          code = codes.get(event_code)
-          if not code:
-             raise WorkflowEventError('This model does not have event code %s, while available %s' % (event_code, codes))
-          
-          return code
-    
+      OBJECT_STATES = {}
+      OBJECT_TRANSITIONS = {}
+      OBJECT_ACTIONS = {}
+  
       @classmethod
       def _resolve_state_code(cls, state_code):
-          if not settings.OBJECT_STATES.has_key(cls.__name__):
-             raise WorkflowStateError('This model does not have any states defined, check settings.OBJECT_STATES for reference' % settings.OBJECT_STATES)
-          
-          codes = settings.OBJECT_STATES[cls.__name__]
+          codes = cls.OBJECT_STATES
           code = codes.get(state_code)
           if not code:
              raise WorkflowStateError('This model does not have state code %s, while available %s' % (state_code, codes))
-          
           return code
       
       def _resolve_state(self, new_state_code):
@@ -53,36 +41,97 @@ class Workflow():
           
           # if the state is changing
           if code != new_state_code:
-             transitions = settings.OBJECT_TRANSITIONS[self.__name__]
-             transition = transitions.get(code)
+             transitions = self.OBJECT_TRANSITIONS
+             transition = transitions.get(new_state_code)
              if new_state_code not in transition:
                 raise WorkflowTransitionError('You cannot move this object from state %s to %s according to %s transition config.' % (state, new_state_code, transitions))
              else:
                 return new_state_code
           return code
-            
-      def _resolve_event(self, new_event_code):
-          return self._resolve_event_code(new_event_code)
-            
-      def new_state(self, state, **kwargs):
-          return ObjectLog(state=self._resolve_state(state), parent=self.key, **kwargs).put()
+      
+      @classmethod
+      def _get_state_code(cls, st):
+          return cls.OBJECT_STATES[st]
+      
+      @classmethod
+      def _get_action_code(cls, st):
+          return cls.OBJECT_ACTIONS[st]
+ 
+      def new_state(self, state, action, **kwargs):
           
-      def new_event(self, event, **kwargs):
-          return ObjectLog(event=self._resolve_event(event), parent=self.key, **kwargs).put()
+          # if `state` is None, use the object's current state
+          if state == None:
+              state = self.state
+               
+          if not isinstance(action, int):
+             action = self._get_action_code(action)
+          
+          log = kwargs.pop('log', None)
+          message = kwargs.pop('message', None)
+          note = kwargs.pop('note', None)
+          async = kwargs.pop('_async', None) 
+              
+          objlog = ObjectLog(state=self._resolve_state(state), action=action, parent=self.key, **kwargs)
+          
+          if log != None:
+             objlog.set_log(log)
+             
+          if message != None:
+             objlog.set_message(message)
+             
+          if note != None:
+             objlog.set_note(note)
+          
+          if not async:   
+             return objlog.put()
+          else:
+             return objlog.put_async()
+      
+      @classmethod
+      def _workflow_can_transition(cls):
+          pass
+      
+      def workflow_can_transition(self):
+          pass
+ 
       
       @property
       def logs(self):
           return ObjectLog.query(ancestor=self.key)
 
 class User(ndb.BaseExpando, Workflow):
+    
+    _KIND = 0
+  
+    OBJECT_STATES = {
+        'active' : 1,
+        'suspended' : 2,
+    }
  
-    state = ndb.IntegerProperty('1', required=True)
+    OBJECT_ACTIONS = {
+       'register' : 1,
+       'update' : 2,
+       'login' : 3,
+       'logout' : 4,
+       'suspend' : 5,
+       'activate' : 6
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'activate' : (('suspended', 'active'), None),
+        'suspend' : (('active', 'suspended'), ('suspend',)),
+    }
+     
+    state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
     _default_indexed = False
+    
+    @classmethod
+    def default_state(cls):
+        return cls._get_state_code('active')
     
     def logout(self):
         self._self_clear_memcache()
-        
-    
+       
     @property
     def primary_email(self):
         b = self._self_from_memory('primary_email', -1)
@@ -137,12 +186,9 @@ class User(ndb.BaseExpando, Workflow):
              
         return u
      
-    def new_state(self, state, **kwargs):
-        return super(User, self).new_state(state, agent=self.key, **kwargs)
-        
-    def new_event(self, event, **kwargs):
-        return super(User, self).new_event(event, agent=self.key, **kwargs)  
-    
+    def new_state(self, state, action, **kwargs):
+        return super(User, self).new_state(state, action, agent=self.key, **kwargs)
+  
     def has_permission(self, obj, permission_name=None, strict=False):
         return self._has_permission(self, obj, permission_name, strict)
     
@@ -227,62 +273,90 @@ class User(ndb.BaseExpando, Workflow):
               return True
         else:
            return False
+   
+class ObjectLog(ndb.BaseExpando):
     
-     
-class ObjectLog(ndb.BaseModel):
-    
+    _KIND = 7
     # ancestor Any
-    # kind izvlacimo iz kljuca pomocu key.kind() funkcije
-    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    # reference i type izvlacimo iz kljuca - key.parent()
+    # posible composite indexes ???
+    logged = ndb.DateTimeProperty('1', auto_now_add=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
-    event = ndb.IntegerProperty('3', required=True)
+    action = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
-    message = ndb.TextProperty('5') # nema potrebe da bude ovo required
-    note = ndb.TextProperty('6') # nema potrebe da bude ovo required
-    log = ndb.TextProperty('7') # nema potrebe da bude ovo required
+    
+    #_default_indexed = False
+    #message / m = ndb.TextProperty('5')# max size 64kb - to determine char count
+    #note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
+    #log / l = ndb.TextProperty('7')
+    
+    def set_log(self, txt):
+        self.set_virtual_field(txt, 'log', ndb.PickleProperty('7'))
+        
+    def set_message(self, txt):
+        self.set_virtual_field(txt, 'message', ndb.TextProperty('5'))
+        
+    def set_note(self, txt):
+        self.set_virtual_field(txt, 'note', ndb.TextProperty('6'))
+         
+    @property
+    def get_log(self):
+        if 'log' in self._properties:
+           return self.log
+        return None
+
 
 class UserEmail(ndb.BaseModel):
     
+    _KIND = 1
+    
     # ancestor User
-    email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', default=True, indexed=False)
-
+    email = ndb.StringProperty('1', required=True, verbose_name=u'Email')
+    primary = ndb.BooleanProperty('2', default=True, indexed=False, verbose_name=u'Primary Email')
 
 class UserIdentity(ndb.BaseModel):
     
+    _KIND = 2
     # ancestor User
     # index identity only
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    identity = ndb.StringProperty('3', required=True, indexed=True)# ?
-    associated = ndb.BooleanProperty('4', default=True, indexed=False)
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
+    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa id-jem
+    associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
 
 
 class UserIPAddress(ndb.BaseModel):
     
+    _KIND = 3
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True, indexed=False)
-    logged = ndb.DateTimeProperty('2', auto_now_add=True)
+    ip_address = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'IP Address')
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, verbose_name=u'Logged On')
 
 
 class Role(ndb.BaseModel):
     
+    _KIND = 6
     # ancestor Store (Any)
-    name = ndb.StringProperty('1', required=True, indexed=False)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
     
 class UserRole(ndb.Model):
     
+    _KIND = 4
     # ancestor User
-    role = ndb.KeyProperty('1', kind=Role, required=True)
+    role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
+    state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
 class AggregateUserPermission(ndb.BaseModel):
     
+    _KIND = 5
     # ancestor User
-    reference = ndb.KeyProperty('1',required=True)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)
+    reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
 
 
 
+class TestExpando(ndb.BaseExpando):
+      pass
     
