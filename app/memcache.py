@@ -5,11 +5,11 @@ Created on Jul 22, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import webapp2
-import logging
- 
+
 from google.appengine.api import memcache
 
 from app import settings
+from app.core import logger
 
 class smart_cache:
     """
@@ -35,8 +35,7 @@ class smart_cache:
            return tmp
         else:
            tmp = memcache.get(k)
-           if settings.DO_LOGS:
-              logging.info('cache get %s, got: %s' % (k, tmp))
+           logger('cache get %s, got: %s' % (k, tmp))
            if tmp == None:
               if callback:
                  v = callback()
@@ -49,7 +48,7 @@ class smart_cache:
     
     @staticmethod
     def set(k, v, expire=0):
-         logging.info('cache set %s' % k)
+         logger('cache set %s' % k)
          set_temp_memory(k, v)
          memcache.set(k, v, expire)        
     

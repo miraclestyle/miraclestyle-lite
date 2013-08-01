@@ -6,6 +6,15 @@ Created on Jul 12, 2013
 '''
 import sys
 import logging
+
+from app import settings
+
+def logger(msg, t=None):
+    if t == None:
+       t = 'info'
+       
+    if settings.DO_LOGS:
+       getattr(logging, t)(msg)
  
 
 def _resolve_name(name, package, level):
@@ -44,7 +53,7 @@ def import_module(name, package=None):
 
 def module_exists(module_name):
     try:
-       logging.info('Loading module: ' + module_name)
+       logger('Loading module: ' + module_name)
        module = import_module(module_name)
     except ImportError:
         return False

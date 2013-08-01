@@ -7,9 +7,9 @@ Created on Jul 9, 2013
 
 import decimal
 import hashlib
-import logging
 
 from app import settings
+from app.core import logger
 from app.memcache import smart_cache
 
 # Google Appengine Datastore
@@ -22,7 +22,7 @@ contx.set_memcache_policy(False)
 class _BaseModel:
     
   _KIND = -1  
-    
+  
   def _memcache_key(self):
       # memcache generator for this model
       return self._return_memcache_key(self.key.id())
@@ -50,8 +50,7 @@ class _BaseModel:
       for k in kwargs:
           _data.append(unicode(kwargs.get(k)))
       hashed = str(hashlib.md5(settings.HASH_BINDER.join(_data)).hexdigest())
-      if settings.DEBUG and settings.DO_LOGS:
-         logging.info('get by hash: %s' % hashed)    
+      logger('get by hash: %s' % hashed)
       return hashed
   
   @classmethod
@@ -136,6 +135,10 @@ class BaseModel(_BaseModel, Model):
     pass
 
 class BaseExpando(_BaseModel, Expando):
+    
+    def get_field(self, k):
+        fname = self._VIRTUAL_FIELDS.get(k)
+        return getattr(self, fname, None)
     
     def set_virtual_field(self, value, alias, prop):
         prop._code_name = alias

@@ -5,7 +5,6 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import webapp2
-import time
 
 from webapp2_extras.i18n import _
 from webapp2_extras import sessions, i18n, jinja2

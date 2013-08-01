@@ -5,9 +5,8 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import json
-import logging
 import random
-
+ 
 from google.appengine.api import urlfetch
  
 from webapp2_extras.i18n import _ 
@@ -16,10 +15,50 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from app import ndb
 
 from app import settings
+from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog)
+from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, UserRole)
  
 class Tests(Segments):
+    
+      # unit testing segmenter
+      
+      def segment_test5(self):
+          user = User.get_current_user()
+          if user.is_logged:
+             if self.request.get('make_roles'): 
+                 newrole = Role(parent=user.key, name='Admin', permissions=['update_active_user', 'suspend_active_user', 'activate_suspended_user']).put()
+                 UserRole(parent=user.key, role=newrole, state=1).put()
+                 user.aggregate_user_permissions()
+                 user._self_clear_memcache()
+             else:
+                 self.response.write(user.has_permission(user, 'update'))
+    
+      def segment_test4(self):
+          user = User.get_current_user()
+          if user.is_logged:
+             self.response.write('Hello, %s' % user.primary_email)
+             for l in user.logs:
+                 self.response.write([l.key.id(), l.get_log])
+                 
+             if self.request.get('make'):
+                pass
+                 
+             if self.request.get('check'):
+                user.has_permission(user, 'update', _raise=True)
+    
+      def segment_test3(self):
+          if self.request.get('k'):
+             t = ndb.Key(urlsafe=str(self.request.get('k'))).get()
+             t.baaz = 1
+             t.put()
+             self.response.write(t)
+             return
+             
+          a = TestExpando(foobar=2)
+          a.put()
+          
+          self.response.write([a, a.key.urlsafe()])
     
       def segment_test2(self):
           
@@ -148,7 +187,7 @@ class Login(Segments):
              except (AssertionError, TypeError), e:
                  del self.session[keyx]
              except Exception, e:
-                 logging.exception(e)
+                 logger(e, 'exception')
                  del self.session[keyx]
              else:
                  relate = None
@@ -185,8 +224,9 @@ class Login(Segments):
                      if user_is_new:
                          user = User(state=User.default_state())
                          user.put()
-                        
-                         user.new_state('active', 'register')
+                         
+                         # register new action for newly `put` user
+                         user.new_state(None, 'register')
 
                          put_email = True
                          put_identity = True
@@ -219,6 +259,7 @@ class Login(Segments):
                         ip = UserIPAddress(parent=user.key, ip_address=self.request.remote_addr).put()
                 
                      if record_login_event:   
+                        # record login action if needed
                         user.new_state(None, 'login', log=[user, ip])
                      
                      return user

@@ -8,15 +8,15 @@ Created on Oct 15, 2012
 @module wsgi.py
 
 '''
-import logging
 import webapp2
 import six
 import os
 import sys
 
+
 from jinja2 import FileSystemLoader
  
-from app.core import import_module
+from app.core import import_module, logger
 from app import settings
 
 if not six.PY3:
@@ -27,6 +27,7 @@ app_template_dirs = []
   
 for a in settings.APPLICATIONS_INSTALLED:
     module_urls = import_module('%s.%s' % (a, 'urls'))
+    module_models = import_module('%s.%s' % (a, 'models'))
     if module_urls:
         template_dir = os.path.join(os.path.dirname(module_urls.__file__), 'templates')
         if os.path.isdir(template_dir):
@@ -44,7 +45,7 @@ for a in settings.APPLICATIONS_INSTALLED:
 ROUTES = tuple(ROUTES)       
 app_template_dirs = tuple(app_template_dirs)   
 
-logging.info('Webapp2 started')
+logger('Webapp2 started')
 
 config = {}
 config.update(settings.WEBAPP2_EXTRAS)
