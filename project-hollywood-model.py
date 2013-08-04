@@ -402,6 +402,7 @@ class BuyerCollection(ndb.Model):
     # composite index store+notifications
     store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
     notifications = ndb.BooleanProperty('2', default=False, indexed=False)
+    primary_email = ndb.StringProperty('3', required=True, indexed=False)
 
 
 class Currency(ndb.Model):
