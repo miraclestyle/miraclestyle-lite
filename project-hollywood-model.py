@@ -197,11 +197,11 @@ class Country(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
-    # u slucaju da ostane index za code, trebace nam composit index code+name
+    # u slucaju da ostane index za code, trebace nam composit index code+name+active
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     code = ndb.StringProperty('1', required=True, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
-    state = ndb.IntegerProperty('3', required=True)# active/inactive - proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('3', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class CountrySubdivision(ndb.Model):
@@ -210,13 +210,13 @@ class CountrySubdivision(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.py#l52
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
-    # u slucaju da ostane index za code, trebace nam composit index code+name
+    # u slucaju da ostane index za code, trebace nam composit index code+name+active
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
     name = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True, indexed=False)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
-    state = ndb.IntegerProperty('5', required=True)# active/inactive - proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class Location(ndb.Model):
@@ -258,13 +258,14 @@ class ProductUOM(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    # custom index name+active
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     rate = ndb.FloatProperty('3', required=True, indexed=False)# ovde ide custom decimal property
     factor = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property
     rounding = ndb.FloatProperty('5', required=True, indexed=False)# ovde ide custom decimal property
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    state = ndb.IntegerProperty('7', required=True)# ? mozda bude state
+    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class User(ndb.Expando):
@@ -411,13 +412,15 @@ class Currency(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
+    # custom index code+active
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True, indexed=False)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True)
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True)# ? mozda bude state
+    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
     #formating
     grouping = ndb.StringProperty('8', required=True, indexed=False)
     decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
