@@ -325,7 +325,7 @@ class Store(ndb.Expando):
     
     # root
     name = ndb.StringProperty('1', required=True)
-    logo = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
     state = ndb.IntegerProperty('3', required=True)
     _default_indexed = False
     pass
@@ -402,7 +402,7 @@ class BuyerCollection(ndb.Model):
     name = ndb.StringProperty('1', required=True)
     notifications = ndb.BooleanProperty('2', default=False, indexed=False)
     store = ndb.KeyProperty('3', kind=Store, repeated=True, indexed=False)
-    product_category = ndb.KeyProperty('4', kind=ProductCategory, repeated=True, indexed=False)
+    # product_category = ndb.KeyProperty('4', kind=ProductCategory, repeated=True, indexed=False)
 
 
 class Currency(ndb.Model):
