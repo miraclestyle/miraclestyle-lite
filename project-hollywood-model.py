@@ -211,15 +211,6 @@ class CountrySubdivision(ndb.Model):
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
-# ?
-class Location(ndb.Model):
-    
-    # ancestor Any Object (Store, StoreTax, StoreCarrierLine, Catalog...)
-    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, indexed=False)
-    city = ndb.StringProperty('4', indexed=False)# ?
-    postal_code_from = ndb.StringProperty('4', indexed=False)
-    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # ?
 class ProductCategory(ndb.Model):
@@ -359,7 +350,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 # STORE
 ################################################################################
 
-
+# done!
 class Store(ndb.Expando):
     
     # root
@@ -370,7 +361,7 @@ class Store(ndb.Expando):
     pass
     #Expando
 
-
+# done!
 class StoreContent(ndb.Model):
     
     # ancestor Store, Catalog (kesiranje)
@@ -379,6 +370,17 @@ class StoreContent(ndb.Model):
     sequence = ndb.IntegerProperty('3', required=True)
 
 
+# ?
+class StoreShippingExclusion(ndb.Model):
+    
+    # ancestor Store
+    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
+    city = ndb.StringProperty('3', indexed=False)# ?
+    postal_code_from = ndb.StringProperty('4', indexed=False)
+    postal_code_to = ndb.StringProperty('5', indexed=False)
+
+# done!
 class StoreTax(ndb.Expando):
     
     # ancestor Store
@@ -388,36 +390,60 @@ class StoreTax(ndb.Expando):
     amount = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
     location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
     active = ndb.BooleanProperty('6', default=True)
-    #product_category = ndb.KeyProperty('7', kind=ProductCategory)
-    #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier)
+    _default_indexed = False
+    pass
+    #Expando
+    #product_category = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)
+    #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier, repeated=True)
 
+# ?
+class StoreTaxLocation(ndb.Model):
+    
+    # ancestor StoreTax
+    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
+    city = ndb.StringProperty('3', indexed=False)# ?
+    postal_code_from = ndb.StringProperty('4', indexed=False)
+    postal_code_to = ndb.StringProperty('5', indexed=False)
 
+# done!
 class StoreCarrier(ndb.Model):
     
     # ancestor Store
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
 
-
+# done!
 class StoreCarrierLine(ndb.Model):
     
     # ancestor StoreCarrier
-    name = ndb.StringProperty('1', required=True)
+    name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
-    location_exclusion = ndb.BooleanProperty('3', default=False)
+    location_exclusion = ndb.BooleanProperty('3', default=False, indexed=False)
     active = ndb.BooleanProperty('4', default=True)
-    pricelists = ndb.StructuredProperty(StoreCarrierPricelist, '5', repeated=True)
+    rules = ndb.StructuredProperty(StoreCarrierLineRule, '5', repeated=True, indexed=False)
 
-# jos je upitno da li cemo ovo ovako zadrzati, to sve zavizi od querija i indexa...
-class StoreCarrierPricelist(ndb.Model):
+# ?
+class StoreCarrierLineLocation(ndb.Model):
+    
+    # ancestor StoreCarrierLine
+    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
+    city = ndb.StringProperty('3', indexed=False)# ?
+    postal_code_from = ndb.StringProperty('4', indexed=False)
+    postal_code_to = ndb.StringProperty('5', indexed=False)
+
+# ?
+class StoreCarrierLineRule(ndb.Model):
     
     # StructuredProperty model
-    condition_type = ndb.IntegerProperty('1', required=True)
-    condition_operator = ndb.IntegerProperty('2', required=True)
-    condition_value = ndb.FloatProperty('3', required=True)# ovde ide custom decimal property - verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
-    price_type = ndb.IntegerProperty('4', required=True)
-    price_type_factor = ndb.IntegerProperty('5', required=True)
-    amount = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
+    condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
+    condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
+    condition_value = ndb.FloatProperty('3', required=True, indexed=False)# ovde ide custom decimal property - verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
+    condition_value_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)# ? filter: ProductUOMCategory = Weight / ProductUOMCategory = Volume
+    price_type = ndb.IntegerProperty('4', required=True, indexed=False)
+    price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
+    amount = ndb.FloatProperty('6', required=True, indexed=False)# ovde ide custom decimal property
 
 
 ################################################################################
