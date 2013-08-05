@@ -86,9 +86,9 @@ class _BaseModel:
     if settings.DEBUG:
        return cls.__name__
    
-    if cls.__name__ not in ('BaseModel', 'BaseExpando'):
+    if cls.__name__ not in ('BaseModel', '_BaseModel', 'BaseExpando'):
        if cls._KIND < 0:
-          raise TypeError('Invalid _KIND ID') 
+          raise TypeError('Invalid _KIND ID %s, for %s' % (cls._KIND, cls.__name__)) 
     return str(cls._KIND)
 
   # helper memcache tools
@@ -138,17 +138,40 @@ class BaseModel(_BaseModel, Model):
 
 class BaseExpando(_BaseModel, Expando):
     
-    def get_field(self, k):
-        fname = self._VIRTUAL_FIELDS.get(k)
-        return getattr(self, fname, None)
-    
-    def set_virtual_field(self, value, alias, prop):
-        prop._code_name = alias
-        self._properties[alias] = prop
-        prop._set_value(self, value)
-        return self
+  def __getattr__(self, name):
+      
+    if hasattr(self, '_VIRTUAL_FIELDS'):
+       vf = self._VIRTUAL_FIELDS.get(name) 
+       if vf:
+          return vf._get_value(self)
+    return super(BaseExpando, self).__getattr__(name)
+
+  def __setattr__(self, name, value):
+      
+    if hasattr(self, '_VIRTUAL_FIELDS'):
+       vf = self._VIRTUAL_FIELDS.get(name) 
+       if vf:
+            vf._code_name = name
+            self._properties[name] = vf
+            vf._set_value(self, value)
+            return vf
+    return super(BaseExpando, self).__setattr__(name, value)
+
+  def __delattr__(self, name):
+
+    if hasattr(self, '_VIRTUAL_FIELDS'):
+       vf = self._VIRTUAL_FIELDS.get(name) 
+       if vf:
+            vf._delete_value(self)
+            if vf in self.__class__._properties:
+              raise RuntimeError('Property %s still in the list of properties for the '
+                                 'base class.' % name)
+            del self._properties[name]
+                
+    return super(BaseExpando, self).__delattr__(name)
  
 class DecimalProperty(StringProperty):
+    
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
       raise TypeError('expected an decimal, got %s' % repr(value))
@@ -161,6 +184,7 @@ class DecimalProperty(StringProperty):
      
     
 class ReferenceProperty(KeyProperty):
+    
     def _validate(self, value):
         if not isinstance(value, Model):
             raise TypeError('expected an ndb.Model, got %s' % repr(value))

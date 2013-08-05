@@ -17,18 +17,21 @@ from app import ndb
 from app import settings
 from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, UserRole)
+from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
  
 class Tests(Segments):
     
       # unit testing segmenter
+      
+      def segment_test6(self):
+          self.response.write(User.current().has_permission(permission_name='view_published_catalog', _raise=True))
       
       def segment_test5(self):
           user = User.get_current_user()
           if user.is_logged:
              if self.request.get('make_roles'): 
                  newrole = Role(parent=user.key, name='Admin', permissions=['update_active_user', 'suspend_active_user', 'activate_suspended_user']).put()
-                 UserRole(parent=user.key, role=newrole, state=1).put()
+                 RoleUser(parent=user.key, role=newrole, state=1).put()
                  user.aggregate_user_permissions()
                  user._self_clear_memcache()
              else:

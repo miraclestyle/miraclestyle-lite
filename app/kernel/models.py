@@ -4,13 +4,11 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import pickle
-from webapp2_extras.i18n import _
 from webapp2_extras import sessions
 
 from app import settings
 from app import ndb
-from app.memcache import get_temp_memory, set_temp_memory, smart_cache
+from app.memcache import get_temp_memory, set_temp_memory
 from app.core import logger
 
 class WorkflowTransitionError(Exception):
@@ -113,23 +111,10 @@ class Workflow():
                
           if not isinstance(action, int):
              action = self._resolve_action_code_by_name(action)
-          
-          log = kwargs.pop('log', None)
-          message = kwargs.pop('message', None)
-          note = kwargs.pop('note', None)
-          async = kwargs.pop('_async', None) 
-              
+
+          async = kwargs.pop('_async', None)
           objlog = ObjectLog(state=self.resolve_state(state), action=action, parent=self.key, **kwargs)
-          
-          if log != None:
-             objlog.set_log(log)
-             
-          if message != None:
-             objlog.set_message(message)
-             
-          if note != None:
-             objlog.set_note(note)
-          
+
           if not async:   
              return objlog.put()
           else:
@@ -231,7 +216,7 @@ class User(ndb.BaseExpando, Workflow):
                role = Role(permissions=perms, id=k, name='%s Users' % what.lower().capitalize())
                role.put()
                
-               user_role = UserRole(parent=u.key, role=role.key, state=UserRole._resolve_state_code_by_name('accepted')[0])
+               user_role = RoleUser(parent=role.key, user=u.key, state=RoleUser._resolve_state_code_by_name('accepted')[0])
                user_role.put()
                
                return u
@@ -241,7 +226,7 @@ class User(ndb.BaseExpando, Workflow):
            
            up = {}
            if dic:
-              up = user
+              up = u
            user._self_make_memory(up, True)
            return user
        
@@ -275,13 +260,13 @@ class User(ndb.BaseExpando, Workflow):
         if not isinstance(user, ndb.Key):
            user = user.key
             
-        roles_ = UserRole.query(UserRole.state==UserRole._resolve_state_code_by_name('accepted')[0], ancestor=user)
+        roles_ = RoleUser.query(RoleUser.user==user, RoleUser.state==RoleUser._resolve_state_code_by_name('accepted')[0])
         
         logger('aggregate user perms %s, roles: %s' % (user, roles_))  
         
         @ndb.tasklet
         def callback(user_role):
-          role_perms = yield user_role.role.get_async()
+          role_perms = yield user_role.key.parent().get_async()
           raise ndb.Return((user_role, role_perms))
       
         roles = roles_.map(callback)
@@ -304,7 +289,7 @@ class User(ndb.BaseExpando, Workflow):
         
         keys = permission_makeup.keys()
         to_delete = list()
-        puts_fs = []
+        puts_fs = list()
         
         for f in fs:
             reference_key = f.reference.urlsafe()
@@ -370,7 +355,8 @@ class User(ndb.BaseExpando, Workflow):
     
     @staticmethod
     def current_user_is_logged():
-        return User.current_user_is_guest() == False
+        u = User.get_current_user()
+        return u.is_logged
      
     # some shorthand aliases
     @property
@@ -412,11 +398,11 @@ class User(ndb.BaseExpando, Workflow):
     def new_state(self, state, action, **kwargs):
         return super(User, self).new_state(state, action, agent=self.key, **kwargs)
   
-    def has_permission(self, obj, permission_name=None, strict=False, _raise=False):
+    def has_permission(self, obj=None, permission_name=None, strict=False, _raise=False):
         return self._has_permission(self, obj, permission_name, strict, _raise)
     
     @classmethod
-    def _has_permission(cls, user, obj, permission_name=None, strict=False, _raise=False, **kwargs):
+    def _has_permission(cls, user, obj=None, permission_name=None, strict=False, _raise=False, **kwargs):
         """
         
         Can be called as `User._has_permission(user_key....)` as well
@@ -444,6 +430,8 @@ class User(ndb.BaseExpando, Workflow):
   
         returns mixed, depending on permission_name==None
         """
+        
+        is_callback = callable(permission_name)
           
         # to prevent recursion
         auth = kwargs.get('_check_authenticated', False)
@@ -451,10 +439,7 @@ class User(ndb.BaseExpando, Workflow):
         
         if not user:
            raise Exception('Invalid user provided')
-       
-        if not obj:
-           raise Exception('Invalid object provided')
-        
+ 
         if user.is_logged and not auth: 
            response = cls._has_permission(User.authenticated_user(), obj, permission_name, strict, False, _check_authenticated=True)
            if response == True:
@@ -463,11 +448,17 @@ class User(ndb.BaseExpando, Workflow):
         if user.is_guest and not guest:
            response = cls._has_permission(User.anonymous_user(), obj, permission_name, strict, _raise, _check_guest=True)
            return response
-          
-        if hasattr(obj, 'format_permission'):
-           permission_name = obj.format_permission(permission_name)
-        else:
-           raise PermissionError('obj `%s` provided, is not instance of `Workflow`' % obj)
+       
+        # do not format it because we are providing callbacks
+        if not is_callback:
+            if obj:  
+                if hasattr(obj, 'format_permission'):
+                   permission_name = obj.format_permission(permission_name)
+                else:
+                   raise PermissionError('obj `%s` provided, is not instance of `Workflow`' % obj)
+            else:
+                if not isinstance(permission_name, (list, tuple)):
+                   permission_name = (permission_name,) 
        
         ex = PermissionDenied('Not allowed, because you do not have permission(s): `%s`' % permission_name)  
         
@@ -481,7 +472,8 @@ class User(ndb.BaseExpando, Workflow):
            if guest:
               obj = User.anonymous_user_role()
         
-        obj = obj.key
+        if obj:
+           obj = obj.key
  
         logger('checking if user %s has permissions %s upon object %s' %  (user.id(), permission_name, obj.urlsafe()))
    
@@ -489,8 +481,14 @@ class User(ndb.BaseExpando, Workflow):
   
         if memory == None:
            memory = {}
-         
-        obj_id = obj.urlsafe()
+        
+        if obj: 
+           obj_id = obj.urlsafe()
+        else:
+            if _raise:
+               raise ex
+            else:
+               return False
         
         if not memory.has_key('permissions'):
            memory['permissions'] = {}
@@ -513,26 +511,35 @@ class User(ndb.BaseExpando, Workflow):
            if _raise:
               raise ex
            return False
-       
+        
+        # if we want the callback to handle the things
+        if is_callback:
+           result = permission_name(obj, user)
+           if result:
+              return result
+           else:
+              if _raise:
+                 raise ex
+              else:
+                 return False
         if ag:
            if permission_name == None:
               return ag
            else: 
+              response = strict 
               for p in permission_name:
                   if strict:
-                      if p not in ag:
-                         if _raise:
-                            raise ex
-                         return False
+                     if p not in ag:
+                        response = False
+                        break
                   else:
                       if p in ag:
-                         return True
-              if strict:
-                 return True
-              else:
+                         response = True
+                         break
+              if not response:
                  if _raise:
                     raise ex
-                 return False
+              return response
         else:
            if _raise:
               raise ex
@@ -554,30 +561,13 @@ class ObjectLog(ndb.BaseExpando):
     #note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
     #log / l = ndb.TextProperty('7')
     
-    # We use this define user-specific expando properties
+    # We use this define user-specific expando properties, without defining them in for each datastore put
     # @see meth `BaseExpando.get_field`
     _VIRTUAL_FIELDS = {
-       'message' : '5',
-       'note' : '6',
-       'log' : '7',
+       'message' : ndb.TextProperty('5', verbose_name=u'Message'),
+       'note' : ndb.TextProperty('6', verbose_name=u'Note'),
+       'log' : ndb.PickleProperty('7', verbose_name=u'Log'),
     }
-  
-    def set_log(self, txt):
-        self.set_virtual_field(txt, 'log', ndb.PickleProperty(self._VIRTUAL_FIELDS['log']))
-        
-    def set_message(self, txt):
-        self.set_virtual_field(txt, 'message', ndb.TextProperty(self._VIRTUAL_FIELDS['message']))
-        
-    def set_note(self, txt):
-        self.set_virtual_field(txt, 'note', ndb.TextProperty(self._VIRTUAL_FIELDS['note']))
-         
-    @property
-    def get_log(self):
-        # returns unpickled log from object log if there's any otherwise `None`
-        try:
-            return pickle.loads(self.get_field('log'))
-        except:
-            return None
 
 
 class UserEmail(ndb.BaseModel):
@@ -614,10 +604,10 @@ class Role(ndb.BaseModel):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
     
-class UserRole(ndb.Model, Workflow):
+class RoleUser(ndb.Model, Workflow):
     
     _KIND = 4
-    # ancestor User
+    # ancestor Role
     
     OBJECT_DEFAULT_STATE = 'invited'
 
@@ -648,7 +638,7 @@ class UserRole(ndb.Model, Workflow):
         },
     }    
     
-    role = ndb.KeyProperty('1', kind=Role, required=True, verbose_name=u'User Role')
+    user = ndb.KeyProperty('1', kind=User, required=True, verbose_name=u'User')
     state = ndb.IntegerProperty('2', required=True)# invited/accepted
  
 
@@ -660,5 +650,6 @@ class AggregateUserPermission(ndb.BaseModel):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
 
 class TestExpando(ndb.BaseExpando):
+      _KIND = 'TestExpando'
       pass
     

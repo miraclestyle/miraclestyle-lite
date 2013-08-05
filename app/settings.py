@@ -22,7 +22,6 @@ HASH_BINDER = u'-'
 
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 # will still hold this as debug until full production
-DEBUG = True
 DO_LOGS = True
 
  
