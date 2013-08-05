@@ -400,9 +400,10 @@ class BuyerCollection(ndb.Model):
     
     # ancestor User
     # composite index store+notifications
-    store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
-    notifications = ndb.BooleanProperty('2', default=False, indexed=False)
-    primary_email = ndb.StringProperty('3', required=True, indexed=False)
+    name = ndb.StringProperty('1', required=True)
+    store = ndb.KeyProperty('2', kind=Store, repeated=True, indexed=False)
+    notifications = ndb.BooleanProperty('3', default=False, indexed=False)
+    primary_email = ndb.StringProperty('4', required=True, indexed=False)
 
 
 class Currency(ndb.Model):
