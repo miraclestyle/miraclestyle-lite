@@ -128,7 +128,7 @@ class ObjectLog(ndb.Expando):
     def _get_kind(cls):
       return datastore_key_kinds.ObjectLog
 
-
+# done!
 class User(ndb.Expando):
     
     # root
@@ -136,14 +136,14 @@ class User(ndb.Expando):
     #_default_indexed = False
     #pass
 
-
+# done!
 class UserEmail(ndb.Model):
     
     # ancestor User
     email = ndb.StringProperty('1', required=True)
     primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
-
+# done!
 class UserIdentity(ndb.Model):
     
     # ancestor User
@@ -151,21 +151,21 @@ class UserIdentity(ndb.Model):
     identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
 
-
+# done!
 class UserIPAddress(ndb.Model):
     
     # ancestor User
     ip_address = ndb.StringProperty('1', required=True, indexed=False)
     logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
-
+# done!
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
-    reference = ndb.KeyProperty('1',required=True)# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
 
-
+# done!
 class Role(ndb.Model):
     
     # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
@@ -174,7 +174,7 @@ class Role(ndb.Model):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
 
-
+# done!
 class RoleUser(ndb.Model):
     
     # ancestor Role - ovo je optimalnije resenje za querije na store management/role tabu, a posto imamo AggregateUserPermission onda nije concern za performance i nista se ne gubi.
@@ -187,7 +187,7 @@ class RoleUser(ndb.Model):
 # MISC
 ################################################################################
 
-
+# done!
 class FeedbackRequest(ndb.Model):
     
     # ancestor User
@@ -201,7 +201,7 @@ class FeedbackRequest(ndb.Model):
     def logs(self):
       return ObjectLog.query(ancestor = self.key())
 
-
+# done!
 class SupportRequest(ndb.Model):
     
     # ancestor User
@@ -223,7 +223,7 @@ class Content(ndb.Model):
     sequence = ndb.IntegerProperty('5', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     state = ndb.IntegerProperty('6', required=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
 
-
+# done!
 class Image(ndb.Model):
     
     # ancestor Any Object
@@ -314,6 +314,58 @@ class ProductUOM(ndb.Model):
     active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
+class Currency(ndb.Model):
+    
+    # root
+    # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://en.wikipedia.org/wiki/ISO_4217
+    # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
+    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
+    # custom index code+active
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)
+    code = ndb.StringProperty('3', required=True)
+    numeric_code = ndb.StringProperty('4', indexed=False)
+    rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    digits = ndb.IntegerProperty('6', required=True, indexed=False)
+    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    #formating
+    grouping = ndb.StringProperty('8', required=True, indexed=False)
+    decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
+    thousands_separator = ndb.StringProperty('10', indexed=False)
+    positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
+    negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
+    positive_sign = ndb.StringProperty('13', indexed=False)
+    negative_sign = ndb.StringProperty('14', indexed=False)
+    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
+    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
+    positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
+    negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
+
+
+# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
+# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
+class Message(ndb.Model):
+    
+    # root
+    outlet = ndb.IntegerProperty('1', required=True)
+    group = ndb.IntegerProperty('2', required=True)
+    state = ndb.IntegerProperty('3', required=True)
+
+
+class MessageRecepient(ndb.Model):
+    
+    # ancestor Message
+    recepient = ndb.KeyProperty('1', kind=User, required=True)
+    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+
+
+################################################################################
+# BUYER
+################################################################################
+
+
 class BuyerAddress(ndb.Model):
     
     # ancestor User
@@ -329,7 +381,7 @@ class BuyerAddress(ndb.Model):
     default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
     default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
 
-
+# done!
 class BuyerCollection(ndb.Model):
     
     # ancestor User
@@ -337,14 +389,14 @@ class BuyerCollection(ndb.Model):
     notifications = ndb.BooleanProperty('2', default=False)
     primary_email = ndb.StringProperty('3', required=True, indexed=False)
 
-
+# done!
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
     
-
+# done!
 class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
@@ -356,6 +408,9 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     catalog_published_date = ndb.DateTimeProperty('5', required=True)
     
 
+################################################################################
+# STORE
+################################################################################
 
 
 class Store(ndb.Expando):
@@ -417,54 +472,13 @@ class StoreCarrierPricelist(ndb.Model):
     amount = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
 
 
-# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
-# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
-class Message(ndb.Model):
-    
-    # root
-    outlet = ndb.IntegerProperty('1', required=True)
-    group = ndb.IntegerProperty('2', required=True)
-    state = ndb.IntegerProperty('3', required=True)
-
-
-class MessageRecepient(ndb.Model):
-    
-    # ancestor Message
-    recepient = ndb.KeyProperty('1', kind=User, required=True)
-    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
 
 
 
-class Currency(ndb.Model):
-    
-    # root
-    # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
-    # http://en.wikipedia.org/wiki/ISO_4217
-    # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
-    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # custom index code+active
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    name = ndb.StringProperty('1', required=True, indexed=False)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True)
-    numeric_code = ndb.StringProperty('4', indexed=False)
-    rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
-    digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    #formating
-    grouping = ndb.StringProperty('8', required=True, indexed=False)
-    decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
-    thousands_separator = ndb.StringProperty('10', indexed=False)
-    positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
-    negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
-    positive_sign = ndb.StringProperty('13', indexed=False)
-    negative_sign = ndb.StringProperty('14', indexed=False)
-    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
-    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
-    positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
-    negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
+
+
 
 
 class Order(ndb.Expando):
