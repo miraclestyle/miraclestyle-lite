@@ -403,7 +403,6 @@ class BuyerCollection(ndb.Model):
     name = ndb.StringProperty('1', required=True)
     #store = ndb.KeyProperty('2', kind=Store, repeated=True, indexed=False)
     notifications = ndb.BooleanProperty('3', default=False, indexed=False)
-    primary_email = ndb.StringProperty('4', required=True, indexed=False)
 
 
 class BuyerCollectionStore(ndb.Model):
@@ -412,6 +411,7 @@ class BuyerCollectionStore(ndb.Model):
     store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
     store_timestamp = ndb.DateTimeProperty('2', required=True)
     collections = ndb.KeyProperty('3', kind=BuyerCollection, repeated=True, indexed=False)
+    primary_email = ndb.StringProperty('4', indexed=False)
 
 
 class AggregateBuyerCollectionCatalog(ndb.Model):
