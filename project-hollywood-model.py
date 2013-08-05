@@ -406,12 +406,22 @@ class BuyerCollection(ndb.Model):
     primary_email = ndb.StringProperty('4', required=True, indexed=False)
 
 
-# bice potrebna verovatno i aggregate tabela neka
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    store_timestamp = ndb.DateTimeProperty('2', required=True)
+    collections = ndb.KeyProperty('3', kind=BuyerCollection, repeated=True, indexed=False)
+
+
+class AggregateBuyerCollectionCatalog(ndb.Model):
+    
+    # ancestor User
+    store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
+    catalog = ndb.KeyProperty('2', kind=Store, required=True, indexed=False)
+    catalog_published_date = ndb.DateTimeProperty('3', required=True)
+    collections = ndb.KeyProperty('4', kind=BuyerCollection, repeated=True, indexed=False)
+
 
 class Currency(ndb.Model):
     
