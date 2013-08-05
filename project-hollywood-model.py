@@ -395,34 +395,32 @@ class BuyerAddress(ndb.Model):
     default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
     default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
 
-# bice potrebna verovatno i aggregate tabela neka
+
 class BuyerCollection(ndb.Model):
     
     # ancestor User
-    # composite index store+notifications
     name = ndb.StringProperty('1', required=True)
-    #store = ndb.KeyProperty('2', kind=Store, repeated=True, indexed=False)
-    notifications = ndb.BooleanProperty('3', default=False, indexed=False)
+    notifications = ndb.BooleanProperty('2', default=False)
+    primary_email = ndb.StringProperty('3', required=True, indexed=False)
 
 
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
-    store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
-    store_timestamp = ndb.DateTimeProperty('2', required=True)
-    collections = ndb.KeyProperty('3', kind=BuyerCollection, repeated=True, indexed=False)
-    primary_email = ndb.StringProperty('4', indexed=False)
-
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    
 
 class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
-    store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
-    catalog = ndb.KeyProperty('2', kind=Catalog, required=True, indexed=False)
-    catalog_cover = blobstore.BlobKeyProperty('3', required=True)# blob ce se implementirati na GCS
-    catalog_published_date = ndb.DateTimeProperty('4', required=True)
-    collections = ndb.KeyProperty('5', kind=BuyerCollection, repeated=True, indexed=False)
-
+    # task queue radi agregaciju prilikom nekih promena na store-u
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
+    catalog_cover = blobstore.BlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
+    catalog_published_date = ndb.DateTimeProperty('5', required=True)
+    
 
 class Currency(ndb.Model):
     
