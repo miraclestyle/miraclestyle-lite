@@ -126,7 +126,7 @@ class RoleUser(ndb.Model):
     # s tim da se opet smanjuje performance na account management/roles tabu...
     # posto imamo AggregateUserPermission onda nije concern za performance po pitanju has_permission funkcija...
     # ukoliko bude trebalo vraticemo kind name na UserRole i property na role...
-    user = ndb.KeyProperty('1', kind=User, required=True)
+    user = ndb.KeyProperty('1', kind=User, required=True)# role = ndb.KeyProperty('1', kind=Role, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
@@ -215,11 +215,11 @@ class CountrySubdivision(ndb.Model):
 class Location(ndb.Model):
     
     # ancestor Any Object (Store, StoreTax, StoreCarrierLine, Catalog...)
-    country = ndb.KeyProperty('1', kind=Country, required=True)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision)
-    city = ndb.KeyProperty('3', kind=CountrySubdivision)# ne znam da li ce ovo postojati??
-    postal_code_from = ndb.StringProperty('4')
-    postal_code_to = ndb.StringProperty('5')
+    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, indexed=False)
+    city = ndb.StringProperty('4', indexed=False)# ?
+    postal_code_from = ndb.StringProperty('4', indexed=False)
+    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # ?
 class ProductCategory(ndb.Model):
@@ -364,7 +364,7 @@ class Store(ndb.Expando):
     
     # root
     name = ndb.StringProperty('1', required=True)
-    logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
+    logo = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
     state = ndb.IntegerProperty('3', required=True)
     _default_indexed = False
     pass
@@ -374,7 +374,7 @@ class Store(ndb.Expando):
 class StoreContent(ndb.Model):
     
     # ancestor Store, Catalog (kesiranje)
-    title = ndb.StringProperty('1', required=True)
+    title = ndb.StringProperty('1', required=True, indexed=False)
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
 
@@ -382,11 +382,11 @@ class StoreContent(ndb.Model):
 class StoreTax(ndb.Expando):
     
     # ancestor Store
-    name = ndb.StringProperty('1', required=True)
+    name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
-    type = ndb.IntegerProperty('3', required=True)
-    amount = ndb.FloatProperty('4', required=True)# ovde ide custom decimal property - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-    location_exclusion = ndb.BooleanProperty('5', default=False)
+    type = ndb.IntegerProperty('3', required=True, indexed=False)
+    amount = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
     active = ndb.BooleanProperty('6', default=True)
     #product_category = ndb.KeyProperty('7', kind=ProductCategory)
     #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier)
