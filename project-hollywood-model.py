@@ -2,7 +2,7 @@
 
 #MASTER MODEL FILE
 
-# NAPOMENA!!! - Sve mapirane informacije koje se koriste u aplikaciji trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
+# NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
 from google.appengine.ext import blobstore
@@ -36,62 +36,6 @@ to_xml
 update
 '''
 
-datastore_key_kinds = {
-    'ObjectLog':0,
-    'User':1,
-    'UserEmail':2,
-    'UserIdentity':3,
-    'UserIPAddress':4,
-    'AggregateUserPermission':5,
-    'Role':6,
-    'RoleUser':7,
-    'Country':8,
-    'CountrySubdivision':9,
-    'Content':10,
-    'SupportRequest':11,
-    'FeedbackRequest':12,
-    'Image':13,
-    'ProductCategory':14,
-    'ProductUOMCategory':15,
-    'ProductUOM':16,
-    'BuyerAddress':17,
-    'BuyerCollection':18,
-    
-    
-    'Notification':1,
-    'NotificationRecipient':1,
-    'NotificationOutlet':1,
-    'Location':1,
-    'Store':1,
-    'StoreContent':1,
-    'StoreTax':1,
-    'StoreCarrier':1,
-    'StoreCarrierLine':1,
-    'StoreCarrierPricelist':1,
-    
-    'Currency':1,
-    'Order':1,
-    'OrderReference':1,
-    'OrderAddress':1,
-    'OrderLine':1,
-    'OrderLineReference':1,
-    'OrderLineTax':1,
-    'PayPalTransaction':1,
-    'BillingLog':1,
-    'BillingCreditAdjustment':1,
-    'OrderFeedback':1,
-    'Catalog':1,
-    'CatalogContent':1,
-    'CatalogPricetag':1,
-    'ProductTemplate':1,
-    'ProductInstance':1,
-    'ProductInstanceInventory':1,
-    'ProductContent':1,
-    'ProductVariant':1,
-    'ProductTemplateVariant':1,
-}
-
-
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
@@ -107,7 +51,7 @@ class DecimalProperty(ndb.StringProperty):
 # CORE
 ################################################################################
 
-
+# ?
 class ObjectLog(ndb.Expando):
     
     # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, ukljucujuci i njegovu hiejrarhiju - napr: 'User-UserLog-ObjectLog'
@@ -117,8 +61,8 @@ class ObjectLog(ndb.Expando):
     agent = ndb.KeyProperty('2', kind=User, required=True)
     action = ndb.IntegerProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
-    #_default_indexed = False
-    #pass
+    _default_indexed = False
+    pass
     #message / m = ndb.TextProperty('5')# max size 64kb - to determine char count
     #note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
     #log / l = ndb.TextProperty('7')
@@ -133,8 +77,9 @@ class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
-    #_default_indexed = False
-    #pass
+    _default_indexed = False
+    pass
+    #Expando
 
 # done!
 class UserEmail(ndb.Model):
@@ -177,8 +122,10 @@ class Role(ndb.Model):
 # done!
 class RoleUser(ndb.Model):
     
-    # ancestor Role - ovo je optimalnije resenje za querije na store management/role tabu, a posto imamo AggregateUserPermission onda nije concern za performance i nista se ne gubi.
-    # ukoliko bude trebalo vraticemo kind name na UserRole i property na role..
+    # ancestor Role - ovo je optimalnije i logicnije resenje (od UserRole) za querije na store management/roles tabu, 
+    # s tim da se opet smanjuje performance na account management/roles tabu...
+    # posto imamo AggregateUserPermission onda nije concern za performance po pitanju has_permission funkcija...
+    # ukoliko bude trebalo vraticemo kind name na UserRole i property na role...
     user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
@@ -210,7 +157,7 @@ class SupportRequest(ndb.Model):
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
     created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
 
-
+# ?
 class Content(ndb.Model):
     
     # root
@@ -234,7 +181,7 @@ class Image(ndb.Model):
     height = ndb.IntegerProperty('5', required=True, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
 
-
+# ?
 class Country(ndb.Model):
     
     # root
@@ -249,7 +196,7 @@ class Country(ndb.Model):
     name = ndb.StringProperty('2', required=True, indexed=False)
     active = ndb.BooleanProperty('3', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
-
+# ?
 class CountrySubdivision(ndb.Model):
     
     # ancestor Country
@@ -264,7 +211,7 @@ class CountrySubdivision(ndb.Model):
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
-
+# ?
 class Location(ndb.Model):
     
     # ancestor Any Object (Store, StoreTax, StoreCarrierLine, Catalog...)
@@ -274,7 +221,7 @@ class Location(ndb.Model):
     postal_code_from = ndb.StringProperty('4')
     postal_code_to = ndb.StringProperty('5')
 
-
+# ?
 class ProductCategory(ndb.Model):
     
     # root
@@ -287,7 +234,7 @@ class ProductCategory(ndb.Model):
     complete_name = ndb.TextProperty('3', required=True, indexed=False)
     state = ndb.IntegerProperty('4', required=True)
 
-
+# ?
 class ProductUOMCategory(ndb.Model):
     
     # root
@@ -296,7 +243,7 @@ class ProductUOMCategory(ndb.Model):
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True, indexed=False)
 
-
+# ?
 class ProductUOM(ndb.Model):
     
     # ancestor ProductUOMCategory
@@ -313,7 +260,7 @@ class ProductUOM(ndb.Model):
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
-
+# ?
 class Currency(ndb.Model):
     
     # root
@@ -343,7 +290,7 @@ class Currency(ndb.Model):
     positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
     negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
 
-
+# ?
 # ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
 # ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
 class Message(ndb.Model):
@@ -353,7 +300,7 @@ class Message(ndb.Model):
     group = ndb.IntegerProperty('2', required=True)
     state = ndb.IntegerProperty('3', required=True)
 
-
+# ?
 class MessageRecepient(ndb.Model):
     
     # ancestor Message
@@ -365,7 +312,7 @@ class MessageRecepient(ndb.Model):
 # BUYER
 ################################################################################
 
-
+# ?
 class BuyerAddress(ndb.Model):
     
     # ancestor User
@@ -421,6 +368,7 @@ class Store(ndb.Expando):
     state = ndb.IntegerProperty('3', required=True)
     _default_indexed = False
     pass
+    #Expando
 
 
 class StoreContent(ndb.Model):
@@ -472,13 +420,124 @@ class StoreCarrierPricelist(ndb.Model):
     amount = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
 
 
+################################################################################
+# CATALOG
+################################################################################
 
 
+class Catalog(ndb.Expando):
+    
+    # root
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    name = ndb.StringProperty('2', required=True)
+    publish = ndb.DateTimeProperty('3', required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
+    discontinue = ndb.DateTimeProperty('4', required=True)
+    cover = blobstore.BlobKeyProperty('5', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    cost = ndb.FloatProperty('6', required=True)# custom decimal
+    state = ndb.IntegerProperty('7', required=True)
+    _default_indexed = False
+    pass
 
 
+class CatalogContent(ndb.Model):
+    
+    # ancestor Catalog
+    title = ndb.StringProperty('1', required=True)
+    body = ndb.TextProperty('2', required=True)
 
 
+class CatalogPricetag(ndb.Model):
+    
+    # ancestor Catalog
+    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
+    container_image = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    source_width = ndb.FloatProperty('3', required=True)
+    source_height = ndb.FloatProperty('4', required=True)
+    source_position_top = ndb.FloatProperty('5', required=True)
+    source_position_left = ndb.FloatProperty('6', required=True)
+    value = ndb.StringProperty('7', required=True)
 
+
+class ProductTemplate(ndb.Expando):
+    
+    # ancestor Catalog
+    product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
+    name = ndb.StringProperty('2', required=True)
+    description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
+    product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)
+    unit_price = ndb.FloatProperty('5', required=True) # custom decimal property
+    active = ndb.BooleanProperty('6', default=True)#?
+    _default_indexed = False
+    pass
+    #Expando
+    #weight = ndb.FloatProperty('7')# custom decimal
+    #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    #volume = ndb.FloatProperty('9')# custom decimal
+    #volume_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+
+
+class ProductInstance(ndb.Expando):
+    
+    # ancestor ProductTemplate
+    #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
+    #key name ce se graditi tako sto se uradi MD5 na variant_signature
+    #query ce se graditi tako sto se prvo izgradi variant_signature vrednost na osnovu odabira od strane krajnjeg korisnika a potom se ta vrednost hesira u MD5 i koristi kao key identifier
+    #mana ove metode je ta sto se uvek mora izgraditi kompletan variant_signature, tj moraju se sve varijacije odabrati (svaka varianta mora biti mandatory_variant_type)
+    #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
+    #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
+    code = ndb.StringProperty('1', required=True)
+    active = ndb.BooleanProperty('2', default=True)#?
+    _default_indexed = False
+    pass
+    #Expando
+    #description = ndb.TextProperty('3', required=True)
+    #unit_price = ndb.FloatProperty('4', required=True) # custom decimal property
+    #managed_stock = ndb.BooleanProperty('5', default=False)
+    #low_stock_notify = ndb.BooleanProperty('6', default=True)
+    #low_stock_quantity = ndb.FloatProperty('7', default=0.00)# custom decimal
+    #weight = ndb.FloatProperty('8')# custom decimal
+    #weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    #volume = ndb.FloatProperty('10')# custom decimal
+    #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    #variant_signature = ndb.TextProperty('12', required=True)
+
+
+class ProductInstanceInventory(ndb.Model):
+    
+    # ancestor ProductInstance
+    updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    # ? reference = ndb.KeyProperty('2', required=True)
+    quantity = ndb.FloatProperty('3', required=True)# custom decimal
+    balance = ndb.FloatProperty('4', required=True)# custom decimal
+
+
+class ProductContent(ndb.Model):
+    
+    # ancestor ProductTemplate, ProductInstance
+    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+
+
+class ProductVariant(ndb.Model):
+    
+    #ancestor Catalog
+    name = ndb.StringProperty('1', required=True)
+    description = ndb.TextProperty('2')
+    options = ndb.StringProperty('3', repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
+    allow_custom_value = ndb.BooleanProperty('4', default=False)#?
+    mandatory_variant_type = ndb.BooleanProperty('5', default=True)#?
+
+
+class ProductTemplateVariant(ndb.Model):
+    
+    # ancestor ProductTemplate
+    product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+
+
+################################################################################
+# TRADE
+################################################################################
 
 
 class Order(ndb.Expando):
@@ -598,111 +657,62 @@ class OrderFeedback(ndb.Model):
     order_state = ndb.IntegerProperty('8', required=True)# ? mozda async
 
 
-class Catalog(ndb.Expando):
+################################################################################
+# KIND KEYES
+################################################################################
+
+
+datastore_key_kinds = {
+    'ObjectLog':0,
+    'User':1,
+    'UserEmail':2,
+    'UserIdentity':3,
+    'UserIPAddress':4,
+    'AggregateUserPermission':5,
+    'Role':6,
+    'RoleUser':7,
+    'Country':8,
+    'CountrySubdivision':9,
+    'Content':10,
+    'SupportRequest':11,
+    'FeedbackRequest':12,
+    'Image':13,
+    'ProductCategory':14,
+    'ProductUOMCategory':15,
+    'ProductUOM':16,
+    'BuyerAddress':17,
+    'BuyerCollection':18,
     
-    # root
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-    name = ndb.StringProperty('2', required=True)
-    publish = ndb.DateTimeProperty('3', required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
-    discontinue = ndb.DateTimeProperty('4', required=True)
-    cover = blobstore.BlobKeyProperty('5', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    cost = ndb.FloatProperty('6', required=True)# custom decimal
-    state = ndb.IntegerProperty('7', required=True)
-    _default_indexed = False
-    pass
-
-
-class CatalogContent(ndb.Model):
     
-    # ancestor Catalog
-    title = ndb.StringProperty('1', required=True)
-    body = ndb.TextProperty('2', required=True)
-
-
-class CatalogPricetag(ndb.Model):
+    'Notification':1,
+    'NotificationRecipient':1,
+    'NotificationOutlet':1,
+    'Location':1,
+    'Store':1,
+    'StoreContent':1,
+    'StoreTax':1,
+    'StoreCarrier':1,
+    'StoreCarrierLine':1,
+    'StoreCarrierPricelist':1,
     
-    # ancestor Catalog
-    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
-    container_image = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    source_width = ndb.FloatProperty('3', required=True)
-    source_height = ndb.FloatProperty('4', required=True)
-    source_position_top = ndb.FloatProperty('5', required=True)
-    source_position_left = ndb.FloatProperty('6', required=True)
-    value = ndb.StringProperty('7', required=True)
-
-
-class ProductTemplate(ndb.Expando):
-    
-    # ancestor Catalog
-    product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
-    name = ndb.StringProperty('2', required=True)
-    description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
-    product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)
-    unit_price = ndb.FloatProperty('5', required=True) # custom decimal property
-    active = ndb.BooleanProperty('6', default=True)#?
-    _default_indexed = False
-    pass
-    #Expando
-    #weight = ndb.FloatProperty('7')# custom decimal
-    #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    #volume = ndb.FloatProperty('9')# custom decimal
-    #volume_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
-
-
-class ProductInstance(ndb.Expando):
-    
-    # ancestor ProductTemplate
-    #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
-    #key name ce se graditi tako sto se uradi MD5 na variant_signature
-    #query ce se graditi tako sto se prvo izgradi variant_signature vrednost na osnovu odabira od strane krajnjeg korisnika a potom se ta vrednost hesira u MD5 i koristi kao key identifier
-    #mana ove metode je ta sto se uvek mora izgraditi kompletan variant_signature, tj moraju se sve varijacije odabrati (svaka varianta mora biti mandatory_variant_type)
-    #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
-    #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
-    code = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)#?
-    _default_indexed = False
-    pass
-    #Expando
-    #description = ndb.TextProperty('3', required=True)
-    #unit_price = ndb.FloatProperty('4', required=True) # custom decimal property
-    #managed_stock = ndb.BooleanProperty('5', default=False)
-    #low_stock_notify = ndb.BooleanProperty('6', default=True)
-    #low_stock_quantity = ndb.FloatProperty('7', default=0.00)# custom decimal
-    #weight = ndb.FloatProperty('8')# custom decimal
-    #weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    #volume = ndb.FloatProperty('10')# custom decimal
-    #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
-    #variant_signature = ndb.TextProperty('12', required=True)
-
-
-class ProductInstanceInventory(ndb.Model):
-    
-    # ancestor ProductInstance
-    updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    # ? reference = ndb.KeyProperty('2', required=True)
-    quantity = ndb.FloatProperty('3', required=True)# custom decimal
-    balance = ndb.FloatProperty('4', required=True)# custom decimal
-
-
-class ProductContent(ndb.Model):
-    
-    # ancestor ProductTemplate, ProductInstance
-    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True)
-    sequence = ndb.IntegerProperty('2', required=True)
-
-
-class ProductVariant(ndb.Model):
-    
-    #ancestor Catalog
-    name = ndb.StringProperty('1', required=True)
-    description = ndb.TextProperty('2')
-    options = ndb.StringProperty('3', repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
-    allow_custom_value = ndb.BooleanProperty('4', default=False)#?
-    mandatory_variant_type = ndb.BooleanProperty('5', default=True)#?
-
-
-class ProductTemplateVariant(ndb.Model):
-    
-    # ancestor ProductTemplate
-    product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True)
-    sequence = ndb.IntegerProperty('2', required=True)
+    'Currency':1,
+    'Order':1,
+    'OrderReference':1,
+    'OrderAddress':1,
+    'OrderLine':1,
+    'OrderLineReference':1,
+    'OrderLineTax':1,
+    'PayPalTransaction':1,
+    'BillingLog':1,
+    'BillingCreditAdjustment':1,
+    'OrderFeedback':1,
+    'Catalog':1,
+    'CatalogContent':1,
+    'CatalogPricetag':1,
+    'ProductTemplate':1,
+    'ProductInstance':1,
+    'ProductInstanceInventory':1,
+    'ProductContent':1,
+    'ProductVariant':1,
+    'ProductTemplateVariant':1,
+}
