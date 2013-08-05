@@ -42,9 +42,9 @@ datastore_key_kinds = {
     'UserEmail':2,
     'UserIdentity':3,
     'UserIPAddress':4,
-    'UserRole':5,
-    'AggregateUserPermission':6,
-    'Role':7,
+    'AggregateUserPermission':5,
+    'Role':6,
+    'RoleUser':7,
     'Country':8,
     'CountrySubdivision':9,
     'Content':10,
@@ -103,6 +103,10 @@ class DecimalProperty(ndb.StringProperty):
   def _from_base_type(self, value):
     return decimal.Decimal(value)  # Always return a decimal
 
+################################################################################
+# CORE
+################################################################################
+
 
 class ObjectLog(ndb.Expando):
     
@@ -125,21 +129,63 @@ class ObjectLog(ndb.Expando):
       return datastore_key_kinds.ObjectLog
 
 
-# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
-# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
-class Message(ndb.Model):
+class User(ndb.Expando):
     
     # root
-    outlet = ndb.IntegerProperty('1', required=True)
-    group = ndb.IntegerProperty('2', required=True)
-    state = ndb.IntegerProperty('3', required=True)
+    state = ndb.IntegerProperty('1', required=True)
+    #_default_indexed = False
+    #pass
 
 
-class MessageRecepient(ndb.Model):
+class UserEmail(ndb.Model):
     
-    # ancestor Message
-    recepient = ndb.KeyProperty('1', kind=User, required=True)
-    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    # ancestor User
+    email = ndb.StringProperty('1', required=True)
+    primary = ndb.BooleanProperty('2', default=True, indexed=False)
+
+
+class UserIdentity(ndb.Model):
+    
+    # ancestor User
+    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
+    identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
+    associated = ndb.BooleanProperty('3', default=True, indexed=False)
+
+
+class UserIPAddress(ndb.Model):
+    
+    # ancestor User
+    ip_address = ndb.StringProperty('1', required=True, indexed=False)
+    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+
+
+class AggregateUserPermission(ndb.Model):
+    
+    # ancestor User
+    reference = ndb.KeyProperty('1',required=True)# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
+
+
+class Role(ndb.Model):
+    
+    # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
+    # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+
+
+class RoleUser(ndb.Model):
+    
+    # ancestor Role - ovo je optimalnije resenje za querije na store management/role tabu, a posto imamo AggregateUserPermission onda nije concern za performance i nista se ne gubi.
+    # ukoliko bude trebalo vraticemo kind name na UserRole i property na role..
+    user = ndb.KeyProperty('1', kind=User, required=True)
+    state = ndb.IntegerProperty('1', required=True)# invited/accepted
+
+
+################################################################################
+# MISC
+################################################################################
 
 
 class FeedbackRequest(ndb.Model):
@@ -268,57 +314,48 @@ class ProductUOM(ndb.Model):
     active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
-class User(ndb.Expando):
-    
-    # root
-    state = ndb.IntegerProperty('1', required=True)
-    #_default_indexed = False
-    #pass
-
-
-class UserEmail(ndb.Model):
+class BuyerAddress(ndb.Model):
     
     # ancestor User
-    email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', default=True, indexed=False)
+    name = ndb.StringProperty('1', required=True)
+    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
+    city = ndb.StringProperty('4', required=True, indexed=False)
+    postal_code = ndb.StringProperty('5', required=True, indexed=False)
+    street_address = ndb.StringProperty('6', required=True, indexed=False)
+    street_address2 = ndb.StringProperty('7', indexed=False)
+    email = ndb.StringProperty('8', indexed=False)
+    telephone = ndb.StringProperty('9', indexed=False)
+    default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
+    default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
 
 
-class UserIdentity(ndb.Model):
+class BuyerCollection(ndb.Model):
     
     # ancestor User
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
-    identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
-    associated = ndb.BooleanProperty('3', default=True, indexed=False)
+    name = ndb.StringProperty('1', required=True)
+    notifications = ndb.BooleanProperty('2', default=False)
+    primary_email = ndb.StringProperty('3', required=True, indexed=False)
 
 
-class UserIPAddress(ndb.Model):
+class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True, indexed=False)
-    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    
 
-
-class UserRole(ndb.Model):
+class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
-    role = ndb.KeyProperty('1', kind=Role, required=True)
-    state = ndb.IntegerProperty('1', required=True)# invited/accepted
-
-
-class AggregateUserPermission(ndb.Model):
+    # task queue radi agregaciju prilikom nekih promena na store-u
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
+    catalog_cover = blobstore.BlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
+    catalog_published_date = ndb.DateTimeProperty('5', required=True)
     
-    # ancestor User
-    reference = ndb.KeyProperty('1',required=True)# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
 
-
-class Role(ndb.Model):
-    
-    # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
-    # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
-    name = ndb.StringProperty('1', required=True, indexed=False)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
 
 
 class Store(ndb.Expando):
@@ -380,47 +417,25 @@ class StoreCarrierPricelist(ndb.Model):
     amount = ndb.FloatProperty('6', required=True)# ovde ide custom decimal property
 
 
-class BuyerAddress(ndb.Model):
+# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
+# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
+class Message(ndb.Model):
     
-    # ancestor User
-    name = ndb.StringProperty('1', required=True)
-    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
-    city = ndb.StringProperty('4', required=True, indexed=False)
-    postal_code = ndb.StringProperty('5', required=True, indexed=False)
-    street_address = ndb.StringProperty('6', required=True, indexed=False)
-    street_address2 = ndb.StringProperty('7', indexed=False)
-    email = ndb.StringProperty('8', indexed=False)
-    telephone = ndb.StringProperty('9', indexed=False)
-    default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
-    default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
+    # root
+    outlet = ndb.IntegerProperty('1', required=True)
+    group = ndb.IntegerProperty('2', required=True)
+    state = ndb.IntegerProperty('3', required=True)
 
 
-class BuyerCollection(ndb.Model):
+class MessageRecepient(ndb.Model):
     
-    # ancestor User
-    name = ndb.StringProperty('1', required=True)
-    notifications = ndb.BooleanProperty('2', default=False)
-    primary_email = ndb.StringProperty('3', required=True, indexed=False)
+    # ancestor Message
+    recepient = ndb.KeyProperty('1', kind=User, required=True)
+    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
 
 
-class BuyerCollectionStore(ndb.Model):
-    
-    # ancestor User
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
-    
 
-class AggregateBuyerCollectionCatalog(ndb.Model):
-    
-    # ancestor User
-    # task queue radi agregaciju prilikom nekih promena na store-u
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
-    catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
-    catalog_cover = blobstore.BlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
-    catalog_published_date = ndb.DateTimeProperty('5', required=True)
-    
+
 
 class Currency(ndb.Model):
     
