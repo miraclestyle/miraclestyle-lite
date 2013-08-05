@@ -418,9 +418,10 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True, indexed=False)
-    catalog = ndb.KeyProperty('2', kind=Store, required=True, indexed=False)
-    catalog_published_date = ndb.DateTimeProperty('3', required=True)
-    collections = ndb.KeyProperty('4', kind=BuyerCollection, repeated=True, indexed=False)
+    catalog = ndb.KeyProperty('2', kind=Catalog, required=True, indexed=False)
+    catalo_cover = blobstore.BlobKeyProperty('3', required=True)# verovatno je i dalje ovaj property od klase blobstore
+    catalog_published_date = ndb.DateTimeProperty('4', required=True)
+    collections = ndb.KeyProperty('5', kind=BuyerCollection, repeated=True, indexed=False)
 
 
 class Currency(ndb.Model):
