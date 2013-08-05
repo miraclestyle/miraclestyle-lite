@@ -97,3 +97,5 @@
 {"ts":1375702516475,"patch":[[{"diffs":[[0,"db.KeyProperty('"],[-1,"4"],[1,"5"],[0,"', kind=BuyerCol"]],"start1":16735,"start2":16735,"length1":33,"length2":33}]],"length":28875,"saved":false}
 {"ts":1375702521141,"patch":[[{"diffs":[[0,"    "],[-1,"collections = ndb.KeyProperty('5', kind=BuyerCollection, repeated=True, indexed=False)"],[0,"\n\n\nc"]],"start1":16716,"start2":16716,"length1":94,"length2":8}]],"length":28789,"saved":false}
 {"ts":1375702525937,"patch":[[{"diffs":[[0,"ue)\n    "],[1,"collections = ndb.KeyProperty('5', kind=BuyerCollection, repeated=True, indexed=False)"],[0,"\n\n\nclass"]],"start1":16712,"start2":16712,"length1":16,"length2":102}]],"length":28875,"saved":false}
+{"ts":1375702580709,"patch":[[{"diffs":[[0,"  catalo"],[1,"g"],[0,"_cover ="]],"start1":16528,"start2":16528,"length1":16,"length2":17}]],"length":28876,"saved":false}
+{"ts":1375702598623,"patch":[[{"diffs":[[0,"e)# "],[-1,"verovatno je i dalje ovaj property od klase blobstore"],[1,"blob ce se implementirati na GCS"],[0,"\n   "]],"start1":16589,"start2":16589,"length1":61,"length2":40}]],"length":28855,"saved":false}
