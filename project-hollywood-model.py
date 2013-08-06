@@ -360,11 +360,37 @@ class Store(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
+    #
+    # Company
+    # company_name = ndb.StringProperty('4', required=True)
+    # company_country = ndb.KeyProperty('5', kind=Country, required=True)
+    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
+    # company_city = ndb.StringProperty('7', required=True)
+    # company_postal_code = ndb.StringProperty('8', required=True)
+    # company_street_address = ndb.StringProperty('9', required=True)
+    # company_street_address2 = ndb.StringProperty('10')
+    # company_email = ndb.StringProperty('11')
+    # company_telephone = ndb.StringProperty('12')
+    #
+    # Payment
+    # currency = ndb.KeyProperty('13', kind=Currency, required=True)
+    # tax_buyer_on ?
+    # paypal_email = ndb.StringProperty('14')
+    # paypal_shipping ?
+    #
+    # Analytics 
+    # tracking_id = ndb.StringProperty('15')
+    #
+    # Feedback
+    # positive_feedback_count = ndb.IntegerProperty('16', required=True)
+    # negative_feedback_count = ndb.IntegerProperty('17', required=True)
+    # neutral_feedback_count = ndb.IntegerProperty('18', required=True)
+    
 
 # done!
 class StoreContent(ndb.Model):
     
-    # ancestor Store, Catalog (kesiranje)
+    # ancestor Store (Catalog - for caching)
     title = ndb.StringProperty('1', required=True, indexed=False)
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
@@ -373,7 +399,7 @@ class StoreContent(ndb.Model):
 # ?
 class StoreShippingExclusion(ndb.Model):
     
-    # ancestor Store
+    # ancestor Store (Catalog - for caching)
     country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
     region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
     city = ndb.StringProperty('3', indexed=False)# ?
@@ -450,58 +476,65 @@ class StoreCarrierLineRule(ndb.Model):
 # CATALOG
 ################################################################################
 
-
+# done!
 class Catalog(ndb.Expando):
     
     # root
+    # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     store = ndb.KeyProperty('1', kind=Store, required=True)
     name = ndb.StringProperty('2', required=True)
-    publish = ndb.DateTimeProperty('3', required=True)# trebaju se definisati granice i rasponi, i postaviti neke default vrednosti
-    discontinue = ndb.DateTimeProperty('4', required=True)
-    cover = blobstore.BlobKeyProperty('5', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    cost = ndb.FloatProperty('6', required=True)# custom decimal
+    publish = ndb.DateTimeProperty('3', required=True)# today
+    discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
+    cover = blobstore.BlobKeyProperty('5', required=True, indexed=False)# blob ce se implementirati na GCS
+    cost = ndb.FloatProperty('6', required=True, indexed=False)# custom decimal
     state = ndb.IntegerProperty('7', required=True)
     _default_indexed = False
     pass
+    # Expando
+    # Search improvements
+    # product count per product category
+    # rank coefficient based on store feedback
 
-
+# done!
 class CatalogContent(ndb.Model):
     
     # ancestor Catalog
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
 
-
+# done!
 class CatalogPricetag(ndb.Model):
     
     # ancestor Catalog
-    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True)
-    container_image = blobstore.BlobKeyProperty('2', required=True)# verovatno je i dalje ovaj property od klase blobstore
-    source_width = ndb.FloatProperty('3', required=True)
-    source_height = ndb.FloatProperty('4', required=True)
-    source_position_top = ndb.FloatProperty('5', required=True)
-    source_position_left = ndb.FloatProperty('6', required=True)
-    value = ndb.StringProperty('7', required=True)
+    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True, indexed=False)
+    container_image = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
+    source_width = ndb.FloatProperty('3', required=True, indexed=False)
+    source_height = ndb.FloatProperty('4', required=True, indexed=False)
+    source_position_top = ndb.FloatProperty('5', required=True, indexed=False)
+    source_position_left = ndb.FloatProperty('6', required=True, indexed=False)
+    value = ndb.StringProperty('7', required=True, indexed=False)# $ 19.99 - ovo se handla unutar transakcije kada se radi update na unit_price od ProductTemplate ili ProductInstance
 
-
+# ?
 class ProductTemplate(ndb.Expando):
     
     # ancestor Catalog
-    product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
+    product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
     description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
-    product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)
-    unit_price = ndb.FloatProperty('5', required=True) # custom decimal property
-    active = ndb.BooleanProperty('6', default=True)#?
+    product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
+    unit_price = ndb.FloatProperty('5', required=True, indexed=False) # custom decimal property
+    active = ndb.BooleanProperty('6', default=True)# ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike
     _default_indexed = False
     pass
     #Expando
+    # mozda treba uvesti customer lead time??
+    # da razmislim oko UOM parametara
     #weight = ndb.FloatProperty('7')# custom decimal
     #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
     #volume = ndb.FloatProperty('9')# custom decimal
     #volume_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
 
-
+# ?
 class ProductInstance(ndb.Expando):
     
     # ancestor ProductTemplate
@@ -512,7 +545,7 @@ class ProductInstance(ndb.Expando):
     #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
     #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
     code = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)#?
+    active = ndb.BooleanProperty('2', default=True)# ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike
     _default_indexed = False
     pass
     #Expando
@@ -527,7 +560,7 @@ class ProductInstance(ndb.Expando):
     #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
     #variant_signature = ndb.TextProperty('12', required=True)
 
-
+# ?
 class ProductInstanceInventory(ndb.Model):
     
     # ancestor ProductInstance
@@ -536,28 +569,27 @@ class ProductInstanceInventory(ndb.Model):
     quantity = ndb.FloatProperty('3', required=True)# custom decimal
     balance = ndb.FloatProperty('4', required=True)# custom decimal
 
-
+# done!
 class ProductContent(ndb.Model):
     
     # ancestor ProductTemplate, ProductInstance
-    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True)
+    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
 
-
+# done!
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')
-    options = ndb.StringProperty('3', repeated=True)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
-    allow_custom_value = ndb.BooleanProperty('4', default=False)#?
-    mandatory_variant_type = ndb.BooleanProperty('5', default=True)#?
+    options = ndb.StringProperty('3', repeated=True, indexed=False)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
+    allow_custom_value = ndb.BooleanProperty('4', default=False, indexed=False)# ovu vrednost buyer upisuje u definisano polje a ona se dalje prepisuje u order line description prilikom Add to Cart 
 
-
+# done!
 class ProductTemplateVariant(ndb.Model):
     
     # ancestor ProductTemplate
-    product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True)
+    product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
 
 
@@ -681,64 +713,3 @@ class OrderFeedback(ndb.Model):
     order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)#? mozda async
     total_amount = ndb.FloatProperty('7', required=True)# custom decimal ? mozda async
     order_state = ndb.IntegerProperty('8', required=True)# ? mozda async
-
-
-################################################################################
-# KIND KEYES
-################################################################################
-
-
-datastore_key_kinds = {
-    'ObjectLog':0,
-    'User':1,
-    'UserEmail':2,
-    'UserIdentity':3,
-    'UserIPAddress':4,
-    'AggregateUserPermission':5,
-    'Role':6,
-    'RoleUser':7,
-    'Country':8,
-    'CountrySubdivision':9,
-    'Content':10,
-    'SupportRequest':11,
-    'FeedbackRequest':12,
-    'Image':13,
-    'ProductCategory':14,
-    'ProductUOMCategory':15,
-    'ProductUOM':16,
-    'BuyerAddress':17,
-    'BuyerCollection':18,
-    
-    
-    'Notification':1,
-    'NotificationRecipient':1,
-    'NotificationOutlet':1,
-    'Location':1,
-    'Store':1,
-    'StoreContent':1,
-    'StoreTax':1,
-    'StoreCarrier':1,
-    'StoreCarrierLine':1,
-    'StoreCarrierPricelist':1,
-    
-    'Currency':1,
-    'Order':1,
-    'OrderReference':1,
-    'OrderAddress':1,
-    'OrderLine':1,
-    'OrderLineReference':1,
-    'OrderLineTax':1,
-    'PayPalTransaction':1,
-    'BillingLog':1,
-    'BillingCreditAdjustment':1,
-    'OrderFeedback':1,
-    'Catalog':1,
-    'CatalogContent':1,
-    'CatalogPricetag':1,
-    'ProductTemplate':1,
-    'ProductInstance':1,
-    'ProductInstanceInventory':1,
-    'ProductContent':1,
-    'ProductVariant':1,
-    'ProductTemplateVariant':1,
-}

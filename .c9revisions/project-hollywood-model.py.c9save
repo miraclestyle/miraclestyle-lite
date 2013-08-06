@@ -437,3 +437,231 @@
 {"ts":1375725072897,"patch":[[{"diffs":[[0,"eight / "],[1,"ProductUOMCategory = Weight"],[0,"\n    pri"]],"start1":19589,"start2":19589,"length1":16,"length2":43}]],"length":31718,"saved":false}
 {"ts":1375725077884,"patch":[[{"diffs":[[0,"egory = "],[-1,"Weight"],[1,"Volume"],[0,"\n    pri"]],"start1":19610,"start2":19610,"length1":22,"length2":22}]],"length":31718,"saved":false}
 {"ts":1375725117908,"patch":[[{"diffs":[[0,"uired=True)#"],[1," ?"],[0," filter: Pro"]],"start1":19546,"start2":19546,"length1":24,"length2":26}]],"length":31720,"saved":false}
+{"contributors":[],"silentsave":true,"ts":1375779943676,"patch":[[{"diffs":[[0,"c\n\n\n"],[-1,"################################################################################\n# KIND KEYES\n################################################################################\n\n\ndatastore_key_kinds = {\n    'ObjectLog':0,\n    'User':1,\n    'UserEmail':2,\n    'UserIdentity':3,\n    'UserIPAddress':4,\n    'AggregateUserPermission':5,\n    'Role':6,\n    'RoleUser':7,\n    'Country':8,\n    'CountrySubdivision':9,\n    'Content':10,\n    'SupportRequest':11,\n    'FeedbackRequest':12,\n    'Image':13,\n    'ProductCategory':14,\n    'ProductUOMCategory':15,\n    'ProductUOM':16,\n    'BuyerAddress':17,\n    'BuyerCollection':18,\n    \n    \n    'Notification':1,\n    'NotificationRecipient':1,\n    'NotificationOutlet':1,\n    'Location':1,\n    'Store':1,\n    'StoreContent':1,\n    'StoreTax':1,\n    'StoreCarrier':1,\n    'StoreCarrierLine':1,\n    'StoreCarrierPricelist':1,\n    \n    'Currency':1,\n    'Order':1,\n    'OrderReference':1,\n    'OrderAddress':1,\n    'OrderLine':1,\n    'OrderLineReference':1,\n    'OrderLineTax':1,\n    'PayPalTransaction':1,\n    'BillingLog':1,\n    'BillingCreditAdjustment':1,\n    'OrderFeedback':1,\n    'Catalog':1,\n    'CatalogContent':1,\n    'CatalogPricetag':1,\n    'ProductTemplate':1,\n    'ProductInstance':1,\n    'ProductInstanceInventory':1,\n    'ProductContent':1,\n    'ProductVariant':1,\n    'ProductTemplateVariant':1,\n}"],[0,"\n"]],"start1":30367,"start2":30367,"length1":1353,"length2":5}]],"length":30372,"saved":false}
+{"ts":1375779946087,"patch":[[{"diffs":[[0,"a async\n"],[-1,"\n\n\n"]],"start1":30361,"start2":30361,"length1":11,"length2":8}]],"length":30369,"saved":false}
+{"ts":1375781177762,"patch":[[{"diffs":[[0,")# t"],[-1,"rebaju se definisati granice i rasponi, i postaviti neke default vrednosti"],[1,"oda"],[0,"\n   "]],"start1":20261,"start2":20261,"length1":82,"length2":11}]],"length":30298,"saved":false}
+{"ts":1375781179061,"patch":[[{"diffs":[[0,"e)# toda"],[1,"y"],[0,"\n    dis"]],"start1":20260,"start2":20260,"length1":16,"length2":17}]],"length":30299,"saved":false}
+{"ts":1375781184039,"patch":[[{"diffs":[[0,"quired=True)"],[1,"# "],[0,"\n    cover ="]],"start1":20316,"start2":20316,"length1":24,"length2":26}]],"length":30301,"saved":false}
+{"ts":1375781187807,"patch":[[{"diffs":[[0,"=True)# "],[1,"+"],[0,"\n    cov"]],"start1":20322,"start2":20322,"length1":16,"length2":17}]],"length":30302,"saved":false}
+{"ts":1375781190213,"patch":[[{"diffs":[[0,"True)# +"],[1,"30 da"],[0,"\n    cov"]],"start1":20323,"start2":20323,"length1":16,"length2":21}]],"length":30307,"saved":false}
+{"ts":1375781192305,"patch":[[{"diffs":[[0,"# +30 da"],[1,"ys"],[0,"\n    cov"]],"start1":20328,"start2":20328,"length1":16,"length2":18}]],"length":30309,"saved":false}
+{"ts":1375781204817,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")# verovatno je "]],"start1":20379,"start2":20379,"length1":32,"length2":47}]],"length":30324,"saved":false}
+{"ts":1375781252685,"patch":[[{"diffs":[[0,"e)# "],[-1,"verovatno je i dalje ovaj property od klase blobstore"],[1,"blob ce se implementirati na GCS"],[0,"\n   "]],"start1":20409,"start2":20409,"length1":61,"length2":40}]],"length":30303,"saved":false}
+{"ts":1375781296417,"patch":[[{"diffs":[[0," False\n    pass\n"],[1,"    \n"],[0,"\n\nclass CatalogC"]],"start1":20585,"start2":20585,"length1":32,"length2":37}]],"length":30308,"saved":false}
+{"ts":1375781297807,"patch":[[{"diffs":[[0,"ass\n    "],[1,"#"],[0,"\n\n\nclass"]],"start1":20597,"start2":20597,"length1":16,"length2":17}]],"length":30309,"saved":false}
+{"ts":1375781298980,"patch":[[{"diffs":[[0,"ss\n    #"],[1," E"],[0,"\n\n\nclass"]],"start1":20598,"start2":20598,"length1":16,"length2":18}]],"length":30311,"saved":false}
+{"ts":1375781301638,"patch":[[{"diffs":[[0,"\n    # E"],[1,"xpando\n    "],[0,"\n\n\nclass"]],"start1":20600,"start2":20600,"length1":16,"length2":27}]],"length":30322,"saved":false}
+{"ts":1375781306231,"patch":[[{"diffs":[[0,"    "],[-1,"cost = ndb.FloatProperty('6', required=True)# custom decimal"],[0,"\n   "]],"start1":20446,"start2":20446,"length1":68,"length2":8}]],"length":30262,"saved":false}
+{"ts":1375781307815,"patch":[[{"diffs":[[0," na GCS\n"],[-1,"    \n"],[0,"    stat"]],"start1":20438,"start2":20438,"length1":21,"length2":16}]],"length":30257,"saved":false}
+{"ts":1375781312998,"patch":[[{"diffs":[[0,"ndo\n    "],[1,"# cost = ndb.FloatProperty('6', required=True)# custom decimal"],[0,"\n\n\nclass"]],"start1":20546,"start2":20546,"length1":16,"length2":78}]],"length":30319,"saved":false}
+{"ts":1375781354610,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"7"],[1,"6"],[0,"', required=True"]],"start1":20463,"start2":20463,"length1":33,"length2":33}]],"length":30319,"saved":false}
+{"ts":1375781358289,"patch":[[{"diffs":[[0,".FloatProperty('"],[-1,"6"],[1,"7"],[0,"', required=True"]],"start1":20566,"start2":20566,"length1":33,"length2":33}]],"length":30319,"saved":false}
+{"ts":1375781363700,"patch":[[{"diffs":[[0,"ass\n    #Expando"],[1,"\n    "],[0,"\n\n# done!\nclass "]],"start1":16026,"start2":16026,"length1":32,"length2":37}]],"length":30324,"saved":false}
+{"ts":1375781365426,"patch":[[{"diffs":[[0,"ndo\n    "],[1,"# "],[0,"\n\n# done"]],"start1":16039,"start2":16039,"length1":16,"length2":18}]],"length":30326,"saved":false}
+{"ts":1375781372536,"patch":[[{"diffs":[[0,"o\n    # "],[1,"positive feed"],[0,"\n\n# done"]],"start1":16041,"start2":16041,"length1":16,"length2":29}]],"length":30339,"saved":false}
+{"ts":1375781375821,"patch":[[{"diffs":[[0,"ive feed"],[1,"back count\n    "],[0,"\n\n# done"]],"start1":16054,"start2":16054,"length1":16,"length2":31}]],"length":30354,"saved":false}
+{"ts":1375781504124,"patch":[[{"diffs":[[0,"  # "],[-1,"positive feedback count"],[1,"currency = ndb.KeyProperty('1', kind=Currency, required=True, indexed=False)\n    # positive_feedback_count = ndb.IntegerProperty('4', required=True)\n    # negative_feedback_count = ndb.IntegerProperty('5', required=True)\n    # neutral_feedback_count = ndb.IntegerProperty('6', required=True)"],[0,"\n   "]],"start1":16045,"start2":16045,"length1":31,"length2":299}]],"length":30622,"saved":false}
+{"ts":1375781516382,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # posi"]],"start1":16097,"start2":16097,"length1":39,"length2":24}]],"length":30607,"saved":false}
+{"ts":1375781522782,"patch":[[{"diffs":[[0,"db.KeyProperty('"],[-1,"1"],[1,"4"],[0,"', kind=Currency"]],"start1":16061,"start2":16061,"length1":33,"length2":33}]],"length":30607,"saved":false}
+{"ts":1375781525566,"patch":[[{"diffs":[[0,"uired=True)\n"],[1,"    \n"],[0,"    # positi"]],"start1":16099,"start2":16099,"length1":24,"length2":29}]],"length":30612,"saved":false}
+{"ts":1375781528601,"patch":[[{"diffs":[[0,"uired=True)\n    "],[1,"# pa"],[0,"\n    # positive_"]],"start1":16099,"start2":16099,"length1":32,"length2":36}]],"length":30616,"saved":false}
+{"ts":1375781529705,"patch":[[{"diffs":[[0,"    # pa"],[1,"ypal"],[0,"\n    # p"]],"start1":16111,"start2":16111,"length1":16,"length2":20}]],"length":30620,"saved":false}
+{"ts":1375781530567,"patch":[[{"diffs":[[0,"# paypal"],[1,"_"],[0,"\n    # p"]],"start1":16115,"start2":16115,"length1":16,"length2":17}]],"length":30621,"saved":false}
+{"ts":1375781531715,"patch":[[{"diffs":[[0," paypal_"],[1,"email"],[0,"\n    # p"]],"start1":16116,"start2":16116,"length1":16,"length2":21}]],"length":30626,"saved":false}
+{"ts":1375781534646,"patch":[[{"diffs":[[0," paypal_"],[-1,"email"],[0,"\n    # p"]],"start1":16116,"start2":16116,"length1":21,"length2":16}]],"length":30621,"saved":false}
+{"ts":1375781540490,"patch":[[{"diffs":[[0," paypal_"],[1,"email +"],[0,"\n    # p"]],"start1":16116,"start2":16116,"length1":16,"length2":23}]],"length":30628,"saved":false}
+{"ts":1375781541296,"patch":[[{"diffs":[[0,"_email +"],[1," "],[0,"\n    # p"]],"start1":16123,"start2":16123,"length1":16,"length2":17}]],"length":30629,"saved":false}
+{"ts":1375781542226,"patch":[[{"diffs":[[0,"ail "],[-1,"+ "],[0,"\n   "]],"start1":16126,"start2":16126,"length1":10,"length2":8}]],"length":30627,"saved":false}
+{"ts":1375781543490,"patch":[[{"diffs":[[0,"l_email "],[1,"= "],[0,"\n    # p"]],"start1":16122,"start2":16122,"length1":16,"length2":18}]],"length":30629,"saved":false}
+{"ts":1375781549699,"patch":[[{"diffs":[[0,"email = "],[1,"ndb.StringProperty('1', required=True)"],[0,"\n    # p"]],"start1":16124,"start2":16124,"length1":16,"length2":54}]],"length":30667,"saved":false}
+{"ts":1375781552130,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"1"],[1,"5"],[0,"', required=True"]],"start1":16136,"start2":16136,"length1":33,"length2":33}]],"length":30667,"saved":false}
+{"ts":1375781554574,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"4"],[1,"6"],[0,"', required=True"]],"start1":16208,"start2":16208,"length1":33,"length2":33}]],"length":30667,"saved":false}
+{"ts":1375781556167,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"5"],[1,"7"],[0,"', required=True"]],"start1":16280,"start2":16280,"length1":33,"length2":33}]],"length":30667,"saved":false}
+{"ts":1375781558124,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"6"],[1,"8"],[0,"', required=True"]],"start1":16351,"start2":16351,"length1":33,"length2":33}]],"length":30667,"saved":false}
+{"ts":1375781569506,"patch":[[{"diffs":[[0,"   #Expando\n"],[1,"    \n"],[0,"    # curren"]],"start1":16031,"start2":16031,"length1":24,"length2":29}]],"length":30672,"saved":false}
+{"ts":1375781592922,"patch":[[{"diffs":[[0,"Expando\n    "],[1,"name = ndb.StringProperty('1', required=True)\n    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)\n    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...\n    city = ndb.StringProperty('4', required=True, indexed=False)\n    postal_code = ndb.StringProperty('5', required=True, indexed=False)\n    street_address = ndb.StringProperty('6', required=True, indexed=False)\n    street_address2 = ndb.StringProperty('7', indexed=False)\n    email = ndb.StringProperty('8', indexed=False)\n    telephone = ndb.StringProperty('9', indexed=False)"],[0,"\n    # curre"]],"start1":16035,"start2":16035,"length1":24,"length2":720}]],"length":31368,"saved":false}
+{"ts":1375781596470,"patch":[[{"diffs":[[0,"#Expando\n   "],[1," #"],[0," name = ndb."]],"start1":16034,"start2":16034,"length1":24,"length2":26}]],"length":31370,"saved":false}
+{"ts":1375781597416,"patch":[[{"diffs":[[0,"o\n    # "],[1,"compa"],[0,"name = n"]],"start1":16041,"start2":16041,"length1":16,"length2":21}]],"length":31375,"saved":false}
+{"ts":1375781599632,"patch":[[{"diffs":[[0," # compa"],[1,"ny_"],[0,"name = n"]],"start1":16046,"start2":16046,"length1":16,"length2":19}]],"length":31378,"saved":false}
+{"ts":1375781602429,"patch":[[{"diffs":[[0,"quired=True)\n   "],[1," #"],[0," country = ndb.K"]],"start1":16090,"start2":16090,"length1":32,"length2":34}]],"length":31380,"saved":false}
+{"ts":1375781609604,"patch":[[{"diffs":[[0,")\n    # "],[1,"company_"],[0,"country "]],"start1":16101,"start2":16101,"length1":16,"length2":24}]],"length":31388,"saved":false}
+{"ts":1375781611966,"patch":[[{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"region = ndb.Key"]],"start1":16180,"start2":16180,"length1":32,"length2":42}]],"length":31398,"saved":false}
+{"ts":1375781614602,"patch":[[{"diffs":[[0," potrebi...\n    "],[1,"# company_"],[0,"city = ndb.Strin"]],"start1":16383,"start2":16383,"length1":32,"length2":42},{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"postal_code = nd"]],"start1":16458,"start2":16458,"length1":32,"length2":42},{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"street_address ="]],"start1":16540,"start2":16540,"length1":32,"length2":42}]],"length":31428,"saved":false}
+{"ts":1375781616687,"patch":[[{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"street_address2 "]],"start1":16625,"start2":16625,"length1":32,"length2":42}]],"length":31438,"saved":false}
+{"ts":1375781617633,"patch":[[{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"email = ndb.Stri"]],"start1":16696,"start2":16696,"length1":32,"length2":42}]],"length":31448,"saved":false}
+{"ts":1375781618648,"patch":[[{"diffs":[[0,"exed=False)\n    "],[1,"# company_"],[0,"telephone = ndb."]],"start1":16757,"start2":16757,"length1":32,"length2":42}]],"length":31458,"saved":false}
+{"ts":1375781627999,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16163,"start2":16163,"length1":39,"length2":24}]],"length":31443,"saved":false}
+{"ts":1375781632998,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")# ostaje da"]],"start1":16247,"start2":16247,"length1":39,"length2":24}]],"length":31428,"saved":false}
+{"ts":1375781637785,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16411,"start2":16411,"length1":39,"length2":24}]],"length":31413,"saved":false}
+{"ts":1375781640146,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16478,"start2":16478,"length1":39,"length2":24}]],"length":31398,"saved":false}
+{"ts":1375781643525,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16548,"start2":16548,"length1":39,"length2":24}]],"length":31383,"saved":false}
+{"ts":1375781646556,"patch":[[{"diffs":[[0,"Property('7'"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16604,"start2":16604,"length1":39,"length2":24}]],"length":31368,"saved":false}
+{"ts":1375781649812,"patch":[[{"diffs":[[0,"Property('8'"],[-1,", indexed=False"],[0,")\n    # comp"]],"start1":16650,"start2":16650,"length1":39,"length2":24}]],"length":31353,"saved":false}
+{"ts":1375781652802,"patch":[[{"diffs":[[0,"Property('9'"],[-1,", indexed=False"],[0,")\n    # curr"]],"start1":16700,"start2":16700,"length1":39,"length2":24}]],"length":31338,"saved":false}
+{"ts":1375781713488,"patch":[[{"diffs":[[0,"ss\n    #Expando\n"],[1,"    # \n"],[0,"    # company_na"]],"start1":16027,"start2":16027,"length1":32,"length2":39}]],"length":31345,"saved":false}
+{"ts":1375781716038,"patch":[[{"diffs":[[0,"o\n    # "],[1,"Company"],[0,"\n    # c"]],"start1":16041,"start2":16041,"length1":16,"length2":23}]],"length":31352,"saved":false}
+{"ts":1375781719365,"patch":[[{"diffs":[[0,"operty('9')\n"],[1,"    # \n"],[0,"    # curren"]],"start1":16716,"start2":16716,"length1":24,"length2":31}]],"length":31359,"saved":false}
+{"ts":1375781722393,"patch":[[{"diffs":[[0,")\n    # "],[1,"Payment"],[0,"\n    # c"]],"start1":16726,"start2":16726,"length1":16,"length2":23}]],"length":31366,"saved":false}
+{"ts":1375781912279,"patch":[[{"diffs":[[0,"uired=True)\n"],[1,"    \n"],[0,"    # positi"]],"start1":16858,"start2":16858,"length1":24,"length2":29}]],"length":31371,"saved":false}
+{"ts":1375781915592,"patch":[[{"diffs":[[0," required=True)\n"],[1,"    # Tracking \n"],[0,"    \n    # posit"]],"start1":16854,"start2":16854,"length1":32,"length2":48}]],"length":31387,"saved":false}
+{"ts":1375781921576,"patch":[[{"diffs":[[0,"  # "],[-1,"Tracking"],[1,"Analytics"],[0," \n  "]],"start1":16872,"start2":16872,"length1":16,"length2":17}]],"length":31388,"saved":false}
+{"ts":1375781924217,"patch":[[{"diffs":[[0,"lytics \n    "],[1,"# "],[0,"\n    # posit"]],"start1":16879,"start2":16879,"length1":24,"length2":26}]],"length":31390,"saved":false}
+{"ts":1375781930709,"patch":[[{"diffs":[[0," \n    # "],[1,"company_email = ndb.StringProperty('8')"],[0,"\n    # p"]],"start1":16885,"start2":16885,"length1":16,"length2":55}]],"length":31429,"saved":false}
+{"ts":1375781933766,"patch":[[{"diffs":[[0,"tics \n    # "],[-1,"company_email"],[1,"tracking_id"],[0," = ndb.Strin"]],"start1":16881,"start2":16881,"length1":37,"length2":35}]],"length":31427,"saved":false}
+{"ts":1375781946796,"patch":[[{"diffs":[[0,"Property('5'"],[-1,", required=True"],[0,")\n    # Anal"]],"start1":16841,"start2":16841,"length1":39,"length2":24}]],"length":31412,"saved":false}
+{"ts":1375781968950,"patch":[[{"diffs":[[0,"operty('8')\n"],[1,"    # \n"],[0,"    # positi"]],"start1":16904,"start2":16904,"length1":24,"length2":31}]],"length":31419,"saved":false}
+{"ts":1375781973527,"patch":[[{"diffs":[[0,")\n    # "],[1,"Feedback"],[0,"\n    # p"]],"start1":16914,"start2":16914,"length1":16,"length2":24}]],"length":31427,"saved":false}
+{"ts":1375781976010,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"1"],[1,"4"],[0,"', required=True"]],"start1":16082,"start2":16082,"length1":33,"length2":33},{"diffs":[[0,"db.KeyProperty('"],[-1,"2"],[1,"5"],[0,"', kind=Country,"]],"start1":16142,"start2":16142,"length1":33,"length2":33}]],"length":31427,"saved":false}
+{"ts":1375781977170,"patch":[[{"diffs":[[0,"db.KeyProperty('"],[-1,"3"],[1,"6"],[0,"', kind=CountryS"]],"start1":16215,"start2":16215,"length1":33,"length2":33}]],"length":31427,"saved":false}
+{"ts":1375781979257,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"4"],[1,"7"],[0,"', required=True"]],"start1":16404,"start2":16404,"length1":33,"length2":33}]],"length":31427,"saved":false}
+{"ts":1375781982534,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"5"],[1,"8"],[0,"', required=True"]],"start1":16471,"start2":16471,"length1":33,"length2":33}]],"length":31427,"saved":false}
+{"ts":1375781985794,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"6"],[1,"9"],[0,"', required=True"]],"start1":16541,"start2":16541,"length1":33,"length2":33},{"diffs":[[0,"ngProperty('"],[-1,"7"],[1,"10"],[0,"')\n    # com"]],"start1":16616,"start2":16616,"length1":25,"length2":26}]],"length":31428,"saved":false}
+{"ts":1375781989188,"patch":[[{"diffs":[[0,"StringProperty('"],[-1,"8"],[1,"11"],[0,"')\n    # company"]],"start1":16659,"start2":16659,"length1":33,"length2":34}]],"length":31429,"saved":false}
+{"ts":1375781991706,"patch":[[{"diffs":[[0,"ngProperty('"],[-1,"9"],[1,"12"],[0,"')\n    # Pay"]],"start1":16714,"start2":16714,"length1":25,"length2":26}]],"length":31430,"saved":false}
+{"ts":1375781993679,"patch":[[{"diffs":[[0,"db.KeyProperty('"],[-1,"4"],[1,"13"],[0,"', kind=Currency"]],"start1":16763,"start2":16763,"length1":33,"length2":34}]],"length":31431,"saved":false}
+{"ts":1375781996013,"patch":[[{"diffs":[[0,"operty('"],[-1,"5"],[1,"14"],[0,"')\n    #"]],"start1":16847,"start2":16847,"length1":17,"length2":18}]],"length":31432,"saved":false}
+{"ts":1375781998356,"patch":[[{"diffs":[[0,"ngProperty('"],[-1,"8"],[1,"15"],[0,"')\n    # Fee"]],"start1":16905,"start2":16905,"length1":25,"length2":26}]],"length":31433,"saved":false}
+{"ts":1375782001187,"patch":[[{"diffs":[[0,"ntegerProperty('"],[1,"1"],[0,"6', required=Tru"]],"start1":16974,"start2":16974,"length1":32,"length2":33}]],"length":31434,"saved":false}
+{"ts":1375782003976,"patch":[[{"diffs":[[0,"ntegerProperty('"],[1,"1"],[0,"7', required=Tru"]],"start1":17047,"start2":17047,"length1":32,"length2":33},{"diffs":[[0,"ntegerProperty('"],[-1,"8"],[1,"1"],[0,"', required=True"]],"start1":17119,"start2":17119,"length1":33,"length2":33}]],"length":31435,"saved":false}
+{"ts":1375782005556,"patch":[[{"diffs":[[0,"tegerProperty('1"],[1,"8"],[0,"', required=True"]],"start1":17120,"start2":17120,"length1":32,"length2":33}]],"length":31436,"saved":false}
+{"ts":1375782028906,"patch":[[{"diffs":[[0,"y('14')\n"],[1,"    \n"],[0,"    # An"]],"start1":16852,"start2":16852,"length1":16,"length2":21}]],"length":31441,"saved":false}
+{"ts":1375782030909,"patch":[[{"diffs":[[0,"y('14')\n    "],[1,"# paypal"],[0,"\n    # Analy"]],"start1":16852,"start2":16852,"length1":24,"length2":32}]],"length":31449,"saved":false}
+{"ts":1375782033209,"patch":[[{"diffs":[[0,"# paypal"],[1,"_shippin"],[0,"\n    # A"]],"start1":16864,"start2":16864,"length1":16,"length2":24}]],"length":31457,"saved":false}
+{"ts":1375782035326,"patch":[[{"diffs":[[0,"_shippin"],[1,"g ?"],[0,"\n    # A"]],"start1":16872,"start2":16872,"length1":16,"length2":19}]],"length":31460,"saved":false}
+{"ts":1375782039295,"patch":[[{"diffs":[[0,"uired=True)\n"],[1,"    # ta\n"],[0,"    # paypal"]],"start1":16802,"start2":16802,"length1":24,"length2":33}]],"length":31469,"saved":false}
+{"ts":1375782040264,"patch":[[{"diffs":[[0,"    # ta"],[1,"x_"],[0,"\n    # p"]],"start1":16814,"start2":16814,"length1":16,"length2":18}]],"length":31471,"saved":false}
+{"ts":1375782041481,"patch":[[{"diffs":[[0,"  # tax_"],[1,"buyer"],[0,"\n    # p"]],"start1":16816,"start2":16816,"length1":16,"length2":21}]],"length":31476,"saved":false}
+{"ts":1375782042817,"patch":[[{"diffs":[[0,"ax_buyer"],[1,"_o"],[0,"\n    # p"]],"start1":16821,"start2":16821,"length1":16,"length2":18}]],"length":31478,"saved":false}
+{"ts":1375782044965,"patch":[[{"diffs":[[0,"_buyer_o"],[1,"n ?"],[0,"\n    # p"]],"start1":16823,"start2":16823,"length1":16,"length2":19}]],"length":31481,"saved":false}
+{"ts":1375782058202,"patch":[[{"diffs":[[0,"perty('12')\n"],[1,"    \n"],[0,"    # Paymen"]],"start1":16719,"start2":16719,"length1":24,"length2":29}]],"length":31486,"saved":false}
+{"ts":1375782060596,"patch":[[{"diffs":[[0,"   #Expando\n"],[1,"    \n"],[0,"    # Compan"]],"start1":16031,"start2":16031,"length1":24,"length2":29}]],"length":31491,"saved":false}
+{"ts":1375782065156,"patch":[[{"diffs":[[0,"y('12')\n"],[-1,"    \n"],[0,"    # Pa"]],"start1":16728,"start2":16728,"length1":21,"length2":16}]],"length":31486,"saved":false}
+{"ts":1375782068684,"patch":[[{"diffs":[[0,"Expando\n    "],[1,"#"],[0,"\n    # Compa"]],"start1":16035,"start2":16035,"length1":24,"length2":25}]],"length":31487,"saved":false}
+{"ts":1375782071758,"patch":[[{"diffs":[[0,"perty('12')\n"],[1,"    #\n"],[0,"    # Paymen"]],"start1":16725,"start2":16725,"length1":24,"length2":30}]],"length":31493,"saved":false}
+{"ts":1375782074792,"patch":[[{"diffs":[[0,"pping ?\n"],[1,"    #\n"],[0,"    # An"]],"start1":16909,"start2":16909,"length1":16,"length2":22}]],"length":31499,"saved":false}
+{"ts":1375782076764,"patch":[[{"diffs":[[0,"y('15')\n"],[1,"    #\n"],[0,"    # Fe"]],"start1":16977,"start2":16977,"length1":16,"length2":22}]],"length":31505,"saved":false}
+{"ts":1375782134750,"patch":[[{"diffs":[[0,"cestor Store"],[1," ()"],[0,"\n    country"]],"start1":17545,"start2":17545,"length1":24,"length2":27}]],"length":31508,"saved":false}
+{"ts":1375782140427,"patch":[[{"diffs":[[0," Store ("],[1,"Catalog"],[0,")\n    co"]],"start1":17551,"start2":17551,"length1":16,"length2":23}]],"length":31515,"saved":false}
+{"ts":1375782143048,"patch":[[{"diffs":[[0,"(Catalog"],[1," - f"],[0,")\n    co"]],"start1":17558,"start2":17558,"length1":16,"length2":20}]],"length":31519,"saved":false}
+{"ts":1375782146327,"patch":[[{"diffs":[[0,"alog - f"],[1,"or caching"],[0,")\n    co"]],"start1":17562,"start2":17562,"length1":16,"length2":26}]],"length":31529,"saved":false}
+{"ts":1375782158189,"patch":[[{"diffs":[[0,"tore"],[-1,", Catalog"],[0," (ke"]],"start1":17290,"start2":17290,"length1":17,"length2":8}]],"length":31520,"saved":false}
+{"ts":1375782164361,"patch":[[{"diffs":[[0," Store ("],[1,"Catalog "],[0,"kesiranj"]],"start1":17288,"start2":17288,"length1":16,"length2":24}]],"length":31528,"saved":false}
+{"ts":1375782165209,"patch":[[{"diffs":[[0,"(Catalog"],[1," -"],[0," kesiran"]],"start1":17295,"start2":17295,"length1":16,"length2":18}]],"length":31530,"saved":false}
+{"ts":1375782187317,"patch":[[{"diffs":[[0,"g - "],[-1,"kesiranje"],[1,"for caching"],[0,")\n  "]],"start1":17302,"start2":17302,"length1":17,"length2":19}]],"length":31532,"saved":false}
+{"ts":1375782553949,"patch":[[{"diffs":[[0," custom decimal\n"],[1,"    # S\n"],[0,"\n\nclass CatalogC"]],"start1":21814,"start2":21814,"length1":32,"length2":40}]],"length":31540,"saved":false}
+{"ts":1375782555908,"patch":[[{"diffs":[[0,"\n    # S"],[1,"earch i"],[0,"\n\n\nclass"]],"start1":21829,"start2":21829,"length1":16,"length2":23}]],"length":31547,"saved":false}
+{"ts":1375782559012,"patch":[[{"diffs":[[0,"Search i"],[1,"mprovements"],[0,"\n\n\nclass"]],"start1":21836,"start2":21836,"length1":16,"length2":27}]],"length":31558,"saved":false}
+{"ts":1375782566438,"patch":[[{"diffs":[[0,"vements\n"],[1,"    # \n"],[0,"\n\nclass "]],"start1":21848,"start2":21848,"length1":16,"length2":23}]],"length":31565,"saved":false}
+{"ts":1375782574193,"patch":[[{"diffs":[[0,"s\n    # "],[1,"product count per "],[0,"\n\n\nclass"]],"start1":21854,"start2":21854,"length1":16,"length2":34}]],"length":31583,"saved":false}
+{"ts":1375782583174,"patch":[[{"diffs":[[0,"unt per "],[1,"product category\n    #"],[0,"\n\n\nclass"]],"start1":21872,"start2":21872,"length1":16,"length2":38}]],"length":31605,"saved":false}
+{"ts":1375782584843,"patch":[[{"diffs":[[0,"ry\n    #"],[1," "],[0,"\n\n\nclass"]],"start1":21894,"start2":21894,"length1":16,"length2":17}]],"length":31606,"saved":false}
+{"ts":1375782595068,"patch":[[{"diffs":[[0,"y\n    # "],[1,"rank ba"],[0,"\n\n\nclass"]],"start1":21895,"start2":21895,"length1":16,"length2":23}]],"length":31613,"saved":false}
+{"ts":1375782598996,"patch":[[{"diffs":[[0," rank ba"],[1,"sed on store "],[0,"\n\n\nclass"]],"start1":21902,"start2":21902,"length1":16,"length2":29}]],"length":31626,"saved":false}
+{"ts":1375782602859,"patch":[[{"diffs":[[0,"n store "],[1,"feedback\n    #"],[0,"\n\n\nclass"]],"start1":21915,"start2":21915,"length1":16,"length2":30}]],"length":31640,"saved":false}
+{"ts":1375782605022,"patch":[[{"diffs":[[0,"ck\n    #"],[1," "],[0,"\n\n\nclass"]],"start1":21929,"start2":21929,"length1":16,"length2":17}]],"length":31641,"saved":false}
+{"ts":1375782611437,"patch":[[{"diffs":[[0," # rank "],[1,"coefficient "],[0,"based on"]],"start1":21900,"start2":21900,"length1":16,"length2":28}]],"length":31653,"saved":false}
+{"ts":1375782619809,"patch":[[{"diffs":[[0,"ack\n"],[-1,"    # \n"],[0,"\n\ncl"]],"start1":21940,"start2":21940,"length1":15,"length2":8}]],"length":31646,"saved":false}
+{"ts":1375782703943,"patch":[[{"diffs":[[0,"  # "],[-1,"cost = ndb.FloatProperty('7', required=True)"],[0,"# cu"]],"start1":21765,"start2":21765,"length1":52,"length2":8}]],"length":31602,"saved":false}
+{"ts":1375782709534,"patch":[[{"diffs":[[0,"entirati na GCS\n"],[1,"    cost = ndb.FloatProperty('7', required=True)\n"],[0,"    state = ndb."]],"start1":21643,"start2":21643,"length1":32,"length2":81}]],"length":31651,"saved":false}
+{"ts":1375782715314,"patch":[[{"diffs":[[0,".FloatProperty('"],[-1,"7"],[1,"6"],[0,"', required=True"]],"start1":21673,"start2":21673,"length1":33,"length2":33}]],"length":31651,"saved":false}
+{"ts":1375782718247,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"6"],[1,"7"],[0,"', required=True"]],"start1":21725,"start2":21725,"length1":33,"length2":33}]],"length":31651,"saved":false}
+{"ts":1375782724471,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    state = nd"]],"start1":21690,"start2":21690,"length1":32,"length2":47}]],"length":31666,"saved":false}
+{"ts":1375782732367,"patch":[[{"diffs":[[0,"o\n    # "],[-1,"# custom decimal"],[0,"\n    # S"]],"start1":21825,"start2":21825,"length1":32,"length2":16}]],"length":31650,"saved":false}
+{"ts":1375782733897,"patch":[[{"diffs":[[0,", indexed=False)"],[1,"# custom decimal"],[0,"\n    state = ndb"]],"start1":21706,"start2":21706,"length1":32,"length2":48}]],"length":31666,"saved":false}
+{"ts":1375782737996,"patch":[[{"diffs":[[0,"ndo\n"],[-1,"    # \n"],[0,"    "]],"start1":21839,"start2":21839,"length1":15,"length2":8}]],"length":31659,"saved":false}
+{"ts":1375782763837,"patch":[[{"diffs":[[0,"edback\n\n"],[1,"# done"],[0,"\nclass C"]],"start1":21950,"start2":21950,"length1":16,"length2":22}]],"length":31665,"saved":false}
+{"ts":1375782765937,"patch":[[{"diffs":[[0,"\n\n# done"],[1," !"],[0,"\nclass C"]],"start1":21956,"start2":21956,"length1":16,"length2":18}]],"length":31667,"saved":false}
+{"ts":1375782772244,"patch":[[{"diffs":[[0,"\n\n# done"],[-1," "],[0,"!\nclass "]],"start1":21956,"start2":21956,"length1":17,"length2":16}]],"length":31666,"saved":false}
+{"ts":1375782775322,"patch":[[{"diffs":[[0,"##########\n\n"],[1,"# done"],[0,"\nclass Catal"]],"start1":21254,"start2":21254,"length1":24,"length2":30}]],"length":31672,"saved":false}
+{"ts":1375782777713,"patch":[[{"diffs":[[0,"\n\n# done"],[1,"!"],[0,"\nclass C"]],"start1":21264,"start2":21264,"length1":16,"length2":17}]],"length":31673,"saved":false}
+{"ts":1375782846734,"patch":[[{"diffs":[[0,"e, required=True"],[1,", indexed=False"],[0,")\n    container_"]],"start1":22260,"start2":22260,"length1":32,"length2":47}]],"length":31688,"saved":false}
+{"ts":1375782856274,"patch":[[{"diffs":[[0,"red=True"],[1,", indexed=False"],[0,")# verov"]],"start1":22351,"start2":22351,"length1":16,"length2":31}]],"length":31703,"saved":false}
+{"ts":1375782864368,"patch":[[{"diffs":[[0,"e)# "],[-1,"verovatno je i dalje ovaj property od klase blobstore"],[1,"blob ce se implementirati na GCS"],[0,"\n   "]],"start1":22373,"start2":22373,"length1":61,"length2":40}]],"length":31682,"saved":false}
+{"ts":1375782870496,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    source_hei"]],"start1":22449,"start2":22449,"length1":32,"length2":47}]],"length":31697,"saved":false}
+{"ts":1375782873508,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    source_pos"]],"start1":22522,"start2":22522,"length1":32,"length2":47}]],"length":31712,"saved":false}
+{"ts":1375782876026,"patch":[[{"diffs":[[0,"equired=True"],[1,", indexed=False"],[0,")\n    source"]],"start1":22605,"start2":22605,"length1":24,"length2":39}]],"length":31727,"saved":false}
+{"ts":1375782879520,"patch":[[{"diffs":[[0,"equired=True"],[1,", indexed=False"],[0,")\n    value "]],"start1":22685,"start2":22685,"length1":24,"length2":39}]],"length":31742,"saved":false}
+{"ts":1375782889962,"patch":[[{"diffs":[[0,"', required=True"],[-1,")"],[1,", indexed=False) "],[0,"\n\n\nclass Product"]],"start1":22747,"start2":22747,"length1":33,"length2":49}]],"length":31758,"saved":false}
+{"ts":1375782891383,"patch":[[{"diffs":[[0,"d=False)"],[-1," "],[0,"\n\n\nclass"]],"start1":22771,"start2":22771,"length1":17,"length2":16}]],"length":31757,"saved":false}
+{"ts":1375782892611,"patch":[[{"diffs":[[0,"d=False)"],[1,"# "],[0,"\n\n\nclass"]],"start1":22771,"start2":22771,"length1":16,"length2":18}]],"length":31759,"saved":false}
+{"ts":1375782893955,"patch":[[{"diffs":[[0,"False)# "],[1,"$ "],[0,"\n\n\nclass"]],"start1":22773,"start2":22773,"length1":16,"length2":18}]],"length":31761,"saved":false}
+{"ts":1375782897474,"patch":[[{"diffs":[[0,"lse)# $ "],[1,"123.99"],[0,"\n\n\nclass"]],"start1":22775,"start2":22775,"length1":16,"length2":22}]],"length":31767,"saved":false}
+{"ts":1375782901027,"patch":[[{"diffs":[[0," $ 1"],[-1,"23"],[1,"9"],[0,".99\n"]],"start1":22780,"start2":22780,"length1":10,"length2":9}]],"length":31766,"saved":false}
+{"ts":1375782913158,"patch":[[{"diffs":[[0,"ired=True)\n\n"],[1,"#"],[0,"\nclass Catal"]],"start1":22122,"start2":22122,"length1":24,"length2":25}]],"length":31767,"saved":false}
+{"ts":1375782917074,"patch":[[{"diffs":[[0,"True)\n\n#"],[1," done!"],[0,"\nclass C"]],"start1":22127,"start2":22127,"length1":16,"length2":22}]],"length":31773,"saved":false}
+{"ts":1375782953922,"patch":[[{"diffs":[[0," $ 19.99"],[1," - "],[0,"\n\n\nclass"]],"start1":22787,"start2":22787,"length1":16,"length2":19}]],"length":31776,"saved":false}
+{"ts":1375782957357,"patch":[[{"diffs":[[0,"19.99 - "],[1,"algoritam k"],[0,"\n\n\nclass"]],"start1":22790,"start2":22790,"length1":16,"length2":27}]],"length":31787,"saved":false}
+{"ts":1375782961048,"patch":[[{"diffs":[[0,"oritam k"],[1,"oji ce da radi "],[0,"\n\n\nclass"]],"start1":22801,"start2":22801,"length1":16,"length2":31}]],"length":31802,"saved":false}
+{"ts":1375782975139,"patch":[[{"diffs":[[0,"9 - "],[-1,"algoritam koji ce da radi"],[1,"ovo je"],[0," \n\n\n"]],"start1":22794,"start2":22794,"length1":33,"length2":14}]],"length":31783,"saved":false}
+{"ts":1375782976758,"patch":[[{"diffs":[[0," ovo je "],[1,"unu"],[0,"\n\n\nclass"]],"start1":22797,"start2":22797,"length1":16,"length2":19}]],"length":31786,"saved":false}
+{"ts":1375782979628,"patch":[[{"diffs":[[0,"o je unu"],[1,"tar transakcije "],[0,"\n\n\nclass"]],"start1":22800,"start2":22800,"length1":16,"length2":32}]],"length":31802,"saved":false}
+{"ts":1375782987636,"patch":[[{"diffs":[[0,"9 - ovo "],[-1,"je"],[1,"se handla"],[0," unutar "]],"start1":22794,"start2":22794,"length1":18,"length2":25}]],"length":31809,"saved":false}
+{"ts":1375782990290,"patch":[[{"diffs":[[0,"sakcije "],[1,"kada se "],[0,"\n\n\nclass"]],"start1":22823,"start2":22823,"length1":16,"length2":24}]],"length":31817,"saved":false}
+{"ts":1375782991541,"patch":[[{"diffs":[[0,"kada se "],[1,"radi"],[0,"\n\n\nclass"]],"start1":22831,"start2":22831,"length1":16,"length2":20}]],"length":31821,"saved":false}
+{"ts":1375782993035,"patch":[[{"diffs":[[0," se radi"],[1," upt"],[0,"\n\n\nclass"]],"start1":22835,"start2":22835,"length1":16,"length2":20}]],"length":31825,"saved":false}
+{"ts":1375782994222,"patch":[[{"diffs":[[0," radi up"],[-1,"t"],[1,"da"],[0,"\n\n\nclass"]],"start1":22838,"start2":22838,"length1":17,"length2":18}]],"length":31826,"saved":false}
+{"ts":1375782996565,"patch":[[{"diffs":[[0,"adi upda"],[1,"te na "],[0,"\n\n\nclass"]],"start1":22840,"start2":22840,"length1":16,"length2":22}]],"length":31832,"saved":false}
+{"ts":1375782998750,"patch":[[{"diffs":[[0,"date na "],[1,"price"],[0,"\n\n\nclass"]],"start1":22846,"start2":22846,"length1":16,"length2":21}]],"length":31837,"saved":false}
+{"ts":1375783005565,"patch":[[{"diffs":[[0,"date na "],[-1,"price"],[1,"nit"],[0,"\n\n\nclass"]],"start1":22846,"start2":22846,"length1":21,"length2":19}]],"length":31835,"saved":false}
+{"ts":1375783007964,"patch":[[{"diffs":[[0,"e na nit"],[1,"_rpice"],[0,"\n\n\nclass"]],"start1":22849,"start2":22849,"length1":16,"length2":22}]],"length":31841,"saved":false}
+{"ts":1375783011940,"patch":[[{"diffs":[[0," na "],[1,"u"],[0,"nit_"],[1,"p"],[0,"r"],[-1,"pice"],[0,"\n\n\nc"]],"start1":22850,"start2":22850,"length1":17,"length2":15}]],"length":31839,"saved":false}
+{"ts":1375783013761,"patch":[[{"diffs":[[0," unit_pr"],[1,"ice od "],[0,"\n\n\nclass"]],"start1":22853,"start2":22853,"length1":16,"length2":23}]],"length":31846,"saved":false}
+{"ts":1375783020529,"patch":[[{"diffs":[[0,"rice od "],[1,"ProductTemplate ili "],[0,"\n\n\nclass"]],"start1":22860,"start2":22860,"length1":16,"length2":36}]],"length":31866,"saved":false}
+{"ts":1375783029738,"patch":[[{"diffs":[[0,"ate ili "],[1,"ProductInstance"],[0,"\n\n\nclass"]],"start1":22880,"start2":22880,"length1":16,"length2":31}]],"length":31881,"saved":false}
+{"ts":1375783195237,"patch":[[{"diffs":[[0,"y, required=True"],[1,", indexed=False"],[0,")\n    name = ndb"]],"start1":23033,"start2":23033,"length1":32,"length2":47}]],"length":31896,"saved":false}
+{"ts":1375783198817,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    descriptio"]],"start1":23098,"start2":23098,"length1":32,"length2":47}]],"length":31911,"saved":false}
+{"ts":1375783211731,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    descri"]],"start1":23102,"start2":23102,"length1":39,"length2":24}]],"length":31896,"saved":false}
+{"ts":1375783415160,"patch":[[{"diffs":[[0,"M, required=True"],[1,", indexed=False"],[0,")\n    unit_price"]],"start1":23357,"start2":23357,"length1":32,"length2":47}]],"length":31911,"saved":false}
+{"ts":1375783427551,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,") # custom decim"]],"start1":23427,"start2":23427,"length1":32,"length2":47}]],"length":31926,"saved":false}
+{"ts":1375783730155,"patch":[[{"diffs":[[0,"\n    # root\n"],[1,"    # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other\n"],[0,"    store = "]],"start1":21306,"start2":21306,"length1":24,"length2":101}]],"length":32003,"saved":false}
+{"ts":1375784275357,"patch":[[{"diffs":[[0,", default=True)#"],[-1,"?"],[1," "],[0,"\n    _default_in"]],"start1":23599,"start2":23599,"length1":33,"length2":33}]],"length":32003,"saved":false}
+{"ts":1375784296739,"patch":[[{"diffs":[[0,"t=True)#"],[-1," "],[1,"?"],[0,"\n    _de"]],"start1":23607,"start2":23607,"length1":17,"length2":17}]],"length":32003,"saved":false}
+{"ts":1375784366008,"patch":[[{"diffs":[[0," default=True)#?"],[1," "],[0,"\n    _default_in"]],"start1":23600,"start2":23600,"length1":32,"length2":33}]],"length":32004,"saved":false}
+{"ts":1375784367031,"patch":[[{"diffs":[[0,"t=True)#"],[-1,"? "],[0,"\n    _de"]],"start1":23607,"start2":23607,"length1":18,"length2":16}]],"length":32002,"saved":false}
+{"ts":1375784368077,"patch":[[{"diffs":[[0,"t=True)#"],[1," "],[0,"\n    _de"]],"start1":23607,"start2":23607,"length1":16,"length2":17}]],"length":32003,"saved":false}
+{"ts":1375784369275,"patch":[[{"diffs":[[0,"=True)# "],[1,"? "],[0,"\n    _de"]],"start1":23608,"start2":23608,"length1":16,"length2":18}]],"length":32005,"saved":false}
+{"ts":1375784371177,"patch":[[{"diffs":[[0,"rue)# ? "],[1,"- ako ov"],[0,"\n    _de"]],"start1":23610,"start2":23610,"length1":16,"length2":24}]],"length":32013,"saved":false}
+{"ts":1375784374412,"patch":[[{"diffs":[[0,"- ako ov"],[1,"o ostane onda "],[0,"\n    _de"]],"start1":23618,"start2":23618,"length1":16,"length2":30}]],"length":32027,"saved":false}
+{"ts":1375784380266,"patch":[[{"diffs":[[0,"ne onda "],[1,"ce trebati i active prop na "],[0,"\n    _de"]],"start1":23632,"start2":23632,"length1":16,"length2":44}]],"length":32055,"saved":false}
+{"ts":1375784385098,"patch":[[{"diffs":[[0,"prop na "],[1,"CatalogPricetag"],[0,"\n    _de"]],"start1":23660,"start2":23660,"length1":16,"length2":31}]],"length":32070,"saved":false}
+{"ts":1375784389264,"patch":[[{"diffs":[[0,"Pricetag"],[1," - "],[0,"\n    _de"]],"start1":23675,"start2":23675,"length1":16,"length2":19}]],"length":32073,"saved":false}
+{"ts":1375784394664,"patch":[[{"diffs":[[0,"cetag - "],[1,"drugo resenje je da "],[0,"\n    _de"]],"start1":23678,"start2":23678,"length1":16,"length2":36}]],"length":32093,"saved":false}
+{"ts":1375784528018,"patch":[[{"diffs":[[0,"e je da "],[1,"active ustvari bude deo inventory logike"],[0,"\n    _de"]],"start1":23698,"start2":23698,"length1":16,"length2":56}]],"length":32133,"saved":false}
+{"ts":1375784562513,"patch":[[{"diffs":[[0,"   #Expando\n"],[1,"    # da\n"],[0,"    #weight "]],"start1":23786,"start2":23786,"length1":24,"length2":33}]],"length":32142,"saved":false}
+{"ts":1375784564116,"patch":[[{"diffs":[[0,"    # da"],[1," razmisl"],[0,"\n    #we"]],"start1":23798,"start2":23798,"length1":16,"length2":24}]],"length":32150,"saved":false}
+{"ts":1375784566634,"patch":[[{"diffs":[[0," razmisl"],[1,"im oko UOM "],[0,"\n    #we"]],"start1":23806,"start2":23806,"length1":16,"length2":27}]],"length":32161,"saved":false}
+{"ts":1375784570068,"patch":[[{"diffs":[[0,"oko UOM "],[1,"parametara"],[0,"\n    #we"]],"start1":23817,"start2":23817,"length1":16,"length2":26}]],"length":32171,"saved":false}
+{"ts":1375784602884,"patch":[[{"diffs":[[0,"   #Expando\n"],[1,"    # mo\n"],[0,"    # da raz"]],"start1":23786,"start2":23786,"length1":24,"length2":33}]],"length":32180,"saved":false}
+{"ts":1375784605197,"patch":[[{"diffs":[[0,"    # mo"],[1,"zda treba uve"],[0,"\n    # d"]],"start1":23798,"start2":23798,"length1":16,"length2":29}]],"length":32193,"saved":false}
+{"ts":1375784607222,"patch":[[{"diffs":[[0,"reba uve"],[1,"sti "],[0,"\n    # d"]],"start1":23811,"start2":23811,"length1":16,"length2":20}]],"length":32197,"saved":false}
+{"ts":1375784623989,"patch":[[{"diffs":[[0," uvesti "],[1,"customer lead time??"],[0,"\n    # d"]],"start1":23815,"start2":23815,"length1":16,"length2":36}]],"length":32217,"saved":false}
+{"ts":1375784634943,"patch":[[{"diffs":[[0,"stance\n\n"],[1,"# ?"],[0,"\nclass P"]],"start1":22974,"start2":22974,"length1":16,"length2":19}]],"length":32220,"saved":false}
+{"ts":1375784779103,"patch":[[{"diffs":[[0,"t, required=True"],[1,", indexed=False"],[0,")\n    sequence ="]],"start1":26577,"start2":26577,"length1":32,"length2":47}]],"length":32235,"saved":false}
+{"ts":1375784940869,"patch":[[{"diffs":[[0,"om decimal\n\n"],[1,"# done!"],[0,"\nclass Produ"]],"start1":26417,"start2":26417,"length1":24,"length2":31}]],"length":32242,"saved":false}
+{"ts":1375785002200,"patch":[[{"diffs":[[0,"ted=True"],[1,", indexed=False"],[0,")# nema "]],"start1":26867,"start2":26867,"length1":16,"length2":31}]],"length":32257,"saved":false}
+{"ts":1375785130511,"patch":[[{"diffs":[[0,"=False)#"],[-1,"?"],[1," ova v"],[0,"\n    man"]],"start1":27102,"start2":27102,"length1":17,"length2":22}]],"length":32262,"saved":false}
+{"ts":1375785133007,"patch":[[{"diffs":[[0,")# ova v"],[1,"rednost se "],[0,"\n    man"]],"start1":27108,"start2":27108,"length1":16,"length2":27}]],"length":32273,"saved":false}
+{"ts":1375785137801,"patch":[[{"diffs":[[0,"nost se "],[1,"prepisuje iz polja "],[0,"\n    man"]],"start1":27119,"start2":27119,"length1":16,"length2":35}]],"length":32292,"saved":false}
+{"ts":1375785142664,"patch":[[{"diffs":[[0,"lse)# ov"],[-1,"a"],[1,"u"],[0," vrednos"]],"start1":27105,"start2":27105,"length1":17,"length2":17}]],"length":32292,"saved":false}
+{"ts":1375785146795,"patch":[[{"diffs":[[0,"rednost "],[1,"buyer upisuje u d"],[0,"se prepi"]],"start1":27116,"start2":27116,"length1":16,"length2":33}]],"length":32309,"saved":false}
+{"ts":1375785150373,"patch":[[{"diffs":[[0,"suje u d"],[1,"efinisano polje "],[0,"se prepi"]],"start1":27133,"start2":27133,"length1":16,"length2":32}]],"length":32325,"saved":false}
+{"ts":1375785153056,"patch":[[{"diffs":[[0,"o polje "],[1,"a ona se "],[0,"se prepi"]],"start1":27149,"start2":27149,"length1":16,"length2":25}]],"length":32334,"saved":false}
+{"ts":1375785155660,"patch":[[{"diffs":[[0," ona se "],[-1,"s"],[1,"dalj"],[0,"e prepis"]],"start1":27158,"start2":27158,"length1":17,"length2":20}]],"length":32337,"saved":false}
+{"ts":1375785161439,"patch":[[{"diffs":[[0,"uje "],[-1,"iz polja"],[1,"pril"],[0," \n  "]],"start1":27178,"start2":27178,"length1":16,"length2":12}]],"length":32333,"saved":false}
+{"ts":1375785167284,"patch":[[{"diffs":[[0,"uje pril"],[1,"ikom Add to Cart "],[0," \n    ma"]],"start1":27178,"start2":27178,"length1":16,"length2":33}]],"length":32350,"saved":false}
+{"ts":1375785175447,"patch":[[{"diffs":[[0,"to Cart "],[-1," "],[0,"\n    man"]],"start1":27195,"start2":27195,"length1":17,"length2":16}]],"length":32349,"saved":false}
+{"ts":1375785179510,"patch":[[{"diffs":[[0,"episuje "],[1,"u order"],[0,"prilikom"]],"start1":27174,"start2":27174,"length1":16,"length2":23}]],"length":32356,"saved":false}
+{"ts":1375785180625,"patch":[[{"diffs":[[0," u order"],[1," "],[0,"prilikom"]],"start1":27181,"start2":27181,"length1":16,"length2":17}]],"length":32357,"saved":false}
+{"ts":1375785185783,"patch":[[{"diffs":[[0,"u order "],[1,"line description "],[0,"prilikom"]],"start1":27182,"start2":27182,"length1":16,"length2":33}]],"length":32374,"saved":false}
+{"ts":1375785578578,"patch":[[{"diffs":[[0,"efault=False"],[1,", indexed=False"],[0,")# ovu vredn"]],"start1":27096,"start2":27096,"length1":24,"length2":39}]],"length":32389,"saved":false}
+{"ts":1375785822710,"patch":[[{"diffs":[[0,"rt \n"],[-1,"    mandatory_variant_type = ndb.BooleanProperty('5', default=True)#?\n"],[0,"\n\ncl"]],"start1":27240,"start2":27240,"length1":78,"length2":8}]],"length":32319,"saved":false}
+{"ts":1375785875756,"patch":[[{"diffs":[[0,"required=True)\n\n"],[1,"# done!"],[0,"\nclass ProductVa"]],"start1":26657,"start2":26657,"length1":32,"length2":39}]],"length":32326,"saved":false}
+{"ts":1375785902733,"patch":[[{"diffs":[[0,"t, required=True"],[1,", indexed=False"],[0,")\n    sequence ="]],"start1":27391,"start2":27391,"length1":32,"length2":47}]],"length":32341,"saved":false}
+{"ts":1375785917268,"patch":[[{"diffs":[[0," Cart \n\n"],[1,"# done"],[0,"\nclass P"]],"start1":27244,"start2":27244,"length1":16,"length2":22}]],"length":32347,"saved":false}
+{"ts":1375785918776,"patch":[[{"diffs":[[0,"\n\n# done"],[1,"!"],[0,"\nclass P"]],"start1":27250,"start2":27250,"length1":16,"length2":17}]],"length":32348,"saved":false}
+{"ts":1375786265973,"patch":[[{"diffs":[[0,"', required=True"],[1,", indexed=False"],[0,")\n    active = n"]],"start1":25221,"start2":25221,"length1":32,"length2":47}]],"length":32363,"saved":false}
+{"ts":1375786272990,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    active"]],"start1":25225,"start2":25225,"length1":39,"length2":24}]],"length":32348,"saved":false}
+{"ts":1375786297222,"patch":[[{"diffs":[[0,"t=True)#"],[-1,"?"],[1," ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike"],[0,"\n    _de"]],"start1":25283,"start2":25283,"length1":17,"length2":147}]],"length":32478,"saved":false}
+{"ts":1375786376013,"patch":[[{"diffs":[[0,"Volume\n\n"],[1,"#"],[0,"\nclass P"]],"start1":24209,"start2":24209,"length1":16,"length2":17}]],"length":32479,"saved":false}
+{"ts":1375786377326,"patch":[[{"diffs":[[0,"olume\n\n#"],[1," ?"],[0,"\nclass P"]],"start1":24210,"start2":24210,"length1":16,"length2":18}]],"length":32481,"saved":false}
+{"ts":1375786388098,"patch":[[{"diffs":[[0,"required=True)\n\n"],[1,"# ?"],[0,"\nclass ProductIn"]],"start1":26198,"start2":26198,"length1":32,"length2":35}]],"length":32484,"saved":false}
