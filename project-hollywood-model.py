@@ -597,7 +597,7 @@ class ProductTemplateVariant(ndb.Model):
 # TRADE
 ################################################################################
 
-# done!
+# ?
 class Order(ndb.Expando):
     
     # root
@@ -640,37 +640,37 @@ class OrderAddress(ndb.Expando):
     email = ndb.StringProperty('9')
     telephone = ndb.StringProperty('10')
 
-
+# ?
 class OrderLine(ndb.Expando):
     
     # ancestor Order
+    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     description = ndb.TextProperty('1', required=True)
-    quantity = ndb.FloatProperty('2', required=True)# custom decimal
-    product_uom = ndb.KeyProperty('3', kind=ProductUOM, required=True)
-    unit_price = ndb.FloatProperty('4', required=True)# custom decimal
-    discount = ndb.FloatProperty('5', default=0.00)# custom decimal
-    sequence = ndb.IntegerProperty('6', required=True)
-    taxes = ndb.StructuredProperty(OrderLineTax, '7', repeated=True)
+    quantity = ndb.FloatProperty('2', required=True, indexed=False)# custom decimal
+    product_uom = ndb.KeyProperty('3', kind=ProductUOM, required=True, indexed=False)#?
+    unit_price = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
+    discount = ndb.FloatProperty('5', default=0.00, indexed=False)# custom decimal
+    sequence = ndb.IntegerProperty('6', required=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
-    # product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
-    # catalog_pricetag_reference = ndb.KeyProperty('1', kind=CatalogPricetag, required=True)
-    # product_instance_reference = ndb.KeyProperty('2', kind=ProductInstance, required=True)
-    # taxes_reference = ndb.KeyProperty('3', kind=StoreTax, repeated=True)
+    # taxes = ndb.StructuredProperty(OrderLineTax, '7', repeated=True)
+    # product_category = ndb.KeyProperty('8', kind=ProductCategory, required=True)
+    # catalog_pricetag_reference = ndb.KeyProperty('9', kind=CatalogPricetag, required=True)
+    # product_instance_reference = ndb.KeyProperty('10', kind=ProductInstance, required=True)
+    # taxes_reference = ndb.KeyProperty('11', kind=StoreTax, repeated=True)
 
-
+# done!
 class OrderLineTax(ndb.Model):
     
     # StructuredProperty model
-    # ovde vazi isto, ovo se moze izmeniti kada budemo optimize query/index..
     # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
     name = ndb.StringProperty('1', required=True)
     type = ndb.IntegerProperty('2', required=True)
     amount = ndb.FloatProperty('3', required=True) # custom decimal - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-    #sequence = ndb.IntegerProperty('4', required=True)
 
-
+# done!
 class PayPalTransaction(ndb.Model):
     
     # ancestor Order
@@ -678,32 +678,33 @@ class PayPalTransaction(ndb.Model):
     ipn_message = ndb.TextProperty('2', required=True)
     logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
 
-
+# done!
 class BillingLog(ndb.Model):
     
     # ancestor Billing Object (Store)
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    reference = ndb.KeyProperty('2',required=True)
-    amount = ndb.FloatProperty('3', required=True)# custom decimal
-    balance = ndb.FloatProperty('4', required=True)# custom decimal
+    reference = ndb.KeyProperty('2',required=True, indexed=False)
+    amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
+    balance = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
 
-
+# done!
 class BillingCreditAdjustment(ndb.Model):
     
     # ancestor Billing Object (Store)
-    amount = ndb.FloatProperty('1', required=True)# custom decimal
-    state = ndb.IntegerProperty('2', required=True)
+    amount = ndb.FloatProperty('1', required=True, indexed=False)# custom decimal
+    state = ndb.IntegerProperty('2', required=True)# ?
 
-
-class OrderFeedback(ndb.Model):
+# done!
+class OrderFeedback(ndb.Expando):
     
     # ancestor Order
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    store_name = ndb.StringProperty('2', required=True)
-    buyer = ndb.KeyProperty('3', kind=User, required=True)
-    state = ndb.IntegerProperty('4', required=True)
-    
-    order_reference = ndb.StringProperty('5', required=True)# ? mozda async 
-    order_date = ndb.DateTimeProperty('6', auto_now_add=True, required=True)#? mozda async
-    total_amount = ndb.FloatProperty('7', required=True)# custom decimal ? mozda async
-    order_state = ndb.IntegerProperty('8', required=True)# ? mozda async
+    buyer = ndb.KeyProperty('2', kind=User, required=True)
+    state = ndb.IntegerProperty('3', required=True)
+    updated = ndb.DateTimeProperty('4', auto_now=True, required=True)
+    # Expando
+    # store_name = ndb.StringProperty('5', required=True, indexed=False)
+    # order_reference = ndb.StringProperty('6', required=True)# ? mozda async 
+    # order_date = ndb.DateTimeProperty('7', auto_now_add=True, required=True)#? mozda async
+    # total_amount = ndb.FloatProperty('8', required=True)# custom decimal ? mozda async
+    # order_state = ndb.IntegerProperty('9', required=True)# ? mozda async
