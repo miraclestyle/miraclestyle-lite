@@ -601,15 +601,17 @@ class ProductTemplateVariant(ndb.Model):
 class Order(ndb.Expando):
     
     # root
-    reference = ndb.StringProperty('1', required=True)
-    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
-    currency = ndb.KeyProperty('3', kind=Currency, required=True)
-    untaxed_amount = ndb.FloatProperty('4', required=True)# custom decimal
-    tax_amount = ndb.FloatProperty('5', required=True)# custom decimal
-    total_amount = ndb.FloatProperty('6', required=True)# custom decimal
-    comment = ndb.TextProperty('7')
-    state = ndb.IntegerProperty('8', required=True)
+    order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
+    currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
+    untaxed_amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
+    tax_amount = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
+    total_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    state = ndb.IntegerProperty('6', required=True)# , indexed=False ? 
+    _default_indexed = False
+    pass
     #Expando
+    comment = ndb.TextProperty('7')
+    reference = ndb.StringProperty('1', required=True, indexed=False)
     company_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
     billing_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
     shipping_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
