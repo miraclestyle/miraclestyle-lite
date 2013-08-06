@@ -702,9 +702,11 @@ class OrderFeedback(ndb.Expando):
     buyer = ndb.KeyProperty('2', kind=User, required=True)
     state = ndb.IntegerProperty('3', required=True)
     updated = ndb.DateTimeProperty('4', auto_now=True, required=True)
+    _default_indexed = False
+    pass
     # Expando
     # store_name = ndb.StringProperty('5', required=True, indexed=False)
     # order_reference = ndb.StringProperty('6', required=True)# ? mozda async 
-    # order_date = ndb.DateTimeProperty('7', auto_now_add=True, required=True)#? mozda async
-    # total_amount = ndb.FloatProperty('8', required=True)# custom decimal ? mozda async
-    # order_state = ndb.IntegerProperty('9', required=True)# ? mozda async
+    # order_date = ndb.DateTimeProperty('7', auto_now_add=True, required=True, indexed=False)
+    # total_amount = ndb.FloatProperty('8', required=True)# custom decimal
+    # order_state = ndb.IntegerProperty('9', required=True)

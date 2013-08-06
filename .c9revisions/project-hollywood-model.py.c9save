@@ -769,3 +769,5 @@
 {"ts":1375803334532,"patch":[[{"diffs":[[0,".FloatProperty('"],[-1,"7"],[1,"8"],[0,"', required=True"]],"start1":33109,"start2":33109,"length1":33,"length2":33}]],"length":33249,"saved":false}
 {"ts":1375803336549,"patch":[[{"diffs":[[0,"ntegerProperty('"],[-1,"8"],[1,"9"],[0,"', required=True"]],"start1":33199,"start2":33199,"length1":33,"length2":33}]],"length":33249,"saved":false}
 {"ts":1375803339721,"patch":[[{"diffs":[[0,"ue)# ?\n\n"],[1,"# done!"],[0,"\nclass O"]],"start1":32516,"start2":32516,"length1":16,"length2":23}]],"length":33256,"saved":false}
+{"ts":1375803438675,"patch":[[{"diffs":[[0,"uired=True)\n"],[1,"    _default_indexed = False\n    pass\n"],[0,"    # Expand"]],"start1":32821,"start2":32821,"length1":24,"length2":62}]],"length":33294,"saved":false}
+{"ts":1375803807768,"patch":[[{"diffs":[[0,"red=True"],[1,", , in"],[0,")#? mozd"]],"start1":33106,"start2":33106,"length1":16,"length2":22}]],"length":33300,"saved":false}
