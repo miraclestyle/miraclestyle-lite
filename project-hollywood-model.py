@@ -597,35 +597,35 @@ class ProductTemplateVariant(ndb.Model):
 # TRADE
 ################################################################################
 
-
+# done!
 class Order(ndb.Expando):
     
     # root
+    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
+    # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
+    # http://doc.tryton.org/2.8/modules/sale/doc/index.html
+    # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
     currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
     untaxed_amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
     tax_amount = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
     total_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
-    state = ndb.IntegerProperty('6', required=True)# , indexed=False ? 
+    state = ndb.IntegerProperty('6', required=True)# indexed=False ? 
     _default_indexed = False
     pass
-    #Expando
-    # comment = ndb.TextProperty('7')
-    # reference = ndb.StringProperty('1', required=True, indexed=False)
-    # company_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
-    # billing_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
-    # shipping_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
+    # Expando
+    # company_address = ndb.StructuredProperty(OrderAddress, '7', required=True)
+    # billing_address = ndb.StructuredProperty(OrderAddress, '8', required=True)
+    # shipping_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
+    # reference = ndb.StringProperty('10', required=True, indexed=False)
+    # comment = ndb.TextProperty('11')# 64kb limit
+    # company_address_reference = ndb.KeyProperty('12', kind=Store, required=True)
+    # billing_address_reference = ndb.KeyProperty('13', kind=BuyerAddress, required=True)
+    # shipping_address_reference = ndb.KeyProperty('14', kind=BuyerAddress, required=True)
+    # carrier_reference = ndb.KeyProperty('15', kind=StoreCarrier, required=True)
 
-
-class OrderReference(ndb.Model):
-    
-    # ancestor Order
-    company_address = ndb.KeyProperty('1', kind=BuyerAddress, required=True)
-    billing_address = ndb.KeyProperty('2', kind=BuyerAddress, required=True)
-    shipping_address = ndb.KeyProperty('3', kind=BuyerAddress, required=True)
-    carrier = ndb.KeyProperty('4', kind=StoreCarrier, required=True)
-
-
+# done!
 class OrderAddress(ndb.Expando):
     
     # StructuredProperty model
@@ -639,7 +639,6 @@ class OrderAddress(ndb.Expando):
     street_address2 = ndb.StringProperty('8')
     email = ndb.StringProperty('9')
     telephone = ndb.StringProperty('10')
-    type = ndb.IntegerProperty('11', required=True)# ?
 
 
 class OrderLine(ndb.Expando):
@@ -654,16 +653,11 @@ class OrderLine(ndb.Expando):
     taxes = ndb.StructuredProperty(OrderLineTax, '7', repeated=True)
     _default_indexed = False
     pass
-    #Expando
-    #product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
-
-
-class OrderLineReference(ndb.Model):
-    
-    # ancestor OrderLine
-    catalog_pricetag = ndb.KeyProperty('1', kind=CatalogPricetag, required=True)
-    product_instance = ndb.KeyProperty('2', kind=ProductInstance, required=True)
-    taxes = ndb.KeyProperty('3', kind=StoreTax, repeated=True)
+    # Expando
+    # product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True)
+    # catalog_pricetag_reference = ndb.KeyProperty('1', kind=CatalogPricetag, required=True)
+    # product_instance_reference = ndb.KeyProperty('2', kind=ProductInstance, required=True)
+    # taxes_reference = ndb.KeyProperty('3', kind=StoreTax, repeated=True)
 
 
 class OrderLineTax(ndb.Model):
