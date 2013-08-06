@@ -610,13 +610,11 @@ class Order(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
-    comment = ndb.TextProperty('7')
-    reference = ndb.StringProperty('1', required=True, indexed=False)
-    company_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
-    billing_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
-    shipping_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
-    _default_indexed = False
-    pass
+    # comment = ndb.TextProperty('7')
+    # reference = ndb.StringProperty('1', required=True, indexed=False)
+    # company_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
+    # billing_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
+    # shipping_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
 
 
 class OrderReference(ndb.Model):
