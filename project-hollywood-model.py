@@ -614,7 +614,7 @@ class ProductInstanceContent(ndb.Model):
 # ?
 class Order(ndb.Expando):
     
-    # root
+    # root - mozda da ovo pripadne nekom user/store ?
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html

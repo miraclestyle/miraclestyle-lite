@@ -908,3 +908,12 @@
 {"ts":1375875859974,"patch":[[{"diffs":[[0,"indexed=False)\n\n"],[1,"\n"],[0,"# ?\nclass Billin"]],"start1":29671,"start2":29671,"length1":32,"length2":33}]],"length":34180,"saved":false}
 {"ts":1375875860948,"patch":[[{"diffs":[[0,"alse)\n\n\n"],[1,"\n"],[0,"# ?\nclas"]],"start1":29680,"start2":29680,"length1":16,"length2":17}]],"length":34181,"saved":false}
 {"ts":1375875862219,"patch":[[{"diffs":[[0,"False)\n\n"],[1,"# done!\nclass OrderFeedback(ndb.Model):\n    \n    # ancestor Order\n    state = ndb.IntegerProperty('1', required=True)"],[0,"\n\n# ?\ncl"]],"start1":29679,"start2":29679,"length1":16,"length2":133}]],"length":34298,"saved":false}
+{"contributors":[],"silentsave":true,"ts":1375891243748,"patch":[[{"diffs":[[0,"\n    \n    # root"],[1," - mozda i "],[0,"\n    # http://hg"]],"start1":27664,"start2":27664,"length1":32,"length2":43}]],"length":34309,"saved":false}
+{"ts":1375891244296,"patch":[[{"diffs":[[0,"- mozda "],[-1,"i "],[0,"\n    # h"]],"start1":27681,"start2":27681,"length1":18,"length2":16}]],"length":34307,"saved":false}
+{"ts":1375891245928,"patch":[[{"diffs":[[0,"- mozda "],[1,"da o"],[0,"\n    # h"]],"start1":27681,"start2":27681,"length1":16,"length2":20}]],"length":34311,"saved":false}
+{"ts":1375891250045,"patch":[[{"diffs":[[0,"zda da o"],[1,"vo pripadne nekom "],[0,"\n    # h"]],"start1":27685,"start2":27685,"length1":16,"length2":34}]],"length":34329,"saved":false}
+{"ts":1375891251800,"patch":[[{"diffs":[[0,"e nekom "],[1,"- "],[0,"\n    # h"]],"start1":27703,"start2":27703,"length1":16,"length2":18}]],"length":34331,"saved":false}
+{"ts":1375891253010,"patch":[[{"diffs":[[0,"e nekom "],[-1,"- "],[0,"\n    # h"]],"start1":27703,"start2":27703,"length1":18,"length2":16}]],"length":34329,"saved":false}
+{"ts":1375891256249,"patch":[[{"diffs":[[0,"e nekom "],[1,"user"],[0,"\n    # h"]],"start1":27703,"start2":27703,"length1":16,"length2":20}]],"length":34333,"saved":false}
+{"ts":1375891258831,"patch":[[{"diffs":[[0,"kom user"],[1,"/"],[0,"\n    # h"]],"start1":27707,"start2":27707,"length1":16,"length2":17}]],"length":34334,"saved":false}
+{"ts":1375891262707,"patch":[[{"diffs":[[0,"om user/"],[1,"store ?"],[0,"\n    # h"]],"start1":27708,"start2":27708,"length1":16,"length2":23}]],"length":34341,"saved":false}
