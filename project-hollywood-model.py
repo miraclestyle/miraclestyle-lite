@@ -5,10 +5,6 @@
 # NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
-from google.appengine.ext import blobstore
-from google.appengine.ext import ndb
-from decimal import *
-
 '''
 Ovo su zabranjena imena propertija:
 
@@ -35,6 +31,12 @@ setdefault
 to_xml
 update
 '''
+
+from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
+from decimal import *
+
+
 
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
@@ -189,7 +191,6 @@ class Country(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_3166
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
-    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
     # u slucaju da ostane index za code, trebace nam composit index code+name+active
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     code = ndb.StringProperty('1', required=True, indexed=False)
@@ -254,9 +255,9 @@ class ProductUOM(ndb.Model):
     # custom index name+active
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
-    rate = ndb.FloatProperty('3', required=True, indexed=False)# ovde ide custom decimal property
-    factor = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property
-    rounding = ndb.FloatProperty('5', required=True, indexed=False)# ovde ide custom decimal property
+    rate = DecimalProperty('3', required=True, indexed=False)
+    factor = DecimalProperty('4', required=True, indexed=False)
+    rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
@@ -274,7 +275,7 @@ class Currency(ndb.Model):
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True)
     numeric_code = ndb.StringProperty('4', indexed=False)
-    rounding = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
     #formating
@@ -415,7 +416,7 @@ class StoreTax(ndb.Expando):
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
     type = ndb.IntegerProperty('3', required=True, indexed=False)
-    amount = ndb.FloatProperty('4', required=True, indexed=False)# ovde ide custom decimal property - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    amount = DecimalProperty('4', required=True, indexed=False)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
     location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
     active = ndb.BooleanProperty('6', default=True)
     _default_indexed = False
@@ -457,11 +458,11 @@ class StoreCarrierLineRule(ndb.Model):
     # StructuredProperty model
     condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
     condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
-    condition_value = ndb.FloatProperty('3', required=True, indexed=False)# ovde ide custom decimal property - verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
+    condition_value = DecimalProperty('3', required=True, indexed=False)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
     condition_value_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)# ? filter: ProductUOMCategory = Weight / ProductUOMCategory = Volume
     price_type = ndb.IntegerProperty('4', required=True, indexed=False)
     price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
-    amount = ndb.FloatProperty('6', required=True, indexed=False)# ovde ide custom decimal property
+    amount = DecimalProperty('6', required=True, indexed=False)
 
 
 ################################################################################
@@ -478,7 +479,7 @@ class Catalog(ndb.Expando):
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
     cover = blobstore.BlobKeyProperty('5', required=True, indexed=False)# blob ce se implementirati na GCS
-    cost = ndb.FloatProperty('6', required=True, indexed=False)# custom decimal
+    cost = DecimalProperty('6', required=True, indexed=False)
     state = ndb.IntegerProperty('7', required=True)
     _default_indexed = False
     pass
@@ -512,16 +513,16 @@ class ProductTemplate(ndb.Expando):
     name = ndb.StringProperty('2', required=True)
     description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
-    unit_price = ndb.FloatProperty('5', required=True, indexed=False) # custom decimal property
+    unit_price = DecimalProperty('5', required=True, indexed=False)
     active = ndb.BooleanProperty('6', default=True)# ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike
     _default_indexed = False
     pass
     #Expando
     # mozda treba uvesti customer lead time??
     # da razmislim oko UOM parametara
-    #weight = ndb.FloatProperty('7')# custom decimal
+    #weight = DecimalProperty('7')
     #weight_uom = ndb.KeyProperty('8', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    #volume = ndb.FloatProperty('9')# custom decimal
+    #volume = DecimalProperty('9')
     #volume_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
 
 # ?
@@ -540,13 +541,13 @@ class ProductInstance(ndb.Expando):
     pass
     #Expando
     #description = ndb.TextProperty('3', required=True)
-    #unit_price = ndb.FloatProperty('4', required=True) # custom decimal property
+    #unit_price = DecimalProperty('4', required=True)
     #managed_stock = ndb.BooleanProperty('5', default=False)
     #low_stock_notify = ndb.BooleanProperty('6', default=True)
-    #low_stock_quantity = ndb.FloatProperty('7', default=0.00)# custom decimal
-    #weight = ndb.FloatProperty('8')# custom decimal
+    #low_stock_quantity = DecimalProperty('7', default=0.00)
+    #weight = DecimalProperty('8')
     #weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    #volume = ndb.FloatProperty('10')# custom decimal
+    #volume = DecimalProperty('10')
     #volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
     #variant_signature = ndb.TextProperty('12', required=True)
 
@@ -556,8 +557,8 @@ class ProductInstanceInventory(ndb.Model):
     # ancestor ProductInstance
     updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     # ? reference = ndb.KeyProperty('2', required=True)
-    quantity = ndb.FloatProperty('3', required=True)# custom decimal
-    balance = ndb.FloatProperty('4', required=True)# custom decimal
+    quantity = DecimalProperty('3', required=True)
+    balance = DecimalProperty('4', required=True)
 
 # done!
 class ProductVariant(ndb.Model):
@@ -624,9 +625,9 @@ class Order(ndb.Expando):
     buyer = ndb.KeyProperty('2', kind=User, required=True)
     order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.KeyProperty('4', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
-    untaxed_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
-    tax_amount = ndb.FloatProperty('6', required=True, indexed=False)# custom decimal
-    total_amount = ndb.FloatProperty('7', required=True, indexed=False)# custom decimal
+    untaxed_amount = DecimalProperty('5', required=True, indexed=False)
+    tax_amount = DecimalProperty('6', required=True, indexed=False)
+    total_amount = DecimalProperty('7', required=True, indexed=False)
     state = ndb.IntegerProperty('8', required=True)# indexed=False ? 
     updated = ndb.DateTimeProperty('9', auto_now=True, required=True)
     _default_indexed = False
@@ -661,9 +662,9 @@ class BillingOrder(ndb.Expando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
-    untaxed_amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
-    tax_amount = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
-    total_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    untaxed_amount = DecimalProperty('3', required=True, indexed=False)
+    tax_amount = DecimalProperty('4', required=True, indexed=False)
+    total_amount = DecimalProperty('5', required=True, indexed=False)
     state = ndb.IntegerProperty('6', required=True)# indexed=False ? 
     updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
     _default_indexed = False
@@ -697,10 +698,10 @@ class OrderLine(ndb.Expando):
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     description = ndb.TextProperty('1', required=True)
-    quantity = ndb.FloatProperty('2', required=True, indexed=False)# custom decimal
+    quantity = DecimalProperty('2', required=True, indexed=False)
     product_uom = ndb.KeyProperty('3', kind=ProductUOM, required=True, indexed=False)#?
-    unit_price = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
-    discount = ndb.FloatProperty('5', default=0.00, indexed=False)# custom decimal
+    unit_price = DecimalProperty('4', required=True, indexed=False)
+    discount = DecimalProperty('5', default=0.00, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True, indexed=False)
     _default_indexed = False
     pass
@@ -718,7 +719,7 @@ class OrderLineTax(ndb.Model):
     # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
     name = ndb.StringProperty('1', required=True)
     type = ndb.IntegerProperty('2', required=True)
-    amount = ndb.FloatProperty('3', required=True) # custom decimal - obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    amount = DecimalProperty('3', required=True)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
 
 # done!
 class PayPalTransaction(ndb.Model):
@@ -734,13 +735,13 @@ class BillingLog(ndb.Model):
     # ancestor Store (Application)
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True, indexed=False)
-    amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
-    balance = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
+    amount = DecimalProperty('3', required=True, indexed=False)
+    balance = DecimalProperty('4', required=True, indexed=False)
 
 # done!
 class BillingCreditAdjustment(ndb.Model):
     
     # ancestor Store (Application)
-    amount = ndb.FloatProperty('1', required=True, indexed=False)# custom decimal
+    amount = DecimalProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)# ?
 
