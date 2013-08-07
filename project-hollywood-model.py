@@ -642,6 +642,38 @@ class Order(ndb.Expando):
     # shipping_address_reference = ndb.KeyProperty('17', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('18', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('19', required=True)
+    # store_name = ndb.StringProperty('20', required=True, indexed=False)
+
+# done!
+class OrderFeedback(ndb.Model):
+    
+    # ancestor Order
+    state = ndb.IntegerProperty('1', required=True)
+
+# ?
+class BillingOrder(ndb.Expando):
+    
+    # ancestor Store (Application)
+    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
+    # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
+    # http://doc.tryton.org/2.8/modules/sale/doc/index.html
+    # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
+    order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# updated on checkout
+    currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
+    untaxed_amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
+    tax_amount = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
+    total_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    state = ndb.IntegerProperty('6', required=True)# indexed=False ? 
+    updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+    _default_indexed = False
+    pass
+    # Expando
+    # company_address = ndb.StructuredProperty(OrderAddress, '8', required=True)
+    # billing_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
+    # shipping_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
+    # reference = ndb.StringProperty('11', required=True, indexed=False)
+    # comment = ndb.TextProperty('12')# 64kb limit
 
 # done!
 class OrderAddress(ndb.Expando):
@@ -661,7 +693,7 @@ class OrderAddress(ndb.Expando):
 # ?
 class OrderLine(ndb.Expando):
     
-    # ancestor Order
+    # ancestor Order, BillingOrder
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     description = ndb.TextProperty('1', required=True)
@@ -691,7 +723,7 @@ class OrderLineTax(ndb.Model):
 # done!
 class PayPalTransaction(ndb.Model):
     
-    # ancestor Order
+    # ancestor Order, BillingOrder
     txn_id = ndb.StringProperty('1', required=True)
     ipn_message = ndb.TextProperty('2', required=True)
     logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
@@ -699,7 +731,7 @@ class PayPalTransaction(ndb.Model):
 # done!
 class BillingLog(ndb.Model):
     
-    # ancestor Billing Object (Store)
+    # ancestor Store (Application)
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True, indexed=False)
     amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
@@ -708,12 +740,7 @@ class BillingLog(ndb.Model):
 # done!
 class BillingCreditAdjustment(ndb.Model):
     
-    # ancestor Billing Object (Store)
+    # ancestor Store (Application)
     amount = ndb.FloatProperty('1', required=True, indexed=False)# custom decimal
     state = ndb.IntegerProperty('2', required=True)# ?
 
-# done!
-class OrderFeedback(ndb.Model):
-    
-    # ancestor Order
-    state = ndb.IntegerProperty('3', required=True)
