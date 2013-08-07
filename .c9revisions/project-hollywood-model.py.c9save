@@ -983,3 +983,5 @@
 {"ts":1375908282984,"patch":[[{"diffs":[[0,"illingOrder\n"],[1,"    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888\n"],[0,"    # http:/"]],"start1":31315,"start2":31315,"length1":24,"length2":86}]],"length":33552,"saved":false}
 {"ts":1375908363228,"patch":[[{"diffs":[[0,"ed=True)# ob"],[1,"\n    "],[0,"ratiti paznj"]],"start1":32645,"start2":32645,"length1":24,"length2":29}]],"length":33557,"saved":false}
 {"ts":1375908367272,"patch":[[{"diffs":[[0,"rue)# ob"],[-1,"\n    "],[0,"ratiti p"]],"start1":32649,"start2":32649,"length1":21,"length2":16}]],"length":33552,"saved":false}
+{"ts":1375909617964,"patch":[[{"diffs":[[0,".tar.gz\n"],[1,"    \n"],[0,"    # u "]],"start1":7064,"start2":7064,"length1":16,"length2":21}]],"length":33557,"saved":false}
+{"ts":1375909623082,"patch":[[{"diffs":[[0,".tar.gz\n    "],[1,"# http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42"],[0,"\n    # u slu"]],"start1":7064,"start2":7064,"length1":24,"length2":138}]],"length":33671,"saved":false}

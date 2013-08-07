@@ -191,6 +191,7 @@ class Country(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_3166
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
+    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
     # u slucaju da ostane index za code, trebace nam composit index code+name+active
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     code = ndb.StringProperty('1', required=True, indexed=False)
