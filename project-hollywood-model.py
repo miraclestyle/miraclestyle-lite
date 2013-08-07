@@ -170,10 +170,10 @@ class Content(ndb.Model):
     sequence = ndb.IntegerProperty('5', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     state = ndb.IntegerProperty('6', required=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
 
-# done!
+# done
 class Image(ndb.Model):
     
-    # ancestor Any Object
+    # base class
     image = blobstore.BlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
     content_type = ndb.StringProperty('2', required=True, indexed=False)
     size = ndb.FloatProperty('3', required=True, indexed=False)
@@ -211,6 +211,15 @@ class CountrySubdivision(ndb.Model):
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
+# ?
+class Location(ndb.Model):
+    
+    # base class
+    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
+    city = ndb.StringProperty('3', indexed=False)# ?
+    postal_code_from = ndb.StringProperty('4', indexed=False)
+    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # ?
 class ProductCategory(ndb.Model):
@@ -385,7 +394,6 @@ class Store(ndb.Expando):
     # positive_feedback_count = ndb.IntegerProperty('16', required=True)
     # negative_feedback_count = ndb.IntegerProperty('17', required=True)
     # neutral_feedback_count = ndb.IntegerProperty('18', required=True)
-    
 
 # done!
 class StoreContent(ndb.Model):
@@ -395,16 +403,10 @@ class StoreContent(ndb.Model):
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
 
-
-# ?
-class StoreShippingExclusion(ndb.Model):
+# done!
+class StoreShippingExclusion(Location):
     
     # ancestor Store (Catalog - for caching)
-    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
-    city = ndb.StringProperty('3', indexed=False)# ?
-    postal_code_from = ndb.StringProperty('4', indexed=False)
-    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # done!
 class StoreTax(ndb.Expando):
@@ -422,15 +424,10 @@ class StoreTax(ndb.Expando):
     #product_category = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)
     #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier, repeated=True)
 
-# ?
-class StoreTaxLocation(ndb.Model):
+# done!
+class StoreTaxLocation(Location):
     
     # ancestor StoreTax
-    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
-    city = ndb.StringProperty('3', indexed=False)# ?
-    postal_code_from = ndb.StringProperty('4', indexed=False)
-    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # done!
 class StoreCarrier(ndb.Model):
@@ -449,15 +446,10 @@ class StoreCarrierLine(ndb.Model):
     active = ndb.BooleanProperty('4', default=True)
     rules = ndb.StructuredProperty(StoreCarrierLineRule, '5', repeated=True, indexed=False)
 
-# ?
-class StoreCarrierLineLocation(ndb.Model):
+# done!
+class StoreCarrierLineLocation(Location):
     
     # ancestor StoreCarrierLine
-    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
-    city = ndb.StringProperty('3', indexed=False)# ?
-    postal_code_from = ndb.StringProperty('4', indexed=False)
-    postal_code_to = ndb.StringProperty('5', indexed=False)
 
 # ?
 class StoreCarrierLineRule(ndb.Model):
@@ -496,11 +488,9 @@ class Catalog(ndb.Expando):
     # rank coefficient based on store feedback
 
 # done!
-class CatalogContent(ndb.Model):
+class CatalogImage(Image):
     
     # ancestor Catalog
-    title = ndb.StringProperty('1', required=True)
-    body = ndb.TextProperty('2', required=True)
 
 # done!
 class CatalogPricetag(ndb.Model):
@@ -570,13 +560,6 @@ class ProductInstanceInventory(ndb.Model):
     balance = ndb.FloatProperty('4', required=True)# custom decimal
 
 # done!
-class ProductContent(ndb.Model):
-    
-    # ancestor ProductTemplate, ProductInstance
-    catalog_content = ndb.KeyProperty('1', kind=CatalogContent, required=True, indexed=False)
-    sequence = ndb.IntegerProperty('2', required=True)
-
-# done!
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog
@@ -590,6 +573,37 @@ class ProductTemplateVariant(ndb.Model):
     
     # ancestor ProductTemplate
     product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True, indexed=False)
+    sequence = ndb.IntegerProperty('2', required=True)
+
+# done!
+class ProductTemplateImage(Image):
+    
+    # ancestor ProductTemplate
+
+# done!
+class ProductInstanceImage(Image):
+    
+    # ancestor ProductInstance
+
+# done!
+class ProductContent(ndb.Model):
+    
+    # ancestor Catalog
+    title = ndb.StringProperty('1', required=True)
+    body = ndb.TextProperty('2', required=True)
+
+# done!
+class ProductTemplateContent(ndb.Model):
+    
+    # ancestor ProductTemplate
+    product_content = ndb.KeyProperty('1', kind=ProductContent, required=True, indexed=False)
+    sequence = ndb.IntegerProperty('2', required=True)
+
+# done!
+class ProductInstanceContent(ndb.Model):
+    
+    # ancestor ProductInstance
+    product_content = ndb.KeyProperty('1', kind=ProductContent, required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
 
 
@@ -606,24 +620,28 @@ class Order(ndb.Expando):
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
-    currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
-    untaxed_amount = ndb.FloatProperty('3', required=True, indexed=False)# custom decimal
-    tax_amount = ndb.FloatProperty('4', required=True, indexed=False)# custom decimal
-    total_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
-    state = ndb.IntegerProperty('6', required=True)# indexed=False ? 
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    buyer = ndb.KeyProperty('2', kind=User, required=True)
+    order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
+    currency = ndb.KeyProperty('4', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
+    untaxed_amount = ndb.FloatProperty('5', required=True, indexed=False)# custom decimal
+    tax_amount = ndb.FloatProperty('6', required=True, indexed=False)# custom decimal
+    total_amount = ndb.FloatProperty('7', required=True, indexed=False)# custom decimal
+    state = ndb.IntegerProperty('8', required=True)# indexed=False ? 
+    updated = ndb.DateTimeProperty('9', auto_now=True, required=True)
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.StructuredProperty(OrderAddress, '7', required=True)
-    # billing_address = ndb.StructuredProperty(OrderAddress, '8', required=True)
-    # shipping_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
-    # reference = ndb.StringProperty('10', required=True, indexed=False)
-    # comment = ndb.TextProperty('11')# 64kb limit
-    # company_address_reference = ndb.KeyProperty('12', kind=Store, required=True)
-    # billing_address_reference = ndb.KeyProperty('13', kind=BuyerAddress, required=True)
-    # shipping_address_reference = ndb.KeyProperty('14', kind=BuyerAddress, required=True)
-    # carrier_reference = ndb.KeyProperty('15', kind=StoreCarrier, required=True)
+    # company_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
+    # billing_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
+    # shipping_address = ndb.StructuredProperty(OrderAddress, '12', required=True)
+    # reference = ndb.StringProperty('13', required=True, indexed=False)
+    # comment = ndb.TextProperty('14')# 64kb limit
+    # company_address_reference = ndb.KeyProperty('15', kind=Store, required=True)
+    # billing_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
+    # shipping_address_reference = ndb.KeyProperty('17', kind=BuyerAddress, required=True)
+    # carrier_reference = ndb.KeyProperty('18', kind=StoreCarrier, required=True)
+    # feedback = ndb.IntegerProperty('19', required=True)
 
 # done!
 class OrderAddress(ndb.Expando):
@@ -695,18 +713,7 @@ class BillingCreditAdjustment(ndb.Model):
     state = ndb.IntegerProperty('2', required=True)# ?
 
 # done!
-class OrderFeedback(ndb.Expando):
+class OrderFeedback(ndb.Model):
     
     # ancestor Order
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-    buyer = ndb.KeyProperty('2', kind=User, required=True)
     state = ndb.IntegerProperty('3', required=True)
-    updated = ndb.DateTimeProperty('4', auto_now=True, required=True)
-    _default_indexed = False
-    pass
-    # Expando
-    # store_name = ndb.StringProperty('5', required=True, indexed=False)
-    # order_reference = ndb.StringProperty('6', required=True)# ? mozda async 
-    # order_date = ndb.DateTimeProperty('7', auto_now_add=True, required=True, indexed=False)
-    # total_amount = ndb.FloatProperty('8', required=True)# custom decimal
-    # order_state = ndb.IntegerProperty('9', required=True)
