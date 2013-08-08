@@ -1001,3 +1001,30 @@
 {"ts":1375960853431,"patch":[[{"diffs":[[0,"on/1809\n    "],[1,"# "],[0,"\n    name = "]],"start1":26182,"start2":26182,"length1":24,"length2":26}]],"length":34666,"saved":false}
 {"ts":1375960881289,"patch":[[{"diffs":[[0,"on/1809\n"],[-1,"    # "],[0,"\n    nam"]],"start1":26182,"start2":26182,"length1":22,"length2":16}]],"length":34660,"saved":false}
 {"ts":1375960882219,"patch":[[{"diffs":[[0,"on/1809\n"],[-1,"\n"],[0,"    name"]],"start1":26182,"start2":26182,"length1":17,"length2":16}]],"length":34659,"saved":false}
+{"contributors":[],"silentsave":true,"ts":1375971457508,"patch":[[{"diffs":[[0,"dexed=False)"],[1,"# mo"],[0,"\n    \n# done"]],"start1":15221,"start2":15221,"length1":24,"length2":28}]],"length":34663,"saved":false}
+{"ts":1375971457952,"patch":[[{"diffs":[[0,"False)# "],[-1,"mo"],[0,"\n    \n# "]],"start1":15227,"start2":15227,"length1":18,"length2":16}]],"length":34661,"saved":false}
+{"ts":1375971459405,"patch":[[{"diffs":[[0,"False)# "],[1,"ova j"],[0,"\n    \n# "]],"start1":15227,"start2":15227,"length1":16,"length2":21}]],"length":34666,"saved":false}
+{"ts":1375971461355,"patch":[[{"diffs":[[0,"se)# ova"],[-1," j"],[0,"\n    \n# "]],"start1":15230,"start2":15230,"length1":18,"length2":16}]],"length":34664,"saved":false}
+{"ts":1375971463107,"patch":[[{"diffs":[[0,"False)# "],[-1,"ova"],[0,"\n    \n# "]],"start1":15227,"start2":15227,"length1":19,"length2":16}]],"length":34661,"saved":false}
+{"ts":1375971464695,"patch":[[{"diffs":[[0,"False)# "],[1,"treb"],[0,"\n    \n# "]],"start1":15227,"start2":15227,"length1":16,"length2":20}]],"length":34665,"saved":false}
+{"ts":1375971468021,"patch":[[{"diffs":[[0,"e)# treb"],[1,"ace index "],[0,"\n    \n# "]],"start1":15231,"start2":15231,"length1":16,"length2":26}]],"length":34675,"saved":false}
+{"ts":1375971470300,"patch":[[{"diffs":[[0,"e index "],[1,"zbog "],[0,"\n    \n# "]],"start1":15241,"start2":15241,"length1":16,"length2":21}]],"length":34680,"saved":false}
+{"ts":1375971480361,"patch":[[{"diffs":[[0,"ex zbog "],[1,"stores taba na co"],[0,"\n    \n# "]],"start1":15246,"start2":15246,"length1":16,"length2":33}]],"length":34697,"saved":false}
+{"ts":1375971485218,"patch":[[{"diffs":[[0,"ba na co"],[1,"llection management"],[0,"\n    \n# "]],"start1":15263,"start2":15263,"length1":16,"length2":35}]],"length":34716,"saved":false}
+{"ts":1375971641199,"patch":[[{"diffs":[[0,", indexed=False)"],[1,"# "],[0,"\n    catalog = n"]],"start1":15580,"start2":15580,"length1":32,"length2":34}]],"length":34718,"saved":false}
+{"ts":1375971647956,"patch":[[{"diffs":[[0,"False)# "],[1,"ovde mozda bude trebao index "],[0,"\n    cat"]],"start1":15590,"start2":15590,"length1":16,"length2":45}]],"length":34747,"saved":false}
+{"ts":1375971651560,"patch":[[{"diffs":[[0,"rebao in"],[-1,"dex "],[0,"\n    cat"]],"start1":15615,"start2":15615,"length1":20,"length2":16}]],"length":34743,"saved":false}
+{"ts":1375971653390,"patch":[[{"diffs":[[0,"rebao in"],[1,"dex"],[0,"\n    cat"]],"start1":15615,"start2":15615,"length1":16,"length2":19}]],"length":34746,"saved":false}
+{"ts":1375971657486,"patch":[[{"diffs":[[0,"ao index"],[1," radi filtriranja"],[0,"\n    cat"]],"start1":15618,"start2":15618,"length1":16,"length2":33}]],"length":34763,"saved":false}
+{"ts":1375971662436,"patch":[[{"diffs":[[0,"ex radi "],[1,"lakseg "],[0,"filtrira"]],"start1":15624,"start2":15624,"length1":16,"length2":23}]],"length":34770,"saved":false}
+{"ts":1375971807541,"patch":[[{"diffs":[[0,", indexed=False)"],[1,"\n    # "],[0,"\n\n# done!\nclass "]],"start1":30323,"start2":30323,"length1":32,"length2":39}]],"length":34777,"saved":false}
+{"ts":1375971830298,"patch":[[{"diffs":[[0,")\n    # "],[1,"logo = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS"],[0,"\n\n# done"]],"start1":30338,"start2":30338,"length1":16,"length2":117}]],"length":34878,"saved":false}
+{"ts":1375971832978,"patch":[[{"diffs":[[0,")\n    # "],[1,"store_"],[0,"logo = b"]],"start1":30338,"start2":30338,"length1":16,"length2":22}]],"length":34884,"saved":false}
+{"ts":1375971837185,"patch":[[{"diffs":[[0,"i na GCS"],[1," "],[0,"\n\n# done"]],"start1":30445,"start2":30445,"length1":16,"length2":17}]],"length":34885,"saved":false}
+{"ts":1375971846255,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # comm"]],"start1":29782,"start2":29782,"length1":39,"length2":24}]],"length":34870,"saved":false}
+{"ts":1375971852089,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")\n    # stor"]],"start1":30296,"start2":30296,"length1":39,"length2":24}]],"length":34855,"saved":false}
+{"ts":1375971856225,"patch":[[{"diffs":[[0,"equired=True"],[-1,", indexed=False"],[0,")# blob ce s"]],"start1":30361,"start2":30361,"length1":39,"length2":24}]],"length":34840,"saved":false}
+{"ts":1375971860783,"patch":[[{"diffs":[[0,"e)# "],[-1,"blob ce se implementirati na GCS"],[1,"ovo"],[0," \n\n#"]],"start1":30372,"start2":30372,"length1":40,"length2":11}]],"length":34811,"saved":false}
+{"ts":1375971865047,"patch":[[{"diffs":[[0,"e)# ovo "],[1,"bi moglo da posluzi"],[0,"\n\n# done"]],"start1":30372,"start2":30372,"length1":16,"length2":35}]],"length":34830,"saved":false}
+{"ts":1375971875654,"patch":[[{"diffs":[[0," posluzi"],[1," ??"],[0,"\n\n# done"]],"start1":30391,"start2":30391,"length1":16,"length2":19}]],"length":34833,"saved":false}
+{"ts":1375971912025,"patch":[[{"diffs":[[0,"obKeyProperty('2"],[1,"1"],[0,"', required=True"]],"start1":30341,"start2":30341,"length1":32,"length2":33}]],"length":34834,"saved":false}

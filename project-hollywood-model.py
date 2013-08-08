@@ -343,7 +343,7 @@ class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# trebace index zbog stores taba na collection management
     
 # done!
 class AggregateBuyerCollectionCatalog(ndb.Model):
@@ -351,7 +351,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     # ancestor User
     # task queue radi agregaciju prilikom nekih promena na store-u
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# ovde mozda bude trebao index radi lakseg filtriranja
     catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
     catalog_cover = blobstore.BlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
     catalog_published_date = ndb.DateTimeProperty('5', required=True)
@@ -641,14 +641,15 @@ class Order(ndb.Expando):
     # company_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
     # billing_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
     # shipping_address = ndb.StructuredProperty(OrderAddress, '12', required=True)
-    # reference = ndb.StringProperty('13', required=True, indexed=False)
+    # reference = ndb.StringProperty('13', required=True)
     # comment = ndb.TextProperty('14')# 64kb limit
     # company_address_reference = ndb.KeyProperty('15', kind=Store, required=True)
     # billing_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
     # shipping_address_reference = ndb.KeyProperty('17', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('18', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('19', required=True)
-    # store_name = ndb.StringProperty('20', required=True, indexed=False)
+    # store_name = ndb.StringProperty('20', required=True)
+    # store_logo = blobstore.BlobKeyProperty('21', required=True)# ovo bi moglo da posluzi ??
 
 # done!
 class OrderFeedback(ndb.Model):
