@@ -568,6 +568,7 @@ class ProductInstanceInventory(ndb.Model):
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog
+    # http://v6apps.openerp.com/addon/1809
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')
     options = ndb.StringProperty('3', repeated=True, indexed=False)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
