@@ -517,10 +517,11 @@ class ProductTemplate(ndb.Expando):
     # da razmislim oko UOM parametara
     # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductVariant entiteta posto pripadaju istoj domeni(katalogu)
     # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductContent entiteta posto pripadaju istoj domeni(katalogu)
-    # weight = DecimalProperty('9')
-    # weight_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    # volume = DecimalProperty('11')
-    # volume_uom = ndb.KeyProperty('12', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)
+    # weight = DecimalProperty('10')
+    # weight_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    # volume = DecimalProperty('12')
+    # volume_uom = ndb.KeyProperty('13', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
 
 # ?
 class ProductInstance(ndb.Expando):
@@ -540,14 +541,15 @@ class ProductInstance(ndb.Expando):
     # description = ndb.TextProperty('3', required=True) # limit!!!
     # unit_price = DecimalProperty('4', required=True)
     # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductContent entiteta posto pripadaju istoj domeni(katalogu)
-    # managed_stock = ndb.BooleanProperty('6', default=False)
-    # low_stock_notify = ndb.BooleanProperty('7', default=True)
-    # low_stock_quantity = DecimalProperty('8', default=0.00)
-    # weight = DecimalProperty('9')
-    # weight_uom = ndb.KeyProperty('10', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    # volume = DecimalProperty('11')
-    # volume_uom = ndb.KeyProperty('12', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
-    # variant_signature = ndb.TextProperty('13', required=True)
+    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)
+    # managed_stock = ndb.BooleanProperty('7', default=False)
+    # low_stock_notify = ndb.BooleanProperty('8', default=True)
+    # low_stock_quantity = DecimalProperty('9', default=0.00)
+    # weight = DecimalProperty('10')
+    # weight_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    # volume = DecimalProperty('12')
+    # volume_uom = ndb.KeyProperty('13', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    # variant_signature = ndb.TextProperty('14', required=True)
 
 # ?
 class ProductInstanceInventory(ndb.Model):
@@ -569,43 +571,11 @@ class ProductVariant(ndb.Model):
     allow_custom_value = ndb.BooleanProperty('4', default=False, indexed=False)# ovu vrednost buyer upisuje u definisano polje a ona se dalje prepisuje u order line description prilikom Add to Cart 
 
 # done!
-class ProductTemplateImage(Image):
-    
-    # ancestor ProductTemplate
-
-# done!
-class ProductInstanceImage(Image):
-    
-    # ancestor ProductInstance
-
-# done!
 class ProductContent(ndb.Model):
     
     # ancestor Catalog (Application)
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
-
-# done! - ovo je skalabilnije od repeated property u ProductTemplate, ali je losije za performanse
-#class ProductTemplateVariant(ndb.Model):
-    
-    # ancestor ProductTemplate
-    #product_variant = ndb.KeyProperty('1', kind=ProductVariant, required=True, indexed=False)
-    #sequence = ndb.IntegerProperty('2', required=True)
-
-# done! - ovo je skalabilnije od repeated property u ProductTemplate, ali je losije za performanse
-#class ProductTemplateContent(ndb.Model):
-    
-    # ancestor ProductTemplate
-    #product_content = ndb.KeyProperty('1', kind=ProductContent, required=True, indexed=False)
-    #sequence = ndb.IntegerProperty('2', required=True)
-
-# done! - ovo je skalabilnije od repeated property u ProductInstance, ali je losije za performanse
-#class ProductInstanceContent(ndb.Model):
-    
-    # ancestor ProductInstance
-    #product_content = ndb.KeyProperty('1', kind=ProductContent, required=True, indexed=False)
-    #sequence = ndb.IntegerProperty('2', required=True)
-
 
 ################################################################################
 # TRADE
