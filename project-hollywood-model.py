@@ -218,7 +218,7 @@ class Location(ndb.Model):
     
     # base class
     country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)
+    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)# ? treba nam neki property koji moze da pamti i key i string
     city = ndb.StringProperty('3', indexed=False)# ?
     postal_code_from = ndb.StringProperty('4', indexed=False)
     postal_code_to = ndb.StringProperty('5', indexed=False)
@@ -320,7 +320,7 @@ class BuyerAddress(ndb.Model):
     # ancestor User
     name = ndb.StringProperty('1', required=True)
     country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
+    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ? treba nam neki property koji moze da pamti i key i string
     city = ndb.StringProperty('4', required=True, indexed=False)
     postal_code = ndb.StringProperty('5', required=True, indexed=False)
     street_address = ndb.StringProperty('6', required=True, indexed=False)
@@ -364,38 +364,39 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 # done!
 class Store(ndb.Expando):
     
-    # root
+    # root (ancestor Application)
     name = ndb.StringProperty('1', required=True)
     logo = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
-    state = ndb.IntegerProperty('3', required=True)
+    primary_contact = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
+    state = ndb.IntegerProperty('4', required=True)
     _default_indexed = False
     pass
     #Expando
     #
     # Company
-    # company_name = ndb.StringProperty('4', required=True)
-    # company_country = ndb.KeyProperty('5', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ostaje da vidimo kako cemo ovo da handlamo, ili selection, ili text, ili i jedno i drugo po potrebi...
-    # company_city = ndb.StringProperty('7', required=True)
-    # company_postal_code = ndb.StringProperty('8', required=True)
-    # company_street_address = ndb.StringProperty('9', required=True)
-    # company_street_address2 = ndb.StringProperty('10')
-    # company_email = ndb.StringProperty('11')
-    # company_telephone = ndb.StringProperty('12')
+    # company_name = ndb.StringProperty('5', required=True)
+    # company_country = ndb.KeyProperty('6', kind=Country, required=True)
+    # company_region = ndb.KeyProperty('7', kind=CountrySubdivision, required=True)# ? treba nam neki property koji moze da pamti i key i string
+    # company_city = ndb.StringProperty('8', required=True)
+    # company_postal_code = ndb.StringProperty('9', required=True)
+    # company_street_address = ndb.StringProperty('10', required=True)
+    # company_street_address2 = ndb.StringProperty('11')
+    # company_email = ndb.StringProperty('12')
+    # company_telephone = ndb.StringProperty('13')
     #
     # Payment
-    # currency = ndb.KeyProperty('13', kind=Currency, required=True)
+    # currency = ndb.KeyProperty('14', kind=Currency, required=True)
     # tax_buyer_on ?
-    # paypal_email = ndb.StringProperty('14')
+    # paypal_email = ndb.StringProperty('15')
     # paypal_shipping ?
     #
     # Analytics 
-    # tracking_id = ndb.StringProperty('15')
+    # tracking_id = ndb.StringProperty('16')
     #
     # Feedback
-    # positive_feedback_count = ndb.IntegerProperty('16', required=True)
-    # negative_feedback_count = ndb.IntegerProperty('17', required=True)
-    # neutral_feedback_count = ndb.IntegerProperty('18', required=True)
+    # positive_feedback_count = ndb.IntegerProperty('17', required=True)
+    # negative_feedback_count = ndb.IntegerProperty('18', required=True)
+    # neutral_feedback_count = ndb.IntegerProperty('19', required=True)
 
 # done!
 class StoreContent(ndb.Model):
@@ -411,9 +412,9 @@ class StoreShippingExclusion(Location):
     # ancestor Store (Catalog - for caching)
 
 # done!
-class StoreTax(ndb.Expando):
+class Tax(ndb.Expando):
     
-    # ancestor Store
+    # ancestor Store (Application)
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
     type = ndb.IntegerProperty('3', required=True, indexed=False)
@@ -422,39 +423,32 @@ class StoreTax(ndb.Expando):
     active = ndb.BooleanProperty('6', default=True)
     _default_indexed = False
     pass
-    #Expando
-    #product_category = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)
-    #store_carrier = ndb.KeyProperty('8', kind=StoreCarrier, repeated=True)
+    # Expando
+    # location = ndb.StructuredProperty(Location, '7', repeated=True)
+    # product_category = ndb.KeyProperty('8', kind=ProductCategory, repeated=True)
+    # carrier = ndb.KeyProperty('9', kind=Carrier, repeated=True)
 
 # done!
-class StoreTaxLocation(Location):
+class Carrier(ndb.Model):
     
-    # ancestor StoreTax
-
-# done!
-class StoreCarrier(ndb.Model):
-    
-    # ancestor Store
+    # ancestor Store (Application)
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
 
 # done!
-class StoreCarrierLine(ndb.Model):
+class CarrierLine(ndb.Expando):
     
-    # ancestor StoreCarrier
+    # ancestor Carrier
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
     location_exclusion = ndb.BooleanProperty('3', default=False, indexed=False)
     active = ndb.BooleanProperty('4', default=True)
-    rules = ndb.StructuredProperty(StoreCarrierLineRule, '5', repeated=True, indexed=False)
-
-# done!
-class StoreCarrierLineLocation(Location):
-    
-    # ancestor StoreCarrierLine
+    # Expando
+    # location = ndb.StructuredProperty(Location, '5', repeated=True, indexed=False)
+    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True, indexed=False)
 
 # ?
-class StoreCarrierLineRule(ndb.Model):
+class CarrierLineRule(ndb.Model):
     
     # StructuredProperty model
     condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
@@ -473,7 +467,7 @@ class StoreCarrierLineRule(ndb.Model):
 # done!
 class Catalog(ndb.Expando):
     
-    # root
+    # root (ancestor Application)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     store = ndb.KeyProperty('1', kind=Store, required=True)
     name = ndb.StringProperty('2', required=True)
@@ -509,7 +503,7 @@ class CatalogPricetag(ndb.Model):
 # ?
 class ProductTemplate(ndb.Expando):
     
-    # ancestor Catalog
+    # ancestor Catalog (Application)
     product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
     description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
@@ -567,7 +561,7 @@ class ProductInstanceInventory(ndb.Model):
 # done!
 class ProductVariant(ndb.Model):
     
-    #ancestor Catalog
+    #ancestor Catalog (Application)
     # http://v6apps.openerp.com/addon/1809
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')
@@ -587,7 +581,7 @@ class ProductInstanceImage(Image):
 # done!
 class ProductContent(ndb.Model):
     
-    # ancestor Catalog
+    # ancestor Catalog (Application)
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
 
@@ -620,13 +614,13 @@ class ProductContent(ndb.Model):
 # ?
 class Order(ndb.Expando):
     
-    # root - mozda da ovo pripadne nekom user/store ?
+    # ancestor Store (Application) ? root - ali verovatno je najbolje da pripadne storovima, radi jednostavnosti
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    store = ndb.KeyProperty('1', kind=Store, required=True)
+    # store = ndb.KeyProperty('1', kind=Store, required=True)
     buyer = ndb.KeyProperty('2', kind=User, required=True)
     order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.KeyProperty('4', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 

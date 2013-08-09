@@ -1028,3 +1028,25 @@
 {"ts":1375971865047,"patch":[[{"diffs":[[0,"e)# ovo "],[1,"bi moglo da posluzi"],[0,"\n\n# done"]],"start1":30372,"start2":30372,"length1":16,"length2":35}]],"length":34830,"saved":false}
 {"ts":1375971875654,"patch":[[{"diffs":[[0," posluzi"],[1," ??"],[0,"\n\n# done"]],"start1":30391,"start2":30391,"length1":16,"length2":19}]],"length":34833,"saved":false}
 {"ts":1375971912025,"patch":[[{"diffs":[[0,"obKeyProperty('2"],[1,"1"],[0,"', required=True"]],"start1":30341,"start2":30341,"length1":32,"length2":33}]],"length":34834,"saved":false}
+{"contributors":[],"silentsave":true,"ts":1376045859520,"patch":[[{"diffs":[[0,"  # "],[-1,"root - mozda da ovo pripadne nekom user/store ?"],[1,"ancestor Store (Application) ? r"],[0,"\n   "]],"start1":28337,"start2":28337,"length1":55,"length2":40}]],"length":34819,"saved":false}
+{"ts":1376045859555,"patch":[[{"diffs":[[0,"ion) ? r"],[1,"oot"],[0,"\n    # h"]],"start1":28365,"start2":28365,"length1":16,"length2":19}]],"length":34822,"saved":false}
+{"ts":1376045860686,"patch":[[{"diffs":[[0,"tion) ? root"],[1," "],[0,"\n    # http:"]],"start1":28364,"start2":28364,"length1":24,"length2":25}]],"length":34823,"saved":false}
+{"ts":1376045862168,"patch":[[{"diffs":[[0," ? root "],[1,"- ali ve"],[0,"\n    # h"]],"start1":28369,"start2":28369,"length1":16,"length2":24}]],"length":34831,"saved":false}
+{"ts":1376045866100,"patch":[[{"diffs":[[0,"- ali ve"],[1,"rovatno je najbolje da p"],[0,"\n    # h"]],"start1":28377,"start2":28377,"length1":16,"length2":40}]],"length":34855,"saved":false}
+{"ts":1376045869381,"patch":[[{"diffs":[[0,"lje da p"],[1,"ripadne sto"],[0,"\n    # h"]],"start1":28401,"start2":28401,"length1":16,"length2":27}]],"length":34866,"saved":false}
+{"ts":1376045872916,"patch":[[{"diffs":[[0,"adne sto"],[1,"rovima, radi feedback"],[0,"\n    # h"]],"start1":28412,"start2":28412,"length1":16,"length2":37}]],"length":34887,"saved":false}
+{"ts":1376045874885,"patch":[[{"diffs":[[0," radi fe"],[-1,"edback"],[0,"\n    # h"]],"start1":28427,"start2":28427,"length1":22,"length2":16}]],"length":34881,"saved":false}
+{"ts":1376045876957,"patch":[[{"diffs":[[0,", ra"],[-1,"di fe"],[0,"\n   "]],"start1":28426,"start2":28426,"length1":13,"length2":8}]],"length":34876,"saved":false}
+{"ts":1376045879396,"patch":[[{"diffs":[[0,"vima, ra"],[1,"di jednostavnosi"],[0,"\n    # h"]],"start1":28422,"start2":28422,"length1":16,"length2":32}]],"length":34892,"saved":false}
+{"ts":1376045881298,"patch":[[{"diffs":[[0,"ostavnos"],[1,"t"],[0,"i\n    # "]],"start1":28437,"start2":28437,"length1":16,"length2":17}]],"length":34893,"saved":false}
+{"ts":1376045886434,"patch":[[{"diffs":[[0,"e.py#L48\n   "],[1," #"],[0," store = ndb"]],"start1":28786,"start2":28786,"length1":24,"length2":26}]],"length":34895,"saved":false}
+{"ts":1376046395776,"patch":[[{"diffs":[[0,"d below\n"],[1,"    \n"],[0,"    acti"]],"start1":18473,"start2":18473,"length1":16,"length2":21}]],"length":34900,"saved":false}
+{"ts":1376046405620,"patch":[[{"diffs":[[0,"d below\n    "],[1,"location = "],[0,"\n    active "]],"start1":18473,"start2":18473,"length1":24,"length2":35}]],"length":34911,"saved":false}
+{"ts":1376046422398,"patch":[[{"diffs":[[0,"    "],[-1,"location = "],[1,"rules = ndb.StructuredProperty(StoreCarrierLineRule, '5', repeated=True, indexed=False)"],[0,"\n   "]],"start1":18481,"start2":18481,"length1":19,"length2":95}]],"length":34987,"saved":false}
+{"ts":1376046426435,"patch":[[{"diffs":[[0,"d below\n    "],[-1,"rules"],[1,"location"],[0," = ndb.Struc"]],"start1":18473,"start2":18473,"length1":29,"length2":32}]],"length":34990,"saved":false}
+{"ts":1376046433026,"patch":[[{"diffs":[[0,"roperty("],[-1,"StoreCarrierLineRule"],[1,"Location"],[0,", '5', r"]],"start1":18511,"start2":18511,"length1":36,"length2":24}]],"length":34978,"saved":false}
+{"ts":1376046437280,"patch":[[{"diffs":[[0,"ation, '"],[-1,"5"],[1,"6"],[0,"', repea"]],"start1":18522,"start2":18522,"length1":17,"length2":17}]],"length":34978,"saved":false}
+{"ts":1376046526798,"patch":[[{"diffs":[[0,"ooleanProperty('"],[-1,"6"],[1,"7"],[0,"', default=True)"]],"start1":18582,"start2":18582,"length1":33,"length2":33}]],"length":34978,"saved":false}
+{"ts":1376046534958,"patch":[[{"diffs":[[0,"    "],[-1,"location = ndb.StructuredProperty(Location, '6', repeated=True, indexed=False)"],[0,"\n   "]],"start1":18481,"start2":18481,"length1":86,"length2":8}]],"length":34900,"saved":false}
+{"ts":1376046541272,"patch":[[{"diffs":[[0,"  pass\n    #"],[1," "],[0,"Expando\n"],[1,"    \n"],[0,"    #product"]],"start1":18569,"start2":18569,"length1":32,"length2":38}]],"length":34906,"saved":false}
+{"ts":1376046542791,"patch":[[{"diffs":[[0,"Expando\n    "],[1,"# location = ndb.StructuredProperty(Location, '6', repeated=True, indexed=False)"],[0,"\n    #produc"]],"start1":18582,"start2":18582,"length1":24,"length2":104}]],"length":34986,"saved":false}
