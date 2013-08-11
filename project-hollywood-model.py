@@ -50,7 +50,7 @@ class DecimalProperty(ndb.StringProperty):
     return decimal.Decimal(value)  # Always return a decimal
 
 ################################################################################
-# CORE
+# CORE - 8
 ################################################################################
 
 # ?
@@ -133,7 +133,7 @@ class RoleUser(ndb.Model):
 
 
 ################################################################################
-# MISC
+# MISC - 13
 ################################################################################
 
 # done!
@@ -172,7 +172,7 @@ class Content(ndb.Model):
     sequence = ndb.IntegerProperty('5', required=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     state = ndb.IntegerProperty('6', required=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
 
-# done
+# done!
 class Image(ndb.Model):
     
     # base class
@@ -311,7 +311,7 @@ class MessageRecepient(ndb.Model):
 
 
 ################################################################################
-# BUYER
+# BUYER - 4
 ################################################################################
 
 # ?
@@ -358,7 +358,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     
 
 ################################################################################
-# STORE
+# STORE - 7
 ################################################################################
 
 # done!
@@ -461,7 +461,7 @@ class CarrierLineRule(ndb.Model):
 
 
 ################################################################################
-# CATALOG
+# CATALOG - 8
 ################################################################################
 
 # done!
@@ -555,6 +555,11 @@ class ProductInstance(ndb.Expando):
 class ProductInstanceInventory(ndb.Model):
     
     # ancestor ProductInstance
+    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
+    # 'in stock'
+    # 'available for order'
+    # 'out of stock'
+    # 'preorder'
     updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     # ? reference = ndb.KeyProperty('2', required=True)
     quantity = DecimalProperty('3', required=True)
@@ -578,7 +583,7 @@ class ProductContent(ndb.Model):
     body = ndb.TextProperty('2', required=True)
 
 ################################################################################
-# TRADE
+# TRADE - 9
 ################################################################################
 
 # ?
