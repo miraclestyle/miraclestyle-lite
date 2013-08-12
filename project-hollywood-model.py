@@ -65,9 +65,9 @@ class ObjectLog(ndb.Expando):
     state = ndb.IntegerProperty('4', required=True)
     _default_indexed = False
     pass
-    #message / m = ndb.TextProperty('5')# max size 64kb - to determine char count
-    #note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
-    #log / l = ndb.TextProperty('7')
+    # message / m = ndb.TextProperty('5')# max size 64kb - to determine char count
+    # note / n = ndb.TextProperty('6')# max size 64kb - to determine char count
+    # log / l = ndb.TextProperty('7')
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
@@ -551,19 +551,32 @@ class ProductInstance(ndb.Expando):
     # volume_uom = ndb.KeyProperty('13', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
     # variant_signature = ndb.TextProperty('14', required=True)
 
-# ?
-class ProductInstanceInventory(ndb.Model):
+# done!
+class ProductInventoryLog(ndb.Model):
     
     # ancestor ProductInstance
     # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
+    # product instance state: 
     # 'in stock'
     # 'available for order'
     # 'out of stock'
     # 'preorder'
-    updated = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    # ? reference = ndb.KeyProperty('2', required=True)
-    quantity = DecimalProperty('3', required=True)
-    balance = DecimalProperty('4', required=True)
+    # manage inventory automatically
+    # poduct is 'available for order'/'out of stock' when inventory balance is <= 0
+    # notify store manager when qty drops below x 
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    reference = ndb.KeyProperty('2',required=True, indexed=False)
+    quantity = DecimalProperty('3', required=True, indexed=False)
+    balance = DecimalProperty('4', required=True, indexed=False)
+
+# done!
+class ProductInventoryAdjustment(ndb.Model):
+    
+    # ancestor ProductInstance
+    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
+    agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
+    quantity = DecimalProperty('3', required=True, indexed=False, indexed=False)
+    comment = ndb.StringProperty('4', required=True, indexed=False)
 
 # done!
 class ProductVariant(ndb.Model):
@@ -581,6 +594,7 @@ class ProductContent(ndb.Model):
     # ancestor Catalog (Application)
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
+
 
 ################################################################################
 # TRADE - 9
@@ -717,6 +731,9 @@ class BillingLog(ndb.Model):
 class BillingCreditAdjustment(ndb.Model):
     
     # ancestor Store (Application)
-    amount = DecimalProperty('1', required=True, indexed=False)
-    state = ndb.IntegerProperty('2', required=True)# ?
+    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
+    agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
+    amount = DecimalProperty('3', required=True, indexed=False, indexed=False)
+    message = ndb.TextProperty('4')# max size 64kb - to determine char count
+    note = ndb.TextProperty('5')# max size 64kb - to determine char count
 
