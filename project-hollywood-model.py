@@ -53,7 +53,7 @@ class DecimalProperty(ndb.StringProperty):
 # CORE - 8
 ################################################################################
 
-# ?
+# done!
 class ObjectLog(ndb.Expando):
     
     # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, ukljucujuci i njegovu hiejrarhiju - napr: 'User-UserLog-ObjectLog'
@@ -213,15 +213,20 @@ class CountrySubdivision(ndb.Model):
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
 
-# ?
-class Location(ndb.Model):
+# done!
+class Location(ndb.Expando):
     
-    # base class
+    # base class/structured class
+    # valjda ovo moze biti expando kao structured property ?
     country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('2', kind=CountrySubdivision, indexed=False)# ? treba nam neki property koji moze da pamti i key i string
-    city = ndb.StringProperty('3', indexed=False)# ?
-    postal_code_from = ndb.StringProperty('4', indexed=False)
-    postal_code_to = ndb.StringProperty('5', indexed=False)
+    _default_indexed = False
+    pass
+    # Expando
+    # region = ndb.KeyProperty('2', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace 
+    # region = ndb.StringProperty('2')# ako je potreban key val onda se ovo preksace
+    # postal_code_from = ndb.StringProperty('3', indexed=False)
+    # postal_code_to = ndb.StringProperty('4', indexed=False)
+    # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
 
 # ?
 class ProductCategory(ndb.Model):
@@ -314,21 +319,26 @@ class MessageRecepient(ndb.Model):
 # BUYER - 4
 ################################################################################
 
-# ?
-class BuyerAddress(ndb.Model):
+# done!
+class BuyerAddress(ndb.Expando):
     
     # ancestor User
     name = ndb.StringProperty('1', required=True)
     country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
-    region = ndb.KeyProperty('3', kind=CountrySubdivision, required=True, indexed=False)# ? treba nam neki property koji moze da pamti i key i string
-    city = ndb.StringProperty('4', required=True, indexed=False)
-    postal_code = ndb.StringProperty('5', required=True, indexed=False)
-    street_address = ndb.StringProperty('6', required=True, indexed=False)
-    street_address2 = ndb.StringProperty('7', indexed=False)
-    email = ndb.StringProperty('8', indexed=False)
-    telephone = ndb.StringProperty('9', indexed=False)
-    default_shipping = ndb.BooleanProperty('10', default=True)# indexed=False ?
-    default_billing = ndb.BooleanProperty('11', default=True)# indexed=False ?
+    city = ndb.StringProperty('3', required=True, indexed=False)
+    postal_code = ndb.StringProperty('4', required=True, indexed=False)
+    street_address = ndb.StringProperty('5', required=True, indexed=False)
+    default_shipping = ndb.BooleanProperty('6', default=True)# indexed=False ?
+    default_billing = ndb.BooleanProperty('7', default=True)# indexed=False ?
+    _default_indexed = False
+    pass
+    # Expando
+    # naredna dva polja su required!!!
+    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
+    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preksace
+    # street_address2 = ndb.StringProperty('9')
+    # email = ndb.StringProperty('10')
+    # telephone = ndb.StringProperty('11')
 
 # done!
 class BuyerCollection(ndb.Model):
@@ -509,15 +519,23 @@ class ProductTemplate(ndb.Expando):
     description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
     unit_price = DecimalProperty('5', required=True, indexed=False)
-    active = ndb.BooleanProperty('6', default=True)# ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike
+    state = ndb.IntegerProperty('6', required=True)
+    # states: - ovo cemo pojasniti
+    # 'in stock'
+    # 'available for order'
+    # 'out of stock'
+    # 'preorder'
+    # 'auto manage inventory - available for order' (poduct is 'available for order' when inventory balance is <= 0)
+    # 'auto manage inventory - out of stock' (poduct is 'out of stock' when inventory balance is <= 0)
+    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
     _default_indexed = False
     pass
     # Expando
     # mozda treba uvesti customer lead time??
     # da razmislim oko UOM parametara
-    # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductVariant entiteta posto pripadaju istoj domeni(katalogu)
-    # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductContent entiteta posto pripadaju istoj domeni(katalogu)
-    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)
+    # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit ? 100x?
+    # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit ? 100x?
+    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)# soft limit ? 100x?
     # weight = DecimalProperty('10')
     # weight_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
     # volume = DecimalProperty('12')
@@ -534,36 +552,33 @@ class ProductInstance(ndb.Expando):
     #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
     #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
     code = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)# ? - ako ovo ostane onda ce trebati i active prop na CatalogPricetag - drugo resenje je da active ustvari bude deo inventory logike
+    state = ndb.IntegerProperty('2', required=True)
+    # states: - ovo cemo pojasniti
+    # 'in stock'
+    # 'available for order'
+    # 'out of stock'
+    # 'preorder'
+    # 'auto manage inventory - available for order' (poduct is 'available for order' when inventory balance is <= 0)
+    # 'auto manage inventory - out of stock' (poduct is 'out of stock' when inventory balance is <= 0)
+    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
     _default_indexed = False
     pass
     # Expando
-    # description = ndb.TextProperty('3', required=True) # limit!!!
+    # description = ndb.TextProperty('3', required=True)# soft limit ? 100kb?
     # unit_price = DecimalProperty('4', required=True)
-    # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# mozda da se ovde ne pamti kompletan kljuc vec samo id od ProductContent entiteta posto pripadaju istoj domeni(katalogu)
-    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)
-    # managed_stock = ndb.BooleanProperty('7', default=False)
-    # low_stock_notify = ndb.BooleanProperty('8', default=True)
-    # low_stock_quantity = DecimalProperty('9', default=0.00)
-    # weight = DecimalProperty('10')
-    # weight_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    # volume = DecimalProperty('12')
-    # volume_uom = ndb.KeyProperty('13', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
-    # variant_signature = ndb.TextProperty('14', required=True)
+    # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit ? 100x?
+    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)# soft limit ? 100x?
+    # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below x 
+    # weight = DecimalProperty('8')
+    # weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
+    # volume = DecimalProperty('10')
+    # volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    # variant_signature = ndb.TextProperty('12', required=True)# ova vrednost kao i vrednosti koje kupac manuelno upise kao opcije variante se prepisuju u order line description prilikom Add to Cart
 
 # done!
 class ProductInventoryLog(ndb.Model):
     
     # ancestor ProductInstance
-    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
-    # product instance state: 
-    # 'in stock'
-    # 'available for order'
-    # 'out of stock'
-    # 'preorder'
-    # manage inventory automatically
-    # poduct is 'available for order'/'out of stock' when inventory balance is <= 0
-    # notify store manager when qty drops below x 
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True, indexed=False)
     quantity = DecimalProperty('3', required=True, indexed=False)
@@ -582,7 +597,7 @@ class ProductInventoryAdjustment(ndb.Model):
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog (Application)
-    # http://v6apps.openerp.com/addon/1809
+    # http://v6apps.openerp.com/addon/1809 
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')
     options = ndb.StringProperty('3', repeated=True, indexed=False)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
