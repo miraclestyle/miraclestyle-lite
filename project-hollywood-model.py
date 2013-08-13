@@ -56,7 +56,7 @@ class DecimalProperty(ndb.StringProperty):
 # done!
 class ObjectLog(ndb.Expando):
     
-    # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, ukljucujuci i njegovu hiejrarhiju - napr: 'User-UserLog-ObjectLog'
+    # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, i moze biti bilo koji objekat osim pojedinih objekata koji su independent
     # reference i type izvlacimo iz kljuca - key.parent()
     # posible composite indexes ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
@@ -109,6 +109,7 @@ class UserIPAddress(ndb.Model):
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
+    # not logged
     reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# permission_state_model - edit_unpublished_catalog
 
@@ -124,11 +125,8 @@ class Role(ndb.Model):
 # done!
 class RoleUser(ndb.Model):
     
-    # ancestor Role - ovo je optimalnije i logicnije resenje (od UserRole) za querije na store management/roles tabu, 
-    # s tim da se opet smanjuje performance na account management/roles tabu...
-    # posto imamo AggregateUserPermission onda nije concern za performance po pitanju has_permission funkcija...
-    # ukoliko bude trebalo vraticemo kind name na UserRole i property na role...
-    user = ndb.KeyProperty('1', kind=User, required=True)# role = ndb.KeyProperty('1', kind=Role, required=True)
+    # ancestor Role
+    user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
@@ -328,14 +326,14 @@ class BuyerAddress(ndb.Expando):
     city = ndb.StringProperty('3', required=True, indexed=False)
     postal_code = ndb.StringProperty('4', required=True, indexed=False)
     street_address = ndb.StringProperty('5', required=True, indexed=False)
-    default_shipping = ndb.BooleanProperty('6', default=True)# indexed=False ?
-    default_billing = ndb.BooleanProperty('7', default=True)# indexed=False ?
+    default_shipping = ndb.BooleanProperty('6', default=True, indexed=False)
+    default_billing = ndb.BooleanProperty('7', default=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
     # naredna dva polja su required!!!
     # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
-    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preksace
+    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace
     # street_address2 = ndb.StringProperty('9')
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
@@ -359,6 +357,7 @@ class BuyerCollectionStore(ndb.Model):
 class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
+    # not logged
     # task queue radi agregaciju prilikom nekih promena na store-u
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# ovde mozda bude trebao index radi lakseg filtriranja
@@ -386,7 +385,8 @@ class Store(ndb.Expando):
     # Company
     # company_name = ndb.StringProperty('5', required=True)
     # company_country = ndb.KeyProperty('6', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('7', kind=CountrySubdivision, required=True)# ? treba nam neki property koji moze da pamti i key i string
+    # company_region = ndb.KeyProperty('7', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
+    # company_region = ndb.StringProperty('7', required=True)# ako je potreban key val onda se ovo preskace
     # company_city = ndb.StringProperty('8', required=True)
     # company_postal_code = ndb.StringProperty('9', required=True)
     # company_street_address = ndb.StringProperty('10', required=True)
@@ -453,18 +453,19 @@ class CarrierLine(ndb.Expando):
     sequence = ndb.IntegerProperty('2', required=True)
     location_exclusion = ndb.BooleanProperty('3', default=False, indexed=False)
     active = ndb.BooleanProperty('4', default=True)
+    _default_indexed = False
+    pass
     # Expando
-    # location = ndb.StructuredProperty(Location, '5', repeated=True, indexed=False)
-    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True, indexed=False)
+    # location = ndb.StructuredProperty(Location, '5', repeated=True)
+    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True)
 
-# ?
+# done!
 class CarrierLineRule(ndb.Model):
     
     # StructuredProperty model
     condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
     condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
-    condition_value = DecimalProperty('3', required=True, indexed=False)# verovatno da ce trebati i ovde product_uom_id kako bi prodavac mogao da ustima vrednost koju zeli... mozemo ici i na to da je uom fiksan ovde, a isto tako i fiksan u product measurements-ima...
-    condition_value_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True)# ? filter: ProductUOMCategory = Weight / ProductUOMCategory = Volume
+    condition_value = DecimalProperty('3', required=True, indexed=False)# weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
     price_type = ndb.IntegerProperty('4', required=True, indexed=False)
     price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
     amount = DecimalProperty('6', required=True, indexed=False)
@@ -510,13 +511,13 @@ class CatalogPricetag(ndb.Model):
     source_position_left = ndb.FloatProperty('6', required=True, indexed=False)
     value = ndb.StringProperty('7', required=True, indexed=False)# $ 19.99 - ovo se handla unutar transakcije kada se radi update na unit_price od ProductTemplate ili ProductInstance
 
-# ?
+# done!
 class ProductTemplate(ndb.Expando):
     
     # ancestor Catalog (Application)
     product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
-    description = ndb.TextProperty('3', required=True)# limit na 10000 karaktera - We recommend that you submit around 500 to 1,000 characters, but you can submit up to 10,000 characters.
+    description = ndb.TextProperty('3', required=True)# soft limit 64kb
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
     unit_price = DecimalProperty('5', required=True, indexed=False)
     state = ndb.IntegerProperty('6', required=True)
@@ -532,16 +533,13 @@ class ProductTemplate(ndb.Expando):
     pass
     # Expando
     # mozda treba uvesti customer lead time??
-    # da razmislim oko UOM parametara
-    # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit ? 100x?
-    # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit ? 100x?
-    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)# soft limit ? 100x?
-    # weight = DecimalProperty('10')
-    # weight_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    # volume = DecimalProperty('12')
-    # volume_uom = ndb.KeyProperty('13', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
+    # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
+    # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
+    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)# soft limit 100x
+    # weight = DecimalProperty('10')# kg - ili sta vec odlucimo
+    # volume = DecimalProperty('11')# m3 - ili sta vec odlucimo
 
-# ?
+# done!
 class ProductInstance(ndb.Expando):
     
     # ancestor ProductTemplate
@@ -564,21 +562,20 @@ class ProductInstance(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # description = ndb.TextProperty('3', required=True)# soft limit ? 100kb?
+    # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
-    # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit ? 100x?
-    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)# soft limit ? 100x?
-    # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below x 
-    # weight = DecimalProperty('8')
-    # weight_uom = ndb.KeyProperty('9', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Weight
-    # volume = DecimalProperty('10')
-    # volume_uom = ndb.KeyProperty('11', kind=ProductUOM, required=True)# filtrirano po ProductUOMCategory Volume
-    # variant_signature = ndb.TextProperty('12', required=True)# ova vrednost kao i vrednosti koje kupac manuelno upise kao opcije variante se prepisuju u order line description prilikom Add to Cart
+    # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
+    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)# soft limit 100x
+    # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below X quantity
+    # weight = DecimalProperty('8')# kg - ili sta vec odlucimo
+    # volume = DecimalProperty('9')# m3 - ili sta vec odlucimo
+    # variant_signature = ndb.TextProperty('10', required=True)# soft limit 64kb - ova vrednost kao i vrednosti koje kupac manuelno upise kao opcije variante se prepisuju u order line description prilikom Add to Cart
 
 # done!
 class ProductInventoryLog(ndb.Model):
     
     # ancestor ProductInstance
+    # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True, indexed=False)
     quantity = DecimalProperty('3', required=True, indexed=False)
@@ -588,6 +585,7 @@ class ProductInventoryLog(ndb.Model):
 class ProductInventoryAdjustment(ndb.Model):
     
     # ancestor ProductInstance
+    # not logged
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
     quantity = DecimalProperty('3', required=True, indexed=False, indexed=False)
@@ -597,7 +595,7 @@ class ProductInventoryAdjustment(ndb.Model):
 class ProductVariant(ndb.Model):
     
     #ancestor Catalog (Application)
-    # http://v6apps.openerp.com/addon/1809 
+    # http://v6apps.openerp.com/addon/1809
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')
     options = ndb.StringProperty('3', repeated=True, indexed=False)# nema potrebe za seqence - The datastore preserves the order of the list items in a repeated property, so you can assign some meaning to their ordering.
@@ -684,16 +682,16 @@ class BillingOrder(ndb.Expando):
 class OrderAddress(ndb.Expando):
     
     # StructuredProperty model
-    name = ndb.StringProperty('1', required=True)
-    country = ndb.StringProperty('2', required=True)
-    country_code = ndb.StringProperty('3', required=True)
-    region = ndb.StringProperty('4', required=True)
-    city = ndb.StringProperty('5', required=True)
-    postal_code = ndb.StringProperty('6', required=True)
-    street_address = ndb.StringProperty('7', required=True)
-    street_address2 = ndb.StringProperty('8')
-    email = ndb.StringProperty('9')
-    telephone = ndb.StringProperty('10')
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    country = ndb.StringProperty('2', required=True, indexed=False)
+    country_code = ndb.StringProperty('3', required=True, indexed=False)
+    region = ndb.StringProperty('4', required=True, indexed=False)
+    city = ndb.StringProperty('5', required=True, indexed=False)
+    postal_code = ndb.StringProperty('6', required=True, indexed=False)
+    street_address = ndb.StringProperty('7', required=True, indexed=False)
+    street_address2 = ndb.StringProperty('8', indexed=False)
+    email = ndb.StringProperty('9', indexed=False)
+    telephone = ndb.StringProperty('10', indexed=False)
 
 # ?
 class OrderLine(ndb.Expando):
@@ -721,14 +719,15 @@ class OrderLineTax(ndb.Model):
     
     # StructuredProperty model
     # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
-    name = ndb.StringProperty('1', required=True)
-    type = ndb.IntegerProperty('2', required=True)
-    amount = DecimalProperty('3', required=True)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    type = ndb.IntegerProperty('2', required=True, indexed=False)
+    amount = DecimalProperty('3', required=True, indexed=False)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
 
 # done!
 class PayPalTransaction(ndb.Model):
     
     # ancestor Order, BillingOrder
+    # not logged
     txn_id = ndb.StringProperty('1', required=True)
     ipn_message = ndb.TextProperty('2', required=True)
     logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
@@ -737,6 +736,7 @@ class PayPalTransaction(ndb.Model):
 class BillingLog(ndb.Model):
     
     # ancestor Store (Application)
+    # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True, indexed=False)
     amount = DecimalProperty('3', required=True, indexed=False)
@@ -746,6 +746,7 @@ class BillingLog(ndb.Model):
 class BillingCreditAdjustment(ndb.Model):
     
     # ancestor Store (Application)
+    # not logged
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
     amount = DecimalProperty('3', required=True, indexed=False, indexed=False)
