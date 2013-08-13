@@ -149,6 +149,15 @@ class Workflow():
       @property
       def logs(self):
           return ObjectLog.query(ancestor=self.key)
+      
+class Image(ndb.BaseModel):
+      _KIND = 925929
+      state = ndb.IntegerProperty(default=0)
+      some_text = ndb.StringProperty(required=True)      
+      
+class CatalogImage(Image):
+    _KIND = 9999
+    pass
 
 class User(ndb.BaseExpando, Workflow):
     

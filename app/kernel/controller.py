@@ -8,20 +8,21 @@ import json
 import random
  
 from google.appengine.api import urlfetch
- 
-from webapp2_extras.i18n import _ 
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
  
-from app import ndb
-
-from app import settings
+from app import settings, ndb
 from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
+from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser, CatalogImage)
  
 class Tests(Segments):
     
       # unit testing segmenter
+      
+      def segment_test7(self):
+          bar = CatalogImage(state=1, some_text='foobar')
+          bar.put()
+          self.response.write(bar)
       
       def segment_test6(self):
           self.response.write(User.current().has_permission(permission_name='view_published_catalog', _raise=True))
@@ -56,12 +57,14 @@ class Tests(Segments):
       def segment_test3(self):
           if self.request.get('k'):
              t = ndb.Key(urlsafe=str(self.request.get('k'))).get()
-             t.baaz = 1
-             t.put()
+             
+             if self.request.get('put'):
+                 del t.baaz
+                 t.put()
              self.response.write(t)
              return
              
-          a = TestExpando(foobar=2)
+          a = TestExpando(foobar=2, baaz=4, faas=3)
           a.put()
           
           self.response.write([a, a.key.urlsafe()])
@@ -100,7 +103,6 @@ class Tests(Segments):
               oblog = ndb.Key(urlsafe=str(self.request.get('k')))
               pa = oblog.parent()
               self.response.write(pa.get())
-              iter = 50
               while pa:
                   pa = pa.parent()
                   if not pa:
@@ -283,7 +285,7 @@ class Login(Segments):
                  pass
  
           if error:
-             self.response.write(_('You rejected access to your account.'))
+             self.response.write('You rejected access to your account.')
           elif code:
              try: 
                  creds = flow.step2_exchange(code)

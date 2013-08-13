@@ -8,11 +8,10 @@ Created on Jul 9, 2013
 import decimal
 import hashlib
 
-from app import settings
+from app import settings, memcache
 from app.core import logger
-from app.memcache import smart_cache
 
-# Google Appengine Datastore
+# Google Appengine NDBatastore
 from google.appengine.ext.ndb import *
 
 contx = get_context()
@@ -101,13 +100,13 @@ class _BaseModel:
    
   @classmethod
   def _clear_memcache(cls, kid):
-      smart_cache.delete(cls._return_memcache_key(kid))
+      memcache.delete(cls._return_memcache_key(kid))
   
   @classmethod
   def _make_memory(cls, user, structure, expire=0):
       if not isinstance(structure, dict):
          raise Exception('_make_memory allows only dicts as values')
-      smart_cache.set(cls._return_memcache_key(user.urlsafe()), structure, expire)
+      memcache.set(cls._return_memcache_key(user.urlsafe()), structure, expire)
   
   @classmethod    
   def _get_from_memory(cls, kid, segment=None, empty=None):
@@ -126,7 +125,7 @@ class _BaseModel:
           ...
         }
       """
-      gets = smart_cache.get(cls._return_memcache_key(kid), empty)
+      gets = memcache.get(cls._return_memcache_key(kid), empty)
       if gets and empty != gets:
          if segment:
             return gets.get(segment, empty) 

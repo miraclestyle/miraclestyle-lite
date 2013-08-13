@@ -35,15 +35,27 @@ class Handler(webapp2.RequestHandler):
         return self.render_response(tpl, **self._common)
     
     def before_before(self):
+        """
+        This function fires even before the session init
+        """
         pass
     
     def after_after(self):
+        """
+        This function fires after all executions are done
+        """
         pass
     
     def before(self):
+        """
+        This function is fired just before the handler, usefull for setting variables
+        """
         pass
     
     def after(self):
+        """
+        This function is fired just after the handler is executed
+        """
         pass
     
     def get(self, *args, **kwargs):
