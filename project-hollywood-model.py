@@ -434,16 +434,15 @@ class Tax(ndb.Expando):
     # composite index - active+sequence
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
-    type = ndb.IntegerProperty('3', required=True, indexed=False)
-    amount = DecimalProperty('4', required=True, indexed=False)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
-    location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
-    active = ndb.BooleanProperty('6', default=True)# indexed=False ?
+    amount = ndb.StringProperty('3', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
+    location_exclusion = ndb.BooleanProperty('4', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
+    active = ndb.BooleanProperty('5', default=True)# indexed=False ?
     _default_indexed = False
     pass
     # Expando
-    # location = ndb.StructuredProperty(Location, '7', repeated=True)
-    # product_category = ndb.KeyProperty('8', kind=ProductCategory, repeated=True)
-    # carrier = ndb.KeyProperty('9', kind=Carrier, repeated=True)
+    # location = ndb.StructuredProperty(Location, '6', repeated=True)
+    # product_category = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)
+    # carrier = ndb.KeyProperty('8', kind=Carrier, repeated=True)
 
 # done!
 class Carrier(ndb.Model):
@@ -472,18 +471,10 @@ class CarrierLine(ndb.Expando):
 class CarrierLineRule(ndb.Model):
     
     # StructuredProperty model
-    # ovde se cuvaju dve vrednosti koje su obicno struktuirane kao formule, ovo je mnogo fleksibilnije nego hardcoded struktura informacija koje se cuva kao sto je bio prethodni slucaj (pogledati commentovane propertije)
+    # ovde se cuvaju dve vrednosti koje su obicno struktuirane kao formule, ovo je mnogo fleksibilnije nego hardcoded struktura informacija koje se cuva kao sto je bio prethodni slucaj
     condition = ndb.StringProperty('1', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: True ili weight[kg] >= 5 ili volume[m3] = 0.002
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
-    
-    # prethodni dizajn koji je bio losiji performance wize ali donekle bolji storagewize
-    # condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
-    # condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
-    # condition_value = DecimalProperty('3', required=True, indexed=False)# weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
-    # price_type = ndb.IntegerProperty('4', required=True, indexed=False)
-    # price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
-    # amount = DecimalProperty('6', required=True, indexed=False)
 
 
 ################################################################################
