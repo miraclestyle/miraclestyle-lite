@@ -5,6 +5,10 @@
 # NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
+# glavno pitanje je da li ce nam trebati composite indexi za query-je poput:
+# BuyerAddress.query(ancestor=key).order(BuyerAddress.name) ili AggregateUserPermission.query(AggregateUserPermission.reference == key, ancestor=key)
+# ali je highly unlikely, zato sto se ancestor ne mora ukljucivati u slucajevima composite indexa
+
 '''
 Ovo su zabranjena imena propertija:
 
@@ -58,7 +62,7 @@ class ObjectLog(ndb.Expando):
     
     # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, i moze biti bilo koji objekat osim pojedinih objekata koji su independent
     # reference i type izvlacimo iz kljuca - key.parent()
-    # posible composite indexes ???
+    # composite index - ???
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     action = ndb.IntegerProperty('3', required=True)
@@ -86,14 +90,14 @@ class User(ndb.Expando):
 # done!
 class UserEmail(ndb.Model):
     
-    # ancestor User
+    # ancestor User - mozda da ovo bude StructuredProperty, mozemo ustedeti na kljucevima i na query-ima
     email = ndb.StringProperty('1', required=True)
     primary = ndb.BooleanProperty('2', default=True, indexed=False)
 
 # done!
 class UserIdentity(ndb.Model):
     
-    # ancestor User
+    # ancestor User - mozda da ovo bude StructuredProperty, mozemo ustedeti na kljucevima i na query-ima
     user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
     identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
@@ -102,8 +106,9 @@ class UserIdentity(ndb.Model):
 class UserIPAddress(ndb.Model):
     
     # ancestor User
-    ip_address = ndb.StringProperty('1', required=True, indexed=False)
-    logged = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+    # not logged
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
 # done!
 class AggregateUserPermission(ndb.Model):
@@ -351,7 +356,7 @@ class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# trebace index zbog stores taba na collection management
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x - mozda ce trebati index zbog stores taba na collection management
     
 # done!
 class AggregateBuyerCollectionCatalog(ndb.Model):
@@ -360,11 +365,11 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     # not logged
     # task queue radi agregaciju prilikom nekih promena na store-u
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# ovde mozda bude trebao index radi lakseg filtriranja
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x
     catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
     catalog_cover = blobstore.BlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
     catalog_published_date = ndb.DateTimeProperty('5', required=True)
-    
+
 
 ################################################################################
 # STORE - 7
@@ -374,10 +379,11 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 class Store(ndb.Expando):
     
     # root (ancestor Application)
+    # composite index - state+name ??
     name = ndb.StringProperty('1', required=True)
     logo = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
     primary_contact = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
-    state = ndb.IntegerProperty('4', required=True)
+    state = ndb.IntegerProperty('4', required=True)# indexed=False ?
     _default_indexed = False
     pass
     #Expando
@@ -425,12 +431,13 @@ class StoreShippingExclusion(Location):
 class Tax(ndb.Expando):
     
     # ancestor Store (Application)
+    # composite index - active+sequence
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
     type = ndb.IntegerProperty('3', required=True, indexed=False)
     amount = DecimalProperty('4', required=True, indexed=False)# obratiti paznju oko decimala posto ovo moze da bude i currency i procenat.
     location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
-    active = ndb.BooleanProperty('6', default=True)
+    active = ndb.BooleanProperty('6', default=True)# indexed=False ?
     _default_indexed = False
     pass
     # Expando
@@ -442,37 +449,45 @@ class Tax(ndb.Expando):
 class Carrier(ndb.Model):
     
     # ancestor Store (Application)
+    # composite index - active+name ??
     name = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)
+    active = ndb.BooleanProperty('2', default=True)# indexed=False ?
 
 # done!
 class CarrierLine(ndb.Expando):
     
     # ancestor Carrier
+    # composite index - active+sequence
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
     location_exclusion = ndb.BooleanProperty('3', default=False, indexed=False)
-    active = ndb.BooleanProperty('4', default=True)
+    active = ndb.BooleanProperty('4', default=True)# indexed=False ?
     _default_indexed = False
     pass
     # Expando
-    # location = ndb.StructuredProperty(Location, '5', repeated=True)
-    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True)
+    # location = ndb.StructuredProperty(Location, '5', repeated=True)# soft limit 400x
+    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True)# soft limit 500x
 
 # done!
 class CarrierLineRule(ndb.Model):
     
     # StructuredProperty model
-    condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
-    condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
-    condition_value = DecimalProperty('3', required=True, indexed=False)# weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
-    price_type = ndb.IntegerProperty('4', required=True, indexed=False)
-    price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
-    amount = DecimalProperty('6', required=True, indexed=False)
+    # ovde se cuvaju dve vrednosti koje su obicno struktuirane kao formule, ovo je mnogo fleksibilnije nego hardcoded struktura informacija koje se cuva kao sto je bio prethodni slucaj (pogledati commentovane propertije)
+    condition = ndb.StringProperty('1', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: True ili weight[kg] >= 5 ili volume[m3] = 0.002
+    price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
+    # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
+    
+    # prethodni dizajn koji je bio losiji performance wize ali donekle bolji storagewize
+    # condition_type = ndb.IntegerProperty('1', required=True, indexed=False)
+    # condition_operator = ndb.IntegerProperty('2', required=True, indexed=False)
+    # condition_value = DecimalProperty('3', required=True, indexed=False)# weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
+    # price_type = ndb.IntegerProperty('4', required=True, indexed=False)
+    # price_type_factor = ndb.IntegerProperty('5', required=True, indexed=False)
+    # amount = DecimalProperty('6', required=True, indexed=False)
 
 
 ################################################################################
-# CATALOG - 8
+# CATALOG - 9
 ################################################################################
 
 # done!
@@ -480,6 +495,7 @@ class Catalog(ndb.Expando):
     
     # root (ancestor Application)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
+    # composite index - ???
     store = ndb.KeyProperty('1', kind=Store, required=True)
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
@@ -623,7 +639,8 @@ class Order(ndb.Expando):
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     # store = ndb.KeyProperty('1', kind=Store, required=True)
-    buyer = ndb.KeyProperty('2', kind=User, required=True)
+    # composite index - buyer+updated; buyer+order_date
+    buyer = ndb.KeyProperty('2', kind=User, required=True)# indexed=False ?
     order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.KeyProperty('4', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
     untaxed_amount = DecimalProperty('5', required=True, indexed=False)
@@ -651,7 +668,7 @@ class Order(ndb.Expando):
 class OrderFeedback(ndb.Model):
     
     # ancestor Order
-    state = ndb.IntegerProperty('1', required=True)
+    state = ndb.IntegerProperty('1', required=True, indexed=False)
 
 # ?
 class BillingOrder(ndb.Expando):
@@ -675,7 +692,7 @@ class BillingOrder(ndb.Expando):
     # company_address = ndb.StructuredProperty(OrderAddress, '8', required=True)
     # billing_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
     # shipping_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
-    # reference = ndb.StringProperty('11', required=True, indexed=False)
+    # reference = ndb.StringProperty('11', required=True)
     # comment = ndb.TextProperty('12')# 64kb limit
 
 # done!
@@ -728,9 +745,9 @@ class PayPalTransaction(ndb.Model):
     
     # ancestor Order, BillingOrder
     # not logged
-    txn_id = ndb.StringProperty('1', required=True)
-    ipn_message = ndb.TextProperty('2', required=True)
-    logged = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# indexed=False ? ako cemo imati direktan pristup ovoj tabeli onda nam treba index
+    txn_id = ndb.StringProperty('2', required=True)
+    ipn_message = ndb.TextProperty('3', required=True)
 
 # done!
 class BillingLog(ndb.Model):
@@ -749,7 +766,7 @@ class BillingCreditAdjustment(ndb.Model):
     # not logged
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
-    amount = DecimalProperty('3', required=True, indexed=False, indexed=False)
+    amount = DecimalProperty('3', required=True, indexed=False)
     message = ndb.TextProperty('4')# max size 64kb - to determine char count
     note = ndb.TextProperty('5')# max size 64kb - to determine char count
 
