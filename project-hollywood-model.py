@@ -93,8 +93,8 @@ class User(ndb.Expando):
 class UserIdentity(ndb.Model):
     
     # StructuredProperty model
-    email = ndb.StringProperty('1', required=True, indexed=False)
-    identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
+    identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
+    email = ndb.StringProperty('2', required=True, indexed=False)
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
     primary = ndb.BooleanProperty('4', default=True, indexed=False)
 
@@ -174,7 +174,7 @@ class Content(ndb.Model):
 # done!
 class Image(ndb.Model):
     
-    # base class
+    # base class/structured class
     image = blobstore.BlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
     content_type = ndb.StringProperty('2', required=True, indexed=False)
     size = ndb.FloatProperty('3', required=True, indexed=False)
@@ -216,15 +216,14 @@ class CountrySubdivision(ndb.Model):
 class Location(ndb.Expando):
     
     # base class/structured class
-    # valjda ovo moze biti expando kao structured property ?
     country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
     # region = ndb.KeyProperty('2', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace 
     # region = ndb.StringProperty('2')# ako je potreban key val onda se ovo preksace
-    # postal_code_from = ndb.StringProperty('3', indexed=False)
-    # postal_code_to = ndb.StringProperty('4', indexed=False)
+    # postal_code_from = ndb.StringProperty('3')
+    # postal_code_to = ndb.StringProperty('4')
     # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
 
 # ?
@@ -693,9 +692,12 @@ class OrderAddress(ndb.Expando):
     city = ndb.StringProperty('5', required=True, indexed=False)
     postal_code = ndb.StringProperty('6', required=True, indexed=False)
     street_address = ndb.StringProperty('7', required=True, indexed=False)
-    street_address2 = ndb.StringProperty('8', indexed=False)
-    email = ndb.StringProperty('9', indexed=False)
-    telephone = ndb.StringProperty('10', indexed=False)
+    _default_indexed = False
+    pass
+    # Expando
+    # street_address2 = ndb.StringProperty('8')
+    # email = ndb.StringProperty('9')
+    # telephone = ndb.StringProperty('10')
 
 # ?
 class OrderLine(ndb.Expando):
