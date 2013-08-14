@@ -83,6 +83,8 @@ class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
+    email = ndb.StringProperty('2', repeated=True)# soft limit 500x
+    identity = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 500x
     _default_indexed = False
     pass
     #Expando
@@ -98,9 +100,10 @@ class UserEmail(ndb.Model):
 class UserIdentity(ndb.Model):
     
     # ancestor User - mozda da ovo bude StructuredProperty, mozemo ustedeti na kljucevima i na query-ima
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False)
+    email = ndb.StringProperty('1', required=True, indexed=False)
     identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
+    primary = ndb.BooleanProperty('4', default=True, indexed=False)
 
 # done!
 class UserIPAddress(ndb.Model):
