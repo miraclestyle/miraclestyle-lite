@@ -83,23 +83,16 @@ class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
-    email = ndb.StringProperty('2', repeated=True)# soft limit 500x
+    email = ndb.StringProperty('2', repeated=True)# soft limit 1000x
     identity = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 500x
     _default_indexed = False
     pass
     #Expando
 
 # done!
-class UserEmail(ndb.Model):
-    
-    # ancestor User - mozda da ovo bude StructuredProperty, mozemo ustedeti na kljucevima i na query-ima
-    email = ndb.StringProperty('1', required=True)
-    primary = ndb.BooleanProperty('2', default=True, indexed=False)
-
-# done!
 class UserIdentity(ndb.Model):
     
-    # ancestor User - mozda da ovo bude StructuredProperty, mozemo ustedeti na kljucevima i na query-ima
+    # StructuredProperty model
     email = ndb.StringProperty('1', required=True, indexed=False)
     identity = ndb.StringProperty('2', required=True)# spojen je i provider name sa id-jem
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
@@ -443,7 +436,7 @@ class Tax(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # location = ndb.StructuredProperty(Location, '6', repeated=True)
+    # location = ndb.LocalStructuredProperty(Location, '6', repeated=True)
     # product_category = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)
     # carrier = ndb.KeyProperty('8', kind=Carrier, repeated=True)
 
@@ -467,13 +460,13 @@ class CarrierLine(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # location = ndb.StructuredProperty(Location, '5', repeated=True)# soft limit 400x
-    # rules = ndb.StructuredProperty(CarrierLineRule, '6', repeated=True)# soft limit 500x
+    # location = ndb.LocalStructuredProperty(Location, '5', repeated=True)# soft limit 400x
+    # rules = ndb.LocalStructuredProperty(CarrierLineRule, '6', repeated=True)# soft limit 500x
 
 # done!
 class CarrierLineRule(ndb.Model):
     
-    # StructuredProperty model
+    # LocalStructuredProperty model
     # ovde se cuvaju dve vrednosti koje su obicno struktuirane kao formule, ovo je mnogo fleksibilnije nego hardcoded struktura informacija koje se cuva kao sto je bio prethodni slucaj
     condition = ndb.StringProperty('1', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: True ili weight[kg] >= 5 ili volume[m3] = 0.002
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
@@ -545,7 +538,7 @@ class ProductTemplate(ndb.Expando):
     # mozda treba uvesti customer lead time??
     # product_template_variant = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
     # product_template_content = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
-    # product_template_image = ndb.StructuredProperty(Image, '9', repeated=True)# soft limit 100x
+    # product_template_image = ndb.LocalStructuredProperty(Image, '9', repeated=True)# soft limit 100x
     # weight = DecimalProperty('10')# kg - ili sta vec odlucimo
     # volume = DecimalProperty('11')# m3 - ili sta vec odlucimo
 
@@ -575,7 +568,7 @@ class ProductInstance(ndb.Expando):
     # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
     # product_instance_content = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
-    # product_instance_image = ndb.StructuredProperty(Image, '6', repeated=True)# soft limit 100x
+    # product_instance_image = ndb.LocalStructuredProperty(Image, '6', repeated=True)# soft limit 100x
     # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below X quantity
     # weight = DecimalProperty('8')# kg - ili sta vec odlucimo
     # volume = DecimalProperty('9')# m3 - ili sta vec odlucimo
@@ -645,9 +638,9 @@ class Order(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
-    # billing_address = ndb.StructuredProperty(OrderAddress, '11', required=True)
-    # shipping_address = ndb.StructuredProperty(OrderAddress, '12', required=True)
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '12', required=True)
     # reference = ndb.StringProperty('13', required=True)
     # comment = ndb.TextProperty('14')# 64kb limit
     # company_address_reference = ndb.KeyProperty('15', kind=Store, required=True)
@@ -683,16 +676,16 @@ class BillingOrder(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.StructuredProperty(OrderAddress, '8', required=True)
-    # billing_address = ndb.StructuredProperty(OrderAddress, '9', required=True)
-    # shipping_address = ndb.StructuredProperty(OrderAddress, '10', required=True)
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '8', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
     # reference = ndb.StringProperty('11', required=True)
     # comment = ndb.TextProperty('12')# 64kb limit
 
 # done!
 class OrderAddress(ndb.Expando):
     
-    # StructuredProperty model
+    # LocalStructuredProperty model
     name = ndb.StringProperty('1', required=True, indexed=False)
     country = ndb.StringProperty('2', required=True, indexed=False)
     country_code = ndb.StringProperty('3', required=True, indexed=False)
@@ -719,7 +712,7 @@ class OrderLine(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # taxes = ndb.StructuredProperty(OrderLineTax, '7', repeated=True)
+    # taxes = ndb.LocalStructuredProperty(OrderLineTax, '7', repeated=True)
     # product_category = ndb.KeyProperty('8', kind=ProductCategory, required=True)
     # catalog_pricetag_reference = ndb.KeyProperty('9', kind=CatalogPricetag, required=True)
     # product_instance_reference = ndb.KeyProperty('10', kind=ProductInstance, required=True)
@@ -728,7 +721,7 @@ class OrderLine(ndb.Expando):
 # done!
 class OrderLineTax(ndb.Model):
     
-    # StructuredProperty model
+    # LocalStructuredProperty model
     # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
     name = ndb.StringProperty('1', required=True, indexed=False)
     type = ndb.IntegerProperty('2', required=True, indexed=False)
