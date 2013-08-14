@@ -13,16 +13,29 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from app import settings, ndb
 from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser, CatalogImage)
+from app.kernel.models import (User, MyContent, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
+ 
+ 
  
 class Tests(Segments):
     
       # unit testing segmenter
       
-      def segment_test7(self):
-          bar = CatalogImage(state=1, some_text='foobar')
-          bar.put()
-          self.response.write(bar)
+      def segment_test9(self):
+          u = MyContent.query(ndb.GenericProperty('category') == 1, ndb.GenericProperty('state') == 1).order(ndb.GenericProperty('sequence')).fetch()
+
+          for i in u:
+              self.response.write(i.key)
+              self.response.write('<br />')
+      
+      def segment_test8(self):
+          u = MyContent(title = 'A title',
+                      category = 1, # proveriti da li composite index moze raditi kada je ovo indexed=False
+                      body = "Body text",
+                      sequence = 1, # proveriti da li composite index moze raditi kada je ovo indexed=False
+                      state = 1) 
+          u.put()
+ 
       
       def segment_test6(self):
           self.response.write(User.current().has_permission(permission_name='view_published_catalog', _raise=True))

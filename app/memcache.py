@@ -10,11 +10,11 @@ from google.appengine.api import memcache
 
 from app.core import logger
 
-__all__ = ['set', 'get', 'delete', 'tempcached', 'memcached', 'get_temp_memory', 'set_temp_memory', 'delete_temp_memory']
+__all__ = ['set', 'get', 'delete', 'tempcached', 'memcached', 'temp_memory_get', 'temp_memory_set', 'temp_memory_delete']
 
 def set(k, v, expire=0, **kwargs):
          logger('cache set %s' % k)
-         set_temp_memory(k, v)
+         temp_memory_set(k, v)
          memcache.set(k, v, expire, **kwargs)
          
 def get(k, d=None, callback=None, **kwargs):
@@ -28,7 +28,7 @@ def get(k, d=None, callback=None, **kwargs):
         setkwargs = kwargs.pop('set', {})
         # if specified force=True, it will avoid in-memory check
         if not force:
-           tmp = get_temp_memory(k, d)
+           tmp = temp_memory_get(k, d)
         else:
            tmp = d
            
@@ -44,22 +44,23 @@ def get(k, d=None, callback=None, **kwargs):
                  return v
               return d
           
-           set_temp_memory(k, tmp)
+           temp_memory_set(k, tmp)
            return tmp  
 
 def delete(k):
+        
         memcache.delete(k)
-        delete_temp_memory(k)
+        temp_memory_delete(k)
         
 def tempcached(func, k=None, d=None):
         if k == None:
            k = func.__name__
            
         def dec(*args, **kwargs):
-            v = get_temp_memory(k, d)
+            v = temp_memory_get(k, d)
             if v == d:
                v = func() 
-               set_temp_memory(k, v)
+               temp_memory_set(k, v)
             return v
         return dec
 
@@ -83,13 +84,13 @@ def memcached(func, k=None, d=None):
             return v
         return dec        
          
-def get_temp_memory(k, d=None):
+def temp_memory_get(k, d=None):
     return getattr(webapp2._local, k, d)
 
-def set_temp_memory(k, v):
+def temp_memory_set(k, v):
     setattr(webapp2._local, k, v)
     
-def delete_temp_memory(k):
+def temp_memory_delete(k):
     try:
       del webapp2._local[k]
     except:

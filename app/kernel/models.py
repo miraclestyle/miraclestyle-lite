@@ -8,7 +8,7 @@ from webapp2_extras import sessions
 
 from app import settings
 from app import ndb
-from app.memcache import get_temp_memory, set_temp_memory
+from app.memcache import temp_memory_get, temp_memory_set
 from app.core import logger
 
 class WorkflowTransitionError(Exception):
@@ -149,15 +149,7 @@ class Workflow():
       @property
       def logs(self):
           return ObjectLog.query(ancestor=self.key)
-      
-class Image(ndb.BaseModel):
-      _KIND = 925929
-      state = ndb.IntegerProperty(default=0)
-      some_text = ndb.StringProperty(required=True)      
-      
-class CatalogImage(Image):
-    _KIND = 9999
-    pass
+ 
 
 class User(ndb.BaseExpando, Workflow):
     
@@ -166,7 +158,8 @@ class User(ndb.BaseExpando, Workflow):
     OBJECT_DEFAULT_STATE = 'active'
   
     OBJECT_STATES = {
-        # tuple represents (state_code, transition_name)         
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state         
         'active' : (1, 'activate'),
         'suspended' : (2, 'suspend'),
     }
@@ -381,14 +374,14 @@ class User(ndb.BaseExpando, Workflow):
     @staticmethod
     def set_current_user(u):
         logger('setting new user %s' % u)
-        set_temp_memory('user', u)
+        temp_memory_set('user', u)
          
     @staticmethod
     def get_current_user():
         """
         @return `User`
         """
-        u = get_temp_memory('user', None)
+        u = temp_memory_get('user', None)
         if u == None:
             logger('get_current_user')
             sess = sessions.get_store().get_session(backend=settings.SESSION_STORAGE)
@@ -398,7 +391,7 @@ class User(ndb.BaseExpando, Workflow):
                   u = User.anonymous_user()
             else:
                u = User.anonymous_user()
-            set_temp_memory('user', u)
+            temp_memory_set('user', u)
              
         return u
     
@@ -657,6 +650,34 @@ class AggregateUserPermission(ndb.BaseModel):
     # ancestor User
     reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
+
+class Content(ndb.BaseModel):
+    
+    _KIND = 'Content'
+    # root
+    # composite index category+state+sequence
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    updated = ndb.DateTimeProperty('1', auto_now=True)
+    title = ndb.StringProperty('2', required=True, indexed=False)
+    category = ndb.IntegerProperty('3', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    body = ndb.TextProperty('4', required=True, indexed=False)
+    sequence = ndb.IntegerProperty('5', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    state = ndb.IntegerProperty('6', required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
+
+class MyContent(ndb.BaseModel):
+    
+    _KIND = 'MyContent'
+    # root
+    # composite index category+state+sequence
+    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    updated = ndb.DateTimeProperty(auto_now=True)
+    title = ndb.StringProperty(required=True, indexed=False)
+    category = ndb.IntegerProperty(required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    body = ndb.TextProperty(required=True, indexed=False)
+    sequence = ndb.IntegerProperty(required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    state = ndb.IntegerProperty(required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
+
+
 
 class TestExpando(ndb.BaseExpando):
       _KIND = 'TestExpando'
