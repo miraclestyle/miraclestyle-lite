@@ -187,7 +187,7 @@ class Image(ndb.Model):
     height = ndb.IntegerProperty('5', required=True, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
 
-# ?
+# done!
 class Country(ndb.Model):
     
     # root
@@ -196,24 +196,24 @@ class Country(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
-    # u slucaju da ostane index za code, trebace nam composite index code+name+active
-    code = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: active+code - ancestor: no
+    code = ndb.StringProperty('1', required=True)
     name = ndb.StringProperty('2', required=True, indexed=False)
-    active = ndb.BooleanProperty('3', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('3', default=True)
 
-# ?
+# done!
 class CountrySubdivision(ndb.Model):
     
     # ancestor Country
     # http://hg.tryton.org/modules/country/file/tip/country.py#l52
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
-    # u slucaju da ostane index za code, trebace nam composite index code+name+active
+    # composite index: active+code - ancestor: yes
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
-    name = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True, indexed=False)
+    code = ndb.StringProperty('2', required=True)
+    name = ndb.StringProperty('3', required=True, indexed=False)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
-    active = ndb.BooleanProperty('5', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('5', default=True)
 
 # done!
 class Location(ndb.Expando):
@@ -271,16 +271,15 @@ class ProductUOM(ndb.Model):
 # done!
 class Currency(ndb.Model):
     
-    # root
-    # key = code - ako uzememo pretpostavku da ce code uvek biti unique (sto bi po common sense trebalo da bude, ali birokratima nikad ne treba verovati)
+    # root/structured class
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # composite index: active+name - ancestor: no
-    name = ndb.StringProperty('1', required=True)
+    # composite index: active+code - ancestor: no
+    name = ndb.StringProperty('1', required=True, indexed=False)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
-    # code = ndb.StringProperty('3', required=True) ? posto je ovo key value
+    code = ndb.StringProperty('3', required=True)
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
@@ -621,10 +620,10 @@ class ProductContent(ndb.Model):
 # TRADE - 9
 ################################################################################
 
-# ?
+# done!
 class Order(ndb.Expando):
     
-    # ancestor Store (Application) ? root - ali verovatno je najbolje da pripadne storovima, radi jednostavnosti
+    # ancestor Store (Application)
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
@@ -632,29 +631,29 @@ class Order(ndb.Expando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     # store = ndb.KeyProperty('1', kind=Store, required=True)
     # composite index: buyer+state+updated - ancestor: no; buyer+state+order_date - ancestor: no; state+updated - ancestor: yes; state+order_date - ancestor: yes
-    buyer = ndb.KeyProperty('2', kind=User, required=True)
-    order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
-    currency_code = ndb.StringProperty('4', required=True, indexed=False)
-    untaxed_amount = DecimalProperty('5', required=True, indexed=False)
-    tax_amount = DecimalProperty('6', required=True, indexed=False)
-    total_amount = DecimalProperty('7', required=True, indexed=False)
-    state = ndb.IntegerProperty('8', required=True) 
-    updated = ndb.DateTimeProperty('9', auto_now=True, required=True)
+    buyer = ndb.KeyProperty('1', kind=User, required=True)
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
+    currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
+    untaxed_amount = DecimalProperty('4', required=True, indexed=False)
+    tax_amount = DecimalProperty('5', required=True, indexed=False)
+    total_amount = DecimalProperty('6', required=True, indexed=False)
+    state = ndb.IntegerProperty('7', required=True) 
+    updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
-    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
-    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '12', required=True)
-    # reference = ndb.StringProperty('13', required=True)
-    # comment = ndb.TextProperty('14')# 64kb limit
-    # company_address_reference = ndb.KeyProperty('15', kind=Store, required=True)
-    # billing_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
-    # shipping_address_reference = ndb.KeyProperty('17', kind=BuyerAddress, required=True)
-    # carrier_reference = ndb.KeyProperty('18', kind=StoreCarrier, required=True)
-    # feedback = ndb.IntegerProperty('19', required=True)
-    # store_name = ndb.StringProperty('20', required=True)
-    # store_logo = blobstore.BlobKeyProperty('21', required=True)# ovo bi moglo da posluzi ??
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
+    # reference = ndb.StringProperty('12', required=True)
+    # comment = ndb.TextProperty('13')# 64kb limit
+    # company_address_reference = ndb.KeyProperty('14', kind=Store, required=True)
+    # billing_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
+    # shipping_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
+    # carrier_reference = ndb.KeyProperty('17', kind=StoreCarrier, required=True)
+    # feedback = ndb.IntegerProperty('18', required=True)
+    # store_name = ndb.StringProperty('19', required=True)
+    # store_logo = blobstore.BlobKeyProperty('20', required=True)# ovo bi moglo da posluzi ??
 
 # done!
 class OrderFeedback(ndb.Model):
@@ -662,7 +661,7 @@ class OrderFeedback(ndb.Model):
     # ancestor Order
     state = ndb.IntegerProperty('1', required=True, indexed=False)
 
-# ?
+# done!
 class BillingOrder(ndb.Expando):
     
     # ancestor Store (Application)
@@ -672,7 +671,7 @@ class BillingOrder(ndb.Expando):
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# updated on checkout
-    currency = ndb.KeyProperty('2', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
+    currency = ndb.LocalStructuredProperty(OrderCurrency, '2', required=True)# ovde moze i samo code eventualno posto ovaj currency mi kontrolisemo...
     untaxed_amount = DecimalProperty('3', required=True, indexed=False)
     tax_amount = DecimalProperty('4', required=True, indexed=False)
     total_amount = DecimalProperty('5', required=True, indexed=False)
@@ -695,17 +694,45 @@ class OrderAddress(ndb.Expando):
     country = ndb.StringProperty('2', required=True, indexed=False)
     country_code = ndb.StringProperty('3', required=True, indexed=False)
     region = ndb.StringProperty('4', required=True, indexed=False)
-    city = ndb.StringProperty('5', required=True, indexed=False)
-    postal_code = ndb.StringProperty('6', required=True, indexed=False)
-    street_address = ndb.StringProperty('7', required=True, indexed=False)
+    region_code = ndb.StringProperty('5', required=True, indexed=False)
+    city = ndb.StringProperty('6', required=True, indexed=False)
+    postal_code = ndb.StringProperty('7', required=True, indexed=False)
+    street_address = ndb.StringProperty('8', required=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
-    # street_address2 = ndb.StringProperty('8')
-    # email = ndb.StringProperty('9')
-    # telephone = ndb.StringProperty('10')
+    # street_address2 = ndb.StringProperty('9')
+    # email = ndb.StringProperty('10')
+    # telephone = ndb.StringProperty('11')
 
-# ?
+# done!
+class OrderCurrency(ndb.Model):
+    
+    # LocalStructuredProperty model
+    # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
+    # http://en.wikipedia.org/wiki/ISO_4217
+    # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
+    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)
+    code = ndb.StringProperty('3', required=True, indexed=False)
+    numeric_code = ndb.StringProperty('4', indexed=False)
+    rounding = DecimalProperty('5', required=True, indexed=False)
+    digits = ndb.IntegerProperty('6', required=True, indexed=False)
+    #formating
+    grouping = ndb.StringProperty('7', required=True, indexed=False)
+    decimal_separator = ndb.StringProperty('8', required=True, indexed=False)
+    thousands_separator = ndb.StringProperty('9', indexed=False)
+    positive_sign_position = ndb.IntegerProperty('10', required=True, indexed=False)
+    negative_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
+    positive_sign = ndb.StringProperty('12', indexed=False)
+    negative_sign = ndb.StringProperty('13', indexed=False)
+    positive_currency_symbol_precedes = ndb.BooleanProperty('14', default=True, indexed=False)
+    negative_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
+    positive_separate_by_space = ndb.BooleanProperty('16', default=True, indexed=False)
+    negative_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
+
+# done!
 class OrderLine(ndb.Expando):
     
     # ancestor Order, BillingOrder
@@ -713,7 +740,7 @@ class OrderLine(ndb.Expando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     description = ndb.TextProperty('1', required=True)# soft limit 64kb
     quantity = DecimalProperty('2', required=True, indexed=False)
-    product_uom = ndb.KeyProperty('3', kind=ProductUOM, required=True, indexed=False)#?
+    product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)# indexed=False - to se verovatno assume kada je LocalStructuredProperty ali to treba testirati
     unit_price = DecimalProperty('4', required=True, indexed=False)
     discount = DecimalProperty('5', default=0.00, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
@@ -725,6 +752,19 @@ class OrderLine(ndb.Expando):
     # catalog_pricetag_reference = ndb.KeyProperty('9', kind=CatalogPricetag, required=True)
     # product_instance_reference = ndb.KeyProperty('10', kind=ProductInstance, required=True)
     # tax_references = ndb.KeyProperty('11', kind=StoreTax, repeated=True)# soft limit 500x
+
+# done!
+class OrderLineProductUOM(ndb.Model):
+    
+    # LocalStructuredProperty model
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
+    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)
+    category = ndb.StringProperty('3', required=True, indexed=False)# ProductUOMCategory.name
+    rounding = DecimalProperty('4', required=True, indexed=False)
+    digits = ndb.IntegerProperty('5', required=True, indexed=False)
 
 # done!
 class OrderLineTax(ndb.Model):
