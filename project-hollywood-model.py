@@ -84,10 +84,12 @@ class User(ndb.Expando):
     # root
     state = ndb.IntegerProperty('1', required=True)
     email = ndb.StringProperty('2', repeated=True)# soft limit 1000x
-    identity = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 500x
+    identity = ndb.StringProperty('3', repeated=True)# soft limit 100x
     _default_indexed = False
     pass
     #Expando
+    # mozda ovako napraviti radi indexiranja, moguce je da StructuredProperty indexira svaki field a nama u indexu treba samo identity prop.
+    # user_identity = ndb.LocalStructuredProperty(UserIdentity, '4', repeated=True)# soft limit 100x
 
 # done!
 class UserIdentity(ndb.Model):
