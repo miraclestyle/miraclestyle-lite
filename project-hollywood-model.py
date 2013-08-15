@@ -268,7 +268,7 @@ class ProductUOM(ndb.Model):
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True)
 
-# ?
+# done!
 class Currency(ndb.Model):
     
     # root
@@ -278,14 +278,13 @@ class Currency(ndb.Model):
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
     # composite index: active+name - ancestor: no
-    # composite index code+active
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True)
+    # code = ndb.StringProperty('3', required=True) ? posto je ovo key value
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True, indexed=False)
+    active = ndb.BooleanProperty('7', default=True)
     #formating
     grouping = ndb.StringProperty('8', required=True, indexed=False)
     decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
@@ -635,7 +634,7 @@ class Order(ndb.Expando):
     # composite index: buyer+state+updated - ancestor: no; buyer+state+order_date - ancestor: no; state+updated - ancestor: yes; state+order_date - ancestor: yes
     buyer = ndb.KeyProperty('2', kind=User, required=True)
     order_date = ndb.DateTimeProperty('3', auto_now_add=True, required=True)# updated on checkout
-    currency = ndb.KeyProperty('4', kind=Currency, required=True, indexed=False)# ? mozda staviti iso code posto je to key na currency 
+    currency_code = ndb.StringProperty('4', required=True, indexed=False)
     untaxed_amount = DecimalProperty('5', required=True, indexed=False)
     tax_amount = DecimalProperty('6', required=True, indexed=False)
     total_amount = DecimalProperty('7', required=True, indexed=False)
