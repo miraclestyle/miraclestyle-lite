@@ -88,7 +88,7 @@ class User(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
-    # mozda ovako napraviti radi indexiranja, moguce je da StructuredProperty indexira svaki field a nama u indexu treba samo identity prop.
+    # mozda ovako napraviti radi indexiranja, moguce je da StructuredProperty indexira svaki field, a nama u indexu treba samo identity prop.
     # user_identity = ndb.LocalStructuredProperty(UserIdentity, '4', repeated=True)# soft limit 100x
 
 # done!
