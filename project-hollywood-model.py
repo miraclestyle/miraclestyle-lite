@@ -100,7 +100,7 @@ class User(ndb.Expando):
 # done!
 class UserIdentity(ndb.Model):
     
-    # StructuredProperty model
+    # LocalStructuredProperty model
     identity = ndb.StringProperty('1', required=True, indexed=False)# spojen je i provider name sa id-jem
     email = ndb.StringProperty('2', required=True, indexed=False)
     associated = ndb.BooleanProperty('3', default=True, indexed=False)
@@ -246,49 +246,50 @@ class ProductCategory(ndb.Model):
     complete_name = ndb.TextProperty('3', required=True, indexed=False)
     state = ndb.IntegerProperty('4', required=True)
 
-# ?
+# done!
 class ProductUOMCategory(ndb.Model):
     
     # root
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    # mozda da ovi entiteti budu non-deletable i non-editable ??
+    name = ndb.StringProperty('1', required=True)
 
-# ?
+# done!
 class ProductUOM(ndb.Model):
     
     # ancestor ProductUOMCategory
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    # composite index name+active
+    # mozda da ovi entiteti budu non-deletable i non-editable ??
+    # composite index: active+name - ancestor: no
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
-    rate = DecimalProperty('3', required=True, indexed=False)
-    factor = DecimalProperty('4', required=True, indexed=False)
-    rounding = DecimalProperty('5', required=True, indexed=False)
+    rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
+    factor = DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
+    rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('7', default=True)
 
 # ?
 class Currency(ndb.Model):
     
     # root
+    # key = code - ako uzememo pretpostavku da ce code uvek biti unique (sto bi po common sense trebalo da bude, ali birokratima nikad ne treba verovati)
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
+    # composite index: active+name - ancestor: no
     # composite index code+active
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     name = ndb.StringProperty('1', required=True, indexed=False)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True)
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    active = ndb.BooleanProperty('7', default=True, indexed=False)
     #formating
     grouping = ndb.StringProperty('8', required=True, indexed=False)
     decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
