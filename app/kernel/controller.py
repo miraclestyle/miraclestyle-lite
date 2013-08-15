@@ -13,13 +13,19 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from app import settings, ndb
 from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, MyContent, UserIdentity, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
+from app.kernel.models import (User, MyContent, UserIdentity, TestStructured, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
  
  
  
 class Tests(Segments):
     
       # unit testing segmenter
+      
+      def segment_test10(self):
+          abc = TestExpando(aa=1, baaz=1, fazz=2)
+          u = TestStructured(struct=[abc, abc])
+          u.put()
+          self.response.write(u)
       
       def segment_test9(self):
           u = MyContent.query(ndb.GenericProperty('category') == 1, ndb.GenericProperty('state') == 1).order(ndb.GenericProperty('sequence')).fetch()

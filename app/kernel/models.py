@@ -672,14 +672,16 @@ class MyContent(ndb.BaseModel):
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     updated = ndb.DateTimeProperty(auto_now=True)
     title = ndb.StringProperty(required=True, indexed=False)
-    category = ndb.IntegerProperty(required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    category = ndb.IntegerProperty(required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
     body = ndb.TextProperty(required=True, indexed=False)
-    sequence = ndb.IntegerProperty(required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    state = ndb.IntegerProperty(required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
-
-
-
+    sequence = ndb.IntegerProperty(required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    state = ndb.IntegerProperty(required=True, indexed=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
+ 
 class TestExpando(ndb.BaseExpando):
       _KIND = 'TestExpando'
       pass
+  
+class TestStructured(ndb.BaseModel):
+      _KIND = 'TestStructured'
+      struct  = ndb.StructuredProperty(TestExpando, repeated=True)
     
