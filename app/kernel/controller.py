@@ -13,7 +13,7 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from app import settings, ndb
 from app.core import logger
 from app.request import Segments
-from app.kernel.models import (User, MyContent, UserIdentity, TestStructured, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
+from app.kernel.models import (User, ContentAlias, UserIdentity, TestStructured, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
  
  
  
@@ -28,14 +28,14 @@ class Tests(Segments):
           self.response.write(u)
       
       def segment_test9(self):
-          u = MyContent.query(ndb.GenericProperty('category') == 1, ndb.GenericProperty('state') == 1).order(ndb.GenericProperty('sequence')).fetch()
+          u = ContentAlias.query(ContentAlias.category == 1, ContentAlias.state == 1).order(ContentAlias.sequence).fetch()
 
           for i in u:
               self.response.write(i.key)
               self.response.write('<br />')
       
       def segment_test8(self):
-          u = MyContent(title = 'A title',
+          u = ContentAlias(title = 'A title',
                       category = 1, # proveriti da li composite index moze raditi kada je ovo indexed=False
                       body = "Body text",
                       sequence = 1, # proveriti da li composite index moze raditi kada je ovo indexed=False

@@ -1,6 +1,6 @@
 indexes:
   
-- kind: Content
+- kind: ContentAlias
   ancestor: no
   properties:
   - name: '3'
@@ -8,7 +8,7 @@ indexes:
   - name: '5'
     direction: asc
     
-- kind: MyContent
+- kind: MyContents
   ancestor: no
   properties:
   - name: category
