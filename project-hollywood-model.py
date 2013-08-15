@@ -86,25 +86,21 @@ class ObjectLog(ndb.Expando):
 class User(ndb.Expando):
     
     # root
-    # testirati kako indexiranje radi u slucaju identity = StructuredProperty..., napr: User.query(User.identity.email=key), 
-    # i ukoliko query vrati rezultate onda trenutni dizajn moze ostati
     state = ndb.IntegerProperty('1', required=True)
     emails = ndb.StringProperty('2', repeated=True)# soft limit 1000x
-    identities = ndb.StringProperty('3', repeated=True)# soft limit 100x
+    identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 100x
     _default_indexed = False
     pass
     #Expando
-    # mozda ovako napraviti radi indexiranja, moguce je da StructuredProperty indexira svaki field, a nama u indexu treba samo identity prop.
-    # user_identities = ndb.LocalStructuredProperty(UserIdentity, '4', repeated=True)# soft limit 100x
 
 # done!
 class UserIdentity(ndb.Model):
     
-    # LocalStructuredProperty model
-    identity = ndb.StringProperty('1', required=True, indexed=False)# spojen je i provider name sa id-jem
-    email = ndb.StringProperty('2', required=True, indexed=False)
-    associated = ndb.BooleanProperty('3', default=True, indexed=False)
-    primary = ndb.BooleanProperty('4', default=True, indexed=False)
+    # StructuredProperty model
+    identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
+    email = ndb.StringProperty('2', required=True)
+    associated = ndb.BooleanProperty('3', default=True)
+    primary = ndb.BooleanProperty('4', default=True)
 
 # done!
 class UserIPAddress(ndb.Model):
