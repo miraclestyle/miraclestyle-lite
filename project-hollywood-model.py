@@ -543,8 +543,8 @@ class ProductTemplate(ndb.Expando):
     # product_template_variants = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
     # product_template_contents = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
     # product_template_images = ndb.LocalStructuredProperty(Image, '9', repeated=True)# soft limit 100x
-    # weight = DecimalProperty('10')# kg - ili sta vec odlucimo
-    # volume = DecimalProperty('11')# m3 - ili sta vec odlucimo
+    # weight = ndb.StringProperty('10')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
+    # volume = ndb.StringProperty('11')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
 
 # done!
 class ProductInstance(ndb.Expando):
@@ -574,8 +574,8 @@ class ProductInstance(ndb.Expando):
     # product_instance_contents = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
     # product_instance_images = ndb.LocalStructuredProperty(Image, '6', repeated=True)# soft limit 100x
     # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below X quantity
-    # weight = DecimalProperty('8')# kg - ili sta vec odlucimo
-    # volume = DecimalProperty('9')# m3 - ili sta vec odlucimo
+    # weight = ndb.StringProperty('8')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
+    # volume = ndb.StringProperty('9')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
     # variant_signature = ndb.TextProperty('10', required=True)# soft limit 64kb - ova vrednost kao i vrednosti koje kupac manuelno upise kao opcije variante se prepisuju u order line description prilikom Add to Cart
 
 # done!
