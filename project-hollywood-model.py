@@ -14,6 +14,8 @@
 # SELECT * FROM Country WHERE name >= 'B' AND name < 'C' ORDER BY name
 # mnogi modeli koji ce imati opciju pretraga po osnovu user custom entry-ja ce koristiti ovaj mehanizam
 
+# treba se ispitati "_default_indexed = False" za Expando modele
+
 '''
 Ovo su zabranjena imena propertija:
 
