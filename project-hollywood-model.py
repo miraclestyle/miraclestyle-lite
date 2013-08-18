@@ -10,8 +10,9 @@
 # ali je highly unlikely, zato sto se ancestor ne mora ukljucivati u slucajevima composite indexa
 # odgovor na gore postavljeno pitanje se mozda moze pronaci na: https://developers.google.com/appengine/docs/python/datastore/indexes#Python_Index_configuration
 
-# za mnoge modele postoji problem u vezi query-ja (zato sto datastore ne podrzava LIKE statement), 
-# zato cemo u tim slucajevima verovatno koristiti GAE Search
+# datastore ne podrzava LIKE statement kao sto to podrzavaju struktuirane baze, umesto LIKE se moze korititi index range scan, kao napr:
+# SELECT * FROM Country WHERE name >= 'B' AND name < 'C' ORDER BY name
+# mnogi modeli koji ce imati opciju pretraga po osnovu user custom entry-ja ce koristiti ovaj mehanizam
 
 '''
 Ovo su zabranjena imena propertija:
