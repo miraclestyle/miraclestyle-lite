@@ -78,7 +78,7 @@ class ObjectLog(ndb.Expando):
     pass
     # message / m = ndb.TextProperty('5')# soft limit 64kb - to determine char count
     # note / n = ndb.TextProperty('6')# soft limit 64kb - to determine char count
-    # log / l = ndb.TextProperty('7')
+    # log / l = ndb.PickleProperty('7')
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
