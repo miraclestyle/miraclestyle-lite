@@ -14,12 +14,46 @@ from app import settings, ndb
 from app.core import logger
 from app.request import Segments
 from app.kernel.models import (User, ContentAlias, UserIdentity, TestStructured, UserEmail, UserIPAddress, ObjectLog, TestExpando, Role, RoleUser)
+
+
+# done!
+class TestUserIdentity(ndb.Model):
+    
+    # LocalStructuredProperty model
+    identity = ndb.StringProperty(required=True, indexed=False)# spojen je i provider name sa id-jem
+    email = ndb.StringProperty(required=True, indexed=True)
+    associated = ndb.BooleanProperty(default=True, indexed=False)
+    primary = ndb.BooleanProperty(default=True, indexed=False)
  
+class TestUser(ndb.Expando):
+    
+    # root
+    # testirati kako indexiranje radi u slucaju identity = StructuredProperty..., napr: User.query(User.identity.email=key), 
+    # i ukoliko query vrati rezultate onda trenutni dizajn moze ostati
+    state = ndb.IntegerProperty(required=True)
+    emails = ndb.StringProperty(repeated=True)# soft limit 1000x
+    identities = ndb.StructuredProperty(TestUserIdentity, repeated=True)# soft limit 100x
+    _default_indexed = False
+    pass
+    #Expando
+    # mozda ovako napraviti radi indexiranja, moguce je da StructuredProperty indexira svaki field, a nama u indexu treba samo identity prop.
+    # user_identities = ndb.LocalStructuredProperty(UserIdentity, '4', repeated=True)# soft limit 100x
+
+
  
  
 class Tests(Segments):
     
       # unit testing segmenter
+      
+      def segment_test11(self):
+          
+          if self.request.get('put'):
+             t = TestUser(state=1, identities=[TestUserIdentity(email='foo@email.com', identity='10101010')])
+             t.put()
+             self.response.write(t)
+          
+          self.response.write(TestUser.query(TestUser.identities.email == 'foo@email.com').fetch())
       
       def segment_test10(self):
           abc = TestExpando(aa=1, baaz=1, fazz=2)
@@ -28,7 +62,10 @@ class Tests(Segments):
           self.response.write(u)
       
       def segment_test9(self):
-          u = ContentAlias.query(ContentAlias.category == 1, ContentAlias.state == 1).order(ContentAlias.sequence).fetch()
+          if self.request.get('not_generic'):
+             u = ContentAlias.query(ContentAlias.category == 1, ContentAlias.state == 1).order(ContentAlias.sequence).fetch()
+          else:
+             u = ContentAlias.query(ndb.GenericProperty('3') == 1, ndb.GenericProperty('6') == 1).order(ndb.GenericProperty('5')).fetch()
 
           for i in u:
               self.response.write(i.key)

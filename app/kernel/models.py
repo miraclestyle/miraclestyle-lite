@@ -654,15 +654,36 @@ class AggregateUserPermission(ndb.BaseModel):
 class ContentAlias(ndb.BaseModel):
     
     _KIND = 'ContentAlias'
+    
+    """
+    indexes:
+  
+    - kind: ContentAlias
+      ancestor: no
+      properties:
+      - name: '3'
+      - name: '6'
+      - name: '5'
+        direction: asc
+        
+    - kind: MyContents
+      ancestor: no
+      properties:
+      - name: category
+      - name: state
+      - name: sequence
+        direction: asc    
+    """
+    
     # root
     # composite index category+state+sequence
     # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
     updated = ndb.DateTimeProperty('1', auto_now=True)
     title = ndb.StringProperty('2', required=True, indexed=False)
-    category = ndb.IntegerProperty('3', required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    category = ndb.IntegerProperty('3', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
     body = ndb.TextProperty('4', required=True, indexed=False)
-    sequence = ndb.IntegerProperty('5', required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    state = ndb.IntegerProperty('6', required=True, indexed=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
+    sequence = ndb.IntegerProperty('5', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
+    state = ndb.IntegerProperty('6', required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
 
 
 class Content(ndb.BaseModel):
