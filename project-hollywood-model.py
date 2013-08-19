@@ -61,7 +61,7 @@ class DecimalProperty(ndb.StringProperty):
     return decimal.Decimal(value)  # Always return a decimal
 
 ################################################################################
-# CORE - 8
+# CORE - 7
 ################################################################################
 
 # done!
@@ -90,7 +90,7 @@ class User(ndb.Expando):
     
     # root
     state = ndb.IntegerProperty('1', required=True)
-    emails = ndb.StringProperty('2', repeated=True)# soft limit 1000x
+    emails = ndb.StringProperty('2', repeated=True)# soft limit 100x
     identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 100x
     _default_indexed = False
     pass
@@ -232,17 +232,17 @@ class Location(ndb.Expando):
     # postal_code_to = ndb.StringProperty('4')
     # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
 
-# ?
+# done!
 class ProductCategory(ndb.Model):
     
     # root
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
     # https://support.google.com/merchants/answer/1705911
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
+    # composite index: state+name - ancestor: no
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
-    name = ndb.StringProperty('2', required=True, indexed=False)
-    complete_name = ndb.TextProperty('3', required=True, indexed=False)
+    name = ndb.StringProperty('2', required=True)
+    complete_name = ndb.TextProperty('3', required=True)
     state = ndb.IntegerProperty('4', required=True)
 
 # done!
@@ -300,23 +300,14 @@ class Currency(ndb.Model):
     positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
     negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
 
-# ?
-# ovo ce biti sistem za slanje poruka userima preko odredjenog outleta
-# ostavicemo ga za kasnije posto nismo upoznati detaljno sa task queue
+# done!
+# ostaje da se ispita u preprodukciji!!
 class Message(ndb.Model):
     
     # root
-    outlet = ndb.IntegerProperty('1', required=True)
-    group = ndb.IntegerProperty('2', required=True)
+    outlet = ndb.IntegerProperty('1', required=True, indexed=False)
+    group = ndb.IntegerProperty('2', required=True, indexed=False)
     state = ndb.IntegerProperty('3', required=True)
-
-# ?
-class MessageRecepient(ndb.Model):
-    
-    # ancestor Message
-    recepient = ndb.KeyProperty('1', kind=User, required=True)
-    sent = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
-
 
 ################################################################################
 # BUYER - 4
@@ -620,7 +611,7 @@ class ProductContent(ndb.Model):
 
 
 ################################################################################
-# TRADE - 9
+# TRADE - 11
 ################################################################################
 
 # done!
@@ -751,10 +742,11 @@ class OrderLine(ndb.Expando):
     pass
     # Expando
     # taxes = ndb.LocalStructuredProperty(OrderLineTax, '7', repeated=True)# soft limit 500x
-    # product_category = ndb.KeyProperty('8', kind=ProductCategory, required=True)
-    # catalog_pricetag_reference = ndb.KeyProperty('9', kind=CatalogPricetag, required=True)
-    # product_instance_reference = ndb.KeyProperty('10', kind=ProductInstance, required=True)
-    # tax_references = ndb.KeyProperty('11', kind=StoreTax, repeated=True)# soft limit 500x
+    # product_category_complete_name = ndb.TextProperty('8', required=True)# soft limit 64kb
+    # product_category = ndb.KeyProperty('9', kind=ProductCategory, required=True)
+    # catalog_pricetag_reference = ndb.KeyProperty('10', kind=CatalogPricetag, required=True)
+    # product_instance_reference = ndb.KeyProperty('11', kind=ProductInstance, required=True)
+    # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
 
 # done!
 class OrderLineProductUOM(ndb.Model):
