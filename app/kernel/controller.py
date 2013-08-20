@@ -14,8 +14,49 @@ from app.core import logger
 from app.request import Segments
 from app.kernel.models import (User, UserIdentity, UserIPAddress)
 
-  
+
+class TestRoot(ndb.BaseModel):
+      _KIND = 'TestRoot'
+      name = ndb.StringProperty()
+      sequence = ndb.IntegerProperty()
+      
+class TestChild(ndb.BaseModel):
+      _KIND = 'TestChild'
+      childname = ndb.StringProperty()
+      
+      
 class Tests(Segments):
+    
+     def segment_test4(self):
+         
+         import time
+         
+         if self.request.get('put'):
+            u = TestRoot(name='test', sequence=1)
+            u.put()
+            
+            self.response.write(u)
+            self.response.write('<br />Factory key: ' + u.key.urlsafe() + '<br /><br />')
+         else:
+             u = ndb.Key(urlsafe=self.request.get('k')).get()
+             
+         
+         self.ss = 0.0 
+         
+         @ndb.transactional
+         def trans(u):
+             t = time.time()
+             b = TestChild(parent=u.key, childname='foobar')
+             self.response.write('Writing this entity to %s' % u.key.urlsafe())
+             b.put()
+             ssa = time.time() - t
+             self.ss += ssa
+             self.response.write('<br />Wrote it, got id() %s (%s s)<br />' % (b.key.id(), ssa))
+             
+         for i in range(0, int(self.request.get('iterations', 5))):
+             trans(u)
+             
+         self.response.write('<br />Total time taken to complete %s' % self.ss)
     
      def segment_test(self):
          self.response.write(User.current())
