@@ -365,7 +365,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 
 
 ################################################################################
-# STORE - 7
+# STORE - 8
 ################################################################################
 
 # done!
@@ -403,9 +403,21 @@ class Store(ndb.Expando):
     # tracking_id = ndb.StringProperty('16')
     #
     # Feedback
-    # positive_feedback_count = ndb.IntegerProperty('17', required=True)
-    # negative_feedback_count = ndb.IntegerProperty('18', required=True)
-    # neutral_feedback_count = ndb.IntegerProperty('19', required=True)
+    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '17', repeated=True)# soft limit 120x
+
+# done!
+class StoreFeedback(ndb.Model):
+    
+    # LocalStructuredProperty model
+    # ovaj model dozvoljava da se radi feedback trending per month per year
+    # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
+    # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
+    # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
+    month = ndb.IntegerProperty('1', required=True, indexed=False)
+    year = ndb.IntegerProperty('2', required=True, indexed=False)
+    positive_feedback_count = ndb.IntegerProperty('3', required=True, indexed=False)
+    negative_feedback_count = ndb.IntegerProperty('4', required=True, indexed=False)
+    neutral_feedback_count = ndb.IntegerProperty('5', required=True, indexed=False)
 
 # done!
 class StoreContent(ndb.Model):
@@ -442,6 +454,8 @@ class Tax(ndb.Expando):
 class Carrier(ndb.Model):
     
     # ancestor Store (Application)
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
+    # http://hg.tryton.org/modules/carrier/file/tip/carrier.py#l10
     # composite index: active+name - ancestor: yes
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
@@ -450,6 +464,7 @@ class Carrier(ndb.Model):
 class CarrierLine(ndb.Expando):
     
     # ancestor Carrier
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
     # composite index: active+sequence - ancestor: yes
     name = ndb.StringProperty('1', required=True, indexed=False)
     sequence = ndb.IntegerProperty('2', required=True)
@@ -465,6 +480,7 @@ class CarrierLine(ndb.Expando):
 class CarrierLineRule(ndb.Model):
     
     # LocalStructuredProperty model
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L226
     # ovde se cuvaju dve vrednosti koje su obicno struktuirane kao formule, ovo je mnogo fleksibilnije nego hardcoded struktura informacija koje se cuva kao sto je bio prethodni slucaj
     condition = ndb.StringProperty('1', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: True ili weight[kg] >= 5 ili volume[m3] = 0.002
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
