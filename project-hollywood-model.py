@@ -16,6 +16,10 @@
 
 # treba se ispitati "_default_indexed = False" za Expando modele
 
+# problem 1 write per sec unutar transakcija kojie se commitaju na jednu entity grupu se treba normalizovati.
+# ovaj problem se odnosi na broj write (transaction) operacija koje se mogu odvijati na istoj entity grupi.
+# jedan primer gde ovaj problem moze postojati je u slucaju AggregateBuyerCollectionCatalog!!
+
 '''
 Ovo su zabranjena imena propertija:
 
