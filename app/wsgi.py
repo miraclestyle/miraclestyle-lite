@@ -18,6 +18,10 @@ from jinja2 import FileSystemLoader
 from app.core import import_module, logger
 from app import settings
 
+"""
+  Main bootstrap file, consists of loading urls.py from every installed application, and builds theme file paths
+"""
+
 if not six.PY3:
     fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
   
@@ -25,8 +29,8 @@ ROUTES = []
 app_template_dirs = []
   
 for a in settings.APPLICATIONS_INSTALLED:
+    module_models = import_module('%s.%s' % (a, 'models')) # import all models for ndb mapper
     module_urls = import_module('%s.%s' % (a, 'urls'))
-    module_models = import_module('%s.%s' % (a, 'models'))
     if module_urls:
         template_dir = os.path.join(os.path.dirname(module_urls.__file__), 'templates')
         if os.path.isdir(template_dir):
@@ -52,7 +56,7 @@ config['webapp2_extras.jinja2'] = {
              'template_path': 'templates',
              'globals' : {'uri_for' : webapp2.uri_for, 'settings' : settings},
              'environment_args': { 
-               'extensions': ['jinja2.ext.i18n'],
+               'extensions': ['jinja2.ext.i18n', 'jinja2.ext.autoescape', 'jinja2.ext.loopcontrols'],
                'autoescape' : True, 
                'loader' : FileSystemLoader(app_template_dirs),
                'cache_size' : settings.TEMPLATE_CACHE

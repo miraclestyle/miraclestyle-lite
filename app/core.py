@@ -9,6 +9,10 @@ import logging
 
 from app import settings
 
+"""
+ Systemic helper functions that are more python-related in their nature
+"""
+
 def logger(msg, t=None):
     if t == None:
        t = 'info'

@@ -6,8 +6,7 @@ Created on Jul 9, 2013
 '''
 from webapp2_extras import sessions
 
-from app import settings
-from app import ndb
+from app import settings, ndb
 from app.memcache import temp_memory_get, temp_memory_set
 from app.core import logger
 
@@ -151,6 +150,15 @@ class Workflow():
           return ObjectLog.query(ancestor=self.key)
  
 
+class UserIdentity(ndb.BaseModel):
+    
+    _KIND = 2
+    # StructuredProperty model
+    identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
+    email = ndb.StringProperty('2', required=True)
+    associated = ndb.BooleanProperty('3', default=True)
+    primary = ndb.BooleanProperty('4', default=True)
+    
 class User(ndb.BaseExpando, Workflow):
     
     _KIND = 0
@@ -187,8 +195,11 @@ class User(ndb.BaseExpando, Workflow):
     }
      
     state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
-    _default_indexed = False
+    emails = ndb.StringProperty('2', repeated=True, validator=ndb.Validator(ndb.soft_limit, limit=100))# soft limit 100x
+    identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True, validator=ndb.Validator(ndb.soft_limit, limit=100))# soft limit 100x
     
+    _default_indexed = False
+  
     @classmethod
     def _auth_or_anon_role(cls, what):
         k = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
@@ -325,30 +336,11 @@ class User(ndb.BaseExpando, Workflow):
        
     @property
     def primary_email(self):
-        b = self._self_from_memory('primary_email', -1)
-        if b == -1:
-           a = {} 
-           lia = []
-           for e in self.emails.fetch():
-               if e.primary == True:
-                  a['primary_email'] = e
-                  b = e
-                  lia.append(e)
-                  
-           a['emails'] = lia
-           self._self_make_memory(a) 
+        for i in self.identities:
+            if i.primary:
+               return i.email
            
-        if isinstance(b, UserEmail):
-           return b.email
-        else:
-           return 'N/A'
-    
-    @property
-    def emails(self):
-        """
-          Returns Query iterator for user emails entity
-        """
-        return UserEmail.query(ancestor=self.key)
+        return 'N/A'
   
     @staticmethod
     def current_user_is_guest():
@@ -570,26 +562,7 @@ class ObjectLog(ndb.BaseExpando):
        'note' : ndb.TextProperty('6', verbose_name=u'Note'),
        'log' : ndb.PickleProperty('7', verbose_name=u'Log'),
     }
-
-
-class UserEmail(ndb.BaseModel):
-    
-    _KIND = 1
-    
-    # ancestor User
-    email = ndb.StringProperty('1', required=True, verbose_name=u'Email')
-    primary = ndb.BooleanProperty('2', default=True, indexed=False, verbose_name=u'Primary Email')
-
-class UserIdentity(ndb.BaseModel):
-    
-    _KIND = 2
-    # ancestor User
-    # index identity only
-    user_email = ndb.KeyProperty('1', kind=UserEmail, required=True, indexed=False, verbose_name=u'Email Reference')
-    identity = ndb.StringProperty('2', required=True, verbose_name=u'Provider User ID')# spojen je i provider name sa id-jem
-    associated = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Associated')
-
-
+ 
 class UserIPAddress(ndb.BaseModel):
     
     _KIND = 3
@@ -602,8 +575,8 @@ class Role(ndb.BaseModel):
     
     _KIND = 6
     # ancestor Store (Any)
-    name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role Name')
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role Permissions')# permission_state_model - edit_unpublished_catalog
+    name = ndb.StringProperty('1', required=True, indexed=False, verbose_name=u'Role name')
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Role permissions')# soft limit 1000x - permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False, verbose_name=u'Readonly')
     
 class RoleUser(ndb.Model, Workflow):
@@ -641,7 +614,7 @@ class RoleUser(ndb.Model, Workflow):
     }    
     
     user = ndb.KeyProperty('1', kind=User, required=True, verbose_name=u'User')
-    state = ndb.IntegerProperty('2', required=True)# invited/accepted
+    state = ndb.IntegerProperty('2', required=True, verbose_name=u'Invited/Accepted')# invited/accepted
  
 
 class AggregateUserPermission(ndb.BaseModel):
@@ -650,73 +623,4 @@ class AggregateUserPermission(ndb.BaseModel):
     # ancestor User
     reference = ndb.KeyProperty('1',required=True, verbose_name=u'Reference')# ? ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False, verbose_name=u'Permissions')# permission_state_model - edit_unpublished_catalog
- 
-class ContentAlias(ndb.BaseModel):
-    
-    _KIND = 'ContentAlias'
-    
-    """
-    indexes:
-  
-    - kind: ContentAlias
-      ancestor: no
-      properties:
-      - name: '3'
-      - name: '6'
-      - name: '5'
-        direction: asc
-        
-    - kind: MyContents
-      ancestor: no
-      properties:
-      - name: category
-      - name: state
-      - name: sequence
-        direction: asc    
-    """
-    
-    # root
-    # composite index category+state+sequence
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    updated = ndb.DateTimeProperty('1', auto_now=True)
-    title = ndb.StringProperty('2', required=True, indexed=False)
-    category = ndb.IntegerProperty('3', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    body = ndb.TextProperty('4', required=True, indexed=False)
-    sequence = ndb.IntegerProperty('5', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    state = ndb.IntegerProperty('6', required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
-
-
-class Content(ndb.BaseModel):
-    
-    _KIND = 'Content'
-    # root
-    # composite index category+state+sequence
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    updated = ndb.DateTimeProperty('1', auto_now=True)
-    title = ndb.StringProperty('2', required=True, indexed=False)
-    category = ndb.IntegerProperty('3', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    body = ndb.TextProperty('4', required=True, indexed=False)
-    sequence = ndb.IntegerProperty('5', required=True, indexed=False)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    state = ndb.IntegerProperty('6', required=True, indexed=False)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
-
-class MyContent(ndb.BaseModel):
-    
-    _KIND = 'MyContent'
-    # root
-    # composite index category+state+sequence
-    # veliki problem je ovde u vezi query-ja, zato sto datastore ne podrzava LIKE statement, verovatno cemo koristiti GAE Search
-    updated = ndb.DateTimeProperty(auto_now=True)
-    title = ndb.StringProperty(required=True, indexed=False)
-    category = ndb.IntegerProperty(required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    body = ndb.TextProperty(required=True, indexed=False)
-    sequence = ndb.IntegerProperty(required=True, indexed=True)# proveriti da li composite index moze raditi kada je ovo indexed=False
-    state = ndb.IntegerProperty(required=True, indexed=True)# published/unpublished - proveriti da li composite index moze raditi kada je ovo indexed=False
- 
-class TestExpando(ndb.BaseExpando):
-      _KIND = 'TestExpando'
-      pass
-  
-class TestStructured(ndb.BaseModel):
-      _KIND = 'TestStructured'
-      struct  = ndb.StructuredProperty(TestExpando, repeated=True)
     

@@ -11,6 +11,8 @@ Created on Jul 8, 2013
 
 import os
 
+APPDIR = os.path.dirname(os.path.abspath(__file__))
+
 # This is for key-based encryption we can change before we go into production
 # - however changing this, automatically corrupts data (keys) and renders them unusable and undecryptable
 SALT = u'salt'
@@ -24,36 +26,43 @@ DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 # will still hold this as debug until full production
 DO_LOGS = True
 
- 
+# Some jinja2 internal cache 
 TEMPLATE_CACHE = 3600
 
 if DEBUG:
    TEMPLATE_CACHE = 0
 
+# Here we specify which of the packages metadata will be loaded into the system
 APPLICATIONS_INSTALLED = (
      'app.kernel',
 )
 
+# session storage, currently set memcache. Maybe we will change it into datastore because of consistency
+# memcache keys can be dropped on server and user can loose his active session
 SESSION_STORAGE = 'memcache'
 
+# user-specific settings
 USER_SESSION_KEY = 'user_key'
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
 
-# PERMISSIONS - these are installation permissions
+# PERMISSIONS - these are permissions that all authenticated users will have
 USER_AUTHENTICATED_PERMISSIONS = (
     'create_active_store',
     'create_unpublished_catalog'
 )
+# PERMISSIONS - these are permissions that anonymous user will have
 USER_ANONYMOUS_PERMISSIONS = (
     'view_published_catalog',
 )
 
+# MAP that points to what ID goes which identity MAP_IDENTITIES['facebook'] => 2
 MAP_IDENTITIES = {
     'google' : 1,
     'facebook' : 2,
 }
 
+# OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
    'client_id'    : '283384992095.apps.googleusercontent.com',
    'client_secret': '5MJ6bqGPbyD_bt2hYKFqShE2',              
@@ -83,7 +92,6 @@ WEBAPP2_EXTRAS = {
         'secret_key': 'd212k19f0k09sdkf009kfewwdw',
     },
     'webapp2_extras.i18n' : {
-    'translations_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'locale'),
+    'translations_path': os.path.join(APPDIR, 'locale'),
     }
 }
-

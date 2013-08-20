@@ -6,7 +6,7 @@ Created on Jul 15, 2013
 '''
 from webapp2 import Route
 
-class InvalidRoute(Exception):
+class InvalidRouteError(Exception):
       pass
 
 def register(prefix=None, *args):
@@ -27,7 +27,7 @@ def register(prefix=None, *args):
             arg = Route(**arg)
             
         if not isinstance(arg, Route):
-           raise InvalidRoute
+           raise InvalidRouteError
             
         routes.append(arg)
     return routes

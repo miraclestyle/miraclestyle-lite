@@ -6,17 +6,24 @@ Created on Jul 15, 2013
 '''
 import webapp2
 
-from webapp2_extras.i18n import _
 from webapp2_extras import sessions, i18n, jinja2
 
 from app import settings
  
 class Handler(webapp2.RequestHandler):
     
+    """
+    General-purpose handler that comes with:
+    self.session for session access
+    self._template to send variables to render template
+    and other hooks like `after`, `before` etc.
+    
+    """
+    
     _USE_SESSION = True
     _LOAD_TRANSLATIONS = True
     
-    _common = {'base' : 'index.html'}
+    _template = {'base' : 'index.html'}
     
     @webapp2.cached_property
     def jinja2(self):
@@ -31,8 +38,8 @@ class Handler(webapp2.RequestHandler):
     def render(self, tpl, data=None):
         if data == None:
            data = {}
-        self._common.update(data)
-        return self.render_response(tpl, **self._common)
+        self._template.update(data)
+        return self.render_response(tpl, **self._template)
     
     def before_before(self):
         """
@@ -66,7 +73,7 @@ class Handler(webapp2.RequestHandler):
         
     def respond(self, *args, **kwargs):
         self.abort(404)
-        self.response.write(_('Not found'))
+        self.response.write(i18n._('Not found'))
  
     def dispatch(self):
         
@@ -98,10 +105,11 @@ class Handler(webapp2.RequestHandler):
     def session(self):
         # Returns a session using the default cookie key.
         return self.session_store.get_session(backend=settings.SESSION_STORAGE)
-    
-    
+     
 class Segments(Handler):
-  
+      """
+       Segments handler behaves in the way that you can construct multi-function "view"
+      """
       def respond(self, *args, **kwargs):
           segment = kwargs.pop('segment')
           f = 'segment_%s' % segment

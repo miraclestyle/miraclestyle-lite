@@ -9,7 +9,10 @@ import webapp2
 from google.appengine.api import memcache
 
 from app.core import logger
+"""
+ Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
 
+"""
 __all__ = ['set', 'get', 'delete', 'tempcached', 'memcached', 'temp_memory_get', 'temp_memory_set', 'temp_memory_delete']
 
 def set(k, v, expire=0, **kwargs):
@@ -48,9 +51,8 @@ def get(k, d=None, callback=None, **kwargs):
            return tmp  
 
 def delete(k):
-        
-        memcache.delete(k)
-        temp_memory_delete(k)
+    memcache.delete(k)
+    temp_memory_delete(k)
         
 def tempcached(func, k=None, d=None):
         if k == None:

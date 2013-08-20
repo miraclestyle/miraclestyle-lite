@@ -4,19 +4,38 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-
 import decimal
 import hashlib
 
 from app import settings, memcache
 from app.core import logger
 
-# Google Appengine NDBatastore
 from google.appengine.ext.ndb import *
-
+ 
 contx = get_context()
 
+# memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
 contx.set_memcache_policy(False)
+
+def soft_limit(prop, value, limit=100):
+    logger(value)
+    return value
+    if len(value) > limit:
+       return False
+    return True
+
+class Validator:
+    
+    """
+      Validator class for calling internal functions, usage
+      ndb.Validator(callback, .. keyword arguments for the `callback`)
+    """
+    def __init__(self, callback, **kwargs):
+        self.kwargs = kwargs
+        self.callback = callback
+    
+    def __call__(self, prop, value):
+        return self.callback(prop, value, **self.kwargs)
  
 class _BaseModel:
     
@@ -65,8 +84,7 @@ class _BaseModel:
          return cls.get_by_id_async(ke, parent, app, namespace, **ctx_options)
       else:
          return cls.get_by_id(ke, parent, app, namespace, **ctx_options)
-      
-  
+       
   @classmethod
   def hash_get_by_id(cls, **kwargs):
       return cls._hash_get_by_id(False, **kwargs)
@@ -94,9 +112,8 @@ class _BaseModel:
   
   @classmethod
   def _return_memcache_key(cls, kid):
-      ## now we are using urlsafe complete encoded key for ABSOLUTE consistency
+      # `kid` is a ndb.Key(...).urlsafe()
       return str('m-%s' % str(kid))
-      #return str('mc-%s-%s' % (cls._get_kind(), kid))
    
   @classmethod
   def _clear_memcache(cls, kid):
@@ -133,10 +150,14 @@ class _BaseModel:
       return empty
 
 class BaseModel(_BaseModel, Model):
-    pass
+   """
+    Base class for all `ndb.Model` entities
+   """
 
 class BaseExpando(_BaseModel, Expando):
-    
+  """
+   Base class for all `ndb.Expando` entities
+  """  
   def __getattr__(self, name):
       
     if hasattr(self, '_VIRTUAL_FIELDS'):
@@ -180,8 +201,7 @@ class DecimalProperty(StringProperty):
 
   def _from_base_type(self, value):
     return decimal.Decimal(value)  # Always return a long  
-     
-    
+      
 class ReferenceProperty(KeyProperty):
     
     def _validate(self, value):
