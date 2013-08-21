@@ -12,13 +12,18 @@
 
 # datastore ne podrzava LIKE statement kao sto to podrzavaju struktuirane baze, umesto LIKE se moze korititi index range scan, kao napr:
 # SELECT * FROM Country WHERE name >= 'B' AND name < 'C' ORDER BY name
-# mnogi modeli koji ce imati opciju pretraga po osnovu user custom entry-ja ce koristiti ovaj mehanizam
+# mnogi modeli koji ce imati opciju pretraga po osnovu user custom entry-ja ce koristiti ovaj mehanizam,
+# i na njima se moraju pripremiti indexi za ove funkcije.
 
 # treba se ispitati "_default_indexed = False" za Expando modele
 
 # problem 1 write per sec unutar transakcija kojie se commitaju na jednu entity grupu se treba normalizovati.
-# ovaj problem se odnosi na broj write (transaction) operacija koje se mogu odvijati na istoj entity grupi.
+# ovaj problem se odnosi na broj write operacija koje se mogu odvijati na istoj entity grupi.
 # jedan primer gde ovaj problem moze postojati je u slucaju AggregateBuyerCollectionCatalog!!
+
+# detalji oko modeliranja podataka i skaliranja su prezentirani na dole navedenim linkovima
+# https://developers.google.com/appengine/articles/datastore/overview
+# https://developers.google.com/appengine/articles/scaling/overview
 
 '''
 Ovo su zabranjena imena propertija:
@@ -50,7 +55,6 @@ update
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
-
 
 
 class DecimalProperty(ndb.StringProperty):
@@ -117,7 +121,7 @@ class UserIPAddress(ndb.Model):
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
-# done!
+# done! ovde je za svaki write potreban user approval tako da je contention skoro nemoguc!
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
@@ -278,7 +282,7 @@ class ProductUOM(ndb.Model):
 # done!
 class Currency(ndb.Model):
     
-    # root/structured class
+    # root
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
@@ -353,7 +357,7 @@ class BuyerCollectionStore(ndb.Model):
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x - mozda ce trebati index zbog stores taba na collection management
     
-# done!
+# done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateBuyerCollectionCatalog(ndb.Model):
     
     # ancestor User
@@ -592,7 +596,7 @@ class ProductInstance(ndb.Expando):
     # volume = ndb.StringProperty('9')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
     # variant_signature = ndb.TextProperty('10', required=True)# soft limit 64kb - ova vrednost kao i vrednosti koje kupac manuelno upise kao opcije variante se prepisuju u order line description prilikom Add to Cart
 
-# done!
+# done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class ProductInventoryLog(ndb.Model):
     
     # ancestor ProductInstance
@@ -637,15 +641,15 @@ class ProductContent(ndb.Model):
 # done!
 class Order(ndb.Expando):
     
-    # ancestor Store (Application)
+    # ancestor User
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    # store = ndb.KeyProperty('1', kind=Store, required=True)
-    # composite index: buyer+state+updated - ancestor: no; buyer+state+order_date - ancestor: no; state+updated - ancestor: yes; state+order_date - ancestor: yes
-    buyer = ndb.KeyProperty('1', kind=User, required=True)
+    # buyer = ndb.KeyProperty('1', kind=User, required=True)
+    # composite index: store+state+updated - ancestor: no; store+state+order_date - ancestor: no; state+updated - ancestor: yes; state+order_date - ancestor: yes
+    store = ndb.KeyProperty('1', kind=Store, required=True)
     order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = DecimalProperty('4', required=True, indexed=False)
@@ -675,7 +679,7 @@ class OrderFeedback(ndb.Model):
     # ancestor Order
     state = ndb.IntegerProperty('1', required=True, indexed=False)
 
-# done!
+# done! ovo je system generisano po osnovu paypal IPN, i contention se treba verovatno kontrolisati preko task queue, ili da ovo bude root entity.
 class BillingOrder(ndb.Expando):
     
     # ancestor Store (Application)
@@ -798,7 +802,7 @@ class PayPalTransaction(ndb.Model):
     txn_id = ndb.StringProperty('2', required=True)
     ipn_message = ndb.TextProperty('3', required=True)
 
-# done!
+# done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
     
     # ancestor Store (Application)
