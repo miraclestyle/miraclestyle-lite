@@ -8,7 +8,9 @@
 # glavno pitanje je da li ce nam trebati composite indexi za query-je poput:
 # BuyerAddress.query(ancestor=key).order(BuyerAddress.name) ili AggregateUserPermission.query(AggregateUserPermission.reference == key, ancestor=key)
 # ali je highly unlikely, zato sto se ancestor ne mora ukljucivati u slucajevima composite indexa
-# odgovor na gore postavljeno pitanje se mozda moze pronaci na: https://developers.google.com/appengine/docs/python/datastore/indexes#Python_Index_configuration
+# odgovor na gore postavljeno pitanje se mozda moze pronaci na: 
+# https://developers.google.com/appengine/docs/python/datastore/indexes#Python_Index_configuration
+# https://github.com/GoogleCloudPlatform/appengine-guestbook-python
 
 # datastore ne podrzava LIKE statement kao sto to podrzavaju struktuirane baze, umesto LIKE se moze korititi index range scan, kao napr:
 # SELECT * FROM Country WHERE name >= 'B' AND name < 'C' ORDER BY name
