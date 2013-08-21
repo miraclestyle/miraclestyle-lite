@@ -602,7 +602,7 @@ class ProductInventoryLog(ndb.Model):
     # ancestor ProductInstance
     # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    reference = ndb.KeyProperty('2',required=True, indexed=False)
+    reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan 
     quantity = DecimalProperty('3', required=True, indexed=False)
     balance = DecimalProperty('4', required=True, indexed=False)
 
@@ -679,30 +679,31 @@ class OrderFeedback(ndb.Model):
     # ancestor Order
     state = ndb.IntegerProperty('1', required=True, indexed=False)
 
-# done! ovo je system generisano po osnovu paypal IPN, i contention se treba verovatno kontrolisati preko task queue, ili da ovo bude root entity.
+# done!
 class BillingOrder(ndb.Expando):
     
-    # ancestor Store (Application)
+    # root
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# updated on checkout
-    currency = ndb.LocalStructuredProperty(OrderCurrency, '2', required=True)# ovde moze i samo code eventualno posto ovaj currency mi kontrolisemo...
-    untaxed_amount = DecimalProperty('3', required=True, indexed=False)
-    tax_amount = DecimalProperty('4', required=True, indexed=False)
-    total_amount = DecimalProperty('5', required=True, indexed=False)
-    state = ndb.IntegerProperty('6', required=True)# indexed=False ? odluciemo kad budemo znali state-ove i to ce uticati da li cemo praviti composite indexe
-    updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
+    currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
+    untaxed_amount = DecimalProperty('4', required=True, indexed=False)
+    tax_amount = DecimalProperty('5', required=True, indexed=False)
+    total_amount = DecimalProperty('6', required=True, indexed=False)
+    state = ndb.IntegerProperty('7', required=True) 
+    updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.LocalStructuredProperty(OrderAddress, '8', required=True)
-    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
-    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
-    # reference = ndb.StringProperty('11', required=True)
-    # comment = ndb.TextProperty('12')# 64kb limit
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
+    # reference = ndb.StringProperty('12', required=True)
+    # comment = ndb.TextProperty('13')# 64kb limit
 
 # done!
 class OrderAddress(ndb.Expando):
@@ -798,7 +799,7 @@ class PayPalTransaction(ndb.Model):
     
     # ancestor Order, BillingOrder
     # not logged
-    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)# indexed=False ? ako cemo imati direktan pristup ovoj tabeli onda nam treba index
+    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     txn_id = ndb.StringProperty('2', required=True)
     ipn_message = ndb.TextProperty('3', required=True)
 
@@ -808,18 +809,19 @@ class BillingLog(ndb.Model):
     # ancestor Store (Application)
     # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    reference = ndb.KeyProperty('2',required=True, indexed=False)
+    reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
     amount = DecimalProperty('3', required=True, indexed=False)
     balance = DecimalProperty('4', required=True, indexed=False)
 
 # done!
 class BillingCreditAdjustment(ndb.Model):
     
-    # ancestor Store (Application)
+    # root
     # not logged
-    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
-    agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
-    amount = DecimalProperty('3', required=True, indexed=False)
-    message = ndb.TextProperty('4')# soft limit 64kb - to determine char count
-    note = ndb.TextProperty('5')# soft limit 64kb - to determine char count
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    adjusted = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
+    agent = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
+    amount = DecimalProperty('4', required=True, indexed=False)
+    message = ndb.TextProperty('5')# soft limit 64kb - to determine char count
+    note = ndb.TextProperty('6')# soft limit 64kb - to determine char count
 
