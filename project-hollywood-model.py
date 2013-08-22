@@ -115,11 +115,12 @@ class UserIdentity(ndb.Model):
     associated = ndb.BooleanProperty('3', default=True)
     primary = ndb.BooleanProperty('4', default=True)
 
-# done!
+# done! mozemo li ovo da stavljamo u app engine log ? - ovo sam verovatno i ranje pitao...
 class UserIPAddress(ndb.Model):
     
     # ancestor User
     # not logged
+    # ako budemo radili per user istragu loga onda nam treba composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
@@ -128,6 +129,7 @@ class AggregateUserPermission(ndb.Model):
     
     # ancestor User
     # not logged
+    # composite index: ancestor:yes - reference
     reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
 
@@ -136,7 +138,9 @@ class Role(ndb.Model):
     
     # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
     # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
+    # composite index: ancestor:yes - name
+    name = ndb.StringProperty('1', required=True)
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
 
@@ -144,6 +148,8 @@ class Role(ndb.Model):
 class RoleUser(ndb.Model):
     
     # ancestor Role
+    # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
+    # composite index: ancestor:yes - user
     user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
@@ -156,7 +162,12 @@ class RoleUser(ndb.Model):
 class FeedbackRequest(ndb.Model):
     
     # ancestor User
-    # composite index: state+updated - ancestor: yes; state+created - ancestor: yes ??
+    # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
+    # composite index: 
+    # ancestor:yes - updated; ancestor:yes - created;
+    # ancestor:yes - updated:desc; ancestor:yes - created:desc;
+    # ancestor:yes - state,updated; ancestor:yes - state,created;
+    # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
@@ -171,7 +182,12 @@ class FeedbackRequest(ndb.Model):
 class SupportRequest(ndb.Model):
     
     # ancestor User
-    # composite index: state+updated - ancestor: yes; state+created - ancestor: yes ??
+    # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
+    # composite index: 
+    # ancestor:yes - updated; ancestor:yes - created;
+    # ancestor:yes - updated:desc; ancestor:yes - created:desc;
+    # ancestor:yes - state,updated; ancestor:yes - state,created;
+    # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
@@ -181,9 +197,9 @@ class SupportRequest(ndb.Model):
 class Content(ndb.Model):
     
     # root
-    # composite index: category+state+sequence - ancestor: no
+    # composite index: ancestor:no - category,state,sequence
     updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
-    title = ndb.StringProperty('2', required=True, indexed=False)
+    title = ndb.StringProperty('2', required=True)
     category = ndb.IntegerProperty('3', required=True)
     body = ndb.TextProperty('4', required=True)
     sequence = ndb.IntegerProperty('5', required=True)
@@ -209,9 +225,9 @@ class Country(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
-    # composite index: active+code - ancestor: no
-    code = ndb.StringProperty('1', required=True)
-    name = ndb.StringProperty('2', required=True, indexed=False)
+    # composite index: ancestor:no - name; ancestor:no - active,name
+    code = ndb.StringProperty('1', required=True, indexed=False)
+    name = ndb.StringProperty('2', required=True)
     active = ndb.BooleanProperty('3', default=True)
 
 # done!
@@ -221,10 +237,10 @@ class CountrySubdivision(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.py#l52
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
-    # composite index: active+code - ancestor: yes
+    # composite index: ancestor:yes - name; ancestor:yes - active,name
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
-    code = ndb.StringProperty('2', required=True)
-    name = ndb.StringProperty('3', required=True, indexed=False)
+    code = ndb.StringProperty('2', required=True, indexed=False)
+    name = ndb.StringProperty('3', required=True)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True)
 
@@ -249,7 +265,7 @@ class ProductCategory(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
     # https://support.google.com/merchants/answer/1705911
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
-    # composite index: state+name - ancestor: no
+    # composite index: ancestor:no - name; ancestor:no - state,name
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
     name = ndb.StringProperty('2', required=True)
     complete_name = ndb.TextProperty('3', required=True)
@@ -272,7 +288,7 @@ class ProductUOM(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # mozda da ovi entiteti budu non-deletable i non-editable ??
-    # composite index: active+name - ancestor: no
+    # composite index: ancestor:no - name; ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
@@ -289,10 +305,10 @@ class Currency(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # composite index: active+code - ancestor: no
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: ancestor:no - name; ancestor:no - active,name
+    name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True)
+    code = ndb.StringProperty('3', required=True, indexed=False)
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
@@ -327,6 +343,7 @@ class Message(ndb.Model):
 class BuyerAddress(ndb.Expando):
     
     # ancestor User
+    # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
     country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
     city = ndb.StringProperty('3', required=True, indexed=False)
@@ -348,6 +365,7 @@ class BuyerAddress(ndb.Expando):
 class BuyerCollection(ndb.Model):
     
     # ancestor User
+    # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
     notifications = ndb.BooleanProperty('2', default=False)
     primary_email = ndb.StringProperty('3', required=True, indexed=False)
@@ -356,8 +374,9 @@ class BuyerCollection(ndb.Model):
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
+    # composite index: ancestor:yes - collections
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x - mozda ce trebati index zbog stores taba na collection management
+    collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True)# soft limit 500x
     
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateBuyerCollectionCatalog(ndb.Model):
@@ -366,7 +385,8 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     # not logged
     # task queue radi agregaciju prilikom nekih promena na store-u
     # mogao bi da se uvede index na collections radi filtera: AggregateBuyerCollectionCatalog.collections = 'collection', 
-    # u tom slucaju bi trebao composite index: collections+catalog_published_date - ancestor: yes
+    # ovo moze biti dobra situacija za upotrebu MapReduce ??
+    # composite index: ancestor:yes - catalog_published_date:desc
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x
     catalog = ndb.KeyProperty('3', kind=Catalog, required=True, indexed=False)
@@ -382,9 +402,9 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 class Store(ndb.Expando):
     
     # root (ancestor Application)
-    # composite index: state+name - ancestor: no
+    # composite index: ancestor:no - state,name
     name = ndb.StringProperty('1', required=True)
-    logo = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
+    logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
     primary_contact = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
     state = ndb.IntegerProperty('4', required=True)
     _default_indexed = False
@@ -433,7 +453,8 @@ class StoreFeedback(ndb.Model):
 class StoreContent(ndb.Model):
     
     # ancestor Store (Catalog - for caching)
-    title = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: ancestor:yes - sequence
+    title = ndb.StringProperty('1', required=True, indexed=False)# ako budemo odlucili da koristimo projection na title onda nam treba index ukljucen
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
 
