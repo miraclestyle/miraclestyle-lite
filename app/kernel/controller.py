@@ -9,7 +9,7 @@ import json
 from google.appengine.api import urlfetch
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
  
-from app import settings, ndb
+from app import settings, ndb, memcache
 from app.core import logger
 from app.request import Segments
 from app.kernel.models import (User, UserIdentity, UserIPAddress)
@@ -27,27 +27,71 @@ class TestChild(ndb.BaseModel):
 class Tests(Segments):
     
      def segment_test_queries(self):
+         
+         import time
+         
          data = self.request.get_all('d')
+         self.data = data
+         
          self.response.headers['Content-Type'] = 'text/plain;charset=utf8'
          
          command = self.request.get('command')
          no_put = self.request.get('no_put')
+         update = self.request.get('update')
+         no_update = self.request.get('no_update')
          
-         if command == 'wipe':
-            ndb.delete_multi(TestRoot.query().fetch(keys_only=True))
-            ndb.delete_multi(TestChild.query().fetch(keys_only=True))
+         l1 = TestRoot.query().fetch(keys_only=True)
          
+         if l1 and (not no_put and not update):
+            ndb.delete_multi(l1)
+            memcache.delete('update_factory')
          
+         l2 = TestChild.query().fetch(keys_only=True)
+         
+         if l2 and (not no_put and not update):
+            ndb.delete_multi(l2)
+            
+         update_factory = memcache.get('update_factory')
+         
+         if not update:
+            update_factory = {
+               'test1' : [],
+               'test2' : [],
+               'test3' : [],
+               'test4' : [],
+            }
+            
+         if update:
+            if not update_factory:
+               raise Exception('Run the creation first, memcache is empty')
+            else:
+               logger(update_factory)
+           
          if command == 'test1':
              @ndb.transactional(xg=True)
              def test1():
-                 
-                 if not no_put:
-                     for d in data:
-                         a = TestRoot(name=d)
-                         a.put()
+                 if update:
+                    self.data = []
+                    for k in update_factory['test1']:
+                        ke = ndb.Key(urlsafe=k).get()
+                        kx = u'%s updated' % ke.name
+                         
+                        if not no_update:
+                           ke.name = kx 
+                           ke.put()
+                        else:
+                           kx = ke.name
+                           
+                        self.data.append(kx)  
+                 else:
+                     logger(self.data)
+                     if not no_put:
+                         for d in self.data:
+                             a = TestRoot(name=d)
+                             a.put()
+                             update_factory['test1'].append(a.key.urlsafe())
                 
-                 for d in data:
+                 for d in self.data:
                     self.response.write("Querying for %s inside transaction function, got: \n" % d)
                     self.response.write(TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch())
                  self.response.write("\n \n")  
@@ -57,15 +101,32 @@ class Tests(Segments):
          if command == 'test2':       
              @ndb.transactional(xg=True)
              def test2():
-                 
-                 if not no_put:
-                     for d in data:
-                         a = TestRoot(name=d)
-                         a.put()
+                 if update:
+                    self.data = []
+                    for k in update_factory['test2']:
+                        ke = ndb.Key(urlsafe=k).get()
+                        kx = u'%s updated' % ke.name
+                         
+                        if not no_update:
+                           ke.name = kx 
+                           ke.put()
+                        else:
+                           kx = ke.name
+                           
+                        self.data.append(kx)
+                 else:
+                     if not no_put:
+                         for d in self.data:
+                             a = TestRoot(name=d)
+                             a.put()
+                             update_factory['test2'].append(a.key.urlsafe())
              
              test2()   
-             for d in data:
+              
+             for d in self.data:
                  self.response.write("\n\n Querying for %s outside (TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch()) transaction function, got: \n" % d)
+                 
+                # time.sleep(0.2)
                  
                  for f in TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch():
                      self.response.write("\t %s \n" % f)
@@ -82,13 +143,28 @@ class Tests(Segments):
                     troot.put()
                  else:
                     troot = troot2 
-                 
-                 if not no_put:   
-                     for d in data:
-                         a = TestChild(childname=d, parent=troot.key)
-                         a.put()
-                     
-                 for d in data:
+                    
+                 if update:
+                    self.data = []
+                    for k in update_factory['test3']:
+                        ke = ndb.Key(urlsafe=k).get()
+                        kx = u'%s updated' % ke.childname
+                         
+                        if not no_update:
+                           ke.childname = kx 
+                           ke.put()
+                        else:
+                           kx = ke.childname
+                           
+                        self.data.append(kx)  
+                 else:                 
+                     if not no_put:   
+                         for d in self.data:
+                             a = TestChild(childname=d, parent=troot.key)
+                             a.put()
+                             update_factory['test3'].append(a.key.urlsafe())
+       
+                 for d in self.data:
                      self.response.write("Querying (TestChild) for %s inside (TestChild.query(TestChild.childname==d, ancestor=%s).order(TestChild.childname).fetch()) transaction function, got: \n" % (d, str(kg)))
                      for f in TestChild.query(TestChild.childname==d, ancestor=kg).order(TestChild.childname).fetch():
                          self.response.write("\t" + str(f) + "\n")    
@@ -106,14 +182,29 @@ class Tests(Segments):
                     troot.put()
                  else:
                     troot = troot2 
-                 
-                 if not no_put:   
-                     for d in data:
-                         a = TestChild(childname=d, parent=troot.key)
-                         a.put()
+                    
+                 if update:
+                    self.data = []
+                    for k in update_factory['test4']:
+                        ke = ndb.Key(urlsafe=k).get()
+                        kx = u'%s updated' % ke.childname
+                         
+                        if not no_update:
+                           ke.childname = kx 
+                           ke.put()
+                        else:
+                           kx = ke.childname
+                           
+                        self.data.append(kx)    
+                 else:                
+                     if not no_put:   
+                         for d in self.data:
+                             a = TestChild(childname=d, parent=troot.key)
+                             a.put()
+                             update_factory['test4'].append(a.key.urlsafe())
              
              test4()   
-             for d in data:
+             for d in self.data:
                  self.response.write("Querying (TestChild) for %s outside (TestChild.query(TestChild.childname==d, ancestor=%s).order(TestChild.childname).fetch()) transaction function, got: \n" % (d, str(kg)))
                  
                  for f in TestChild.query(TestChild.childname==d, ancestor=kg).order(TestChild.childname).fetch():
@@ -121,6 +212,8 @@ class Tests(Segments):
                      
                  self.response.write("\n \n")
              
+         if not no_put:
+             memcache.set('update_factory', update_factory)
              
     
      def segment_testanc(self):
