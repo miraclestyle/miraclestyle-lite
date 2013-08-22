@@ -16,7 +16,7 @@ import sys
 from jinja2 import FileSystemLoader
  
 from app.core import import_module, logger
-from app import settings
+from app import settings, ndb
 
 """
   Main bootstrap file, consists of loading urls.py from every installed application, and builds theme file paths
@@ -37,9 +37,8 @@ for a in settings.APPLICATIONS_INSTALLED:
            if not six.PY3:
               template_dir = template_dir.decode(fs_encoding)
            app_template_dirs.append(template_dir)
-        
-        patts = None
-        patts = getattr(module_urls, 'ROUTES')
+           
+        patts = getattr(module_urls, 'ROUTES', None)
         if patts:
            ROUTES += patts
             

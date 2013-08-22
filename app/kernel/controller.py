@@ -18,14 +18,124 @@ from app.kernel.models import (User, UserIdentity, UserIPAddress)
 class TestRoot(ndb.BaseModel):
       _KIND = 'TestRoot'
       name = ndb.StringProperty()
-      sequence = ndb.IntegerProperty()
-      
+ 
 class TestChild(ndb.BaseModel):
       _KIND = 'TestChild'
       childname = ndb.StringProperty()
       
       
 class Tests(Segments):
+    
+     def segment_test_queries(self):
+         data = self.request.get_all('d')
+         self.response.headers['Content-Type'] = 'text/plain;charset=utf8'
+         
+         command = self.request.get('command')
+         no_put = self.request.get('no_put')
+         
+         if command == 'wipe':
+            ndb.delete_multi(TestRoot.query().fetch(keys_only=True))
+            ndb.delete_multi(TestChild.query().fetch(keys_only=True))
+         
+         
+         if command == 'test1':
+             @ndb.transactional(xg=True)
+             def test1():
+                 
+                 if not no_put:
+                     for d in data:
+                         a = TestRoot(name=d)
+                         a.put()
+                
+                 for d in data:
+                    self.response.write("Querying for %s inside transaction function, got: \n" % d)
+                    self.response.write(TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch())
+                 self.response.write("\n \n")  
+                
+             test1()
+         
+         if command == 'test2':       
+             @ndb.transactional(xg=True)
+             def test2():
+                 
+                 if not no_put:
+                     for d in data:
+                         a = TestRoot(name=d)
+                         a.put()
+             
+             test2()   
+             for d in data:
+                 self.response.write("\n\n Querying for %s outside (TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch()) transaction function, got: \n" % d)
+                 
+                 for f in TestRoot.query(TestRoot.name==d).order(TestRoot.name).fetch():
+                     self.response.write("\t %s \n" % f)
+                     
+                 self.response.write("\n \n")
+                 
+         if command == 'test3':
+             kg = ndb.Key(TestRoot, 'root_test3')
+             @ndb.transactional(xg=True)
+             def test3():
+                 troot = TestRoot(id='root_test3', name='Root Entity for test3')
+                 troot2 = kg.get()
+                 if not troot2:
+                    troot.put()
+                 else:
+                    troot = troot2 
+                 
+                 if not no_put:   
+                     for d in data:
+                         a = TestChild(childname=d, parent=troot.key)
+                         a.put()
+                     
+                 for d in data:
+                     self.response.write("Querying (TestChild) for %s inside (TestChild.query(TestChild.childname==d, ancestor=%s).order(TestChild.childname).fetch()) transaction function, got: \n" % (d, str(kg)))
+                     for f in TestChild.query(TestChild.childname==d, ancestor=kg).order(TestChild.childname).fetch():
+                         self.response.write("\t" + str(f) + "\n")    
+                     self.response.write("\n \n")
+                     
+             test3()   
+ 
+         if command == 'test4':
+             kg = ndb.Key(TestRoot, 'root_test4')
+             @ndb.transactional(xg=True)
+             def test4():
+                 troot = TestRoot(id='root_test4', name='Root Entity for test4')
+                 troot2 = kg.get()
+                 if not troot2:
+                    troot.put()
+                 else:
+                    troot = troot2 
+                 
+                 if not no_put:   
+                     for d in data:
+                         a = TestChild(childname=d, parent=troot.key)
+                         a.put()
+             
+             test4()   
+             for d in data:
+                 self.response.write("Querying (TestChild) for %s outside (TestChild.query(TestChild.childname==d, ancestor=%s).order(TestChild.childname).fetch()) transaction function, got: \n" % (d, str(kg)))
+                 
+                 for f in TestChild.query(TestChild.childname==d, ancestor=kg).order(TestChild.childname).fetch():
+                     self.response.write("\t" + str(f) + "\n")    
+                     
+                 self.response.write("\n \n")
+             
+             
+    
+     def segment_testanc(self):
+         k = ndb.Key(urlsafe='agpkZXZ-YnViZWZkchULEghUZXN0Um9vdBiAgICAgNC7Cgw')
+         TestChild(parent=k, childname='aaa').put()
+         b = TestChild.query(ancestor=k).order(-TestChild.childname).fetch()
+ 
+         self.response.write(b)
+    
+     def segment_wipetests(self):
+         keys = TestChild.query().fetch(keys_only=True)
+         ndb.delete_multi(keys)
+    
+     def segment_test6(self):
+         self.render('ajax.html')
     
      def segment_test4(self):
          
@@ -37,26 +147,51 @@ class Tests(Segments):
             
             self.response.write(u)
             self.response.write('<br />Factory key: ' + u.key.urlsafe() + '<br /><br />')
+            return
          else:
-             u = ndb.Key(urlsafe=self.request.get('k')).get()
+             pass
              
          
          self.ss = 0.0 
          
          @ndb.transactional
-         def trans(u):
-             t = time.time()
-             b = TestChild(parent=u.key, childname='foobar')
-             self.response.write('Writing this entity to %s' % u.key.urlsafe())
-             b.put()
-             ssa = time.time() - t
-             self.ss += ssa
-             self.response.write('<br />Wrote it, got id() %s (%s s)<br />' % (b.key.id(), ssa))
+         def trans():
+             u = ndb.Key(urlsafe=self.request.get('k')).get()
+             error = False
+             for i in range(0, int(self.request.get('iterations', 5))):
+                 t = time.time()
+                 b = TestChild(parent=u.key, childname='foobar')
+                 #self.response.write('Writing this entity to %s' % u.key.urlsafe())
+                 try:
+                     b.put()
+                     ssa = time.time() - t
+                     self.ss += ssa
+                 except Exception as e:
+                     error = True
+                     self.response.clear()
+                     #self.handle_exception(e, True)
+                     self.response.write('<span style="color:red;font-weight:bold;">%s</span><div>%s</div>' % (e, ''))
+                     break
              
-         for i in range(0, int(self.request.get('iterations', 5))):
-             trans(u)
+             if not error:
+                self.response.clear() 
+                self.response.write('<span style="color:green;font-weight:bold;">OK</span>') 
+             #self.response.write('<br />Wrote it, got id() %s (%s s)<br />' % (b.key.id(), ssa))
+         
+         trans()
+         """
+         try:    
+             for i in range(0, int(self.request.get('iterations', 5))):
+                  trans()
+             self.response.write('<span style="color:green;font-weight:bold;">OK</span>')    
+         except Exception as e:
+             self.response.clear()
+             #self.handle_exception(e, True)
+             self.response.write('<span style="color:red;font-weight:bold;">%s</span><div>%s</div>' % (e, ''))
+         """
+     
              
-         self.response.write('<br />Total time taken to complete %s' % self.ss)
+         #self.response.write('<br />Total time taken to complete %s' % self.ss)
     
      def segment_test(self):
          self.response.write(User.current())

@@ -45,8 +45,6 @@ class _BaseModel:
       # memcache generator for this model
       return self._return_memcache_key(self.key.urlsafe())
   
-  _memcache_key = _memcache_key
-   
   def _self_clear_memcache(self):
       self._clear_memcache(self.key.urlsafe())
       
@@ -192,6 +190,10 @@ class BaseExpando(_BaseModel, Expando):
  
 class DecimalProperty(StringProperty):
     
+  """
+   Decimal property that accepts only `decimal.Decimal`
+  """  
+  
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
       raise TypeError('expected an decimal, got %s' % repr(value))
@@ -203,6 +205,10 @@ class DecimalProperty(StringProperty):
     return decimal.Decimal(value)  # Always return a long  
       
 class ReferenceProperty(KeyProperty):
+    
+    """
+      Replicated property from db module
+    """
     
     def _validate(self, value):
         if not isinstance(value, Model):
