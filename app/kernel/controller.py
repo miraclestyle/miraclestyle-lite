@@ -22,9 +22,100 @@ class TestRoot(ndb.BaseModel):
 class TestChild(ndb.BaseModel):
       _KIND = 'TestChild'
       childname = ndb.StringProperty()
+
+class SecondTestRoot(ndb.BaseModel):
+       _KIND = 'SecondTestRoot'
+       name = ndb.StringProperty(indexed=True)
+      
+class Test(ndb.BaseModel):
+       _KIND = 'Test'
+       name = ndb.StringProperty(indexed=True)
+       date = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
       
       
 class Tests(Segments):
+    
+     def segment_test_ancestor_queries(self):
+         """
+         Test.query(ancestor='value).order(Test.date)
+         Test.query(ancestor='value).order(-Test.date)
+         Test.query(Test.name == 'value', ancestor='value')
+         Test.query(Test.name == 'value', ancestor='value).order(Test.name)
+         Test.query(Test.name == 'value', ancestor='value).order(-Test.name)
+         Test.query(Test.name == 'value', ancestor='value).order(Test.date)
+         Test.query(Test.name == 'value', ancestor='value).order(-Test.date)
+         """
+         
+         k2e = SecondTestRoot.get_by_id('foo')
+         if k2e:
+            ke = k2e.key
+         
+         q = self.request.get('q')
+         if not q:
+            q = -1
+         else:
+            q = int(q)
+            
+         command = self.request.get('command')
+         if command == 'make':
+            f = SecondTestRoot(id='foo', name='bar') 
+            f.put()
+            
+            ke = f.key
+            
+            for i in range(0, 10):
+                k = Test(name='record', parent=f.key)
+                k.put()
+            return
+            
+         self.response.headers['Content-Type'] = 'text/plain;charset=utf8'
+         
+         if q == 1:
+             self.response.write("\n Test.query(ancestor='value).order(Test.name) GOT: \n")
+             self.response.write(Test.query(ancestor=ke).order(Test.name).fetch())
+             self.response.write("\n \n")
+         
+         if q == 2:
+             self.response.write("\n Test.query(ancestor='value).order(-Test.name) GOT: \n")
+             self.response.write(Test.query(ancestor=ke).order(-Test.name).fetch())
+             self.response.write("\n \n")
+         
+         if q == 3:
+             self.response.write("\n Test.query(ancestor='value).order(Test.date) GOT: \n")
+             self.response.write(Test.query(ancestor=ke).order(Test.date).fetch())
+             self.response.write("\n \n")
+         
+         if q == 4:
+             self.response.write("\n Test.query(ancestor='value).order(-Test.date) GOT: \n")
+             self.response.write(Test.query(ancestor=ke).order(-Test.date).fetch())
+             self.response.write("\n \n")
+         
+         if q == 5:
+             self.response.write("\n Test.query(Test.name == 'value', ancestor='value') GOT: \n")
+             self.response.write(Test.query(Test.name == 'record', ancestor=ke).fetch())
+             self.response.write("\n \n")
+         
+         if q == 6:
+             self.response.write("\n Test.query(Test.name == 'value', ancestor='value).order(Test.name) GOT: \n")
+             self.response.write(Test.query(Test.name == 'record', ancestor=ke).order(Test.name).fetch())
+             self.response.write("\n \n")
+         
+         if q == 7:
+             self.response.write("\n Test.query(Test.name == 'value', ancestor='value).order(-Test.name) GOT: \n")
+             self.response.write(Test.query(Test.name == 'record', ancestor=ke).order(-Test.name).fetch())
+             self.response.write("\n \n")
+         
+         if q == 8:
+             self.response.write("\n Test.query(Test.name == 'value', ancestor='value).order(Test.date) GOT: \n")
+             self.response.write(Test.query(Test.name == 'record', ancestor=ke).order(Test.date).fetch())
+             self.response.write("\n \n")
+         
+         if q == 9:
+             self.response.write("\n Test.query(Test.name == 'value', ancestor='value).order(-Test.date) GOT: \n")
+             self.response.write(Test.query(Test.name == 'record', ancestor=ke).order(-Test.date).fetch())
+             self.response.write("\n \n")
+         
+         
     
      def segment_test_queries(self):
          
@@ -98,15 +189,26 @@ class Tests(Segments):
                 
              test1()
          
-         if command == 'test2':       
+         if command == 'test2':
+             runs = []
+             for d in data:
+                 if no_update:
+                    d = '%s updated' % d
+                 runs.append(TestRoot.query(TestRoot.name==d).order(TestRoot.name).get())     
              @ndb.transactional(xg=True)
              def test2():
                  if update:
+                    """ 
                     self.data = []
                     for k in update_factory['test2']:
                         ke = ndb.Key(urlsafe=k).get()
                         kx = u'%s updated' % ke.name
-                         
+                    """
+                    self.data = []
+                    for ke in runs:
+                        if not ke:
+                           continue 
+                        kx = u'%s updated' % ke.name
                         if not no_update:
                            ke.name = kx 
                            ke.put()
