@@ -27,6 +27,8 @@
 # https://developers.google.com/appengine/articles/datastore/overview
 # https://developers.google.com/appengine/articles/scaling/overview
 
+# skontati idempotency modela koji ce ucestvovati u transakcijama
+
 '''
 Ovo su zabranjena imena propertija:
 
@@ -129,7 +131,6 @@ class AggregateUserPermission(ndb.Model):
     
     # ancestor User
     # not logged
-    # composite index: ancestor:yes - reference
     reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
 
@@ -182,6 +183,7 @@ class FeedbackRequest(ndb.Model):
 class SupportRequest(ndb.Model):
     
     # ancestor User
+    # ako uopste bude vidljivo useru onda mozemo razmatrati indexing
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
     # composite index: 
     # ancestor:yes - updated; ancestor:yes - created;
@@ -225,8 +227,8 @@ class Country(ndb.Model):
     # http://hg.tryton.org/modules/country/file/tip/country.xml
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
-    # composite index: ancestor:no - name; ancestor:no - active,name
-    code = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: ancestor:no - active,name
+    code = ndb.StringProperty('1', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.StringProperty('2', required=True)
     active = ndb.BooleanProperty('3', default=True)
 
@@ -239,7 +241,7 @@ class CountrySubdivision(ndb.Model):
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
     # composite index: ancestor:yes - name; ancestor:yes - active,name
     parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
-    code = ndb.StringProperty('2', required=True, indexed=False)
+    code = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.StringProperty('3', required=True)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True)
@@ -265,10 +267,10 @@ class ProductCategory(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
     # https://support.google.com/merchants/answer/1705911
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
-    # composite index: ancestor:no - name; ancestor:no - state,name
+    # composite index: ancestor:no - state,name
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
     name = ndb.StringProperty('2', required=True)
-    complete_name = ndb.TextProperty('3', required=True)
+    complete_name = ndb.TextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
     state = ndb.IntegerProperty('4', required=True)
 
 # done!
@@ -288,9 +290,9 @@ class ProductUOM(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # mozda da ovi entiteti budu non-deletable i non-editable ??
-    # composite index: ancestor:no - name; ancestor:no - active,name
+    # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
     factor = DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
     rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
@@ -305,10 +307,10 @@ class Currency(ndb.Model):
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # composite index: ancestor:no - name; ancestor:no - active,name
+    # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)
-    code = ndb.StringProperty('3', required=True, indexed=False)
+    symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    code = ndb.StringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     numeric_code = ndb.StringProperty('4', indexed=False)
     rounding = DecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
@@ -374,7 +376,6 @@ class BuyerCollection(ndb.Model):
 class BuyerCollectionStore(ndb.Model):
     
     # ancestor User
-    # composite index: ancestor:yes - collections
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True)# soft limit 500x
     
@@ -454,7 +455,7 @@ class StoreContent(ndb.Model):
     
     # ancestor Store (Catalog - for caching)
     # composite index: ancestor:yes - sequence
-    title = ndb.StringProperty('1', required=True, indexed=False)# ako budemo odlucili da koristimo projection na title onda nam treba index ukljucen
+    title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
 
@@ -468,8 +469,8 @@ class StoreShippingExclusion(Location):
 class Tax(ndb.Expando):
     
     # ancestor Store (Application)
-    # composite index: active+sequence - ancestor: yes
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: ancestor:yes - sequence; ancestor:yes - active,sequence
+    name = ndb.StringProperty('1', required=True)
     sequence = ndb.IntegerProperty('2', required=True)
     amount = ndb.StringProperty('3', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
     location_exclusion = ndb.BooleanProperty('4', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
@@ -487,7 +488,7 @@ class Carrier(ndb.Model):
     # ancestor Store (Application)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
     # http://hg.tryton.org/modules/carrier/file/tip/carrier.py#l10
-    # composite index: active+name - ancestor: yes
+    # composite index: ancestor:yes - name; ancestor:yes - active,name
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
 
@@ -496,8 +497,8 @@ class CarrierLine(ndb.Expando):
     
     # ancestor Carrier
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
-    # composite index: active+sequence - ancestor: yes
-    name = ndb.StringProperty('1', required=True, indexed=False)
+    # composite index: ancestor:yes - sequence; ancestor:yes - active,sequence
+    name = ndb.StringProperty('1', required=True)
     sequence = ndb.IntegerProperty('2', required=True)
     location_exclusion = ndb.BooleanProperty('3', default=False, indexed=False)
     active = ndb.BooleanProperty('4', default=True)
@@ -532,7 +533,7 @@ class Catalog(ndb.Expando):
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
-    cover = blobstore.BlobKeyProperty('5', required=True, indexed=False)# blob ce se implementirati na GCS
+    cover = blobstore.BlobKeyProperty('5', required=True)# blob ce se implementirati na GCS
     cost = DecimalProperty('6', required=True, indexed=False)
     state = ndb.IntegerProperty('7', required=True)
     _default_indexed = False
@@ -546,6 +547,7 @@ class Catalog(ndb.Expando):
 class CatalogImage(Image):
     
     # ancestor Catalog
+    # composite index: ancestor:yes - sequence
 
 # done!
 class CatalogPricetag(ndb.Model):
@@ -563,11 +565,12 @@ class CatalogPricetag(ndb.Model):
 class ProductTemplate(ndb.Expando):
     
     # ancestor Catalog (Application)
+    # composite index: ancestor:yes - name
     product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
     description = ndb.TextProperty('3', required=True)# soft limit 64kb
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
-    unit_price = DecimalProperty('5', required=True, indexed=False)
+    unit_price = DecimalProperty('5', required=True)
     state = ndb.IntegerProperty('6', required=True, indexed=False)
     # states: - ovo cemo pojasniti
     # 'in stock'
@@ -597,8 +600,9 @@ class ProductInstance(ndb.Expando):
     #mana ove metode je ta sto se uvek mora izgraditi kompletan variant_signature, tj moraju se sve varijacije odabrati (svaka varianta mora biti mandatory_variant_type)
     #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
     #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
+    # composite index: ancestor:yes - code
     code = ndb.StringProperty('1', required=True)
-    state = ndb.IntegerProperty('2', required=True, indexed=False)
+    state = ndb.IntegerProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     # states: - ovo cemo pojasniti
     # 'in stock'
     # 'available for order'
@@ -624,10 +628,11 @@ class ProductInventoryLog(ndb.Model):
     
     # ancestor ProductInstance
     # not logged
+    # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan 
-    quantity = DecimalProperty('3', required=True, indexed=False)
-    balance = DecimalProperty('4', required=True, indexed=False)
+    quantity = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
 class ProductInventoryAdjustment(ndb.Model):
@@ -644,6 +649,7 @@ class ProductVariant(ndb.Model):
     
     #ancestor Catalog (Application)
     # http://v6apps.openerp.com/addon/1809
+    # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
     description = ndb.TextProperty('2')# soft limit 64kb
     options = ndb.StringProperty('3', repeated=True, indexed=False)# soft limit 1000x
@@ -653,6 +659,7 @@ class ProductVariant(ndb.Model):
 class ProductContent(ndb.Model):
     
     # ancestor Catalog (Application)
+    # composite index: ancestor:yes - title
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
 
@@ -671,13 +678,15 @@ class Order(ndb.Expando):
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     # buyer = ndb.KeyProperty('1', kind=User, required=True)
-    # composite index: store+state+updated - ancestor: no; store+state+order_date - ancestor: no; state+updated - ancestor: yes; state+order_date - ancestor: yes
+    # composite index: 
+    # ancestor:no - store,state,updated:desc; ancestor:no - store,state,order_date:desc
+    # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
     store = ndb.KeyProperty('1', kind=Store, required=True)
     order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
     currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = DecimalProperty('4', required=True, indexed=False)
     tax_amount = DecimalProperty('5', required=True, indexed=False)
-    total_amount = DecimalProperty('6', required=True, indexed=False)
+    total_amount = DecimalProperty('6', required=True)
     state = ndb.IntegerProperty('7', required=True) 
     updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
     _default_indexed = False
@@ -693,8 +702,8 @@ class Order(ndb.Expando):
     # shipping_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('17', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('18', required=True)
-    # store_name = ndb.StringProperty('19', required=True)
-    # store_logo = blobstore.BlobKeyProperty('20', required=True)# ovo bi moglo da posluzi ??
+    # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
 
 # done!
 class OrderFeedback(ndb.Model):
@@ -712,13 +721,13 @@ class BillingOrder(ndb.Expando):
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)# updated on checkout
     currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = DecimalProperty('4', required=True, indexed=False)
     tax_amount = DecimalProperty('5', required=True, indexed=False)
     total_amount = DecimalProperty('6', required=True, indexed=False)
-    state = ndb.IntegerProperty('7', required=True) 
-    updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
+    state = ndb.IntegerProperty('7', required=True, indexed=False) 
+    updated = ndb.DateTimeProperty('8', auto_now=True, required=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
@@ -780,9 +789,10 @@ class OrderLine(ndb.Expando):
     # ancestor Order, BillingOrder
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
+    # composite index: ancestor:yes - sequence
     description = ndb.TextProperty('1', required=True)# soft limit 64kb
     quantity = DecimalProperty('2', required=True, indexed=False)
-    product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)# indexed=False - to se verovatno assume kada je LocalStructuredProperty ali to treba testirati
+    product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
     unit_price = DecimalProperty('4', required=True, indexed=False)
     discount = DecimalProperty('5', default=0.00, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
@@ -822,6 +832,7 @@ class PayPalTransaction(ndb.Model):
     
     # ancestor Order, BillingOrder
     # not logged
+    # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     txn_id = ndb.StringProperty('2', required=True)
     ipn_message = ndb.TextProperty('3', required=True)
@@ -831,10 +842,11 @@ class BillingLog(ndb.Model):
     
     # ancestor Store (Application)
     # not logged
+    # composite index: ancestor:yes - logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
-    amount = DecimalProperty('3', required=True, indexed=False)
-    balance = DecimalProperty('4', required=True, indexed=False)
+    amount = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
 class BillingCreditAdjustment(ndb.Model):
