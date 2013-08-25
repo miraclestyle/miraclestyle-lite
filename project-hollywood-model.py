@@ -164,10 +164,8 @@ class FeedbackRequest(ndb.Model):
     
     # ancestor User
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
-    # composite index: 
-    # ancestor:yes - updated; ancestor:yes - created;
+    # composite index:
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
-    # ancestor:yes - state,updated; ancestor:yes - state,created;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
@@ -185,10 +183,8 @@ class SupportRequest(ndb.Model):
     # ancestor User
     # ako uopste bude vidljivo useru onda mozemo razmatrati indexing
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
-    # composite index: 
-    # ancestor:yes - updated; ancestor:yes - created;
+    # composite index:
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
-    # ancestor:yes - state,updated; ancestor:yes - state,created;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.StringProperty('1', required=True, indexed=False)
     state = ndb.IntegerProperty('2', required=True)
@@ -832,7 +828,7 @@ class PayPalTransaction(ndb.Model):
     
     # ancestor Order, BillingOrder
     # not logged
-    # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged
+    # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     txn_id = ndb.StringProperty('2', required=True)
     ipn_message = ndb.TextProperty('3', required=True)
@@ -842,7 +838,7 @@ class BillingLog(ndb.Model):
     
     # ancestor Store (Application)
     # not logged
-    # composite index: ancestor:yes - logged
+    # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
     amount = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
