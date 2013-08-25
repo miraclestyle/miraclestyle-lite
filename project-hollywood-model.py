@@ -5,12 +5,14 @@
 # NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
-# glavno pitanje je da li ce nam trebati composite indexi za query-je poput:
+# pitanje je da li ce nam trebati composite indexi za query-je poput:
 # BuyerAddress.query(ancestor=key).order(BuyerAddress.name) ili AggregateUserPermission.query(AggregateUserPermission.reference == key, ancestor=key)
 # ali je highly unlikely, zato sto se ancestor ne mora ukljucivati u slucajevima composite indexa
 # odgovor na gore postavljeno pitanje se mozda moze pronaci na: 
 # https://developers.google.com/appengine/docs/python/datastore/indexes#Python_Index_configuration
 # https://github.com/GoogleCloudPlatform/appengine-guestbook-python
+# za sada smo resili osnovne query-je sa composite indexima koji podrazumevaju ancestor filtere,
+# pa mozemo kasnije tokom razvoja funkcionalne logike to dalje unaprediti.
 
 # datastore ne podrzava LIKE statement kao sto to podrzavaju struktuirane baze, umesto LIKE se moze korititi index range scan, kao napr:
 # SELECT * FROM Country WHERE name >= 'B' AND name < 'C' ORDER BY name
@@ -27,7 +29,8 @@
 # https://developers.google.com/appengine/articles/datastore/overview
 # https://developers.google.com/appengine/articles/scaling/overview
 
-# skontati idempotency modela koji ce ucestvovati u transakcijama
+# skontati idempotency modela koji ce ucestvovati u transakcijama (ovo je najbolje uraditi u fazi razvoja funkcionalne logike)
+# idempotency se odnosi na sve modele, i treba nastojati uciniti sve transakcije idempotent-ne, u najmanju ruku, kada je to moguce!
 
 '''
 Ovo su zabranjena imena propertija:
