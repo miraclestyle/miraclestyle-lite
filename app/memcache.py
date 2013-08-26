@@ -97,3 +97,21 @@ def temp_memory_delete(k):
       del webapp2._local[k]
     except:
       pass   
+
+# comply with memcache from google app engine, these methods will possibly overriden in favor of above methods  
+set_servers = memcache.set_servers
+disconnect_all = memcache.disconnect_all
+forget_dead_hosts = memcache.forget_dead_hosts
+debuglog = memcache.debuglog
+get_multi = memcache.get_multi
+set_multi = memcache.set_multi
+add = memcache.add
+add_multi = memcache.add_multi
+replace = memcache.replace
+replace_multi = memcache.replace_multi
+delete_multi = memcache.delete_multi
+incr = memcache.incr
+decr = memcache.decr
+flush_all = memcache.flush_all
+flush_all = memcache.get_stats
+offset_multi = memcache.offset_multi

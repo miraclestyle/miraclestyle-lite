@@ -5,6 +5,8 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import json
+import time
+import os
 
 from google.appengine.api import urlfetch
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
@@ -32,8 +34,62 @@ class Test(ndb.BaseModel):
        name = ndb.StringProperty(indexed=True)
        date = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
       
+class TestExpandoIndex(ndb.BaseExpando):
+    
+      _KIND = 'TestExpandoIndex'
       
+      name = ndb.StringProperty()
+      
+      _default_indexed = False
+      
+      _VIRUTAL_FIELDS = {
+         'west' : ndb.StringProperty(indexed=True)
+      }
+      
+class TestCountry(ndb.BaseModel):
+      _KIND = 'TestCountry'
+      name = ndb.StringProperty()
+      
+        
 class Tests(Segments):
+    
+     def segment_test_find_query(self):
+         
+         if self.request.get('put'):
+            fx = os.path.join(os.path.abspath('.'), 'countries.json')
+            logger(fx)
+            
+            f = open(fx)
+            js = f.read()
+            
+            js = json.loads(js)
+            for j in js:
+                TestCountry(name=j['short_name']).put()
+         
+         q = self.request.get('q')
+       
+         letters = list('abcdefghijklmnopqrstuvwxyz')
+         
+         logger(letters)
+         
+         b = letters[letters.index(q[-1].lower()) + 1]
+          
+         self.response.write('<p>Last letter from (%s) letter: %s Next letter: %s</p>' % (q, q[-1].lower(), b))
+         
+         res = TestCountry.query(TestCountry.name >= q, TestCountry.name < b).order(TestCountry.name).fetch()
+         
+         for pr in res:
+             self.response.write('<br /> %s' % pr.name)
+    
+     def segment_test_index(self):
+         
+         if self.request.get('put'):
+             a = TestExpandoIndex(name='foo2', west='east2')
+             a.put()
+         else:
+             a = ndb.Key(urlsafe='agpkZXZ-YnViZWZkch0LEhBUZXN0RXhwYW5kb0luZGV4GICAgICAyPMKDA').get()
+             del a.west
+             a.put()
     
      def segment_test_ancestor_queries(self):
          """
@@ -114,13 +170,17 @@ class Tests(Segments):
              self.response.write("\n Test.query(Test.name == 'value', ancestor='value).order(-Test.date) GOT: \n")
              self.response.write(Test.query(Test.name == 'record', ancestor=ke).order(-Test.date).fetch())
              self.response.write("\n \n")
+             
+         if q == 10:
+            # Test.query().order(Test.name)
+             self.response.write("\n Test.query().order(Test.name) GOT: \n")
+             self.response.write(Test.query().order(Test.name).fetch())
+             self.response.write("\n \n")
          
          
     
      def segment_test_queries(self):
-         
-         import time
-         
+          
          data = self.request.get_all('d')
          self.data = data
          
@@ -330,12 +390,10 @@ class Tests(Segments):
          ndb.delete_multi(keys)
     
      def segment_test6(self):
-         self.render('ajax.html')
+         self.render('tests/ajax.html')
     
      def segment_test4(self):
-         
-         import time
-         
+  
          if self.request.get('put'):
             u = TestRoot(name='test', sequence=1)
             u.put()

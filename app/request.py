@@ -24,6 +24,12 @@ class Handler(webapp2.RequestHandler):
     _LOAD_TRANSLATIONS = True
     
     _template = {'base' : 'index.html'}
+     
+    def is_post(self):
+        """
+        Checks if current request is post method
+        """
+        return self.request.method == 'POST'
     
     @webapp2.cached_property
     def jinja2(self):

@@ -62,9 +62,10 @@ class Workflow():
           """
           @return str
           """
-          action = cls.OBJECT_ACTIONS.get(st, None)
+          actions = cls.OBJECT_ACTIONS
+          action = actions.get(st, None)
           if action == None:
-             raise WorkflowActionError('Unexisting action called %s' % st)
+             raise WorkflowActionError('Unexisting action called %s, while available %s' % (st, actions))
           return action
       
       @classmethod
