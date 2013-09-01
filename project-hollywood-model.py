@@ -152,9 +152,11 @@ class Role(ndb.Model):
 class RoleUser(ndb.Model):
     
     # ancestor Role
+    # id = string(User.key.id) / umesto user = ndb.KeyProperty('1', kind=User, required=True)
+    # ovde smo izbacili user prop., zato sto je pouzdanije embedovati User.key.id u key RoleUser-a.
+    # ovo treba testirati kako rade query kada ima vise RoleUser entiteta sa istim id (ali unique key pathovima), kakav je slucaj ovde.
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
-    # composite index: ancestor:yes - user
-    user = ndb.KeyProperty('1', kind=User, required=True)
+    # composite index: ancestor:yes - state
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
