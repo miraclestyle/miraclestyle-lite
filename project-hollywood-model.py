@@ -134,7 +134,7 @@ class AggregateUserPermission(ndb.Model):
     
     # ancestor User
     # not logged
-    reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj da je Role entitet root
+    reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj kada je Role entitet root
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
 
 # done!
@@ -165,12 +165,10 @@ class RoleUser(ndb.Model):
     
     # ancestor Role
     # id = string(User.key.id)
-    # ovde smo izbacili user prop., zato sto je pouzdanije embedovati User.key.id u key RoleUser-a.
-    # ovo treba testirati kako rade query kada ima vise RoleUser entiteta sa istim id (ali unique key pathovima), kakav je slucaj ovde.
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - user
     user = ndb.KeyProperty('1', kind=User, required=True)
-    state = ndb.IntegerProperty('1', required=True)# invited/accepted
+    state = ndb.IntegerProperty('2', required=True)# invited/accepted
 
 
 ################################################################################
