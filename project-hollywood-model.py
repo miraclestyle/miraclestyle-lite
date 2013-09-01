@@ -76,7 +76,7 @@ class DecimalProperty(ndb.StringProperty):
     return decimal.Decimal(value)  # Always return a decimal
 
 ################################################################################
-# CORE - 7
+# CORE - 8
 ################################################################################
 
 # done!
