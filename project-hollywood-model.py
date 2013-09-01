@@ -138,9 +138,21 @@ class AggregateUserPermission(ndb.Model):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
 
 # done!
+class Domain(ndb.Expando):
+    
+    # root
+    # composite index: ancestor:no - state,name
+    name = ndb.StringProperty('1', required=True)
+    primary_contact = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
+    state = ndb.IntegerProperty('3', required=True)
+    _default_indexed = False
+    pass
+    #Expando
+
+# done!
 class Role(ndb.Model):
     
-    # ancestor Store (Application, in the future) with permissions that affect store (application) and it's related entities
+    # ancestor Domain with permissions that affect Domain and it's related entities
     # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
@@ -152,11 +164,12 @@ class Role(ndb.Model):
 class RoleUser(ndb.Model):
     
     # ancestor Role
-    # id = string(User.key.id) / umesto user = ndb.KeyProperty('1', kind=User, required=True)
+    # id = string(User.key.id)
     # ovde smo izbacili user prop., zato sto je pouzdanije embedovati User.key.id u key RoleUser-a.
     # ovo treba testirati kako rade query kada ima vise RoleUser entiteta sa istim id (ali unique key pathovima), kakav je slucaj ovde.
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
-    # composite index: ancestor:yes - state
+    # composite index: ancestor:yes - user
+    user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('1', required=True)# invited/accepted
 
 
@@ -397,45 +410,44 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 
 
 ################################################################################
-# STORE - 8
+# Domain - 8
 ################################################################################
 
 # done!
 class Store(ndb.Expando):
     
-    # root (ancestor Application)
+    # root (namespace Domain)
     # composite index: ancestor:no - state,name
     name = ndb.StringProperty('1', required=True)
     logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
-    primary_contact = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
-    state = ndb.IntegerProperty('4', required=True)
+    state = ndb.IntegerProperty('3', required=True)
     _default_indexed = False
     pass
     #Expando
     #
     # Company
-    # company_name = ndb.StringProperty('5', required=True)
-    # company_country = ndb.KeyProperty('6', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('7', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
-    # company_region = ndb.StringProperty('7', required=True)# ako je potreban key val onda se ovo preskace
-    # company_city = ndb.StringProperty('8', required=True)
-    # company_postal_code = ndb.StringProperty('9', required=True)
-    # company_street_address = ndb.StringProperty('10', required=True)
-    # company_street_address2 = ndb.StringProperty('11')
-    # company_email = ndb.StringProperty('12')
-    # company_telephone = ndb.StringProperty('13')
+    # company_name = ndb.StringProperty('4', required=True)
+    # company_country = ndb.KeyProperty('5', kind=Country, required=True)
+    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
+    # company_region = ndb.StringProperty('6', required=True)# ako je potreban key val onda se ovo preskace
+    # company_city = ndb.StringProperty('7', required=True)
+    # company_postal_code = ndb.StringProperty('8', required=True)
+    # company_street_address = ndb.StringProperty('9', required=True)
+    # company_street_address2 = ndb.StringProperty('10')
+    # company_email = ndb.StringProperty('11')
+    # company_telephone = ndb.StringProperty('12')
     #
     # Payment
-    # currency = ndb.KeyProperty('14', kind=Currency, required=True)
+    # currency = ndb.KeyProperty('13', kind=Currency, required=True)
     # tax_buyer_on ?
-    # paypal_email = ndb.StringProperty('15')
+    # paypal_email = ndb.StringProperty('14')
     # paypal_shipping ?
     #
     # Analytics 
-    # tracking_id = ndb.StringProperty('16')
+    # tracking_id = ndb.StringProperty('15')
     #
     # Feedback
-    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '17', repeated=True)# soft limit 120x
+    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '16', repeated=True)# soft limit 120x
 
 # done!
 class StoreFeedback(ndb.Model):
@@ -469,8 +481,8 @@ class StoreShippingExclusion(Location):
 # done!
 class Tax(ndb.Expando):
     
-    # ancestor Store (Application)
-    # composite index: ancestor:yes - sequence; ancestor:yes - active,sequence
+    # root (namespace Domain)
+    # composite index: ancestor:no - active,sequence
     name = ndb.StringProperty('1', required=True)
     sequence = ndb.IntegerProperty('2', required=True)
     amount = ndb.StringProperty('3', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
@@ -486,10 +498,10 @@ class Tax(ndb.Expando):
 # done!
 class Carrier(ndb.Model):
     
-    # ancestor Store (Application)
+    # root (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
     # http://hg.tryton.org/modules/carrier/file/tip/carrier.py#l10
-    # composite index: ancestor:yes - name; ancestor:yes - active,name
+    # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
 
@@ -527,7 +539,7 @@ class CarrierLineRule(ndb.Model):
 # done!
 class Catalog(ndb.Expando):
     
-    # root (ancestor Application)
+    # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     # composite index: ???
     store = ndb.KeyProperty('1', kind=Store, required=True)
@@ -565,7 +577,7 @@ class CatalogPricetag(ndb.Model):
 # done!
 class ProductTemplate(ndb.Expando):
     
-    # ancestor Catalog (Application)
+    # ancestor Catalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
     product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
@@ -648,7 +660,7 @@ class ProductInventoryAdjustment(ndb.Model):
 # done!
 class ProductVariant(ndb.Model):
     
-    #ancestor Catalog (Application)
+    # ancestor Catalog (future - root / namespace Domain)
     # http://v6apps.openerp.com/addon/1809
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
@@ -659,7 +671,7 @@ class ProductVariant(ndb.Model):
 # done!
 class ProductContent(ndb.Model):
     
-    # ancestor Catalog (Application)
+    # ancestor Catalog (future - root / namespace Domain)
     # composite index: ancestor:yes - title
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
@@ -672,7 +684,7 @@ class ProductContent(ndb.Model):
 # done!
 class Order(ndb.Expando):
     
-    # ancestor User
+    # ancestor User (namespace Domain)
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
@@ -681,6 +693,7 @@ class Order(ndb.Expando):
     # buyer = ndb.KeyProperty('1', kind=User, required=True)
     # composite index: 
     # ancestor:no - store,state,updated:desc; ancestor:no - store,state,order_date:desc
+    # ancestor:no - state,updated:desc; ancestor:no - state,order_date:desc
     # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
     store = ndb.KeyProperty('1', kind=Store, required=True)
     order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
@@ -715,28 +728,27 @@ class OrderFeedback(ndb.Model):
 # done!
 class BillingOrder(ndb.Expando):
     
-    # root
+    # root (namespace Domain)
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    store = ndb.KeyProperty('1', kind=Store, required=True)
-    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)# updated on checkout
-    currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
-    untaxed_amount = DecimalProperty('4', required=True, indexed=False)
-    tax_amount = DecimalProperty('5', required=True, indexed=False)
-    total_amount = DecimalProperty('6', required=True, indexed=False)
-    state = ndb.IntegerProperty('7', required=True, indexed=False) 
-    updated = ndb.DateTimeProperty('8', auto_now=True, required=True, indexed=False)
+    order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
+    currency = ndb.LocalStructuredProperty(OrderCurrency, '2', required=True)
+    untaxed_amount = DecimalProperty('3', required=True, indexed=False)
+    tax_amount = DecimalProperty('4', required=True, indexed=False)
+    total_amount = DecimalProperty('5', required=True, indexed=False)
+    state = ndb.IntegerProperty('6', required=True, indexed=False) 
+    updated = ndb.DateTimeProperty('7', auto_now=True, required=True, indexed=False)
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
-    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
-    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
-    # reference = ndb.StringProperty('12', required=True)
-    # comment = ndb.TextProperty('13')# 64kb limit
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '8', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # reference = ndb.StringProperty('11', required=True)
+    # comment = ndb.TextProperty('12')# 64kb limit
 
 # done!
 class OrderAddress(ndb.Expando):
@@ -841,9 +853,8 @@ class PayPalTransaction(ndb.Model):
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
     
-    # ancestor Store (Application)
+    # root (namespace Domain)
     # not logged
-    # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
     amount = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
@@ -852,9 +863,8 @@ class BillingLog(ndb.Model):
 # done!
 class BillingCreditAdjustment(ndb.Model):
     
-    # root
+    # root (namespace Domain)
     # not logged
-    store = ndb.KeyProperty('1', kind=Store, required=True)
     adjusted = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('3', kind=User, required=True, indexed=False)
     amount = DecimalProperty('4', required=True, indexed=False)
