@@ -110,6 +110,60 @@ class User(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'active'
+  
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        'active' : (1, 'activate'),
+        'suspended' : (2, 'suspend'),
+    }
+ 
+    OBJECT_ACTIONS = {
+       'register' : 1,
+       'update' : 2,
+       'login' : 3,
+       'logout' : 4,
+       'suspend' : 5,
+       'activate' : 6
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'activate' : {
+             # from where to where this transition can be accomplished?
+            'from' : ('suspend',),
+            'to' : ('active',)
+         },
+        'suspend' : {
+            # suspend can go from active to suspend
+           'from' : ('active', ),
+           'to'   : ('suspend',)
+        },
+    }
+    
+    # Ova akcija nastaje prilikom prve autentikacije kada korisnik nije jos registrovan.
+    # Ukoliko se prilikom "login-User" akcije ustanovi da korisnik nikada nije evidentiran u bazi, nastupa akcija "register-User". 
+    @ndb.transactional
+    def register():
+        user = User(state='active', emails=['user@email.com',], identities=[UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),])
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=user_key, action=1, state=user.state, log=user)
+        # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
+        user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
+        user_ip_address.put()
+
+    @ndb.transactional
+    def update():
+        user.emails = ['user@email.com',]
+        user.identities = [UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),]
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=user_key, action=1, state=user.state, log=user)
+
 
 # done!
 class UserIdentity(ndb.Model):
