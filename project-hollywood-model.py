@@ -420,7 +420,6 @@ class SupportRequest(ndb.Model):
            'from' : ('opened', ),
            'to'   : ('awaiting_closure',),
         },
-        # finta je sto bi user trebao da moze da pozove ovu akciju i u slucaju da je pocetno stanje 'awaiting_closure'!
         'close' : {
            'from' : ('opened', 'awaiting_closure',),
            'to'   : ('closed',),
