@@ -111,17 +111,18 @@ class User(ndb.Expando):
     pass
     #Expando
     
-    _KIND = 0
+    _KIND = 2
     
     OBJECT_DEFAULT_STATE = 'active'
   
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
         # second value represents which transition will be called for changing the state
-        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
-        'active' : (1, 'activate'),
-        'suspended' : (2, 'suspend'),
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'active' : (1, ),
+        'suspended' : (2, ),
     }
  
     OBJECT_ACTIONS = {
@@ -130,40 +131,90 @@ class User(ndb.Expando):
        'login' : 3,
        'logout' : 4,
        'suspend' : 5,
-       'activate' : 6
+       'activate' : 6,
     }
     
     OBJECT_TRANSITIONS = {
         'activate' : {
              # from where to where this transition can be accomplished?
-            'from' : ('suspend',),
+            'from' : ('suspended',),
             'to' : ('active',)
          },
         'suspend' : {
-            # suspend can go from active to suspend
+            # suspend can go from active to suspended
            'from' : ('active', ),
-           'to'   : ('suspend',)
+           'to'   : ('suspended',)
         },
     }
     
     # Ova akcija nastaje prilikom prve autentikacije kada korisnik nije jos registrovan.
-    # Ukoliko se prilikom "login-User" akcije ustanovi da korisnik nikada nije evidentiran u bazi, nastupa akcija "register-User". 
+    # Ukoliko se prilikom "login" akcije ustanovi da korisnik nikada nije evidentiran u bazi, nastupa akcija "register". 
     @ndb.transactional
     def register():
         user = User(state='active', emails=['user@email.com',], identities=[UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),])
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent=user_key, action=1, state=user.state, log=user)
+        object_log = ObjectLog(parent=user_key, agent=user_key, action='register', state=user.state, log=user)
+        object_log.put()
         # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
         user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
         user_ip_address.put()
 
+    # Ova akcija radi insert/update/delete na neki prop. (izuzev state) u User objektu.
     @ndb.transactional
     def update():
         user.emails = ['user@email.com',]
         user.identities = [UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),]
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent=user_key, action=1, state=user.state, log=user)
+        object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
+        object_log.put()
 
+    # Ova akcija se izvrsava svaki put kada neautenticirani korisnik stupi u proces autentikacije.
+    # Prvo se proverava da li je korisnik vec registrovan. Ukoliko User ne postoji onda se prelazi na akciju "register".
+    # Ukoliko user postoji, onda se dalje ispituje. 
+    # Proverava se da li ima nekih izmena na postojecim podacima, i ukoliko ima, onda se poziva "update" akcija.
+    # Dalje se proverava da li je useru dozvoljen login (User.state == 'active'). Ako mu je dozvoljen login onda se izvrsava "login" akcija.
+    @ndb.transactional
+    def login():
+        # ovde bi mogla da stoji provera continue if(User.state == 'active'),ili vani, videcemo.
+        object_log = ObjectLog(parent=user_key, agent=user_key, action='login', state=user.state)
+        object_log.put()
+        # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
+        user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
+        user_ip_address.put()
+
+    # Ova akcija se izvrsava svaki put kada autenticirani korisnik stupi u proces deautentikacije.
+    @ndb.transactional
+    def logout():
+        object_log = ObjectLog(parent=user_key, agent='user_key/agent_key', action='logout', state=user.state)
+        object_log.put()
+
+    # Ova akcija sluzi za suspenziju aktivnog korisnika, i izvrsava je privilegovani/administrativni agent.
+    # Treba obratiti paznju na to da suspenzija usera ujedno znaci i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    ''' Suspenzija user account-a zabranjuje njegovom vlasniku autenticirani pristup na mstyle, 
+    i deaktivira sve negativne i neutralne feedback-ove koji su sa ovog user account-a ostavljeni. 
+    Ni jedan asocirani email suspendovanog korisnickog racuna se vise ne moze upotrebiti na mstyle 
+    (za otvaranje novog account-a, ili neke druge operacije). 
+    Account koji je suspendovan se moze opet reaktivirati od strane administratora sistema. '''
+    @ndb.transactional
+    def suspend():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'suspend'.
+        user.state = 'suspended'
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
+        object_log.put()
+        # poziva se akcija "logout";
+        User.logout()
+
+    # Ova akcija sluzi za aktiviranje suspendovanog korisnika i izvrsava je privilegovani/administrativni agent.
+    # Treba obratiti paznju na to da aktivacija usera ujedno znaci i vracanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan, a koji su bili izuzeti dok je bio suspendovan.
+    # Aktivni user account je u potpunosti funkcionalan i operativan.
+    @ndb.transactional
+    def activate():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'activate'.
+        user.state = 'active'
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
+        object_log.put()
 
 # done!
 class UserIdentity(ndb.Model):
@@ -247,6 +298,105 @@ class FeedbackRequest(ndb.Model):
     def logs(self):
       return ObjectLog.query(ancestor = self.key())
 
+    _KIND = 8
+    
+    OBJECT_DEFAULT_STATE = 'new'
+  
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'new' : (1, ),
+        'reviewing' : (2, ),
+        'duplicate' : (3, ),
+        'accepted' : (4, ),
+        'dismissed' : (5, ),
+    }
+ 
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'review' : 3,
+       'duplicate' : 4,
+       'accept' : 5,
+       'dismiss' : 6,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'review' : {
+            'from' : ('new',),
+            'to' : ('reviewing',)
+         },
+        'duplicate' : {
+           'from' : ('reviewing', ),
+           'to'   : ('duplicate',)
+        },
+        'accept' : {
+           'from' : ('reviewing', ),
+           'to'   : ('accepted',)
+        },
+        'dismiss' : {
+           'from' : ('reviewing', ),
+           'to'   : ('dismissed',)
+        },
+    }
+    
+    # Ova akcija sluzi za slanje feedback-a miraclestyle timu od strane krajnjih korisnika.
+    @ndb.transactional
+    def create():
+        feedback_request = FeedbackRequest(parent=user_key, reference='https://www,miraclestyle.com/...', state='new')
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=user_key, action='create', state=feedback_request.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
+
+    # Ova akcija sluzi za insert ObjectLog-a koji je descendant FeedbackRequest entitetu.
+    # Insertom ObjectLog-a dozvoljeno je unosenje poruke i privatnog komentara, sto je i smisao ove akcije.
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'update'.
+        # Radi se update FeedbackRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na FeedbackRequest.updated prop.)
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='update', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u reviewing.
+    @ndb.transactional
+    def review():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'review'.
+        feedback_request.state = 'reviewing'
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='review', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u duplicate.
+    @ndb.transactional
+    def duplicate():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'duplicate'.
+        feedback_request.state = 'duplicate'
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='duplicate', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u accepted.
+    @ndb.transactional
+    def accept():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'accept'.
+        feedback_request.state = 'accepted'
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='accept', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u dismissed.
+    @ndb.transactional
+    def dismiss():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'dismiss'.
+        feedback_request.state = 'dismissed'
+        feedback_request_key = feedback_request.put()
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='dismiss', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
 # done!
 class SupportRequest(ndb.Model):
     
@@ -260,6 +410,51 @@ class SupportRequest(ndb.Model):
     state = ndb.IntegerProperty('2', required=True)
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
     created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    
+    _KIND = 9
+    
+    OBJECT_DEFAULT_STATE = 'new'
+  
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'new' : (1, ),
+        'opened' : (2, ),
+        'awaiting_closure' : (3, ),
+        'closed' : (4, ),
+    }
+ 
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'open' : 3,
+       'propose_close' : 4,
+       'close' : 5,
+       'auto_close' : 6
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'open' : {
+            'from' : ('new',),
+            'to' : ('opened',)
+         },
+        'propose_close' : {
+           'from' : ('opened', ),
+           'to'   : ('awaiting_closure',)
+        },
+        # finta je sto bi user trebao da moze da pozove ovu akciju i u slucaju da je pocetno stanje 'awaiting_closure'!
+        'close' : {
+           'from' : ('opened', ),
+           'to'   : ('closed',)
+        },
+        'auto_close' : {
+           'from' : ('awaiting_closure', ),
+           'to'   : ('closed',)
+        },
+    }
 
 # done!
 class Content(ndb.Model):
