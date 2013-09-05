@@ -138,12 +138,12 @@ class User(ndb.Expando):
         'activate' : {
              # from where to where this transition can be accomplished?
             'from' : ('suspended',),
-            'to' : ('active',)
+            'to' : ('active',),
          },
         'suspend' : {
             # suspend can go from active to suspended
            'from' : ('active', ),
-           'to'   : ('suspended',)
+           'to'   : ('suspended',),
         },
     }
     
@@ -198,6 +198,7 @@ class User(ndb.Expando):
     @ndb.transactional
     def suspend():
         # ova akcija zahteva da agent ima globalnu dozvolu 'suspend'.
+        # akcija se ne moze pozvati ako je user.state != 'active'
         user.state = 'suspended'
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
@@ -211,6 +212,7 @@ class User(ndb.Expando):
     @ndb.transactional
     def activate():
         # ova akcija zahteva da agent ima globalnu dozvolu 'activate'.
+        # akcija se ne moze pozvati ako je user.state != 'suspended'
         user.state = 'active'
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
@@ -319,27 +321,17 @@ class FeedbackRequest(ndb.Model):
        'create' : 1,
        'update' : 2,
        'review' : 3,
-       'duplicate' : 4,
-       'accept' : 5,
-       'dismiss' : 6,
+       'close' : 4,
     }
     
     OBJECT_TRANSITIONS = {
         'review' : {
             'from' : ('new',),
-            'to' : ('reviewing',)
+            'to' : ('reviewing',),
          },
-        'duplicate' : {
+        'close' : {
            'from' : ('reviewing', ),
-           'to'   : ('duplicate',)
-        },
-        'accept' : {
-           'from' : ('reviewing', ),
-           'to'   : ('accepted',)
-        },
-        'dismiss' : {
-           'from' : ('reviewing', ),
-           'to'   : ('dismissed',)
+           'to'   : ('duplicate', 'accepted', 'dismissed',),
         },
     }
     
@@ -352,49 +344,33 @@ class FeedbackRequest(ndb.Model):
         object_log.put()
 
     # Ova akcija sluzi za insert ObjectLog-a koji je descendant FeedbackRequest entitetu.
-    # Insertom ObjectLog-a dozvoljeno je unosenje poruke i privatnog komentara, sto je i smisao ove akcije.
+    # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
     def update():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'update'.
+        # ova akcija zahteva da agent ima globalnu dozvolu 'update'. / ova akcija zahteva da je agent ili owner (feedback_request.parent == agent) ili da agent ima globalnu dozvolu 'update'.
         # Radi se update FeedbackRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na FeedbackRequest.updated prop.)
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='update', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u reviewing.
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'reviewing'.
     @ndb.transactional
     def review():
         # ova akcija zahteva da agent ima globalnu dozvolu 'review'.
+        # akcija se ne moze pozvati ako je feedback_request.state != 'new'
         feedback_request.state = 'reviewing'
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='review', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u duplicate.
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'duplicate', 'accepted', ili 'dismissed'.
     @ndb.transactional
-    def duplicate():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'duplicate'.
-        feedback_request.state = 'duplicate'
+    def close():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'close'.
+        # akcija se ne moze pozvati ako je feedback_request.state != 'reviewing'
+        feedback_request.state = 'duplicate' | 'accepted' | 'dismissed'
         feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='duplicate', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u accepted.
-    @ndb.transactional
-    def accept():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'accept'.
-        feedback_request.state = 'accepted'
-        feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='accept', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u dismissed.
-    @ndb.transactional
-    def dismiss():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'dismiss'.
-        feedback_request.state = 'dismissed'
-        feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='dismiss', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='close', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
 # done!
@@ -433,28 +409,71 @@ class SupportRequest(ndb.Model):
        'open' : 3,
        'propose_close' : 4,
        'close' : 5,
-       'auto_close' : 6
     }
     
     OBJECT_TRANSITIONS = {
         'open' : {
             'from' : ('new',),
-            'to' : ('opened',)
+            'to' : ('opened',),
          },
         'propose_close' : {
            'from' : ('opened', ),
-           'to'   : ('awaiting_closure',)
+           'to'   : ('awaiting_closure',),
         },
         # finta je sto bi user trebao da moze da pozove ovu akciju i u slucaju da je pocetno stanje 'awaiting_closure'!
         'close' : {
-           'from' : ('opened', ),
-           'to'   : ('closed',)
-        },
-        'auto_close' : {
-           'from' : ('awaiting_closure', ),
-           'to'   : ('closed',)
+           'from' : ('opened', 'awaiting_closure',),
+           'to'   : ('closed',),
         },
     }
+
+    # Ova akcija krajnjem korisniku sluzi za pravljenje zahteva za pomoc (ticket-a) od miraclestyle tima.
+    @ndb.transactional
+    def create():
+        support_request = SupportRequest(parent=user_key, reference='https://www,miraclestyle.com/...', state='new')
+        support_request_key = support_request.put()
+        object_log = ObjectLog(parent=support_request_key, agent=user_key, action='create', state=support_request.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
+
+    # Ova akcija sluzi za insert ObjectLog-a koji je descendant SupportRequest entitetu.
+    # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da je agent ili owner (support_request.parent == agent) ili da agent ima globalnu dozvolu 'update'.
+        # Radi se update SupportRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na SupportRequest.updated prop.)
+        support_request_key = support_request.put()
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='update', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'opened'.
+    @ndb.transactional
+    def open():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'open'.
+        # akcija se ne moze pozvati ako je support_request.state != 'new'
+        support_request.state = 'opened'
+        support_request_key = support_request.put()
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='open', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'awaiting_closure'.
+    @ndb.transactional
+    def propose_close():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'propose_close'.
+        # akcija se ne moze pozvati ako je support_request.state != 'opened'
+        support_request.state = 'awaiting_closure'
+        support_request_key = support_request.put()
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='propose_close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log.put()
+
+    # Ovom akcijom agent menja stanje SupportRequest entiteta u 'closed'.
+    @ndb.transactional
+    def close():
+        # ova akcija zahteva da je agent ili owner (support_request.parent == agent) ili da agent ima globalnu dozvolu 'close' (sto ce verovatno imati sistemski account koji ce preko cron-a izvrsiti akciju).
+        # akcija se ne moze pozvati ako je support_request.state != 'opened' ili support_request.state != 'awaiting_closure'
+        support_request.state = 'closed'
+        support_request_key = support_request.put()
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log.put()
 
 # done!
 class Content(ndb.Model):
