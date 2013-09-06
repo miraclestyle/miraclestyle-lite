@@ -784,6 +784,7 @@ class BuyerCollectionStore(ndb.Model):
         object_log.put()
         buyer_collection_store_key.delete()
         # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+        # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key))
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateBuyerCollectionCatalog(ndb.Model):
