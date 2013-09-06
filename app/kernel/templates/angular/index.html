@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="App" id="top">
+<head>
+    <meta charset="utf-8">
+    <title>Angular directives for Twitter's Bootstrap</title>
+ 
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.js"></script>
+    <script type="text/javascript">
+    	var crUser = {'email' : 'test@example.com'};
+    </script>
+     
+    <script type="text/javascript" src="/static/angular/app/lib/bootstrap/ui-bootstrap-tpls-0.5.0.js"></script>
+   
+	<script type="text/javascript" src="{{uri_for('appconfig')}}"></script>
+	<script type="text/javascript" src="/static/angular/app/js/services.js"></script>
+	<script type="text/javascript" src="/static/angular/app/js/controllers.js"></script>
+	<script type="text/javascript" src="/static/angular/app/js/filters.js"></script>
+	<script type="text/javascript" src="/static/angular/app/js/directives.js"></script>
+	
+	{% for r in ROUTES %}
+	<script type="text/javascript" src="/static/angular/app/js/controllers/{{r.angular_controller}}.js"></script>
+	{% endfor %}
+   
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="ng-cloak" ng-controller="Boot">
+<header class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+    <div class="container">
+      <div class="dropdown pull-left">
+        <a class="brand dropdown-toggle" role="button" data-toggle="dropdown" href="#"> 
+          UI Bootstrap
+          <b class="caret"></b>
+        </a>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+          <li><a href="https://github.com/angular-ui/"><strong>Related Projects:</strong></a></li>
+          <li class="divider"></li>
+          <li><a href="http://angular-ui.github.io/">AngularUI</a></li>
+          <li><a href="http://angular-ui.github.io/ng-grid/">Grid</a></li>
+          <li><a href="https://github.com/angular-ui/AngularJs.tmbundle">AngularJS.tmbundle</a></li>
+          <li><a href="https://github.com/angular-ui/ui-router">Router <span class="label label-success">New!</span></a></li>
+        </ul>
+      </div>
+      <div class="nav-collapse">
+        <ul class="nav">
+           <li>
+               <a href="#" role="button" class="dropdown-toggle">
+                   Directives <b class="caret"></b>
+               </a>
+               <ul class="dropdown-menu">
+                   
+                   <li><a href="#accordion">Accordion</a></li>
+                   
+                   <li><a href="#alert">Alert</a></li>
+                   
+                   <li><a href="#buttons">Buttons</a></li>
+                   
+                   <li><a href="#carousel">Carousel</a></li>
+                   
+                   <li><a href="#collapse">Collapse</a></li>
+                   
+                   <li><a href="#datepicker">Datepicker</a></li>
+                   
+                   <li><a href="#dialog">Dialog</a></li>
+                   
+                   <li><a href="#dropdownToggle">Dropdown Toggle</a></li>
+                   
+                   <li><a href="#modal">Modal</a></li>
+                   
+                   <li><a href="#pagination">Pagination</a></li>
+                   
+                   <li><a href="#popover">Popover</a></li>
+                   
+                   <li><a href="#progressbar">Progressbar</a></li>
+                   
+                   <li><a href="#rating">Rating</a></li>
+                   
+                   <li><a href="#tabs">Tabs</a></li>
+                   
+                   <li><a href="#timepicker">Timepicker</a></li>
+                   
+                   <li><a href="#tooltip">Tooltip</a></li>
+                   
+                   <li><a href="#typeahead">Typeahead</a></li>
+                   
+               </ul>
+           </li>
+           <li><a href="#getting_started">Getting started</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+<div style="margin: 32px;"></div>
+<div ng-view role="main">
+	Hey, {{'{{user.email}}'}}
+</div>
+</body>
+</html>

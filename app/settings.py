@@ -35,6 +35,7 @@ if DEBUG:
 # Here we specify which of the packages metadata will be loaded into the system
 APPLICATIONS_INSTALLED = (
      'app.kernel',
+     'app.tests',
 )
 
 # session storage, currently set memcache. Maybe we will change it into datastore because of consistency

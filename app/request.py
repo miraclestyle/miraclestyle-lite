@@ -4,11 +4,13 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import json
 import webapp2
 
 from webapp2_extras import sessions, i18n, jinja2
 
 from app import settings
+from app.core import JSONEncoderForHTML
  
 class Handler(webapp2.RequestHandler):
     
@@ -22,8 +24,16 @@ class Handler(webapp2.RequestHandler):
     
     _USE_SESSION = True
     _LOAD_TRANSLATIONS = True
+    _SENDING_JSON = False
     
     _template = {'base' : 'index.html'}
+    
+     
+    def send_json(self, data):
+        if not self._SENDING_JSON:
+           self.response.headers['Content-Type'] = 'application/json'
+           self._SENDING_JSON = True
+        self.response.write(json.dumps(data, cls=JSONEncoderForHTML))
      
     def is_post(self):
         """
@@ -121,3 +131,22 @@ class Segments(Handler):
           f = 'segment_%s' % segment
           if hasattr(self, f):
              return getattr(self, f)(*args, **kwargs)
+         
+         
+class Angular(Handler):
+      
+      data = {}
+    
+      def after(self):
+          if self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest':
+             if not self.data:
+                self.data = {}
+                if self.response.status == 200:
+                   self.response.status = 204
+             self.send_json(self.data)
+             return
+         
+          self.render('angular/index.html')
+          
+class AngularSegments(Segments, Angular):
+      pass

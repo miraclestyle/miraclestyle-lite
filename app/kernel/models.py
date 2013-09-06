@@ -196,8 +196,8 @@ class User(ndb.BaseExpando, Workflow):
     }
      
     state = ndb.IntegerProperty('1', required=True, verbose_name=u'Account State')
-    emails = ndb.StringProperty('2', repeated=True, validator=ndb.Validator(ndb.soft_limit, limit=100))# soft limit 100x
-    identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True, validator=ndb.Validator(ndb.soft_limit, limit=100))# soft limit 100x
+    emails = ndb.StringProperty('2', repeated=True)# soft limit 100x
+    identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 100x
     
     _default_indexed = False
   
