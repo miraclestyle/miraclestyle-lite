@@ -114,7 +114,7 @@ class User(ndb.Expando):
     _KIND = 2
     
     OBJECT_DEFAULT_STATE = 'active'
-  
+    
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
         # second value represents which transition will be called for changing the state
@@ -124,7 +124,7 @@ class User(ndb.Expando):
         'active' : (1, ),
         'suspended' : (2, ),
     }
- 
+    
     OBJECT_ACTIONS = {
        'register' : 1,
        'update' : 2,
@@ -158,7 +158,7 @@ class User(ndb.Expando):
         # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
         user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
         user_ip_address.put()
-
+    
     # Ova akcija radi insert/update/delete na neki prop. (izuzev state) u User objektu.
     @ndb.transactional
     def update():
@@ -167,7 +167,10 @@ class User(ndb.Expando):
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
         object_log.put()
-
+        # ukoliko se u listi user.identities promenio prop. user.identities.primary, 
+        # radi se potraga za eventualnim BuyerCollection entietom usera koji je imao prethodnu email adresu, 
+        # i radi se buyer_collection.primary_email prop.
+    
     # Ova akcija se izvrsava svaki put kada neautenticirani korisnik stupi u proces autentikacije.
     # Prvo se proverava da li je korisnik vec registrovan. Ukoliko User ne postoji onda se prelazi na akciju "register".
     # Ukoliko user postoji, onda se dalje ispituje. 
@@ -181,13 +184,13 @@ class User(ndb.Expando):
         # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
         user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
         user_ip_address.put()
-
+    
     # Ova akcija se izvrsava svaki put kada autenticirani korisnik stupi u proces deautentikacije.
     @ndb.transactional
     def logout():
         object_log = ObjectLog(parent=user_key, agent='user_key/agent_key', action='logout', state=user.state)
         object_log.put()
-
+    
     # Ova akcija sluzi za suspenziju aktivnog korisnika, i izvrsava je privilegovani/administrativni agent.
     # Treba obratiti paznju na to da suspenzija usera ujedno znaci i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
     ''' Suspenzija user account-a zabranjuje njegovom vlasniku autenticirani pristup na mstyle, 
@@ -205,7 +208,7 @@ class User(ndb.Expando):
         object_log.put()
         # poziva se akcija "logout";
         User.logout()
-
+    
     # Ova akcija sluzi za aktiviranje suspendovanog korisnika i izvrsava je privilegovani/administrativni agent.
     # Treba obratiti paznju na to da aktivacija usera ujedno znaci i vracanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan, a koji su bili izuzeti dok je bio suspendovan.
     # Aktivni user account je u potpunosti funkcionalan i operativan.
@@ -299,11 +302,11 @@ class FeedbackRequest(ndb.Model):
     @property
     def logs(self):
       return ObjectLog.query(ancestor = self.key())
-
+    
     _KIND = 8
     
     OBJECT_DEFAULT_STATE = 'new'
-  
+    
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
         # second value represents which transition will be called for changing the state
@@ -316,7 +319,7 @@ class FeedbackRequest(ndb.Model):
         'accepted' : (4, ),
         'dismissed' : (5, ),
     }
- 
+    
     OBJECT_ACTIONS = {
        'create' : 1,
        'update' : 2,
@@ -342,7 +345,7 @@ class FeedbackRequest(ndb.Model):
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=user_key, action='create', state=feedback_request.state, message='poruka od agenta - obavezno polje!')
         object_log.put()
-
+    
     # Ova akcija sluzi za insert ObjectLog-a koji je descendant FeedbackRequest entitetu.
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
@@ -352,7 +355,7 @@ class FeedbackRequest(ndb.Model):
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='update', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
-
+    
     # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'reviewing'.
     @ndb.transactional
     def review():
@@ -362,7 +365,7 @@ class FeedbackRequest(ndb.Model):
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='review', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
-
+    
     # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'duplicate', 'accepted', ili 'dismissed'.
     @ndb.transactional
     def close():
@@ -372,7 +375,7 @@ class FeedbackRequest(ndb.Model):
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='close', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
-    
+
 # done!
 class SupportRequest(ndb.Model):
     
@@ -390,7 +393,7 @@ class SupportRequest(ndb.Model):
     _KIND = 9
     
     OBJECT_DEFAULT_STATE = 'new'
-  
+    
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
         # second value represents which transition will be called for changing the state
@@ -402,7 +405,7 @@ class SupportRequest(ndb.Model):
         'awaiting_closure' : (3, ),
         'closed' : (4, ),
     }
- 
+    
     OBJECT_ACTIONS = {
        'create' : 1,
        'update' : 2,
@@ -425,7 +428,7 @@ class SupportRequest(ndb.Model):
            'to'   : ('closed',),
         },
     }
-
+    
     # Ova akcija krajnjem korisniku sluzi za pravljenje zahteva za pomoc (ticket-a) od miraclestyle tima.
     @ndb.transactional
     def create():
@@ -433,7 +436,7 @@ class SupportRequest(ndb.Model):
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=user_key, action='create', state=support_request.state, message='poruka od agenta - obavezno polje!')
         object_log.put()
-
+    
     # Ova akcija sluzi za insert ObjectLog-a koji je descendant SupportRequest entitetu.
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
@@ -443,7 +446,7 @@ class SupportRequest(ndb.Model):
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='update', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
-
+    
     # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'opened'.
     @ndb.transactional
     def open():
@@ -453,7 +456,7 @@ class SupportRequest(ndb.Model):
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='open', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
-
+    
     # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'awaiting_closure'.
     @ndb.transactional
     def propose_close():
@@ -463,7 +466,7 @@ class SupportRequest(ndb.Model):
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='propose_close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
-
+    
     # Ovom akcijom agent menja stanje SupportRequest entiteta u 'closed'.
     @ndb.transactional
     def close():
@@ -641,15 +644,101 @@ class BuyerAddress(ndb.Expando):
     # street_address2 = ndb.StringProperty('9')
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
+    
+    _KIND = 18
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Pravi novu adresu korisnika
+    @ndb.transactional
+    def create():
+        buyer_address = BuyerAddress(parent=user_key, name='Home', country='82736563', city='Beverly Hills', postal_code='90210', street_address='First Street, 10', region='656776533')
+        buyer_address_key = buyer_address.put()
+        object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='create', state='none', log=buyer_address)
+        object_log.put()
+    
+    # Azurira postojecu adresu korisnika
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        buyer_address.name = 'Home in Miami'
+        buyer_address.country = '82736563'
+        buyer_address.city = 'Miami'
+        buyer_address.postal_code = '26547'
+        buyer_address.street_address = 'Second Street, 10'
+        buyer_address.region = '514133'
+        buyer_address_key = buyer_address.put()
+        object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='update', state='none', log=buyer_address)
+        object_log.put()
+    
+    # Brise postojecu adresu korisnika
+    @ndb.transactional
+    def delete():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='delete', state='none')
+        object_log.put()
+        buyer_address_key.delete()
 
 # done!
 class BuyerCollection(ndb.Model):
     
     # ancestor User
+    # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
     notifications = ndb.BooleanProperty('2', default=False)
     primary_email = ndb.StringProperty('3', required=True, indexed=False)
+    
+    _KIND = 19
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Pravi novu kolekciju za korisnika
+    @ndb.transactional
+    def create():
+        for identity in user.identities:
+            if(identity.primary == True):
+                user_primary_email = identity.email
+                break
+        buyer_collection = BuyerCollection(parent=user_key, name='Favorites', notifications=True, primary_email=user_primary_email)
+        buyer_collection_key = buyer_collection.put()
+        object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='create', state='none', log=buyer_collection)
+        object_log.put()
+    
+    # Azurira postojecu kolekciju korisnika
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        buyer_collection.name = 'Shoes'
+        buyer_collection.notifications = True
+        for identity in user.identities:
+            if(identity.primary == True):
+                user_primary_email = identity.email
+                break
+        buyer_collection.primary_email = user_primary_email
+        buyer_collection_key = buyer_collection.put()
+        object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='update', state='none', log=buyer_collection)
+        object_log.put()
+    
+    # Brise postojecu kolekciju korisnika
+    @ndb.transactional
+    def delete():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='delete', state='none')
+        object_log.put()
+        buyer_collection_key.delete()
 
 # done!
 class BuyerCollectionStore(ndb.Model):
@@ -658,6 +747,44 @@ class BuyerCollectionStore(ndb.Model):
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True)# soft limit 500x
     
+    _KIND = 20
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Dodaje novi store u korisnikovu listu i odredjuje clanstvo u kolekcijama korisnika
+    @ndb.transactional
+    def create():
+        buyer_collection_store = BuyerCollectionStore(parent=user_key, store='7464536', collections=['1234'])
+        buyer_collection_store_key = buyer_collection_store.put()
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='create', state='none', log=buyer_collection_store)
+        object_log.put()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+    
+    # Menja clanstvo store u kolekcijama korisnika
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        buyer_collection_store.collections = ['1234', '56433']
+        buyer_collection_store_key = buyer_collection_store.put()
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='update', state='none', log=buyer_collection_store)
+        object_log.put()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+    
+    # Brise store iz korisnikove liste
+    @ndb.transactional
+    def delete():
+        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='delete', state='none')
+        object_log.put()
+        buyer_collection_store_key.delete()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateBuyerCollectionCatalog(ndb.Model):
     
