@@ -44,20 +44,20 @@ class _BaseModel:
   
   _original_values = {}
   
-  def _resolve_readonly(self, prop):
-      if isinstance(prop._readonly, pyson.PYSON):
+  def _resolve_writable(self, prop):
+      if isinstance(prop._writable, pyson.PYSON):
          environ = EvalEnvironment(self)
-         encoded = pyson.PYSONEncoder(environ).encode(prop._readonly)
+         encoded = pyson.PYSONEncoder(environ).encode(prop._writable)
          check = pyson.PYSONDecoder(environ).decode(encoded)
          if not check:
-            # if this is not truth, set the default value 
+            # if the evaluation is not true, set the original values because new value is not allowed to be set
             setattr(self, prop._name, self._original_values.get(prop._name))
   
   def _pre_put_hook(self):
       for p in self._properties:
           prop = self._properties.get(p)
-          if prop and hasattr(prop, '_readonly') and prop._readonly:
-             self._resolve_readonly(prop)
+          if prop and hasattr(prop, '_writable') and prop._writable:
+             self._resolve_writable(prop)
            
   def original_values(self, name):
       """
@@ -220,15 +220,13 @@ class BaseExpando(_BaseModel, Expando):
 
 class _BaseProperty(object):
   
-  _readonly = False
-  _invisible = False
-  _isrequired = False
-    
+  _writable = False
+  _visible = False
+  
   def __init__(self, *args, **kwds):
-      self._readonly = kwds.pop('readonly', self._readonly)
-      self._invisible = kwds.pop('invisible', self._invisible)
-      self._isrequired = kwds.pop('isrequired', self._isrequired)
-        
+      self._writable = kwds.pop('writable', self._writable)
+      self._visible = kwds.pop('visible', self._visible)
+ 
       super(_BaseProperty, self).__init__(*args, **kwds)
     
   def _set_value(self, entity, value):
@@ -237,7 +235,7 @@ class _BaseProperty(object):
 
 class BaseProperty(_BaseProperty, Property):
   """
-   Base property class for all properties capable of having readonly, and invisible commands
+   Base property class for all properties capable of having writable, and invisible commands
   """
  
 class SuperStringProperty(_BaseProperty, StringProperty):
@@ -286,7 +284,7 @@ class SuperReferenceProperty(dict):
      
      class UserChildEntity(ndb.BaseModel):
            user = ndb.SuperReferenceProperty(User)
-           name = ndb.StringProperty(required=True, readonly=Eval('user.state') != 'active')
+           name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
            
      foo = UserChildEntity(name='Edward')
      foo.user = ndb.Key('User', 'foo').get() # since this is a Fake property, it cannot be placed via model constructor
@@ -356,10 +354,10 @@ class EvalEnvironment(dict):
      return super(EvalEnvironment, self).__getitem__(item)
 
   def __getattr__(self, item):
-        try:
-            return self.__getitem__(item)
-        except KeyError, exception:
-            raise AttributeError(*exception.args)
+      try:
+         return self.__getitem__(item)
+      except KeyError, exception:
+         raise AttributeError(*exception.args)
 
   def get(self, item, default=None):
       try:

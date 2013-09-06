@@ -37,7 +37,7 @@ class Test(ndb.BaseModel, Workflow):
           'not_active' : (2, )              
        }
        
-       name = ndb.SuperStringProperty(indexed=True, readonly=Eval('state') == 'active')
+       name = ndb.SuperStringProperty(indexed=True, writable=Eval('state') == 'active')
        state = ndb.SuperStateProperty(default=1)
        
        date = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
@@ -90,7 +90,7 @@ class TestUser(ndb.Model):
 class TestOrder(ndb.Model):
       name = ndb.StringProperty()
  
-import decimal 
+import decimal
         
 class Tests(Segments):
     
@@ -100,7 +100,7 @@ class Tests(Segments):
          
          if self.request.get('put'):
              soul.state = 2
-             soul.name = 'sdssdsd'
+             soul.name = 'sdsddssdgegeg'
              soul.put()
              self.response.write(soul._original_values)
     
