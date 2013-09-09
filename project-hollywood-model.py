@@ -141,7 +141,6 @@ class User(ndb.Expando):
             'to' : ('active',),
          },
         'suspend' : {
-            # suspend can go from active to suspended
            'from' : ('active', ),
            'to'   : ('suspended',),
         },
@@ -204,7 +203,7 @@ class User(ndb.Expando):
         # akcija se moze pozvati samo ako je user.state == 'active'
         user.state = 'suspended'
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
+        object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
         # poziva se akcija "logout";
         User.logout()
@@ -218,7 +217,7 @@ class User(ndb.Expando):
         # akcija se moze pozvati samo ako je user.state == 'suspended'
         user.state = 'active'
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!', log=user)
+        object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -258,6 +257,106 @@ class Domain(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
+    
+    _KIND = 3
+    
+    OBJECT_DEFAULT_STATE = 'active'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'active' : (1, ),
+        'suspended' : (2, ),
+        'terminated' : (3, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'suspend' : 3,
+       'terminate' : 4,
+       'activate_suspended' : 5,
+       'activate_terminated' : 6,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'activate_suspended' : {
+            'from' : ('suspended',),
+            'to' : ('active',),
+         },
+         'activate_terminated' : {
+            'from' : ('terminated',),
+            'to' : ('active',),
+         },
+        'suspend' : {
+           'from' : ('active', ),
+           'to'   : ('suspended',),
+        },
+        'terminate' : {
+           'from' : ('active', 'suspended'),
+           'to'   : ('terminated',),
+        },
+    }
+    
+    # Ova akcija kreira novu domenu.
+    @ndb.transactional
+    def create():
+        domain = Domain(name='deskriptivno ime po zelji kreatora', primary_contact=user_key, state='active')
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
+        object_log.put()
+    
+    # Ova akcija azurira postojecu domenu.
+    @ndb.transactional
+    def update():
+        domain.name = 'promenjeno ime od strane administratora domene'
+        domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'update'.
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='update', state=domain.state, log=domain)
+        object_log.put()
+    
+    # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
+    @ndb.transactional
+    def suspend():
+        # ova akcija zahteva da agent ima domain-specific dozvolu 'suspend'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'
+        domain.state = 'suspended'
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='suspend', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija terminira aktivnu ili suspendovanu domenu. Ovde cemo dalje opisati posledice terminacije
+    @ndb.transactional
+    def terminate():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'terminate'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' ili domain.state == 'suspended'
+        domain.state = 'terminated'
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='terminate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija aktivira suspendovanu domenu. Ovde cemo dalje opisati posledice aktivacije
+    @ndb.transactional
+    def activate_suspended():
+        # ova akcija zahteva da agent ima domain-specific dozvolu 'activate_suspended'.
+        # akcija se moze pozvati samo ako je domain.state == 'suspended'
+        domain.state = 'active'
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_suspended', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija aktivira terminiranu domenu. Ovde cemo dalje opisati posledice aktivacije
+    @ndb.transactional
+    def activate_terminated():
+        # ova akcija zahteva da agent ima globalnu dozvolu 'activate_terminated'.
+        # akcija se moze pozvati samo ako je domain.state == 'terminated'
+        domain.state = 'active'
+        domain_key = domain.put()
+        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_terminated', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
 
 # done!
 class Role(ndb.Model):
