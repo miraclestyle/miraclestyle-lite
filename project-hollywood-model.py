@@ -150,6 +150,7 @@ class User(ndb.Expando):
     # Ukoliko se prilikom "login" akcije ustanovi da korisnik nikada nije evidentiran u bazi, nastupa akcija "register". 
     @ndb.transactional
     def register():
+        # ovu akciju moze izvrsiti samo neregistrovani neautenticirani agent.
         user = User(state='active', emails=['user@email.com',], identities=[UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),])
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='register', state=user.state, log=user)
@@ -177,7 +178,7 @@ class User(ndb.Expando):
     # Dalje se proverava da li je useru dozvoljen login (User.state == 'active'). Ako mu je dozvoljen login onda se izvrsava "login" akcija.
     @ndb.transactional
     def login():
-        # ovde bi mogla da stoji provera continue if(User.state == 'active'),ili vani, videcemo.
+        # ovde bi mogla da stoji provera continue if(User.state == 'active'), ili van ove funkcije, videcemo.
         object_log = ObjectLog(parent=user_key, agent=user_key, action='login', state=user.state)
         object_log.put()
         # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
@@ -199,8 +200,8 @@ class User(ndb.Expando):
     Account koji je suspendovan se moze opet reaktivirati od strane administratora sistema. '''
     @ndb.transactional
     def suspend():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'suspend'.
-        # akcija se moze pozvati samo ako je user.state == 'active'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'suspend-User'.
+        # akcija se moze pozvati samo ako je user.state == 'active'.
         user.state = 'suspended'
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -213,8 +214,8 @@ class User(ndb.Expando):
     # Aktivni user account je u potpunosti funkcionalan i operativan.
     @ndb.transactional
     def activate():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'activate'.
-        # akcija se moze pozvati samo ako je user.state == 'suspended'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'activate-User'.
+        # akcija se moze pozvati samo ako je user.state == 'suspended'.
         user.state = 'active'
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -304,6 +305,7 @@ class Domain(ndb.Expando):
     # Ova akcija kreira novu domenu.
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         domain = Domain(name='deskriptivno ime po zelji kreatora', primary_contact=user_key, state='active')
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
@@ -312,8 +314,10 @@ class Domain(ndb.Expando):
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
     def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.name = 'promenjeno ime od strane administratora domene'
-        domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'update'.
+        domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'manage_security-Domain'. ? provericemo kako je to na google apps
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='update', state=domain.state, log=domain)
         object_log.put()
@@ -321,8 +325,8 @@ class Domain(ndb.Expando):
     # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
     @ndb.transactional
     def suspend():
-        # ova akcija zahteva da agent ima domain-specific dozvolu 'suspend'.
-        # akcija se moze pozvati samo ako je domain.state == 'active'
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.state = 'suspended'
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='suspend', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -331,8 +335,8 @@ class Domain(ndb.Expando):
     # Ova akcija terminira aktivnu ili suspendovanu domenu. Ovde cemo dalje opisati posledice terminacije
     @ndb.transactional
     def terminate():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'terminate'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' ili domain.state == 'suspended'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'terminate-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' ili domain.state == 'suspended'.
         domain.state = 'terminated'
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='terminate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -341,8 +345,8 @@ class Domain(ndb.Expando):
     # Ova akcija aktivira suspendovanu domenu. Ovde cemo dalje opisati posledice aktivacije
     @ndb.transactional
     def activate_suspended():
-        # ova akcija zahteva da agent ima domain-specific dozvolu 'activate_suspended'.
-        # akcija se moze pozvati samo ako je domain.state == 'suspended'
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == 'suspended'.
         domain.state = 'active'
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_suspended', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -351,8 +355,8 @@ class Domain(ndb.Expando):
     # Ova akcija aktivira terminiranu domenu. Ovde cemo dalje opisati posledice aktivacije
     @ndb.transactional
     def activate_terminated():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'activate_terminated'.
-        # akcija se moze pozvati samo ako je domain.state == 'terminated'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'activate_terminated-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == 'terminated'.
         domain.state = 'active'
         domain_key = domain.put()
         object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_terminated', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -368,6 +372,48 @@ class Role(ndb.Model):
     name = ndb.StringProperty('1', required=True)
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    
+    _KIND = 6
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Pravi novu rolu domene, ili globalnu rolu
+    @ndb.transactional
+    def create():
+        # ova akcija zahteva da agent ima domain-specific dozvolu 'create'.
+        role = Role(parent=domain_key, name='Store Managers', permissions=['create_store', 'update_store',], readonly=False)
+        role_key = role.put()
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
+        object_log.put()
+    
+    # Azurira postojecu rolu domene, ili globalnu rolu
+    @ndb.transactional
+    def update():
+        # ova akcija zahteva da agent ima domain-specific dozvolu 'update'.
+        role.name = 'New Store Managers'
+        role.permissions = ['create_store',]
+        role_key = role.put()
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='update', state='none', log=role)
+        object_log.put()
+    
+    # Brise postojecu rolu domene, ili globalnu rolu.
+    @ndb.transactional
+    def delete():
+        # ova akcija zahteva da agent ima domain-specific dozvolu 'delete'.
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        ndb.delete_multi(RoleUser.query(ancestor=role_key))
+        role_key.delete()
+        # za svakog usera koji ima AggregateUserPermission entitete koji referenciraju tekucu domenu,
+        # radi se brisanje svih dozvola (iz AggregateUserPermission entiteta) koje ova rola ima,
+        # a koje user nema preko drugih rola
+        # ovo moze biti problem jer moze biti poprilicno kompleksno, pa bi se eventualno moglo raditi preko task queue
 
 # done!
 class RoleUser(ndb.Model):
@@ -378,6 +424,63 @@ class RoleUser(ndb.Model):
     # composite index: ancestor:yes - user
     user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('2', required=True)# invited/accepted
+    
+    _KIND = 7
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'invited' : (1, ),
+        'accepted' : (2, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'delete' : 2,
+       'accept' : 3,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'accept' : {
+            'from' : ('invited',),
+            'to' : ('accepted',),
+        },
+    }
+    
+    # Dodaje novog usera u rolu domene, ili globalnu rolu
+    @ndb.transactional
+    def create():
+        # ova akcija zahteva da agent ima domain-specific ili globalnu dozvolu 'create'.
+        role_user = RoleUser(parent=role_key, user='123673472829', state='invited')
+        role_user_key = role_user.put()
+        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='create', state=role_user.state, log=role_user)
+        object_log.put()
+    
+    # Brise postojeceg usera iz role domene, ili globalnu role.
+    @ndb.transactional
+    def delete():
+        # ova akcija zahteva da agent ima domain-specific ili globalnu dozvolu 'delete' ili da je user koji je referenciran u entitetu (role_user.user == acting user)
+        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='delete', state=role_user.state)
+        object_log.put()
+        role_user_key.delete()
+        # iz AggregateUserPermission entiteta koji referencira tekucu domenu za usera role_user.user,
+        # radi se brisanje svih dozvola (iz AggregateUserPermission entiteta) koje rola (kojoj je user pripadao) ima,
+        # a koje user nema preko drugih rola
+        # ovo moze biti problem jer moze biti poprilicno kompleksno, pa bi se eventualno moglo raditi preko task queue
+    
+    # Azurira postojecu rolu domene, ili globalnu rolu
+    @ndb.transactional
+    def accept():
+        # ovu akciju moze izvrsiti samo user koji je referenciran u entitetu (role_user.user == acting user)
+        role_user.state = 'accepted'
+        role_user_key = role.put()
+        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='accept', role_user.state)
+        object_log.put()
 
 
 ################################################################################
@@ -440,6 +543,7 @@ class FeedbackRequest(ndb.Model):
     # Ova akcija sluzi za slanje feedback-a miraclestyle timu od strane krajnjih korisnika.
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         feedback_request = FeedbackRequest(parent=user_key, reference='https://www,miraclestyle.com/...', state='new')
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=user_key, action='create', state=feedback_request.state, message='poruka od agenta - obavezno polje!')
@@ -449,7 +553,7 @@ class FeedbackRequest(ndb.Model):
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
     def update():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'update'. / ova akcija zahteva da je agent ili owner (feedback_request.parent == agent) ili da agent ima globalnu dozvolu 'update'.
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-FeedbackRequest'. / ? # ovu akciju moze izvrsiti samo entity owner (feedback_request.parent == agent) ili agent koji ima globalnu dozvolu 'update-FeedbackRequest'.
         # Radi se update FeedbackRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na FeedbackRequest.updated prop.)
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='update', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -458,8 +562,8 @@ class FeedbackRequest(ndb.Model):
     # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'reviewing'.
     @ndb.transactional
     def review():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'review'.
-        # akcija se moze pozvati samo ako je feedback_request.state == 'new'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'review-FeedbackRequest'.
+        # akcija se moze pozvati samo ako je feedback_request.state == 'new'.
         feedback_request.state = 'reviewing'
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='review', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -468,8 +572,8 @@ class FeedbackRequest(ndb.Model):
     # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'duplicate', 'accepted', ili 'dismissed'.
     @ndb.transactional
     def close():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'close'.
-        # akcija se moze pozvati samo ako je feedback_request.state == 'reviewing'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'close-FeedbackRequest'.
+        # akcija se moze pozvati samo ako je feedback_request.state == 'reviewing'.
         feedback_request.state = 'duplicate' | 'accepted' | 'dismissed'
         feedback_request_key = feedback_request.put()
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='close', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -531,6 +635,7 @@ class SupportRequest(ndb.Model):
     # Ova akcija krajnjem korisniku sluzi za pravljenje zahteva za pomoc (ticket-a) od miraclestyle tima.
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         support_request = SupportRequest(parent=user_key, reference='https://www,miraclestyle.com/...', state='new')
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=user_key, action='create', state=support_request.state, message='poruka od agenta - obavezno polje!')
@@ -540,7 +645,7 @@ class SupportRequest(ndb.Model):
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
     def update():
-        # ova akcija zahteva da je agent ili owner (support_request.parent == agent) ili da agent ima globalnu dozvolu 'update'.
+        # ovu akciju moze izvrsiti samo entity owner (support_request.parent == agent) ili agent koji ima globalnu dozvolu 'update-SupportRequest'
         # Radi se update SupportRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na SupportRequest.updated prop.)
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='update', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -549,8 +654,8 @@ class SupportRequest(ndb.Model):
     # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'opened'.
     @ndb.transactional
     def open():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'open'.
-        # akcija se moze pozvati samo ako je support_request.state == 'new'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'open-SupportRequest'.
+        # akcija se moze pozvati samo ako je support_request.state == 'new'.
         support_request.state = 'opened'
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='open', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -559,8 +664,8 @@ class SupportRequest(ndb.Model):
     # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'awaiting_closure'.
     @ndb.transactional
     def propose_close():
-        # ova akcija zahteva da agent ima globalnu dozvolu 'propose_close'.
-        # akcija se moze pozvati samo ako je support_request.state == 'opened'
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'propose_close-SupportRequest'.
+        # akcija se moze pozvati samo ako je support_request.state == 'opened'.
         support_request.state = 'awaiting_closure'
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='propose_close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -569,8 +674,8 @@ class SupportRequest(ndb.Model):
     # Ovom akcijom agent menja stanje SupportRequest entiteta u 'closed'.
     @ndb.transactional
     def close():
-        # ova akcija zahteva da je agent ili owner (support_request.parent == agent) ili da agent ima globalnu dozvolu 'close' (sto ce verovatno imati sistemski account koji ce preko cron-a izvrsiti akciju).
-        # akcija se moze pozvati samo ako je support_request.state == 'opened' ili support_request.state == 'awaiting_closure'
+        # ovu akciju moze izvrsiti samo entity owner (support_request.parent == agent) ili agent koji ima globalnu dozvolu 'close-SupportRequest' (sto ce verovatno imati sistemski account koji ce preko cron-a izvrsiti akciju).
+        # akcija se moze pozvati samo ako je support_request.state == 'opened' ili support_request.state == 'awaiting_closure'.
         support_request.state = 'closed'
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -757,6 +862,7 @@ class BuyerAddress(ndb.Expando):
     # Pravi novu adresu korisnika
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         buyer_address = BuyerAddress(parent=user_key, name='Home', country='82736563', city='Beverly Hills', postal_code='90210', street_address='First Street, 10', region='656776533')
         buyer_address_key = buyer_address.put()
         object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='create', state='none', log=buyer_address)
@@ -765,7 +871,7 @@ class BuyerAddress(ndb.Expando):
     # Azurira postojecu adresu korisnika
     @ndb.transactional
     def update():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_address.parent == agent).
         buyer_address.name = 'Home in Miami'
         buyer_address.country = '82736563'
         buyer_address.city = 'Miami'
@@ -779,7 +885,7 @@ class BuyerAddress(ndb.Expando):
     # Brise postojecu adresu korisnika
     @ndb.transactional
     def delete():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_address.parent == agent).
         object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_address_key.delete()
@@ -807,6 +913,7 @@ class BuyerCollection(ndb.Model):
     # Pravi novu kolekciju za korisnika
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         for identity in user.identities:
             if(identity.primary == True):
                 user_primary_email = identity.email
@@ -819,7 +926,7 @@ class BuyerCollection(ndb.Model):
     # Azurira postojecu kolekciju korisnika
     @ndb.transactional
     def update():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_collection.parent == agent).
         buyer_collection.name = 'Shoes'
         buyer_collection.notifications = True
         for identity in user.identities:
@@ -834,7 +941,7 @@ class BuyerCollection(ndb.Model):
     # Brise postojecu kolekciju korisnika
     @ndb.transactional
     def delete():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_collection.parent == agent).
         object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_collection_key.delete()
@@ -859,6 +966,7 @@ class BuyerCollectionStore(ndb.Model):
     # Dodaje novi store u korisnikovu listu i odredjuje clanstvo u kolekcijama korisnika
     @ndb.transactional
     def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         buyer_collection_store = BuyerCollectionStore(parent=user_key, store='7464536', collections=['1234'])
         buyer_collection_store_key = buyer_collection_store.put()
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='create', state='none', log=buyer_collection_store)
@@ -868,7 +976,7 @@ class BuyerCollectionStore(ndb.Model):
     # Menja clanstvo store u kolekcijama korisnika
     @ndb.transactional
     def update():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_collection_store.parent == agent).
         buyer_collection_store.collections = ['1234', '56433']
         buyer_collection_store_key = buyer_collection_store.put()
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='update', state='none', log=buyer_collection_store)
@@ -878,7 +986,7 @@ class BuyerCollectionStore(ndb.Model):
     # Brise store iz korisnikove liste
     @ndb.transactional
     def delete():
-        # ova akcija zahteva da je agent owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo entity owner (buyer_collection_store.parent == agent).
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_collection_store_key.delete()
