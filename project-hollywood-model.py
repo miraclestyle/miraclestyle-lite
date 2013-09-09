@@ -308,7 +308,7 @@ class Domain(ndb.Expando):
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         domain = Domain(name='deskriptivno ime po zelji kreatora', primary_contact=user_key, state='active')
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
+        object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
         object_log.put()
     
     # Ova akcija azurira postojecu domenu.
@@ -319,7 +319,7 @@ class Domain(ndb.Expando):
         domain.name = 'promenjeno ime od strane administratora domene'
         domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'manage_security-Domain'. ? provericemo kako je to na google apps
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='update', state=domain.state, log=domain)
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='update', state=domain.state, log=domain)
         object_log.put()
     
     # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
@@ -329,7 +329,7 @@ class Domain(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.state = 'suspended'
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='suspend', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='suspend', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
     # Ova akcija terminira aktivnu ili suspendovanu domenu. Ovde cemo dalje opisati posledice terminacije
@@ -339,7 +339,7 @@ class Domain(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'active' ili domain.state == 'suspended'.
         domain.state = 'terminated'
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='terminate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='terminate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
     # Ova akcija aktivira suspendovanu domenu. Ovde cemo dalje opisati posledice aktivacije
@@ -349,7 +349,7 @@ class Domain(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'suspended'.
         domain.state = 'active'
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_suspended', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_suspended', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
     # Ova akcija aktivira terminiranu domenu. Ovde cemo dalje opisati posledice aktivacije
@@ -359,7 +359,7 @@ class Domain(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'terminated'.
         domain.state = 'active'
         domain_key = domain.put()
-        object_log = object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_terminated', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_terminated', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -440,8 +440,8 @@ class RoleUser(ndb.Model):
     }
     
     OBJECT_ACTIONS = {
-       'create' : 1,
-       'delete' : 2,
+       'invite' : 1,
+       'remove' : 2,
        'accept' : 3,
     }
     
@@ -452,19 +452,21 @@ class RoleUser(ndb.Model):
         },
     }
     
-    # Dodaje novog usera u rolu domene, ili globalnu rolu
+    # Poziva novog usera u rolu domene, ili globalnu rolu
     @ndb.transactional
-    def create():
-        # ova akcija zahteva da agent ima domain-specific ili globalnu dozvolu 'create'.
+    def invite():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage_security-Domain' (ili globalnu dozvolu 'manage_security-Miraclestyle', u slucaju da je Rola globalna).
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         role_user = RoleUser(parent=role_key, user='123673472829', state='invited')
         role_user_key = role_user.put()
-        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='create', state=role_user.state, log=role_user)
+        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='invite', state=role_user.state, log=role_user)
         object_log.put()
     
-    # Brise postojeceg usera iz role domene, ili globalnu role.
+    # Uklanja postojeceg usera iz role domene, ili globalne role.
     @ndb.transactional
-    def delete():
-        # ova akcija zahteva da agent ima domain-specific ili globalnu dozvolu 'delete' ili da je user koji je referenciran u entitetu (role_user.user == acting user)
+    def remove():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage_security-Domain' (ili globalnu dozvolu 'manage_security-Miraclestyle', u slucaju da je Rola globalna), ili agent koji je referenciran u entitetu (role_user.user == agent).
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='delete', state=role_user.state)
         object_log.put()
         role_user_key.delete()
@@ -476,11 +478,14 @@ class RoleUser(ndb.Model):
     # Azurira postojecu rolu domene, ili globalnu rolu
     @ndb.transactional
     def accept():
-        # ovu akciju moze izvrsiti samo user koji je referenciran u entitetu (role_user.user == acting user)
+        # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (role_user.user == agent).
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         role_user.state = 'accepted'
-        role_user_key = role.put()
+        role_user_key = role_user.put()
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='accept', role_user.state)
         object_log.put()
+        # u AggregateUserPermission entitet koji referencira tekucu domenu za usera role_user.user,
+        # radi se dodavanje onih dozvola koje vec ne postoje u toj listi....
 
 
 ################################################################################
