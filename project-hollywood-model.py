@@ -240,6 +240,7 @@ class UserIPAddress(ndb.Model):
     ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
 # done! ovde je za svaki write potreban user approval tako da je contention skoro nemoguc!
+# umesto ovog modela, trebao bi se iskoristiti Role model. Pogledati Role model!
 class AggregateUserPermission(ndb.Model):
     
     # ancestor User
@@ -375,6 +376,9 @@ class Role(ndb.Model):
     
     # ancestor Domain with permissions that affect Domain and it's related entities
     # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
+    # TREBA TESTIRATI DA LI RADe QUERY: Role.query(namespace=..., ancestor=..., id=....)
+    # ovaj model ce se kopirati prilikom accept akcije u RoleUser entitetu, na sledeci nacin:
+    # Role(namespace=domain_key, parent=user_key, id=role.id, ....)
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
@@ -415,6 +419,14 @@ class Role(ndb.Model):
         role_key = role.put()
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='update', state='none', log=role)
         object_log.put()
+        role_users = RoleUser.query(ancestor=role_key).fetch(projection=[RoleUser.user,])
+        # ovo uraditi sa taskletima za async operacije
+        for role_user in role_users:
+            key = ndb.Key(namespace=domain_key, parent=role_user, str(role_key.id()))
+            sub_role = key.get()
+            sub_role.name = role.name
+            sub_role.permissions = role.permissions
+            sub_role.put()
     
     # Brise postojecu rolu domene, ili globalnu rolu.
     @ndb.transactional
@@ -425,12 +437,14 @@ class Role(ndb.Model):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        ndb.delete_multi(RoleUser.query(ancestor=role_key))
+        role_users = RoleUser.query(ancestor=role_key).fetch(projection=[RoleUser.user,])
+        roles = []
+        for role_user in role_users:
+            key = ndb.Key(namespace=domain_key, parent=role_user, str(role_key.id()))
+            roles.append(key)
+        ndb.delete_multi(roles)
+        ndb.delete_multi(role_users)
         role_key.delete()
-        # za svakog usera koji ima AggregateUserPermission entitete koji referenciraju tekucu domenu,
-        # radi se brisanje svih dozvola (iz AggregateUserPermission entiteta) koje ova rola ima,
-        # a koje user nema preko drugih rola
-        # ovo moze biti problem jer moze biti poprilicno kompleksno, pa bi se eventualno moglo raditi preko task queue
 
 # done!
 class RoleUser(ndb.Model):
@@ -490,11 +504,9 @@ class RoleUser(ndb.Model):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='remove', state=role_user.state)
         object_log.put()
+        key = ndb.Key(namespace=domain_key, parent=role_user_key, str(role_key.id()))
+        key.delete()
         role_user_key.delete()
-        # iz AggregateUserPermission entiteta koji referencira tekucu domenu za usera role_user.user,
-        # radi se brisanje svih dozvola (iz AggregateUserPermission entiteta) koje rola (kojoj je user pripadao) ima,
-        # a koje user nema preko drugih rola
-        # ovo moze biti problem jer moze biti poprilicno kompleksno, pa bi se eventualno moglo raditi preko task queue
     
     # Azurira postojecu rolu domene, ili globalnu rolu
     @ndb.transactional
@@ -505,8 +517,8 @@ class RoleUser(ndb.Model):
         role_user_key = role_user.put()
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='accept', role_user.state)
         object_log.put()
-        # u AggregateUserPermission entitet koji referencira tekucu domenu za usera role_user.user,
-        # radi se dodavanje onih dozvola koje vec ne postoje u toj listi....
+        sub_role = Role(namespace=domain_key, parent=role_user_key, id=role.id, ....)
+        sub_role.put()
 
 
 ################################################################################
