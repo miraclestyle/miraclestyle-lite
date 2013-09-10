@@ -302,6 +302,8 @@ class Domain(ndb.Expando):
         },
     }
     
+    # *** mozda treba zameniti dozvole za upravljanje domenom sa jednom dozvolom 'manage-Domain' ili tome slicno!
+    
     # Ova akcija kreira novu domenu.
     @ndb.transactional
     def create():
@@ -314,7 +316,7 @@ class Domain(ndb.Expando):
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Domain'. ***
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.name = 'promenjeno ime od strane administratora domene'
         domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'manage_security-Domain'. ? provericemo kako je to na google apps
@@ -325,7 +327,7 @@ class Domain(ndb.Expando):
     # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
     @ndb.transactional
     def suspend():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'suspend-Domain'. ***
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.state = 'suspended'
         domain_key = domain.put()
@@ -337,6 +339,9 @@ class Domain(ndb.Expando):
     def terminate():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'terminate-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'active' ili domain.state == 'suspended'.
+        # ova akcija treba biti mozda drugacije protected od ostalih akcija, to se moze resiti na dva nacina:
+        # prvi nacin je da se domain administrativnim userima zabrani mogucnost dodavanja dozvole 'terminate-Domain' u listi dozvola na domain-specific Rolama
+        # drugi nacin je da se ova metoda drugacije evaluira, tako da ignorise proveru domain-specific Rola
         domain.state = 'terminated'
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='terminate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -345,7 +350,7 @@ class Domain(ndb.Expando):
     # Ova akcija aktivira suspendovanu domenu. Ovde cemo dalje opisati posledice aktivacije
     @ndb.transactional
     def activate_suspended():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage-Domain'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'activate_suspended-Domain'. ***
         # akcija se moze pozvati samo ako je domain.state == 'suspended'.
         domain.state = 'active'
         domain_key = domain.put()
@@ -357,6 +362,9 @@ class Domain(ndb.Expando):
     def activate_terminated():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'activate_terminated-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'terminated'.
+        # ova akcija treba biti mozda drugacije protected od ostalih akcija, to se moze resiti na dva nacina:
+        # prvi nacin je da se domain administrativnim userima zabrani mogucnost dodavanja dozvole 'activate_terminated-Domain' u listi dozvola na domain-specific Rolama
+        # drugi nacin je da se ova metoda drugacije evaluira, tako da ignorise proveru domain-specific Rola
         domain.state = 'active'
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate_terminated', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
@@ -386,8 +394,11 @@ class Role(ndb.Model):
     # Pravi novu rolu domene, ili globalnu rolu
     @ndb.transactional
     def create():
-        # ova akcija zahteva da agent ima domain-specific dozvolu 'create'.
-        role = Role(parent=domain_key, name='Store Managers', permissions=['create_store', 'update_store',], readonly=False)
+        # (u slucaju da agent treba praviti globalne Role imacemo problem posto bi globalna dozvola 'create-Role'
+        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'create-Role').
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Role'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        role = Role(parent=domain_key, name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
         role_key = role.put()
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
         object_log.put()
@@ -395,7 +406,10 @@ class Role(ndb.Model):
     # Azurira postojecu rolu domene, ili globalnu rolu
     @ndb.transactional
     def update():
-        # ova akcija zahteva da agent ima domain-specific dozvolu 'update'.
+        # (u slucaju da agent treba azurirati globalne Role imacemo problem posto bi globalna dozvola 'update-Role'
+        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'update-Role').
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Role'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         role.name = 'New Store Managers'
         role.permissions = ['create_store',]
         role_key = role.put()
@@ -405,7 +419,10 @@ class Role(ndb.Model):
     # Brise postojecu rolu domene, ili globalnu rolu.
     @ndb.transactional
     def delete():
-        # ova akcija zahteva da agent ima domain-specific dozvolu 'delete'.
+        # (u slucaju da agent treba brisati globalne Role imacemo problem posto bi globalna dozvola 'delete-Role'
+        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'delete-Role').
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Role'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         ndb.delete_multi(RoleUser.query(ancestor=role_key))
@@ -455,7 +472,9 @@ class RoleUser(ndb.Model):
     # Poziva novog usera u rolu domene, ili globalnu rolu
     @ndb.transactional
     def invite():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage_security-Domain' (ili globalnu dozvolu 'manage_security-Miraclestyle', u slucaju da je Rola globalna).
+        # (u slucaju da se user treba invite na globalnu Rolu imacemo problem posto bi globalna dozvola 'invite-RoleUser'
+        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'invite').
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'invite-RoleUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         role_user = RoleUser(parent=role_key, user='123673472829', state='invited')
         role_user_key = role_user.put()
@@ -465,9 +484,11 @@ class RoleUser(ndb.Model):
     # Uklanja postojeceg usera iz role domene, ili globalne role.
     @ndb.transactional
     def remove():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'manage_security-Domain' (ili globalnu dozvolu 'manage_security-Miraclestyle', u slucaju da je Rola globalna), ili agent koji je referenciran u entitetu (role_user.user == agent).
+        # (u slucaju da se user treba remove sa globalne Role imacemo problem posto bi globalna dozvola 'remove-RoleUser'
+        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'remove').
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'remove-RoleUser', ili agent koji je referenciran u entitetu (role_user.user == agent).
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='delete', state=role_user.state)
+        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='remove', state=role_user.state)
         object_log.put()
         role_user_key.delete()
         # iz AggregateUserPermission entiteta koji referencira tekucu domenu za usera role_user.user,
