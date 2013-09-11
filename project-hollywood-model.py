@@ -239,15 +239,6 @@ class UserIPAddress(ndb.Model):
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
-# done! ovde je za svaki write potreban user approval tako da je contention skoro nemoguc!
-# umesto ovog modela, trebao bi se iskoristiti Role model. Pogledati Role model!
-class AggregateUserPermission(ndb.Model):
-    
-    # ancestor User
-    # not logged
-    reference = ndb.KeyProperty('1',required=True)# ovo je referenca na Role u slucaju da user nasledjuje globalne dozvole, tj kada je Role entitet root
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
-
 # done!
 class Domain(ndb.Expando):
     
@@ -382,11 +373,11 @@ class Domain(ndb.Expando):
 # done!
 class Role(ndb.Model):
     
-    # ancestor Domain, with permissions that affect Domain and it's related entities
-    # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
-    # TREBA TESTIRATI DA LI RADe QUERY: Role.query(namespace=..., ancestor=..., id=....)
-    # ovaj model ce se kopirati prilikom accept akcije u RoleUser entitetu, na sledeci nacin:
-    # Role(namespace=domain_key, parent=user_key, id=role.id, ....)
+    # root (namespace Domain/'MIRACLESTYLE')
+    # Role permissions affect Domain and it's related entities, with exception to Roles in 'MIRACLESTYLE' namespace.
+    # Roles in 'MIRACLESTYLE' namespace globally affect Miraclestyle Application and all of it's related entities.
+    # ancestor User (for caching/optimization purposes) - Role(namespace=domain_key, parent=user_key, id=str(role_key.id()), ....)
+    # TREBA TESTIRATI DA LI RADE QUERY: Role.query(namespace=..., ancestor=..., id=....)
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
@@ -406,11 +397,11 @@ class Role(ndb.Model):
     # Pravi novu rolu domene, ili globalnu rolu
     @ndb.transactional
     def create():
-        # (u slucaju da agent treba praviti globalne Role imacemo problem posto bi globalna dozvola 'create-Role'
-        # po trenutnom konceptu znacila da user sa ovom dozvolom moze u svakoj domeni raditi 'create-Role').
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Role'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Role'. 
+        # u slucaju kreiranja Role u 'MIRACLESTYLE' domeni, agent mora biti Application Admin (users.is_current_user_admin()).
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role = Role(parent=domain_key, name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
+        # domena 'MIRACLESTYLE' je uvek evaluated 'active'
+        role = Role(namespace=domain_key, name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
         role_key = role.put()
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
         object_log.put()
@@ -458,7 +449,7 @@ class Role(ndb.Model):
 class RoleUser(ndb.Model):
     
     # ancestor Role
-    # id = string(User.key.id)
+    # id = str(user_key.id())
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - user
     user = ndb.KeyProperty('1', kind=User, required=True)
@@ -518,7 +509,7 @@ class RoleUser(ndb.Model):
         # ovaj delete ce fail ukoliko nije napravljen entitet sa tim kljucem, napr: ako je role_user.state == 'invited'
         key.delete()
     
-    # Prihvata poziv novog usera u rolu domene, ili globalnu rolu
+    # Prihvata poziv novog usera u rolu (lokalne ili globalne - "MIRACLESTYLE") domene
     @ndb.transactional
     def accept():
         # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (role_user.user == agent).
@@ -529,6 +520,25 @@ class RoleUser(ndb.Model):
         object_log.put()
         sub_role = Role(namespace=domain_key, parent=role_user.user, id=str(role_key.id()), name='~', permissions=['~',], readonly='True/False')
         sub_role.put()
+
+# future implementation - prototype!
+class Rule(ndb.Model):
+    
+    # root
+    name = ndb.StringProperty('1', required=True)
+    model_kind = ndb.StringProperty('2', required=True)
+    actions = ndb.StringProperty('3', repeated=True)
+    fields = ndb.LocalStructuredProperty(Field, '4', repeated=True)
+    condition = ndb.TextProperty('5')
+    roles = ndb.KeyProperty('6', kind=Role, repeated=True)
+
+# future implementation - prototype!
+class Field(ndb.Model):
+    
+    # LocalStructuredProperty model
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    writable = ndb.BooleanProperty('2', default=True, indexed=False)
+    visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
 
 ################################################################################
