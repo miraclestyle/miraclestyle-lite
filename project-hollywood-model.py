@@ -313,6 +313,14 @@ class Domain(ndb.Expando):
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
         object_log.put()
+        role = Role(parent=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
+        role_key = role.put()
+        role_user = RoleUser(parent=role_key, user=user_key, state='accepted')
+        role_user_key = role_user.put()
+        #object_log = ObjectLog(parent=role_user_key, agent=user_key, action='accept', state=role_user.state, log=role_user)
+        #object_log.put()
+        sub_role = Role(namespace=domain_key, parent=role_user.user, id=str(role_key.id()), name='Domain Admins', permissions=['*',], readonly=True)
+        sub_role.put()
     
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
@@ -374,7 +382,7 @@ class Domain(ndb.Expando):
 # done!
 class Role(ndb.Model):
     
-    # ancestor Domain with permissions that affect Domain and it's related entities
+    # ancestor Domain, with permissions that affect Domain and it's related entities
     # or root (if it is root, key id is manually assigned string) with global permissions on mstyle
     # TREBA TESTIRATI DA LI RADe QUERY: Role.query(namespace=..., ancestor=..., id=....)
     # ovaj model ce se kopirati prilikom accept akcije u RoleUser entitetu, na sledeci nacin:
@@ -382,7 +390,7 @@ class Role(ndb.Model):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - permission_state_model - edit_unpublished_catalog
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
     
     _KIND = 6
@@ -494,6 +502,7 @@ class RoleUser(ndb.Model):
         role_user_key = role_user.put()
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='invite', state=role_user.state, log=role_user)
         object_log.put()
+        # salje se notifikacija korisniku da je dobio poziv za dodavanje u Rolu.
     
     # Uklanja postojeceg usera iz role domene, ili globalne role.
     @ndb.transactional
@@ -504,11 +513,12 @@ class RoleUser(ndb.Model):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='remove', state=role_user.state)
         object_log.put()
-        key = ndb.Key(namespace=domain_key, parent=role_user_key, str(role_key.id()))
-        key.delete()
         role_user_key.delete()
+        key = ndb.Key(namespace=domain_key, parent=role_user.user, str(role_key.id()))
+        # ovaj delete ce fail ukoliko nije napravljen entitet sa tim kljucem, napr: ako je role_user.state == 'invited'
+        key.delete()
     
-    # Azurira postojecu rolu domene, ili globalnu rolu
+    # Prihvata poziv novog usera u rolu domene, ili globalnu rolu
     @ndb.transactional
     def accept():
         # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (role_user.user == agent).
@@ -517,7 +527,7 @@ class RoleUser(ndb.Model):
         role_user_key = role_user.put()
         object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='accept', role_user.state)
         object_log.put()
-        sub_role = Role(namespace=domain_key, parent=role_user_key, id=role.id, ....)
+        sub_role = Role(namespace=domain_key, parent=role_user.user, id=str(role_key.id()), name='~', permissions=['~',], readonly='True/False')
         sub_role.put()
 
 
