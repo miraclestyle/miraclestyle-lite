@@ -91,7 +91,7 @@ class Domain(ndb.Expando):
     pass
     #Expando
     
-    _KIND = 3
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'active'
     
@@ -123,8 +123,6 @@ class Domain(ndb.Expando):
         },
     }
     
-    # *** mozda treba zameniti dozvole za upravljanje domenom sa jednom dozvolom 'manage-Domain' ili tome slicno!
-    
     # Ova akcija kreira novu domenu.
     @ndb.transactional
     def create():
@@ -143,7 +141,7 @@ class Domain(ndb.Expando):
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Domain'. ***
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.name = 'promenjeno ime od strane administratora domene'
         domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'manage_security-Domain'. ? provericemo kako je to na google apps
@@ -154,7 +152,7 @@ class Domain(ndb.Expando):
     # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
     @ndb.transactional
     def suspend():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'suspend-Domain'. ***
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'suspend-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         domain.state = 'suspended'
         domain_key = domain.put()
@@ -164,14 +162,14 @@ class Domain(ndb.Expando):
     # Ova akcija aktivira suspendovanu domenu. Ovde cemo dalje opisati posledice aktivacije
     @ndb.transactional
     def activate():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'activate-Domain'. ***
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'activate-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'suspended'.
         domain.state = 'active'
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-# done! ovo cemo iskoristiti za globalne dozvole
+# done!
 class Role(ndb.Model):
     
     # root (namespace Domain)
@@ -183,7 +181,7 @@ class Role(ndb.Model):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
     
-    _KIND = 6
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -238,7 +236,7 @@ class Role(ndb.Model):
         ndb.delete_multi(role_users)
         role_key.delete()
 
-# done! ovo cemo iskoristiti za globalne dozvole
+# done!
 class RoleUser(ndb.Model):
     
     # ancestor Role (namespace Domain) - id = str(user_key.id())
@@ -247,7 +245,7 @@ class RoleUser(ndb.Model):
     user = ndb.KeyProperty('1', kind=User, required=True)
     state = ndb.IntegerProperty('2', required=True)# invited/accepted
     
-    _KIND = 7
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -364,6 +362,79 @@ class Store(ndb.Expando):
     #
     # Feedback
     # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '16', repeated=True)# soft limit 120x
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'active'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'open' : (1, ),
+        'closed' : (2, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'close' : 3,
+       'open' : 4,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'open' : {
+            'from' : ('closed',),
+            'to' : ('open',),
+         },
+        'close' : {
+           'from' : ('open', ),
+           'to'   : ('closed',),
+        },
+    }
+    
+    # Ova akcija kreira novi store.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        store = Store(name=var_name, logo=var_logo, state='open')
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija azurira i store.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.name = var_name
+        store.logo = var_logo
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    @ndb.transactional
+    def close():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.state = 'closed'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    @ndb.transactional
+    def open():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
+        store.state = 'open'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
 
 # done!
 class StoreFeedback(ndb.Model):
@@ -382,11 +453,62 @@ class StoreFeedback(ndb.Model):
 # done!
 class StoreContent(ndb.Model):
     
-    # ancestor Store (Catalog - for caching)
+    # ancestor Store (Catalog for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
     sequence = ndb.IntegerProperty('3', required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi store content.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-StoreContent'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store = Store(name=var_name, logo=var_logo, state='open')
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija azurira i store.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.name = var_name
+        store.logo = var_logo
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    @ndb.transactional
+    def close():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.state = 'closed'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    @ndb.transactional
+    def open():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
+        store.state = 'open'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
 
 # done!
 class StoreShippingExclusion(Location):
