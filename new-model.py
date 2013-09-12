@@ -453,7 +453,7 @@ class StoreFeedback(ndb.Model):
 # done!
 class StoreContent(ndb.Model):
     
-    # ancestor Store (Catalog for caching) (namespace Domain)
+    # ancestor Store (Catalog, for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
@@ -503,7 +503,7 @@ class StoreContent(ndb.Model):
 # done!
 class StoreShippingExclusion(Location):
     
-    # ancestor Store (Catalog - for caching)
+    # ancestor Store (Catalog, for caching) (namespace Domain)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
     
     _KIND = 0
@@ -596,7 +596,7 @@ class Tax(ndb.Expando):
         object_log = ObjectLog(parent=tax_key, agent=agent_key, action='update', state='none', log=tax)
         object_log.put()
     
-    # Ova akcija brise store shipping exclusion.
+    # Ova akcija brise taxu.
     @ndb.transactional
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Tax'.
@@ -614,11 +614,51 @@ class Carrier(ndb.Model):
     # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
     active = ndb.BooleanProperty('2', default=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi carrier.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Carrier'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        carrier = Carrier(name=var_name, active=True)
+        carrier_key = carrier.put()
+        object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='create', state='none', log=carrier)
+        object_log.put()
+    
+    # Ova akcija azurira carrier.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Carrier'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        carrier.name = var_name
+        carrier.active = var_active
+        carrier_key = carrier.put()
+        object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='update', state='none', log=carrier)
+        object_log.put()
+    
+    # Ova akcija brise carrier.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Carrier'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        carrier_key.delete()
 
 # done!
 class CarrierLine(ndb.Expando):
     
-    # ancestor Carrier
+    # ancestor Carrier (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
     # composite index: ancestor:yes - sequence; ancestor:yes - active,sequence
     name = ndb.StringProperty('1', required=True)
@@ -630,6 +670,48 @@ class CarrierLine(ndb.Expando):
     # Expando
     # locations = ndb.LocalStructuredProperty(Location, '5', repeated=True)# soft limit 300x
     # rules = ndb.LocalStructuredProperty(CarrierLineRule, '6', repeated=True)# soft limit 300x
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi carrier line.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-CarrierLine'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        carrier_line = CarrierLine(name=var_name, sequence=var_sequence, location_exclusion=var_location_exclusion, active=True)
+        carrier_line_key = carrier_line.put()
+        object_log = ObjectLog(parent=carrier_line_key, agent=agent_key, action='create', state='none', log=carrier_line)
+        object_log.put()
+    
+    # Ova akcija azurira carrier line.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-CarrierLine'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        carrier_line.name = var_name
+        carrier_line.sequence = var_sequence
+        carrier_line.location_exclusion = var_location_exclusion
+        carrier_line.active = var_active
+        carrier_line_key = carrier_line.put()
+        object_log = ObjectLog(parent=carrier_line_key, agent=agent_key, action='update', state='none', log=carrier_line)
+        object_log.put()
+    
+    # Ova akcija brise carrier line.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-CarrierLine'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        object_log = ObjectLog(parent=carrier_line_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        carrier_line_key.delete()
 
 # done!
 class CarrierLineRule(ndb.Model):
@@ -660,6 +742,79 @@ class Catalog(ndb.Expando):
     # Search improvements
     # product count per product category
     # rank coefficient based on store feedback
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'active'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'open' : (1, ),
+        'closed' : (2, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'close' : 3,
+       'open' : 4,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'open' : {
+            'from' : ('closed',),
+            'to' : ('open',),
+         },
+        'close' : {
+           'from' : ('open', ),
+           'to'   : ('closed',),
+        },
+    }
+    
+    # Ova akcija kreira novi store.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        store = Store(name=var_name, logo=var_logo, state='open')
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija azurira postojeci store.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.name = var_name
+        store.logo = var_logo
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    @ndb.transactional
+    def close():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.state = 'closed'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    @ndb.transactional
+    def open():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
+        store.state = 'open'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
 
 # done!
 class CatalogImage(Image):
