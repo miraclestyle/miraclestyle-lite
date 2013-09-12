@@ -169,7 +169,7 @@ class Domain(ndb.Expando):
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-# done!
+# done! mozda napraviti DomainUser u kojem je repeated prop. Roles, i onda u Expando od User modela dodati struct prop Roles(Domain, Roles)?
 class Role(ndb.Model):
     
     # root (namespace Domain)
@@ -405,7 +405,7 @@ class Store(ndb.Expando):
         object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
         object_log.put()
     
-    # Ova akcija azurira i store.
+    # Ova akcija azurira postojeci store.
     @ndb.transactional
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
@@ -474,47 +474,76 @@ class StoreContent(ndb.Model):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-StoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store = Store(name=var_name, logo=var_logo, state='open')
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
+        store_content = StoreContent(title=var_title, body=var_body, sequence=var_sequence)
+        store_content_key = store_content.put()
+        object_log = ObjectLog(parent=store_content_key, agent=agent_key, action='create', state='none', log=store_content)
         object_log.put()
     
-    # Ova akcija azurira i store.
+    # Ova akcija azurira store content.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-StoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.name = var_name
-        store.logo = var_logo
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        store_content.title = var_title
+        store_content.body = var_body
+        store_content.sequence = var_sequence
+        store_content_key = store_content.put()
+        object_log = ObjectLog(parent=store_content_key, agent=agent_key, action='update', state='none', log=store_content)
         object_log.put()
     
-    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    # Ova akcija brise store content.
     @ndb.transactional
-    def close():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-StoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.state = 'closed'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=store_content_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-    
-    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
-    @ndb.transactional
-    def open():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
-        store.state = 'open'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
+        store_content_key.delete()
 
 # done!
 class StoreShippingExclusion(Location):
     
     # ancestor Store (Catalog - for caching)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi store shipping exclusion.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-StoreShippingExclusion'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store_shipping_exclusion = StoreShippingExclusion(country=var_country)
+        store_shipping_exclusion_key = store_shipping_exclusion.put()
+        object_log = ObjectLog(parent=store_shipping_exclusion_key, agent=agent_key, action='create', state='none', log=store_shipping_exclusion)
+        object_log.put()
+    
+    # Ova akcija azurira store shipping exclusion.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-StoreShippingExclusion'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store_shipping_exclusion.country = var_country
+        store_shipping_exclusion_key = store_shipping_exclusion.put()
+        object_log = ObjectLog(parent=store_shipping_exclusion_key, agent=agent_key, action='update', state='none', log=store_shipping_exclusion)
+        object_log.put()
+    
+    # Ova akcija brise store shipping exclusion.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-StoreShippingExclusion'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        object_log = ObjectLog(parent=store_shipping_exclusion_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        store_shipping_exclusion_key.delete()
 
 # done!
 class Tax(ndb.Expando):
