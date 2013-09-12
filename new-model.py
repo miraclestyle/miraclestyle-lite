@@ -561,6 +561,49 @@ class Tax(ndb.Expando):
     # locations = ndb.LocalStructuredProperty(Location, '6', repeated=True)# soft limit 300x
     # product_categories = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)# soft limit 100x
     # carriers = ndb.KeyProperty('8', kind=Carrier, repeated=True)# soft limit 100x
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novu taxu.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Tax'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        tax = Tax(name=var_name, sequence=var_sequence, amount=var_amount, location_exclusion=var_location_exclusion, active=True)
+        tax_key = tax.put()
+        object_log = ObjectLog(parent=tax_key, agent=agent_key, action='create', state='none', log=tax)
+        object_log.put()
+    
+    # Ova akcija azurira taxu.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Tax'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        tax.name = var_name
+        tax.sequence = var_sequence
+        tax.amount = var_amount
+        tax.location_exclusion = var_location_exclusion
+        tax.active = var_active
+        tax_key = tax.put()
+        object_log = ObjectLog(parent=tax_key, agent=agent_key, action='update', state='none', log=tax)
+        object_log.put()
+    
+    # Ova akcija brise store shipping exclusion.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Tax'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        object_log = ObjectLog(parent=tax_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        tax_key.delete()
 
 # done!
 class Carrier(ndb.Model):
