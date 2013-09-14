@@ -1022,47 +1022,47 @@ class ProductTemplate(ndb.Expando):
             dic['reset'] = False
             variants.append(dic)
         
-variants = [
-    {'name': 'Color', 'options': ['Red', 'Green', 'Blue'], 'position': 0, 'increment': False, 'reset': False},
-    {'name': 'Size', 'options': ['Small', 'Medium', 'Large'], 'position': 0, 'increment': False, 'reset': False},
-    {'name': 'Fabric', 'options': ['Silk', 'Cotton'], 'position': 0, 'increment': False, 'reset': False},
-    {'name': 'Motif', 'options': ['Lace', 'Smooth', 'ZigZag', 'Butterfly'], 'position': 0, 'increment': False, 'reset': False},
-]
-        
-variant_signatures = []
-stay = True
-while stay:
-    iterator = 0
-    for item in variants:
-        if (item['increment']):
-            variants[iterator]['position'] += 1
-            variants[iterator]['increment'] = False
-        if (item['reset']):
-            variants[iterator]['position'] = 0
-            variants[iterator]['reset'] = False
-        iterator += 1
-    dic = {}
-    iterator = 0
-    for item in variants:
-        dic[item['name']] = item['options'][item['position']]
-        if (iterator == 0):
-            if (len(item['options']) == item['position'] + 1):
-                variants[iterator]['reset'] = True
-                variants[iterator + 1]['increment'] = True
-            else:
-                variants[iterator]['increment'] = True
-        elif not (len(variants) == iterator + 1):
-            if (len(item['options']) == item['position'] + 1):
-                if (variants[iterator - 1]['reset']):
-                    variants[iterator]['reset'] = True
-                    variants[iterator + 1]['increment'] = True
-        elif (len(variants) == iterator + 1):
-            if (len(item['options']) == item['position'] + 1):
-                if (variants[iterator - 1]['reset']):
-                    stay = False
-                    break
-        iterator += 1
-    variant_signatures.append(dic)
+        variants = [
+            {'name': 'Color', 'options': ['Red', 'Green', 'Blue'], 'position': 0, 'increment': False, 'reset': False},
+            {'name': 'Size', 'options': ['Small', 'Medium', 'Large'], 'position': 0, 'increment': False, 'reset': False},
+            {'name': 'Fabric', 'options': ['Silk', 'Cotton'], 'position': 0, 'increment': False, 'reset': False},
+            {'name': 'Motif', 'options': ['Lace', 'Smooth', 'ZigZag', 'Butterfly'], 'position': 0, 'increment': False, 'reset': False},
+        ]
+                
+        variant_signatures = []
+        stay = True
+        while stay:
+            iterator = 0
+            for item in variants:
+                if (item['increment']):
+                    variants[iterator]['position'] += 1
+                    variants[iterator]['increment'] = False
+                if (item['reset']):
+                    variants[iterator]['position'] = 0
+                    variants[iterator]['reset'] = False
+                iterator += 1
+            dic = {}
+            iterator = 0
+            for item in variants:
+                dic[item['name']] = item['options'][item['position']]
+                if (iterator == 0):
+                    if (len(item['options']) == item['position'] + 1):
+                        variants[iterator]['reset'] = True
+                        variants[iterator + 1]['increment'] = True
+                    else:
+                        variants[iterator]['increment'] = True
+                elif not (len(variants) == iterator + 1):
+                    if (len(item['options']) == item['position'] + 1):
+                        if (variants[iterator - 1]['reset']):
+                            variants[iterator]['reset'] = True
+                            variants[iterator + 1]['increment'] = True
+                elif (len(variants) == iterator + 1):
+                    if (len(item['options']) == item['position'] + 1):
+                        if (variants[iterator - 1]['reset']):
+                            stay = False
+                            break
+                iterator += 1
+            variant_signatures.append(dic)
         
         variant_signatures = [
             {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Silk'},
