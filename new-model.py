@@ -127,23 +127,29 @@ class Domain(ndb.Expando):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        domain = Domain(name='deskriptivno ime po zelji kreatora', primary_contact=user_key, state='active')
+        domain = Domain(name=var_name, primary_contact=user_key, state='active')
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
         object_log.put()
-        role = Role(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
-        role_key = role.put()
-        role_user = RoleUser(parent=role_key, user=user_key, state='accepted')
-        role_user_key = role_user.put()
-        user_role = Role(namespace=domain_key, parent=role_user.user, id=str(role_key.id()), name='Domain Admins', permissions=['*',], readonly=True)
-        user_role.put()
+        domain_role = DomainRole(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
+        domain_role_key = domain_role.put()
+        domain_user = DomainUser(namespace=domain_key, id=str(user_key.id()), name='Administrator', user=user_key, roles=[domain_role_key,], state='accepted')
+        domain_user_key = domain_user.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
+        object_log.put()
+        user = user_key.get()
+        user.roles.append(domain_role_key)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+        object_log.put()
+        
     
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Domain'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        domain.name = 'promenjeno ime od strane administratora domene'
+        domain.name = var_name
         domain.primary_contact = agent_key # u ovaj prop. se moze upisati samo key user-a koji ima domain-specific dozvolu 'manage_security-Domain'. ? provericemo kako je to na google apps
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='update', state=domain.state, log=domain)
