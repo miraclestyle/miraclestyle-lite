@@ -133,6 +133,8 @@ class Domain(ndb.Expando):
         object_log.put()
         domain_role = DomainRole(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
         domain_role_key = domain_role.put()
+        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='create', state='none', log=domain_role)
+        object_log.put()
         domain_user = DomainUser(namespace=domain_key, id=str(user_key.id()), name='Administrator', user=user_key, roles=[domain_role_key,], state='accepted')
         domain_user_key = domain_user.put()
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
