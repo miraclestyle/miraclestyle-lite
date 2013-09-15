@@ -79,7 +79,7 @@ class DecimalProperty(ndb.StringProperty):
 # DOMAIN - 20
 ################################################################################
 
-# done! - ovde ce nam trebati kontrola
+# done! - ovde ce nam trebati kontrola - treba odluciti konvenciju imenovanja objekata!
 class Domain(ndb.Expando):
     
     # root
