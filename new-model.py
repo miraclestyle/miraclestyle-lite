@@ -169,8 +169,8 @@ class Domain(ndb.Expando):
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-# done! mozda napraviti DomainUser u kojem je repeated prop. Roles, i onda u Expando od User modela dodati struct prop Roles(Domain, Roles)?
-class Role(ndb.Model):
+# done!
+class DomainRole(ndb.Model):
     
     # root (namespace Domain)
     # ancestor User (for caching/optimization purposes) - Role(namespace=domain_key, parent=user_key, id=str(role_key.id()), ....)
@@ -191,63 +191,69 @@ class Role(ndb.Model):
        'delete' : 3,
     }
     
-    # Pravi novu rolu
+    # Pravi novu domain rolu
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Role'. 
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainRole'. 
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role = Role(name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
-        role_key = role.put()
-        object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
+        domain_role = DomainRole(name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
+        domain_role_key = domain_role.put()
+        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='create', state='none', log=domain_role)
         object_log.put()
     
-    # Azurira postojecu rolu
+    # Azurira postojecu domain rolu
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Role'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainRole'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role.name = 'New Store Managers'
-        role.permissions = ['create_store',]
-        role_key = role.put()
-        object_log = ObjectLog(parent=role_key, agent=agent_key, action='update', state='none', log=role)
+        domain_role.name = 'New Store Managers'
+        domain_role.permissions = ['create_store',]
+        domain_role_key = domain_role.put()
+        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='update', state='none', log=domain_role)
         object_log.put()
-        role_users = RoleUser.query(ancestor=role_key).fetch(projection=[RoleUser.user,])
-        # ovo uraditi sa taskletima u async radi optimizacije
-        for role_user in role_users:
-            key = ndb.Key(namespace=domain_key, parent=role_user, str(role_key.id()))
-            user_role = key.get()
-            user_role.name = role.name
-            user_role.permissions = role.permissions
-            user_role.put()
     
-    # Brise postojecu rolu
+    # Brise postojecu domain rolu
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Role'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainRole'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
+        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        role_users = RoleUser.query(ancestor=role_key).fetch(projection=[RoleUser.user,])
-        roles = []
-        for role_user in role_users:
-            key = ndb.Key(namespace=domain_key, parent=role_user, str(role_key.id()))
-            roles.append(key)
-        ndb.delete_multi(roles)
-        ndb.delete_multi(role_users)
-        role_key.delete()
+        domain_users = DomainUser.query(roles == domain_role_key).fetch()
+        user_keys = []
+        for domain_user in domain_users:
+            domain_user.roles.remove(domain_role_key)
+            domain_user_key = domain_user.put()
+            object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state)
+            object_log.put()
+            user_keys.append(domain_user.user)
+        users = ndb.get_multi(user_keys)
+        for user in users:
+            if (user.state == 'active'):
+                user.roles.remove(domain_role_key)
+                user_key = user.put()
+                object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+                object_log.put()
+            
+        domain_role_key.delete()
 
 # done!
-class RoleUser(ndb.Model):
+class DomainUser(ndb.Expando):
     
-    # ancestor Role (namespace Domain) - id = str(user_key.id())
+    # root (namespace Domain) - id = str(user_key.id())
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
-    # composite index: ancestor:yes - user
-    user = ndb.KeyProperty('1', kind=User, required=True)
-    state = ndb.IntegerProperty('2', required=True)# invited/accepted
+    # composite index: ancestor:no - name
+    name = ndb.StringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
+    user = ndb.KeyProperty('2', kind=User, required=True)
+    roles = ndb.KeyProperty('3', kind=Role, repeated=True)
+    state = ndb.IntegerProperty('4', required=True)# invited/accepted
+    _default_indexed = False
+    pass
+    #Expando
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'none'
+    OBJECT_DEFAULT_STATE = 'invited'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -263,6 +269,7 @@ class RoleUser(ndb.Model):
        'invite' : 1,
        'remove' : 2,
        'accept' : 3,
+       'update' : 4,
     }
     
     OBJECT_TRANSITIONS = {
@@ -272,41 +279,73 @@ class RoleUser(ndb.Model):
         },
     }
     
-    # Poziva novog usera u rolu
+    # Poziva novog usera u domenu
     @ndb.transactional
     def invite():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'invite-RoleUser'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'invite-DomainUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role_user = RoleUser(parent=role_key, id='123673472829', user='123673472829', state='invited')
-        role_user_key = role_user.put()
-        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='invite', state=role_user.state, log=role_user)
-        object_log.put()
-        # salje se notifikacija korisniku da je dobio poziv za dodavanje u Rolu.
+        user = var_user.get()
+        if (user.state == 'active'):
+            domain_user = DomainUser(id=str(var_user.id()), name=var_name, user=var_user, roles=var_roles, state='invited')
+            domain_user_key = domain_user.put()
+            object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='invite', state=domain_user.state, log=domain_user)
+            object_log.put()
+            # salje se notifikacija korisniku da je dobio poziv za dodavanje u Domenu.
     
-    # Uklanja postojeceg usera iz role
+    # Uklanja postojeceg usera iz domene
     @ndb.transactional
     def remove():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'remove-RoleUser', ili agent koji je referenciran u entitetu (role_user.user == agent).
-        # agent koji je referenciran u domain.primary_contact prop. ne moze izgubiti dozvole za upravljanje domenom.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'remove-DomainUser', ili agent koji je referenciran u entitetu (domain_user.user == agent).
+        # agent koji je referenciran u domain.primary_contact prop. ne moze biti izbacen iz domene i izgubiti dozvole za upravljanje domenom.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='remove', state=role_user.state)
+        user = domain_user.user.get()
+        if (user.state == 'active'):
+            for role in domain_user.roles:
+                user.roles.remove(role)
+            user_key = user.put()
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='remove', state=domain_user.state)
         object_log.put()
-        role_user_key.delete()
-        key = ndb.Key(namespace=domain_key, parent=role_user.user, str(role_key.id()))
-        # ovaj delete nece uspeti ukoliko entitet ne postoji, napr: ako je role_user.state == 'invited'
-        key.delete()
+        domain_user_key.delete()
     
-    # Prihvata poziv novog usera u rolu
+    # Prihvata poziv novog usera u domenu
     @ndb.transactional
     def accept():
-        # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (role_user.user == agent).
+        # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (domain_user.user == agent).
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role_user.state = 'accepted'
-        role_user_key = role_user.put()
-        object_log = ObjectLog(parent=role_user_key, agent=agent_key, action='accept', state=role_user.state)
+        domain_user.state = 'accepted'
+        domain_user_key = domain_user.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
         object_log.put()
-        user_role = Role(parent=role_user.user, id=str(role_key.id()), name='~', permissions=['~',], readonly='True/False')
-        user_role.put()
+        user = domain_user.user.get()
+        if (user.state == 'active'):
+            for role in domain_user.roles:
+                user.roles.append(role)
+            user_key = user.put()
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log.put()
+    
+    # Azurira postojeceg usera u domeni
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainUser'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        old_roles = domain_user.roles
+        domain_user.name = var_name
+        domain_user.roles = var_roles
+        domain_user_key = domain_user.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
+        object_log.put()
+        user = domain_user.user.get()
+        if (user.state == 'active'):
+            for role in old_roles:
+                user.roles.remove(role)
+            for role in domain_user.roles:
+                user.roles.append(role)
+            user_key = user.put()
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log.put()
 
 # future implementation - prototype!
 class Rule(ndb.Model):
