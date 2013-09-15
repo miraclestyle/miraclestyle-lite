@@ -365,7 +365,7 @@ class Store(ndb.Expando):
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'active'
+    OBJECT_DEFAULT_STATE = 'open'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -728,7 +728,7 @@ class CarrierLineRule(ndb.Model):
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
 
-# done!
+# done! - ovde ce nam trebati kontrola
 class Catalog(ndb.Expando):
     
     # root (namespace Domain)
@@ -738,19 +738,19 @@ class Catalog(ndb.Expando):
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
-    cover = blobstore.BlobKeyProperty('5', required=True)# blob ce se implementirati na GCS
-    cost = DecimalProperty('6', required=True, indexed=False)
-    state = ndb.IntegerProperty('7', required=True)
+    state = ndb.IntegerProperty('5', required=True)
     _default_indexed = False
     pass
     # Expando
+    # cover = blobstore.BlobKeyProperty('6', required=True)# blob ce se implementirati na GCS
+    # cost = DecimalProperty('7', required=True)
     # Search improvements
     # product count per product category
     # rank coefficient based on store feedback
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'active'
+    OBJECT_DEFAULT_STATE = 'unpublished'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -764,6 +764,7 @@ class Catalog(ndb.Expando):
         'discontinued' : (4, ),
     }
     
+    # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
     OBJECT_ACTIONS = {
        'create' : 1,
        'update' : 2,
@@ -787,45 +788,65 @@ class Catalog(ndb.Expando):
         },
     }
     
-    # Ova akcija kreira novi store.
+    # Ova akcija kreira novi catalog.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Catalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        store = Store(name=var_name, logo=var_logo, state='open')
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
+        catalog = Catalog(store=store_key, name=var_name, publish=var_publish, discontinue=var_discontinue, state='unpublished')
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='create', state=catalog.state, log=catalog)
         object_log.put()
     
-    # Ova akcija azurira postojeci store.
+    # Ova akcija azurira postojeci catalog.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.name = var_name
-        store.logo = var_logo
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Catalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
+        catalog.store = var_store
+        catalog.name = var_name
+        catalog.publish = var_publish
+        catalog.discontinue = var_discontinue
+        catalog.state = var_state
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='update', state=catalog.state, log=catalog)
         object_log.put()
     
-    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    # Ova akcija zakljucava unpublished catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
-    def close():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.state = 'closed'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+    def lock():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-Catalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
+        # radimo update catalog-a sa novim cover-om - ovde cemo verovatno raditi i presnimavanje entiteta iz store-a za koji je zakacen catalog, i svega ostalog sto je neophodno.
+        catalog_cover = CatalogImage.query(ancestor=catalog_key).order(CatalogImage.sequence).fetch(1, keys_only=True)
+        catalog.cover = catalog_cover
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='update', state=catalog.state, log=catalog)
+        object_log.put()
+        # zakljucavamo catalog
+        catalog.state = 'locked'
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='lock', state=catalog.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
-    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    # Ova akcija objavljuje locked catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
-    def open():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
-        store.state = 'open'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+    def publish():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-Catalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'locked'.
+        catalog.state = 'published'
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='publish', state=catalog.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija prekida objavljen catalog. Ovde cemo dalje opisati posledice zatvaranja...
+    @ndb.transactional
+    def discontinue():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-Catalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'published'.
+        catalog.state = 'discontinued'
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='discontinue', state=catalog.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -940,15 +961,26 @@ class ProductTemplate(ndb.Expando):
     description = ndb.TextProperty('3', required=True)# soft limit 64kb
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
     unit_price = DecimalProperty('5', required=True)
+    state = ndb.IntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    # states: - ovo cemo pojasniti
+    # 'in stock'
+    # 'available for order'
+    # 'out of stock'
+    # 'preorder'
+    # 'auto manage inventory - available for order' (poduct is 'available for order' when inventory balance is <= 0)
+    # 'auto manage inventory - out of stock' (poduct is 'out of stock' when inventory balance is <= 0)
+    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
     _default_indexed = False
     pass
     # Expando
     # mozda treba uvesti customer lead time??
-    # product_template_variants = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
-    # product_template_contents = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
-    # product_template_images = ndb.LocalStructuredProperty(Image, '9', repeated=True)# soft limit 100x
+    # variants = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
+    # contents = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
+    # images = ndb.LocalStructuredProperty(Image, '9', repeated=True)# soft limit 100x
     # weight = ndb.StringProperty('10')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
     # volume = ndb.StringProperty('11')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
+    # low_stock_quantity = DecimalProperty('12', default=0.00)# notify store manager when qty drops below X quantity
+    # product_instance_count = ndb.IntegerProperty('13') cuvanje ovog podatka moze biti od koristi zbog prakticnog limita broja instanci na sistemu
     
     _KIND = 0
     
@@ -966,9 +998,9 @@ class ProductTemplate(ndb.Expando):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        product_template = ProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price)
+        product_template = ProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price, state=var_state)
         product_template_key = product_template.put()
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='create', state='none', log=product_template)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='create', state=product_template.state, log=product_template)
         object_log.put()
     
     # Ova akcija azurira product template.
@@ -983,7 +1015,7 @@ class ProductTemplate(ndb.Expando):
         product_template.unit_price = var_unit_price
         product_template.state = var_state
         product_template_key = product_template.put()
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='update', state='none', log=product_template)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='update', state=product_template.state, log=product_template)
         object_log.put()
     
     # Ova akcija brise product template.
@@ -991,12 +1023,12 @@ class ProductTemplate(ndb.Expando):
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-ProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='delete', state='none')
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='delete', state=product_template.state)
         object_log.put()
         product_instances = ProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
-        # ovaj metod ne loguje brisanje pojedinacno svakog product_instance entiteta, pa se trebati ustvari pozivati ProductInstance.delete() sa listom kljuceva.
+        # ovaj metod ne loguje brisanje pojedinacno svakog product_instance entiteta, pa se treba ustvari pozivati ProductInstance.delete() sa listom kljuceva.
         # ProductInstance.delete() nije za sada opisana da radi multi key delete.
-        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductTemplate entiteta podrazumvea da su svi potomci izbrisani!!
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductTemplate entiteta podrazumvea da su svi children izbrisani!!
         ndb.delete_multi(product_instances)
         product_template_key.delete()
     
@@ -1005,14 +1037,25 @@ class ProductTemplate(ndb.Expando):
     def generate_product_instances():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'generate_product_instances-ProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
+        # ova funkcija ce se u potpunosti oslanjati na task queue kako bi se resio problem velikog broja pravljenja/brisanja instanci.
+        # brisemo postojece product instance - imamo problem sto se brisanje product instanci ne loguje
         product_instances = ProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
         ndb.delete_multi(product_instances)
-        
-        
-        
-        
+        # brisemo postojece product inventory logove - imamo problem sto se brisanje product inventory logova ne loguje
+        product_inventory_logs = ProductInventoryLog.query(ancestor=product_template_key).fetch(keys_only=True)
+        ndb.delete_multi(product_inventory_logs)
+        # brisemo postojece product inventory adjustment-e - imamo problem sto se brisanje product inventory adjustment-a ne loguje
+        product_inventory_adjustments = ProductInventoryAdjustment.query(ancestor=product_template_key).fetch(keys_only=True)
+        ndb.delete_multi(product_inventory_adjustments)
+        # pripremamo listu varianti za product template
+        # primer:
+        # variants = [
+            # {'name': 'Color', 'options': ['Red', 'Green', 'Blue'], 'position': 0, 'increment': False, 'reset': False},
+            # {'name': 'Size', 'options': ['Small', 'Medium', 'Large'], 'position': 0, 'increment': False, 'reset': False},
+            # {'name': 'Fabric', 'options': ['Silk', 'Cotton'], 'position': 0, 'increment': False, 'reset': False},
+        # ]
         variants []
-        for key in product_template_variants:
+        for key in product_template.variants:
             product_template_variant = key.get()
             dic = {}
             dic['name'] = product_template_variant.name
@@ -1021,86 +1064,76 @@ class ProductTemplate(ndb.Expando):
             dic['increment'] = False
             dic['reset'] = False
             variants.append(dic)
-        
-        variants = [
-            {'name': 'Color', 'options': ['Red', 'Green', 'Blue'], 'position': 0, 'increment': False, 'reset': False},
-            {'name': 'Size', 'options': ['Small', 'Medium', 'Large'], 'position': 0, 'increment': False, 'reset': False},
-            {'name': 'Fabric', 'options': ['Silk', 'Cotton'], 'position': 0, 'increment': False, 'reset': False},
-            {'name': 'Motif', 'options': ['Lace', 'Smooth', 'ZigZag', 'Butterfly'], 'position': 0, 'increment': False, 'reset': False},
-        ]
-                
+        # generisemo sve moguce kombinacije variacija koje product instance moze imati
+        # primer:
+        # variant_signatures = [
+            # {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Silk'},
+            # {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Silk'},
+            # {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Silk'},
+            # {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Silk'},
+            # {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Silk'},
+            # {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Silk'},
+            # {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Silk'},
+            # {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Silk'},
+            # {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Silk'},
+            # {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Cotton'},
+            # {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Cotton'},
+            # {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Cotton'},
+            # {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            # {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            # {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            # {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Cotton'},
+            # {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Cotton'},
+            # {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Cotton'},
+        # ]
         variant_signatures = []
         stay = True
         while stay:
-            iterator = 0
+            i = 0
             for item in variants:
                 if (item['increment']):
-                    variants[iterator]['position'] += 1
-                    variants[iterator]['increment'] = False
+                    variants[i]['position'] += 1
+                    variants[i]['increment'] = False
                 if (item['reset']):
-                    variants[iterator]['position'] = 0
-                    variants[iterator]['reset'] = False
-                iterator += 1
+                    variants[i]['position'] = 0
+                    variants[i]['reset'] = False
+                i += 1
             dic = {}
-            iterator = 0
+            i = 0
             for item in variants:
                 dic[item['name']] = item['options'][item['position']]
-                if (iterator == 0):
+                if (i == 0):
                     if (len(item['options']) == item['position'] + 1):
-                        variants[iterator]['reset'] = True
-                        variants[iterator + 1]['increment'] = True
+                        variants[i]['reset'] = True
+                        variants[i + 1]['increment'] = True
                     else:
-                        variants[iterator]['increment'] = True
-                elif not (len(variants) == iterator + 1):
+                        variants[i]['increment'] = True
+                elif not (len(variants) == i + 1):
                     if (len(item['options']) == item['position'] + 1):
-                        if (variants[iterator - 1]['reset']):
-                            variants[iterator]['reset'] = True
-                            variants[iterator + 1]['increment'] = True
-                elif (len(variants) == iterator + 1):
+                        if (variants[i - 1]['reset']):
+                            variants[i]['reset'] = True
+                            variants[i + 1]['increment'] = True
+                elif (len(variants) == i + 1):
                     if (len(item['options']) == item['position'] + 1):
-                        if (variants[iterator - 1]['reset']):
+                        if (variants[i - 1]['reset']):
                             stay = False
                             break
-                iterator += 1
+                i += 1
             variant_signatures.append(dic)
-        
-        variant_signatures = [
-            {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Silk'},
-            {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Silk'},
-            {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Silk'},
-            {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Silk'},
-            {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Silk'},
-            {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Silk'},{'name
-            {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Silk'},
-            {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Silk'},
-            {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Silk'},
-            {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Cotton'},
-            {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Cotton'},
-            {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Cotton'},
-            {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Cotton'},
-            {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Cotton'},
-            {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Cotton'},
-            {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Cotton'},
-            {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Cotton'},
-            {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Cotton'},
-        ]
-        
-            # ako nakon ove variante ima jos varianti onda mi treba broj option-sa u varianti i prvi option iz variante, 
-            # ali treba zapamtiti redni broj option-a koji je trenutno izabran
-            
-            # 
-            # treba mi index ucatne variante i treba mi ukupan broj varianti
-            # ako iza ove 
-            for option in product_template_variant.options:
-                
-                
-                
-                
-                
-        product_instance = ProductInstance(parent=product_template_key, code=var_code, state=var_state)
-        product_instance_key = product_instance.put()
-        object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='create', state='none', log=product_instance)
+        product_template.product_instance_count = len(variant_signatures)
+        product_template_key = product_template.put()
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='generate_product_instances', state=product_template.state, log=product_template)
         object_log.put()
+        # postavljamo limit na broju product instanci koje mogu biti generisane
+        if (len(variant_signatures) <= 1000):
+            i = 0
+            for variant_signature in variant_signatures:
+                var_code = product_template_key + "-" + i
+                product_instance = ProductInstance(parent=product_template_key, code=var_code)
+                product_instance_key = product_instance.put()
+                object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='create', state=product_template.state, log=product_instance)
+                object_log.put()
+                i += 1
 
 # done!
 class ProductInstance(ndb.Expando):
@@ -1114,18 +1147,10 @@ class ProductInstance(ndb.Expando):
     #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
     # composite index: ancestor:yes - code
     code = ndb.StringProperty('1', required=True)
-    state = ndb.IntegerProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    # states: - ovo cemo pojasniti
-    # 'in stock'
-    # 'available for order'
-    # 'out of stock'
-    # 'preorder'
-    # 'auto manage inventory - available for order' (poduct is 'available for order' when inventory balance is <= 0)
-    # 'auto manage inventory - out of stock' (poduct is 'out of stock' when inventory balance is <= 0)
-    # https://support.google.com/merchants/answer/188494?hl=en&ref_topic=2473824
     _default_indexed = False
     pass
     # Expando
+    # state = ndb.IntegerProperty('2', required=True) overide state vrednosti sa product_template-a, inventory se uvek prati na nivou instanci, state je stavljen na template kako bi se olaksala kontrola state-ova. 
     # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
     # product_instance_contents = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
@@ -1141,7 +1166,6 @@ class ProductInstance(ndb.Expando):
     
     OBJECT_ACTIONS = {
        'update' : 1,
-       'update_inventory' : 2,
     }
     
     # Ova akcija azurira product instance.
@@ -1151,7 +1175,6 @@ class ProductInstance(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         # u slucaju da je catalog.state == 'published' onda je moguce editovanje samo product_instance.state i product_instance.low_stock_quantity
         product_instance.code = var_code
-        product_instance.state = var_state
         product_instance_key = product_instance.put()
         object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='update', state=product_instance.state, log=product_instance)
         object_log.put()
