@@ -133,16 +133,16 @@ class Domain(ndb.Expando):
         object_log.put()
         domain_role = DomainRole(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
         domain_role_key = domain_role.put()
-        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='create', state='none', log=domain_role)
+        object_log = ObjectLog(parent=domain_role_key, agent=user_key, action='create', state='none', log=domain_role)
         object_log.put()
         domain_user = DomainUser(namespace=domain_key, id=str(user_key.id()), name='Administrator', user=user_key, roles=[domain_role_key,], state='accepted')
         domain_user_key = domain_user.put()
-        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
+        object_log = ObjectLog(parent=domain_user_key, agent=user_key, action='accept', state=domain_user.state, log=domain_user)
         object_log.put()
         user = user_key.get()
         user.roles.append(domain_role_key)
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+        object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
         object_log.put()
         
     
@@ -232,7 +232,7 @@ class DomainRole(ndb.Model):
         for domain_user in domain_users:
             domain_user.roles.remove(domain_role_key)
             domain_user_key = domain_user.put()
-            object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state)
+            object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
             object_log.put()
             user_keys.append(domain_user.user)
         users = ndb.get_multi(user_keys)
@@ -240,7 +240,7 @@ class DomainRole(ndb.Model):
             if (user.state == 'active'):
                 user.roles.remove(domain_role_key)
                 user_key = user.put()
-                object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+                object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
                 object_log.put()
             
         domain_role_key.delete()
@@ -311,7 +311,7 @@ class DomainUser(ndb.Expando):
             for role in domain_user.roles:
                 user.roles.remove(role)
             user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
             object_log.put()
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='remove', state=domain_user.state)
         object_log.put()
@@ -331,7 +331,7 @@ class DomainUser(ndb.Expando):
             for role in domain_user.roles:
                 user.roles.append(role)
             user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
             object_log.put()
     
     # Azurira postojeceg usera u domeni
@@ -352,7 +352,7 @@ class DomainUser(ndb.Expando):
             for role in domain_user.roles:
                 user.roles.append(role)
             user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state)
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
             object_log.put()
 
 # future implementation - prototype!
