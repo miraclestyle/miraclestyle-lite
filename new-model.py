@@ -1008,8 +1008,8 @@ class ProductTemplate(ndb.Expando):
     description = ndb.TextProperty('3', required=True)# soft limit 64kb
     product_uom = ndb.KeyProperty('4', kind=ProductUOM, required=True, indexed=False)
     unit_price = DecimalProperty('5', required=True)
-    state = ndb.IntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    # states: - ovo cemo pojasniti
+    availability = ndb.IntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    # availability: - ovo cemo pojasniti
     # 'in stock'
     # 'available for order'
     # 'out of stock'
@@ -1045,9 +1045,9 @@ class ProductTemplate(ndb.Expando):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        product_template = ProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price, state=var_state)
+        product_template = ProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price, availability=var_availability)
         product_template_key = product_template.put()
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='create', state=product_template.state, log=product_template)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='create', state='none', log=product_template)
         object_log.put()
     
     # Ova akcija azurira product template.
@@ -1060,9 +1060,9 @@ class ProductTemplate(ndb.Expando):
         product_template.description = var_description
         product_template.product_uom = var_product_uom
         product_template.unit_price = var_unit_price
-        product_template.state = var_state
+        product_template.availability = var_availability
         product_template_key = product_template.put()
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='update', state=product_template.state, log=product_template)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='update', state='none', log=product_template)
         object_log.put()
     
     # Ova akcija brise product template.
@@ -1070,7 +1070,7 @@ class ProductTemplate(ndb.Expando):
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-ProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='delete', state=product_template.state)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         product_instances = ProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
         # ovaj metod ne loguje brisanje pojedinacno svakog product_instance entiteta, pa se treba ustvari pozivati ProductInstance.delete() sa listom kljuceva.
@@ -1169,7 +1169,7 @@ class ProductTemplate(ndb.Expando):
             variant_signatures.append(dic)
         product_template.product_instance_count = len(variant_signatures)
         product_template_key = product_template.put()
-        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='generate_product_instances', state=product_template.state, log=product_template)
+        object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='generate_product_instances', state='none', log=product_template)
         object_log.put()
         # postavljamo limit na broju product instanci koje mogu biti generisane
         if (len(variant_signatures) <= 1000):
@@ -1178,7 +1178,7 @@ class ProductTemplate(ndb.Expando):
                 var_code = product_template_key + "-" + i
                 product_instance = ProductInstance(parent=product_template_key, code=var_code)
                 product_instance_key = product_instance.put()
-                object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='create', state=product_template.state, log=product_instance)
+                object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='create', state='none', log=product_instance)
                 object_log.put()
                 i += 1
 
@@ -1197,7 +1197,7 @@ class ProductInstance(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # state = ndb.IntegerProperty('2', required=True) overide state vrednosti sa product_template-a, inventory se uvek prati na nivou instanci, state je stavljen na template kako bi se olaksala kontrola state-ova. 
+    # availability = ndb.IntegerProperty('2', required=True) overide availability vrednosti sa product_template-a, inventory se uvek prati na nivou instanci, state je stavljen na template kako bi se olaksala kontrola state-ova. 
     # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
     # product_instance_contents = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
@@ -1220,10 +1220,10 @@ class ProductInstance(ndb.Expando):
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-ProductInstance'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        # u slucaju da je catalog.state == 'published' onda je moguce editovanje samo product_instance.state i product_instance.low_stock_quantity
+        # u slucaju da je catalog.state == 'published' onda je moguce editovanje samo product_instance.availability i product_instance.low_stock_quantity
         product_instance.code = var_code
         product_instance_key = product_instance.put()
-        object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='update', state=product_instance.state, log=product_instance)
+        object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='update', state='none', log=product_instance)
         object_log.put()
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
@@ -2079,13 +2079,53 @@ class BillingCreditAdjustment(ndb.Model):
 class Content(ndb.Model):
     
     # root
-    # composite index: ancestor:no - category,state,sequence
+    # composite index: ancestor:no - category,active,sequence
     updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
     title = ndb.StringProperty('2', required=True)
     category = ndb.IntegerProperty('3', required=True)
     body = ndb.TextProperty('4', required=True)
     sequence = ndb.IntegerProperty('5', required=True)
-    state = ndb.IntegerProperty('6', required=True)# published/unpublished
+    active = ndb.BooleanProperty('6', default=False)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi content.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Content'.
+        content = Content(title=var_title, category=var_category, body=var_body, sequence=var_sequence, active=var_active)
+        content_key = content.put()
+        object_log = ObjectLog(parent=content_key, agent=agent_key, action='create', state='none', log=content)
+        object_log.put()
+    
+    # Ova akcija azurira content.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-Content'.
+        content.title = var_title
+        content.category = var_category
+        content.body = var_body
+        content.sequence = var_sequence
+        content.active = var_active
+        content_key = content.put()
+        object_log = ObjectLog(parent=content_key, agent=agent_key, action='update', state='none', log=content)
+        object_log.put()
+    
+    # Ova akcija brise content.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-Content'.
+        object_log = ObjectLog(parent=content_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        content_key.delete()
 
 # done!
 class Image(ndb.Model):
@@ -2111,6 +2151,49 @@ class Country(ndb.Model):
     code = ndb.StringProperty('1', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.StringProperty('2', required=True)
     active = ndb.BooleanProperty('3', default=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi country.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Country'.
+        country = Country(code=var_code, name=var_name, active=var_active)
+        country_key = country.put()
+        object_log = ObjectLog(parent=country_key, agent=agent_key, action='create', state='none', log=country)
+        object_log.put()
+    
+    # Ova akcija azurira country.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-Country'.
+        country.code = var_code
+        country.name = var_name
+        country.active = var_active
+        country_key = country.put()
+        object_log = ObjectLog(parent=country_key, agent=agent_key, action='update', state='none', log=country)
+        object_log.put()
+    
+    # Ova akcija brise country.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-Country'.
+        object_log = ObjectLog(parent=country_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        country_subdivisions = CountrySubdivision.query(ancestor=country_key).fetch(keys_only=True)
+        # ovaj metod ne loguje brisanje pojedinacno svakog country_subdivision entiteta, pa se trebati ustvari pozivati CountrySubdivision.delete() sa listom kljuceva.
+        # CountrySubdivision.delete() nije za sada nije opisana da radi multi key delete.
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog Country entiteta podrazumvea da su svi potomci izbrisani!!
+        ndb.delete_multi(country_subdivisions)
+        country_key.delete()
 
 # done!
 class CountrySubdivision(ndb.Model):
@@ -2125,6 +2208,46 @@ class CountrySubdivision(ndb.Model):
     name = ndb.StringProperty('3', required=True)
     type = ndb.IntegerProperty('4', required=True, indexed=False)
     active = ndb.BooleanProperty('5', default=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi country subdivision.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-CountrySubdivision'.
+        country_subdivision = CountrySubdivision(parent=country_key, parent_record=var_parent_record, code=var_code, name=var_name, type=var_type, active=var_active)
+        country_subdivision_key = country_subdivision.put()
+        object_log = ObjectLog(parent=country_subdivision_key, agent=agent_key, action='create', state='none', log=country_subdivision)
+        object_log.put()
+    
+    # Ova akcija azurira country subdivision.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-CountrySubdivision'.
+        country_subdivision.parent_record = var_parent_record
+        country_subdivision.code = var_code
+        country_subdivision.name = var_name
+        country_subdivision.type = var_type
+        country_subdivision.active = var_active
+        country_subdivision_key = country_subdivision.put()
+        object_log = ObjectLog(parent=country_subdivision_key, agent=agent_key, action='update', state='none', log=country_subdivision)
+        object_log.put()
+    
+    # Ova akcija brise country subdivision.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-CountrySubdivision'.
+        object_log = ObjectLog(parent=country_subdivision_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        country_subdivision_key.delete()
 
 # done!
 class Location(ndb.Expando):
@@ -2147,11 +2270,50 @@ class ProductCategory(ndb.Model):
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
     # https://support.google.com/merchants/answer/1705911
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
-    # composite index: ancestor:no - state,name
+    # composite index: ancestor:no - status,name
     parent_record = ndb.KeyProperty('1', kind=ProductCategory, indexed=False)
     name = ndb.StringProperty('2', required=True)
     complete_name = ndb.TextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
-    state = ndb.IntegerProperty('4', required=True)
+    status = ndb.IntegerProperty('4', required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi product category.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductCategory'.
+        product_category = ProductCategory(parent_record=var_parent_record, name=var_name, complete_name=var_complete_name, status=var_status)
+        product_category_key = product_category.put()
+        object_log = ObjectLog(parent=product_category_key, agent=agent_key, action='create', state='none', log=product_category)
+        object_log.put()
+    
+    # Ova akcija azurira product category.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductCategory'.
+        product_category.parent_record = var_parent_record
+        product_category.name = var_name
+        product_category.complete_name = var_complete_name
+        product_category.status = var_status
+        product_category_key = product_category.put()
+        object_log = ObjectLog(parent=product_category_key, agent=agent_key, action='update', state='none', log=product_category)
+        object_log.put()
+    
+    # Ova akcija brise product category.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductCategory'.
+        object_log = ObjectLog(parent=product_category_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        product_category_key.delete()
 
 # done!
 class ProductUOMCategory(ndb.Model):
@@ -2161,6 +2323,47 @@ class ProductUOMCategory(ndb.Model):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     name = ndb.StringProperty('1', required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi product uom category.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOMCategory'.
+        product_uom_category = ProductUOMCategory(name=var_name)
+        product_uom_category_key = product_uom_category.put()
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='create', state='none', log=product_uom_category)
+        object_log.put()
+    
+    # Ova akcija azurira product uom category.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOMCategory'.
+        product_uom_category.name = var_name
+        product_uom_category_key = product_uom_category.put()
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='update', state='none', log=product_uom_category)
+        object_log.put()
+    
+    # Ova akcija brise product uom category.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOMCategory'.
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        product_uoms = ProductUOM.query(ancestor=product_uom_category_key).fetch(keys_only=True)
+        # ovaj metod ne loguje brisanje pojedinacno svakog product_uom entiteta, pa se trebati ustvari pozivati ProductUOM.delete() sa listom kljuceva.
+        # ProductUOM.delete() nije za sada nije opisana da radi multi key delete.
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductUOMCategory entiteta podrazumvea da su svi potomci izbrisani!!
+        ndb.delete_multi(product_uoms)
+        product_uom_category_key.delete()
 
 # done!
 class ProductUOM(ndb.Model):
@@ -2178,6 +2381,48 @@ class ProductUOM(ndb.Model):
     rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi product uom.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOM'.
+        product_uom = ProductUOM(parent=product_uom_category_key, name=var_name, symbol=var_symbol, rate=var_rate, factor=var_factor, rounding=var_rounding, digits=var_digits, active=var_active)
+        product_uom_key = product_uom.put()
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='create', state='none', log=product_uom)
+        object_log.put()
+    
+    # Ova akcija azurira product uom.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOM'.
+        product_uom.name = var_name
+        product_uom.symbol = var_symbol
+        product_uom.rate = var_rate
+        product_uom.factor = var_factor
+        product_uom.rounding = var_rounding
+        product_uom.digits = var_digits
+        product_uom.active = var_active
+        product_uom_key = product_uom.put()
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='update', state='none', log=product_uom)
+        object_log.put()
+    
+    # Ova akcija brise product uom.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOM'.
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        product_uom_key.delete()
 
 # done!
 class Currency(ndb.Model):
@@ -2207,6 +2452,77 @@ class Currency(ndb.Model):
     negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
     positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
     negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+    
+    # Ova akcija kreira novi currency.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Currency'.
+        currency = Currency()
+        currency.name = var_name
+        currency.symbol = var_symbol
+        currency.code = var_code
+        currency.numeric_code = var_numeric_code
+        currency.rounding = var_rounding
+        currency.digits = var_digits
+        currency.active = var_active
+        currency.grouping = var_grouping
+        currency.decimal_separator = var_decimal_separator
+        currency.thousands_separator = var_thousands_separator
+        currency.positive_sign_position = var_positive_sign_position
+        currency.negative_sign_position = var_negative_sign_position
+        currency.positive_sign = var_positive_sign
+        currency.negative_sign = var_negative_sign
+        currency.positive_currency_symbol_precedes = var_positive_currency_symbol_precedes
+        currency.negative_currency_symbol_precedes = var_negative_currency_symbol_precedes
+        currency.positive_separate_by_space = var_positive_separate_by_space
+        currency.negative_separate_by_space = var_negative_separate_by_space
+        currency_key = currency.put()
+        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='create', state='none', log=currency)
+        object_log.put()
+    
+    # Ova akcija azurira currency.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-Currency'.
+        currency.name = var_name
+        currency.symbol = var_symbol
+        currency.code = var_code
+        currency.numeric_code = var_numeric_code
+        currency.rounding = var_rounding
+        currency.digits = var_digits
+        currency.active = var_active
+        currency.grouping = var_grouping
+        currency.decimal_separator = var_decimal_separator
+        currency.thousands_separator = var_thousands_separator
+        currency.positive_sign_position = var_positive_sign_position
+        currency.negative_sign_position = var_negative_sign_position
+        currency.positive_sign = var_positive_sign
+        currency.negative_sign = var_negative_sign
+        currency.positive_currency_symbol_precedes = var_positive_currency_symbol_precedes
+        currency.negative_currency_symbol_precedes = var_negative_currency_symbol_precedes
+        currency.positive_separate_by_space = var_positive_separate_by_space
+        currency.negative_separate_by_space = var_negative_separate_by_space
+        currency_key = currency.put()
+        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='update', state='none', log=currency)
+        object_log.put()
+    
+    # Ova akcija brise currency.
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-Currency'.
+        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='delete', state='none')
+        object_log.put()
+        currency_key.delete()
 
 # done!
 # ostaje da se ispita u preprodukciji!!
@@ -2216,6 +2532,77 @@ class Message(ndb.Model):
     outlet = ndb.IntegerProperty('1', required=True, indexed=False)
     group = ndb.IntegerProperty('2', required=True, indexed=False)
     state = ndb.IntegerProperty('3', required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'open'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'prepare' : (1, ),
+        'processing' : (2, ),
+        'completed' : (3, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'complete' : 2,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'process' : {
+            'from' : ('preparation',),
+            'to' : ('processing',),
+         },
+        'complete' : {
+           'from' : ('processing', ),
+           'to'   : ('completed',),
+        },
+    }
+    
+    # Ova akcija kreira novi message.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Message'.
+        message = Message(outlet=var_outlet, group=var_group, state='preparation')
+        message_key = message.put()
+        object_log = ObjectLog(parent=message_key, agent=agent_key, action='create', state=message.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija azurira postojeci message.
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.name = var_name
+        store.logo = var_logo
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        object_log.put()
+    
+    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    @ndb.transactional
+    def close():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
+        store.state = 'closed'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    @ndb.transactional
+    def open():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
+        store.state = 'open'
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
 
 ################################################################################
 # OBJECT LOG - 1
