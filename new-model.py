@@ -2535,7 +2535,7 @@ class Message(ndb.Model):
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'open'
+    OBJECT_DEFAULT_STATE = 'composing'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -2543,24 +2543,32 @@ class Message(ndb.Model):
         # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'prepare' : (1, ),
+        'composing' : (1, ),
         'processing' : (2, ),
         'completed' : (3, ),
+        'canceled' : (4, ),
     }
     
     OBJECT_ACTIONS = {
        'create' : 1,
-       'complete' : 2,
+       'update' : 2,
+       'send' : 3,
+       'complete' : 4,
+       'cancel' : 5,
     }
     
     OBJECT_TRANSITIONS = {
-        'process' : {
-            'from' : ('preparation',),
+        'send' : {
+            'from' : ('composing',),
             'to' : ('processing',),
          },
         'complete' : {
-           'from' : ('processing', ),
+           'from' : ('processing',),
            'to'   : ('completed',),
+        },
+        'cancel' : {
+           'from' : ('composing',),
+           'to'   : ('canceled',),
         },
     }
     
@@ -2568,7 +2576,7 @@ class Message(ndb.Model):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Message'.
-        message = Message(outlet=var_outlet, group=var_group, state='preparation')
+        message = Message(outlet=var_outlet, group=var_group, state='composing')
         message_key = message.put()
         object_log = ObjectLog(parent=message_key, agent=agent_key, action='create', state=message.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
@@ -2576,32 +2584,40 @@ class Message(ndb.Model):
     # Ova akcija azurira postojeci message.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.name = var_name
-        store.logo = var_logo
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='update', state=store.state, log=store)
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-Message'.
+        # akcija se moze pozvati samo ako je message.state == 'composing'.
+        object_log = ObjectLog(parent=message_key, agent=agent_key, action='update', state=message.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
-    # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
+    # Ova akcija salje poruku. Ovde cemo dalje opisati posledice slanja...
     @ndb.transactional
-    def close():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store.state = 'closed'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='close', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+    def send():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'send-Message'.
+        # akcija se moze pozvati samo ako je message.state == 'composing'.
+        message.state = 'processing'
+        message_key = message.put()
+        object_log = ObjectLog(parent=message_key, agent=agent_key, action='send', state=message.state, note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+        # ovde se dalje inicira distribucija poruke preko task queue...
+    
+    # Ova akcija oznacava poruku kao poslanu. Ovde cemo dalje opisati posledice oznacavanja poruke kao poslane...
+    @ndb.transactional
+    def complete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'complete-Message'. ovu akciju poziva sistemski agent sa eventualnim izvestajem sta je uradjeno.
+        # akcija se moze pozvati samo ako je message.state == 'processing'.
+        message.state = 'completed'
+        message_key = message.put()
+        object_log = ObjectLog(parent=message_key, agent=agent_key, action='complete', state=message.state, note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
-    # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
+    # Ova akcija obustavlja poruku. Ovde cemo dalje opisati posledice obustavljanja...
     @ndb.transactional
-    def open():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
-        store.state = 'open'
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+    def cancel():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'cancel-Message'.
+        # akcija se moze pozvati samo ako je message.state == 'composing'.
+        message.state = 'canceled'
+        message_key = message.put()
+        object_log = ObjectLog(parent=message_key, agent=agent_key, action='cancel', state=message.state, note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 ################################################################################
