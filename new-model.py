@@ -1534,7 +1534,7 @@ class BuyerAddress(ndb.Expando):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        buyer_address = BuyerAddress(parent=user_key, name='Home', country='82736563', city='Beverly Hills', postal_code='90210', street_address='First Street, 10', region='656776533')
+        buyer_address = BuyerAddress(parent=user_key, name=var_name, country=var_country, city=var_city, postal_code=var_postal_code, street_address=var_street_address, region=var_region)
         buyer_address_key = buyer_address.put()
         object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='create', state='none', log=buyer_address)
         object_log.put()
@@ -1542,13 +1542,13 @@ class BuyerAddress(ndb.Expando):
     # Azurira postojecu adresu korisnika
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_address.parent == agent).
-        buyer_address.name = 'Home in Miami'
-        buyer_address.country = '82736563'
-        buyer_address.city = 'Miami'
-        buyer_address.postal_code = '26547'
-        buyer_address.street_address = 'Second Street, 10'
-        buyer_address.region = '514133'
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_address.parent == agent).
+        buyer_address.name = var_name
+        buyer_address.country = var_country
+        buyer_address.city = var_city
+        buyer_address.postal_code = var_postal_code
+        buyer_address.street_address = var_street_address
+        buyer_address.region = var_region
         buyer_address_key = buyer_address.put()
         object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='update', state='none', log=buyer_address)
         object_log.put()
@@ -1556,7 +1556,7 @@ class BuyerAddress(ndb.Expando):
     # Brise postojecu adresu korisnika
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_address.parent == agent).
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_address.parent == agent).
         object_log = ObjectLog(parent=buyer_address_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_address_key.delete()
@@ -1568,7 +1568,7 @@ class BuyerCollection(ndb.Model):
     # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
-    notifications = ndb.BooleanProperty('2', default=False)
+    notify = ndb.BooleanProperty('2', default=False)
     primary_email = ndb.StringProperty('3', required=True, indexed=False)
     
     _KIND = 19
@@ -1581,38 +1581,38 @@ class BuyerCollection(ndb.Model):
        'delete' : 3,
     }
     
-    # Pravi novu kolekciju za korisnika
+    # Pravi novu korisnikovu kolekciju
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         for identity in user.identities:
             if(identity.primary == True):
-                user_primary_email = identity.email
+                var_primary_email = identity.email
                 break
-        buyer_collection = BuyerCollection(parent=user_key, name='Favorites', notifications=True, primary_email=user_primary_email)
+        buyer_collection = BuyerCollection(parent=user_key, name=var_name, notify=var_notify, primary_email=var_primary_email)
         buyer_collection_key = buyer_collection.put()
         object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='create', state='none', log=buyer_collection)
         object_log.put()
     
-    # Azurira postojecu kolekciju korisnika
+    # Azurira postojecu korisnikovu kolekciju
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_collection.parent == agent).
-        buyer_collection.name = 'Shoes'
-        buyer_collection.notifications = True
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection.parent == agent).
+        buyer_collection.name = var_name
+        buyer_collection.notify = var_notify
         for identity in user.identities:
             if(identity.primary == True):
-                user_primary_email = identity.email
+                var_primary_email = identity.email
                 break
-        buyer_collection.primary_email = user_primary_email
+        buyer_collection.primary_email = var_primary_email
         buyer_collection_key = buyer_collection.put()
         object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='update', state='none', log=buyer_collection)
         object_log.put()
     
-    # Brise postojecu kolekciju korisnika
+    # Brise postojecu korisnikovu kolekciju
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_collection.parent == agent).
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection.parent == agent).
         object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_collection_key.delete()
@@ -1634,21 +1634,21 @@ class BuyerCollectionStore(ndb.Model):
        'delete' : 3,
     }
     
-    # Dodaje novi store u korisnikovu listu i odredjuje clanstvo u kolekcijama korisnika
+    # Dodaje novi store u korisnikovoj listi i odredjuje clanstvo u korisnikovim kolekcijama
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        buyer_collection_store = BuyerCollectionStore(parent=user_key, store='7464536', collections=['1234'])
+        buyer_collection_store = BuyerCollectionStore(parent=user_key, store=var_store, collections=var_collections)
         buyer_collection_store_key = buyer_collection_store.put()
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='create', state='none', log=buyer_collection_store)
         object_log.put()
         # izaziva se update AggregateBuyerCollectionCatalog preko task queue
     
-    # Menja clanstvo store u kolekcijama korisnika
+    # Menja clanstvo store u korisnikovim kolekcijama
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_collection_store.parent == agent).
-        buyer_collection_store.collections = ['1234', '56433']
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
+        buyer_collection_store.collections = var_collections
         buyer_collection_store_key = buyer_collection_store.put()
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='update', state='none', log=buyer_collection_store)
         object_log.put()
@@ -1657,12 +1657,12 @@ class BuyerCollectionStore(ndb.Model):
     # Brise store iz korisnikove liste
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo entity owner (buyer_collection_store.parent == agent).
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
         object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='delete', state='none')
         object_log.put()
         buyer_collection_store_key.delete()
         # izaziva se update AggregateBuyerCollectionCatalog preko task queue
-        # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key))
+        # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key).fetch(keys_only=True))
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateBuyerCollectionCatalog(ndb.Model):
@@ -1671,7 +1671,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     # not logged
     # task queue radi agregaciju prilikom nekih promena na store-u
     # mogao bi da se uvede index na collections radi filtera: AggregateBuyerCollectionCatalog.collections = 'collection', 
-    # ovo moze biti dobra situacija za upotrebu MapReduce ??
+    # ovaj model bi se trebao ukinuti u korist MapReduce resenja, koje bi bilo superiornije od ovog
     # composite index: ancestor:yes - catalog_published_date:desc
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True, indexed=False)# soft limit 500x
