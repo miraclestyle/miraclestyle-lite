@@ -225,22 +225,20 @@ class DomainRole(ndb.Model):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        domain_users = DomainUser.query(roles == domain_role_key).fetch()
+        domain_users = DomainUser.query(DomainUser.domain_roles == domain_role_key).fetch()
         user_keys = []
         for domain_user in domain_users:
-            domain_user.roles.remove(domain_role_key)
+            domain_user.domain_roles.remove(domain_role_key)
             domain_user_key = domain_user.put()
             object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
             object_log.put()
             user_keys.append(domain_user.user)
         users = ndb.get_multi(user_keys)
         for user in users:
-            if (user.state == 'active'):
-                user.roles.remove(domain_role_key)
-                user_key = user.put()
-                object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
-                object_log.put()
-            
+            user.domain_roles.remove(domain_role_key)
+            user_key = user.put()
+            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+            object_log.put()
         domain_role_key.delete()
 
 # done!
@@ -251,7 +249,7 @@ class DomainUser(ndb.Expando):
     # composite index: ancestor:no - name
     name = ndb.StringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
     user = ndb.KeyProperty('2', kind=User, required=True)
-    roles = ndb.KeyProperty('3', kind=Role, repeated=True)
+    domain_roles = ndb.KeyProperty('3', kind=DomainRole, repeated=True)
     state = ndb.IntegerProperty('4', required=True)# invited/accepted
     _default_indexed = False
     pass
@@ -291,8 +289,8 @@ class DomainUser(ndb.Expando):
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'invite-DomainUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         user = var_user.get()
-        if (user.state == 'active'):
-            domain_user = DomainUser(id=str(var_user.id()), name=var_name, user=var_user, roles=var_roles, state='invited')
+        if (user.state == 'active'):# da li uvoditi ovaj check jos negde, ili ga izbaciti i odavde ? 
+            domain_user = DomainUser(id=str(var_user.id()), name=var_name, user=var_user, domain_roles=var_domain_roles, state='invited')
             domain_user_key = domain_user.put()
             object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='invite', state=domain_user.state, log=domain_user)
             object_log.put()
@@ -305,12 +303,11 @@ class DomainUser(ndb.Expando):
         # agent koji je referenciran u domain.primary_contact prop. ne moze biti izbacen iz domene i izgubiti dozvole za upravljanje domenom.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         user = domain_user.user.get()
-        if (user.state == 'active'):
-            for role in domain_user.roles:
-                user.roles.remove(role)
-            user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
-            object_log.put()
+        for domain_role in domain_user.domain_roles:
+            user.domain_roles.remove(domain_role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='remove', state=domain_user.state)
         object_log.put()
         domain_user_key.delete()
@@ -325,33 +322,31 @@ class DomainUser(ndb.Expando):
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
         object_log.put()
         user = domain_user.user.get()
-        if (user.state == 'active'):
-            for role in domain_user.roles:
-                user.roles.append(role)
-            user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
-            object_log.put()
+        for domain_role in domain_user.domain_roles:
+            user.domain_roles.append(domain_role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
     
     # Azurira postojeceg usera u domeni
     @ndb.transactional
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        old_roles = domain_user.roles
+        old_domain_roles = domain_user.domain_roles
         domain_user.name = var_name
-        domain_user.roles = var_roles
+        domain_user.domain_roles = var_domain_roles
         domain_user_key = domain_user.put()
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
         object_log.put()
         user = domain_user.user.get()
-        if (user.state == 'active'):
-            for role in old_roles:
-                user.roles.remove(role)
-            for role in domain_user.roles:
-                user.roles.append(role)
-            user_key = user.put()
-            object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
-            object_log.put()
+        for domain_role in old_domain_roles:
+            user.domain_roles.remove(domain_role)
+        for domain_role in domain_user.domain_roles:
+            user.domain_roles.append(domain_role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
 
 # future implementation - prototype!
 class Rule(ndb.Model):
@@ -1363,6 +1358,7 @@ class User(ndb.Expando):
     _default_indexed = False
     pass
     #Expando
+    # roles = ndb.KeyProperty('4', kind=DomainRole, repeated=True)
     
     _KIND = 2
     
