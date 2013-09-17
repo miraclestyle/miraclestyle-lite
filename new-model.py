@@ -131,16 +131,16 @@ class Domain(ndb.Expando):
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=user_key, action='create', state=domain.state, log=domain)
         object_log.put()
-        domain_role = DomainRole(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
-        domain_role_key = domain_role.put()
-        object_log = ObjectLog(parent=domain_role_key, agent=user_key, action='create', state='none', log=domain_role)
+        role = DomainRole(namespace=domain_key, name='Domain Admins', permissions=['*',], readonly=True)
+        role_key = role.put()
+        object_log = ObjectLog(parent=role_key, agent=user_key, action='create', state='none', log=role)
         object_log.put()
-        domain_user = DomainUser(namespace=domain_key, id=str(user_key.id()), name='Administrator', user=user_key, roles=[domain_role_key,], state='accepted')
+        domain_user = DomainUser(namespace=domain_key, id=str(user_key.id()), name='Administrator', user=user_key, roles=[role_key,], state='accepted')
         domain_user_key = domain_user.put()
         object_log = ObjectLog(parent=domain_user_key, agent=user_key, action='accept', state=domain_user.state, log=domain_user)
         object_log.put()
         user = user_key.get()
-        user.roles.append(domain_role_key)
+        user.roles.append(role_key)
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
         object_log.put()
@@ -202,9 +202,9 @@ class DomainRole(ndb.Model):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainRole'. 
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        domain_role = DomainRole(name='Store Managers', permissions=['create_store', 'update_store',], readonly=False) # readonly je uvek False za user generated Roles
-        domain_role_key = domain_role.put()
-        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='create', state='none', log=domain_role)
+        role = DomainRole(name=var_name, permissions=var_permissions, readonly=False) # readonly je uvek False za user generated Roles
+        role_key = role.put()
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
         object_log.put()
     
     # Azurira postojecu domain rolu
@@ -212,10 +212,10 @@ class DomainRole(ndb.Model):
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainRole'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        domain_role.name = 'New Store Managers'
-        domain_role.permissions = ['create_store',]
-        domain_role_key = domain_role.put()
-        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='update', state='none', log=domain_role)
+        role.name = var_name
+        role.permissions = var_permissions
+        role_key = role.put()
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='update', state='none', log=role)
         object_log.put()
     
     # Brise postojecu domain rolu
@@ -223,19 +223,19 @@ class DomainRole(ndb.Model):
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainRole'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        object_log = ObjectLog(parent=domain_role_key, agent=agent_key, action='delete', state='none')
+        object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        domain_users = DomainUser.query(DomainUser.domain_roles == domain_role_key).fetch()
+        domain_users = DomainUser.query(DomainUser.roles == role_key).fetch()
         user_keys = []
         for domain_user in domain_users:
-            domain_user.domain_roles.remove(domain_role_key)
+            domain_user.roles.remove(role_key)
             domain_user_key = domain_user.put()
             object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
             object_log.put()
             user_keys.append(domain_user.user)
         users = ndb.get_multi(user_keys)
         for user in users:
-            user.domain_roles.remove(domain_role_key)
+            user.roles.remove(role_key)
             user_key = user.put()
             object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
             object_log.put()
@@ -249,7 +249,7 @@ class DomainUser(ndb.Expando):
     # composite index: ancestor:no - name
     name = ndb.StringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
     user = ndb.KeyProperty('2', kind=User, required=True)
-    domain_roles = ndb.KeyProperty('3', kind=DomainRole, repeated=True)
+    roles = ndb.KeyProperty('3', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
     state = ndb.IntegerProperty('4', required=True)# invited/accepted
     _default_indexed = False
     pass
@@ -290,7 +290,7 @@ class DomainUser(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         user = var_user.get()
         if (user.state == 'active'):# da li uvoditi ovaj check jos negde, ili ga izbaciti i odavde ? 
-            domain_user = DomainUser(id=str(var_user.id()), name=var_name, user=var_user, domain_roles=var_domain_roles, state='invited')
+            domain_user = DomainUser(id=str(var_user.id()), name=var_name, user=var_user, roles=var_roles, state='invited')
             domain_user_key = domain_user.put()
             object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='invite', state=domain_user.state, log=domain_user)
             object_log.put()
@@ -303,8 +303,8 @@ class DomainUser(ndb.Expando):
         # agent koji je referenciran u domain.primary_contact prop. ne moze biti izbacen iz domene i izgubiti dozvole za upravljanje domenom.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         user = domain_user.user.get()
-        for domain_role in domain_user.domain_roles:
-            user.domain_roles.remove(domain_role)
+        for role in domain_user.roles:
+            user.roles.remove(role)
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
         object_log.put()
@@ -322,8 +322,8 @@ class DomainUser(ndb.Expando):
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
         object_log.put()
         user = domain_user.user.get()
-        for domain_role in domain_user.domain_roles:
-            user.domain_roles.append(domain_role)
+        for role in domain_user.roles:
+            user.roles.append(role)
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
         object_log.put()
@@ -333,23 +333,23 @@ class DomainUser(ndb.Expando):
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        old_domain_roles = domain_user.domain_roles
+        old_roles = domain_user.roles
         domain_user.name = var_name
-        domain_user.domain_roles = var_domain_roles
+        domain_user.roles = var_roles
         domain_user_key = domain_user.put()
         object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
         object_log.put()
         user = domain_user.user.get()
-        for domain_role in old_domain_roles:
-            user.domain_roles.remove(domain_role)
-        for domain_role in domain_user.domain_roles:
-            user.domain_roles.append(domain_role)
+        for role in old_roles:
+            user.roles.remove(role)
+        for role in domain_user.roles:
+            user.roles.append(role)
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
         object_log.put()
 
 # future implementation - prototype!
-class Rule(ndb.Model):
+class DomainRule(ndb.Model):
     
     # root (namespace Domain)
     name = ndb.StringProperty('1', required=True)
@@ -357,10 +357,10 @@ class Rule(ndb.Model):
     actions = ndb.StringProperty('3', repeated=True)
     fields = ndb.LocalStructuredProperty(Field, '4', repeated=True)
     condition = ndb.TextProperty('5')
-    roles = ndb.KeyProperty('6', kind=Role, repeated=True)
+    roles = ndb.KeyProperty('6', kind=DomainRole, repeated=True)
 
 # future implementation - prototype!
-class Field(ndb.Model):
+class DomainField(ndb.Model):
     
     # LocalStructuredProperty model
     name = ndb.StringProperty('1', required=True, indexed=False)
@@ -368,7 +368,7 @@ class Field(ndb.Model):
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
 # done! mozda bude trebala kontrola i ovde
-class Store(ndb.Expando):
+class DomainStore(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
@@ -438,9 +438,9 @@ class Store(ndb.Expando):
     # Ova akcija kreira novi store.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainStore'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        store = Store(name=var_name, logo=var_logo, state='open')
+        store = DomainStore(name=var_name, logo=var_logo, state='open')
         store_key = store.put()
         object_log = ObjectLog(parent=store_key, agent=agent_key, action='create', state=store.state, log=store)
         object_log.put()
@@ -448,7 +448,7 @@ class Store(ndb.Expando):
     # Ova akcija azurira postojeci store.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainStore'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         store.name = var_name
         store.logo = var_logo
@@ -459,7 +459,7 @@ class Store(ndb.Expando):
     # Ova akcija zatvara otvoren store. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
     def close():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'close-DomainStore'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         store.state = 'closed'
         store_key = store.put()
@@ -469,7 +469,7 @@ class Store(ndb.Expando):
     # Ova akcija otvara zatvoreni store. Ovde cemo dalje opisati posledice otvaranja...
     @ndb.transactional
     def open():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-Store'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'open-DomainStore'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'closed'.
         store.state = 'open'
         store_key = store.put()
@@ -477,7 +477,7 @@ class Store(ndb.Expando):
         object_log.put()
 
 # done!
-class StoreFeedback(ndb.Model):
+class DomainStoreFeedback(ndb.Model):
     
     # LocalStructuredProperty model
     # ovaj model dozvoljava da se radi feedback trending per month per year
@@ -491,9 +491,9 @@ class StoreFeedback(ndb.Model):
     neutral_feedback_count = ndb.IntegerProperty('5', required=True, indexed=False)
 
 # done!
-class StoreContent(ndb.Model):
+class DomainStoreContent(ndb.Model):
     
-    # ancestor Store (Catalog, for caching) (namespace Domain)
+    # ancestor DomainStore (Catalog, for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
@@ -512,9 +512,9 @@ class StoreContent(ndb.Model):
     # Ova akcija kreira novi store content.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-StoreContent'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainStoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store_content = StoreContent(parent=store_key, title=var_title, body=var_body, sequence=var_sequence)
+        store_content = DomainStoreContent(parent=store_key, title=var_title, body=var_body, sequence=var_sequence)
         store_content_key = store_content.put()
         object_log = ObjectLog(parent=store_content_key, agent=agent_key, action='create', state='none', log=store_content)
         object_log.put()
@@ -522,7 +522,7 @@ class StoreContent(ndb.Model):
     # Ova akcija azurira store content.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-StoreContent'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainStoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         store_content.title = var_title
         store_content.body = var_body
@@ -534,16 +534,16 @@ class StoreContent(ndb.Model):
     # Ova akcija brise store content.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-StoreContent'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainStoreContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         object_log = ObjectLog(parent=store_content_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         store_content_key.delete()
 
 # done!
-class StoreShippingExclusion(Location):
+class DomainStoreShippingExclusion(Location):
     
-    # ancestor Store (Catalog, for caching) (namespace Domain)
+    # ancestor DomainStore (DomainCatalog, for caching) (namespace Domain)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
     
     _KIND = 0
@@ -559,9 +559,9 @@ class StoreShippingExclusion(Location):
     # Ova akcija kreira novi store shipping exclusion.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-StoreShippingExclusion'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainStoreShippingExclusion'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
-        store_shipping_exclusion = StoreShippingExclusion(parent=store_key, country=var_country)
+        store_shipping_exclusion = DomainStoreShippingExclusion(parent=store_key, country=var_country)
         store_shipping_exclusion_key = store_shipping_exclusion.put()
         object_log = ObjectLog(parent=store_shipping_exclusion_key, agent=agent_key, action='create', state='none', log=store_shipping_exclusion)
         object_log.put()
@@ -569,7 +569,7 @@ class StoreShippingExclusion(Location):
     # Ova akcija azurira store shipping exclusion.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-StoreShippingExclusion'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainStoreShippingExclusion'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         store_shipping_exclusion.country = var_country
         store_shipping_exclusion_key = store_shipping_exclusion.put()
@@ -579,14 +579,14 @@ class StoreShippingExclusion(Location):
     # Ova akcija brise store shipping exclusion.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-StoreShippingExclusion'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainStoreShippingExclusion'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == 'open'.
         object_log = ObjectLog(parent=store_shipping_exclusion_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         store_shipping_exclusion_key.delete()
 
 # done!
-class Tax(ndb.Expando):
+class DomainTax(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - active,sequence
@@ -600,7 +600,7 @@ class Tax(ndb.Expando):
     # Expando
     # locations = ndb.LocalStructuredProperty(Location, '6', repeated=True)# soft limit 300x
     # product_categories = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)# soft limit 100x
-    # carriers = ndb.KeyProperty('8', kind=Carrier, repeated=True)# soft limit 100x
+    # carriers = ndb.KeyProperty('8', kind=DomainCarrier, repeated=True)# soft limit 100x
     
     _KIND = 0
     
@@ -615,9 +615,9 @@ class Tax(ndb.Expando):
     # Ova akcija kreira novu taxu.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Tax'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainTax'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        tax = Tax(name=var_name, sequence=var_sequence, amount=var_amount, location_exclusion=var_location_exclusion, active=True)
+        tax = DomainTax(name=var_name, sequence=var_sequence, amount=var_amount, location_exclusion=var_location_exclusion, active=True)
         tax_key = tax.put()
         object_log = ObjectLog(parent=tax_key, agent=agent_key, action='create', state='none', log=tax)
         object_log.put()
@@ -625,7 +625,7 @@ class Tax(ndb.Expando):
     # Ova akcija azurira taxu.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Tax'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainTax'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         tax.name = var_name
         tax.sequence = var_sequence
@@ -639,14 +639,14 @@ class Tax(ndb.Expando):
     # Ova akcija brise taxu.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Tax'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainTax'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=tax_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         tax_key.delete()
 
 # done!
-class Carrier(ndb.Model):
+class DomainCarrier(ndb.Model):
     
     # root (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
@@ -668,9 +668,9 @@ class Carrier(ndb.Model):
     # Ova akcija kreira novi carrier.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Carrier'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCarrier'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        carrier = Carrier(name=var_name, active=True)
+        carrier = DomainCarrier(name=var_name, active=True)
         carrier_key = carrier.put()
         object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='create', state='none', log=carrier)
         object_log.put()
@@ -678,7 +678,7 @@ class Carrier(ndb.Model):
     # Ova akcija azurira carrier.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Carrier'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCarrier'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         carrier.name = var_name
         carrier.active = var_active
@@ -689,21 +689,21 @@ class Carrier(ndb.Model):
     # Ova akcija brise carrier.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Carrier'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainCarrier'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        carrier_lines = CarrierLine.query(ancestor=carrier_key).fetch(keys_only=True)
-        # ovaj metod ne loguje brisanje pojedinacno svakog carrier_line entiteta, pa se trebati ustvari pozivati CarrierLine.delete() sa listom kljuceva.
-        # CarrierLine.delete() nije za sada nije opisana da radi multi key delete.
-        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog Carrier entiteta podrazumvea da su svi potomci izbrisani!!
+        carrier_lines = DomainCarrierLine.query(ancestor=carrier_key).fetch(keys_only=True)
+        # ovaj metod ne loguje brisanje pojedinacno svakog carrier_line entiteta, pa se trebati ustvari pozivati DomainCarrierLine.delete() sa listom kljuceva.
+        # DomainCarrierLine.delete() nije za sada nije opisana da radi multi key delete.
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog DomainCarrier entiteta podrazumvea da su svi potomci izbrisani!!
         ndb.delete_multi(carrier_lines)
         carrier_key.delete()
 
 # done!
-class CarrierLine(ndb.Expando):
+class DomainCarrierLine(ndb.Expando):
     
-    # ancestor Carrier (namespace Domain)
+    # ancestor DomainCarrier (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
     # composite index: ancestor:yes - sequence; ancestor:yes - active,sequence
     name = ndb.StringProperty('1', required=True)
@@ -729,9 +729,9 @@ class CarrierLine(ndb.Expando):
     # Ova akcija kreira novi carrier line.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-CarrierLine'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCarrierLine'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        carrier_line = CarrierLine(parent=carrier_key, name=var_name, sequence=var_sequence, location_exclusion=var_location_exclusion, active=True)
+        carrier_line = DomainCarrierLine(parent=carrier_key, name=var_name, sequence=var_sequence, location_exclusion=var_location_exclusion, active=True)
         carrier_line_key = carrier_line.put()
         object_log = ObjectLog(parent=carrier_line_key, agent=agent_key, action='create', state='none', log=carrier_line)
         object_log.put()
@@ -739,7 +739,7 @@ class CarrierLine(ndb.Expando):
     # Ova akcija azurira carrier line.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-CarrierLine'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCarrierLine'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         carrier_line.name = var_name
         carrier_line.sequence = var_sequence
@@ -752,14 +752,14 @@ class CarrierLine(ndb.Expando):
     # Ova akcija brise carrier line.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-CarrierLine'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainCarrierLine'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=carrier_line_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         carrier_line_key.delete()
 
 # done!
-class CarrierLineRule(ndb.Model):
+class DomainCarrierLineRule(ndb.Model):
     
     # LocalStructuredProperty model
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L226
@@ -769,12 +769,12 @@ class CarrierLineRule(ndb.Model):
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
 
 # done! - ovde ce nam trebati kontrola
-class Catalog(ndb.Expando):
+class DomainCatalog(ndb.Expando):
     
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     # composite index: ???
-    store = ndb.KeyProperty('1', kind=Store, required=True)
+    store = ndb.KeyProperty('1', kind=DomainStore, required=True)
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
@@ -831,9 +831,9 @@ class Catalog(ndb.Expando):
     # Ova akcija kreira novi catalog.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Catalog'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        catalog = Catalog(store=store_key, name=var_name, publish=var_publish, discontinue=var_discontinue, state='unpublished')
+        catalog = DomainCatalog(store=store_key, name=var_name, publish=var_publish, discontinue=var_discontinue, state='unpublished')
         catalog_key = catalog.put()
         object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='create', state=catalog.state, log=catalog)
         object_log.put()
@@ -841,7 +841,7 @@ class Catalog(ndb.Expando):
     # Ova akcija azurira postojeci catalog.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Catalog'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         catalog.store = var_store
         catalog.name = var_name
@@ -855,10 +855,10 @@ class Catalog(ndb.Expando):
     # Ova akcija zakljucava unpublished catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
     def lock():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-Catalog'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         # radimo update catalog-a sa novim cover-om - ovde cemo verovatno raditi i presnimavanje entiteta iz store-a za koji je zakacen catalog, i svega ostalog sto je neophodno.
-        catalog_cover = CatalogImage.query(ancestor=catalog_key).order(CatalogImage.sequence).fetch(1, keys_only=True)
+        catalog_cover = DomainCatalogImage.query(ancestor=catalog_key).order(DomainCatalogImage.sequence).fetch(1, keys_only=True)
         catalog.cover = catalog_cover
         catalog_key = catalog.put()
         object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='update', state=catalog.state, log=catalog)
@@ -872,7 +872,7 @@ class Catalog(ndb.Expando):
     # Ova akcija objavljuje locked catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
     def publish():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-Catalog'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'locked'.
         catalog.state = 'published'
         catalog_key = catalog.put()
@@ -882,7 +882,7 @@ class Catalog(ndb.Expando):
     # Ova akcija prekida objavljen catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
     def discontinue():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-Catalog'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'published'.
         catalog.state = 'discontinued'
         catalog_key = catalog.put()
@@ -890,9 +890,9 @@ class Catalog(ndb.Expando):
         object_log.put()
 
 # done!
-class CatalogImage(Image):
+class DomainCatalogImage(Image):
     
-    # ancestor Catalog (namespace Domain)
+    # ancestor DomainCatalog (namespace Domain)
     # composite index: ancestor:yes - sequence
     
     _KIND = 0
@@ -908,9 +908,9 @@ class CatalogImage(Image):
     # Ova akcija dodaje novu sliku u catalog.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-CatalogImage'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCatalogImage'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        catalog_image = CatalogImage(parent=catalog_key, image=var_image, content_type=var_content_type, size=var_size, width=var_width, height=var_height, sequence=var_sequence)
+        catalog_image = DomainCatalogImage(parent=catalog_key, image=var_image, content_type=var_content_type, size=var_size, width=var_width, height=var_height, sequence=var_sequence)
         catalog_image_key = catalog_image.put()
         object_log = ObjectLog(parent=catalog_image_key, agent=agent_key, action='create', state='none', log=catalog_image)
         object_log.put()
@@ -918,7 +918,7 @@ class CatalogImage(Image):
     # Ova akcija menja raspored slike u catalog-u.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-CatalogImage'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCatalogImage'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         catalog_image.sequence = var_sequence
         catalog_image_key = catalog_image.put()
@@ -928,17 +928,17 @@ class CatalogImage(Image):
     # Ova akcija brise sliku.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-CatalogImage'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainCatalogImage'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         object_log = ObjectLog(parent=catalog_image_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         catalog_image_key.delete()
 
 # done!
-class CatalogPricetag(ndb.Model):
+class DomainCatalogPricetag(ndb.Model):
     
-    # ancestor Catalog (namespace Domain)
-    product_template = ndb.KeyProperty('1', kind=ProductTemplate, required=True, indexed=False)
+    # ancestor DomainCatalog (namespace Domain)
+    product_template = ndb.KeyProperty('1', kind=DomainProductTemplate, required=True, indexed=False)
     container_image = blobstore.BlobKeyProperty('2', required=True, indexed=False)# blob ce se implementirati na GCS
     source_width = ndb.FloatProperty('3', required=True, indexed=False)
     source_height = ndb.FloatProperty('4', required=True, indexed=False)
@@ -959,9 +959,9 @@ class CatalogPricetag(ndb.Model):
     # Ova akcija dodaje novi pricetag na catalog.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-CatalogPricetag'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCatalogPricetag'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        catalog_pricetag = CatalogPricetag(parent=catalog_key, product_template=var_product_template, container_image=var_container_image, source_width=var_source_width, source_height=var_source_height, source_position_top=var_source_position_top, source_position_left=var_source_position_left, value=var_value)
+        catalog_pricetag = DomainCatalogPricetag(parent=catalog_key, product_template=var_product_template, container_image=var_container_image, source_width=var_source_width, source_height=var_source_height, source_position_top=var_source_position_top, source_position_left=var_source_position_left, value=var_value)
         catalog_pricetag_key = catalog_pricetag.put()
         object_log = ObjectLog(parent=catalog_pricetag_key, agent=agent_key, action='create', state='none', log=catalog_pricetag)
         object_log.put()
@@ -969,7 +969,7 @@ class CatalogPricetag(ndb.Model):
     # Ova akcija azurira pricetag na catalog-u.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-CatalogPricetag'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCatalogPricetag'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         catalog_pricetag.product_template = var_product_template
         catalog_pricetag.container_image = var_container_image
@@ -985,16 +985,16 @@ class CatalogPricetag(ndb.Model):
     # Ova akcija brise pricetag sa catalog-a.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-CatalogPricetag'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainCatalogPricetag'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         object_log = ObjectLog(parent=catalog_pricetag_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         catalog_pricetag_key.delete()
 
 # done!
-class ProductTemplate(ndb.Expando):
+class DomainProductTemplate(ndb.Expando):
     
-    # ancestor Catalog (future - root / namespace Domain)
+    # ancestor DomainCatalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
     product_category = ndb.KeyProperty('1', kind=ProductCategory, required=True, indexed=False)
     name = ndb.StringProperty('2', required=True)
@@ -1014,8 +1014,8 @@ class ProductTemplate(ndb.Expando):
     pass
     # Expando
     # mozda treba uvesti customer lead time??
-    # variants = ndb.KeyProperty('7', kind=ProductVariant, repeated=True)# soft limit 100x
-    # contents = ndb.KeyProperty('8', kind=ProductContent, repeated=True)# soft limit 100x
+    # variants = ndb.KeyProperty('7', kind=DomainProductVariant, repeated=True)# soft limit 100x
+    # contents = ndb.KeyProperty('8', kind=DomainProductContent, repeated=True)# soft limit 100x
     # images = ndb.LocalStructuredProperty(Image, '9', repeated=True)# soft limit 100x
     # weight = ndb.StringProperty('10')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
     # volume = ndb.StringProperty('11')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
@@ -1036,9 +1036,9 @@ class ProductTemplate(ndb.Expando):
     # Ova akcija kreira novi product template.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductTemplate'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        product_template = ProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price, availability=var_availability)
+        product_template = DomainProductTemplate(parent=catalog_key, product_category=var_product_category, name=var_name, description=var_description, product_uom=var_product_uom, unit_price=var_unit_price, availability=var_availability)
         product_template_key = product_template.put()
         object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='create', state='none', log=product_template)
         object_log.put()
@@ -1046,7 +1046,7 @@ class ProductTemplate(ndb.Expando):
     # Ova akcija azurira product template.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-ProductTemplate'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         product_template.product_category = var_product_category
         product_template.name = var_name
@@ -1061,31 +1061,31 @@ class ProductTemplate(ndb.Expando):
     # Ova akcija brise product template.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-ProductTemplate'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         object_log = ObjectLog(parent=product_template_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        product_instances = ProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
-        # ovaj metod ne loguje brisanje pojedinacno svakog product_instance entiteta, pa se treba ustvari pozivati ProductInstance.delete() sa listom kljuceva.
-        # ProductInstance.delete() nije za sada opisana da radi multi key delete.
-        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductTemplate entiteta podrazumvea da su svi children izbrisani!!
+        product_instances = DomainProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
+        # ovaj metod ne loguje brisanje pojedinacno svakog product_instance entiteta, pa se treba ustvari pozivati DomainProductInstance.delete() sa listom kljuceva.
+        # DomainProductInstance.delete() nije za sada opisana da radi multi key delete.
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog DomainProductTemplate entiteta podrazumvea da su svi children izbrisani!!
         ndb.delete_multi(product_instances)
         product_template_key.delete()
     
     # Ova akcija generise product instance.
     @ndb.transactional
     def generate_product_instances():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'generate_product_instances-ProductTemplate'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'generate_product_instances-DomainProductTemplate'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         # ova funkcija ce se u potpunosti oslanjati na task queue kako bi se resio problem velikog broja pravljenja/brisanja instanci.
         # brisemo postojece product instance - imamo problem sto se brisanje product instanci ne loguje
-        product_instances = ProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
+        product_instances = DomainProductInstance.query(ancestor=product_template_key).fetch(keys_only=True)
         ndb.delete_multi(product_instances)
         # brisemo postojece product inventory logove - imamo problem sto se brisanje product inventory logova ne loguje
-        product_inventory_logs = ProductInventoryLog.query(ancestor=product_template_key).fetch(keys_only=True)
+        product_inventory_logs = DomainProductInventoryLog.query(ancestor=product_template_key).fetch(keys_only=True)
         ndb.delete_multi(product_inventory_logs)
         # brisemo postojece product inventory adjustment-e - imamo problem sto se brisanje product inventory adjustment-a ne loguje
-        product_inventory_adjustments = ProductInventoryAdjustment.query(ancestor=product_template_key).fetch(keys_only=True)
+        product_inventory_adjustments = DomainProductInventoryAdjustment.query(ancestor=product_template_key).fetch(keys_only=True)
         ndb.delete_multi(product_inventory_adjustments)
         # pripremamo listu varianti za product template
         # primer:
@@ -1169,16 +1169,16 @@ class ProductTemplate(ndb.Expando):
             i = 0
             for variant_signature in variant_signatures:
                 var_code = product_template_key + "-" + i
-                product_instance = ProductInstance(parent=product_template_key, code=var_code)
+                product_instance = DomainProductInstance(parent=product_template_key, code=var_code)
                 product_instance_key = product_instance.put()
                 object_log = ObjectLog(parent=product_instance_key, agent=agent_key, action='create', state='none', log=product_instance)
                 object_log.put()
                 i += 1
 
 # done!
-class ProductInstance(ndb.Expando):
+class DomainProductInstance(ndb.Expando):
     
-    # ancestor ProductTemplate
+    # ancestor DomainProductTemplate
     #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
     #key name ce se graditi tako sto se uradi MD5 na variant_signature
     #query ce se graditi tako sto se prvo izgradi variant_signature vrednost na osnovu odabira od strane krajnjeg korisnika a potom se ta vrednost hesira u MD5 i koristi kao key identifier
@@ -1193,7 +1193,7 @@ class ProductInstance(ndb.Expando):
     # availability = ndb.IntegerProperty('2', required=True) overide availability vrednosti sa product_template-a, inventory se uvek prati na nivou instanci, state je stavljen na template kako bi se olaksala kontrola state-ova. 
     # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
-    # product_instance_contents = ndb.KeyProperty('5', kind=ProductContent, repeated=True)# soft limit 100x
+    # product_instance_contents = ndb.KeyProperty('5', kind=DomainProductContent, repeated=True)# soft limit 100x
     # product_instance_images = ndb.LocalStructuredProperty(Image, '6', repeated=True)# soft limit 100x
     # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below X quantity
     # weight = ndb.StringProperty('8')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
@@ -1211,7 +1211,7 @@ class ProductInstance(ndb.Expando):
     # Ova akcija azurira product instance.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-ProductInstance'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainProductInstance'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         # u slucaju da je catalog.state == 'published' onda je moguce editovanje samo product_instance.availability i product_instance.low_stock_quantity
         product_instance.code = var_code
@@ -1220,9 +1220,9 @@ class ProductInstance(ndb.Expando):
         object_log.put()
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class ProductInventoryLog(ndb.Model):
+class DomainProductInventoryLog(ndb.Model):
     
-    # ancestor ProductInstance
+    # ancestor DomainProductInstance
     # not logged
     # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
@@ -1231,9 +1231,9 @@ class ProductInventoryLog(ndb.Model):
     balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
-class ProductInventoryAdjustment(ndb.Model):
+class DomainProductInventoryAdjustment(ndb.Model):
     
-    # ancestor ProductInstance (namespace Domain)
+    # ancestor DomainProductInstance (namespace Domain)
     # not logged ?
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
@@ -1251,22 +1251,22 @@ class ProductInventoryAdjustment(ndb.Model):
     # Ova akcija azurira product inventory.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductInventoryAdjustment'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainProductInventoryAdjustment'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'published'. - mozda budemo dozvolili adjustment bez obzira na catalog.state
-        product_inventory_adjustment = ProductInventoryAdjustment(parent=product_instance_key, agent=agent_key, quantity=var_quantity, comment=var_comment)
+        product_inventory_adjustment = DomainProductInventoryAdjustment(parent=product_instance_key, agent=agent_key, quantity=var_quantity, comment=var_comment)
         product_inventory_adjustment_key = product_inventory_adjustment.put()
         object_log = ObjectLog(parent=product_inventory_adjustment_key, agent=agent_key, action='create', state='none', log=product_inventory_adjustment)
         object_log.put()
         # ovo bi trebalo ici preko task queue
         # idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
-        product_inventory_log = ProductInventoryLog.query().order(-ProductInventoryLog.logged).fetch(1)
-        new_product_inventory_log = ProductInventoryLog(parent=product_instance_key, reference=product_inventory_adjustment_key, quantity=product_inventory_adjustment.quantity, balance=product_inventory_log.balance + product_inventory_adjustment.quantity)
+        product_inventory_log = DomainProductInventoryLog.query().order(-DomainProductInventoryLog.logged).fetch(1)
+        new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, reference=product_inventory_adjustment_key, quantity=product_inventory_adjustment.quantity, balance=product_inventory_log.balance + product_inventory_adjustment.quantity)
         new_product_inventory_log.put()
 
 # done!
-class ProductVariant(ndb.Model):
+class DomainProductVariant(ndb.Model):
     
-    # ancestor Catalog (future - root) (namespace Domain)
+    # ancestor DomainCatalog (future - root) (namespace Domain)
     # http://v6apps.openerp.com/addon/1809
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
@@ -1286,9 +1286,9 @@ class ProductVariant(ndb.Model):
     # Ova akcija kreira novi product variant.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductVariant'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainProductVariant'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        product_variant = ProductVariant(parent=catalog_key, name=var_name, description=var_description, options=var_options, allow_custom_value=var_allow_custom_value)
+        product_variant = DomainProductVariant(parent=catalog_key, name=var_name, description=var_description, options=var_options, allow_custom_value=var_allow_custom_value)
         product_variant_key = product_variant.put()
         object_log = ObjectLog(parent=product_variant_key, agent=agent_key, action='create', state='none', log=product_variant)
         object_log.put()
@@ -1296,7 +1296,7 @@ class ProductVariant(ndb.Model):
     # Ova akcija azurira product variant.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-ProductVariant'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainProductVariant'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         product_variant.name = var_name
         product_variant.description = var_description
@@ -1307,9 +1307,9 @@ class ProductVariant(ndb.Model):
         object_log.put()
 
 # done!
-class ProductContent(ndb.Model):
+class DomainProductContent(ndb.Model):
     
-    # ancestor Catalog (future - root) (namespace Domain)
+    # ancestor DomainCatalog (future - root) (namespace Domain)
     # composite index: ancestor:yes - title
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
@@ -1326,9 +1326,9 @@ class ProductContent(ndb.Model):
     # Ova akcija kreira novi product content.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-ProductContent'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainProductContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
-        product_content = ProductContent(parent=catalog_key, title=var_title, body=var_body)
+        product_content = DomainProductContent(parent=catalog_key, title=var_title, body=var_body)
         product_content_key = product_content.put()
         object_log = ObjectLog(parent=product_content_key, agent=agent_key, action='create', state='none', log=product_content)
         object_log.put()
@@ -1336,7 +1336,7 @@ class ProductContent(ndb.Model):
     # Ova akcija azurira product content.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-ProductContent'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainProductContent'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
         product_content.title = var_title
         product_content.body = var_body
