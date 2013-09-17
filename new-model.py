@@ -181,8 +181,6 @@ class Domain(ndb.Expando):
 class DomainRole(ndb.Model):
     
     # root (namespace Domain)
-    # ancestor User (for caching/optimization purposes) - Role(namespace=domain_key, parent=user_key, id=str(role_key.id()), ....)
-    # TREBA TESTIRATI DA LI RADE QUERY: Role.query(namespace=..., ancestor=..., id=....)
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
     name = ndb.StringProperty('1', required=True)
@@ -374,7 +372,7 @@ class Field(ndb.Model):
     writable = ndb.BooleanProperty('2', default=True, indexed=False)
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
-# done!
+# done! mozda bude trebala kontrola i ovde
 class Store(ndb.Expando):
     
     # root (namespace Domain)
@@ -1359,9 +1357,9 @@ class ProductContent(ndb.Model):
 class User(ndb.Expando):
     
     # root
-    state = ndb.IntegerProperty('1', required=True)
+    identities = ndb.StructuredProperty(UserIdentity, '1', repeated=True)# soft limit 100x
     emails = ndb.StringProperty('2', repeated=True)# soft limit 100x
-    identities = ndb.StructuredProperty(UserIdentity, '3', repeated=True)# soft limit 100x
+    state = ndb.IntegerProperty('3', required=True)
     _default_indexed = False
     pass
     #Expando
@@ -1406,21 +1404,25 @@ class User(ndb.Expando):
     @ndb.transactional
     def register():
         # ovu akciju moze izvrsiti samo neregistrovani neautenticirani agent.
-        user = User(state='active', emails=['user@email.com',], identities=[UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),])
+        var_identities = []
+        var_emails = []
+        var_identities.append(UserIdentity(identity=var_identity, email=var_email, associated=True, primary=True))
+        var_emails.append(var_email)
+        user = User(identities=var_identities, emails=var_emails, state='active')
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='register', state=user.state, log=user)
         object_log.put()
         # UserIPAddress se pravi nakon pravljenja ObjectLog-a zato sto se ne loguje.
-        user_ip_address = UserIPAddress(parent=user_key, ip_address='127.0.0.1')
+        user_ip_address = UserIPAddress(parent=user_key, ip_address=var_ip_address)
         user_ip_address.put()
     
     # Ova akcija radi insert/update/delete na neki prop. (izuzev state) u User objektu.
     @ndb.transactional
     def update():
-        user.emails = ['user@email.com',]
-        user.identities = [UserIdentity(identity='abc123', email='user@email.com', associated=True, primary=True),]
+        user.emails = var_emails
+        user.identities = var_identities
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
         object_log.put()
         # ukoliko se u listi user.identities promenio prop. user.identities.primary, 
         # radi se potraga za eventualnim BuyerCollection entietom usera koji je imao prethodnu email adresu, 
@@ -1459,7 +1461,7 @@ class User(ndb.Expando):
         # akcija se moze pozvati samo ako je user.state == 'active'.
         user.state = 'suspended'
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent='agent_key', action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
         # poziva se akcija "logout";
         User.logout()
