@@ -1,4 +1,5 @@
 #coding=UTF-8
+# http://www.python.org/dev/peps/pep-0008/
 
 #MASTER MODEL FILE
 
@@ -402,6 +403,10 @@ class DomainStore(ndb.Expando):
     #
     # Feedback
     # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '16', repeated=True)# soft limit 120x
+    #
+    # Shipping Exclusion Settings
+    # location_exclusion = ndb.BooleanProperty('17', default=False)
+    
     
     _KIND = 0
     
@@ -1883,7 +1888,7 @@ class SupportRequest(ndb.Model):
 class Order(ndb.Expando):
     
     # ancestor User (namespace Domain)
-    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l28
+    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l33
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
@@ -1916,6 +1921,122 @@ class Order(ndb.Expando):
     # feedback = ndb.IntegerProperty('18', required=True)
     # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'unpublished'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'cart' : (1, ),
+        'quotation' : (2, ),
+        'processing' : (3, ),
+        'done' : (4, ),
+        'cancel' : (5, ),
+    }
+    
+    # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'lock' : 3,
+       'publish' : 4,
+       'discontinue' : 5,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'lock' : {
+            'from' : ('unpublished',),
+            'to' : ('locked',),
+         },
+        'publish' : {
+           'from' : ('locked', ),
+           'to'   : ('published',),
+        },
+        'discontinue' : {
+           'from' : ('published', ),
+           'to'   : ('discontinued',),
+        },
+    }
+    
+    #
+    @ndb.transactional
+    def add_to_cart():
+        # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
+        catalog = catalog_key.get()
+        buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
+        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=catalog.store).fetch()
+        shipping_allowed = False
+        order_shipping_addresses = []
+        order_default_shipping_address = None
+        for buyer_address in buyer_addresses:
+            if not (shipping_exclusions):
+                shipping_allowed = True
+                order_shipping_addresses.append(buyer_address)
+                if (buyer_address.default_shipping):
+                    order_default_shipping_address = buyer_address
+            else:
+                for shipping_exclusion in shipping_exclusions:
+                    p = shipping_exclusion._properties
+                    if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+                        if (buyer_address.country == shipping_exclusion.country):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                order_shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    order_default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            order_shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                order_default_shipping_address = buyer_address
+                    elif not (p['postal_code_from'] and p['postal_code_to']):
+                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                order_shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    order_default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            order_shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                order_default_shipping_address = buyer_address
+                    else:
+                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region and (buyer_address.postal_code >= shipping_exclusion.postal_code_from and buyer_address.postal_code <= shipping_exclusion.postal_code_to)):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                order_shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    order_default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            order_shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                order_default_shipping_address = buyer_address
+            
+
+        store = catalog.store.get()
+        # trebaju nam domain_key, store_key, user_key, catalog_key, product_instance_key
+        # def get_carriers():
+        # def get_taxes():
+        # trazimo postojeci order koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
+        # Order.query(Order.store == store_key, Order.state == 'cart', ancestor=user_key)
+        # ako nema ordera u state == 'cart' treba jos proveriti ima li neki order koji je u 'quotation' ili 'processing'
+        # ako ima 'cart' onda se on ucitava, ako ima 'quotation' ili 'processing' onda se prijavljuje kupcu da vec ima kopru koja treba da se naplati
+        # ako nema ordera onda se pravi novi order, uzimaju se default adrese od usera ili one koje odgovaraju shipping exclusions-ima i upisuju se u order
+        # proverava se da li ima order line sa product_instance_reference == product_instance_key
+        # ako ima onda se quantity na tom order line uvecava za 1 (verovatno), i rade se ostale provere da nije sta izmenjeno (taxe, carrier, etc..)
+        # ako nema onda se pravi novi order line i rade se obracuni 
+        # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
+        # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
 
 # done!
 class OrderFeedback(ndb.Model):
@@ -2013,8 +2134,8 @@ class OrderLine(ndb.Expando):
     # taxes = ndb.LocalStructuredProperty(OrderLineTax, '7', repeated=True)# soft limit 500x
     # product_category_complete_name = ndb.TextProperty('8', required=True)# soft limit 64kb
     # product_category = ndb.KeyProperty('9', kind=ProductCategory, required=True)
-    # catalog_pricetag_reference = ndb.KeyProperty('10', kind=CatalogPricetag, required=True)
-    # product_instance_reference = ndb.KeyProperty('11', kind=ProductInstance, required=True)
+    # catalog_pricetag_reference = ndb.KeyProperty('10', kind=DomainCatalogPricetag, required=True)
+    # product_instance_reference = ndb.KeyProperty('11', kind=DomainProductInstance, required=True)
     # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
 
 # done!
