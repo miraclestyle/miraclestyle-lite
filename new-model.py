@@ -1966,63 +1966,9 @@ class Order(ndb.Expando):
     #
     @ndb.transactional
     def add_to_cart():
-        # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
+        
         catalog = catalog_key.get()
-        buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
-        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=catalog.store).fetch()
-        shipping_allowed = False
-        order_shipping_addresses = []
-        order_default_shipping_address = None
-        for buyer_address in buyer_addresses:
-            if not (shipping_exclusions):
-                shipping_allowed = True
-                order_shipping_addresses.append(buyer_address)
-                if (buyer_address.default_shipping):
-                    order_default_shipping_address = buyer_address
-            else:
-                for shipping_exclusion in shipping_exclusions:
-                    p = shipping_exclusion._properties
-                    if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
-                        if (buyer_address.country == shipping_exclusion.country):
-                            # only at the following locations
-                            if (store.location_exclusion):
-                                shipping_allowed = True
-                                order_shipping_addresses.append(buyer_address)
-                                if (buyer_address.default_shipping):
-                                    order_default_shipping_address = buyer_address
-                        elif not (store.location_exclusion):
-                            shipping_allowed = True
-                            order_shipping_addresses.append(buyer_address)
-                            if (buyer_address.default_shipping):
-                                order_default_shipping_address = buyer_address
-                    elif not (p['postal_code_from'] and p['postal_code_to']):
-                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region):
-                            # only at the following locations
-                            if (store.location_exclusion):
-                                shipping_allowed = True
-                                order_shipping_addresses.append(buyer_address)
-                                if (buyer_address.default_shipping):
-                                    order_default_shipping_address = buyer_address
-                        elif not (store.location_exclusion):
-                            shipping_allowed = True
-                            order_shipping_addresses.append(buyer_address)
-                            if (buyer_address.default_shipping):
-                                order_default_shipping_address = buyer_address
-                    else:
-                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region and (buyer_address.postal_code >= shipping_exclusion.postal_code_from and buyer_address.postal_code <= shipping_exclusion.postal_code_to)):
-                            # only at the following locations
-                            if (store.location_exclusion):
-                                shipping_allowed = True
-                                order_shipping_addresses.append(buyer_address)
-                                if (buyer_address.default_shipping):
-                                    order_default_shipping_address = buyer_address
-                        elif not (store.location_exclusion):
-                            shipping_allowed = True
-                            order_shipping_addresses.append(buyer_address)
-                            if (buyer_address.default_shipping):
-                                order_default_shipping_address = buyer_address
-            
-
+        shipping = validate_buyer_addresses(user_key, catalog.store)
         store = catalog.store.get()
         # trebaju nam domain_key, store_key, user_key, catalog_key, product_instance_key
         # def get_carriers():
@@ -2037,6 +1983,67 @@ class Order(ndb.Expando):
         # ako nema onda se pravi novi order line i rade se obracuni 
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
+    
+    def validate_buyer_addresses(user_key, store_key):
+        # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
+        # ovde smo trebali da koristimo keshiranu verziju DomainStoreShippingExclusion, 
+        # tj. DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch(),
+        # medjutim to predstavlja problem da se moze dogoditi da user iz jednog kataloga moze izabrati adresu koja mu je nedostupna u drugom katalogu u istom store-u
+        # to pravi nekonzistentnost i funkcionalnost nije onakva kakva se ocekuje da bude.
+        buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
+        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=store_key).fetch()
+        shipping_allowed = False
+        shipping_addresses = []
+        default_shipping_address = None
+        for buyer_address in buyer_addresses:
+            if not (shipping_exclusions):
+                shipping_allowed = True
+                shipping_addresses.append(buyer_address)
+                if (buyer_address.default_shipping):
+                    default_shipping_address = buyer_address
+            else:
+                for shipping_exclusion in shipping_exclusions:
+                    p = shipping_exclusion._properties
+                    if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+                        if (buyer_address.country == shipping_exclusion.country):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                default_shipping_address = buyer_address
+                    elif not (p['postal_code_from'] and p['postal_code_to']):
+                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                default_shipping_address = buyer_address
+                    else:
+                        if (buyer_address.country == shipping_exclusion.country and buyer_address.region == shipping_exclusion.region and (buyer_address.postal_code >= shipping_exclusion.postal_code_from and buyer_address.postal_code <= shipping_exclusion.postal_code_to)):
+                            # only at the following locations
+                            if (store.location_exclusion):
+                                shipping_allowed = True
+                                shipping_addresses.append(buyer_address)
+                                if (buyer_address.default_shipping):
+                                    default_shipping_address = buyer_address
+                        elif not (store.location_exclusion):
+                            shipping_allowed = True
+                            shipping_addresses.append(buyer_address)
+                            if (buyer_address.default_shipping):
+                                default_shipping_address = buyer_address
+        return {'shipping_allowed': shipping_allowed, 'shipping_addresses': shipping_addresses, 'default_shipping_address': default_shipping_address}
 
 # done!
 class OrderFeedback(ndb.Model):
