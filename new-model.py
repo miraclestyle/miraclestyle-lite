@@ -1887,7 +1887,7 @@ class SupportRequest(ndb.Model):
 # done!
 class Order(ndb.Expando):
     
-    # ancestor User (namespace Domain)
+    # ancestor User (namespace Domain) ovaj koncept ne radi, morace da se promeni...
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l33
     # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
@@ -1932,11 +1932,13 @@ class Order(ndb.Expando):
         # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'cart' : (1, ),
-        'quotation' : (2, ),
-        'processing' : (3, ),
-        'done' : (4, ),
-        'cancel' : (5, ),
+        'cart' : (1, ),# buyer can create order, add/update (quantity)/remove order lines;
+        'checkout' : (2, ),# buyer can cancel/request quotation/pay order;
+        'quotation_requested' : (3, ),# seller can edit discount on order lines, buyer can cancel order;
+        'quotation_completed' : (4, ),# buyer can cancel/pay order;
+        'processing' : (5, ),# no one can cancel/edit/delete order lines;
+        'completed' : (6, ),# no one can cancel/edit/delete order lines;
+        'canceled' : (7, ),# no one can cancel/edit/delete order lines;
     }
     
     # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
@@ -1966,14 +1968,27 @@ class Order(ndb.Expando):
     #
     @ndb.transactional
     def add_to_cart():
-        
+        shipping = validate_buyer_addresses(user_key, catalog_key)
+        if not (shipping['shipping_allowed']):
+            return # add_to_cart nije dozvoljena kupcu koji nije na shipping listi
         catalog = catalog_key.get()
-        shipping = validate_buyer_addresses(user_key, catalog.store)
         store = catalog.store.get()
+        product_instance = product_instance_key.get()
+        product_template = product_template_key.get()
         # trebaju nam domain_key, store_key, user_key, catalog_key, product_instance_key
         # def get_carriers():
         # def get_taxes():
         # trazimo postojeci order koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
+        order = Order.query(Order.store == store_key, Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=user_key).fetch() # trebace nam composite index
+        if not (order):
+            currency = OrderCurrency(store.currency.get()) # ovo nije sintaksno ispravno, ovde treba ustvari mapirati argumente u constructor-u OrderCurrency
+            untaxed_amount = product_instance.unit_price
+            tax_amount = None
+            total_amount = None
+            state = 'cart'
+            order = Order(parent=user_key, store=store_key, currency=currency, untaxed_amount=untaxed_amount, tax_amount=tax_amount, total_amount=total_amount, state=state)
+            order_key = order.put()
+            
         # Order.query(Order.store == store_key, Order.state == 'cart', ancestor=user_key)
         # ako nema ordera u state == 'cart' treba jos proveriti ima li neki order koji je u 'quotation' ili 'processing'
         # ako ima 'cart' onda se on ucitava, ako ima 'quotation' ili 'processing' onda se prijavljuje kupcu da vec ima kopru koja treba da se naplati
@@ -1984,14 +1999,15 @@ class Order(ndb.Expando):
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
     
-    def validate_buyer_addresses(user_key, store_key):
+    def validate_buyer_addresses(user_key, object_key):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
+        # object_key moze da bude key bilo kojeg entiteta koji u potomstvu ima DomainStoreShippingExclusion entitete
         # ovde smo trebali da koristimo keshiranu verziju DomainStoreShippingExclusion, 
         # tj. DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch(),
         # medjutim to predstavlja problem da se moze dogoditi da user iz jednog kataloga moze izabrati adresu koja mu je nedostupna u drugom katalogu u istom store-u
         # to pravi nekonzistentnost i funkcionalnost nije onakva kakva se ocekuje da bude.
         buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
-        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=store_key).fetch()
+        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=object_key).fetch()
         shipping_allowed = False
         shipping_addresses = []
         default_shipping_address = None
@@ -2126,6 +2142,10 @@ class OrderCurrency(ndb.Model):
 class OrderLine(ndb.Expando):
     
     # ancestor Order, BillingOrder
+    # u slucaju Order-a, key za OrderLine ce se graditi na sledeci nacin:
+    # key: namespace=domain_id, parent=order_id, id=catalog_id+product_template_id+product_instance_id
+    # u slucaju BillingOrder-a, key za OrderLine ce se graditi na sledeci nacin:
+    # key: namespace=domain_id, parent=billing_order_id, id=paypal_transaction_log_id ?
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     # composite index: ancestor:yes - sequence
