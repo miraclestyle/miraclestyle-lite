@@ -2025,11 +2025,10 @@ class Order(ndb.Expando):
                 shipping_exclusions = value
             elif (key = 'store'):
                 store = value
-        shipping_allowed = False
         shipping_addresses = []
-        forbiden_addresses = []
         default_shipping_address = None
         for buyer_address in buyer_addresses:
+            shipping_allowed = False
             if not (shipping_exclusions):
                 shipping_allowed = True
             else:
@@ -2082,7 +2081,6 @@ class Order(ndb.Expando):
         product_category = None
         carrier = None
         valid_taxes = []
-        tax_allowed = False
         for key, value in kwargs.iteritems():
             if (key = 'taxes'):
                 taxes = value
@@ -2093,13 +2091,12 @@ class Order(ndb.Expando):
             elif (key = 'carrier'):
                 carrier = value
         for tax in taxes:
+            tax_allowed = False
             tax_p = tax._properties
             if (tax_p['locations']):
                 # Tax everywhere except at the following locations
                 if not (tax.location_exclusion):
                     tax_allowed = True
-                    if (tax_p['carriers']) and tax.carriers.count(carrier):
-                        
                     for tax_location in tax.locations:
                         p = tax_location._properties
                         if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
@@ -2115,6 +2112,7 @@ class Order(ndb.Expando):
                                 tax_allowed = False
                                 break
                 else:
+                    # Tax only at the following locations
                     for tax_location in tax.locations:
                         p = tax_location._properties
                         if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
@@ -2129,9 +2127,19 @@ class Order(ndb.Expando):
                             if (location.country == tax_location.country and location.region == tax_location.region and (location.postal_code >= tax_location.postal_code_from and location.postal_code <= tax_location.postal_code_to)):
                                 tax_allowed = True
                                 break
-                
-                    
-                            
+            else:
+                tax_allowed = True
+            if (tax_allowed):
+                if (tax_p['carriers']):
+                    if not (tax.carriers.count(carrier)):
+                        tax_allowed = False
+                        
+                if (tax_p['product_categories']):
+                    if not (tax.product_categories.count(product_category)):
+                        tax_allowed = False
+                        
+            if (tax_allowed):    
+                valid_taxes.append(tax)
         
     def validate_carriers():
         
