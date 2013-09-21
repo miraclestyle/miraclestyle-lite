@@ -2093,6 +2093,7 @@ class Order(ndb.Expando):
         for tax in taxes:
             tax_allowed = False
             tax_p = tax._properties
+            # location parametar se uvek mora proslediti metodi, kako bi se uradila ispravna validacija.
             if (tax_p['locations']):
                 # Tax everywhere except at the following locations
                 if not (tax.location_exclusion):
@@ -2128,17 +2129,27 @@ class Order(ndb.Expando):
                                 tax_allowed = True
                                 break
             else:
+                # u slucaju da taxa nema konfigurisane location exclusions-e onda se odnosi na sve lokacije/onda je to globalna taxa
                 tax_allowed = True
+            # ako je tax_allowed nakon location check-a onda radimo validaciju po carrier-u i product_category-ju
             if (tax_allowed):
-                if (tax_p['carriers']):
-                    if not (tax.carriers.count(carrier)):
+                # ako je validator metod primio carrier id, onda se validacija odnosi na carrier.
+                if (carrier):
+                    tax_allowed = False
+                    # samo taxe koje su eksplicitno konfigurisane za carrier-e se mogu odnositi na carrier
+                    if (tax_p['carriers']) and (tax.carriers.count(carrier)):
+                        tax_allowed = True
+                # ako je validator metod primio product_category id, onda se validacija odnosi na product.
+                elif (product_category):
+                    # samo taxe koje nisu eksplicitno konfigurisane za carrier-e se mogu odnositi na prouduct
+                    if (tax_p['carriers']):
                         tax_allowed = False
-                        
-                if (tax_p['product_categories']):
-                    if not (tax.product_categories.count(product_category)):
-                        tax_allowed = False
-                        
-            if (tax_allowed):    
+                    else:
+                        # ukoliko taxa target-a product kategorije, onda se product_category mora naci medju njima kako bi taxa bila validna
+                        if (tax_p['product_categories']):
+                            if not (tax.product_categories.count(product_category)):
+                                tax_allowed = False
+            if (tax_allowed):
                 valid_taxes.append(tax)
         
     def validate_carriers():
