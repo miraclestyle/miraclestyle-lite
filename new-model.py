@@ -2009,6 +2009,10 @@ class Order(ndb.Expando):
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
     
+    def get_order():
+        
+    def get_order_line():
+        
     def get_shipping_addresses(**kwargs):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
         # object_key moze da bude key bilo kojeg entiteta koji u potomstvu ima DomainStoreShippingExclusion entitete
@@ -2018,6 +2022,9 @@ class Order(ndb.Expando):
         # to pravi nekonzistentnost i funkcionalnost nije onakva kakva se ocekuje da bude.
         buyer_addresses = []
         shipping_exclusions = []
+        store = None
+        shipping_addresses = []
+        default_shipping_address = None
         for key, value in kwargs.iteritems():
             if (key = 'buyer_addresses'):
                 buyer_addresses = value
@@ -2025,8 +2032,6 @@ class Order(ndb.Expando):
                 shipping_exclusions = value
             elif (key = 'store'):
                 store = value
-        shipping_addresses = []
-        default_shipping_address = None
         for buyer_address in buyer_addresses:
             shipping_allowed = False
             if not (shipping_exclusions):
@@ -2071,11 +2076,7 @@ class Order(ndb.Expando):
                         default_shipping_address = buyer_address
         return {'shipping_addresses': shipping_addresses, 'default_shipping_address': default_shipping_address}
     
-    def get_order():
-        
-    def get_order_line():
-        
-    def validate_taxes(**kwargs):
+    def get_taxes(**kwargs):
         taxes = []
         location = None
         product_category = None
@@ -2151,9 +2152,66 @@ class Order(ndb.Expando):
                                 tax_allowed = False
             if (tax_allowed):
                 valid_taxes.append(tax)
-        
-    def validate_carriers():
-        
+        return valid_taxes
+    
+    def get_carriers(**kwargs):
+        carriers = []
+        order = None
+        valid_carriers = []
+        for key, value in kwargs.iteritems():
+            if (key = 'carriers'):
+                carriers = value
+            elif (key = 'order'):
+                order = value
+        for carrier in carriers:
+            for carrier_line in carrier.lines
+                line_allowed = False
+                carrier_line_p = carrier_line._properties
+                # location parametar se uvek mora proslediti metodi, kako bi se uradila ispravna validacija.
+                if (carrier_line_p['locations']):
+                    # Everywhere except at the following locations
+                    if not (carrier_line.location_exclusion):
+                        line_allowed = True
+                        for carrier_line_location in carrier_line.locations:
+                            p = carrier_line_location._properties
+                            if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+                                if (order.shipping_address.country == carrier_line_location.country):
+                                    line_allowed = False
+                                    break
+                            elif not (p['postal_code_from'] and p['postal_code_to']):
+                                if (order.shipping_address.country == carrier_line_location.country and order.shipping_address.region == carrier_line_location.region):
+                                    line_allowed = False
+                                    break
+                            else:
+                                if (order.shipping_address.country == carrier_line_location.country and order.shipping_address.region == carrier_line_location.region and (order.shipping_address.postal_code >= carrier_line_location.postal_code_from and order.shipping_address.postal_code <= carrier_line_location.postal_code_to)):
+                                    line_allowed = False
+                                    break
+                    else:
+                        # Only at the following locations
+                        for carrier_line_location in carrier_line.locations:
+                            p = carrier_line_location._properties
+                            if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+                                if (order.shipping_address.country == carrier_line_location.country):
+                                    line_allowed = True
+                                    break
+                            elif not (p['postal_code_from'] and p['postal_code_to']):
+                                if (order.shipping_address.country == carrier_line_location.country and order.shipping_address.region == carrier_line_location.region):
+                                    line_allowed = True
+                                    break
+                            else:
+                                if (order.shipping_address.country == carrier_line_location.country and order.shipping_address.region == carrier_line_location.region and (order.shipping_address.postal_code >= carrier_line_location.postal_code_from and order.shipping_address.postal_code <= carrier_line_location.postal_code_to)):
+                                    line_allowed = True
+                                    break
+                else:
+                    # u slucaju da carrier line nema konfigurisane location exclusions-e onda se odnosi na sve lokacije/onda je to globalni carrier
+                    line_allowed = True
+                # ako je line_allowed nakon location check-a onda radimo validaciju po carrier line rules
+                if (line_allowed):
+                    for carrier_line_rule in carrier_line.rules:
+                        # validacija carrier_line_rule,condition se ovde radi
+                if (tax_allowed):
+                    valid_carriers.append(tax)
+        return valid_carriers
 
 # done!
 class OrderFeedback(ndb.Model):
