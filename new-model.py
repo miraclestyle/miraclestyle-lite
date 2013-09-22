@@ -1200,8 +1200,8 @@ class DomainProductInstance(ndb.Expando):
     # availability = ndb.IntegerProperty('2', required=True) overide availability vrednosti sa product_template-a, inventory se uvek prati na nivou instanci, state je stavljen na template kako bi se olaksala kontrola state-ova. 
     # description = ndb.TextProperty('3', required=True)# soft limit 64kb
     # unit_price = DecimalProperty('4', required=True)
-    # product_instance_contents = ndb.KeyProperty('5', kind=DomainProductContent, repeated=True)# soft limit 100x
-    # product_instance_images = ndb.LocalStructuredProperty(Image, '6', repeated=True)# soft limit 100x
+    # contents = ndb.KeyProperty('5', kind=DomainProductContent, repeated=True)# soft limit 100x
+    # images = ndb.LocalStructuredProperty(Image, '6', repeated=True)# soft limit 100x
     # low_stock_quantity = DecimalProperty('7', default=0.00)# notify store manager when qty drops below X quantity
     # weight = ndb.StringProperty('8')# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
     # volume = ndb.StringProperty('9')# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
@@ -2008,39 +2008,36 @@ class Order(ndb.Expando):
         # ako nema onda se pravi novi order line i rade se obracuni 
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
-    else:
-            if (create):
-                if (create):
-                # pravimo novi order sa dummy vrednostima
-                store = store_key.get()
-                store_currency = store.currency.get()
-                cart_currency = OrderCurrency()
-                cart_currency.name = store_currency.name
-                cart_currency.symbol = store_currency.symbol
-                cart_currency.code = store_currency.code
-                cart_currency.numeric_code = store_currency.numeric_code
-                cart_currency.rounding = store_currency.rounding
-                cart_currency.digits = store_currency.digits
-                #formating
-                cart_currency.grouping = store_currency.grouping
-                cart_currency.decimal_separator = store_currency.decimal_separator
-                cart_currency.thousands_separator = store_currency.thousands_separator
-                cart_currency.positive_sign_position = store_currency.positive_sign_position
-                cart_currency.negative_sign_position = store_currency.negative_sign_position
-                cart_currency.positive_sign = store_currency.positive_sign
-                cart_currency.negative_sign = store_currency.negative_sign
-                cart_currency.positive_currency_symbol_precedes = store_currency.positive_currency_symbol_precedes
-                cart_currency.negative_currency_symbol_precedes = store_currency.negative_currency_symbol_precedes
-                cart_currency.positive_separate_by_space = store_currency.positive_separate_by_space
-                cart_currency.negative_separate_by_space = store_currency.negative_separate_by_space
-                cart = Order(parent=user_key, store=store, currency=cart_currency, untaxed_amount=0.00, tax_amount=0.00, total_amount=0.00, state='cart')
-                cart_key = cart.put()
-                object_log = ObjectLog(parent=cart_key, agent=agent_key, action='get_cart', state=cart.state, log=cart)
-                object_log.put()
-            else:
-                return
 
     def get_cart(**kwargs):
+        if (kwargs.get('new_cart')):
+            # pravimo novi order/cart sa dummy vrednostima
+            store = kwargs.get('store_key').get()
+            store_currency = store.currency.get()
+            cart_currency = OrderCurrency()
+            cart_currency.name = store_currency.name
+            cart_currency.symbol = store_currency.symbol
+            cart_currency.code = store_currency.code
+            cart_currency.numeric_code = store_currency.numeric_code
+            cart_currency.rounding = store_currency.rounding
+            cart_currency.digits = store_currency.digits
+            #formating
+            cart_currency.grouping = store_currency.grouping
+            cart_currency.decimal_separator = store_currency.decimal_separator
+            cart_currency.thousands_separator = store_currency.thousands_separator
+            cart_currency.positive_sign_position = store_currency.positive_sign_position
+            cart_currency.negative_sign_position = store_currency.negative_sign_position
+            cart_currency.positive_sign = store_currency.positive_sign
+            cart_currency.negative_sign = store_currency.negative_sign
+            cart_currency.positive_currency_symbol_precedes = store_currency.positive_currency_symbol_precedes
+            cart_currency.negative_currency_symbol_precedes = store_currency.negative_currency_symbol_precedes
+            cart_currency.positive_separate_by_space = store_currency.positive_separate_by_space
+            cart_currency.negative_separate_by_space = store_currency.negative_separate_by_space
+            cart = Order(parent=kwargs.get('user_key'), store=kwargs.get('store_key'), currency=cart_currency, untaxed_amount=0.00, tax_amount=0.00, total_amount=0.00, state='cart')
+            cart_key = cart.put()
+            object_log = ObjectLog(parent=cart_key, agent=kwargs.get('user_key'), action='new_cart', state=cart.state, log=cart)# videcemo kako cemo ovaj logging resiti
+            object_log.put()
+            return cart
         cart = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
         if (cart):
             cart = cart[0]
@@ -2050,6 +2047,21 @@ class Order(ndb.Expando):
         return cart
 
     def get_cart_line(**kwargs):
+        if (kwargs.get('new_cart_line')):
+            description = ndb.TextProperty('1', required=True)# soft limit 64kb
+            quantity = DecimalProperty('2', required=True, indexed=False)
+            product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
+            unit_price = DecimalProperty('4', required=True, indexed=False)
+            discount = DecimalProperty('5', default=0.00, indexed=False)
+            sequence = ndb.IntegerProperty('6', required=True)
+            
+            product_template = kwargs.get('product_template_key').get()
+            product_instance = kwargs.get('product_instance_key').get()
+            # treba uraditi merge product_template i product_instance
+            
+            cart_line = OrderLine(parent=kwargs.get('cart').key)
+            
+            
         cart_line = None
         cart = get_cart(kwargs)
         if (cart):
@@ -2064,7 +2076,18 @@ class Order(ndb.Expando):
     def update_cart_line(**kwargs):
         # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
         cart = get_cart_line(kwargs)
-        if (cart.line):
+        # proveravamo da li imamo cart objekat
+        if (cart):
+            # ako imamo cart, proveravamo da li imamo cart line koji trazimo
+            if (cart.line):
+                # ako imamo line koji trazimo, onda ga update-amo
+                
+            # ako imamo cart, ali nemamo cart line koji trazimo, pravimo novi line
+            else:
+        # ako nemamo cart objekat onda praivmo novi cart        
+        else:
+            
+        
             
         
     def get_shipping_addresses(**kwargs):
