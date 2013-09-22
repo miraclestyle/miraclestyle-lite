@@ -1970,8 +1970,10 @@ class Order(ndb.Expando):
     #
     @ndb.transactional
     def add_to_cart():
-        catalog = catalog_key.get()
-        store = catalog.store.get()
+        # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
+        # trazimo postojeci cart koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
+        
+        
         buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
         shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=object_key).fetch()
         shipping = validate_buyer_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
@@ -1979,11 +1981,9 @@ class Order(ndb.Expando):
             return # add_to_cart nije dozvoljena kupcu koji nije na shipping listi
         product_instance = product_instance_key.get()
         product_template = product_template_key.get()
-        # trebaju nam domain_key, store_key, user_key, catalog_key, product_instance_key
-        # def get_carriers():
-        # def get_taxes():
+        
         # trazimo postojeci order koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
-        order = Order.query(Order.store == store_key, Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=user_key).fetch() # trebace nam composite index
+        
         if not (order):
             # pravimo novi order sa blanko vrednostima.
             currency = OrderCurrency(store.currency.get()) # ovo nije sintaksno ispravno, ovde treba ustvari mapirati argumente u constructor-u OrderCurrency
@@ -2008,10 +2008,64 @@ class Order(ndb.Expando):
         # ako nema onda se pravi novi order line i rade se obracuni 
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
-    
-    def get_order():
-        
-    def get_order_line():
+    else:
+            if (create):
+                if (create):
+                # pravimo novi order sa dummy vrednostima
+                store = store_key.get()
+                store_currency = store.currency.get()
+                cart_currency = OrderCurrency()
+                cart_currency.name = store_currency.name
+                cart_currency.symbol = store_currency.symbol
+                cart_currency.code = store_currency.code
+                cart_currency.numeric_code = store_currency.numeric_code
+                cart_currency.rounding = store_currency.rounding
+                cart_currency.digits = store_currency.digits
+                #formating
+                cart_currency.grouping = store_currency.grouping
+                cart_currency.decimal_separator = store_currency.decimal_separator
+                cart_currency.thousands_separator = store_currency.thousands_separator
+                cart_currency.positive_sign_position = store_currency.positive_sign_position
+                cart_currency.negative_sign_position = store_currency.negative_sign_position
+                cart_currency.positive_sign = store_currency.positive_sign
+                cart_currency.negative_sign = store_currency.negative_sign
+                cart_currency.positive_currency_symbol_precedes = store_currency.positive_currency_symbol_precedes
+                cart_currency.negative_currency_symbol_precedes = store_currency.negative_currency_symbol_precedes
+                cart_currency.positive_separate_by_space = store_currency.positive_separate_by_space
+                cart_currency.negative_separate_by_space = store_currency.negative_separate_by_space
+                cart = Order(parent=user_key, store=store, currency=cart_currency, untaxed_amount=0.00, tax_amount=0.00, total_amount=0.00, state='cart')
+                cart_key = cart.put()
+                object_log = ObjectLog(parent=cart_key, agent=agent_key, action='get_cart', state=cart.state, log=cart)
+                object_log.put()
+            else:
+                return
+
+    def get_cart(**kwargs):
+        cart = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
+        if (cart):
+            cart = cart[0]
+            if (kwargs.get('get_lines')):
+                cart_lines = OrderLine.query(ancestor=cart.key).order(OrderLine.sequence).fetch()
+                cart.lines = cart_lines
+        return cart
+
+    def get_cart_line(**kwargs):
+        cart_line = None
+        cart = get_cart(kwargs)
+        if (cart):
+            # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
+            cart_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
+                            str(kwargs.get('catalog_key').id()) + '-' + 
+                            str(kwargs.get('product_template_key').id()) + '-' + 
+                            str(kwargs.get('product_instance_key').id())
+            cart.line = ndb.Key(OrderLine._get_kind(), cart_line_id, parent=cart.key).get()
+        return cart
+
+    def update_cart_line(**kwargs):
+        # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
+        cart = get_cart_line(kwargs)
+        if (cart.line):
+            
         
     def get_shipping_addresses(**kwargs):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
@@ -2295,9 +2349,10 @@ class OrderLine(ndb.Expando):
     
     # ancestor Order, BillingOrder
     # u slucaju Order-a, key za OrderLine ce se graditi na sledeci nacin:
-    # key: namespace=domain_id, parent=order_id, id=catalog_id+product_template_id+product_instance_id
+    # key: parent=order_key, id=domain_id+catalog_id+product_template_id+product_instance_id
+    # iz id-ja se kasnije moze graditi link za referenciranje product_instance, pa je stoga nemoguce koristiti md5 za hashiranje id-a
     # u slucaju BillingOrder-a, key za OrderLine ce se graditi na sledeci nacin:
-    # key: namespace=domain_id, parent=billing_order_id, id=paypal_transaction_log_id ?
+    # key: parent=billing_order_id, id=paypal_transaction_log_id ?
     # http://hg.tryton.org/modules/sale/file/tip/sale.py#l888
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     # composite index: ancestor:yes - sequence
