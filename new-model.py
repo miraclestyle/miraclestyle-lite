@@ -1975,11 +1975,10 @@ class Order(ndb.Expando):
         
         # 1. proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
         # 2. proveriti da li postoji cart line sa proizvodom koji se dodaje u cart, i da je cart u state-u 'cart'
-        # 3. ukoliko cart line postoji (sto podrazumeva da i cart postoji u state-u 'cart'), update postojeceg cart line sa kolicinom proizvod, update postojeceg cart-a sa novim vrednostima
+        # 3. ukoliko cart line postoji (sto podrazumeva da i cart postoji u state-u 'cart'), update postojeceg cart line sa kolicinom proizvoda, update postojeceg cart-a sa novim vrednostima
         # 4. ukoliko cart line ne postoji (a cart postoji u state-u 'cart'), napraviti novi cart line sa vrednostima koje se prepisuju iz proizvoda i ostalim vrednostima (tax...), update postojeceg cart-a sa novim vrednostima
         # 5. ukoliko cart postoji, ali je u drugom state-u od 'cart' satate-a, onda ne praviti nikakve izmene
         # 6. ukoliko cart ne postoji, napraviti novi cart, i potom uraditi korak 4.
-        
         
         
         buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
@@ -2048,9 +2047,9 @@ class Order(ndb.Expando):
         cart = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
         if (cart):
             cart = cart[0]
-            if (kwargs.get('get_lines')):
-                cart_lines = OrderLine.query(ancestor=cart.key).order(OrderLine.sequence).fetch()
-                cart.lines = cart_lines
+            # ucitavamo sve linije, ovde se moze uspostaviti kontrola da se ucitava samo kada se to zahteva, napr: if(kwargs.get('get_lines')):...
+            cart_lines = OrderLine.query(ancestor=cart.key).order(OrderLine.sequence).fetch()
+            cart.lines = cart_lines
         return cart
     
     def get_cart_line(**kwargs):
@@ -2058,6 +2057,7 @@ class Order(ndb.Expando):
             # preuzimamo cart, product template i product instance podatke koji nam trebaju za izgradnju cart line
             cart = kwargs.get('cart')
             product_template = kwargs.get('product_template_key').get()
+            product_template_variants = ndb.get_multi(product_template.variants)
             product_instance = kwargs.get('product_instance_key').get()
             # preuzimamo propertije iz product template i product instance, kako bi mogli da ispitamo koji su postojani
             product_template_properties = product_template._properties
@@ -2080,24 +2080,38 @@ class Order(ndb.Expando):
             discount = format(Decimal('0.00'), '.2f')
             # quantity se setuje na 1 posto new line podrazumeva jednu mernu jedinicu proizvoda
             quantity = format(Decimal('1'), '.' + product_uom.digits + 'f')
-            
+            # sequence se podesava po count-u postojecih linija - ako sequencing bude zero based onda nam ne treba len() + 1
+            sequence = len(cart.lines)
+            # proveravamo da li su product instance uopste generisane, a bice generisane samo ako ih bude mannje od 1k per template
             if (product_template_properties['product_instance_count'] and product_template.product_instance_count > 1000):
-                description = product_template.name # + variant signature se ovde upisuje.
+                # ukolliko nema instanci onda se uz name proizvoda dodaje i variant signature koji se izbildao iz web forme prilikom user inputa.
+                description = product_template.name # + '\n' + variant signature
             else:
-                description = product_template.name
+                # variant_signature ce se mozda upisivati u Expando prop. OrderLine-a
+                variant_signature = product_instance.variant_signature
+                # ovde moramo da imamo neki mehanizam koji ce znati da preuzme custom value iz user inptu forme za onaj variant koji je allow_custom_value=True
+                custom_variants = False
+                for variant in product_template_variants:
+                    if (variant.allow_custom_value):
+                        custom_variants = True
+                        description = product_template.name # + '\n' + variant_name: option
+                if not (custom_variants):
+                    description = product_template.name
             cart_line = OrderLine(parent=kwargs.get('cart').key, )
             
             
         cart_line = None
         cart = get_cart(kwargs)
         if (cart):
-            # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
-            cart_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
-                            str(kwargs.get('catalog_key').id()) + '-' + 
-                            str(kwargs.get('product_template_key').id()) + '-' + 
-                            str(kwargs.get('product_instance_key').id())
-            cart.line = ndb.Key(OrderLine._get_kind(), cart_line_id, parent=cart.key).get()
-        return cart
+            if (cart.lines):
+                # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
+                cart_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
+                                str(kwargs.get('catalog_key').id()) + '-' + 
+                                str(kwargs.get('product_template_key').id()) + '-' + 
+                                str(kwargs.get('product_instance_key').id())
+                for line in cart.lines:
+                    if (line.key == ndb.Key(OrderLine._get_kind(), cart_line_id, parent=cart.key)):
+                        return line
     
     def get_shipping_addresses(**kwargs):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
@@ -2381,7 +2395,7 @@ class OrderLine(ndb.Expando):
     
     # ancestor Order, BillingOrder
     # u slucaju Order-a, key za OrderLine ce se graditi na sledeci nacin:
-    # key: parent=order_key, id=domain_id+catalog_id+product_template_id+product_instance_id
+    # key: parent=order_key, id=catalog_namespace-catalog_id-product_template_id-product_instance_id
     # iz id-ja se kasnije moze graditi link za referenciranje product_instance, pa je stoga nemoguce koristiti md5 za hashiranje id-a
     # u slucaju BillingOrder-a, key za OrderLine ce se graditi na sledeci nacin:
     # key: parent=billing_order_id, id=paypal_transaction_log_id ?

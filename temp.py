@@ -64,11 +64,11 @@ class OrderLine(ndb.Expando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     # composite index: ancestor:yes - sequence
     description = ndb.TextProperty('1', required=True)# soft limit 64kb
-    quantity = DecimalProperty('2', required=True, indexed=False)
-    product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
-    unit_price = DecimalProperty('4', required=True, indexed=False)
-    discount = DecimalProperty('5', default=0.00, indexed=False)
-    sequence = ndb.IntegerProperty('6', required=True)
+     = DecimalProperty('2', required=True, indexed=False)
+     = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
+     = DecimalProperty('4', required=True, indexed=False)
+     = DecimalProperty('5', default=0.00, indexed=False)
+     = ndb.IntegerProperty('6', required=True)
     _default_indexed = False
     pass
     # Expando
