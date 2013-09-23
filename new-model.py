@@ -64,7 +64,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
 
-
+# mozda ce nam trebati mehanizam da mozemo u constructoru supply keyword arguemnte kao napr:  digits=int(2), rounding=...
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
@@ -1973,6 +1973,14 @@ class Order(ndb.Expando):
         # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
         # trazimo postojeci cart koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
         
+        # 1. proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
+        # 2. proveriti da li postoji cart line sa proizvodom koji se dodaje u cart, i da je cart u state-u 'cart'
+        # 3. ukoliko cart line postoji (sto podrazumeva da i cart postoji u state-u 'cart'), update postojeceg cart line sa kolicinom proizvod, update postojeceg cart-a sa novim vrednostima
+        # 4. ukoliko cart line ne postoji (a cart postoji u state-u 'cart'), napraviti novi cart line sa vrednostima koje se prepisuju iz proizvoda i ostalim vrednostima (tax...), update postojeceg cart-a sa novim vrednostima
+        # 5. ukoliko cart postoji, ali je u drugom state-u od 'cart' satate-a, onda ne praviti nikakve izmene
+        # 6. ukoliko cart ne postoji, napraviti novi cart, i potom uraditi korak 4.
+        
+        
         
         buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
         shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=object_key).fetch()
@@ -2008,7 +2016,7 @@ class Order(ndb.Expando):
         # ako nema onda se pravi novi order line i rade se obracuni 
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
-
+    
     def get_cart(**kwargs):
         if (kwargs.get('new_cart')):
             # pravimo novi order/cart sa dummy vrednostima
@@ -2021,7 +2029,6 @@ class Order(ndb.Expando):
             cart_currency.numeric_code = store_currency.numeric_code
             cart_currency.rounding = store_currency.rounding
             cart_currency.digits = store_currency.digits
-            #formating
             cart_currency.grouping = store_currency.grouping
             cart_currency.decimal_separator = store_currency.decimal_separator
             cart_currency.thousands_separator = store_currency.thousands_separator
@@ -2045,21 +2052,40 @@ class Order(ndb.Expando):
                 cart_lines = OrderLine.query(ancestor=cart.key).order(OrderLine.sequence).fetch()
                 cart.lines = cart_lines
         return cart
-
+    
     def get_cart_line(**kwargs):
         if (kwargs.get('new_cart_line')):
-            description = ndb.TextProperty('1', required=True)# soft limit 64kb
-            quantity = DecimalProperty('2', required=True, indexed=False)
-            product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
-            unit_price = DecimalProperty('4', required=True, indexed=False)
-            discount = DecimalProperty('5', default=0.00, indexed=False)
-            sequence = ndb.IntegerProperty('6', required=True)
-            
+            # preuzimamo cart, product template i product instance podatke koji nam trebaju za izgradnju cart line
+            cart = kwargs.get('cart')
             product_template = kwargs.get('product_template_key').get()
             product_instance = kwargs.get('product_instance_key').get()
-            # treba uraditi merge product_template i product_instance
+            # preuzimamo propertije iz product template i product instance, kako bi mogli da ispitamo koji su postojani
+            product_template_properties = product_template._properties
+            product_instance_properties = product_instance._properties
+            # preuzimamo uom iz product template-a i gradimo instancu OrderLineProductUOM koji nam treba za cart line
+            uom = product_template.product_uom.get()
+            uom_category = uom.key.parent().get()
+            product_uom = OrderLineProductUOM(name=uom.name, symbol=uom.symbol, category=uom_category.name, rounding=uom.rounding, digits=uom.digits)
+            # odlucujemo odakle cemo da preuzimamo vrednosti za unit_price, product instance ima prednost (ako postoji)
+            if (product_instance_properties['unit_price']):
+                unit_price = product_instance.unit_price
+            else:
+                unit_price = product_template.unit_price
+            # http://docs.python.org/2/library/decimal.html
+            # http://docs.python.org/2/library/functions.html#format
+            # http://docs.python.org/2/library/string.html#formatspec
+            # http://stackoverflow.com/questions/15076310/format-python-decimal-object-to-a-specified-precision
+            # ovo gore su primeri formatiranja, koji mozda nisu ispravni, ovaj code ovde je samo radi opisa.
+            # discount se postavlja na 0.00, i kasnije se moze editovati od strane prodavca, ukoliko je order u state-u koji to dozvoljava
+            discount = format(Decimal('0.00'), '.2f')
+            # quantity se setuje na 1 posto new line podrazumeva jednu mernu jedinicu proizvoda
+            quantity = format(Decimal('1'), '.' + product_uom.digits + 'f')
             
-            cart_line = OrderLine(parent=kwargs.get('cart').key)
+            if (product_template_properties['product_instance_count'] and product_template.product_instance_count > 1000):
+                description = product_template.name # + variant signature se ovde upisuje.
+            else:
+                description = product_template.name
+            cart_line = OrderLine(parent=kwargs.get('cart').key, )
             
             
         cart_line = None
@@ -2072,24 +2098,7 @@ class Order(ndb.Expando):
                             str(kwargs.get('product_instance_key').id())
             cart.line = ndb.Key(OrderLine._get_kind(), cart_line_id, parent=cart.key).get()
         return cart
-
-    def update_cart_line(**kwargs):
-        # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
-        cart = get_cart_line(kwargs)
-        # proveravamo da li imamo cart objekat
-        if (cart):
-            # ako imamo cart, proveravamo da li imamo cart line koji trazimo
-            if (cart.line):
-                # ako imamo line koji trazimo, onda ga update-amo
-                
-            # ako imamo cart, ali nemamo cart line koji trazimo, pravimo novi line
-            else:
-        # ako nemamo cart objekat onda praivmo novi cart        
-        else:
-            
-        
-            
-        
+    
     def get_shipping_addresses(**kwargs):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
         # object_key moze da bude key bilo kojeg entiteta koji u potomstvu ima DomainStoreShippingExclusion entitete
