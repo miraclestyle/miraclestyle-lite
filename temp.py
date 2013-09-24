@@ -76,5 +76,157 @@ class OrderLine(ndb.Expando):
     # product_category_complete_name = ndb.TextProperty('8', required=True)# soft limit 64kb
     # product_category = ndb.KeyProperty('9', kind=ProductCategory, required=True)
     # catalog_pricetag_reference = ndb.KeyProperty('10', kind=DomainCatalogPricetag, required=True)
-    # product_instance_reference = ndb.KeyProperty('11', kind=DomainProductInstance, required=True)
     # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
+
+
+class OrderLineTax(ndb.Model):
+    
+    # LocalStructuredProperty model
+    # http://hg.tryton.org/modules/account/file/tip/tax.py#l545
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    amount = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
+
+class DomainTax(ndb.Expando):
+    
+    # root (namespace Domain)
+    # composite index: ancestor:no - active,sequence
+    name = ndb.StringProperty('1', required=True)
+    sequence = ndb.IntegerProperty('2', required=True)
+    amount = ndb.StringProperty('3', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
+    location_exclusion = ndb.BooleanProperty('4', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
+    active = ndb.BooleanProperty('5', default=True)
+    _default_indexed = False
+    pass
+    # Expando
+    # locations = ndb.LocalStructuredProperty(Location, '6', repeated=True)# soft limit 300x
+    # product_categories = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)# soft limit 100x
+    # carriers = ndb.KeyProperty('8', kind=DomainCarrier, repeated=True)# soft limit 100x
+
+
+class Order(ndb.Expando):
+    
+    # ancestor User (namespace Domain) ovaj koncept ne radi, morace da se promeni...
+    # http://hg.tryton.org/modules/sale/file/tip/sale.py#l33
+    # http://hg.tryton.org/modules/purchase/file/tip/purchase.py#l32
+    # http://doc.tryton.org/2.8/modules/sale/doc/index.html
+    # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
+    # buyer = ndb.KeyProperty('1', kind=User, required=True)
+    # composite index: 
+    # ancestor:no - store,state,updated:desc; ancestor:no - store,state,order_date:desc
+    # ancestor:no - state,updated:desc; ancestor:no - state,order_date:desc
+    # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
+    store = ndb.KeyProperty('1', kind=Store, required=True)
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
+    currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
+    untaxed_amount = DecimalProperty('4', required=True, indexed=False)
+    tax_amount = DecimalProperty('5', required=True, indexed=False)
+    total_amount = DecimalProperty('6', required=True)
+    state = ndb.IntegerProperty('7', required=True) 
+    updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
+    _default_indexed = False
+    pass
+    # Expando
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
+    # reference = ndb.StringProperty('12', required=True)
+    # comment = ndb.TextProperty('13')# 64kb limit
+    # company_address_reference = ndb.KeyProperty('14', kind=Store, required=True)
+    # billing_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
+    # shipping_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
+    # carrier_reference = ndb.KeyProperty('17', kind=StoreCarrier, required=True)
+    # feedback = ndb.IntegerProperty('18', required=True)
+    # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+
+class OrderAddress(ndb.Expando):
+    
+    # LocalStructuredProperty model
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    country = ndb.StringProperty('2', required=True, indexed=False)
+    country_code = ndb.StringProperty('3', required=True, indexed=False)
+    region = ndb.StringProperty('4', required=True, indexed=False)
+    region_code = ndb.StringProperty('5', required=True, indexed=False)
+    city = ndb.StringProperty('6', required=True, indexed=False)
+    postal_code = ndb.StringProperty('7', required=True, indexed=False)
+    street_address = ndb.StringProperty('8', required=True, indexed=False)
+    _default_indexed = False
+    pass
+    # Expando
+    # street_address2 = ndb.StringProperty('9')
+    # email = ndb.StringProperty('10')
+    # telephone = ndb.StringProperty('11')
+class DomainStore(ndb.Expando):
+    
+    # root (namespace Domain)
+    # composite index: ancestor:no - state,name
+    name = ndb.StringProperty('1', required=True)
+    logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
+    state = ndb.IntegerProperty('3', required=True)
+    _default_indexed = False
+    pass
+    #Expando
+    #
+    # Company
+    # company_name = ndb.StringProperty('4', required=True)
+    # company_country = ndb.KeyProperty('5', kind=Country, required=True)
+    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
+    # company_region = ndb.StringProperty('6', required=True)# ako je potreban key val onda se ovo preskace
+    # company_city = ndb.StringProperty('7', required=True)
+    # company_postal_code = ndb.StringProperty('8', required=True)
+    # company_street_address = ndb.StringProperty('9', required=True)
+    # company_street_address2 = ndb.StringProperty('10')
+    # company_email = ndb.StringProperty('11')
+    # company_telephone = ndb.StringProperty('12')
+    #
+    # Payment
+    # currency = ndb.KeyProperty('13', kind=Currency, required=True)
+    # tax_buyer_on ?
+    # paypal_email = ndb.StringProperty('14')
+    # paypal_shipping ?
+    #
+    # Analytics 
+    # tracking_id = ndb.StringProperty('15')
+    #
+    # Feedback
+    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '16', repeated=True)# soft limit 120x
+    #
+    # Shipping Exclusion Settings
+    # Shipping everywhere except at the following locations: location_exclusion = False
+    # Shipping only at the following locations: location_exclusion = True
+    # location_exclusion = ndb.BooleanProperty('17', default=False)
+
+class CountrySubdivision(ndb.Model):
+    
+    # ancestor Country
+    # http://hg.tryton.org/modules/country/file/tip/country.py#l52
+    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
+    # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
+    # composite index: ancestor:yes - name; ancestor:yes - active,name
+    parent_record = ndb.KeyProperty('1', kind=CountrySubdivision, indexed=False)
+    code = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    name = ndb.StringProperty('3', required=True)
+    type = ndb.IntegerProperty('4', required=True, indexed=False)
+    active = ndb.BooleanProperty('5', default=True)
+
+class BuyerAddress(ndb.Expando):
+    
+    # ancestor User
+    # composite index: ancestor:yes - name
+    name = ndb.StringProperty('1', required=True)
+    country = ndb.KeyProperty('2', kind=Country, required=True, indexed=False)
+    city = ndb.StringProperty('3', required=True, indexed=False)
+    postal_code = ndb.StringProperty('4', required=True, indexed=False)
+    street_address = ndb.StringProperty('5', required=True, indexed=False)
+    default_shipping = ndb.BooleanProperty('6', default=True, indexed=False)
+    default_billing = ndb.BooleanProperty('7', default=True, indexed=False)
+    _default_indexed = False
+    pass
+    # Expando
+    # naredna dva polja su required!!!
+    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje 
+    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # street_address2 = ndb.StringProperty('9')
+    # email = ndb.StringProperty('10')
+    # telephone = ndb.StringProperty('11')

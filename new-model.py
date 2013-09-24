@@ -383,8 +383,8 @@ class DomainStore(ndb.Expando):
     # Company
     # company_name = ndb.StringProperty('4', required=True)
     # company_country = ndb.KeyProperty('5', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
-    # company_region = ndb.StringProperty('6', required=True)# ako je potreban key val onda se ovo preskace
+    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # company_region = ndb.StringProperty('6', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
     # company_city = ndb.StringProperty('7', required=True)
     # company_postal_code = ndb.StringProperty('8', required=True)
     # company_street_address = ndb.StringProperty('9', required=True)
@@ -1519,8 +1519,8 @@ class BuyerAddress(ndb.Expando):
     pass
     # Expando
     # naredna dva polja su required!!!
-    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace 
-    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace
+    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje 
+    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
     # street_address2 = ndb.StringProperty('9')
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
@@ -1967,7 +1967,6 @@ class Order(ndb.Expando):
         },
     }
     
-    #
     @ndb.transactional
     def add_to_cart():
         # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
@@ -2026,40 +2025,209 @@ class Order(ndb.Expando):
         return order
     
     def update_order(**kwargs):
-        if (kwargs.get('new_cart')):
-            # pravimo novi order/cart sa dummy vrednostima
-            store = kwargs.get('store_key').get()
-            store_currency = store.currency.get()
-            cart_currency = OrderCurrency()
-            cart_currency.name = store_currency.name
-            cart_currency.symbol = store_currency.symbol
-            cart_currency.code = store_currency.code
-            cart_currency.numeric_code = store_currency.numeric_code
-            cart_currency.rounding = store_currency.rounding
-            cart_currency.digits = store_currency.digits
-            cart_currency.grouping = store_currency.grouping
-            cart_currency.decimal_separator = store_currency.decimal_separator
-            cart_currency.thousands_separator = store_currency.thousands_separator
-            cart_currency.positive_sign_position = store_currency.positive_sign_position
-            cart_currency.negative_sign_position = store_currency.negative_sign_position
-            cart_currency.positive_sign = store_currency.positive_sign
-            cart_currency.negative_sign = store_currency.negative_sign
-            cart_currency.positive_currency_symbol_precedes = store_currency.positive_currency_symbol_precedes
-            cart_currency.negative_currency_symbol_precedes = store_currency.negative_currency_symbol_precedes
-            cart_currency.positive_separate_by_space = store_currency.positive_separate_by_space
-            cart_currency.negative_separate_by_space = store_currency.negative_separate_by_space
-            cart = Order(parent=kwargs.get('user_key'), store=kwargs.get('store_key'), currency=cart_currency, untaxed_amount=0.00, tax_amount=0.00, total_amount=0.00, state='cart')
-            cart_key = cart.put()
-            object_log = ObjectLog(parent=cart_key, agent=kwargs.get('user_key'), action='new_cart', state=cart.state, log=cart)# videcemo kako cemo ovaj logging resiti
+        # ako order postoji onda ga update-amo
+        if (kwargs.get('order')):
+            # treba zavrsiti dokumentovanje i pregledati kako jos optimize ovo... 
+            order = kwargs.get('order')
+            store = order.store.get()
+            if (kwargs.get('billing_address')):
+                # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
+                billing_address_reference = kwargs.get('billing_address')
+                # billing address se prepisuje iz BuyerAddress koji ima default_billing=True
+                billing_address = kwargs.get('billing_address').get()
+                billing_address_country = billing_address.country.get()
+                if (isinstance(billing_address.region, str)):
+                    billing_address_region = billing_address.region
+                    billing_address_region_code = billing_address.region
+                else:
+                    region = billing_address.region.get()
+                    billing_address_region = region.name
+                    billing_address_region_code = region.code
+                order_billing_address = OrderAddress(
+                    name=billing_address.name, 
+                    country=billing_address_country.name, 
+                    country_code=billing_address_country.code, 
+                    region=billing_address_region, 
+                    region_code=billing_address_region_code, 
+                    city=billing_address.city, 
+                    postal_code=billing_address.postal_code, 
+                    street_address=billing_address.street_address, 
+                    street_address2=billing_address.street_address2, 
+                    email=billing_address.email, 
+                    telephone=billing_address.telephone)
+                order.billing_address = order_billing_address
+                order.billing_address_reference = billing_address_reference
+            if (kwargs.get('shipping_address')):
+                # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
+                shipping_address_reference = kwargs.get('shipping_address')
+                # shipping address se prepisuje iz BuyerAddress koji ima default_shipping=True
+                shipping_address = kwargs.get('shipping_address').get()
+                shipping_address_country = shipping_address.country.get()
+                if (isinstance(shipping_address.region, str)):
+                    shipping_address_region = shipping_address.region
+                    shipping_address_region_code = shipping_address.region
+                else:
+                    region = shipping_address.region.get()
+                    shipping_address_region = region.name
+                    shipping_address_region_code = region.code
+                order_shipping_address = OrderAddress(
+                    name=shipping_address.name, 
+                    country=shipping_address_country.name, 
+                    country_code=shipping_address_country.code, 
+                    region=shipping_address_region, 
+                    region_code=shipping_address_region_code, 
+                    city=shipping_address.city, 
+                    postal_code=shipping_address.postal_code, 
+                    street_address=shipping_address.street_address, 
+                    street_address2=shipping_address.street_address2, 
+                    email=shipping_address.email, 
+                    telephone=shipping_address.telephone)
+                order.shipping_address = order_shipping_address
+                order.shipping_address_reference = shipping_address_reference
+            if (kwargs.get('carrier_reference') and order.carrier_reference != kwargs.get('carrier_reference')):
+                order.carrier_reference = kwargs.get('carrier_reference')
+            if (kwargs.get('feedback') and order.feedback != kwargs.get('feedback')):
+                order.feedback = kwargs.get('feedback')
+            if (order.store_name != store.name):
+                order.store_name = store.name
+            if (order.store_logo != store.logo):
+                order.store_logo = store.logo
+            # nedostaje i compute amount vrednosti 
+            order_key = order.put()
+            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
             object_log.put()
-            return cart
-        cart = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
-        if (cart):
-            cart = cart[0]
-            # ucitavamo sve linije, ovde se moze uspostaviti kontrola da se ucitava samo kada se to zahteva, napr: if(kwargs.get('get_lines')):...
-            cart_lines = OrderLine.query(ancestor=cart.key).order(OrderLine.sequence).fetch()
-            cart.lines = cart_lines
-        return cart
+            return order
+        else:
+            # pravimo novi order sa standardnim vrednostima
+            # store se ucitava radi prepisivanja vrednosti u order
+            store = kwargs.get('store_key').get()
+            # currency za order se preuzima iz store.currency
+            store_currency = store.currency.get()
+            order_currency = OrderCurrency()
+            order_currency.name = store_currency.name
+            order_currency.symbol = store_currency.symbol
+            order_currency.code = store_currency.code
+            order_currency.numeric_code = store_currency.numeric_code
+            order_currency.rounding = store_currency.rounding
+            order_currency.digits = store_currency.digits
+            order_currency.grouping = store_currency.grouping
+            order_currency.decimal_separator = store_currency.decimal_separator
+            order_currency.thousands_separator = store_currency.thousands_separator
+            order_currency.positive_sign_position = store_currency.positive_sign_position
+            order_currency.negative_sign_position = store_currency.negative_sign_position
+            order_currency.positive_sign = store_currency.positive_sign
+            order_currency.negative_sign = store_currency.negative_sign
+            order_currency.positive_currency_symbol_precedes = store_currency.positive_currency_symbol_precedes
+            order_currency.negative_currency_symbol_precedes = store_currency.negative_currency_symbol_precedes
+            order_currency.positive_separate_by_space = store_currency.positive_separate_by_space
+            order_currency.negative_separate_by_space = store_currency.negative_separate_by_space
+            # default amount vrednosti su 0, s obzirom da order jos nema nijedan order line
+            untaxed_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
+            tax_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
+            total_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
+            # company address reference je za sada store key, posto se u store cuvaju company podaci
+            company_address_reference = kwargs.get('store_key')
+            # company address se prepisuje iz store, posto se u store cuvaju company podaci
+            company_address_country = store.company_country.get()
+            if (isinstance(store.company_region, str)):
+                company_address_region = store.company_region
+                company_address_region_code = store.company_region
+            else:
+                region = store.company_region.get()
+                company_address_region = region.name
+                company_address_region_code = region.code
+            if (isinstance())
+            order_company_address = OrderAddress(
+                name=store.company_name, 
+                country=company_address_country.name, 
+                country_code=company_address_country.code, 
+                region=company_address_region, 
+                region_code=company_address_region_code, 
+                city=store.company_city, 
+                postal_code=store.company_postal_code, 
+                street_address=store.company_street_address, 
+                street_address2=store.company_street_address2, 
+                email=store.company_email, 
+                telephone=store.company_telephone)
+            # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
+            billing_address_reference = kwargs.get('billing_address')
+            # billing address se prepisuje iz BuyerAddress koji ima default_billing=True
+            billing_address = kwargs.get('billing_address').get()
+            billing_address_country = billing_address.country.get()
+            if (isinstance(billing_address.region, str)):
+                billing_address_region = billing_address.region
+                billing_address_region_code = billing_address.region
+            else:
+                region = billing_address.region.get()
+                billing_address_region = region.name
+                billing_address_region_code = region.code
+            order_billing_address = OrderAddress(
+                name=billing_address.name, 
+                country=billing_address_country.name, 
+                country_code=billing_address_country.code, 
+                region=billing_address_region, 
+                region_code=billing_address_region_code, 
+                city=billing_address.city, 
+                postal_code=billing_address.postal_code, 
+                street_address=billing_address.street_address, 
+                street_address2=billing_address.street_address2, 
+                email=billing_address.email, 
+                telephone=billing_address.telephone)
+            # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
+            shipping_address_reference = kwargs.get('shipping_address')
+            # shipping address se prepisuje iz BuyerAddress koji ima default_shipping=True
+            shipping_address = kwargs.get('shipping_address').get()
+            shipping_address_country = shipping_address.country.get()
+            if (isinstance(shipping_address.region, str)):
+                shipping_address_region = shipping_address.region
+                shipping_address_region_code = shipping_address.region
+            else:
+                region = shipping_address.region.get()
+                shipping_address_region = region.name
+                shipping_address_region_code = region.code
+            order_shipping_address = OrderAddress(
+                name=shipping_address.name, 
+                country=shipping_address_country.name, 
+                country_code=shipping_address_country.code, 
+                region=shipping_address_region, 
+                region_code=shipping_address_region_code, 
+                city=shipping_address.city, 
+                postal_code=shipping_address.postal_code, 
+                street_address=shipping_address.street_address, 
+                street_address2=shipping_address.street_address2, 
+                email=shipping_address.email, 
+                telephone=shipping_address.telephone)
+            # carrier reference se dobija iz kwarg-a
+            carrier_reference = kwargs.get('carrier_reference')
+            # feedback treba da ima neku default vrednost, to je ustvari OrderFeedback.state vrednost
+            feedback = 1
+            # store name se prepisuje iz store.name
+            store_name = store.name
+            # store logo se prepisuje iz store.logo
+            store_logo = store.logo
+            # ovde se gradi order sa vrednostima koje su prethodno stecene
+            order = Order(
+                parent=kwargs.get('user_key'), 
+                store=kwargs.get('store_key'), 
+                currency=order_currency, 
+                untaxed_amount=untaxed_amount, 
+                tax_amount=tax_amount, 
+                total_amount=total_amount, 
+                state='cart', 
+                company_address=order_company_address, 
+                billing_address=order_billing_address, 
+                shipping_address=order_shipping_address, 
+                company_address_reference=company_address_reference, 
+                billing_address_reference=billing_address_reference, 
+                shipping_address_reference=shipping_address_reference, 
+                carrier_reference=carrier_reference, 
+                feedback=feedback, 
+                store_name=store_name, 
+                store_logo=store_logo)
+            order_key = order.put()
+            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='new_order', state=order.state, log=order)# videcemo kako cemo ovaj logging resiti
+            object_log.put()
+            return order
     
     def update_order_line(**kwargs):
         # ako order_line postoji onda ga update-amo
@@ -2114,7 +2282,14 @@ class Order(ndb.Expando):
             product_category = product_template.product_category.get()
             product_category_complete_name = product_template_category.complete_name
             product_category = product_template.product_category
-            # treba dodati jos taxes i tax_references ..........
+            # generisemo taxes i tax_references
+            valid_taxes = get_taxes(kwargs)
+            taxes = []
+            tax_references = []
+            for tax in valid_taxes:
+                order_line_tax = OrderLineTax(name=tax.name, amount=tax.amount)
+                taxes.append(order_line_tax)
+                tax_references.append(tax.key)
             # description se inicijalno setuje na product template name
             description = product_template.name
             # preuzimamo uom iz product template-a i gradimo instancu OrderLineProductUOM koji nam treba za cart line
@@ -2151,7 +2326,20 @@ class Order(ndb.Expando):
                             str(kwargs.get('catalog_key').id()) + '-' + 
                             str(kwargs.get('product_template_key').id()) + '-' + 
                             str(kwargs.get('product_instance_key').id())
-            order_line = OrderLine(parent=kwargs.get('order').key, id=order_line_id, )
+            order_line = OrderLine(
+                parent=kwargs.get('order').key, 
+                id=order_line_id, 
+                description=description, 
+                quantity=quantity, 
+                product_uom=product_uom, 
+                unit_price=unit_price, 
+                discount=discount, 
+                sequence=sequence, 
+                taxes=taxes, 
+                product_category_complete_name=product_category_complete_name, 
+                product_category=product_category, 
+                catalog_pricetag_reference=catalog_pricetag_reference, 
+                tax_references=tax_references)
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='add_order_line', state='none', log=order_line)
             object_log.put()
@@ -2164,18 +2352,11 @@ class Order(ndb.Expando):
         # tj. DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch(),
         # medjutim to predstavlja problem da se moze dogoditi da user iz jednog kataloga moze izabrati adresu koja mu je nedostupna u drugom katalogu u istom store-u
         # to pravi nekonzistentnost i funkcionalnost nije onakva kakva se ocekuje da bude.
-        buyer_addresses = []
-        shipping_exclusions = []
-        store = None
+        buyer_addresses = kwargs.get('buyer_addresses')
+        shipping_exclusions = kwargs.get('shipping_exclusions')
+        store = kwargs.get('store_key').get()
         shipping_addresses = []
         default_shipping_address = None
-        for key, value in kwargs.iteritems():
-            if (key = 'buyer_addresses'):
-                buyer_addresses = value
-            elif (key = 'shipping_exclusions'):
-                shipping_exclusions = value
-            elif (key = 'store'):
-                store = value
         for buyer_address in buyer_addresses:
             shipping_allowed = False
             if not (shipping_exclusions):
@@ -2223,7 +2404,8 @@ class Order(ndb.Expando):
     def get_taxes(**kwargs):
         taxes = kwargs.get('taxes')
         location = kwargs.get('location')
-        product_category = kwargs.get('product_category')
+        product_template = kwargs.get('product_template')
+        product_category = product_template.product_category
         carrier = kwargs.get('carrier')
         valid_taxes = []
         for tax in taxes:
@@ -2629,7 +2811,7 @@ class Country(ndb.Model):
         ndb.delete_multi(country_subdivisions)
         country_key.delete()
 
-# done!
+# done! - tryton ima CountrySubdivision za skoro sve zemlje!
 class CountrySubdivision(ndb.Model):
     
     # ancestor Country
@@ -2691,8 +2873,8 @@ class Location(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # region = ndb.KeyProperty('2', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace 
-    # region = ndb.StringProperty('2')# ako je potreban key val onda se ovo preksace
+    # region = ndb.KeyProperty('2', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # region = ndb.StringProperty('2')# ako je potreban key val onda se ovo preksace / tryton ima CountrySubdivision za skoro sve zemlje
     # postal_code_from = ndb.StringProperty('3')
     # postal_code_to = ndb.StringProperty('4')
     # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
