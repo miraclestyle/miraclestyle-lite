@@ -2016,7 +2016,16 @@ class Order(ndb.Expando):
         # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
         # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
     
-    def get_cart(**kwargs):
+    def get_order(**kwargs):
+        order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
+        if (order):
+            order = order[0]
+            # ucitavamo sve linije, ovde se moze uspostaviti kontrola da se ucitava samo kada se to zahteva, napr: if(kwargs.get('get_lines')):...
+            order_lines = OrderLine.query(ancestor=order.key).order(OrderLine.sequence).fetch()
+            order.lines = order_lines
+        return order
+    
+    def update_order(**kwargs):
         if (kwargs.get('new_cart')):
             # pravimo novi order/cart sa dummy vrednostima
             store = kwargs.get('store_key').get()
@@ -2052,66 +2061,101 @@ class Order(ndb.Expando):
             cart.lines = cart_lines
         return cart
     
-    def get_cart_line(**kwargs):
-        if (kwargs.get('new_cart_line')):
-            # preuzimamo cart, product template i product instance podatke koji nam trebaju za izgradnju cart line
-            cart = kwargs.get('cart')
+    def update_order_line(**kwargs):
+        # ako order_line postoji onda ga update-amo
+        if (kwargs.get('order_line')):
+            order_line = kwargs.get('order_line')
+            # u svim ovim procedurama mozemo da sprovedemo i get_taxes() metod ako ima potrebe
+            # ako je quantity veci od nule i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
+            if (kwargs.get('order_line_quantity') > 0):
+                if (order_line.quantity != kwargs.get('order_line_quantity')):
+                    order_line.quantity = format(Decimal(kwargs.get('order_line_quantity')), '.' + order_line.product_uom.digits + 'f')
+                    order_line_key = order_line.put()
+                    object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
+                    object_log.put()
+                    return order_line
+            # ako je quantity jednak ili manji od nule onda se order line brise.
+            elif (kwargs.get('order_line_quantity') <= 0):
+                object_log = ObjectLog(parent=order_line.key, agent=kwargs.get('user_key'), action='remove_order_line', state='none')
+                object_log.put()
+                order_line.key.delete()
+                return None
+            # ako je discount provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
+            # treba voditi racuna oko dozvola ko sta moze ovde da uradi...
+            if (kwargs.get('order_line_discount') and (order_line.discount != kwargs.get('order_line_discount'))):
+                order_line.discount = format(Decimal(kwargs.get('order_line_discount')), '.2f')
+                order_line_key = order_line.put()
+                object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
+                object_log.put()
+                return order_line
+            # ako je sequence provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
+            if (kwargs.get('order_line_sequence') and (order_line.sequence != kwargs.get('order_line_sequence'))):
+                order_line.sequence = kwargs.get('order_line_sequence')
+                order_line_key = order_line.put()
+                object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
+                object_log.put()
+                return order_line
+        # ako order line ne postoji onda pravimo novi order line sa discount 0.00 i quantity 1
+        else:
+            # ucitavamo product template i product instance entitete koji nam trebaju za izgradnju order line,
+            # i preuzimamo propertije iz product template i product instance, kako bi mogli da ispitamo koji su postojani
             product_template = kwargs.get('product_template_key').get()
-            product_template_variants = ndb.get_multi(product_template.variants)
             product_instance = kwargs.get('product_instance_key').get()
-            # preuzimamo propertije iz product template i product instance, kako bi mogli da ispitamo koji su postojani
             product_template_properties = product_template._properties
             product_instance_properties = product_instance._properties
+            # catalog_pricetag_reference dobijamo iz inputa
+            catalog_pricetag_reference = kwargs.get('catalog_pricetag')
+            # ili mozemo da extract iz cataloga
+            #catalog_pricetags = DomainCatalogPricetag.query(ancestor=kwargs.get('catalog_key')).fetch()
+            #for catalog_pricetag in catalog_pricetags:
+                #if (catalog_pricetag.product_template == kwargs.get('product_template_key')):
+                    #catalog_pricetag_reference = catalog_pricetag.key
+            # product_category_complete_name i product_category preuzimamo iz product template
+            product_category = product_template.product_category.get()
+            product_category_complete_name = product_template_category.complete_name
+            product_category = product_template.product_category
+            # treba dodati jos taxes i tax_references ..........
+            # description se inicijalno setuje na product template name
+            description = product_template.name
             # preuzimamo uom iz product template-a i gradimo instancu OrderLineProductUOM koji nam treba za cart line
             uom = product_template.product_uom.get()
             uom_category = uom.key.parent().get()
             product_uom = OrderLineProductUOM(name=uom.name, symbol=uom.symbol, category=uom_category.name, rounding=uom.rounding, digits=uom.digits)
-            # odlucujemo odakle cemo da preuzimamo vrednosti za unit_price, product instance ima prednost (ako postoji)
-            if (product_instance_properties['unit_price']):
-                unit_price = product_instance.unit_price
-            else:
-                unit_price = product_template.unit_price
             # http://docs.python.org/2/library/decimal.html
             # http://docs.python.org/2/library/functions.html#format
             # http://docs.python.org/2/library/string.html#formatspec
             # http://stackoverflow.com/questions/15076310/format-python-decimal-object-to-a-specified-precision
             # ovo gore su primeri formatiranja, koji mozda nisu ispravni, ovaj code ovde je samo radi opisa.
-            # discount se postavlja na 0.00, i kasnije se moze editovati od strane prodavca, ukoliko je order u state-u koji to dozvoljava
-            discount = format(Decimal('0.00'), '.2f')
             # quantity se setuje na 1 posto new line podrazumeva jednu mernu jedinicu proizvoda
             quantity = format(Decimal('1'), '.' + product_uom.digits + 'f')
+            # odlucujemo odakle cemo da preuzimamo vrednosti za unit_price, product instance ima prednost (ako postoji)
+            if (product_instance_properties['unit_price']):
+                unit_price = product_instance.unit_price
+            else:
+                unit_price = product_template.unit_price
+            # discount se postavlja na 0.00, i kasnije se moze editovati od strane prodavca, ukoliko je order u state-u koji to dozvoljava
+            discount = format(Decimal('0.00'), '.2f')
             # sequence se podesava po count-u postojecih linija - ako sequencing bude zero based onda nam ne treba len() + 1
-            sequence = len(cart.lines)
+            sequence = len(order.lines)
             # proveravamo da li su product instance uopste generisane, a bice generisane samo ako ih bude mannje od 1k per template
             if (product_template_properties['product_instance_count'] and product_template.product_instance_count > 1000):
                 # ukolliko nema instanci onda se uz name proizvoda dodaje i variant signature koji se izbildao iz web forme prilikom user inputa.
-                description = product_template.name # + '\n' + variant signature
+                description # += '\n' + kwargs.get('variant_signature')
             else:
                 # variant_signature ce se mozda upisivati u Expando prop. OrderLine-a
-                variant_signature = product_instance.variant_signature
-                # ovde moramo da imamo neki mehanizam koji ce znati da preuzme custom value iz user inptu forme za onaj variant koji je allow_custom_value=True
-                custom_variants = False
-                for variant in product_template_variants:
-                    if (variant.allow_custom_value):
-                        custom_variants = True
-                        description = product_template.name # + '\n' + variant_name: option
-                if not (custom_variants):
-                    description = product_template.name
-            cart_line = OrderLine(parent=kwargs.get('cart').key, )
-            
-            
-        cart_line = None
-        cart = get_cart(kwargs)
-        if (cart):
-            if (cart.lines):
-                # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
-                cart_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
-                                str(kwargs.get('catalog_key').id()) + '-' + 
-                                str(kwargs.get('product_template_key').id()) + '-' + 
-                                str(kwargs.get('product_instance_key').id())
-                for line in cart.lines:
-                    if (line.key == ndb.Key(OrderLine._get_kind(), cart_line_id, parent=cart.key)):
-                        return line
+                # variant_signature = product_instance.variant_signature
+                if (kwargs.get('custom_variants')):
+                    description # += '\n' + kwargs.get('variant_signature')
+            # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
+            order_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
+                            str(kwargs.get('catalog_key').id()) + '-' + 
+                            str(kwargs.get('product_template_key').id()) + '-' + 
+                            str(kwargs.get('product_instance_key').id())
+            order_line = OrderLine(parent=kwargs.get('order').key, id=order_line_id, )
+            order_line_key = order_line.put()
+            object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='add_order_line', state='none', log=order_line)
+            object_log.put()
+            return order_line
     
     def get_shipping_addresses(**kwargs):
         # proveravamo da li kupac moze kupovati u datoj prodavnici/da li ima neku adresu na koju store dozvoljava shipping
@@ -2177,20 +2221,11 @@ class Order(ndb.Expando):
         return {'shipping_addresses': shipping_addresses, 'default_shipping_address': default_shipping_address}
     
     def get_taxes(**kwargs):
-        taxes = []
-        location = None
-        product_category = None
-        carrier = None
+        taxes = kwargs.get('taxes')
+        location = kwargs.get('location')
+        product_category = kwargs.get('product_category')
+        carrier = kwargs.get('carrier')
         valid_taxes = []
-        for key, value in kwargs.iteritems():
-            if (key = 'taxes'):
-                taxes = value
-            elif (key = 'location'):
-                location = value
-            elif (key = 'product_category'):
-                product_category = value
-            elif (key = 'carrier'):
-                carrier = value
         for tax in taxes:
             tax_allowed = False
             tax_p = tax._properties

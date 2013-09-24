@@ -56,7 +56,7 @@ class OrderLine(ndb.Expando):
     
     # ancestor Order, BillingOrder
     # u slucaju Order-a, key za OrderLine ce se graditi na sledeci nacin:
-    # key: parent=order_key, id=domain_id+catalog_id+product_template_id+product_instance_id
+    # key: parent=order_key, id=catalog_namespace-catalog_id-product_template_id-product_instance_id
     # iz id-ja se kasnije moze graditi link za referenciranje product_instance, pa je stoga nemoguce koristiti md5 za hashiranje id-a
     # u slucaju BillingOrder-a, key za OrderLine ce se graditi na sledeci nacin:
     # key: parent=billing_order_id, id=paypal_transaction_log_id ?
@@ -64,11 +64,11 @@ class OrderLine(ndb.Expando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     # composite index: ancestor:yes - sequence
     description = ndb.TextProperty('1', required=True)# soft limit 64kb
-     = DecimalProperty('2', required=True, indexed=False)
-     = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
-     = DecimalProperty('4', required=True, indexed=False)
-     = DecimalProperty('5', default=0.00, indexed=False)
-     = ndb.IntegerProperty('6', required=True)
+    quantity = DecimalProperty('2', required=True, indexed=False)
+    product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
+    unit_price = DecimalProperty('4', required=True, indexed=False)
+    discount = DecimalProperty('5', default=0.00, indexed=False)
+    sequence = ndb.IntegerProperty('6', required=True)
     _default_indexed = False
     pass
     # Expando
@@ -78,4 +78,3 @@ class OrderLine(ndb.Expando):
     # catalog_pricetag_reference = ndb.KeyProperty('10', kind=DomainCatalogPricetag, required=True)
     # product_instance_reference = ndb.KeyProperty('11', kind=DomainProductInstance, required=True)
     # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
-
