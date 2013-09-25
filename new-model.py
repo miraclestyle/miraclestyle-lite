@@ -1969,42 +1969,66 @@ class Order(ndb.Expando):
     
     @ndb.transactional
     def add_to_cart():
-        # imamo na raspolaganju user_key, catalog_key, domain_key, product_template_key, product_instance_key
-        # trazimo postojeci cart koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
-        
+        # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
         # 1. proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
-        # 2. proveriti da li postoji cart line sa proizvodom koji se dodaje u cart, i da je cart u state-u 'cart'
-        # 3. ukoliko cart line postoji (sto podrazumeva da i cart postoji u state-u 'cart'), update postojeceg cart line sa kolicinom proizvoda, update postojeceg cart-a sa novim vrednostima
-        # 4. ukoliko cart line ne postoji (a cart postoji u state-u 'cart'), napraviti novi cart line sa vrednostima koje se prepisuju iz proizvoda i ostalim vrednostima (tax...), update postojeceg cart-a sa novim vrednostima
-        # 5. ukoliko cart postoji, ali je u drugom state-u od 'cart' satate-a, onda ne praviti nikakve izmene
-        # 6. ukoliko cart ne postoji, napraviti novi cart, i potom uraditi korak 4.
-        
-        
+        catalog = catalog_key.get()
+        store = catalog.store.get()
         buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
-        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=object_key).fetch()
-        shipping = validate_buyer_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
-        if not (shipping['shipping_allowed']):
-            return # add_to_cart nije dozvoljena kupcu koji nije na shipping listi
-        product_instance = product_instance_key.get()
-        product_template = product_template_key.get()
+        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch()
+        shipping_addresses = get_shipping_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
+        if not (shipping_addresses['shipping_addresses']):
+            # zabranjeno je dodavati artikle iz store-a koji ne dozvoljava shipping na makar jednu adresu korisnika,
+            # bez obizra da li je order prethodno napravljen ili ne.
+            # postojeci order se moze jedino cancel u tom slucaju, 
+            # ili kupac mora napraviti adresu na koju se moze shipping raditi, kako bi bio u stanju da update-a order
+            return
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        # ako order postoji onda ne pravimo novi order
+        if (order):
+            # 2. proveriti da li je order u state-u 'cart'
+            if (order.state != 'cart'):
+                # ukoliko je order u drugom state-u od 'cart' satate-a, onda ne praviti nikakve izmene
+                # zabranjeno je dodavati artikle u order koji nije shopping cart-a
+                return
+            else:
+                # 3. proveriti da li postoji order line (sto podrazumeva da order postoji u state-u 'cart') sa proizvodom koji se dodaje u order
+                order_line_id = str(catalog_key.namespace()) + '-' + 
+                                str(catalog_key.id()) + '-' + 
+                                str(product_template_key.id()) + '-' + 
+                                str(product_instance_key.id())
+                line_exists = False
+                for line in order.lines:
+                    # 4. ukoliko order line postoji (sto podrazumeva da order postoji u state-u 'cart'), 
+                    # update postojeceg order line sa kolicinom proizvoda (quantity), 
+                    # i update postojeceg order-a sa novim vrednostima
+                    if (order_line_id == str(line.key.id())):
+                        # ako order line postoji u order-u, radimo update quantity tako sto ga uvecavamo za 1
+                        quantity = line.quantity + format(Decimal('1'), '.' + line.product_uom.digits + 'f')
+                        order_line = update_order_line(user_key=user_key, order_line=line, order_line_quantity=quantity)
+                        line_exists = True
+                        break
+                # 5. ukoliko order line ne postoji (a order postoji u state-u 'cart'), 
+                # napraviti novi order line sa vrednostima koje se prepisuju iz proizvoda i ostalim vrednostima (tax...), 
+                # i uraditi update postojeceg order-a sa novim vrednostima
+                if not (line_exists):
+                    # ako order line jos uvek ne postoji u order-u, pravimo novi order
+                    order_line = update_order_line(
+                        user_key=user_key, 
+                        catalog_key=catalog_key, 
+                        catalog_pricetag_key=catalog_pricetag_key, 
+                        product_template_key=product_template_key, 
+                        product_instance_key=product_instance_key, 
+                        order=order, 
+                        variant_signature=variant_signature,
+                        custom_variants=custom_variants)
+                # na kraju moramo uraditi i update order-a sa novim kalkulacijama koje ce izracunati taxe i carriere
+        # ako order ne postoji onda u nastavku pokusavamo da napravimo novi
+        # 6. ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
+        else:
+            # pravimo novi order
         
-        # trazimo postojeci order koji je u state=='cart' tako sto koristimo store_key iz catalog objekta i vrsimo upit
         
-        if not (order):
-            # pravimo novi order sa blanko vrednostima.
-            currency = OrderCurrency(store.currency.get()) # ovo nije sintaksno ispravno, ovde treba ustvari mapirati argumente u constructor-u OrderCurrency
-            untaxed_amount = product_instance.unit_price
-            tax_amount = None
-            total_amount = None
-            state = 'cart'
-            order = Order(parent=user_key, store=store_key, currency=currency, untaxed_amount=untaxed_amount, tax_amount=tax_amount, total_amount=total_amount, state=state)
-            order_key = order.put()
-        elif (order.state == 'cart'):
-            # koristiti order
-        elif (order.state == 'checkout' or order.state == 'quotation_requested' or order.state == 'quotation_completed' or order.state == 'processing'):
-            # odgovoriti da je order zakljucan i da se ne mogu dodavati novi proizvodi
         
-            
         # Order.query(Order.store == store_key, Order.state == 'cart', ancestor=user_key)
         # ako nema ordera u state == 'cart' treba jos proveriti ima li neki order koji je u 'quotation' ili 'processing'
         # ako ima 'cart' onda se on ucitava, ako ima 'quotation' ili 'processing' onda se prijavljuje kupcu da vec ima kopru koja treba da se naplati
@@ -2100,7 +2124,7 @@ class Order(ndb.Expando):
         else:
             # pravimo novi order sa standardnim vrednostima
             # store se ucitava radi prepisivanja vrednosti u order
-            store = kwargs.get('store_key').get()
+            store = kwargs.get('store')
             # currency za order se preuzima iz store.currency
             store_currency = store.currency.get()
             order_currency = OrderCurrency()
@@ -2122,11 +2146,11 @@ class Order(ndb.Expando):
             order_currency.positive_separate_by_space = store_currency.positive_separate_by_space
             order_currency.negative_separate_by_space = store_currency.negative_separate_by_space
             # default amount vrednosti su 0, s obzirom da order jos nema nijedan order line
-            untaxed_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
-            tax_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
-            total_amount = format(Decimal(kwargs.get('0')), '.' + order_currency.digits + 'f')
+            untaxed_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
+            tax_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
+            total_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
             # company address reference je za sada store key, posto se u store cuvaju company podaci
-            company_address_reference = kwargs.get('store_key')
+            company_address_reference = store.key
             # company address se prepisuje iz store, posto se u store cuvaju company podaci
             company_address_country = store.company_country.get()
             if (isinstance(store.company_region, str)):
@@ -2208,7 +2232,7 @@ class Order(ndb.Expando):
             # ovde se gradi order sa vrednostima koje su prethodno stecene
             order = Order(
                 parent=kwargs.get('user_key'), 
-                store=kwargs.get('store_key'), 
+                store=store.key, 
                 currency=order_currency, 
                 untaxed_amount=untaxed_amount, 
                 tax_amount=tax_amount, 
@@ -2272,7 +2296,7 @@ class Order(ndb.Expando):
             product_template_properties = product_template._properties
             product_instance_properties = product_instance._properties
             # catalog_pricetag_reference dobijamo iz inputa
-            catalog_pricetag_reference = kwargs.get('catalog_pricetag')
+            catalog_pricetag_reference = kwargs.get('catalog_pricetag_key')
             # ili mozemo da extract iz cataloga
             #catalog_pricetags = DomainCatalogPricetag.query(ancestor=kwargs.get('catalog_key')).fetch()
             #for catalog_pricetag in catalog_pricetags:
@@ -2354,7 +2378,7 @@ class Order(ndb.Expando):
         # to pravi nekonzistentnost i funkcionalnost nije onakva kakva se ocekuje da bude.
         buyer_addresses = kwargs.get('buyer_addresses')
         shipping_exclusions = kwargs.get('shipping_exclusions')
-        store = kwargs.get('store_key').get()
+        store = kwargs.get('store')
         shipping_addresses = []
         default_shipping_address = None
         for buyer_address in buyer_addresses:

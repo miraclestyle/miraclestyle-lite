@@ -230,3 +230,11 @@ class BuyerAddress(ndb.Expando):
     # street_address2 = ndb.StringProperty('9')
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
+
+
+
+
+
+
+
+
