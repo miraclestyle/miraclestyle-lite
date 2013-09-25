@@ -63,6 +63,7 @@ update
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
+import re
 
 # mozda ce nam trebati mehanizam da mozemo u constructoru supply keyword arguemnte kao napr:  digits=int(2), rounding=...
 class DecimalProperty(ndb.StringProperty):
@@ -1966,7 +1967,7 @@ class Order(ndb.Expando):
            'to'   : ('discontinued',),
         },
     }
-    
+    # formatiranje decimalnih brojva bi valjda ovako trebalo da izgleda Decimal(format(17, '.2f')), to treba jos ispitati
     @ndb.transactional
     def add_to_cart():
         # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
@@ -2004,7 +2005,7 @@ class Order(ndb.Expando):
                     if (order_line_id == str(line.key.id())):
                         # ako order line postoji u order-u, radimo update quantity tako sto ga uvecavamo za 1
                         quantity = line.quantity + format(Decimal('1'), '.' + line.product_uom.digits + 'f')
-                        order_line = update_order_line(user_key=user_key, order_line=line, order_line_quantity=quantity)
+                        order_line = update_order_line(user_key=user_key, order=order, order_line=line, order_line_quantity=quantity)
                         line_exists = True
                         break
                 # 5. ukoliko order line ne postoji (a order postoji u state-u 'cart'), 
@@ -2032,6 +2033,16 @@ class Order(ndb.Expando):
         # ako order ne postoji onda u nastavku pokusavamo da napravimo novi
         # 6. ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
         else:
+            # pripremamo shipping address
+            if (shipping_addresses['default_shipping_address']):
+                shipping_address = shipping_addresses['default_shipping_address']
+            else:
+                shipping_address = shipping_addresses['default_shipping_address'][0]
+            # pripremamo billing addresse
+            for buyer_address in buyer_addresses:
+                if (buyer_address.default_billing):
+                    billing_address = buyer_address
+                    break
             # pravimo novi order
             order = update_order(user_key=user_key, store=store, billing_address=billing_address, shipping_address=shipping_address, carrier_reference=carrier_reference)
             # pravimo novi order line
@@ -2265,6 +2276,7 @@ class Order(ndb.Expando):
             return order
     
     def update_order_line(**kwargs):
+        order = kwargs.get('order')
         # ako order_line postoji onda ga update-amo
         if (kwargs.get('order_line')):
             # treba voditi racuna oko dozvola ko sta moze ovde da uradi...
@@ -2296,6 +2308,9 @@ class Order(ndb.Expando):
                     tax_references.append(tax.key)
                 order_line.taxes = taxes
                 order_line.tax_references = tax_references
+            # pre snimanja nazad u bazu update-amo subtotal cache
+            subtotal = Decimal(order_line.unit_price) * Decimal(order_line.quantity)
+            order_line.subtotal = format(Decimal(subtotal), '.' + order.currency.digits + 'f')
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
             object_log.put()
@@ -2359,7 +2374,7 @@ class Order(ndb.Expando):
                 if (kwargs.get('custom_variants')):
                     description # += '\n' + kwargs.get('variant_signature')
             order_line = OrderLine(
-                parent=kwargs.get('order').key, 
+                parent=order.key, 
                 id=order_line_id, 
                 description=description, 
                 quantity=quantity, 
@@ -2372,6 +2387,8 @@ class Order(ndb.Expando):
                 product_category=product_category, 
                 catalog_pricetag_reference=catalog_pricetag_reference, 
                 tax_references=tax_references)
+            subtotal = Decimal(order_line.unit_price) * Decimal(order_line.quantity)
+            order_line.subtotal = format(Decimal(subtotal), '.' + order.currency.digits + 'f')
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='add_order_line', state='none', log=order_line)
             object_log.put()
@@ -2502,6 +2519,30 @@ class Order(ndb.Expando):
             if (tax_allowed):
                 valid_taxes.append(tax)
         return valid_taxes
+    
+    def calcualte_taxes(**kwargs):
+        if (kwargs.get('order')):
+            order = kwargs.get('order')
+            if (kwargs.get('order_line')):
+                order_line = kwargs.get('order_line')
+                tax_subtotal = Decimal(format(Decimal('0'), '.' + order.currency.digits + 'f'))
+                for tax in order_line.taxes:
+                    if (tax.amount.find('[%]') != -1):
+                        tax_amount = re.sub(r'\[%\]','', tax.amount)
+                        tax_subtotal += order_line.subtotal * (tax_amount * 0.01)
+                order_line.tax_subtotal = tax_subtotal
+                return order_line
+            lines = order.lines
+            order.lines = []
+            for line in lines:
+                tax_subtotal = Decimal(format(Decimal('0'), '.' + order.currency.digits + 'f'))
+                for tax in order_line.taxes:
+                    if (tax.amount.find('[%]') != -1):
+                        tax_amount = re.sub(r'\[%\]','', tax.amount)
+                        tax_subtotal += order_line.subtotal * (tax_amount * 0.01)
+                line.tax_subtotal = tax_subtotal
+                order.lines.append(line)
+            return order
     
     def get_carriers(**kwargs):
         carriers = []
