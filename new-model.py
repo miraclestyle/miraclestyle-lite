@@ -1967,7 +1967,7 @@ class Order(ndb.Expando):
            'to'   : ('discontinued',),
         },
     }
-    # formatiranje decimalnih brojva bi valjda ovako trebalo da izgleda Decimal(format(17, '.2f')), to treba jos ispitati
+    # formatiranje decimalnih brojva bi valjda ovako trebalo da izgleda Decimal(format(17, '.2f')), to treba jos ispitati...
     @ndb.transactional
     def add_to_cart():
         # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
