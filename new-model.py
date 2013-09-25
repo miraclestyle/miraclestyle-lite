@@ -2012,32 +2012,43 @@ class Order(ndb.Expando):
                 # i uraditi update postojeceg order-a sa novim vrednostima
                 if not (line_exists):
                     # ako order line jos uvek ne postoji u order-u, pravimo novi order
+                    product_template = product_template_key.get()
+                    product_instance = product_instance_key.get()
+                    valid_taxes = get_taxes()
                     order_line = update_order_line(
                         user_key=user_key, 
                         catalog_key=catalog_key, 
                         catalog_pricetag_key=catalog_pricetag_key, 
-                        product_template_key=product_template_key, 
-                        product_instance_key=product_instance_key, 
+                        product_template=product_template, 
+                        product_instance=product_instance, 
                         order=order, 
-                        variant_signature=variant_signature,
-                        custom_variants=custom_variants)
+                        variant_signature=variant_signature, 
+                        custom_variants=custom_variants, 
+                        valid_taxes=valid_taxes)
                 # na kraju moramo uraditi i update order-a sa novim kalkulacijama koje ce izracunati taxe i carriere
+                # prvo se trebaju uraditi kalkulacije za tax
+                # onda se trebaju obracunati carrier-i
+                # i na kraju se radi update ordera sa novim vrednostima
         # ako order ne postoji onda u nastavku pokusavamo da napravimo novi
         # 6. ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
         else:
             # pravimo novi order
-        
-        
-        
-        # Order.query(Order.store == store_key, Order.state == 'cart', ancestor=user_key)
-        # ako nema ordera u state == 'cart' treba jos proveriti ima li neki order koji je u 'quotation' ili 'processing'
-        # ako ima 'cart' onda se on ucitava, ako ima 'quotation' ili 'processing' onda se prijavljuje kupcu da vec ima kopru koja treba da se naplati
-        # ako nema ordera onda se pravi novi order, uzimaju se default adrese od usera ili one koje odgovaraju shipping exclusions-ima i upisuju se u order
-        # proverava se da li ima order line sa product_instance_reference == product_instance_key
-        # ako ima onda se quantity na tom order line uvecava za 1 (verovatno), i rade se ostale provere da nije sta izmenjeno (taxe, carrier, etc..)
-        # ako nema onda se pravi novi order line i rade se obracuni 
-        # dok se pravi novi ol tu se povlace i query za pronalazenje adekvatnih taksi, njihovo izracunavanje, 
-        # za pronalazenje adekvatnih carrier-a i njihovo izracunavanje, etc...
+            order = update_order(user_key=user_key, store=store, billing_address=billing_address, shipping_address=shipping_address, carrier_reference=carrier_reference)
+            # pravimo novi order line
+            product_template = product_template_key.get()
+            product_instance = product_instance_key.get()
+            valid_taxes = get_taxes()
+            order_line = update_order_line(
+                user_key=user_key, 
+                catalog_key=catalog_key, 
+                catalog_pricetag_key=catalog_pricetag_key, 
+                product_template=product_template, 
+                product_instance=product_instance, 
+                order=order, 
+                variant_signature=variant_signature, 
+                custom_variants=custom_variants, 
+                valid_taxes=valid_taxes)
+            # radimo update prethodno napravljenog ordera (moramo nakon dodatog line-a)
     
     def get_order(**kwargs):
         order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
@@ -2049,16 +2060,17 @@ class Order(ndb.Expando):
         return order
     
     def update_order(**kwargs):
+        # store se ucitava radi prepisivanja vrednosti u order
+        store = kwargs.get('store')
         # ako order postoji onda ga update-amo
         if (kwargs.get('order')):
             # treba zavrsiti dokumentovanje i pregledati kako jos optimize ovo... 
             order = kwargs.get('order')
-            store = order.store.get()
             if (kwargs.get('billing_address')):
-                # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
-                billing_address_reference = kwargs.get('billing_address')
                 # billing address se prepisuje iz BuyerAddress koji ima default_billing=True
-                billing_address = kwargs.get('billing_address').get()
+                billing_address = kwargs.get('billing_address')
+                # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
+                billing_address_reference = billing_address.key
                 billing_address_country = billing_address.country.get()
                 if (isinstance(billing_address.region, str)):
                     billing_address_region = billing_address.region
@@ -2082,10 +2094,10 @@ class Order(ndb.Expando):
                 order.billing_address = order_billing_address
                 order.billing_address_reference = billing_address_reference
             if (kwargs.get('shipping_address')):
-                # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
-                shipping_address_reference = kwargs.get('shipping_address')
                 # shipping address se prepisuje iz BuyerAddress koji ima default_shipping=True
-                shipping_address = kwargs.get('shipping_address').get()
+                shipping_address = kwargs.get('shipping_address')
+                # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
+                shipping_address_reference = shipping_address.key
                 shipping_address_country = shipping_address.country.get()
                 if (isinstance(shipping_address.region, str)):
                     shipping_address_region = shipping_address.region
@@ -2121,10 +2133,9 @@ class Order(ndb.Expando):
             object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
             object_log.put()
             return order
+        # ako order ne potoji onda pravimo novi
         else:
             # pravimo novi order sa standardnim vrednostima
-            # store se ucitava radi prepisivanja vrednosti u order
-            store = kwargs.get('store')
             # currency za order se preuzima iz store.currency
             store_currency = store.currency.get()
             order_currency = OrderCurrency()
@@ -2173,10 +2184,10 @@ class Order(ndb.Expando):
                 street_address2=store.company_street_address2, 
                 email=store.company_email, 
                 telephone=store.company_telephone)
-            # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
-            billing_address_reference = kwargs.get('billing_address')
             # billing address se prepisuje iz BuyerAddress koji ima default_billing=True
-            billing_address = kwargs.get('billing_address').get()
+            billing_address = kwargs.get('billing_address')
+            # billing address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_billing=True
+            billing_address_reference = billing_address.key
             billing_address_country = billing_address.country.get()
             if (isinstance(billing_address.region, str)):
                 billing_address_region = billing_address.region
@@ -2197,10 +2208,10 @@ class Order(ndb.Expando):
                 street_address2=billing_address.street_address2, 
                 email=billing_address.email, 
                 telephone=billing_address.telephone)
-            # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
-            shipping_address_reference = kwargs.get('shipping_address')
             # shipping address se prepisuje iz BuyerAddress koji ima default_shipping=True
-            shipping_address = kwargs.get('shipping_address').get()
+            shipping_address = kwargs.get('shipping_address')
+            # shipping address reference se dobija iz kwarg-a sto je zapravo key BuyerAddress sa default_shipping=True
+            shipping_address_reference = shipping_address.key
             shipping_address_country = shipping_address.country.get()
             if (isinstance(shipping_address.region, str)):
                 shipping_address_region = shipping_address.region
@@ -2256,61 +2267,63 @@ class Order(ndb.Expando):
     def update_order_line(**kwargs):
         # ako order_line postoji onda ga update-amo
         if (kwargs.get('order_line')):
+            # treba voditi racuna oko dozvola ko sta moze ovde da uradi...
             order_line = kwargs.get('order_line')
-            # u svim ovim procedurama mozemo da sprovedemo i get_taxes() metod ako ima potrebe
-            # ako je quantity veci od nule i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
-            if (kwargs.get('order_line_quantity') > 0):
-                if (order_line.quantity != kwargs.get('order_line_quantity')):
-                    order_line.quantity = format(Decimal(kwargs.get('order_line_quantity')), '.' + order_line.product_uom.digits + 'f')
-                    order_line_key = order_line.put()
-                    object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
-                    object_log.put()
-                    return order_line
             # ako je quantity jednak ili manji od nule onda se order line brise.
-            elif (kwargs.get('order_line_quantity') <= 0):
+            if (kwargs.get('order_line_quantity') <= 0):
                 object_log = ObjectLog(parent=order_line.key, agent=kwargs.get('user_key'), action='remove_order_line', state='none')
                 object_log.put()
                 order_line.key.delete()
                 return None
+            # ako je quantity veci od nule i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
+            if (kwargs.get('order_line_quantity') > 0):
+                if (order_line.quantity != kwargs.get('order_line_quantity')):
+                    order_line.quantity = format(Decimal(kwargs.get('order_line_quantity')), '.' + order_line.product_uom.digits + 'f')
             # ako je discount provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
-            # treba voditi racuna oko dozvola ko sta moze ovde da uradi...
             if (kwargs.get('order_line_discount') and (order_line.discount != kwargs.get('order_line_discount'))):
                 order_line.discount = format(Decimal(kwargs.get('order_line_discount')), '.2f')
-                order_line_key = order_line.put()
-                object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
-                object_log.put()
-                return order_line
             # ako je sequence provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
             if (kwargs.get('order_line_sequence') and (order_line.sequence != kwargs.get('order_line_sequence'))):
                 order_line.sequence = kwargs.get('order_line_sequence')
-                order_line_key = order_line.put()
-                object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
-                object_log.put()
-                return order_line
+            # ako je valid_taxes provided onda update-amo order_line
+            if (kwargs.get('valid_taxes')):
+                # generisemo taxes i tax_references
+                taxes = []
+                tax_references = []
+                for tax in kwargs.get('valid_taxes'):
+                    order_line_tax = OrderLineTax(name=tax.name, amount=tax.amount)
+                    taxes.append(order_line_tax)
+                    tax_references.append(tax.key)
+                order_line.taxes = taxes
+                order_line.tax_references = tax_references
+            order_line_key = order_line.put()
+            object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
+            object_log.put()
+            return order_line
         # ako order line ne postoji onda pravimo novi order line sa discount 0.00 i quantity 1
         else:
+            catalog = kwargs.get('catalog')
             # ucitavamo product template i product instance entitete koji nam trebaju za izgradnju order line,
             # i preuzimamo propertije iz product template i product instance, kako bi mogli da ispitamo koji su postojani
-            product_template = kwargs.get('product_template_key').get()
-            product_instance = kwargs.get('product_instance_key').get()
+            product_template = kwargs.get('product_template')
+            product_instance = kwargs.get('product_instance')
             product_template_properties = product_template._properties
             product_instance_properties = product_instance._properties
+            # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
+            order_line_id = str(catalog.key.namespace()) + '-' + 
+                            str(catalog.key.id()) + '-' + 
+                            str(product_template.key.id()) + '-' + 
+                            str(product_instance.key.id())
             # catalog_pricetag_reference dobijamo iz inputa
             catalog_pricetag_reference = kwargs.get('catalog_pricetag_key')
-            # ili mozemo da extract iz cataloga
-            #catalog_pricetags = DomainCatalogPricetag.query(ancestor=kwargs.get('catalog_key')).fetch()
-            #for catalog_pricetag in catalog_pricetags:
-                #if (catalog_pricetag.product_template == kwargs.get('product_template_key')):
-                    #catalog_pricetag_reference = catalog_pricetag.key
             # product_category_complete_name i product_category preuzimamo iz product template
             product_category = product_template.product_category.get()
             product_category_complete_name = product_template_category.complete_name
             product_category = product_template.product_category
             # generisemo taxes i tax_references
-            valid_taxes = get_taxes(kwargs)
             taxes = []
             tax_references = []
-            for tax in valid_taxes:
+            for tax in kwargs.get('valid_taxes'):
                 order_line_tax = OrderLineTax(name=tax.name, amount=tax.amount)
                 taxes.append(order_line_tax)
                 tax_references.append(tax.key)
@@ -2345,11 +2358,6 @@ class Order(ndb.Expando):
                 # variant_signature = product_instance.variant_signature
                 if (kwargs.get('custom_variants')):
                     description # += '\n' + kwargs.get('variant_signature')
-            # redosled izgradnje id-a za order line/cart line: id=catalog_namespace-catalog_id-product_template_id-product_instance_id
-            order_line_id = str(kwargs.get('catalog_key').namespace()) + '-' + 
-                            str(kwargs.get('catalog_key').id()) + '-' + 
-                            str(kwargs.get('product_template_key').id()) + '-' + 
-                            str(kwargs.get('product_instance_key').id())
             order_line = OrderLine(
                 parent=kwargs.get('order').key, 
                 id=order_line_id, 
