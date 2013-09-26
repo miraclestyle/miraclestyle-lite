@@ -1967,7 +1967,7 @@ class Order(ndb.Expando):
            'to'   : ('discontinued',),
         },
     }
-    # formatiranje decimalnih brojva bi valjda ovako trebalo da izgleda Decimal(format(17, '.2f')), to treba jos ispitati...
+    
     @ndb.transactional
     def add_to_cart():
         # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
@@ -2004,8 +2004,9 @@ class Order(ndb.Expando):
                     # i update postojeceg order-a sa novim vrednostima
                     if (order_line_id == str(line.key.id())):
                         # ako order line postoji u order-u, radimo update quantity tako sto ga uvecavamo za 1
-                        quantity = line.quantity + format(Decimal('1'), '.' + line.product_uom.digits + 'f')
+                        quantity = DecTools.form(line.quantity) + DecTools.form('1', line.product_uom)
                         order_line = update_order_line(user_key=user_key, order=order, order_line=line, order_line_quantity=quantity)
+                        # ovde moramo nekako ovaj update-ovani order_line uguramo u order.lines, a da stari iz njih izbacimo.
                         line_exists = True
                         break
                 # 5. ukoliko order line ne postoji (a order postoji u state-u 'cart'), 
@@ -2015,10 +2016,12 @@ class Order(ndb.Expando):
                     # ako order line jos uvek ne postoji u order-u, pravimo novi order
                     product_template = product_template_key.get()
                     product_instance = product_instance_key.get()
-                    valid_taxes = get_taxes()
+                    taxes = DomainTax.query(namespace=catalog_key.namespace).order(DomainTax.sequence).fetch()
+                    # ne znam da li ce ovde ici location=order.shipping_address ili location=order.billing_address
+                    valid_taxes = get_taxes(taxes=taxes, location=order.shipping_address, product_template=product_template)
                     order_line = update_order_line(
                         user_key=user_key, 
-                        catalog_key=catalog_key, 
+                        catalog=catalog, 
                         catalog_pricetag_key=catalog_pricetag_key, 
                         product_template=product_template, 
                         product_instance=product_instance, 
@@ -2026,10 +2029,12 @@ class Order(ndb.Expando):
                         variant_signature=variant_signature, 
                         custom_variants=custom_variants, 
                         valid_taxes=valid_taxes)
-                # na kraju moramo uraditi i update order-a sa novim kalkulacijama koje ce izracunati taxe i carriere
-                # prvo se trebaju uraditi kalkulacije za tax
-                # onda se trebaju obracunati carrier-i
-                # i na kraju se radi update ordera sa novim vrednostima
+                    # u postojeci order dodajemo novu liniju
+                    order.lines.append(order_line)
+                # radimo update ordera kako bi se keshirani amount-ovi update-ovali
+                order = update_order(order=order)
+                # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
+                # sve dok se carrier ne prenese kao novi order line..
         # ako order ne postoji onda u nastavku pokusavamo da napravimo novi
         # 6. ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
         else:
@@ -2048,10 +2053,12 @@ class Order(ndb.Expando):
             # pravimo novi order line
             product_template = product_template_key.get()
             product_instance = product_instance_key.get()
-            valid_taxes = get_taxes()
+            taxes = DomainTax.query(namespace=catalog_key.namespace).order(DomainTax.sequence).fetch()
+            # ne znam da li ce ovde ici location=order.shipping_address ili location=order.billing_address
+            valid_taxes = get_taxes(taxes=taxes, location=order.shipping_address, product_template=product_template)
             order_line = update_order_line(
                 user_key=user_key, 
-                catalog_key=catalog_key, 
+                catalog=catalog, 
                 catalog_pricetag_key=catalog_pricetag_key, 
                 product_template=product_template, 
                 product_instance=product_instance, 
@@ -2059,7 +2066,12 @@ class Order(ndb.Expando):
                 variant_signature=variant_signature, 
                 custom_variants=custom_variants, 
                 valid_taxes=valid_taxes)
-            # radimo update prethodno napravljenog ordera (moramo nakon dodatog line-a)
+            # u postojeci order dodajemo novu liniju
+            order.lines.append(order_line)
+            # radimo update ordera kako bi se keshirani amount-ovi update-ovali
+            order = update_order(order=order)
+            # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
+            # sve dok se carrier ne prenese kao novi order line..
     
     def get_order(**kwargs):
         order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
@@ -2139,7 +2151,17 @@ class Order(ndb.Expando):
                 order.store_name = store.name
             if (order.store_logo != store.logo):
                 order.store_logo = store.logo
-            # nedostaje i compute amount vrednosti 
+            # ovde pre update-a obracunavamo ukupne iznose na orderu
+            untaxed_amount = DecTools.form('0', order.currency)
+            tax_amount = DecTools.form('0', order.currency)
+            total_amount = DecTools.form('0', order.currency)
+            for line in order.lines:
+                untaxed_amount += DecTools.form(line.subtotal, order.currency)
+                tax_amount += DecTools.form(line.tax_subtotal, order.currency)
+                total_amount += DecTools.form(line.subtotal, order.currency) + DecTools.form(line.tax_subtotal, order.currency)
+            order.untaxed_amount = untaxed_amount
+            order.tax_amount = tax_amount
+            order.total_amount = total_amount
             order_key = order.put()
             object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
             object_log.put()
@@ -2168,9 +2190,9 @@ class Order(ndb.Expando):
             order_currency.positive_separate_by_space = store_currency.positive_separate_by_space
             order_currency.negative_separate_by_space = store_currency.negative_separate_by_space
             # default amount vrednosti su 0, s obzirom da order jos nema nijedan order line
-            untaxed_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
-            tax_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
-            total_amount = format(Decimal('0'), '.' + order_currency.digits + 'f')
+            untaxed_amount = DecTools.form('0', order_currency)
+            tax_amount = DecTools.form('0', order_currency)
+            total_amount = DecTools.form('0', order_currency)
             # company address reference je za sada store key, posto se u store cuvaju company podaci
             company_address_reference = store.key
             # company address se prepisuje iz store, posto se u store cuvaju company podaci
@@ -2182,7 +2204,6 @@ class Order(ndb.Expando):
                 region = store.company_region.get()
                 company_address_region = region.name
                 company_address_region_code = region.code
-            if (isinstance())
             order_company_address = OrderAddress(
                 name=store.company_name, 
                 country=company_address_country.name, 
@@ -2290,10 +2311,10 @@ class Order(ndb.Expando):
             # ako je quantity veci od nule i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
             if (kwargs.get('order_line_quantity') > 0):
                 if (order_line.quantity != kwargs.get('order_line_quantity')):
-                    order_line.quantity = format(Decimal(kwargs.get('order_line_quantity')), '.' + order_line.product_uom.digits + 'f')
+                    order_line.quantity = DecTools.form(kwargs.get('order_line_quantity'), order_line.product_uom)
             # ako je discount provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
             if (kwargs.get('order_line_discount') and (order_line.discount != kwargs.get('order_line_discount'))):
-                order_line.discount = format(Decimal(kwargs.get('order_line_discount')), '.2f')
+                order_line.discount = DecTools.form(kwargs.get('order_line_discount'), '.2f')
             # ako je sequence provided i ako se user input razlikuje od onoga sto je vec u order_line-u onda update-amo order_line
             if (kwargs.get('order_line_sequence') and (order_line.sequence != kwargs.get('order_line_sequence'))):
                 order_line.sequence = kwargs.get('order_line_sequence')
@@ -2309,8 +2330,10 @@ class Order(ndb.Expando):
                 order_line.taxes = taxes
                 order_line.tax_references = tax_references
             # pre snimanja nazad u bazu update-amo subtotal cache
-            subtotal = Decimal(order_line.unit_price) * Decimal(order_line.quantity)
-            order_line.subtotal = format(Decimal(subtotal), '.' + order.currency.digits + 'f')
+            subtotal = DecTools.form(order_line.unit_price, order.currency) * DecTools.form(order_line.quantity, order_line.product_uom)
+            order_line.subtotal = DecTools.form(subtotal, order.currency)
+            # pre snimanja nazad u bazu update-amo tax subtotal cache
+            order_line.tax_subtotal = calcualte_taxes(order=order, order_line=order_line)
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='update_order_line', state='none', log=order_line)
             object_log.put()
@@ -2354,14 +2377,14 @@ class Order(ndb.Expando):
             # http://stackoverflow.com/questions/15076310/format-python-decimal-object-to-a-specified-precision
             # ovo gore su primeri formatiranja, koji mozda nisu ispravni, ovaj code ovde je samo radi opisa.
             # quantity se setuje na 1 posto new line podrazumeva jednu mernu jedinicu proizvoda
-            quantity = format(Decimal('1'), '.' + product_uom.digits + 'f')
+            quantity = DecTools.form('1', product_uom)
             # odlucujemo odakle cemo da preuzimamo vrednosti za unit_price, product instance ima prednost (ako postoji)
             if (product_instance_properties['unit_price']):
-                unit_price = product_instance.unit_price
+                unit_price = DecTools.form(product_instance.unit_price, order.currency)
             else:
-                unit_price = product_template.unit_price
+                unit_price = DecTools.form(product_template.unit_price, order.currency)
             # discount se postavlja na 0.00, i kasnije se moze editovati od strane prodavca, ukoliko je order u state-u koji to dozvoljava
-            discount = format(Decimal('0.00'), '.2f')
+            discount = DecTools.form('0', '.2f')
             # sequence se podesava po count-u postojecih linija - ako sequencing bude zero based onda nam ne treba len() + 1
             sequence = len(order.lines)
             # proveravamo da li su product instance uopste generisane, a bice generisane samo ako ih bude mannje od 1k per template
@@ -2387,8 +2410,9 @@ class Order(ndb.Expando):
                 product_category=product_category, 
                 catalog_pricetag_reference=catalog_pricetag_reference, 
                 tax_references=tax_references)
-            subtotal = Decimal(order_line.unit_price) * Decimal(order_line.quantity)
-            order_line.subtotal = format(Decimal(subtotal), '.' + order.currency.digits + 'f')
+            subtotal = DecTools.form(order_line.unit_price, order.currency) * DecTools.form(order_line.quantity, order_line.product_uom)
+            order_line.subtotal = DecTools.form(subtotal, order.currency)
+            order_line.tax_subtotal = calcualte_taxes(order=order, order_line=order_line)
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='add_order_line', state='none', log=order_line)
             object_log.put()
@@ -2525,24 +2549,30 @@ class Order(ndb.Expando):
             order = kwargs.get('order')
             if (kwargs.get('order_line')):
                 order_line = kwargs.get('order_line')
-                tax_subtotal = Decimal(format(Decimal('0'), '.' + order.currency.digits + 'f'))
+                tax_subtotal = DecTools.form('0', order.currency)
                 for tax in order_line.taxes:
                     if (tax.amount.find('[%]') != -1):
-                        tax_amount = re.sub(r'\[%\]','', tax.amount)
-                        tax_subtotal += order_line.subtotal * (tax_amount * 0.01)
-                order_line.tax_subtotal = tax_subtotal
-                return order_line
-            lines = order.lines
-            order.lines = []
-            for line in lines:
-                tax_subtotal = Decimal(format(Decimal('0'), '.' + order.currency.digits + 'f'))
-                for tax in order_line.taxes:
-                    if (tax.amount.find('[%]') != -1):
-                        tax_amount = re.sub(r'\[%\]','', tax.amount)
-                        tax_subtotal += order_line.subtotal * (tax_amount * 0.01)
-                line.tax_subtotal = tax_subtotal
-                order.lines.append(line)
-            return order
+                        tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01')
+                        tax_subtotal += order_line.subtotal * tax_amount
+                    elif (tax.amount.find('[c]') != -1):
+                        tax_amount = DecTools.form(re.sub(r'\[c\]','', tax.amount))
+                        tax_subtotal += tax_amount
+                return tax_subtotal
+            else:
+                lines = order.lines
+                order.lines = []
+                for order_line in lines:
+                    tax_subtotal = DecTools.form('0', order.currency)
+                    for tax in order_line.taxes:
+                        if (tax.amount.find('[%]') != -1):
+                            tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01')
+                            tax_subtotal += order_line.subtotal * tax_amount
+                        elif (tax.amount.find('[c]') != -1):
+                            tax_amount = DecTools.form(re.sub(r'\[c\]','', tax.amount))
+                            tax_subtotal += tax_amount
+                    order_line.tax_subtotal = tax_subtotal
+                    order.lines.append(line)
+                return order
     
     def get_carriers(**kwargs):
         carriers = []
@@ -3333,3 +3363,18 @@ class ObjectLog(ndb.Expando):
     @classmethod
     def _get_kind(cls):
       return datastore_key_kinds.ObjectLog
+
+# neki primer toola za formatiranje Decimal vrednosti
+class DecTools(object):
+    
+    @staticmethod
+    def form(value, formater=None):
+        if (formater):
+            if (isinstance(formater, str)):
+                return Decimal(format(Decimal(value), formater))
+            else:
+                return Decimal(format(Decimal(value), '.' + formater.digits + 'f'))
+        else:
+            return Decimal(value)
+        
+        
