@@ -2154,7 +2154,7 @@ class Order(ndb.Expando):
                 order = update_order(order=order, store=store)
                 return order
             else:
-                # ukoliko je order u drugom state-u od 'cart' ili 'request_quotation' satate-a, onda ne praviti nikakve izmene
+                # ukoliko je order u drugom state-u od 'cart' ili 'checkout' satate-a, onda ne praviti nikakve izmene
                 # zabranjeno je update-ovati order koji nije shopping cart-a ili quotation
                 return None
         # ukoliko order ne postoji vraca se poruka da je shopping cart-a prazna
