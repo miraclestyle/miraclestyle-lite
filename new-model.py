@@ -1941,7 +1941,7 @@ class Order(ndb.Expando):
         'canceled' : (5, ),# no one can cancel/edit/delete order lines;
     }
     
-    # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
+    # nedostaje akcija payment_timeout
     OBJECT_ACTIONS = {
        'add_to_cart' : 1,
        'update_cart' : 2,
