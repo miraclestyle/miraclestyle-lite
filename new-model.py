@@ -1912,18 +1912,17 @@ class Order(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # company_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
-    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
-    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
-    # reference = ndb.StringProperty('12', required=True)
-    # comment = ndb.TextProperty('13')# 64kb limit
-    # company_address_reference = ndb.KeyProperty('14', kind=Store, required=True)
-    # billing_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
-    # shipping_address_reference = ndb.KeyProperty('16', kind=BuyerAddress, required=True)
-    # carrier_reference = ndb.KeyProperty('17', kind=StoreCarrier, required=True)
-    # feedback = ndb.IntegerProperty('18', required=True)
-    # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # reference = ndb.StringProperty('9', required=True)
+    # company_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
+    # billing_address = ndb.LocalStructuredProperty(OrderAddress, '11', required=True)
+    # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '12', required=True)
+    # company_address_reference = ndb.KeyProperty('13', kind=Store, required=True)
+    # billing_address_reference = ndb.KeyProperty('14', kind=BuyerAddress, required=True)
+    # shipping_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
+    # carrier_reference = ndb.KeyProperty('16', kind=StoreCarrier, required=True)
+    # feedback = ndb.IntegerProperty('17', required=True)
+    # store_name = ndb.StringProperty('18', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     
     _KIND = 0
     
@@ -1936,12 +1935,10 @@ class Order(ndb.Expando):
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'cart' : (1, ),# buyer can create order, add/update (quantity)/remove order lines;
-        'checkout' : (2, ),# buyer can cancel/request quotation/pay order;
-        'quotation_requested' : (3, ),# seller can edit discount on order lines, buyer can cancel order;
-        'quotation_completed' : (4, ),# buyer can cancel/pay order;
-        'processing' : (5, ),# no one can cancel/edit/delete order lines;
-        'completed' : (6, ),# no one can cancel/edit/delete order lines;
-        'canceled' : (7, ),# no one can cancel/edit/delete order lines;
+        'checkout' : (2, ),# buyer can cancel/pay order, post messages;
+        'processing' : (3, ),# no one can cancel/edit/delete order lines;
+        'completed' : (4, ),# no one can cancel/edit/delete order lines;
+        'canceled' : (5, ),# no one can cancel/edit/delete order lines;
     }
     
     # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
@@ -1949,11 +1946,10 @@ class Order(ndb.Expando):
        'add_to_cart' : 1,
        'update_cart' : 2,
        'checkout' : 3,
-       'request_quotation' : 4,
-       'complete_quotation' : 5,
-       'pay' : 6,
-       'complete' : 7,
-       'cancel' : 8,
+       'cancel' : 6,
+       'pay' : 4,
+       'complete' : 5,
+       'message' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -1962,60 +1958,55 @@ class Order(ndb.Expando):
             'to' : ('checkout',),
          },
          'cancel' : {
-           'from' : ('checkout', 'quotation_requested', 'quotation_completed',),
+           'from' : ('checkout',),
            'to'   : ('canceled',),
         },
-        'request_quotation' : {
-           'from' : ('checkout', ),
-           'to'   : ('quotation_requested',),
-        },
         'pay' : {
-           'from' : ('checkout', 'quotation_requested', 'quotation_completed',), # mozda zabraniti from: quotation_requested, dok se ne zavrsi quote?
+           'from' : ('checkout',),
            'to'   : ('processing',),
-        },
-        'complete_quotation' : {
-           'from' : ('quotation_requested', ),
-           'to'   : ('quotation_completed',),
         },
         'complete' : {
            'from' : ('processing', ),
            'to'   : ('completed',),
         },
-        
     }
     
     @ndb.transactional
     def add_to_cart():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
+        # akcija se moze pozvati samo ako je order.state == 'cart'.
         # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
-        # 1. proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
         catalog = catalog_key.get()
         store = catalog.store.get()
-        buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
         shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch()
-        shipping_addresses = get_shipping_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
-        if not (shipping_addresses['shipping_addresses']):
-            # zabranjeno je dodavati artikle iz store-a koji ne dozvoljava shipping na makar jednu adresu korisnika,
-            # bez obizra da li je order prethodno napravljen ili ne.
-            # postojeci order se moze jedino cancel u tom slucaju, 
-            # ili kupac mora napraviti adresu na koju se moze shipping raditi, kako bi bio u stanju da update-a order
-            return
         order = get_order(store_key=catalog.store, user_key=user_key)
         # ako order postoji onda ne pravimo novi order
         if (order):
-            # 2. proveriti da li je order u state-u 'cart'
+            # proveriti da li je order u state-u 'cart'
             if (order.state != 'cart'):
                 # ukoliko je order u drugom state-u od 'cart' satate-a, onda ne praviti nikakve izmene
                 # zabranjeno je dodavati artikle u order koji nije shopping cart-a
-                return
+                return None
             else:
-                # 3. proveriti da li postoji order line (sto podrazumeva da order postoji u state-u 'cart') sa proizvodom koji se dodaje u order
+                # proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
+                buyer_addresses = []
+                buyer_addresses.append(order.shipping_address_reference.get())
+                shipping_addresses = get_shipping_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
+                if not (shipping_addresses['shipping_addresses']):
+                    # zabranjeno je dodavati artikle iz store-a koji ne dozvoljava shipping na makar jednu adresu korisnika,
+                    # bez obizra da li je order prethodno napravljen ili ne.
+                    # postojeci order se moze jedino cancel u tom slucaju, 
+                    # ili kupac mora napraviti adresu na koju se moze shipping raditi, kako bi bio u stanju da update-a order
+                    return None
+                # proveriti da li postoji order line (sto podrazumeva da order postoji u state-u 'cart') sa proizvodom koji se dodaje u order
                 order_line_id = str(catalog_key.namespace()) + '-' + 
                                 str(catalog_key.id()) + '-' + 
                                 str(product_template_key.id()) + '-' + 
                                 str(product_instance_key.id())
                 line_exists = False
+                index = 0
                 for line in order.lines:
-                    # 4. ukoliko order line postoji (sto podrazumeva da order postoji u state-u 'cart'), 
+                    # ukoliko order line postoji (sto podrazumeva da order postoji u state-u 'cart'), 
                     # update postojeceg order line sa kolicinom proizvoda (quantity), 
                     # i update postojeceg order-a sa novim vrednostima
                     if (order_line_id == str(line.key.id())):
@@ -2023,9 +2014,13 @@ class Order(ndb.Expando):
                         quantity = DecTools.form(line.quantity) + DecTools.form('1', line.product_uom)
                         order_line = update_order_line(user_key=user_key, order=order, order_line=line, order_line_quantity=quantity)
                         # ovde moramo nekako ovaj update-ovani order_line uguramo u order.lines, a da stari iz njih izbacimo.
+                        # ovo je mozda primer tog swapanja order line-a
+                        order.lines.pop(index)
+                        order.lines.insert(index, order_line)
                         line_exists = True
                         break
-                # 5. ukoliko order line ne postoji (a order postoji u state-u 'cart'), 
+                    index += 1
+                # ukoliko order line ne postoji (a order postoji u state-u 'cart'), 
                 # napraviti novi order line sa vrednostima koje se prepisuju iz proizvoda i ostalim vrednostima (tax...), 
                 # i uraditi update postojeceg order-a sa novim vrednostima
                 if not (line_exists):
@@ -2048,12 +2043,21 @@ class Order(ndb.Expando):
                     # u postojeci order dodajemo novu liniju
                     order.lines.append(order_line)
                 # radimo update ordera kako bi se keshirani amount-ovi update-ovali
-                order = update_order(order=order)
+                order = update_order(order=order, store=store)
+                return order
                 # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
                 # sve dok se carrier ne prenese kao novi order line..
-        # ako order ne postoji onda u nastavku pokusavamo da napravimo novi
-        # 6. ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
+        # ukoliko order ne postoji, napraviti novi order, i potom uraditi korak 5.
         else:
+            # proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
+            buyer_addresses = BuyerAddress.query(ancestor=user_key).fetch()
+            shipping_addresses = get_shipping_addresses(buyer_addresses=buyer_addresses, shipping_exclusions=shipping_exclusions, store=store)
+            if not (shipping_addresses['shipping_addresses']):
+                # zabranjeno je dodavati artikle iz store-a koji ne dozvoljava shipping na makar jednu adresu korisnika,
+                # bez obizra da li je order prethodno napravljen ili ne.
+                # postojeci order se moze jedino cancel u tom slucaju, 
+                # ili kupac mora napraviti adresu na koju se moze shipping raditi, kako bi bio u stanju da update-a order
+                return None
             # pripremamo shipping address
             if (shipping_addresses['default_shipping_address']):
                 shipping_address = shipping_addresses['default_shipping_address']
@@ -2085,18 +2089,142 @@ class Order(ndb.Expando):
             # u postojeci order dodajemo novu liniju
             order.lines.append(order_line)
             # radimo update ordera kako bi se keshirani amount-ovi update-ovali
-            order = update_order(order=order)
+            order = update_order(order=order, store=store)
+            return order
             # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
             # sve dok se carrier ne prenese kao novi order line..
     
     @ndb.transactional
     def update_cart():
-        
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent) ako je order.state == 'cart',
+        # ili agent koji ima domain-specific dozvolu 'discount-Order', za order.store koji pripada domeni, i ako je order.state == 'checkout'.
+        # akcija se moze pozvati samo ako je order.state == 'cart' ili order.state == 'checkout'
+        # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, order_lines, shipping_address_key, billing_address_key   ?
+        catalog = catalog_key.get()
+        store = catalog.store.get()
+        shipping_exclusions = DomainStoreShippingExclusion.query(ancestor=catalog_key).fetch()
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        # ako order postoji onda nastavljamo dalje
+        if (order):
+            # proveriti da li je order u state-u 'cart'
+            if (order.state == 'cart'):
+                # proveriti da li je shipping dozvoljen, i nastaviti ukoliko jeste
+                shipping_address = shipping_address_key.get()
+                billing_address = billing_address_key.get()
+                shipping_addresses = get_shipping_addresses(buyer_addresses=[shipping_address], shipping_exclusions=shipping_exclusions, store=store)
+                if not (shipping_addresses['shipping_addresses']):
+                    # zabranjeno je dodavati artikle iz store-a koji ne dozvoljava shipping na makar jednu adresu korisnika,
+                    # bez obizra da li je order prethodno napravljen ili ne.
+                    # postojeci order se moze jedino cancel u tom slucaju, 
+                    # ili kupac mora napraviti adresu na koju se moze shipping raditi, kako bi bio u stanju da update-a order
+                    return None
+                # update postojecih order lines-a sa novim kolicinama proizvoda (quantity), 
+                # i update postojeceg order-a sa novim vrednostima
+                lines = order.lines
+                order.lines = []
+                sequence = 0
+                for line in lines:
+                    # order_lines je prekapovan dictionary sa values-ima za svaki order line i mapiranim originalnim kljucevima lines-a
+                    ord_line = order_lines.get(line.key)
+                    quantity = DecTools.form(ord_line['quantity'])
+                    order_line = update_order_line(user_key=user_key, order=order, order_line=line, order_line_quantity=quantity, order_line_sequence=sequence)
+                    # valjda ce ovako moci da radi sequencing.
+                    # ako ovo ne bude valjalo onda treba smisliti drugaciji nacin seqenca, mozda sa clienta da se salju sequence..
+                    if (order_line):
+                        order.lines.append(order_line)
+                        sequence += 1
+                # radimo update ordera kako bi se keshirani amount-ovi update-ovali
+                order = update_order(order=order, store=store, billing_address=billing_address, shipping_address=shipping_address, carrier_reference=carrier_reference)
+                return order
+                # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
+                # sve dok se carrier ne prenese kao novi order line..
+            # proveriti da li je order u state-u 'checkout'
+            elif (order.state == 'checkout'):
+                # update postojecih order lines-a sa novim discount-ima, 
+                # i update postojeceg order-a sa novim vrednostima
+                lines = order.lines
+                order.lines = []
+                for line in lines:
+                    # order_lines je prekapovan dictionary sa values-ima za svaki order line i mapiranim originalnim kljucevima lines-a
+                    ord_line = order_lines.get(line.key)
+                    discount = DecTools.form(ord_line['discount'])
+                    order_line = update_order_line(user_key=user_key, order=order, order_line=line, order_line_discount=discount)
+                    order.lines.append(order_line)
+                # radimo update ordera kako bi se keshirani amount-ovi update-ovali
+                order = update_order(order=order, store=store)
+                return order
+            else:
+                # ukoliko je order u drugom state-u od 'cart' ili 'request_quotation' satate-a, onda ne praviti nikakve izmene
+                # zabranjeno je update-ovati order koji nije shopping cart-a ili quotation
+                return None
+        # ukoliko order ne postoji vraca se poruka da je shopping cart-a prazna
+        else:
+            return None
+    
+    @ndb.transactional
+    def checkout():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent).
+        # akcija se moze pozvati samo ako je order.state == 'cart'.
+        # prvo se execute update_cart funkcija i onda se radi update order objekta
+        order = update_cart() # naravno, u pravilnom code-u ova funckija ce primati argumente kao i sve ostale dokumentovane metode
+        order.state = 'checkout'
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='checkout', state=order.state, log=order)
+        object_log.put()
+        return order
+    
+    @ndb.transactional
+    def cancel():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent),
+        # ili agent koji ima domain-specific dozvolu 'cancel-Order', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order.state == 'checkout'.
+        store = catalog.store.get()
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        order.state = 'canceled'
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='cancel', state=order.state, log=order)
+        object_log.put()
+        return order
+    
+    @ndb.transactional
+    def pay():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent).
+        # akcija se moze pozvati samo ako je order.state == 'checkout'.
+        store = catalog.store.get()
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        order.state = 'processing'
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='pay', state=order.state, log=order)
+        object_log.put()
+        return order
+    
+    @ndb.transactional
+    def complete():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'complete-Country'. Verovatno ce to biti System Account
+        # akcija se moze pozvati samo ako je order.state == 'processing'.
+        store = catalog.store.get()
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        order.state = 'completed'
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='complete', state=order.state, log=order)
+        object_log.put()
+        return order
+    
+    @ndb.transactional
+    def message():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent),
+        # ili agent koji ima domain-specific dozvolu 'message-Order', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order.state == 'checkout'.
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='message', state=order.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+        return order
     
     # REUSABLE CODE!
+    # funkcije get_order, update_order, update_order_line, get_shipping_addresses, get_taxes, calculate_taxes, get_carrires.. 
+    # se nikad ne pozivaju direktno (sa client-a) vec ih pozivuaju druge funkcije..
     
     def get_order(**kwargs):
-        order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
+        order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
         if (order):
             order = order[0]
             # ucitavamo sve linije, ovde se moze uspostaviti kontrola da se ucitava samo kada se to zahteva, napr: if(kwargs.get('get_lines')):...
