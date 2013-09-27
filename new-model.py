@@ -1927,7 +1927,7 @@ class Order(ndb.Expando):
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'unpublished'
+    OBJECT_DEFAULT_STATE = 'cart'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -1946,26 +1946,42 @@ class Order(ndb.Expando):
     
     # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
     OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'lock' : 3,
-       'publish' : 4,
-       'discontinue' : 5,
+       'add_to_cart' : 1,
+       'update_cart' : 2,
+       'checkout' : 3,
+       'request_quotation' : 4,
+       'complete_quotation' : 5,
+       'pay' : 6,
+       'complete' : 7,
+       'cancel' : 8,
     }
     
     OBJECT_TRANSITIONS = {
-        'lock' : {
-            'from' : ('unpublished',),
-            'to' : ('locked',),
+        'checkout' : {
+            'from' : ('cart',),
+            'to' : ('checkout',),
          },
-        'publish' : {
-           'from' : ('locked', ),
-           'to'   : ('published',),
+         'cancel' : {
+           'from' : ('checkout', 'quotation_requested', 'quotation_completed',),
+           'to'   : ('canceled',),
         },
-        'discontinue' : {
-           'from' : ('published', ),
-           'to'   : ('discontinued',),
+        'request_quotation' : {
+           'from' : ('checkout', ),
+           'to'   : ('quotation_requested',),
         },
+        'pay' : {
+           'from' : ('checkout', 'quotation_requested', 'quotation_completed',), # mozda zabraniti from: quotation_requested, dok se ne zavrsi quote?
+           'to'   : ('processing',),
+        },
+        'complete_quotation' : {
+           'from' : ('quotation_requested', ),
+           'to'   : ('quotation_completed',),
+        },
+        'complete' : {
+           'from' : ('processing', ),
+           'to'   : ('completed',),
+        },
+        
     }
     
     @ndb.transactional
@@ -2072,6 +2088,12 @@ class Order(ndb.Expando):
             order = update_order(order=order)
             # preostaje da se jos u radi update carrier-a sa novim vrednostima, one se u ovoj fazi koriste samo u view, 
             # sve dok se carrier ne prenese kao novi order line..
+    
+    @ndb.transactional
+    def update_cart():
+        
+    
+    # REUSABLE CODE!
     
     def get_order(**kwargs):
         order = Order.query(Order.store == kwargs.get('store_key'), Order.state.IN(['cart', 'checkout', 'quotation_requested', 'quotation_completed', 'processing']), ancestor=kwargs.get('user_key')).fetch() # trebace nam composite index za ovo
@@ -2331,7 +2353,8 @@ class Order(ndb.Expando):
                 order_line.tax_references = tax_references
             # pre snimanja nazad u bazu update-amo subtotal cache
             subtotal = DecTools.form(order_line.unit_price, order.currency) * DecTools.form(order_line.quantity, order_line.product_uom)
-            order_line.subtotal = DecTools.form(subtotal, order.currency)
+            discount_subtotal = DecTools.form(subtotal) - (DecTools.form(subtotal) * (DecTools.form(order_line.discount) * DecTools.form('0.01'))) # moze i "/ DecTools.form('100')"
+            order_line.subtotal = DecTools.form(discount_subtotal, order.currency)
             # pre snimanja nazad u bazu update-amo tax subtotal cache
             order_line.tax_subtotal = calcualte_taxes(order=order, order_line=order_line)
             order_line_key = order_line.put()
@@ -2411,7 +2434,8 @@ class Order(ndb.Expando):
                 catalog_pricetag_reference=catalog_pricetag_reference, 
                 tax_references=tax_references)
             subtotal = DecTools.form(order_line.unit_price, order.currency) * DecTools.form(order_line.quantity, order_line.product_uom)
-            order_line.subtotal = DecTools.form(subtotal, order.currency)
+            discount_subtotal = DecTools.form(subtotal) - (DecTools.form(subtotal) * (DecTools.form(order_line.discount) * DecTools.form('0.01'))) # moze i "/ DecTools.form('100')"
+            order_line.subtotal = DecTools.form(discount_subtotal, order.currency)
             order_line.tax_subtotal = calcualte_taxes(order=order, order_line=order_line)
             order_line_key = order_line.put()
             object_log = ObjectLog(parent=order_line_key, agent=kwargs.get('user_key'), action='add_order_line', state='none', log=order_line)
@@ -2552,7 +2576,7 @@ class Order(ndb.Expando):
                 tax_subtotal = DecTools.form('0', order.currency)
                 for tax in order_line.taxes:
                     if (tax.amount.find('[%]') != -1):
-                        tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01')
+                        tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01') # moze i "/ DecTools.form('100')"
                         tax_subtotal += order_line.subtotal * tax_amount
                     elif (tax.amount.find('[c]') != -1):
                         tax_amount = DecTools.form(re.sub(r'\[c\]','', tax.amount))
@@ -2565,7 +2589,7 @@ class Order(ndb.Expando):
                     tax_subtotal = DecTools.form('0', order.currency)
                     for tax in order_line.taxes:
                         if (tax.amount.find('[%]') != -1):
-                            tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01')
+                            tax_amount = DecTools.form(re.sub(r'\[%\]','', tax.amount)) * DecTools.form('0.01') # moze i "/ DecTools.form('100')"
                             tax_subtotal += order_line.subtotal * tax_amount
                         elif (tax.amount.find('[c]') != -1):
                             tax_amount = DecTools.form(re.sub(r'\[c\]','', tax.amount))
