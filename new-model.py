@@ -1231,10 +1231,12 @@ class DomainProductInstance(ndb.Expando):
 class DomainProductInventoryLog(ndb.Model):
     
     # ancestor DomainProductInstance
+    # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
+    # key: parent=domain_product_instance.key, id=str(reference_key) ili mozda neki drugi destiled id iz key-a
+    # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan 
     quantity = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
@@ -1268,7 +1270,7 @@ class DomainProductInventoryAdjustment(ndb.Model):
         # ovo bi trebalo ici preko task queue
         # idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
         product_inventory_log = DomainProductInventoryLog.query().order(-DomainProductInventoryLog.logged).fetch(1)
-        new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, reference=product_inventory_adjustment_key, quantity=product_inventory_adjustment.quantity, balance=product_inventory_log.balance + product_inventory_adjustment.quantity)
+        new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, id=str(product_inventory_adjustment_key), quantity=product_inventory_adjustment.quantity, balance=product_inventory_log.balance + product_inventory_adjustment.quantity)
         new_product_inventory_log.put()
 
 # done!
@@ -1921,8 +1923,9 @@ class Order(ndb.Expando):
     # shipping_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('16', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('17', required=True)
-    # store_name = ndb.StringProperty('18', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # store_logo = blobstore.BlobKeyProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # payment = ndb.IntegerProperty('18', required=True) # payment status parametar
+    # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     
     _KIND = 0
     
@@ -1941,15 +1944,15 @@ class Order(ndb.Expando):
         'canceled' : (5, ),# no one can cancel/edit/delete order lines;
     }
     
-    # nedostaje akcija payment_timeout
     OBJECT_ACTIONS = {
        'add_to_cart' : 1,
        'update_cart' : 2,
        'checkout' : 3,
-       'cancel' : 6,
-       'pay' : 4,
-       'complete' : 5,
-       'message' : 6,
+       'cancel' : 4,
+       'pay' : 5,
+       'timeout' : 6,
+       'complete' : 7,
+       'message' : 8,
     }
     
     OBJECT_TRANSITIONS = {
@@ -1964,6 +1967,10 @@ class Order(ndb.Expando):
         'pay' : {
            'from' : ('checkout',),
            'to'   : ('processing',),
+        },
+        'timeout' : {
+           'from' : ('processing',),
+           'to'   : ('checkout',),
         },
         'complete' : {
            'from' : ('processing', ),
@@ -2177,6 +2184,7 @@ class Order(ndb.Expando):
     def cancel():
         # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent),
         # ili agent koji ima domain-specific dozvolu 'cancel-Order', za order.store koji pripada domeni.
+        # mozda budemo stavili da 'checkout' i 'cart' orderi sami expire-aju nakon nekog intervala, tako da domain-specific dozvola bude nepotrebna
         # akcija se moze pozvati samo ako je order.state == 'checkout'.
         store = catalog.store.get()
         order = get_order(store_key=catalog.store, user_key=user_key)
@@ -2199,8 +2207,20 @@ class Order(ndb.Expando):
         return order
     
     @ndb.transactional
+    def timeout():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'timeout-Order'. Verovatno ce to biti System Account
+        # akcija se moze pozvati samo ako je order.state == 'processing'.
+        store = catalog.store.get()
+        order = get_order(store_key=catalog.store, user_key=user_key)
+        order.state = 'checkout'
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='timeout', state=order.state, log=order)
+        object_log.put()
+        return order
+    
+    @ndb.transactional
     def complete():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'complete-Country'. Verovatno ce to biti System Account
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'complete-Order'. Verovatno ce to biti System Account
         # akcija se moze pozvati samo ako je order.state == 'processing'.
         store = catalog.store.get()
         order = get_order(store_key=catalog.store, user_key=user_key)
@@ -2208,6 +2228,25 @@ class Order(ndb.Expando):
         order_key = order.put()
         object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='complete', state=order.state, log=order)
         object_log.put()
+        # azuriranje product inventory. ovaj code bi mogao eventualno da se prebaci u checkout() ?
+        for line in order.lines:
+            # gradimo kljuc product instance iz id-ja linije.
+            line_ids = str(line.key.id()).split('-')
+            product_instance_key = ndb.Key('DomainCatalog', line_ids[1], 'DomainProductTemplate', line_ids[2], 'DomainProductInstance', line_ids[3], namespace=line_ids[0])
+            # proveravamo da li product instance postoji
+            product_instance = product_instance_key.get()
+            if (product_instance):
+                # ako product_instance postoji, onda se radi inventory logging za ovaj line
+                # ovo bi trebalo ici preko task queue
+                # product instance ne mora postojati, napr. u slucaju kada product template ima preko 1000 varijacija
+                # idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
+                logged = ndb.Key('DomainProductInventoryLog', str(line.key), parent=product_instance_key).get()
+                # samo se jednom radi inventory logging per order line!
+                if not (logged):
+                    # uzimamo zadnji status quantity-ja radi obracuna
+                    product_inventory_log = DomainProductInventoryLog.query().order(-DomainProductInventoryLog.logged).fetch(1)
+                    new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, id=str(line.key), quantity=line.quantity, balance=product_inventory_log[0].balance + line.quantity)
+                    new_product_inventory_log.put()
         return order
     
     @ndb.transactional
