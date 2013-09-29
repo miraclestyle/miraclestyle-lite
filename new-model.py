@@ -1924,8 +1924,9 @@ class Order(ndb.Expando):
     # carrier_reference = ndb.KeyProperty('16', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('17', required=True)
     # payment = ndb.IntegerProperty('18', required=True) # payment status parametar
-    # store_name = ndb.StringProperty('19', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # store_logo = blobstore.BlobKeyProperty('20', required=True, indexed=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_name = ndb.StringProperty('19', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('20', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # paypal_account = ndb.StringProperty('21', required=True)
     
     _KIND = 0
     
@@ -2201,6 +2202,7 @@ class Order(ndb.Expando):
         store = catalog.store.get()
         order = get_order(store_key=catalog.store, user_key=user_key)
         order.state = 'processing'
+        order.paypal_account = store.paypal_email # mozda da ovo stavimo u update_order ?
         order_key = order.put()
         object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='pay', state=order.state, log=order)
         object_log.put()
@@ -2971,7 +2973,40 @@ class PayPalTransaction(ndb.Model):
     # 
     @ndb.transactional
     def create():
-    
+        # ipn algoritam
+        # **Preamble**
+        # https://docs.google.com/document/d/1cHymrH2q6pHH19XOtOyLLsznR0tEb0-pkcU5ZGfS1hQ/edit#bookmark=id.fmp7h260u37l
+        # **Duplicate Check**
+        # na raspolaganju imamo kompletan ipn objekat, ili mozda skup variabla, kako se vec bude to formatiralo.
+        if not (ipn.verified):
+            # samo verifikovane ipn poruke dolaze u obzir
+            return None
+        # Kada stigne novi ipn, prvo se radi upit na tabelu i izvlace se svi recordi koji imaju istu vrednost txn_id kao i primljeni ipn.
+        transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
+        if (transactions):
+            # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih recorda.
+            for transaction in transactions:
+                # Provera duplikata se vrsi tako sto se uporedjuje payment_status.
+                # Za sve upisane transakcije sa istim txn_id, vrednosti payment_status moraju biti razlicite.
+                # za sada se uzdamo u payment_status da garantuje uniqueness, ali mozda otkrijemo da to nije dobro resenje...
+                if (transaction.payment_status == ipn.payment_status):
+                    # Ukoliko je pristigla ipn poruka duplikat onda se tiho odbacuje i algoritam se prekida.
+                    return None
+        # Ukoliko nema rezultata iz upita na tabelu, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
+        # **Fraud check**
+        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na record u order tabelama 
+        # (u slucaju billing-a referencu na domenu za koju se kredit kupuje, i referencu na user account koji je inicirao kupovinu kredita).
+        if (ipn.custom):
+            reference = ipn.custom.get()
+            if not (reference):
+                # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira record u order 
+                # tabelama (ili store/user u slucaju billing-a), radi se dispatch na notification 
+                # engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
+                # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
+                return None
+        paypal_transaction = PayPalTransaction(parent=reference.key, txn_id=ipn.txn_id, ipn_message=ipn)
+        paypal_transaction_key = paypal_transaction.put()
+        
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
