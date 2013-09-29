@@ -3041,6 +3041,7 @@ class PayPalTransaction(ndb.Model):
         # notification engine sa detaljima sta se dogodilo, radi se logging i prelazi se na IPN Algoritam - Actions.
         # Ukoliko je doslo do fail-ova u poredjenjima (izuzev prethodno pomenutog slucaja), 
         # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+        # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
