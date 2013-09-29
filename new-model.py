@@ -1524,7 +1524,7 @@ class BuyerAddress(ndb.Expando):
     # naredna dva polja su required!!!
     # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje 
     # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # street_address2 = ndb.StringProperty('9')
+    # street_address2 = ndb.StringProperty('9') # ovo polje verovatno ne treba, s obzirom da je u street_address dozvoljeno 500 karaktera 
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
     
@@ -1926,7 +1926,7 @@ class Order(ndb.Expando):
     # payment = ndb.IntegerProperty('18', required=True) # payment status parametar
     # store_name = ndb.StringProperty('19', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     # store_logo = blobstore.BlobKeyProperty('20', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # paypal_account = ndb.StringProperty('21', required=True)
+    # paypal_email = ndb.StringProperty('21', required=True)
     
     _KIND = 0
     
@@ -2202,7 +2202,7 @@ class Order(ndb.Expando):
         store = catalog.store.get()
         order = get_order(store_key=catalog.store, user_key=user_key)
         order.state = 'processing'
-        order.paypal_account = store.paypal_email # mozda da ovo stavimo u update_order ?
+        order.paypal_email = store.paypal_email # mozda da ovo stavimo u update_order ?
         order_key = order.put()
         object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='pay', state=order.state, log=order)
         object_log.put()
@@ -2872,7 +2872,7 @@ class OrderAddress(ndb.Expando):
     _default_indexed = False
     pass
     # Expando
-    # street_address2 = ndb.StringProperty('9')
+    # street_address2 = ndb.StringProperty('9') # ovo polje verovatno ne treba, s obzirom da je u street_address dozvoljeno 500 karaktera 
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
 
@@ -2970,14 +2970,13 @@ class PayPalTransaction(ndb.Model):
        'create' : 1,
     }
     
-    # 
     @ndb.transactional
     def create():
         # ipn algoritam
         # **Preamble**
         # https://docs.google.com/document/d/1cHymrH2q6pHH19XOtOyLLsznR0tEb0-pkcU5ZGfS1hQ/edit#bookmark=id.fmp7h260u37l
-        # **Duplicate Check**
         # na raspolaganju imamo kompletan ipn objekat, ili mozda skup variabla, kako se vec bude to formatiralo.
+        # **Duplicate Check**
         if not (ipn.verified):
             # samo verifikovane ipn poruke dolaze u obzir
             return None
@@ -2997,16 +2996,51 @@ class PayPalTransaction(ndb.Model):
         # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na record u order tabelama 
         # (u slucaju billing-a referencu na domenu za koju se kredit kupuje, i referencu na user account koji je inicirao kupovinu kredita).
         if (ipn.custom):
-            reference = ipn.custom.get()
-            if not (reference):
+            order = ipn.custom.get()
+            if not (order):
                 # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira record u order 
                 # tabelama (ili store/user u slucaju billing-a), radi se dispatch na notification 
                 # engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
                 # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
                 return None
-        paypal_transaction = PayPalTransaction(parent=reference.key, txn_id=ipn.txn_id, ipn_message=ipn)
+        paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
         paypal_transaction_key = paypal_transaction.put()
         
+    def fraud_check(**kwargs):
+        ipn = kwargs.get('ipn')
+        order = kwargs.get('order')
+        if (order.paypal_email != ipn.receiver_email):
+            receiver_email_mismatch = True
+        if (order.paypal_email != ipn.business):
+            business_mismatch = True
+        if (order.currency.code != ipn.mc_currency):
+            mc_currency_mismatch = True
+        if (order.total_amount != ipn.mc_gross):
+            mc_gross_mismatch = True
+        if (order.tax_amount != ipn.tax):
+            tax_mismatch = True
+        if (order.reference != ipn.invoice):
+            tax_mismatch = True
+        if (order.shipping_address.country != ipn.address_country):
+            address_country_mismatch = True
+        if (order.shipping_address.country_code != ipn.address_country_code):
+            address_country_code_mismatch = True
+        if (order.shipping_address.city != ipn.address_city):
+            address_city_mismatch = True
+        if (order.shipping_address.name != ipn.address_name):
+            address_name_mismatch = True
+        if (order.shipping_address.region != ipn.address_state):
+            address_state_mismatch = True
+        if (order.shipping_address.street_address != ipn.address_street):
+            address_street_mismatch = True
+        if (order.shipping_address.postal_code != ipn.address_zip):
+            address_zip_mismatch = True
+        # Ukoliko je poredjenje receiver_email sa paypal emailom prodavca kojem je transakcija
+        # isla u korist bilo neuspesno, a poredjenje business sa paypal emailom prodavca 
+        # kojem je transakcija isla u korist bilo uspesno, onda se radi dispatch na 
+        # notification engine sa detaljima sta se dogodilo, radi se logging i prelazi se na IPN Algoritam - Actions.
+        # Ukoliko je doslo do fail-ova u poredjenjima (izuzev prethodno pomenutog slucaja), 
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
