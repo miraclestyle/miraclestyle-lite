@@ -1370,7 +1370,7 @@ class User(ndb.Expando):
     #Expando
     # roles = ndb.KeyProperty('4', kind=DomainRole, repeated=True)
     
-    _KIND = 2
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'active'
     
@@ -1528,7 +1528,7 @@ class BuyerAddress(ndb.Expando):
     # email = ndb.StringProperty('10')
     # telephone = ndb.StringProperty('11')
     
-    _KIND = 18
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -1579,7 +1579,7 @@ class BuyerCollection(ndb.Model):
     notify = ndb.BooleanProperty('2', default=False)
     primary_email = ndb.StringProperty('3', required=True, indexed=False)
     
-    _KIND = 19
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -1632,7 +1632,7 @@ class BuyerCollectionStore(ndb.Model):
     store = ndb.KeyProperty('1', kind=Store, required=True)
     collections = ndb.KeyProperty('2', kind=BuyerCollection, repeated=True)# soft limit 500x
     
-    _KIND = 20
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -1709,7 +1709,7 @@ class FeedbackRequest(ndb.Model):
     def logs(self):
       return ObjectLog.query(ancestor = self.key())
     
-    _KIND = 8
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'new'
     
@@ -1797,7 +1797,7 @@ class SupportRequest(ndb.Model):
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
     created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
     
-    _KIND = 9
+    _KIND = 0
     
     OBJECT_DEFAULT_STATE = 'new'
     
@@ -2959,6 +2959,19 @@ class PayPalTransaction(ndb.Model):
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     txn_id = ndb.StringProperty('2', required=True)
     ipn_message = ndb.TextProperty('3', required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+    }
+    
+    # 
+    @ndb.transactional
+    def create():
+    
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
