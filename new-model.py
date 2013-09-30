@@ -2953,14 +2953,17 @@ class OrderLineTax(ndb.Model):
     amount = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
 
 # done!
-class PayPalTransaction(ndb.Model):
+class PayPalTransaction(ndb.Expando):
     
     # ancestor Order, BillingOrder
     # not logged
     # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     txn_id = ndb.StringProperty('2', required=True)
-    ipn_message = ndb.TextProperty('3', required=True)
+    _default_indexed = False
+    pass
+    # Expando
+    # ipn_message = ndb.TextProperty('3', required=True)
     
     _KIND = 0
     
