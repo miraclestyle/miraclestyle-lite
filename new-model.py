@@ -1904,7 +1904,7 @@ class Order(ndb.Expando):
     # ancestor:no - state,updated:desc; ancestor:no - state,order_date:desc
     # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
     store = ndb.KeyProperty('1', kind=Store, required=True)
-    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout
+    order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout / or on completed ?
     currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = DecimalProperty('4', required=True, indexed=False)
     tax_amount = DecimalProperty('5', required=True, indexed=False)
@@ -1923,10 +1923,10 @@ class Order(ndb.Expando):
     # shipping_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('16', kind=StoreCarrier, required=True)
     # feedback = ndb.IntegerProperty('17', required=True)
-    # payment = ndb.IntegerProperty('18', required=True) # payment status parametar
-    # store_name = ndb.StringProperty('19', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # store_logo = blobstore.BlobKeyProperty('20', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
-    # paypal_email = ndb.StringProperty('21', required=True)
+    # store_name = ndb.StringProperty('18', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # store_logo = blobstore.BlobKeyProperty('19', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
+    # paypal_email = ndb.StringProperty('20', required=True)
+    # paypal_payment_status = ndb.StringProperty('21', required=True)
     
     _KIND = 0
     
@@ -2130,7 +2130,7 @@ class Order(ndb.Expando):
                 # i update postojeceg order-a sa novim vrednostima
                 lines = order.lines
                 order.lines = []
-                sequence = 0
+                sequence = 1
                 for line in lines:
                     # order_lines je prekapovan dictionary sa values-ima za svaki order line i mapiranim originalnim kljucevima lines-a
                     ord_line = order_lines.get(line.key)
@@ -2578,7 +2578,7 @@ class Order(ndb.Expando):
             # discount se postavlja na 0.00, i kasnije se moze editovati od strane prodavca, ukoliko je order u state-u koji to dozvoljava
             discount = DecTools.form('0', '.2f')
             # sequence se podesava po count-u postojecih linija - ako sequencing bude zero based onda nam ne treba len() + 1
-            sequence = len(order.lines)
+            sequence = len(order.lines) + 1
             # proveravamo da li su product instance uopste generisane, a bice generisane samo ako ih bude mannje od 1k per template
             if (product_template_properties['product_instance_count'] and product_template.product_instance_count > 1000):
                 # ukolliko nema instanci onda se uz name proizvoda dodaje i variant signature koji se izbildao iz web forme prilikom user inputa.
@@ -2995,46 +2995,58 @@ class PayPalTransaction(ndb.Model):
         # **Fraud check**
         # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na record u order tabelama 
         # (u slucaju billing-a referencu na domenu za koju se kredit kupuje, i referencu na user account koji je inicirao kupovinu kredita).
-        if (ipn.custom):
-            order = ipn.custom.get()
-            if not (order):
-                # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira record u order 
-                # tabelama (ili store/user u slucaju billing-a), radi se dispatch na notification 
-                # engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
-                # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
-                return None
+        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira record u order 
+        # tabelama (ili store/user u slucaju billing-a), radi se dispatch na notification 
+        # engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
+        # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
+        if not (ipn.custom):
+            return None
+        order = ipn.custom.get()
+        if not (order):
+            return None
         paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
         paypal_transaction_key = paypal_transaction.put()
-        
-    def fraud_check(**kwargs):
-        ipn = kwargs.get('ipn')
-        order = kwargs.get('order')
+        mismatches = []
         if (order.paypal_email != ipn.receiver_email):
-            receiver_email_mismatch = True
+            mismatches.append('receiver_email')
         if (order.paypal_email != ipn.business):
-            business_mismatch = True
+            mismatches.append('business')
         if (order.currency.code != ipn.mc_currency):
-            mc_currency_mismatch = True
+            mismatches.append('mc_currency')
         if (order.total_amount != ipn.mc_gross):
-            mc_gross_mismatch = True
+            mismatches.append('mc_gross')
         if (order.tax_amount != ipn.tax):
-            tax_mismatch = True
-        if (order.reference != ipn.invoice):
-            tax_mismatch = True
+            mismatches.append('tax')
+        if (order.reference != ipn.invoice): # order.reference bi mozda mogao da bude user.key.id-order.key.id ili mozda order.key.id ?
+            mismatches.append('invoice')
         if (order.shipping_address.country != ipn.address_country):
-            address_country_mismatch = True
+            mismatches.append('address_country')
         if (order.shipping_address.country_code != ipn.address_country_code):
-            address_country_code_mismatch = True
+            mismatches.append('address_country_code')
         if (order.shipping_address.city != ipn.address_city):
-            address_city_mismatch = True
+            mismatches.append('address_city')
         if (order.shipping_address.name != ipn.address_name):
-            address_name_mismatch = True
+            mismatches.append('address_name')
         if (order.shipping_address.region != ipn.address_state):
-            address_state_mismatch = True
-        if (order.shipping_address.street_address != ipn.address_street):
-            address_street_mismatch = True
+            mismatches.append('address_state')
+        if (order.shipping_address.street_address != ipn.address_street): 
+            # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
+            # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
+            # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 
+            # od kupca bilo "Edi St", a vrednost Street Address (Optional) "Apartment 7".
+            mismatches.append('address_street')
         if (order.shipping_address.postal_code != ipn.address_zip):
-            address_zip_mismatch = True
+            mismatches.append('address_zip')
+        for line in order.lines:
+            if (line.description != ipn['item_name%s' % str(line.sequence])):
+                mismatches.append('item_name%s' % str(line.sequence]))
+            if (line.quantity != ipn['quantity%s' % str(line.sequence)]):
+                mismatches.append('quantity%s' % str(line.sequence]))
+            if ((line.subtotal + line.tax_subtotal) != ipn['mc_gross%s' % str(line.sequence])):
+                mismatches.append('mc_gross%s' % str(line.sequence]))
+        if not (mismatches):
+            if (mismatches.count('receiver_email') and mismatches.count('receiver_email')):
+                return None
         # Ukoliko je poredjenje receiver_email sa paypal emailom prodavca kojem je transakcija
         # isla u korist bilo neuspesno, a poredjenje business sa paypal emailom prodavca 
         # kojem je transakcija isla u korist bilo uspesno, onda se radi dispatch na 
@@ -3042,6 +3054,20 @@ class PayPalTransaction(ndb.Model):
         # Ukoliko je doslo do fail-ova u poredjenjima (izuzev prethodno pomenutog slucaja), 
         # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
         # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
+    
+    def actions(**kwargs):
+        ipn = kwargs.get('ipn')
+        order = kwargs.get('order')
+        if (order.paypal_payment_status == ipn.payment_status):
+            return None
+        if (order.paypal_payment_status == 'Pending' and ipn.payment_status == 'Completed'):
+            order.paypal_payment_status = ipn.payment_status
+        if (order.paypal_payment_status == 'Pending' and ipn.payment_status == 'Denied'):
+            order.paypal_payment_status = ipn.payment_status
+        order_key = order.put()
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+        object_log.put()
+            
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
