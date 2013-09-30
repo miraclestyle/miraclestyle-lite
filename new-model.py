@@ -2971,7 +2971,7 @@ class PayPalTransaction(ndb.Model):
     }
     
     @ndb.transactional
-    def create():
+    def create_order():
         # ipn algoritam
         # **Preamble**
         # https://docs.google.com/document/d/1cHymrH2q6pHH19XOtOyLLsznR0tEb0-pkcU5ZGfS1hQ/edit#bookmark=id.fmp7h260u37l
@@ -2980,10 +2980,10 @@ class PayPalTransaction(ndb.Model):
         if not (ipn.verified):
             # samo verifikovane ipn poruke dolaze u obzir
             return None
-        # Kada stigne novi ipn, prvo se radi upit na tabelu i izvlace se svi recordi koji imaju istu vrednost txn_id kao i primljeni ipn.
+        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi entiteti koji imaju istu vrednost txn_id kao i primljeni ipn.
         transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
         if (transactions):
-            # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih recorda.
+            # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih entiteta.
             for transaction in transactions:
                 # Provera duplikata se vrsi tako sto se uporedjuje payment_status.
                 # Za sve upisane transakcije sa istim txn_id, vrednosti payment_status moraju biti razlicite.
@@ -2991,14 +2991,12 @@ class PayPalTransaction(ndb.Model):
                 if (transaction.payment_status == ipn.payment_status):
                     # Ukoliko je pristigla ipn poruka duplikat onda se tiho odbacuje i algoritam se prekida.
                     return None
-        # Ukoliko nema rezultata iz upita na tabelu, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
+        # Ukoliko nema rezultata iz upita na PayPalTransaction, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
         # **Fraud check**
-        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na record u order tabelama 
-        # (u slucaju billing-a referencu na domenu za koju se kredit kupuje, i referencu na user account koji je inicirao kupovinu kredita).
-        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira record u order 
-        # tabelama (ili store/user u slucaju billing-a), radi se dispatch na notification 
-        # engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
-        # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
+        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na Order entitet.
+        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira Order entitet,
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
+        # validna poruka sa nevazecom referencom na Order), radi se logging i algoritam se prekida.
         if not (ipn.custom):
             return None
         order = ipn.custom.get()
@@ -3038,37 +3036,130 @@ class PayPalTransaction(ndb.Model):
         if (order.shipping_address.postal_code != ipn.address_zip):
             mismatches.append('address_zip')
         for line in order.lines:
+            if (line.code != ipn['item_number%s' % str(line.sequence])): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
+                mismatches.append('item_number%s' % str(line.sequence]))
             if (line.description != ipn['item_name%s' % str(line.sequence])):
                 mismatches.append('item_name%s' % str(line.sequence]))
             if (line.quantity != ipn['quantity%s' % str(line.sequence)]):
                 mismatches.append('quantity%s' % str(line.sequence]))
             if ((line.subtotal + line.tax_subtotal) != ipn['mc_gross%s' % str(line.sequence])):
                 mismatches.append('mc_gross%s' % str(line.sequence]))
-        if not (mismatches):
-            if (mismatches.count('receiver_email') and mismatches.count('receiver_email')):
-                return None
+        # Ukoliko je doslo do fail-ova u poredjenjima (izuzev receiver_email slucaja), 
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+        if (len(mismatches) > 1):
+            return None
+        elif ((len(mismatches) == 1) and (mismatches.count('receiver_email') == 0)):
+            return None
         # Ukoliko je poredjenje receiver_email sa paypal emailom prodavca kojem je transakcija
         # isla u korist bilo neuspesno, a poredjenje business sa paypal emailom prodavca 
         # kojem je transakcija isla u korist bilo uspesno, onda se radi dispatch na 
         # notification engine sa detaljima sta se dogodilo, radi se logging i prelazi se na IPN Algoritam - Actions.
-        # Ukoliko je doslo do fail-ova u poredjenjima (izuzev prethodno pomenutog slucaja), 
-        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
         # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
-    
-    def actions(**kwargs):
-        ipn = kwargs.get('ipn')
-        order = kwargs.get('order')
+        # **Actions**
         if (order.paypal_payment_status == ipn.payment_status):
             return None
-        if (order.paypal_payment_status == 'Pending' and ipn.payment_status == 'Completed'):
+        if (order.paypal_payment_status == 'Pending'):
+            if (ipn.payment_status == 'Completed' or ipn.payment_status == 'Denied')):
+                update_paypal_payment_status = True
+        elif (order.paypal_payment_status == 'Completed'):
+            if (ipn.payment_status == 'Refunded' or ipn.payment_status == 'Reversed')):
+                update_paypal_payment_status = True
+        if (update_paypal_payment_status):
             order.paypal_payment_status = ipn.payment_status
-        if (order.paypal_payment_status == 'Pending' and ipn.payment_status == 'Denied'):
+            order_key = order.put()
+            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+            object_log.put()
+        # Feedback kupca se suspenduje/sprecva u slucajevima kada je order: 
+        # Canceled_Reversal (treba dalje ispitati), 
+        # Denied, 
+        # Failed, 
+        # Pending, 
+        # Refunded (Moguci problem prilikom refunda je taj sto tu prodavac moze umanjiti iznos refunda, 
+        # tako da se to treba proveravati i handlati na odgovarajuci nacin...).
+        # Feedback od kupca je aktivan u slucajevima kada je order: 
+        # Completed, 
+        # Reversed (treba dalje ispitati).
+        # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
+    
+    @ndb.transactional
+    def create_billing():
+        # ipn algoritam
+        # **Preamble**
+        # https://docs.google.com/document/d/1cHymrH2q6pHH19XOtOyLLsznR0tEb0-pkcU5ZGfS1hQ/edit#bookmark=id.fmp7h260u37l
+        # na raspolaganju imamo kompletan ipn objekat, ili mozda skup variabla, kako se vec bude to formatiralo.
+        # **Duplicate Check**
+        if not (ipn.verified):
+            # samo verifikovane ipn poruke dolaze u obzir
+            return None
+        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi recordi koji imaju istu vrednost txn_id kao i primljeni ipn.
+        transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
+        if (transactions):
+            # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih entiteta.
+            for transaction in transactions:
+                # Provera duplikata se vrsi tako sto se uporedjuje payment_status.
+                # Za sve upisane transakcije sa istim txn_id, vrednosti payment_status moraju biti razlicite.
+                # za sada se uzdamo u payment_status da garantuje uniqueness, ali mozda otkrijemo da to nije dobro resenje...
+                if (transaction.payment_status == ipn.payment_status):
+                    # Ukoliko je pristigla ipn poruka duplikat onda se tiho odbacuje i algoritam se prekida.
+                    return None
+        # Ukoliko nema rezultata iz upita na PayPalTransaction, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
+        # **Fraud check**
+        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na domenu za koju se kredit kupuje, 
+        # i referencu na user account koji je inicirao kupovinu kredita.
+        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira domen entitet, 
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
+        # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
+        if not (ipn.custom):
+            return None
+        keyes = ipn.custom.split('-')
+        domain = keyes[0].get()
+        if not (domain):
+            return None
+        # treba sad skontati kako ovo dalje resavati, pogotovo kada recimo imamo vec billing order koji referencira postojecu paypal transakciju
+        # a onda imamo istu transakciju u drugom payment_state-u koju opet trebamo vezati za isti billing order
+        paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
+        paypal_transaction_key = paypal_transaction.put()
+        mismatches = []
+        if (miraclestyle_settings.paypal_email != ipn.receiver_email):
+            mismatches.append('receiver_email')
+        if (miraclestyle_settings.paypal_email != ipn.business):
+            mismatches.append('business')
+        if (miraclestyle_settings.currency_code != ipn.mc_currency):
+            mismatches.append('mc_currency')
+        if (miraclestyle_settings.amounts.count(ipn.mc_gross - ipn.tax) == 0):
+            mismatches.append('mc_gross')
+        # Ukoliko je doslo do fail-ova u poredjenjima, 
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+        if (len(mismatches) > 0):
+            return None
+        # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
+        # ovo se dalje isto treba razmotriti kako i sta..
+        # **Actions**
+        if (order.paypal_payment_status == ipn.payment_status):
+            return None
+        if (order.paypal_payment_status == 'Pending'):
+            if (ipn.payment_status == 'Completed' or ipn.payment_status == 'Denied')):
+                update_paypal_payment_status = True
+        elif (order.paypal_payment_status == 'Completed'):
+            if (ipn.payment_status == 'Refunded' or ipn.payment_status == 'Reversed')):
+                update_paypal_payment_status = True
+        if (update_paypal_payment_status):
             order.paypal_payment_status = ipn.payment_status
-        order_key = order.put()
-        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
-        object_log.put()
-            
-
+            order_key = order.put()
+            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+            object_log.put()
+        # Feedback kupca se suspenduje/sprecva u slucajevima kada je order: 
+        # Canceled_Reversal (treba dalje ispitati), 
+        # Denied, 
+        # Failed, 
+        # Pending, 
+        # Refunded (Moguci problem prilikom refunda je taj sto tu prodavac moze umanjiti iznos refunda, 
+        # tako da se to treba proveravati i handlati na odgovarajuci nacin...).
+        # Feedback od kupca je aktivan u slucajevima kada je order: 
+        # Completed, 
+        # Reversed (treba dalje ispitati).
+        # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
+    
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class BillingLog(ndb.Model):
     
