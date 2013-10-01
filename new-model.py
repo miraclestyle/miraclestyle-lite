@@ -1230,15 +1230,15 @@ class DomainProductInstance(ndb.Expando):
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class DomainProductInventoryLog(ndb.Model):
     
-    # ancestor DomainProductInstance
+    # ancestor DomainProductInstance (namespace Domain)
     # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
     # key: parent=domain_product_instance.key, id=str(reference_key) ili mozda neki drugi destiled id iz key-a
     # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    quantity = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    quantity = DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
 class DomainProductInventoryAdjustment(ndb.Model):
@@ -2247,7 +2247,7 @@ class Order(ndb.Expando):
                 if not (logged):
                     # uzimamo zadnji status quantity-ja radi obracuna
                     product_inventory_log = DomainProductInventoryLog.query().order(-DomainProductInventoryLog.logged).fetch(1)
-                    new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, id=str(line.key), quantity=line.quantity, balance=product_inventory_log[0].balance + line.quantity)
+                    new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, id=str(line.key), quantity=line.quantity, balance=product_inventory_log[0].balance - line.quantity)
                     new_product_inventory_log.put()
         return order
     
@@ -2855,7 +2855,6 @@ class BillingOrder(ndb.Expando):
     # billing_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
     # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
     # reference = ndb.StringProperty('11', required=True)
-    # comment = ndb.TextProperty('12')# 64kb limit
 
 # done!
 class OrderAddress(ndb.Expando):
@@ -3094,7 +3093,7 @@ class PayPalTransaction(ndb.Expando):
         if not (ipn.verified):
             # samo verifikovane ipn poruke dolaze u obzir
             return None
-        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi recordi koji imaju istu vrednost txn_id kao i primljeni ipn.
+        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi entiteti koji imaju istu vrednost txn_id kao i primljeni ipn.
         transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
         if (transactions):
             # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih entiteta.
@@ -3107,19 +3106,15 @@ class PayPalTransaction(ndb.Expando):
                     return None
         # Ukoliko nema rezultata iz upita na PayPalTransaction, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
         # **Fraud check**
-        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na domenu za koju se kredit kupuje, 
-        # i referencu na user account koji je inicirao kupovinu kredita.
-        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira domen entitet, 
+        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na Order entitet.
+        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira Order entitet,
         # radi se dispatch na notification engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
-        # validna poruka sa nevazecom referencom na order tabele), radi se logging i algoritam se prekida.
+        # validna poruka sa nevazecom referencom na Order), radi se logging i algoritam se prekida.
         if not (ipn.custom):
             return None
-        keyes = ipn.custom.split('-')
-        domain = keyes[0].get()
-        if not (domain):
+        order = ipn.custom.get()
+        if not (order):
             return None
-        # treba sad skontati kako ovo dalje resavati, pogotovo kada recimo imamo vec billing order koji referencira postojecu paypal transakciju
-        # a onda imamo istu transakciju u drugom payment_state-u koju opet trebamo vezati za isti billing order
         paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
         paypal_transaction_key = paypal_transaction.put()
         mismatches = []
@@ -3136,7 +3131,6 @@ class PayPalTransaction(ndb.Expando):
         if (len(mismatches) > 0):
             return None
         # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
-        # ovo se dalje isto treba razmotriti kako i sta..
         # **Actions**
         if (order.paypal_payment_status == ipn.payment_status):
             return None
@@ -3162,16 +3156,18 @@ class PayPalTransaction(ndb.Expando):
         # Completed, 
         # Reversed (treba dalje ispitati).
         # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
-    
-# done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
+
+# done!
 class BillingLog(ndb.Model):
     
     # root (namespace Domain)
+    # key za BillingLog ce se graditi na sledeci nacin:
+    # key: namespace=domain.key, id=str(reference_key) ili mozda neki drugi destiled id iz key-a
+    # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    reference = ndb.KeyProperty('2',required=True)# idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
-    amount = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    balance = DecimalProperty('4', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    amount = DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
 class BillingCreditAdjustment(ndb.Model):
@@ -3183,6 +3179,27 @@ class BillingCreditAdjustment(ndb.Model):
     amount = DecimalProperty('4', required=True, indexed=False)
     message = ndb.TextProperty('5')# soft limit 64kb - to determine char count
     note = ndb.TextProperty('6')# soft limit 64kb - to determine char count
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+    }
+    
+    # Ova akcija azurira billing log.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-BillingCreditAdjustment'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'
+        billing_credit_adjustment = BillingCreditAdjustment(namespace=domain_key, agent=agent_key, amount=var_amount, message=var_message, note=var_note)
+        billing_credit_adjustment_key = billing_credit_adjustment.put()
+        # ovo bi trebalo ici preko task queue
+        # idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
+        billing_log = BillingLog.query().order(-BillingLog.logged).fetch(1)
+        new_billing_log = BillingLog(namespace=domain_key, id=str(billing_credit_adjustment_key), amount=billing_credit_adjustment.amount, balance=billing_log.balance + billing_credit_adjustment.amount)
+        new_billing_log.put()
 
 ################################################################################
 # MISC - 10
