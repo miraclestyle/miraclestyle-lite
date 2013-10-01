@@ -2830,7 +2830,71 @@ class Order(ndb.Expando):
 class OrderFeedback(ndb.Model):
     
     # ancestor Order
+    # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
+    # composite index:
+    # ancestor:yes - updated:desc; ancestor:yes - created:desc;
+    # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     state = ndb.IntegerProperty('1', required=True, indexed=False)
+    updated = ndb.DateTimeProperty('2', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('3', auto_now_add=True, required=True)
+    
+    _KIND = 0
+    
+    OBJECT_DEFAULT_STATE = 'new'
+    
+    OBJECT_STATES = {
+        # tuple represents (state_code, transition_name)
+        # second value represents which transition will be called for changing the state
+        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
+        # sto ce biti slucaj sa verovatno mnogim modelima.
+        # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
+        'new' : (1, ),
+        'opened' : (2, ),
+        'awaiting_closure' : (3, ),
+        'closed' : (4, ),
+    }
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'open' : 3,
+       'propose_close' : 4,
+       'close' : 5,
+    }
+    
+    OBJECT_TRANSITIONS = {
+        'open' : {
+            'from' : ('new',),
+            'to' : ('opened',),
+         },
+        'propose_close' : {
+           'from' : ('opened', ),
+           'to'   : ('awaiting_closure',),
+        },
+        'close' : {
+           'from' : ('opened', 'awaiting_closure',),
+           'to'   : ('closed',),
+        },
+    }
+    
+    # Ova akcija krajnjem korisniku sluzi za pravljenje feedback-a.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
+        # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent).
+        order_feedback = OrderFeedback(parent=order_key, state=var_state)
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='create', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
+    
+    @ndb.transactional
+    def message():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent),
+        # ili agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order.state == 'checkout'.
+        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='message', state=order.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+        return order
 
 # done!
 class BillingOrder(ndb.Expando):
@@ -2855,6 +2919,8 @@ class BillingOrder(ndb.Expando):
     # billing_address = ndb.LocalStructuredProperty(OrderAddress, '9', required=True)
     # shipping_address = ndb.LocalStructuredProperty(OrderAddress, '10', required=True)
     # reference = ndb.StringProperty('11', required=True)
+    
+    # trebamo jos da utvrdimo koji je diference u funkcijama izmedju ORder-a i BillingOrder-a
 
 # done!
 class OrderAddress(ndb.Expando):
