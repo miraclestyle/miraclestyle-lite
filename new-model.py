@@ -1922,7 +1922,7 @@ class Order(ndb.Expando):
     # billing_address_reference = ndb.KeyProperty('14', kind=BuyerAddress, required=True)
     # shipping_address_reference = ndb.KeyProperty('15', kind=BuyerAddress, required=True)
     # carrier_reference = ndb.KeyProperty('16', kind=StoreCarrier, required=True)
-    # feedback = ndb.IntegerProperty('17', required=True)
+    # feedback = ndb.IntegerProperty('17', required=True) # ako OrderFeedback jos nije napravljen onda ovo polje nije definisano, a sistem to interpretira kao 'not provided'
     # store_name = ndb.StringProperty('18', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     # store_logo = blobstore.BlobKeyProperty('19', required=True)# testirati da li ovo indexiranje radi, tj overrid-a _default_indexed = False
     # paypal_email = ndb.StringProperty('20', required=True)
@@ -2848,18 +2848,18 @@ class OrderFeedback(ndb.Model):
         # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'new' : (1, ),
-        'opened' : (2, ),
-        'awaiting_closure' : (3, ),
-        'closed' : (4, ),
+        'positive' : (1, ), # ne znam da li nam trebaju sad jos admin state-ovi koji bi lock OrderFeedback??
+        'neutral' : (2, ),
+        'negative' : (3, ),
+        'invisible' : (4, ),
+        'revision' : (5, ),
+        'reported' : (6, ),
     }
     
     OBJECT_ACTIONS = {
        'create' : 1,
-       'update' : 2,
-       'open' : 3,
-       'propose_close' : 4,
-       'close' : 5,
+       'message' : 2,
+       'request_revision' : 3,
     }
     
     OBJECT_TRANSITIONS = {
@@ -2880,8 +2880,8 @@ class OrderFeedback(ndb.Model):
     # Ova akcija krajnjem korisniku sluzi za pravljenje feedback-a.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
         # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent).
+        # akcija se moze pozvati samo ako je order.state == 'completed'.
         order_feedback = OrderFeedback(parent=order_key, state=var_state)
         order_feedback_key = order_feedback.put()
         object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='create', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
@@ -2889,12 +2889,21 @@ class OrderFeedback(ndb.Model):
     
     @ndb.transactional
     def message():
-        # ovu akciju moze izvrsiti samo vlasnik entiteta (order.parent == agent),
-        # ili agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni.
-        # akcija se moze pozvati samo ako je order.state == 'checkout'.
-        object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='message', state=order.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent),
+        # ili agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni,
+        # ili agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
+        # akcija se moze pozvati samo ako je order.state == 'completed'.
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='message', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
-        return order
+    
+    @ndb.transactional
+    def request_revision():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' ili order_feedback.state == 'negative'.
+        order_feedback.state = 'revision'
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='request_revision', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
 
 # done!
 class BillingOrder(ndb.Expando):
