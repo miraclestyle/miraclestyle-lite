@@ -1982,7 +1982,7 @@ class Order(ndb.Expando):
     @ndb.transactional
     def add_to_cart():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        # akcija se moze pozvati samo ako je order.state == 'cart'.
+        # akcija se moze pozvati samo ako je order.state == 'cart' ili ako aktivan order za taj store ne postoji.
         # imamo na raspolaganju user_key, catalog_key, catalog_pricetag_key, domain_key, product_template_key, product_instance_key, variant_signature, custom_variants ?
         catalog = catalog_key.get()
         store = catalog.store.get()
@@ -2338,6 +2338,8 @@ class Order(ndb.Expando):
                 order.carrier_reference = kwargs.get('carrier_reference')
             if (kwargs.get('feedback') and order.feedback != kwargs.get('feedback')):
                 order.feedback = kwargs.get('feedback')
+            if (kwargs.get('paypal_payment_status') and order.paypal_payment_status != kwargs.get('paypal_payment_status')):
+                order.paypal_payment_status = kwargs.get('paypal_payment_status')
             if (order.store_name != store.name):
                 order.store_name = store.name
             if (order.store_logo != store.logo):
@@ -2459,6 +2461,8 @@ class Order(ndb.Expando):
             carrier_reference = kwargs.get('carrier_reference')
             # feedback treba da ima neku default vrednost, to je ustvari OrderFeedback.state vrednost
             feedback = 1
+            # paypal_payment_status treba da ima neku default vrednost, to ce kasnije biti PayPalTransactionLog ipn.payment_status
+            paypal_payment_status = 1
             # store name se prepisuje iz store.name
             store_name = store.name
             # store logo se prepisuje iz store.logo
@@ -2480,6 +2484,7 @@ class Order(ndb.Expando):
                 shipping_address_reference=shipping_address_reference, 
                 carrier_reference=carrier_reference, 
                 feedback=feedback, 
+                paypal_payment_status=paypal_payment_status, 
                 store_name=store_name, 
                 store_logo=store_logo)
             order_key = order.put()
@@ -2830,6 +2835,7 @@ class Order(ndb.Expando):
 class OrderFeedback(ndb.Model):
     
     # ancestor Order
+    # key: parent=order_key, id=order_id
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
     # composite index:
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
@@ -2840,7 +2846,7 @@ class OrderFeedback(ndb.Model):
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'new'
+    OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -2848,62 +2854,125 @@ class OrderFeedback(ndb.Model):
         # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'positive' : (1, ), # ne znam da li nam trebaju sad jos admin state-ovi koji bi lock OrderFeedback??
+        'positive' : (1, ),
         'neutral' : (2, ),
         'negative' : (3, ),
-        'invisible' : (4, ),
-        'revision' : (5, ),
-        'reported' : (6, ),
+        'revision' : (4, ),
+        'reported' : (5, ),
+        'admin_positive' : (6, ),
+        'admin_neutral' : (7, ),
+        'admin_negative' : (8, ),
     }
     
     OBJECT_ACTIONS = {
        'create' : 1,
        'message' : 2,
-       'request_revision' : 3,
+       'review' : 3,
+       'report' : 4,
+       'revision_feedback' : 5,
+       'manage' : 6,
     }
     
     OBJECT_TRANSITIONS = {
-        'open' : {
-            'from' : ('new',),
-            'to' : ('opened',),
+        'review' : {
+            'from' : ('positive', 'neutral', 'negative',),
+            'to' : ('revision',),
          },
-        'propose_close' : {
-           'from' : ('opened', ),
-           'to'   : ('awaiting_closure',),
+        'report' : {
+           'from' : ('positive', 'neutral', 'negative', 'revision',),
+           'to'   : ('reported',),
         },
-        'close' : {
-           'from' : ('opened', 'awaiting_closure',),
-           'to'   : ('closed',),
+        'revision_feedback' : {
+           'from' : ('revision',),
+           'to'   : ('positive', 'neutral', 'negative', 'revision',),
+        },
+        'manage' : {
+           'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'admin_invisible', 'admin_positive', 'admin_neutral', 'admin_negative',),
+           'to'   : ('admin_invisible', 'admin_positive', 'admin_neutral', 'admin_negative',),
         },
     }
     
-    # Ova akcija krajnjem korisniku sluzi za pravljenje feedback-a.
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent).
         # akcija se moze pozvati samo ako je order.state == 'completed'.
-        order_feedback = OrderFeedback(parent=order_key, state=var_state)
+        # var_state moze biti 'positive', 'neutral', 'neutral'.
+        order_feedback = OrderFeedback(parent=order.key, id=order.key.id(), state=var_state)
         order_feedback_key = order_feedback.put()
         object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='create', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
         object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
     
     @ndb.transactional
     def message():
         # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent),
         # ili agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni,
         # ili agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
-        # akcija se moze pozvati samo ako je order.state == 'completed'.
-        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='message', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' 
+        # ili order_feedback.state == 'negative' ili order_feedback.state == 'revision' ili order_feedback.state == 'reported'.
+        ObjectLog(parent=order_feedback_key, agent=user_key, action='message', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
     @ndb.transactional
-    def request_revision():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'message-OrderFeedback', za order.store koji pripada domeni.
-        # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' ili order_feedback.state == 'negative'.
+    def review():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'review-OrderFeedback', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' 
+        # ili order_feedback.state == 'negative'.
         order_feedback.state = 'revision'
         order_feedback_key = order_feedback.put()
-        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='request_revision', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='review', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
         object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
+    
+    @ndb.transactional
+    def report():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'report-OrderFeedback', za order.store koji pripada domeni.
+        # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' 
+        # ili order_feedback.state == 'negative' ili order_feedback.state == 'revision'.
+        order_feedback.state = 'reported'
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='report', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
+    
+    @ndb.transactional
+    def revision_feedback():
+        # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent).
+        # akcija se moze pozvati samo ako je order_feedback.state == 'revision'.
+        order_feedback.state = var_state
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='revision_feedback', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
+        object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
+    
+    @ndb.transactional
+    def manage():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
+        # akcija se moze pozvati samo ako je order_feedback.state u bilo kojem state-u.
+        # var_state moze biti 'admin_positive', 'admin_neutral', 'admin_negative'.
+        order_feedback.state = var_state
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='manage', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
+    
+    @ndb.transactional
+    def invisible():
+        # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila 
+        p = order._properties
+        if (p['feedback']):
+            del order.feedback
+            Order.update_order(order=order, store=store)
+            # nedostaje agregaciona feedback statistika za store
+        else:
+            order_feedback = ndb.Key(OrderFeedback, order.key.id(), parent=order.key).get()
+            Order.update_order(order=order, store=store, feedback=order_feedback.state)
+            # nedostaje agregaciona feedback statistika za store
 
 # done!
 class BillingOrder(ndb.Expando):
@@ -3027,7 +3096,7 @@ class OrderLineTax(ndb.Model):
     amount = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
 
 # done!
-class PayPalTransaction(ndb.Expando):
+class PayPalTransactionLog(ndb.Expando):
     
     # ancestor Order, BillingOrder
     # not logged
@@ -3057,8 +3126,8 @@ class PayPalTransaction(ndb.Expando):
         if not (ipn.verified):
             # samo verifikovane ipn poruke dolaze u obzir
             return None
-        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi entiteti koji imaju istu vrednost txn_id kao i primljeni ipn.
-        transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
+        # Kada stigne novi ipn, prvo se radi upit na PayPalTransactionLog i izvlace se svi entiteti koji imaju istu vrednost txn_id kao i primljeni ipn.
+        transactions = PayPalTransactionLog.query(PayPalTransactionLog.txn_id == ipn.txn_id).fetch()
         if (transactions):
             # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih entiteta.
             for transaction in transactions:
@@ -3068,7 +3137,7 @@ class PayPalTransaction(ndb.Expando):
                 if (transaction.payment_status == ipn.payment_status):
                     # Ukoliko je pristigla ipn poruka duplikat onda se tiho odbacuje i algoritam se prekida.
                     return None
-        # Ukoliko nema rezultata iz upita na PayPalTransaction, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
+        # Ukoliko nema rezultata iz upita na PayPalTransactionLog, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
         # **Fraud check**
         # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na Order entitet.
         # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira Order entitet,
@@ -3079,8 +3148,64 @@ class PayPalTransaction(ndb.Expando):
         order = ipn.custom.get()
         if not (order):
             return None
-        paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
+        paypal_transaction = PayPalTransactionLog(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
         paypal_transaction_key = paypal_transaction.put()
+        # Ukoliko je poredjenje receiver_email sa paypal emailom prodavca kojem je transakcija
+        # isla u korist bilo neuspesno, a poredjenje business sa paypal emailom prodavca 
+        # kojem je transakcija isla u korist bilo uspesno, onda se radi dispatch na 
+        # notification engine sa detaljima sta se dogodilo, radi se logging i prelazi se na IPN Algoritam - Actions.
+        if (order_fraud_check):
+            if not (match_order(order=order)):
+                return None
+        # Ukoliko je doslo do fail-ova u poredjenjima, 
+        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+        if (billing_fraud_check):
+            if not (match_billing(miraclestyle_settings=miraclestyle_settings)):
+                return None
+        # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
+        # **Actions**
+        if (order.paypal_payment_status == ipn.payment_status):
+            return None
+        if (order.paypal_payment_status == 'Pending'):
+            if (ipn.payment_status == 'Completed' or ipn.payment_status == 'Denied')):
+                update_paypal_payment_status = True
+        elif (order.paypal_payment_status == 'Completed'):
+            if (ipn.payment_status == 'Refunded' or ipn.payment_status == 'Reversed')):
+                update_paypal_payment_status = True
+        if (update_paypal_payment_status):
+            # ovo se verovatno treba jos doterati..
+            if (order.state == 'processing' and ipn.payment_status == 'Completed'):
+                order.state = 'completed'
+                order.paypal_payment_status = ipn.payment_status
+                order_key = order.put()
+                object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+                object_log.put()
+            elif (order.state == 'processing' and ipn.payment_status == 'Denied'): # ovo cemo jos da razmotrimo
+                order.state = 'canceled'
+                order.paypal_payment_status = ipn.payment_status
+                order_key = order.put()
+                object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+                object_log.put()
+            elif (order.state == 'completed'):
+                order.paypal_payment_status = ipn.payment_status
+                order_key = order.put()
+                object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
+                object_log.put()
+        # Feedback kupca se suspenduje/sprecva u slucajevima kada je order: 
+        # Canceled_Reversal (treba dalje ispitati), 
+        # Denied, 
+        # Failed, 
+        # Pending, 
+        # Refunded (Moguci problem prilikom refunda je taj sto tu prodavac moze umanjiti iznos refunda, 
+        # tako da se to treba proveravati i handlati na odgovarajuci nacin...).
+        # Feedback od kupca je aktivan u slucajevima kada je order: 
+        # Completed, 
+        # Reversed (treba dalje ispitati).
+        # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
+    
+    @ndb.transactional
+    def match_order(**kwargs):
+        order = kwargs.get('order')
         mismatches = []
         if (order.paypal_email != ipn.receiver_email):
             mismatches.append('receiver_email')
@@ -3124,74 +3249,14 @@ class PayPalTransaction(ndb.Expando):
         # Ukoliko je doslo do fail-ova u poredjenjima (izuzev receiver_email slucaja), 
         # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
         if (len(mismatches) > 1):
-            return None
+            return False
         elif ((len(mismatches) == 1) and (mismatches.count('receiver_email') == 0)):
-            return None
-        # Ukoliko je poredjenje receiver_email sa paypal emailom prodavca kojem je transakcija
-        # isla u korist bilo neuspesno, a poredjenje business sa paypal emailom prodavca 
-        # kojem je transakcija isla u korist bilo uspesno, onda se radi dispatch na 
-        # notification engine sa detaljima sta se dogodilo, radi se logging i prelazi se na IPN Algoritam - Actions.
-        # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
-        # **Actions**
-        if (order.paypal_payment_status == ipn.payment_status):
-            return None
-        if (order.paypal_payment_status == 'Pending'):
-            if (ipn.payment_status == 'Completed' or ipn.payment_status == 'Denied')):
-                update_paypal_payment_status = True
-        elif (order.paypal_payment_status == 'Completed'):
-            if (ipn.payment_status == 'Refunded' or ipn.payment_status == 'Reversed')):
-                update_paypal_payment_status = True
-        if (update_paypal_payment_status):
-            order.paypal_payment_status = ipn.payment_status
-            order_key = order.put()
-            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
-            object_log.put()
-        # Feedback kupca se suspenduje/sprecva u slucajevima kada je order: 
-        # Canceled_Reversal (treba dalje ispitati), 
-        # Denied, 
-        # Failed, 
-        # Pending, 
-        # Refunded (Moguci problem prilikom refunda je taj sto tu prodavac moze umanjiti iznos refunda, 
-        # tako da se to treba proveravati i handlati na odgovarajuci nacin...).
-        # Feedback od kupca je aktivan u slucajevima kada je order: 
-        # Completed, 
-        # Reversed (treba dalje ispitati).
-        # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
+            return False
+        return True
     
     @ndb.transactional
-    def create_billing():
-        # ipn algoritam
-        # **Preamble**
-        # https://docs.google.com/document/d/1cHymrH2q6pHH19XOtOyLLsznR0tEb0-pkcU5ZGfS1hQ/edit#bookmark=id.fmp7h260u37l
-        # na raspolaganju imamo kompletan ipn objekat, ili mozda skup variabla, kako se vec bude to formatiralo.
-        # **Duplicate Check**
-        if not (ipn.verified):
-            # samo verifikovane ipn poruke dolaze u obzir
-            return None
-        # Kada stigne novi ipn, prvo se radi upit na PayPalTransaction i izvlace se svi entiteti koji imaju istu vrednost txn_id kao i primljeni ipn.
-        transactions = PayPalTransaction.query(PayPalTransaction.txn_id == ipn.txn_id).fetch()
-        if (transactions):
-            # Ukoliko ima rezultata, radi se provera da pristigla ipn poruka nije duplikat nekog od snimljenih entiteta.
-            for transaction in transactions:
-                # Provera duplikata se vrsi tako sto se uporedjuje payment_status.
-                # Za sve upisane transakcije sa istim txn_id, vrednosti payment_status moraju biti razlicite.
-                # za sada se uzdamo u payment_status da garantuje uniqueness, ali mozda otkrijemo da to nije dobro resenje...
-                if (transaction.payment_status == ipn.payment_status):
-                    # Ukoliko je pristigla ipn poruka duplikat onda se tiho odbacuje i algoritam se prekida.
-                    return None
-        # Ukoliko nema rezultata iz upita na PayPalTransaction, ili je pristigla poruka unikatna, onda se prelazi na IPN Algoritam - Fraud Check.
-        # **Fraud check**
-        # Prvo ipn polje koje se proverava je custom koje bi trebalo da nosi referencu na Order entitet.
-        # Ukoliko ovo polje nema vrednosti ili vrednost ne referencira Order entitet,
-        # radi se dispatch na notification engine sa detaljima sta se dogodilo (kako bi se obavestilo da je pristigla 
-        # validna poruka sa nevazecom referencom na Order), radi se logging i algoritam se prekida.
-        if not (ipn.custom):
-            return None
-        order = ipn.custom.get()
-        if not (order):
-            return None
-        paypal_transaction = PayPalTransaction(parent=order.key, txn_id=ipn.txn_id, ipn_message=ipn)
-        paypal_transaction_key = paypal_transaction.put()
+    def match_billing(**kwargs):
+        miraclestyle_settings = kwargs.get('miraclestyle_settings')
         mismatches = []
         if (miraclestyle_settings.paypal_email != ipn.receiver_email):
             mismatches.append('receiver_email')
@@ -3201,36 +3266,9 @@ class PayPalTransaction(ndb.Expando):
             mismatches.append('mc_currency')
         if (miraclestyle_settings.amounts.count(ipn.mc_gross - ipn.tax) == 0):
             mismatches.append('mc_gross')
-        # Ukoliko je doslo do fail-ova u poredjenjima, 
-        # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
         if (len(mismatches) > 0):
-            return None
-        # Ukoliko su sve komparacije prosle onda se prelazi na IPN Algoritam - Actions.
-        # **Actions**
-        if (order.paypal_payment_status == ipn.payment_status):
-            return None
-        if (order.paypal_payment_status == 'Pending'):
-            if (ipn.payment_status == 'Completed' or ipn.payment_status == 'Denied')):
-                update_paypal_payment_status = True
-        elif (order.paypal_payment_status == 'Completed'):
-            if (ipn.payment_status == 'Refunded' or ipn.payment_status == 'Reversed')):
-                update_paypal_payment_status = True
-        if (update_paypal_payment_status):
-            order.paypal_payment_status = ipn.payment_status
-            order_key = order.put()
-            object_log = ObjectLog(parent=order_key, agent=kwargs.get('user_key'), action='update_order', state=order.state, log=order)
-            object_log.put()
-        # Feedback kupca se suspenduje/sprecva u slucajevima kada je order: 
-        # Canceled_Reversal (treba dalje ispitati), 
-        # Denied, 
-        # Failed, 
-        # Pending, 
-        # Refunded (Moguci problem prilikom refunda je taj sto tu prodavac moze umanjiti iznos refunda, 
-        # tako da se to treba proveravati i handlati na odgovarajuci nacin...).
-        # Feedback od kupca je aktivan u slucajevima kada je order: 
-        # Completed, 
-        # Reversed (treba dalje ispitati).
-        # Ova funkcija jos uvek ne dokumentuje sve detalje iz dokumenta, tako da je dokument supplement ovome..
+            return False
+        return True
 
 # done!
 class BillingLog(ndb.Model):
