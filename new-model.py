@@ -2859,9 +2859,9 @@ class OrderFeedback(ndb.Model):
         'negative' : (3, ),
         'revision' : (4, ),
         'reported' : (5, ),
-        'admin_positive' : (6, ),
-        'admin_neutral' : (7, ),
-        'admin_negative' : (8, ),
+        'admin_positive' : (6, ), # locked_positive ?
+        'admin_neutral' : (7, ), # locked_neutral ?
+        'admin_negative' : (8, ), # locked_negative ?
     }
     
     OBJECT_ACTIONS = {
@@ -2884,10 +2884,10 @@ class OrderFeedback(ndb.Model):
         },
         'revision_feedback' : {
            'from' : ('revision',),
-           'to'   : ('positive', 'neutral', 'negative', 'revision',),
+           'to'   : ('positive', 'neutral', 'negative',),
         },
         'manage' : {
-           'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'admin_invisible', 'admin_positive', 'admin_neutral', 'admin_negative',),
+           'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'admin_positive', 'admin_neutral', 'admin_negative',),
            'to'   : ('admin_invisible', 'admin_positive', 'admin_neutral', 'admin_negative',),
         },
     }
@@ -2942,6 +2942,7 @@ class OrderFeedback(ndb.Model):
     def revision_feedback():
         # ovu akciju moze izvrsiti samo vlasnik parent entiteta (order_feedback.parent == order.parent == agent).
         # akcija se moze pozvati samo ako je order_feedback.state == 'revision'.
+        # var_state moze biti 'positive', 'neutral', 'neutral'.
         order_feedback.state = var_state
         order_feedback_key = order_feedback.put()
         object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='revision_feedback', state=order_feedback.state, message='poruka od agenta - obavezno polje!')
@@ -2963,7 +2964,9 @@ class OrderFeedback(ndb.Model):
     
     @ndb.transactional
     def invisible():
-        # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila 
+        # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
+        # akcija se moze pozvati samo ako je order_feedback.state u bilo kojem state-u.
         p = order._properties
         if (p['feedback']):
             del order.feedback
