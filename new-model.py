@@ -492,6 +492,7 @@ class DomainStoreFeedback(ndb.Model):
     # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
     # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
     # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
+    # najbolje je raditi update jednom dnevno, ne treba vise od toga, tako da bi mozda cron ili task queue bilo resenje za agregaciju
     month = ndb.IntegerProperty('1', required=True, indexed=False)
     year = ndb.IntegerProperty('2', required=True, indexed=False)
     positive_feedback_count = ndb.IntegerProperty('3', required=True, indexed=False)
@@ -2862,6 +2863,7 @@ class OrderFeedback(ndb.Model):
         'admin_positive' : (6, ), # locked_positive ?
         'admin_neutral' : (7, ), # locked_neutral ?
         'admin_negative' : (8, ), # locked_negative ?
+        # mozda nam bude trebao i admin_invisible state kako bi mogli da uticemo na vidljivost pojedinacnih OrderFeedback-ova
     }
     
     OBJECT_ACTIONS = {
@@ -2888,7 +2890,7 @@ class OrderFeedback(ndb.Model):
         },
         'manage' : {
            'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'admin_positive', 'admin_neutral', 'admin_negative',),
-           'to'   : ('admin_invisible', 'admin_positive', 'admin_neutral', 'admin_negative',),
+           'to'   : ('admin_positive', 'admin_neutral', 'admin_negative',),
         },
     }
     
@@ -2963,12 +2965,13 @@ class OrderFeedback(ndb.Model):
         # nedostaje agregaciona feedback statistika za store
     
     @ndb.transactional
-    def invisible():
+    def invisible(**kwargs):
         # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
         # akcija se moze pozvati samo ako je order_feedback.state u bilo kojem state-u.
-        p = order._properties
-        if (p['feedback']):
+        order = kwargs.get('order')
+        store = kwargs.get('store')
+        if (kwargs.get('true')):
             del order.feedback
             Order.update_order(order=order, store=store)
             # nedostaje agregaciona feedback statistika za store
