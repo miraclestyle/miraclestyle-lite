@@ -2988,9 +2988,6 @@ class OrderFeedback(ndb.Model):
         'negative' : (3, ),
         'revision' : (4, ),
         'reported' : (5, ),
-        'su_positive' : (6, ),
-        'su_neutral' : (7, ),
-        'su_negative' : (8, ),
         # mozda nam bude trebao i su_invisible state kako bi mogli da uticemo na vidljivost pojedinacnih OrderFeedback-ova
     }
     
@@ -3000,7 +2997,6 @@ class OrderFeedback(ndb.Model):
        'review' : 3,
        'report' : 4,
        'revision_feedback' : 5,
-       'sudo' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -3015,10 +3011,6 @@ class OrderFeedback(ndb.Model):
         'revision_feedback' : {
            'from' : ('revision',),
            'to'   : ('positive', 'neutral', 'negative',),
-        },
-        'sudo' : {
-           'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'su_positive', 'su_neutral', 'su_negative',),
-           'to'   : ('su_positive', 'su_neutral', 'su_negative',),
         },
     }
     
@@ -3081,18 +3073,6 @@ class OrderFeedback(ndb.Model):
         # nedostaje agregaciona feedback statistika za store
     
     @ndb.transactional
-    def sudo():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-OrderFeedback'.
-        # akcija se moze pozvati samo ako je order_feedback.state u bilo kojem state-u.
-        # var_state moze biti 'su_positive', 'su_neutral', 'su_negative'.
-        order_feedback.state = var_state
-        order_feedback_key = order_feedback.put()
-        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='sudo', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-        Order.update_order(order=order, store=store, feedback=order_feedback.state)
-        # nedostaje agregaciona feedback statistika za store
-    
-    @ndb.transactional
     def invisible(**kwargs):
         # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
@@ -3107,6 +3087,7 @@ class OrderFeedback(ndb.Model):
             order_feedback = ndb.Key(OrderFeedback, order.key.id(), parent=order.key).get()
             Order.update_order(order=order, store=store, feedback=order_feedback.state)
             # nedostaje agregaciona feedback statistika za store
+
 ################################################################################
 # MISC - 10
 ################################################################################
