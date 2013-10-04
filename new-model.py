@@ -81,7 +81,7 @@ class DecimalProperty(ndb.StringProperty):
 # DOMAIN - 20
 ################################################################################
 
-# done! - ovde ce nam trebati kontrola - treba odluciti konvenciju imenovanja objekata!
+# done! - treba odluciti konvenciju imenovanja objekata!
 class Domain(ndb.Expando):
     
     # root
@@ -105,6 +105,7 @@ class Domain(ndb.Expando):
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'active' : (1, ),
         'suspended' : (2, ),
+        'su_suspended' : (3, ),
     }
     
     OBJECT_ACTIONS = {
@@ -112,6 +113,7 @@ class Domain(ndb.Expando):
        'update' : 2,
        'suspend' : 3,
        'activate' : 4,
+       'sudo' : 5,
     }
     
     OBJECT_TRANSITIONS = {
@@ -122,6 +124,14 @@ class Domain(ndb.Expando):
         'suspend' : {
            'from' : ('active', ),
            'to'   : ('suspended',),
+        },
+        'su_activate' : {
+            'from' : ('su_suspended', 'suspended',),
+            'to' : ('active',),
+         },
+        'su_suspend' : {
+           'from' : ('active', 'suspended',),
+           'to'   : ('su_suspended',),
         },
     }
     
@@ -146,7 +156,6 @@ class Domain(ndb.Expando):
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='update', state=user.state, log=user)
         object_log.put()
-        
     
     # Ova akcija azurira postojecu domenu.
     @ndb.transactional
@@ -177,6 +186,17 @@ class Domain(ndb.Expando):
         domain.state = 'active'
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
+    @ndb.transactional
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == *. '*' znaci bilo koji state.
+        # var_state moze biti: 'active', 'su_suspended'
+        domain.state = var_state
+        domain_key = domain.put()
+        object_log = ObjectLog(parent=domain_key, agent=agent_key, action='sudo', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -1359,7 +1379,7 @@ class DomainProductContent(ndb.Model):
 # User - 3
 ################################################################################
 
-# done! - ovde ce nam trebati kontrola
+# done!
 class User(ndb.Expando):
     
     # root
@@ -1373,7 +1393,7 @@ class User(ndb.Expando):
     
     _KIND = 0
     
-    OBJECT_DEFAULT_STATE = 'active'
+    OBJECT_DEFAULT_STATE = 'su_active'
     
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -1381,8 +1401,8 @@ class User(ndb.Expando):
         # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'active' : (1, ),
-        'suspended' : (2, ),
+        'su_active' : (1, ),
+        'su_suspended' : (2, ),
     }
     
     OBJECT_ACTIONS = {
@@ -1390,19 +1410,18 @@ class User(ndb.Expando):
        'update' : 2,
        'login' : 3,
        'logout' : 4,
-       'suspend' : 5,
-       'activate' : 6,
+       'sudo' : 5,
     }
     
     OBJECT_TRANSITIONS = {
-        'activate' : {
+        'su_activate' : {
              # from where to where this transition can be accomplished?
-            'from' : ('suspended',),
-            'to' : ('active',),
+            'from' : ('su_suspended',),
+            'to' : ('su_active',),
          },
-        'suspend' : {
-           'from' : ('active', ),
-           'to'   : ('suspended',),
+        'su_suspend' : {
+           'from' : ('su_active', ),
+           'to'   : ('su_suspended',),
         },
     }
     
@@ -1415,7 +1434,7 @@ class User(ndb.Expando):
         var_emails = []
         var_identities.append(UserIdentity(identity=var_identity, email=var_email, associated=True, primary=True))
         var_emails.append(var_email)
-        user = User(identities=var_identities, emails=var_emails, state='active')
+        user = User(identities=var_identities, emails=var_emails, state='su_active')
         user_key = user.put()
         object_log = ObjectLog(parent=user_key, agent=user_key, action='register', state=user.state, log=user)
         object_log.put()
@@ -1462,28 +1481,21 @@ class User(ndb.Expando):
     Ni jedan asocirani email suspendovanog korisnickog racuna se vise ne moze upotrebiti na mstyle 
     (za otvaranje novog account-a, ili neke druge operacije). 
     Account koji je suspendovan se moze opet reaktivirati od strane administratora sistema. '''
-    @ndb.transactional
-    def suspend():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'suspend-User'.
-        # akcija se moze pozvati samo ako je user.state == 'active'.
-        user.state = 'suspended'
-        user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent=agent_key, action='suspend', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-        # poziva se akcija "logout";
-        User.logout()
-    
-    # Ova akcija sluzi za aktiviranje suspendovanog korisnika i izvrsava je privilegovani/administrativni agent.
+    # Ova akcija takodjer sluzi za aktiviranje suspendovanog korisnika i izvrsava je privilegovani/administrativni agent.
     # Treba obratiti paznju na to da aktivacija usera ujedno znaci i vracanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan, a koji su bili izuzeti dok je bio suspendovan.
     # Aktivni user account je u potpunosti funkcionalan i operativan.
     @ndb.transactional
-    def activate():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'activate-User'.
-        # akcija se moze pozvati samo ako je user.state == 'suspended'.
-        user.state = 'active'
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-User'.
+        # akcija se moze pozvati samo ako je user.state == *. '*' znaci bilo koji state.
+        # var_state moze biti: 'su_suspended', 'su_active'.
+        user.state = var_state
         user_key = user.put()
-        object_log = ObjectLog(parent=user_key, agent='agent_key', action='activate', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='sudo', state=user.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
+        if (user.state == 'su_suspended'):
+            # poziva se akcija "logout";
+            User.logout()
 
 # done!
 class UserIdentity(ndb.Model):
@@ -1784,7 +1796,7 @@ class FeedbackRequest(ndb.Model):
         object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='close', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-# done! - ovde ce nam trebati kontrola
+# done!
 class SupportRequest(ndb.Model):
     
     # ancestor User
@@ -1809,30 +1821,29 @@ class SupportRequest(ndb.Model):
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'new' : (1, ),
-        'opened' : (2, ),
-        'awaiting_closure' : (3, ),
+        'su_opened' : (2, ),
+        'su_awaiting_closure' : (3, ),
         'closed' : (4, ),
     }
     
     OBJECT_ACTIONS = {
        'create' : 1,
-       'update' : 2,
-       'open' : 3,
-       'propose_close' : 4,
-       'close' : 5,
+       'log_message' : 2,
+       'sudo' : 3,
+       'close' : 4,
     }
     
     OBJECT_TRANSITIONS = {
-        'open' : {
+        'su_open' : {
             'from' : ('new',),
-            'to' : ('opened',),
+            'to' : ('su_opened',),
          },
-        'propose_close' : {
-           'from' : ('opened', ),
-           'to'   : ('awaiting_closure',),
+        'su_propose_close' : {
+           'from' : ('su_opened', ),
+           'to'   : ('su_awaiting_closure',),
         },
         'close' : {
-           'from' : ('opened', 'awaiting_closure',),
+           'from' : ('su_opened', 'su_awaiting_closure',),
            'to'   : ('closed',),
         },
     }
@@ -1841,7 +1852,7 @@ class SupportRequest(ndb.Model):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        support_request = SupportRequest(parent=user_key, reference='https://www,miraclestyle.com/...', state='new')
+        support_request = SupportRequest(parent=user_key, reference=var_reference, state='new')
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=user_key, action='create', state=support_request.state, message='poruka od agenta - obavezno polje!')
         object_log.put()
@@ -1849,38 +1860,31 @@ class SupportRequest(ndb.Model):
     # Ova akcija sluzi za insert ObjectLog-a koji je descendant SupportRequest entitetu.
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
-    def update():
-        # ovu akciju moze izvrsiti samo entity owner (support_request.parent == agent) ili agent koji ima globalnu dozvolu 'update-SupportRequest'
-        # Radi se update SupportRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na SupportRequest.updated prop.)
+    def log_message():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (support_request.parent == agent),
+        # ili agent koji ima globalnu dozvolu 'sudo-SupportRequest'
+        # radi se update SupportRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na SupportRequest.updated prop.)
         support_request_key = support_request.put()
-        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='update', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='log_message', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
     
-    # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'opened'.
+    # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'su_opened' ili 'su_awaiting_closure'.
     @ndb.transactional
-    def open():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'open-SupportRequest'.
-        # akcija se moze pozvati samo ako je support_request.state == 'new'.
-        support_request.state = 'opened'
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-SupportRequest'.
+        # akcija se moze pozvati samo ako je support_request.state == 'new' ili support_request.state == 'su_opened'
+        # var_state moze biti: 'su_opened', 'su_awaiting_closure'.
+        support_request.state = var_state
         support_request_key = support_request.put()
-        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='open', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
-        object_log.put()
-    
-    # Ovom akcijom privilegovani/administrativni agent menja stanje SupportRequest entiteta u 'awaiting_closure'.
-    @ndb.transactional
-    def propose_close():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'propose_close-SupportRequest'.
-        # akcija se moze pozvati samo ako je support_request.state == 'opened'.
-        support_request.state = 'awaiting_closure'
-        support_request_key = support_request.put()
-        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='propose_close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
+        object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='sudo', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
     
     # Ovom akcijom agent menja stanje SupportRequest entiteta u 'closed'.
     @ndb.transactional
     def close():
-        # ovu akciju moze izvrsiti samo entity owner (support_request.parent == agent) ili agent koji ima globalnu dozvolu 'close-SupportRequest' (sto ce verovatno imati sistemski account koji ce preko cron-a izvrsiti akciju).
-        # akcija se moze pozvati samo ako je support_request.state == 'opened' ili support_request.state == 'awaiting_closure'.
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (support_request.parent == agent),
+        # ili agent koji ima globalnu dozvolu 'close-SupportRequest'. (sto ce verovatno imati sistemski account koji ce preko cron-a izvrsiti akciju).
+        # akcija se moze pozvati samo ako je support_request.state == 'su_opened' ili support_request.state == 'su_awaiting_closure'
         support_request.state = 'closed'
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='close', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -2960,7 +2964,7 @@ class OrderLineTax(ndb.Model):
     name = ndb.StringProperty('1', required=True, indexed=False)
     amount = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
 
-# done! - ovde ce nam trebati kontrola
+# done!
 class OrderFeedback(ndb.Model):
     
     # ancestor Order
@@ -2988,6 +2992,9 @@ class OrderFeedback(ndb.Model):
         'negative' : (3, ),
         'revision' : (4, ),
         'reported' : (5, ),
+        'su_positive' : (6, ),
+        'su_neutral' : (7, ),
+        'su_negative' : (8, ),
         # mozda nam bude trebao i su_invisible state kako bi mogli da uticemo na vidljivost pojedinacnih OrderFeedback-ova
     }
     
@@ -2997,6 +3004,7 @@ class OrderFeedback(ndb.Model):
        'review' : 3,
        'report' : 4,
        'revision_feedback' : 5,
+       'sudo' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -3011,6 +3019,10 @@ class OrderFeedback(ndb.Model):
         'revision_feedback' : {
            'from' : ('revision',),
            'to'   : ('positive', 'neutral', 'negative',),
+        },
+        'su_feedback' : {
+           'from' : ('positive', 'neutral', 'negative', 'revision', 'reported', 'su_positive', 'su_neutral', 'su_negative',),
+           'to'   : ('su_positive', 'su_neutral', 'su_negative',),
         },
     }
     
@@ -3033,6 +3045,8 @@ class OrderFeedback(ndb.Model):
         # ili agent koji ima globalnu dozvolu 'sudo-OrderFeedback'.
         # akcija se moze pozvati samo ako je order_feedback.state == 'positive' ili order_feedback.state == 'neutral' 
         # ili order_feedback.state == 'negative' ili order_feedback.state == 'revision' ili order_feedback.state == 'reported'.
+        # radi se update OrderFeedback-a bez izmena na bilo koji prop. (u cilju izazivanja promene na OrderFeedback.updated prop.)
+        order_feedback_key = order_feedback.put()
         object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='log_message', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
@@ -3073,10 +3087,22 @@ class OrderFeedback(ndb.Model):
         # nedostaje agregaciona feedback statistika za store
     
     @ndb.transactional
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-OrderFeedback'.
+        # akcija se moze pozvati samo ako je order_feedback.state == *. '*' znaci bilo koji state.
+        # var_state moze biti: 'su_positive', 'su_neutral', 'su_neutral'.
+        order_feedback.state = var_state
+        order_feedback_key = order_feedback.put()
+        object_log = ObjectLog(parent=order_feedback_key, agent=user_key, action='sudo', state=order_feedback.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+        Order.update_order(order=order, store=store, feedback=order_feedback.state)
+        # nedostaje agregaciona feedback statistika za store
+    
+    @ndb.transactional
     def invisible(**kwargs):
         # ovo bi trebala da bude automatizovana akcija koja brise feedback iz ordera kako bi se feedback statistika promenila
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'manage-OrderFeedback'.
-        # akcija se moze pozvati samo ako je order_feedback.state u bilo kojem state-u.
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-OrderFeedback'. ?
+        # akcija se moze pozvati samo ako je domain.state == *. '*' znaci bilo koji state.
         order = kwargs.get('order')
         store = kwargs.get('store')
         if (kwargs.get('true')):
@@ -3849,7 +3875,7 @@ class BillingLog(ndb.Model):
     amount = DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
-# done! - ovde ce nam trebati kontrola
+# done!
 class BillingCreditAdjustment(ndb.Model):
     
     # root (namespace Domain)
