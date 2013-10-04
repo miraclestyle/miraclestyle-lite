@@ -81,7 +81,7 @@ class DecimalProperty(ndb.StringProperty):
 # DOMAIN - 20
 ################################################################################
 
-# done! - treba odluciti konvenciju imenovanja objekata!
+# done! - sudo kontrolisan model - treba odluciti konvenciju imenovanja objekata!
 class Domain(ndb.Expando):
     
     # root
@@ -831,6 +831,7 @@ class DomainCatalog(ndb.Expando):
         'locked' : (2, ),
         'published' : (3, ),
         'discontinued' : (4, ),
+        'su_discontinued' : (5, ),
     }
     
     # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
@@ -840,6 +841,7 @@ class DomainCatalog(ndb.Expando):
        'lock' : 3,
        'publish' : 4,
        'discontinue' : 5,
+       'sudo' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -1379,7 +1381,7 @@ class DomainProductContent(ndb.Model):
 # User - 3
 ################################################################################
 
-# done!
+# done! - sudo kontrolisan model
 class User(ndb.Expando):
     
     # root
@@ -1704,7 +1706,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 # USER REQUEST - 2
 ################################################################################
 
-# done! - ovde ce nam trebati kontrola
+# done! - sudo kontrolisan model
 class FeedbackRequest(ndb.Model):
     
     # ancestor User
@@ -1733,27 +1735,26 @@ class FeedbackRequest(ndb.Model):
         # sto ce biti slucaj sa verovatno mnogim modelima.
         # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'new' : (1, ),
-        'reviewing' : (2, ),
-        'duplicate' : (3, ),
-        'accepted' : (4, ),
-        'dismissed' : (5, ),
+        'su_reviewing' : (2, ),
+        'su_duplicate' : (3, ),
+        'su_accepted' : (4, ),
+        'su_dismissed' : (5, ),
     }
     
     OBJECT_ACTIONS = {
        'create' : 1,
-       'update' : 2,
-       'review' : 3,
-       'close' : 4,
+       'log_message' : 2,
+       'sudo' : 3,
     }
     
     OBJECT_TRANSITIONS = {
-        'review' : {
+        'su_review' : {
             'from' : ('new',),
-            'to' : ('reviewing',),
+            'to' : ('su_reviewing',),
          },
-        'close' : {
-           'from' : ('reviewing', ),
-           'to'   : ('duplicate', 'accepted', 'dismissed',),
+        'su_close' : {
+           'from' : ('su_reviewing', ),
+           'to'   : ('su_duplicate', 'su_accepted', 'su_dismissed',),
         },
     }
     
@@ -1769,34 +1770,27 @@ class FeedbackRequest(ndb.Model):
     # Ova akcija sluzi za insert ObjectLog-a koji je descendant FeedbackRequest entitetu.
     # Insertom ObjectLog-a dozvoljeno je unosenje poruke (i privatnog komentara), sto je i smisao ove akcije.
     @ndb.transactional
-    def update():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-FeedbackRequest'. / ? # ovu akciju moze izvrsiti samo entity owner (feedback_request.parent == agent) ili agent koji ima globalnu dozvolu 'update-FeedbackRequest'.
-        # Radi se update FeedbackRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na FeedbackRequest.updated prop.)
+    def log_message():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (feedback_request.parent == agent), / za ovo cemo jos videti ???
+        # ili agent koji ima globalnu dozvolu 'sudo-FeedbackRequest'
+        # akcija se moze pozvati samo ako je feedback_request.state == *. '*' znaci bilo koji state. ???
+        # radi se update feedback_request-a bez izmena na bilo koji prop. (u cilju izazivanja promene na feedback_request.updated prop.)
         feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='update', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='log_message', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
         object_log.put()
     
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'reviewing'.
+    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'su_reviewing', 'su_duplicate', 'su_accepted' ili 'su_dismissed'.
     @ndb.transactional
-    def review():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'review-FeedbackRequest'.
-        # akcija se moze pozvati samo ako je feedback_request.state == 'new'.
-        feedback_request.state = 'reviewing'
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-FeedbackRequest'.
+        # akcija se moze pozvati samo ako je feedback_request.state == 'new' ili feedback_request.state == 'su_reviewing'
+        # var_state moze biti: 'su_reviewing', 'su_duplicate', 'su_accepted', 'su_dismissed'.
+        feedback_request.state = var_state
         feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='review', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-    
-    # Ovom akcijom privilegovani/administrativni agent menja stanje FeedbackRequest entiteta u 'duplicate', 'accepted', ili 'dismissed'.
-    @ndb.transactional
-    def close():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'close-FeedbackRequest'.
-        # akcija se moze pozvati samo ako je feedback_request.state == 'reviewing'.
-        feedback_request.state = 'duplicate' | 'accepted' | 'dismissed'
-        feedback_request_key = feedback_request.put()
-        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='close', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log = ObjectLog(parent=feedback_request_key, agent=agent_key, action='sudo', state=feedback_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
-# done!
+# done! - sudo kontrolisan model
 class SupportRequest(ndb.Model):
     
     # ancestor User
@@ -1863,6 +1857,8 @@ class SupportRequest(ndb.Model):
     def log_message():
         # ovu akciju moze izvrsiti samo vlasnik entiteta (support_request.parent == agent),
         # ili agent koji ima globalnu dozvolu 'sudo-SupportRequest'
+        # akcija se moze pozvati samo ako je support_request.state == 'new' ili support_request.state == 'su_opened'
+        # ili support_request.state == 'su_awaiting_closure'
         # radi se update SupportRequest-a bez izmena na bilo koji prop. (u cilju izazivanja promene na SupportRequest.updated prop.)
         support_request_key = support_request.put()
         object_log = ObjectLog(parent=support_request_key, agent=agent_key, action='log_message', state=support_request.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima/non-owner-ima) - obavezno polje!')
@@ -2964,7 +2960,7 @@ class OrderLineTax(ndb.Model):
     name = ndb.StringProperty('1', required=True, indexed=False)
     amount = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
 
-# done!
+# done! - sudo kontrolisan model
 class OrderFeedback(ndb.Model):
     
     # ancestor Order
