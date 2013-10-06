@@ -403,11 +403,11 @@ class DomainField(ndb.Model):
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
 # future implementation - prototype!
-class DomainCompany(ndb.Expando):
+class DomainBusinessUnit(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - active,name
-    parent_record = ndb.KeyProperty('1', kind=DomainCompany, indexed=False)
+    parent_record = ndb.KeyProperty('1', kind=DomainBusinessUnit, indexed=False)
     name = ndb.StringProperty('2', required=True)
     active = ndb.BooleanProperty('3', default=True)
     _default_indexed = False
