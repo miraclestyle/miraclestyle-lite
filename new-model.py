@@ -88,7 +88,9 @@ class Domain(ndb.Expando):
     # composite index: ancestor:no - state,name
     name = ndb.StringProperty('1', required=True)
     primary_contact = ndb.KeyProperty('2', kind=User, required=True, indexed=False)
-    state = ndb.IntegerProperty('3', required=True)
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    state = ndb.IntegerProperty('5', required=True)
     _default_indexed = False
     pass
     #Expando
@@ -114,6 +116,7 @@ class Domain(ndb.Expando):
        'suspend' : 3,
        'activate' : 4,
        'sudo' : 5,
+       'log_message' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -188,7 +191,7 @@ class Domain(ndb.Expando):
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='activate', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
     
-    # Ova akcija suspenduje aktivnu domenu. Ovde cemo dalje opisati posledice suspenzije
+    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @ndb.transactional
     def sudo():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-Domain'.
@@ -197,6 +200,16 @@ class Domain(ndb.Expando):
         domain.state = var_state
         domain_key = domain.put()
         object_log = ObjectLog(parent=domain_key, agent=agent_key, action='sudo', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    @ndb.transactional
+    def log_message():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'log_message-Domain',
+        # ili agent koji ima globalnu dozvolu 'sudo-Domain'.
+        # akcija se moze pozvati samo ako je domain.state == *. '*' znaci bilo koji state.
+        # radi se update Domain-a bez izmena na bilo koji prop. (u cilju izazivanja promene na Domain.updated prop.)
+        domain_key = domain.put()
+        object_log = ObjectLog(parent=domain_key, agent=user_key, action='log_message', state=domain.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -389,46 +402,48 @@ class DomainField(ndb.Model):
     writable = ndb.BooleanProperty('2', default=True, indexed=False)
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
-# done! mozda bude trebala kontrola i ovde
+# done! - sudo kontrolisan model
 class DomainStore(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
     name = ndb.StringProperty('1', required=True)
     logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
-    state = ndb.IntegerProperty('3', required=True)
+    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    state = ndb.IntegerProperty('5', required=True)
     _default_indexed = False
     pass
     #Expando
     #
     # Company
-    # company_name = ndb.StringProperty('4', required=True)
-    # company_country = ndb.KeyProperty('5', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('6', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # company_region = ndb.StringProperty('6', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # company_city = ndb.StringProperty('7', required=True)
-    # company_postal_code = ndb.StringProperty('8', required=True)
-    # company_street_address = ndb.StringProperty('9', required=True)
-    # company_street_address2 = ndb.StringProperty('10')
-    # company_email = ndb.StringProperty('11')
-    # company_telephone = ndb.StringProperty('12')
+    # company_name = ndb.StringProperty('6', required=True)
+    # company_country = ndb.KeyProperty('7', kind=Country, required=True)
+    # company_region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # company_region = ndb.StringProperty('9', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # company_city = ndb.StringProperty('10', required=True)
+    # company_postal_code = ndb.StringProperty('11', required=True)
+    # company_street_address = ndb.StringProperty('12', required=True)
+    # company_street_address2 = ndb.StringProperty('13')
+    # company_email = ndb.StringProperty('14')
+    # company_telephone = ndb.StringProperty('15')
     #
     # Payment
-    # currency = ndb.KeyProperty('13', kind=Currency, required=True)
+    # currency = ndb.KeyProperty('16', kind=Currency, required=True)
     # tax_buyer_on ?
-    # paypal_email = ndb.StringProperty('14')
+    # paypal_email = ndb.StringProperty('17')
     # paypal_shipping ?
     #
     # Analytics 
-    # tracking_id = ndb.StringProperty('15')
+    # tracking_id = ndb.StringProperty('18')
     #
     # Feedback
-    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '16', repeated=True)# soft limit 120x
+    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '19', repeated=True)# soft limit 120x
     #
     # Shipping Exclusion Settings
     # Shipping everywhere except at the following locations: location_exclusion = False
     # Shipping only at the following locations: location_exclusion = True
-    # location_exclusion = ndb.BooleanProperty('17', default=False)
+    # location_exclusion = ndb.BooleanProperty('20', default=False)
     
     
     _KIND = 0
@@ -443,6 +458,7 @@ class DomainStore(ndb.Expando):
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'open' : (1, ),
         'closed' : (2, ),
+        'su_closed' : (3, ), # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
     }
     
     OBJECT_ACTIONS = {
@@ -450,6 +466,8 @@ class DomainStore(ndb.Expando):
        'update' : 2,
        'close' : 3,
        'open' : 4,
+       'sudo' : 5, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
+       'log_message' : 6, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
     }
     
     OBJECT_TRANSITIONS = {
@@ -460,6 +478,16 @@ class DomainStore(ndb.Expando):
         'close' : {
            'from' : ('open', ),
            'to'   : ('closed',),
+        },
+        # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
+        'su_open' : {
+            'from' : ('su_closed', 'closed',),
+            'to' : ('open',),
+         },
+         # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
+        'su_close' : {
+           'from' : ('open', 'closed',),
+           'to'   : ('su_closed',),
         },
     }
     
@@ -502,6 +530,28 @@ class DomainStore(ndb.Expando):
         store.state = 'open'
         store_key = store.put()
         object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ova akcija otvara ili zatvara store. Ovo je samo ako nam bude trebala kontrola nad DomainStore. Ovde cemo dalje opisati posledice suspenzije
+    @ndb.transactional
+    def sudo():
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-DomainStore'.
+        # akcija se moze pozvati samo ako je store.state == *. '*' znaci bilo koji state.
+        # var_state moze biti: 'open', 'su_closed'
+        store.state = var_state
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=agent_key, action='sudo', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    # Ovo je samo ako nam bude trebala kontrola nad DomainStore.
+    @ndb.transactional
+    def log_message():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'log_message-DomainStore',
+        # ili agent koji ima globalnu dozvolu 'sudo-DomainStore'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == *. '*' znaci bilo koji state.
+        # radi se update DomainStore-a bez izmena na bilo koji prop. (u cilju izazivanja promene na DomainStore.updated prop.)
+        store_key = store.put()
+        object_log = ObjectLog(parent=store_key, agent=user_key, action='log_message', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -797,7 +847,7 @@ class DomainCarrierLineRule(ndb.Model):
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
 
-# done! - ovde ce nam trebati kontrola
+# done! - sudo kontrolisan model
 class DomainCatalog(ndb.Expando):
     
     # root (namespace Domain)
@@ -807,12 +857,14 @@ class DomainCatalog(ndb.Expando):
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
-    state = ndb.IntegerProperty('5', required=True)
+    updated = ndb.DateTimeProperty('5', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+    state = ndb.IntegerProperty('7', required=True)
     _default_indexed = False
     pass
     # Expando
-    # cover = blobstore.BlobKeyProperty('6', required=True)# blob ce se implementirati na GCS
-    # cost = DecimalProperty('7', required=True)
+    # cover = blobstore.BlobKeyProperty('8', required=True)# blob ce se implementirati na GCS
+    # cost = DecimalProperty('9', required=True)
     # Search improvements
     # product count per product category
     # rank coefficient based on store feedback
@@ -831,7 +883,6 @@ class DomainCatalog(ndb.Expando):
         'locked' : (2, ),
         'published' : (3, ),
         'discontinued' : (4, ),
-        'su_discontinued' : (5, ),
     }
     
     # nedostaju akcije za dupliciranje catalog-a, za clean-up, etc...
@@ -841,7 +892,7 @@ class DomainCatalog(ndb.Expando):
        'lock' : 3,
        'publish' : 4,
        'discontinue' : 5,
-       'sudo' : 6,
+       'log_message' : 6,
     }
     
     OBJECT_TRANSITIONS = {
@@ -854,7 +905,7 @@ class DomainCatalog(ndb.Expando):
            'to'   : ('published',),
         },
         'discontinue' : {
-           'from' : ('published', ),
+           'from' : ('locked', 'published', ),
            'to'   : ('discontinued',),
         },
     }
@@ -913,11 +964,23 @@ class DomainCatalog(ndb.Expando):
     # Ova akcija prekida objavljen catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @ndb.transactional
     def discontinue():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-DomainCatalog'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'published'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-DomainCatalog',
+        # ili agent koji ima globalnu dozvolu 'sudo-DomainCatalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'locked' ili catalog.state == 'published'.
         catalog.state = 'discontinued'
         catalog_key = catalog.put()
         object_log = ObjectLog(parent=catalog_key, agent=agent_key, action='discontinue', state=catalog.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
+        object_log.put()
+    
+    @ndb.transactional
+    def log_message():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'log_message-DomainCatalog',
+        # ili agent koji ima globalnu dozvolu 'sudo-DomainCatalog'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished',
+        # ili catalog.state == 'locked' ili catalog.state == 'published' ili catalog.state == 'discontinued' (za ovaj zadnji state jos ne znamo).
+        # radi se update DomainCatalog-a bez izmena na bilo koji prop. (u cilju izazivanja promene na DomainCatalog.updated prop.)
+        catalog_key = catalog.put()
+        object_log = ObjectLog(parent=catalog_key, agent=user_key, action='log_message', state=catalog.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -3001,6 +3064,7 @@ class OrderFeedback(ndb.Model):
        'report' : 4,
        'revision_feedback' : 5,
        'sudo' : 6,
+       'invisible' : 7,
     }
     
     OBJECT_TRANSITIONS = {
