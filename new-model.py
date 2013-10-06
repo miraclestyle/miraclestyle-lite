@@ -402,6 +402,33 @@ class DomainField(ndb.Model):
     writable = ndb.BooleanProperty('2', default=True, indexed=False)
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
+# future implementation - prototype!
+class DomainCompany(ndb.Expando):
+    
+    # root (namespace Domain)
+    # composite index: ancestor:no - active,name
+    parent_record = ndb.KeyProperty('1', kind=DomainCompany, indexed=False)
+    name = ndb.StringProperty('2', required=True)
+    active = ndb.BooleanProperty('3', default=True)
+    _default_indexed = False
+    pass
+    #Expando
+    #
+    # logo = blobstore.BlobKeyProperty('4', required=True)# blob ce se implementirati na GCS
+    #
+    # Address
+    # country = ndb.KeyProperty('5', kind=Country)
+    # region = ndb.KeyProperty('6', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # region = ndb.StringProperty('7')# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # city = ndb.StringProperty('8')
+    # postal_code = ndb.StringProperty('9')
+    # street_address = ndb.StringProperty('10')
+    # street_address2 = ndb.StringProperty('11')
+    # email = ndb.StringProperty('12')
+    # telephone = ndb.StringProperty('13')
+    # tax_id = ndb.StringProperty('14')
+    # reference = ndb.StringProperty('15')
+    
 # done! - sudo kontrolisan model
 class DomainStore(ndb.Expando):
     
