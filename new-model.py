@@ -1769,7 +1769,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
 # USER REQUEST - 2
 ################################################################################
 
-# done! - sudo kontrolisan model
+# done! - sudo kontrolisan model 
 class FeedbackRequest(ndb.Model):
     
     # ancestor User
