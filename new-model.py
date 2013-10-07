@@ -1980,7 +1980,7 @@ class SupportRequest(ndb.Model):
 # TRADE - 11
 ################################################################################
 
-# done!
+# done! - carrier funkcija za obracun i odabir carrier-a nije zavrsena! to cemo zavrsiti kad budemo radili dev trade modula..
 class Order(ndb.Expando):
     
     # ancestor User (namespace Domain) ovaj koncept ne radi, morace da se promeni...
