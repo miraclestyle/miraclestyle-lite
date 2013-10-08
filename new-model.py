@@ -66,6 +66,8 @@ from decimal import *
 import re
 
 # mozda ce nam trebati mehanizam da mozemo u constructoru supply keyword arguemnte kao napr:  digits=int(2), rounding=...
+# dodati max_size argument u SuperProperty za ogranicenje duzine value u propertyju
+# sledeci argumenti trebaju postojati u SuperProperty: visible, writable, max_size....
 class DecimalProperty(ndb.StringProperty):
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
