@@ -5,11 +5,12 @@ Created on Jul 8, 2013
 
 @copyright: Vertazzar (Edis Šehalić)
 @author: Vertazzar (Edis Šehalić)
-@module app.settings.py
+@module settings.py
 
 '''
-
 import os
+
+""" APP settings file. """
 
 APPDIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,25 +24,8 @@ SALT = u'salt'
 HASH_BINDER = u'-'
 
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-# will still hold this as debug until full production
 DO_LOGS = True
-
-# Some jinja2 internal cache 
-TEMPLATE_CACHE = 3600
-
-if DEBUG:
-   TEMPLATE_CACHE = 0
-
-# Here we specify which of the packages metadata will be loaded into the system
-APPLICATIONS_INSTALLED = (
-     'app.kernel',
-     'app.tests',
-)
-
-# session storage, currently set memcache. Maybe we will change it into datastore because of consistency
-# memcache keys can be dropped on server and user can loose his active session
-SESSION_STORAGE = 'memcache'
-
+ 
 # user-specific settings
 USER_SESSION_KEY = 'user_key'
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
@@ -86,13 +70,3 @@ FACEBOOK_OAUTH2 = {
 }
 
 FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'
- 
-
-WEBAPP2_EXTRAS = {
-    'webapp2_extras.sessions' : {
-        'secret_key': 'd212k19f0k09sdkf009kfewwdw',
-    },
-    'webapp2_extras.i18n' : {
-    'translations_path': os.path.join(APPDIR, 'locale'),
-    }
-}
