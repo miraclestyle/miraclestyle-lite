@@ -21,7 +21,7 @@ handlers:
   expiration: "364d 5h"
   
 - url: /.*
-  script: app.wsgi.app
+  script: webclient.wsgi.app
   
   
 libraries:

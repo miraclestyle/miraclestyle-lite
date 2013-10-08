@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 '''
-Created on Jul 22, 2013
+Created on Oct 8, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+
 import webapp2
 
 from google.appengine.api import memcache
-
-from app.core import logger
+ 
 """
  Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
 
@@ -16,7 +16,6 @@ from app.core import logger
 __all__ = ['set', 'get', 'delete', 'tempcached', 'memcached', 'temp_memory_get', 'temp_memory_set', 'temp_memory_delete']
 
 def set(k, v, expire=0, **kwargs):
-         logger('cache set %s' % k)
          temp_memory_set(k, v)
          memcache.set(k, v, expire, **kwargs)
          
@@ -39,7 +38,6 @@ def get(k, d=None, callback=None, **kwargs):
            return tmp
         else:
            tmp = memcache.get(k, **kwargs)
-           logger('cache get %s, got: %s' % (k, tmp))
            if tmp == None:
               if callback:
                  v = callback()
