@@ -8,6 +8,7 @@ Created on Sep 5, 2013
 import json
 import time
 import os
+import itertools
  
 from app import ndb, memcache
 from app.pyson import Eval
@@ -93,6 +94,145 @@ class TestOrder(ndb.Model):
 import decimal
         
 class Tests(Segments):
+    
+    
+     def segment_test_loops2(self):
+        variants = [
+            {'name': 'Color', 'count': 3, 'options': ['Red', 'Green', 'Blue'], 'position': 0, 'increment': False, 'reset': False},
+            {'name': 'Size', 'count': 3, 'options': ['Small', 'Medium', 'Large'], 'position': 0, 'increment': False, 'reset': False},
+            {'name': 'Size2', 'count': 3, 'options': ['XS', 'XL', 'XXL'], 'position': 0, 'increment': False, 'reset': False},
+            # {'name': 'Size2', 'count': 3, 'options': ['XS', 'XL', 'XXL'], 'position': 0, 'increment': False, 'reset': False},
+
+            {'name': 'Fabric', 'count': 2, 'options': ['Silk', 'Cotton'], 'position': 0, 'increment': False, 'reset': False},
+        ]
+        
+        variant_signatures = []
+        stay = True
+        while stay:
+            iterator = 0
+            for item in variants:
+                if (item['increment']):
+                    variants[iterator]['position'] += 1
+                    variants[iterator]['increment'] = False
+                if (item['reset']):
+                    variants[iterator]['position'] = 0
+                    variants[iterator]['reset'] = False
+                iterator += 1
+            dic = {}
+            iterator = 0
+            for item in variants:
+                dic[item['name']] = item['options'][item['position']]
+                if (iterator == 0):
+                    if (item['count'] == item['position'] + 1):
+                        variants[iterator]['reset'] = True
+                        variants[iterator + 1]['increment'] = True
+                    else:
+                        variants[iterator]['increment'] = True
+                elif not (len(variants) == iterator + 1):
+                    if (item['count'] == item['position'] + 1):
+                        if (variants[iterator - 1]['reset']):
+                            variants[iterator]['reset'] = True
+                            variants[iterator + 1]['increment'] = True
+                elif (len(variants) == iterator + 1):
+                    if (item['count'] == item['position'] + 1):
+                        if (variants[iterator - 1]['reset']):
+                            variant_signatures.append(dic)
+                            stay = False
+                            break
+                iterator += 1
+            variant_signatures.append(dic)
+            
+        for i in variant_signatures:
+            self.response.write('<br />')
+            self.response.write(i)
+        self.response.write(len(variant_signatures))
+    
+     def segment_test_loops(self):
+         
+         self.response.headers['Content-Type'] = 'text/plain;charset=utf8'
+         
+         product_template_variants = {
+            1: {'name': 'Color', 'options': ['Red', 'Green', 'Blue']},
+            2: {'name': 'Size', 'options': ['Small', 'Medium', 'Large']},
+            2: {'name': 'Size2', 'options': ['Wood', 'Steel', 'Gas']},
+            3: {'name': 'Fabric', 'options': ['Silk', 'Cotton']},
+         }
+         variant_signature = {
+            1: {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Silk'},
+            2: {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Cotton'},
+            3: {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Silk'},
+            4: {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            5: {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Silk'},
+            6: {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Cotton'},
+            7: {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Silk'},
+            8: {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Cotton'},
+            9: {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Silk'},
+            10: {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            11: {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Silk'},
+            12: {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Cotton'},
+            13: {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Silk'},
+            14: {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Cotton'},
+            15: {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Silk'},
+            16: {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            17: {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Silk'},
+            18: {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Cotton'},
+        }
+         
+         variant_signatures = {
+            1: {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Silk'},
+            2: {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Silk'},
+            3: {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Silk'},
+            4: {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Silk'},
+            5: {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Silk'},
+            6: {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Silk'},
+            7: {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Silk'},
+            8: {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Silk'},
+            9: {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Silk'},
+            10: {'Color': 'Red', 'Size': 'Small', 'Fabric': 'Cotton'},
+            11: {'Color': 'Green', 'Size': 'Small', 'Fabric': 'Cotton'},
+            12: {'Color': 'Blue', 'Size': 'Small', 'Fabric': 'Cotton'},
+            13: {'Color': 'Red', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            14: {'Color': 'Green', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            15: {'Color': 'Blue', 'Size': 'Medium', 'Fabric': 'Cotton'},
+            16: {'Color': 'Red', 'Size': 'Large', 'Fabric': 'Cotton'},
+            17: {'Color': 'Green', 'Size': 'Large', 'Fabric': 'Cotton'},
+            18: {'Color': 'Blue', 'Size': 'Large', 'Fabric': 'Cotton'},
+         }
+         
+  
+         flist = [{'name': 'Color', 'options': ['Red', 'Green', 'Blue'], 'count' : 3},
+              {'name': 'Size', 'options': ['Small', 'Medium', 'Large'], 'count' : 3}, 
+               {'name': 'Size Other', 'options': ['XS', 'XL', 'XXL'], 'count' : 3}, 
+               
+              {'name': 'Fabric', 'options': ['Silk', 'Cotton'], 'count' : 2}
+         ]
+         
+         self.response.write("Compile for \n")
+         self.response.write(flist)
+         self.response.write("\n")
+          
+         keys = []
+         
+         max_iteration = 1000
+         
+         from itertools import product
+         option1 = ['Red', 'Green', 'Blue']
+         option2 = ['Small', 'Medium', 'Large']
+         option3 = ['Silk', 'Cotton']
+     
+         it = 1
+         for tup in product(option1, option2, option3):
+                 ttem = "-".join(tup)
+                 print it, ttem
+                 it += 1
+ 
+       
+         self.response.write("\n")        
+         self.response.write(keys)
+         self.response.write("\n")
+         self.response.write(len(keys))
+   
+   
     
      def segment_test_get_hook(self):
          k = self.request.get('k')
