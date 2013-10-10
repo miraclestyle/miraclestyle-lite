@@ -4,9 +4,13 @@ Created on Oct 8, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import imp
+import os
 import json
 
-
+_JINJA_FILTERS = {}
+_JINJA_GLOBALS = {}
+ 
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.
 
@@ -23,3 +27,28 @@ class JSONEncoderHTML(json.JSONEncoder):
             chunk = chunk.replace('<', '\\u003c')
             chunk = chunk.replace('>', '\\u003e')
             yield chunk
+            
+
+
+MODULE_EXTENSIONS = ('.py',)
+
+def package_contents(package_name):
+    file, pathname, description = imp.find_module(package_name)
+    if file:
+        raise ImportError('Not a package: %r', package_name)
+    # Use a set because some may be both source and compiled.
+    return set([os.path.splitext(module)[0]
+        for module in os.listdir(pathname)
+        if module.endswith(MODULE_EXTENSIONS)])
+    
+def register_jinja_filter(name, func):
+    
+    global _JINJA_FILTER
+    
+    _JINJA_FILTER[name] = func
+
+def register_jinja_global(name, var):
+    
+    global _JINJA_GLOBAL
+    
+    _JINJA_GLOBAL[name] = var

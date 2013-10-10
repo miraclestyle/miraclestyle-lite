@@ -26,6 +26,8 @@ class AngularRoute(Route):
         return p
     
     def _angular_make_controller(self, c):
+        if not isinstance(c, basestring):
+            c = c.__name__
         li = c.split('.')
         li_last = li[-1]
         del li[-1]

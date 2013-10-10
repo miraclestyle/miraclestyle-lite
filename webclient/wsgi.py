@@ -11,7 +11,9 @@ Created on Oct 15, 2012
 import webapp2
 
 from app import settings
-from webclient.utils import boot
+
+from webclient.handler import wsgi_config
+ 
   
-load = boot()
-app = webapp2.WSGIApplication(load['ROUTES'], debug=settings.DEBUG, config=load['JINJA_CONFIG'])
+cfg = wsgi_config()
+app = webapp2.WSGIApplication(cfg['ROUTES'], debug=settings.DEBUG, config=cfg['JINJA_CONFIG'])
