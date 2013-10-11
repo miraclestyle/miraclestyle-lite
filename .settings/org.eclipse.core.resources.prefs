@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+encoding//app/kernel/user.py=utf-8
 encoding//app/memcache.py=utf-8
 encoding//app/ndb.py=utf-8
 encoding//app/pyson.py=utf-8

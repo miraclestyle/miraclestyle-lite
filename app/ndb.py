@@ -19,7 +19,7 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
-class BaseModel(Model):
+class _BaseModel():
   
   __original_values = {}
   
@@ -44,7 +44,9 @@ class BaseModel(Model):
     
   @classmethod
   def _from_pb(cls, *args, **kwargs):
-    entity = super(BaseModel, cls)._from_pb(*args, **kwargs)
+    """ Allows for model to get original values who get loaded from the protocol buffer  """
+      
+    entity = super(_BaseModel, cls)._from_pb(*args, **kwargs)
     entity.original_values()
     return entity
 
@@ -61,7 +63,164 @@ class BaseModel(Model):
        return str(cls._KIND)
     return cls.__name__
 
+class BaseModel(_BaseModel, Model):
+  """
+   Base class for all `ndb.Model` entities
+  """
+  
+class BaseExpando(_BaseModel, Expando):
+  """
+   Base class for all `ndb.Expando` entities
+  """
+  def has_expando_fields(self):
+      if hasattr(self, 'EXPANDO_FIELDS'):
+         return self.EXPANDO_FIELDS
+      else:
+         return False
+      
+  def __getattr__(self, name):
+     ex = self.has_expando_fields()
+     if ex:
+        vf = ex.get(name) 
+        if vf:
+           return vf._get_value(self)
+     return super(BaseExpando, self).__getattr__(name)
+    
+  def __setattr__(self, name, value):
+      ex = self.has_expando_fields()
+      if ex:
+         vf = ex.get(name) 
+         if vf:
+            vf._code_name = name
+            self._properties[name] = vf
+            vf._set_value(self, value)
+            return vf
+      return super(BaseExpando, self).__setattr__(name, value)
+    
+  def __delattr__(self, name):
+     ex = self.has_expando_fields()
+     if ex:
+        vf = ex.get(name) 
+        if vf:
+           vf._delete_value(self)
+           if vf in self.__class__._properties:
+               raise RuntimeError('Property %s still in the list of properties for the '
+                                     'base class.' % name)
+           del self._properties[name]
+     return super(BaseExpando, self).__delattr__(name)
 
+class _BaseProperty(object):
+  
+  _writable = False
+  _visible = False
+ 
+  def __init__(self, *args, **kwds):
+      self._writable = kwds.pop('writable', self._writable)
+      self._visible = kwds.pop('visible', self._visible)
+ 
+      super(_BaseProperty, self).__init__(*args, **kwds)
+
+class BaseProperty(_BaseProperty, Property):
+  """
+   Base property class for all properties capable of having writable, and visible options
+  """
+ 
+class SuperStringProperty(_BaseProperty, StringProperty):
+    pass
+
+class SuperIntegerProperty(_BaseProperty, IntegerProperty):
+    pass
+   
+class SuperStateProperty(_BaseProperty, IntegerProperty):
+ 
+    def __get__(self, entity, unused_cls=None):
+        value = super(SuperStateProperty, self).__get__(entity, unused_cls)
+        return entity.resolve_state_name_by_code(value)
+
+    def __set__(self, entity, value):
+      """Descriptor protocol: set the value on the entity."""
+      value = entity.resolve_state_code_by_name(value)
+      super(SuperStateProperty, self).__get__(entity, value)
+  
+class SuperKeyProperty(_BaseProperty, KeyProperty):
+    pass
+ 
+class DecimalProperty(SuperStringProperty):
+  """Decimal property that accepts only `decimal.Decimal`"""
+  
+  def _validate(self, value):
+    if not isinstance(value, (decimal.Decimal)):
+      raise TypeError('expected an decimal, got %s' % repr(value)) # explicitly allow only decimal
+
+  def _to_base_type(self, value):
+      return str(value) # Doesn't matter which type, always return in string format
+
+  def _from_base_type(self, value):
+      return decimal.Decimal(value)  # Always return a decimal
+
+      
+class ReferenceProperty(SuperKeyProperty):
+    
+  """Replicated property from `db` module"""
+    
+  def _validate(self, value):
+      if not isinstance(value, Model):
+         raise TypeError('expected an ndb.Model, got %s' % repr(value))
+
+  def _to_base_type(self, value):
+      return value.key
+
+  def _from_base_type(self, value):
+      return value.get()
+
+class SuperRelationProperty(dict):
+  """
+    This is a fake property that will `not` be stored in datastore,
+     it only represents on what one model can depend. Like so
+     
+     class UserChildEntity(ndb.BaseModel):
+           user = ndb.SuperRelationProperty(User)
+           name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
+           
+     foo = UserChildEntity(name='Edward')
+     foo.user = ndb.Key('User', 'foo').get() # since this is a Fake property, it cannot be placed via model constructor
+     foo.save()     
+     
+     The `Eval` will evaluate: self.user.state != 'active' and therefore the property
+     will validate itself to be read only
+     
+     This property only accepts model that needs validation, otherwise it will accept any value provided
+  """
+  def __get__(self, entity):
+      """Descriptor protocol: get the value on the entity."""
+      return self.model
+      
+  def __set__(self, entity, value):
+      """Descriptor protocol: set the value on the entity."""
+      if self.model_type:
+         if not isinstance(value, self.model_type):
+            raise TypeError('Expected %s, got %s' % (repr(self.model_type), repr(value)))
+      self.model = value
+ 
+  def __init__(self, model=None):
+      self.model_type = model
+  
+  def __getitem__(self, item):
+     return getattr(self.model, item)
+      
+  def __getattr__(self, item):
+     try:
+        return self.__getitem__(item)
+     except KeyError, exception:
+        raise AttributeError(*exception.args)
+      
+  def get(self, item, default=None):
+     try:
+        return self.__getitem__(item)
+     except Exception:
+        pass
+     return super(SuperRelationProperty, self).get(item, default)     
+ 
 class Validator:
     
   """
@@ -82,7 +241,6 @@ class Validator:
     
   def __call__(self, prop, value):
       return self.callback(prop, value, **self.kwargs)
-  
   
 class EvalEnvironment(dict):
 

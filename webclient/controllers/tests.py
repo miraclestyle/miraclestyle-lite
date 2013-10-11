@@ -4,15 +4,15 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from webclient.handler import Handler
+from webclient.handler import Angular
 from webclient.route import register
 
-class Tests(Handler):
+class Tests(Angular):
     
     def respond(self):
-        self.response.write('Hello World')
+        self.data['Hello'] = 'World'
 
-class Other(Handler):
+class Other(Angular):
     pass
 
 

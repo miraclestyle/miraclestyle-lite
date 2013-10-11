@@ -7,9 +7,20 @@ Created on Oct 8, 2013
 import imp
 import os
 import json
+ 
 
-_JINJA_FILTERS = {}
-_JINJA_GLOBALS = {}
+class Jinja():
+    
+    filters = {}
+    globals = {}
+    
+    @classmethod
+    def register_filter(cls, name, funct):
+        cls.filters[name] = funct
+    
+    @staticmethod
+    def register_global(cls, name, value):
+        cls.globals[name] = value
  
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.
@@ -40,15 +51,3 @@ def package_contents(package_name):
     return set([os.path.splitext(module)[0]
         for module in os.listdir(pathname)
         if module.endswith(MODULE_EXTENSIONS)])
-    
-def register_jinja_filter(name, func):
-    
-    global _JINJA_FILTER
-    
-    _JINJA_FILTER[name] = func
-
-def register_jinja_global(name, var):
-    
-    global _JINJA_GLOBAL
-    
-    _JINJA_GLOBAL[name] = var

@@ -16,7 +16,7 @@ from app import settings
 from app.util import import_module, logger
  
 from webclient import webclient_settings
-from webclient.util import JSONEncoderHTML, _JINJA_GLOBALS, _JINJA_FILTERS
+from webclient.util import JSONEncoderHTML, Jinja
 
 _WSGI_CONFIG = None
 
@@ -40,8 +40,8 @@ def wsgi_config(as_tuple=False):
             if routes:
                ROUTES += routes
                 
-    JINJA_FILTERS = _JINJA_FILTERS
-    JINJA_GLOBALS = _JINJA_GLOBALS          
+    JINJA_FILTERS = Jinja.filters
+    JINJA_GLOBALS = Jinja.globals         
     # It won't change, so convert it to a tuple to save memory.           
     ROUTES = tuple(ROUTES)       
     JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : ROUTES, 'settings' : settings, 'webclient_settings' : webclient_settings})
@@ -56,7 +56,7 @@ def wsgi_config(as_tuple=False):
                  'globals' : JINJA_GLOBALS,
                  'filters' : JINJA_FILTERS,
                  'environment_args': {
-                   'extensions': ['jinja2.ext.i18n', 'jinja2.ext.autoescape', 'jinja2.ext.loopcontrols'],
+                   'extensions': ['jinja2.ext.autoescape', 'jinja2.ext.loopcontrols'],
                    'autoescape' : True, 
                    'loader' : TEMPLATE_LOADER,
                    'cache_size' : webclient_settings.TEMPLATE_CACHE
@@ -204,7 +204,7 @@ class Angular(Handler):
              self.send_json(self.data)
              return
          
-          self.render('angular/index.html')
+          self.render('angular/index.html', {'initdata' : self.data})
           
 class AngularSegments(Segments, Angular):
       pass
