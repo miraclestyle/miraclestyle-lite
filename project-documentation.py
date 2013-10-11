@@ -60,6 +60,10 @@ to_xml
 update
 '''
 
+# Treba odluciti konvenciju imenovanja objekata!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Kind ID-jevi su uvek UNIQUE unutar citave aplikacije.
+# Svi ostali ndb ID-jevi su unique unutar modela, i isto vazi za workflow konvenciju (states, transitions, actions....).
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
@@ -83,7 +87,7 @@ class DecimalProperty(ndb.StringProperty):
 # DOMAIN - 20
 ################################################################################
 
-# done! - sudo kontrolisan model - treba odluciti konvenciju imenovanja objekata!
+# done! - sudo kontrolisan model
 class Domain(ndb.Expando):
     
     # root
@@ -3757,6 +3761,7 @@ class Message(ndb.Model):
 ################################################################################
 
 # done!
+# funkcija ObjectLog-a je da radi historization objekata koji se loguju i da radi messaging!
 class ObjectLog(ndb.Expando):
     
     # ancestor Any - ancestor je objekat koji se ujedno i pickle u log property, i moze biti bilo koji objekat osim pojedinih objekata koji su independent
@@ -3765,7 +3770,7 @@ class ObjectLog(ndb.Expando):
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     action = ndb.IntegerProperty('3', required=True)
-    state = ndb.IntegerProperty('4', required=True)
+    state = ndb.IntegerProperty('4', required=True) # verovatno ide u expando
     _default_indexed = False
     pass
     # message / m = ndb.TextProperty('5')# soft limit 64kb - to determine char count
