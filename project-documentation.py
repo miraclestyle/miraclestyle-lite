@@ -60,10 +60,22 @@ to_xml
 update
 '''
 
-# Treba odluciti konvenciju imenovanja objekata!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# struktura i konvencija imenovanja objekata:
 
-# Kind ID-jevi su uvek UNIQUE unutar citave aplikacije.
-# Svi ostali ndb ID-jevi su unique unutar modela, i isto vazi za workflow konvenciju (states, transitions, actions....).
+# package-i ce organizovati logicke celine aplikacije: 
+
+# app/
+# app/modules
+# app/modules/core
+# app/modules/domain
+# app/modules/buyer
+# app/modules/misc
+
+# moduli ce organizovati entitetske grupe, pa makar to bio samo jedan model!
+# Sto se tice ndb-a, konvencija prati sledece:
+# Kind ID-jevi su uvek UNIQUE UNUTAR CITAVE APLIKACIJE!
+# Svi ostali ndb ID-jevi su UNIQUE UNUTAR MODELA, i isto vazi za workflow konvenciju (states, transitions, actions....).
+
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 from decimal import *
