@@ -70,6 +70,7 @@ update
 # app/modules/domain
 # app/modules/buyer
 # app/modules/misc
+# app/modules/trade
 
 # moduli ce organizovati entitetske grupe, pa makar to bio samo jedan model!
 # Sto se tice ndb-a, konvencija prati sledece:
@@ -231,7 +232,7 @@ class Domain(ndb.Expando):
         object_log.put()
 
 # done!
-class DomainRole(ndb.Model):
+class Role(ndb.Model):
     
     # root (namespace Domain)
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
@@ -295,7 +296,7 @@ class DomainRole(ndb.Model):
         domain_role_key.delete()
 
 # done!
-class DomainUser(ndb.Expando):
+class User(ndb.Expando):
     
     # root (namespace Domain) - id = str(user_key.id())
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
@@ -402,7 +403,7 @@ class DomainUser(ndb.Expando):
         object_log.put()
 
 # future implementation - prototype!
-class DomainRule(ndb.Model):
+class Rule(ndb.Model):
     
     # root (namespace Domain)
     name = ndb.StringProperty('1', required=True)
@@ -413,7 +414,7 @@ class DomainRule(ndb.Model):
     roles = ndb.KeyProperty('6', kind=DomainRole, repeated=True)
 
 # future implementation - prototype!
-class DomainField(ndb.Model):
+class Field(ndb.Model):
     
     # LocalStructuredProperty model
     name = ndb.StringProperty('1', required=True, indexed=False)
@@ -421,7 +422,7 @@ class DomainField(ndb.Model):
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
 
 # future implementation - prototype!
-class DomainBusinessUnit(ndb.Expando):
+class Company(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - active,name
@@ -448,7 +449,7 @@ class DomainBusinessUnit(ndb.Expando):
     # reference = ndb.StringProperty('15')
     
 # done! - sudo kontrolisan model
-class DomainStore(ndb.Expando):
+class Store(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
@@ -600,7 +601,7 @@ class DomainStore(ndb.Expando):
         object_log.put()
 
 # done!
-class DomainStoreFeedback(ndb.Model):
+class StoreFeedback(ndb.Model):
     
     # LocalStructuredProperty model
     # ovaj model dozvoljava da se radi feedback trending per month per year
@@ -615,7 +616,7 @@ class DomainStoreFeedback(ndb.Model):
     neutral_feedback_count = ndb.IntegerProperty('5', required=True, indexed=False)
 
 # done!
-class DomainStoreContent(ndb.Model):
+class StoreContent(ndb.Model):
     
     # ancestor DomainStore (Catalog, for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
@@ -665,7 +666,7 @@ class DomainStoreContent(ndb.Model):
         store_content_key.delete()
 
 # done!
-class DomainStoreShippingExclusion(Location):
+class StoreShippingExclusion(Location):
     
     # ancestor DomainStore (DomainCatalog, for caching) (namespace Domain)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
@@ -710,7 +711,7 @@ class DomainStoreShippingExclusion(Location):
         store_shipping_exclusion_key.delete()
 
 # done!
-class DomainTax(ndb.Expando):
+class Tax(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - active,sequence
@@ -770,7 +771,7 @@ class DomainTax(ndb.Expando):
         tax_key.delete()
 
 # done!
-class DomainCarrier(ndb.Model):
+class Carrier(ndb.Model):
     
     # root (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
@@ -825,7 +826,7 @@ class DomainCarrier(ndb.Model):
         carrier_key.delete()
 
 # done!
-class DomainCarrierLine(ndb.Expando):
+class CarrierLine(ndb.Expando):
     
     # ancestor DomainCarrier (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
@@ -883,7 +884,7 @@ class DomainCarrierLine(ndb.Expando):
         carrier_line_key.delete()
 
 # done!
-class DomainCarrierLineRule(ndb.Model):
+class CarrierLineRule(ndb.Model):
     
     # LocalStructuredProperty model
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L226
@@ -893,7 +894,7 @@ class DomainCarrierLineRule(ndb.Model):
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
 
 # done! - sudo kontrolisan model
-class DomainCatalog(ndb.Expando):
+class Catalog(ndb.Expando):
     
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
@@ -1029,7 +1030,7 @@ class DomainCatalog(ndb.Expando):
         object_log.put()
 
 # done!
-class DomainCatalogImage(Image):
+class CatalogImage(Image):
     
     # ancestor DomainCatalog (namespace Domain)
     # composite index: ancestor:yes - sequence
@@ -1074,7 +1075,7 @@ class DomainCatalogImage(Image):
         catalog_image_key.delete()
 
 # done!
-class DomainCatalogPricetag(ndb.Model):
+class CatalogPricetag(ndb.Model):
     
     # ancestor DomainCatalog (namespace Domain)
     product_template = ndb.KeyProperty('1', kind=DomainProductTemplate, required=True, indexed=False)
@@ -1131,7 +1132,7 @@ class DomainCatalogPricetag(ndb.Model):
         catalog_pricetag_key.delete()
 
 # done!
-class DomainProductTemplate(ndb.Expando):
+class ProductTemplate(ndb.Expando):
     
     # ancestor DomainCatalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
@@ -1315,7 +1316,7 @@ class DomainProductTemplate(ndb.Expando):
                 i += 1
 
 # done!
-class DomainProductInstance(ndb.Expando):
+class ProductInstance(ndb.Expando):
     
     # ancestor DomainProductTemplate
     #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
@@ -1359,7 +1360,7 @@ class DomainProductInstance(ndb.Expando):
         object_log.put()
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class DomainProductInventoryLog(ndb.Model):
+class ProductInventoryLog(ndb.Model):
     
     # ancestor DomainProductInstance (namespace Domain)
     # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
@@ -1372,7 +1373,7 @@ class DomainProductInventoryLog(ndb.Model):
     balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
-class DomainProductInventoryAdjustment(ndb.Model):
+class ProductInventoryAdjustment(ndb.Model):
     
     # ancestor DomainProductInstance (namespace Domain)
     # not logged ?
@@ -1405,7 +1406,7 @@ class DomainProductInventoryAdjustment(ndb.Model):
         new_product_inventory_log.put()
 
 # done!
-class DomainProductVariant(ndb.Model):
+class ProductVariant(ndb.Model):
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # http://v6apps.openerp.com/addon/1809
@@ -1448,7 +1449,7 @@ class DomainProductVariant(ndb.Model):
         object_log.put()
 
 # done!
-class DomainProductContent(ndb.Model):
+class ProductContent(ndb.Model):
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # composite index: ancestor:yes - title
@@ -1486,8 +1487,10 @@ class DomainProductContent(ndb.Model):
         object_log.put()
 
 ################################################################################
-# User - 3
+# CORE - 3
 ################################################################################
+
+# ovde jos nedostaje i Role(ndb.Model) koji je isto sto i Role(ndb.Model) u domain modulu.
 
 # done! - sudo kontrolisan model
 class User(ndb.Expando):
@@ -1811,7 +1814,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     catalog_published_date = ndb.DateTimeProperty('5', required=True)
 
 ################################################################################
-# USER REQUEST - 2
+# REQUEST - 2 - mozda prebaciti u misc
 ################################################################################
 
 # done! - sudo kontrolisan model 
@@ -1995,7 +1998,7 @@ class SupportRequest(ndb.Model):
         object_log.put()
 
 ################################################################################
-# TRADE - 11
+# TRADE - 11 - ili mozda da se zove order
 ################################################################################
 
 # done! - carrier funkcija za obracun i odabir carrier-a nije zavrsena! to cemo zavrsiti kad budemo radili dev trade modula..
@@ -2940,7 +2943,7 @@ class Order(ndb.Expando):
                     valid_carriers.append(tax)
         return valid_carriers
 
-# done!
+# done! - ovaj model se verovatno izbacuje
 class BillingOrder(ndb.Expando):
     
     # root (namespace Domain)
@@ -3769,7 +3772,7 @@ class Message(ndb.Model):
         object_log.put()
 
 ################################################################################
-# LOGS - 1
+# LOGS - 1 - mozda prebaciti u core
 ################################################################################
 
 # done!
