@@ -254,9 +254,9 @@ class Role(ndb.Model):
     # Pravi novu domain rolu
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainRole'. 
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-Role'. 
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        role = DomainRole(name=var_name, permissions=var_permissions, readonly=False) # readonly je uvek False za user generated Roles
+        role = Role(name=var_name, permissions=var_permissions, readonly=False) # readonly je uvek False za user generated Roles
         role_key = role.put()
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='create', state='none', log=role)
         object_log.put()
@@ -264,7 +264,7 @@ class Role(ndb.Model):
     # Azurira postojecu domain rolu
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainRole'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-Role'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         role.name = var_name
         role.permissions = var_permissions
@@ -275,7 +275,7 @@ class Role(ndb.Model):
     # Brise postojecu domain rolu
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-DomainRole'.
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'delete-Role'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         object_log = ObjectLog(parent=role_key, agent=agent_key, action='delete', state='none')
         object_log.put()
