@@ -19,9 +19,12 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
-class _BaseModel():
+class _BaseModel(Model):
   
-  __original_values = {}
+  original_values = {}
+  
+  def loaded(self):
+      return self.key != None
   
   def _pre_put_hook(self):
       for p in self._properties:
@@ -36,20 +39,12 @@ class _BaseModel():
          check = pyson.PYSONDecoder(environ).decode(encoded)
          if not check:
             # if the evaluation is not true, set the original values because new value is not allowed to be set
-            prop._set_value(self, self.__original_values.get(prop._name))
+            prop._set_value(self, self.original_values.get(prop._name))
     
-  def original_values(self):
+  def set_original_values(self):
       for p in self._properties:
-          self.__original_values[p] = self._properties[p]._get_value(self)
+          self.original_values[p] = self._properties[p]._get_value(self)
     
-  @classmethod
-  def _from_pb(cls, *args, **kwargs):
-    """ Allows for model to get original values who get loaded from the protocol buffer  """
-      
-    entity = super(_BaseModel, cls)._from_pb(*args, **kwargs)
-    entity.original_values()
-    return entity
-
   @classmethod
   def _get_kind(cls):
     """Return the kind name for this class.
@@ -57,16 +52,24 @@ class _BaseModel():
     This defaults to cls.__name__; users may overrid this to give a
     class a different on-disk name than its class name.
     """
-    if hasattr(cls, '_KIND'):
-       if cls._KIND < 0:
-          raise TypeError('Invalid _KIND ID %s, for %s' % (cls._KIND, cls.__name__)) 
-       return str(cls._KIND)
+    if hasattr(cls, 'KIND_ID'):
+       if cls.KIND_ID < 0:
+          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__)) 
+       return str(cls.KIND_ID)
     return cls.__name__
 
-class BaseModel(_BaseModel, Model):
-  """
-   Base class for all `ndb.Model` entities
-  """
+class BaseModel(_BaseModel):
+    """
+      Base class for all `ndb.Model` entities
+    """
+    @classmethod
+    def _from_pb(cls, *args, **kwargs):
+        """ Allows for model to get original values who get loaded from the protocol buffer  """
+          
+        entity = super(_BaseModel, cls)._from_pb(*args, **kwargs) 
+        entity.set_original_values()
+        return entity
+
   
 class BaseExpando(_BaseModel, Expando):
   """
@@ -130,17 +133,26 @@ class SuperStringProperty(_BaseProperty, StringProperty):
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
     pass
+
+class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
+    pass
    
 class SuperStateProperty(_BaseProperty, IntegerProperty):
- 
+    
+    # @todo cant use this because its impossible to make it work with Model.query
     def __get__(self, entity, unused_cls=None):
+        """Descriptor protocol: get the value from the entity."""
+        
         value = super(SuperStateProperty, self).__get__(entity, unused_cls)
+        if entity is None:
+          return value  # __get__ called on class
         return entity.resolve_state_name_by_code(value)
 
     def __set__(self, entity, value):
       """Descriptor protocol: set the value on the entity."""
+      
       value = entity.resolve_state_code_by_name(value)
-      super(SuperStateProperty, self).__get__(entity, value)
+      super(SuperStateProperty, self).__set__(entity, value)
   
 class SuperKeyProperty(_BaseProperty, KeyProperty):
     pass
@@ -182,8 +194,7 @@ class SuperRelationProperty(dict):
            user = ndb.SuperRelationProperty(User)
            name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
            
-     foo = UserChildEntity(name='Edward')
-     foo.user = ndb.Key('User', 'foo').get() # since this is a Fake property, it cannot be placed via model constructor
+     foo = UserChildEntity(name='Edward', user=ndb.Key('User', 'foo').get())
      foo.save()     
      
      The `Eval` will evaluate: self.user.state != 'active' and therefore the property
@@ -241,6 +252,30 @@ class Validator:
     
   def __call__(self, prop, value):
       return self.callback(prop, value, **self.kwargs)
+  
+class Response(dict):
+    """ Response dict object used for preparing data which is returned to clients for parsing """
+    
+    def __setattr__(self, *args, **kwargs):
+        return dict.__setitem__(self, *args, **kwargs)
+    
+    def __getattr__(self, *args, **kwargs):
+        return dict.__getitem__(self, *args, **kwargs)
+    
+    def error(self, f, m):
+        
+        if self['errors'] == None:
+           self['errors'] = {}
+           
+        if f not in self['errors']:
+            self['errors'][f] = list()
+            
+        self['errors'][f].append(m)
+        return self
+    
+    def __init__(self):
+        self['errors'] = None
+        
   
 class EvalEnvironment(dict):
 

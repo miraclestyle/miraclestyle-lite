@@ -19,7 +19,7 @@ from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
 
 _WSGI_CONFIG = None
-
+ 
 def wsgi_config(as_tuple=False):
     
     global _WSGI_CONFIG
@@ -75,6 +75,7 @@ def wsgi_config(as_tuple=False):
        return _WSGI_CONFIG
     else:
        return tuple(_WSGI_CONFIG.items())
+ 
 
 class Handler(webapp2.RequestHandler):
     
@@ -89,6 +90,7 @@ class Handler(webapp2.RequestHandler):
     _USE_SESSION = True
     
     template = {'base' : 'index.html'}
+ 
      
     def send_json(self, data):
         ent = 'application/json;charset=utf-8'
@@ -194,7 +196,14 @@ class Segments(Handler):
 class Angular(Handler):
       
       data = {}
-    
+      
+      def dispatch(self):  
+          self.data = {}
+          super(Angular, self).dispatch()
+           
+      def angular_redirect(self, *args, **kwargs):
+          self.data['redirect'] = self.uri_for(*args, **kwargs)
+     
       def after(self):
           if self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest':
              if not self.data:
@@ -205,6 +214,7 @@ class Angular(Handler):
              return
          
           self.render('angular/index.html', {'initdata' : self.data})
+          
           
 class AngularSegments(Segments, Angular):
       pass
