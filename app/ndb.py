@@ -136,6 +136,12 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
     pass
+
+class SuperKeyProperty(_BaseProperty, KeyProperty):
+    pass
+
+class SuperBooleanProperty(_BaseProperty, BooleanProperty):
+    pass
    
 class SuperStateProperty(_BaseProperty, IntegerProperty):
     
@@ -153,9 +159,7 @@ class SuperStateProperty(_BaseProperty, IntegerProperty):
       
       value = entity.resolve_state_code_by_name(value)
       super(SuperStateProperty, self).__set__(entity, value)
-  
-class SuperKeyProperty(_BaseProperty, KeyProperty):
-    pass
+      
  
 class DecimalProperty(SuperStringProperty):
   """Decimal property that accepts only `decimal.Decimal`"""
@@ -232,6 +236,112 @@ class SuperRelationProperty(dict):
         pass
      return super(SuperRelationProperty, self).get(item, default)     
  
+ 
+class WorkflowTransitionError(Exception):
+      pass
+  
+class WorkflowStateError(Exception):
+      pass
+  
+class WorkflowActionError(Exception):
+      pass
+  
+class WorkflowActionNotReadyError(Exception):
+      pass
+  
+class WorkflowBadStateCodeError(Exception):
+      pass
+
+class WorkflowBadActionCodeError(Exception):
+      pass
+ 
+class Workflow():
+    
+      OBJECT_DEFAULT_STATE = False
+      OBJECT_STATES = {}
+      OBJECT_TRANSITIONS = {}
+      OBJECT_ACTIONS = {}
+      
+      __record_action = None
+      
+      @classmethod
+      def default_state(cls):
+        # returns default state for this model
+        return cls.resolve_state_code_by_name(cls.OBJECT_DEFAULT_STATE)[0]
+  
+      @classmethod
+      def resolve_state_code_by_name(cls, state_code):
+          """
+          @return tuple (int, str)
+          """
+          codes = cls.OBJECT_STATES
+          code = codes.get(state_code)
+          if not code:
+             raise WorkflowStateError('This model does not have state code %s, while available %s' % (state_code, codes))
+          return code[0]
+      
+      @classmethod
+      def resolve_action_code_by_name(cls, st):
+          """
+          @return str
+          """
+          actions = cls.OBJECT_ACTIONS
+          action = actions.get(st, None)
+          if action == None:
+             raise WorkflowActionError('Unexisting action called %s, while available %s' % (st, actions))
+          return action
+      
+      @classmethod
+      def resolve_action_name_by_code(cls, code):
+          """
+          @return int
+          """
+          for k, v in cls.OBJECT_ACTIONS.items():
+              if v == code:
+                 return k
+          raise WorkflowBadActionCodeError('Bad action coded provided %s, possible names %s' % (code, cls.OBJECT_ACTIONS.keys()))  
+      
+      @classmethod
+      def resolve_state_name_by_code(cls, code):
+          """
+          @return str
+          """
+          for k, value in cls.OBJECT_STATES.items():
+              if value[0] == code:
+                 return k
+          raise WorkflowBadStateCodeError('Bad state code provided %s, possible names %s' % (code, cls.OBJECT_STATES.keys()))  
+      
+      def check_transition(self, state, action):
+       
+          transitions = self.OBJECT_TRANSITIONS[action]
+          
+          if self.state not in transitions['from'] or state not in transitions['to']:
+             raise WorkflowTransitionError('This object cannot go from state `%s` to state `%s`. It can only go from states `%s` to `%s`'
+                                           % (self.state, state, transitions['from'], transitions['to']))
+      
+      def set_state(self, state):
+          self.state = self.resolve_state_code_by_name(state)
+          
+      def new_action(self, state, action, **kwargs):
+          """ Sets new state inited by some action, and returns instance of object log ready for put """
+          
+          self.set_state(state)
+          self.check_transition(state, action)
+          
+          from app.core import logs
+          objlog = logs.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
+          
+          self.__record_action = objlog
+
+          return objlog
+      
+      def record_action(self):
+          if self.__record_action is None:
+             raise WorkflowActionNotReadyError('This entity did not have self.new_action called')
+         
+          return self.__record_action.put()
+ 
+  
 class Validator:
     
   """

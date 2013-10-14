@@ -5,8 +5,8 @@ Created on Oct 10, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.module.core import tests
-
+from app.core import tests
+ 
 from webclient.handler import Angular
 from webclient.route import register
 
@@ -34,6 +34,7 @@ class Tests(Angular):
         res['daemons'] = 2
         res.error('name', 'demons are')
         res.error('name', 'demons are there')
+  
  
         self.data['hello'] = 'World'
         self.data['responder'] = res

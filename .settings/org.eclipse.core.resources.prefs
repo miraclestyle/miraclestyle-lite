@@ -1,7 +1,9 @@
 eclipse.preferences.version=1
+encoding//app/core/logs.py=utf-8
+encoding//app/core/tests.py=utf-8
+encoding//app/core/user.py=utf-8
+encoding//app/domain/domain.py=utf-8
 encoding//app/memcache.py=utf-8
-encoding//app/module/core/tests.py=utf-8
-encoding//app/module/core/user.py=utf-8
 encoding//app/ndb.py=utf-8
 encoding//app/pyson.py=utf-8
 encoding//app/settings.py=utf-8

@@ -5,10 +5,9 @@ Created on Oct 13, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.module.core import user
 from app.pyson import Eval 
 
-class TestModel(ndb.BaseModel, user.Workflow):
+class TestModel(ndb.BaseModel, ndb.Workflow):
     
     OBJECT_DEFAULT_STATE = 'active'
     
