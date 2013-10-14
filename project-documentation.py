@@ -65,12 +65,20 @@ update
 # package-i ce organizovati logicke celine aplikacije: 
 
 # app/
-# app/modules
-# app/modules/core
-# app/modules/domain
-# app/modules/buyer
-# app/modules/misc
-# app/modules/trade
+# app/core
+# app/core/autorization.py
+# app/core/buyer.py
+# app/core/misc.py
+# app/core/order.py
+# app/core/logs.py
+# app/domain
+# app/domain/domain.py
+# app/domain/role.py
+# app/domain/user.py
+# app/domain/store.py
+# app/domain/tax.py
+# app/domain/carrier.py
+# app/domain/catalog.py
 
 # moduli ce organizovati entitetske grupe, pa makar to bio samo jedan model!
 # Sto se tice ndb-a, konvencija prati sledece:
