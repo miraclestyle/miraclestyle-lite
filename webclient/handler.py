@@ -7,16 +7,16 @@ Created on Jul 15, 2013
 import os
 import json
 import webapp2
-
+  
 from jinja2 import FileSystemLoader
 
 from webapp2_extras import sessions, jinja2
 
-from app import settings
+from app import settings, ndb
 from app.util import import_module, logger
  
 from webclient import webclient_settings
-from webclient.util import JSONEncoderHTML, Jinja
+from webclient.util import JSONEncoderHTML, Jinja, DatastoreSessionFactory
 
 _WSGI_CONFIG = None
  
@@ -180,7 +180,7 @@ class Handler(webapp2.RequestHandler):
     @webapp2.cached_property
     def session(self):
         # Returns a session using the default cookie key.
-        return self.session_store.get_session(backend=webclient_settings.SESSION_STORAGE)
+        return self.session_store.get_session(backend=DatastoreSessionFactory)
      
 class Segments(Handler):
       """
@@ -196,9 +196,31 @@ class Segments(Handler):
 class Angular(Handler):
       
       data = {}
+      _current_user = None
+      
+      def for_guests(self, where=None):
+          if where is None:
+             where = 'index'
+          
+          if self.current_user is not None:
+             self.redirect(self.uri_for(where))
+      
+      def ask_login(self):
+          if self.current_user is None:
+             self.redirect(self.uri_for('login'))
+      
+      @property
+      def current_user(self):
+          k = webclient_settings.SESSION_USER_KEY
+          if k in self.session and self._current_user is None:
+             uid = self.session.get(k)
+             if uid and isinstance(uid, ndb.Key):
+                self._current_user = uid.get()
+          return self._current_user
       
       def dispatch(self):  
           self.data = {}
+          self._current_user = None
           super(Angular, self).dispatch()
            
       def angular_redirect(self, *args, **kwargs):

@@ -8,6 +8,8 @@ import imp
 import os
 import json
  
+from app.core.user import Session
+from webapp2_extras import sessions
 
 class Jinja():
     
@@ -51,3 +53,43 @@ def package_contents(package_name):
     return set([os.path.splitext(module)[0]
         for module in os.listdir(pathname)
         if module.endswith(MODULE_EXTENSIONS)])
+    
+
+class DatastoreSessionFactory(sessions.CustomBackendSessionFactory):
+    """A session factory that stores data serialized in datastore.
+
+    To use datastore sessions, pass this class as the `factory` keyword to
+    :meth:`webapp2_extras.sessions.SessionStore.get_session`::
+
+        from webapp2_extras import sessions_ndb
+
+        # [...]
+
+        session = self.session_store.get_session(
+            name='db_session', factory=sessions_ndb.DatastoreSessionFactory)
+
+    See in :meth:`webapp2_extras.sessions.SessionStore` an example of how to
+    make sessions available in a :class:`webapp2.RequestHandler`.
+    """
+
+    #: The session model class.
+    session_model = Session
+
+    def _get_by_sid(self, sid):
+        """Returns a session given a session id."""
+        if self._is_valid_sid(sid):
+            data = self.session_model.get_by_sid(sid)
+            if data is not None:
+                self.sid = sid
+                return sessions.SessionDict(self, data=data)
+
+        self.sid = self._get_new_sid()
+        return sessions.SessionDict(self, new=True)
+
+    def save_session(self, response):
+        if self.session is None or not self.session.modified:
+            return
+
+        self.session_model(id=self.sid, data=dict(self.session))._put()
+        self.session_store.save_secure_cookie(
+            response, self.name, {'_sid': self.sid}, **self.session_args)

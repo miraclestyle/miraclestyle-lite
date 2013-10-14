@@ -44,4 +44,4 @@ class Other(Angular):
     pass
 
 
-ROUTES = register(None, ('/tests', Tests), ('/other', Other))
+ROUTES = register(('/tests', Tests), ('/other', Other))

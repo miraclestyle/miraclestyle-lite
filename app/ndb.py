@@ -29,6 +29,11 @@ class _BaseModel(Model):
   def _pre_put_hook(self):
       for p in self._properties:
           prop = self._properties.get(p)
+          if prop._get_value(self) is None:
+             cb = 'default_%s' % p
+             if hasattr(self, cb):
+                prop._set_value(self, getattr(self, cb)())
+             
           if prop and hasattr(prop, '_writable') and prop._writable:
              self.__resolve_writable(prop)
  
@@ -44,6 +49,7 @@ class _BaseModel(Model):
   def set_original_values(self):
       for p in self._properties:
           self.original_values[p] = self._properties[p]._get_value(self)
+       
     
   @classmethod
   def _get_kind(cls):
@@ -262,7 +268,7 @@ class Workflow():
       OBJECT_TRANSITIONS = {}
       OBJECT_ACTIONS = {}
       
-      __record_action = None
+      __record_action = []
       
       @classmethod
       def default_state(cls):
@@ -322,24 +328,33 @@ class Workflow():
       def set_state(self, state):
           self.state = self.resolve_state_code_by_name(state)
           
-      def new_action(self, state, action, **kwargs):
+      @property
+      def get_state(self):
+          return self.resolve_state_name_by_code(self.state)
+          
+      def new_action(self, action, state=None, **kwargs):
           """ Sets new state inited by some action, and returns instance of object log ready for put """
           
-          self.set_state(state)
-          self.check_transition(state, action)
+          if state == None: # if state is unchanged, no checks for transition needed?
+              self.set_state(state)
+              self.check_transition(state, action)
+              
+          action = self.resolve_action_code_by_name(action)
           
           from app.core import logs
           objlog = logs.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
           
-          self.__record_action = objlog
+          self.__record_action.append(objlog)
 
           return objlog
       
-      def record_action(self):
-          if self.__record_action is None:
+      def record_action(self, skip_check=False):
+          any_actions = len(self.__record_action)
+          if any_actions and not skip_check:
              raise WorkflowActionNotReadyError('This entity did not have self.new_action called')
-         
-          return self.__record_action.put()
+          
+          if any_actions:
+             return put_multi(self.__record_action)
  
   
 class Validator:

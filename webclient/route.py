@@ -47,10 +47,17 @@ class AngularRoute(Route):
         self.angular_template = angular_template
 
 def register(prefix=None, *args):
+    
     routes = []
+    args_ = list()
+    if prefix == None:
+       args_.append(prefix)
+    
+    args = args_ + list(args)
+  
     for arg in args:
         if isinstance(arg, (list, tuple)):
-            if prefix:
+            if prefix and isinstance(prefix, basestring):
                 if isinstance(arg, tuple):
                    arg = list(arg)
                 try:

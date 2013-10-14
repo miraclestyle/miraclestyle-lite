@@ -4,8 +4,39 @@ Created on Oct 11, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
+from app import ndb, memcache, settings, oauth2
 from app.pyson import Eval
+
+class Session(ndb.BaseExpando):
+    """A model to store session data. This is required for authenticating users."""
+
+    #: Save time.
+    updated = ndb.SuperDateTimeProperty(auto_now=True)
+    #: Session data, pickled.
+    data = ndb.PickleProperty()
+
+    @classmethod
+    def get_by_sid(cls, sid):
+        """Returns a ``Session`` instance by session id.
+
+        :param sid:
+            A session id.
+        :returns:
+            An existing ``Session`` entity.
+        """
+        data = memcache.get(sid)
+        if not data:
+            session = ndb.Key(cls, sid).get()
+            if session:
+                data = session.data
+                memcache.set(sid, data)
+
+        return data
+
+    def _put(self):
+        """Saves the session and updates the memcache entry."""
+        memcache.set(self._key.id(), self.data)
+        super(Session, self).put()
  
      
 class Identity(ndb.BaseModel):
@@ -17,7 +48,7 @@ class Identity(ndb.BaseModel):
     primary = ndb.BooleanProperty('4', default=True)
           
           
-class User(ndb.BaseExpando):
+class User(ndb.BaseExpando, ndb.Workflow):
     
     identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
@@ -31,9 +62,7 @@ class User(ndb.BaseExpando):
     }
     
     KIND_ID = 0
-    
-    OBJECT_DEFAULT_STATE = 'su_active'
-    
+  
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
         # second value represents which transition will be called for changing the state
@@ -63,6 +92,84 @@ class User(ndb.BaseExpando):
            'to'   : ('su_suspended',),
         },
     }   
+    
+    @classmethod
+    def default_state(cls):
+        return cls.resolve_state_code_by_name('su_active')
+    
+    @classmethod
+    def login(cls, **kwds):
+        response = ndb.Response()
+        login_method = kwds.get('login_method')
+        if login_method in settings.LOGIN_METHODS:
+           cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
+           cfg['redirect_uri'] = kwds.get('redirect_uri')
+           
+           code = kwds.get('code')
+           error = kwds.get('error')
+           cli = oauth2.Client(**cfg)
+           
+           if error:
+              response.error('oauth2_error', 'You rejected access to your account')
+              return response
+           
+           if code:
+              cli.get_token(code)
+              
+              if not cli.access_token:
+                 response.error('oauth2_error', 'Failed to retrieve access_token')
+                 return response
+              
+              response['access_token'] = cli.access_token
+              
+              userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
+              info = cli.resource_request('GET', userinfo)
+               
+              if info and 'email' in info:
+                 auth_id = settings.LOGIN_METHODS[login_method]
+                 identity_id = '%s-%s' % (info['id'], auth_id)
+                 email = info['email']
+                 
+                 usr = cls.query(cls.identities.identity == identity_id).get()
+                 if not usr:
+                    usr = usr = cls.query(cls.emails == email).get()
+                  
+                 if usr:
+                     if usr.get_state != 'active':
+                        response.error('user', 'This user is not active')
+                        return response
+                     
+                     if email not in usr.emails:
+                        usr.emails.append(email)
+                        usr.put()
+                     usr.new_action('login')
+                     usr.record_action()   
+                 else:
+                    usr = cls.register(email=email, identity=identity_id)
+                         
+                 response['logged_in'] = usr
+              else:
+                  response.error('oauth2_error', 'Failed to retrieve data from provider. Please try again.')
+                  
+           else:
+              response['authorization_url'] = cli.get_authorization_code_uri()
+        else:
+           response.error('login_method', 'Invalid login method selected.')
+    
+    @classmethod
+    def register(cls, **kwds):
+        
+         usr = cls()
+         email = kwds.get('email')
+         identity = kwds.get('identity')
+         usr.emails.append()
+         usr.identities.append(Identity(identity=identity, email=email, primary=True, associated=True))
+         usr.put()
+         usr.new_action('register')
+         usr.record_action()
+         
+         return usr
+ 
       
 class IPAddress(ndb.BaseModel):
     
