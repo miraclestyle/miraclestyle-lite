@@ -69,7 +69,7 @@ update
 # app/core/autorization.py
 # app/core/buyer.py
 # app/core/misc.py
-# app/core/order.py
+# app/core/order.py ? ovo treba dobro razmotriti gde staviti i kako organizovati!!!
 # app/core/logs.py
 # app/domain
 # app/domain/domain.py
@@ -80,7 +80,10 @@ update
 # app/domain/carrier.py
 # app/domain/catalog.py
 
-# moduli ce organizovati entitetske grupe, pa makar to bio samo jedan model!
+# moduli za domain ce se organizovati u entitetske grupe, pa makar to bio samo jedan model!
+# napr: store.py ce imati sve klase cija imana pocinju sa Store...
+# module za core ce se organizovati u logicke grupe!
+# napr: misc.py ce imati sve klase koje su u kategoriji misc.
 # Sto se tice ndb-a, konvencija prati sledece:
 # Kind ID-jevi su uvek UNIQUE UNUTAR CITAVE APLIKACIJE!
 # Svi ostali ndb ID-jevi su UNIQUE UNUTAR MODELA, i isto vazi za workflow konvenciju (states, transitions, actions....).
@@ -3793,12 +3796,12 @@ class ObjectLog(ndb.Expando):
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
     agent = ndb.KeyProperty('2', kind=User, required=True)
     action = ndb.IntegerProperty('3', required=True)
-    state = ndb.IntegerProperty('4', required=True) # verovatno ide u expando
     _default_indexed = False
     pass
-    # message / m = ndb.TextProperty('5')# soft limit 64kb - to determine char count
-    # note / n = ndb.TextProperty('6')# soft limit 64kb - to determine char count
-    # log / l = ndb.PickleProperty('7')
+    # message / m = ndb.TextProperty('4')# soft limit 64kb - to determine char count
+    # note / n = ndb.TextProperty('5')# soft limit 64kb - to determine char count
+    # svi property iz samog objekta
+    # napr: state = ndb.IntegerProperty('6', required=True)
     
     # ovako se smanjuje storage u Datastore, i trebalo bi sprovesti to isto na sve modele
     @classmethod
