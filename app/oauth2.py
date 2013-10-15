@@ -64,6 +64,7 @@ class Client(object):
         self.authorization_uri = authorization_uri
         self.token_uri = token_uri
         self.access_token = access_token
+        self.scope = kwds.get('scope')
     
     def resource_request(self, method, url, data=None):
         if data is None:
@@ -74,6 +75,8 @@ class Client(object):
         url = build_url(url, {'access_token' : self.access_token})
         
         try:
+            if data is not None:
+               data = urllib.urlencode(data)
             response = urlfetch.fetch(url=url, payload=data, method=method)
             if response.status_code == 200:
                return json.loads(response.content)
@@ -101,6 +104,8 @@ class Client(object):
         """
         if not url.startswith('https://'):
             raise ValueError('Protocol must be HTTPS, invalid URL: %s' % url)
+        
+        data = urllib.urlencode(data)
         response = urlfetch.fetch(url=url, payload=data, method=urlfetch.POST, headers={'Content-Type': 'application/x-www-form-urlencoded'})
         if response and response.status_code == 200:
            return json.loads(response.content)
@@ -116,6 +121,7 @@ class Client(object):
         if 'response_type' not in params:
             params['response_type'] = self.default_response_type
         params.update({'client_id': self.client_id,
+                       'scope' : self.scope,
                        'redirect_uri': self.redirect_uri})
         return build_url(self.authorization_uri, params)
 

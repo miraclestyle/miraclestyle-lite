@@ -17,6 +17,7 @@ from app.util import import_module, logger
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja, DatastoreSessionFactory
+from webclient.route import get_routes
 
 _WSGI_CONFIG = None
  
@@ -28,22 +29,17 @@ def wsgi_config(as_tuple=False):
        if not as_tuple:
           return _WSGI_CONFIG
        return tuple(_WSGI_CONFIG.items())
- 
-    ROUTES = []
-   
+  
     TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
       
     for a in webclient_settings.ACTIVE_CONTROLLERS:
-        module_manifest = import_module('webclient.controllers.%s' % a)
-        if module_manifest:
-            routes = getattr(module_manifest, 'ROUTES', None)
-            if routes:
-               ROUTES += routes
-                
+        import_module('webclient.controllers.%s' % a)
+          
     JINJA_FILTERS = Jinja.filters
     JINJA_GLOBALS = Jinja.globals         
-    # It won't change, so convert it to a tuple to save memory.           
-    ROUTES = tuple(ROUTES)       
+    # It won't change, so convert it to a tuple to save memory.   
+    ROUTES = tuple(get_routes())
+   
     JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : ROUTES, 'settings' : settings, 'webclient_settings' : webclient_settings})
     TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)
     
@@ -89,9 +85,36 @@ class Handler(webapp2.RequestHandler):
     
     _USE_SESSION = True
     
+    data = {}
     template = {'base' : 'index.html'}
  
-     
+    _current_user = None
+      
+    def for_guests(self, where=None):
+        if where is None:
+           where = 'index'
+          
+        if self.current_user is not None:
+           self.redirect(self.uri_for(where))
+      
+    def ask_login(self):
+        if self.current_user is None:
+           self.redirect(self.uri_for('login'))
+            
+    def set_current_user(self, usr):
+        self._current_user = usr
+        self.session[webclient_settings.SESSION_USER_KEY] = usr
+      
+    @property
+    def current_user(self):
+        k = webclient_settings.SESSION_USER_KEY
+        if k in self.session and self._current_user is None:
+           uid = self.session.get(k)
+           if uid and isinstance(uid, ndb.Key):
+              self._current_user = uid.get()
+        return self._current_user
+ 
+            
     def send_json(self, data):
         ent = 'application/json;charset=utf-8'
         if self.response.headers.get('Content-Type') != ent:
@@ -156,6 +179,9 @@ class Handler(webapp2.RequestHandler):
  
     def dispatch(self):
         
+        self.data = {}
+        self._current_user = None
+        
         self.before_before()
   
         if self._USE_SESSION:
@@ -180,7 +206,7 @@ class Handler(webapp2.RequestHandler):
     @webapp2.cached_property
     def session(self):
         # Returns a session using the default cookie key.
-        return self.session_store.get_session(backend=DatastoreSessionFactory)
+        return self.session_store.get_session(backend='webclient')
      
 class Segments(Handler):
       """
@@ -194,35 +220,7 @@ class Segments(Handler):
          
          
 class Angular(Handler):
-      
-      data = {}
-      _current_user = None
-      
-      def for_guests(self, where=None):
-          if where is None:
-             where = 'index'
-          
-          if self.current_user is not None:
-             self.redirect(self.uri_for(where))
-      
-      def ask_login(self):
-          if self.current_user is None:
-             self.redirect(self.uri_for('login'))
-      
-      @property
-      def current_user(self):
-          k = webclient_settings.SESSION_USER_KEY
-          if k in self.session and self._current_user is None:
-             uid = self.session.get(k)
-             if uid and isinstance(uid, ndb.Key):
-                self._current_user = uid.get()
-          return self._current_user
-      
-      def dispatch(self):  
-          self.data = {}
-          self._current_user = None
-          super(Angular, self).dispatch()
-           
+       
       def angular_redirect(self, *args, **kwargs):
           self.data['redirect'] = self.uri_for(*args, **kwargs)
      

@@ -16,5 +16,4 @@ from webclient.handler import wsgi_config
  
   
 cfg = wsgi_config()
-print cfg['ROUTES']
 app = webapp2.WSGIApplication(cfg['ROUTES'], debug=settings.DEBUG, config=cfg['JINJA_CONFIG'])

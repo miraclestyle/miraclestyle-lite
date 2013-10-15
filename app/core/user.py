@@ -62,6 +62,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
     }
     
     KIND_ID = 0
+    
+    OBJECT_DEFAULT_STATE = 'su_active'
   
     OBJECT_STATES = {
         # tuple represents (state_code, transition_name)
@@ -93,9 +95,11 @@ class User(ndb.BaseExpando, ndb.Workflow):
         },
     }   
     
-    @classmethod
-    def default_state(cls):
-        return cls.resolve_state_code_by_name('su_active')
+    
+    def record_ip(self, ip):
+        addr = IPAddress(ip_address=ip, parent=self.key)
+        addr.put()
+        return addr
     
     @classmethod
     def login(cls, **kwds):
@@ -115,7 +119,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
            
            if code:
               cli.get_token(code)
-              
+          
               if not cli.access_token:
                  response.error('oauth2_error', 'Failed to retrieve access_token')
                  return response
@@ -133,28 +137,37 @@ class User(ndb.BaseExpando, ndb.Workflow):
                  usr = cls.query(cls.identities.identity == identity_id).get()
                  if not usr:
                     usr = usr = cls.query(cls.emails == email).get()
-                  
-                 if usr:
-                     if usr.get_state != 'active':
+                 
+                 if usr and usr.get_state != 'su_active':
                         response.error('user', 'This user is not active')
                         return response
+                        
+                 @ndb.transactional
+                 def trans(usr): 
+                     if usr:
+                         if email not in usr.emails:
+                            usr.emails.append(email)
+                            usr.put() 
+                     else:
+                        usr = cls.register(email=email, identity=identity_id)
+                     usr.record_ip(kwds.get('ip'))
+                     usr.new_action('login', agent=usr.key)
+                     usr.record_action() 
                      
-                     if email not in usr.emails:
-                        usr.emails.append(email)
-                        usr.put()
-                     usr.new_action('login')
-                     usr.record_action()   
-                 else:
-                    usr = cls.register(email=email, identity=identity_id)
-                         
+                     return usr         
+                     
+                 usr = trans(usr)
+                 
                  response['logged_in'] = usr
               else:
-                  response.error('oauth2_error', 'Failed to retrieve data from provider. Please try again.')
+                 response.error('oauth2_error', 'Failed to retrieve data from provider. Please try again.')
                   
            else:
               response['authorization_url'] = cli.get_authorization_code_uri()
         else:
            response.error('login_method', 'Invalid login method selected.')
+           
+        return response
     
     @classmethod
     def register(cls, **kwds):
@@ -162,10 +175,12 @@ class User(ndb.BaseExpando, ndb.Workflow):
          usr = cls()
          email = kwds.get('email')
          identity = kwds.get('identity')
-         usr.emails.append()
+     
+         usr.emails.append(email)
          usr.identities.append(Identity(identity=identity, email=email, primary=True, associated=True))
+         usr.put_state('su_active')
          usr.put()
-         usr.new_action('register')
+         usr.new_action('register', agent=usr.key)
          usr.record_action()
          
          return usr

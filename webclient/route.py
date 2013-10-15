@@ -6,6 +6,8 @@ Created on Jul 15, 2013
 '''
 from webapp2 import Route
 
+_ROUTES = []
+
 class InvalidRouteError(Exception):
       pass
   
@@ -45,19 +47,25 @@ class AngularRoute(Route):
         self.angular_path = self._angular_make_path(template)
         self.angular_controller = self._angular_make_controller(handler)
         self.angular_template = angular_template
+        
+def get_routes():
+    
+    global _ROUTES
+    return _ROUTES        
 
-def register(prefix=None, *args):
+def register(*args):
     
-    routes = []
-    args_ = list()
-    if prefix == None:
-       args_.append(prefix)
+    global _ROUTES
     
-    args = args_ + list(args)
+    prefix = None
   
     for arg in args:
+        if isinstance(arg, basestring):
+           prefix = arg
+           continue
+       
         if isinstance(arg, (list, tuple)):
-            if prefix and isinstance(prefix, basestring):
+            if prefix:
                 if isinstance(arg, tuple):
                    arg = list(arg)
                 try:
@@ -72,6 +80,6 @@ def register(prefix=None, *args):
             
         if not isinstance(arg, AngularRoute):
            raise InvalidRouteError
-            
-        routes.append(arg)
-    return routes
+    
+        _ROUTES.append(arg)
+    return _ROUTES

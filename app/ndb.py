@@ -273,7 +273,7 @@ class Workflow():
       @classmethod
       def default_state(cls):
         # returns default state for this model
-        return cls.resolve_state_code_by_name(cls.OBJECT_DEFAULT_STATE)[0]
+        return cls.resolve_state_code_by_name(cls.OBJECT_DEFAULT_STATE)
   
       @classmethod
       def resolve_state_code_by_name(cls, state_code):
@@ -325,7 +325,7 @@ class Workflow():
              raise WorkflowTransitionError('This object cannot go from state `%s` to state `%s`. It can only go from states `%s` to `%s`'
                                            % (self.state, state, transitions['from'], transitions['to']))
       
-      def set_state(self, state):
+      def put_state(self, state):
           self.state = self.resolve_state_code_by_name(state)
           
       @property
@@ -335,12 +335,15 @@ class Workflow():
       def new_action(self, action, state=None, **kwargs):
           """ Sets new state inited by some action, and returns instance of object log ready for put """
           
-          if state == None: # if state is unchanged, no checks for transition needed?
+          if state is not None: # if state is unchanged, no checks for transition needed?
               self.set_state(state)
               self.check_transition(state, action)
               
           action = self.resolve_action_code_by_name(action)
-          
+ 
+          if self.state == None:
+             state = self.default_state()
+              
           from app.core import logs
           objlog = logs.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
           
@@ -350,7 +353,7 @@ class Workflow():
       
       def record_action(self, skip_check=False):
           any_actions = len(self.__record_action)
-          if any_actions and not skip_check:
+          if not any_actions and not skip_check:
              raise WorkflowActionNotReadyError('This entity did not have self.new_action called')
           
           if any_actions:
