@@ -11,11 +11,9 @@ from webclient.handler import Angular
 class Login(Angular):
     
     def respond(self, provider=None):
-        
+ 
         self.for_guests()
-        
-        print self.current_user
-        
+ 
         usr = core.user.User
         if provider is not None:
            code = self.request.get('code')
@@ -30,10 +28,10 @@ class Login(Angular):
            if error:
               command['error'] = error
            response = usr.login(**command)
-           usr = response.get('logged_in')
+           logged_in = response.get('logged_in')
            
-           if usr:
-              self.set_current_user(usr)
+           if logged_in:
+              self.set_current_user(logged_in.key)
               
            self.data['response'] = response
            

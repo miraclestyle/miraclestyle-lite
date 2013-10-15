@@ -11,6 +11,7 @@ class HomePage(Angular):
     
     def respond(self):
         self.data['hello'] = 'homepage'
+        self.data['user'] = self.current_user
         
         
         
