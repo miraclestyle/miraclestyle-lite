@@ -4,9 +4,6 @@ Created on Oct 8, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-
-import webapp2
-
 from google.appengine.api import memcache
  
 """
@@ -85,17 +82,31 @@ def memcached(func, k=None, d=None):
         return dec        
          
 def temp_memory_get(k, d=None):
+    # currently unsupported due decupling
+    return d
+
+    """
     return getattr(webapp2._local, k, d)
+    """
 
 def temp_memory_set(k, v):
+    # currently unsupported due decupling
+    return
+
+    """
     setattr(webapp2._local, k, v)
+    """
     
 def temp_memory_delete(k):
+    # currently unsupported due decupling
+    return
+
+    """
     try:
       del webapp2._local[k]
     except:
       pass   
-
+    """
 # comply with memcache from google app engine, these methods will possibly overriden in favor of above methods  
 set_servers = memcache.set_servers
 disconnect_all = memcache.disconnect_all

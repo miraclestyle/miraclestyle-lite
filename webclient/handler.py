@@ -16,12 +16,14 @@ from app import settings, ndb
 from app.util import import_module, logger
  
 from webclient import webclient_settings
-from webclient.util import JSONEncoderHTML, Jinja, DatastoreSessionFactory
+from webclient.util import JSONEncoderHTML, Jinja
 from webclient.route import get_routes
 
 _WSGI_CONFIG = None
  
 def wsgi_config(as_tuple=False):
+    
+    """ Config function. Prepares all variables and routes for webapp2 WSGI startup """
     
     global _WSGI_CONFIG
     
@@ -79,6 +81,7 @@ class Handler(webapp2.RequestHandler):
     General-purpose handler that comes with:
     self.session for session access
     self.template to send variables to render template
+    self.current_user to retrieve current user from session
     and other hooks like `after`, `before` etc.
     
     """
@@ -91,6 +94,8 @@ class Handler(webapp2.RequestHandler):
     _current_user = None
       
     def for_guests(self, where=None):
+        """ Does not allow logged in users """
+        
         if where is None:
            where = 'index'
           
@@ -98,15 +103,18 @@ class Handler(webapp2.RequestHandler):
            self.redirect(self.uri_for(where))
       
     def ask_login(self):
+        """ Does not allow guests """
         if self.current_user is None:
            self.redirect(self.uri_for('login'))
             
     def set_current_user(self, usr):
+        """ Sets the specified user into session """
         self._current_user = usr
         self.session[webclient_settings.SESSION_USER_KEY] = usr
       
     @property
     def current_user(self):
+        """ Retrieves the current user from the session, based on session from the browser """
         k = webclient_settings.SESSION_USER_KEY
         if k in self.session and self._current_user is None:
            uid = self.session.get(k)
@@ -116,6 +124,7 @@ class Handler(webapp2.RequestHandler):
  
             
     def send_json(self, data):
+        """ sends `data` to json format, accepts anything json compatible """
         ent = 'application/json;charset=utf-8'
         if self.response.headers.get('Content-Type') != ent:
            self.response.headers['Content-Type'] = ent

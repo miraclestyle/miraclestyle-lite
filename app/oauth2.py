@@ -67,6 +67,7 @@ class Client(object):
         self.scope = kwds.get('scope')
     
     def resource_request(self, method, url, data=None):
+        """ Uses google urlfetch method for making http requests to external resources """
         if data is None:
            data = {}
            

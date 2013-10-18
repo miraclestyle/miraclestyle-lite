@@ -5,8 +5,7 @@ Created on Oct 11, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb, memcache, settings, oauth2
-from app.pyson import Eval
-
+ 
 class Session(ndb.BaseExpando):
     """A model to store session data. This is required for authenticating users."""
 
@@ -94,12 +93,14 @@ class User(ndb.BaseExpando, ndb.Workflow):
            'to'   : ('su_suspended',),
         },
     }   
-    
-    
+     
     def record_ip(self, ip):
         addr = IPAddress(ip_address=ip, parent=self.key)
         addr.put()
         return addr
+    
+    def has_permission(self):
+        pass
     
     @classmethod
     def login(cls, **kwds):

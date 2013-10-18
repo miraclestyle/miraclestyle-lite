@@ -390,6 +390,12 @@ class Response(dict):
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
     
+    def has_error(self, k=None):
+        if k is None:
+           return len(self['errors'].keys())
+        else:
+           return len(self['errors'][k])
+    
     def error(self, f, m):
         
         if self['errors'] == None:

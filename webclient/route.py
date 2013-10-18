@@ -49,7 +49,6 @@ class AngularRoute(Route):
         self.angular_template = angular_template
         
 def get_routes():
-    
     global _ROUTES
     return _ROUTES        
 

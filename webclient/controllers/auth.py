@@ -13,7 +13,7 @@ class Login(Angular):
     def respond(self, provider=None):
  
         self.for_guests()
- 
+
         usr = core.user.User
         if provider is not None:
            code = self.request.get('code')

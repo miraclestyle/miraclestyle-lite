@@ -30,17 +30,7 @@ DO_LOGS = True
 USER_SESSION_KEY = 'user_key'
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
-
-# PERMISSIONS - these are permissions that all authenticated users will have
-USER_AUTHENTICATED_PERMISSIONS = (
-    'create_active_store',
-    'create_unpublished_catalog'
-)
-# PERMISSIONS - these are permissions that anonymous user will have
-USER_ANONYMOUS_PERMISSIONS = (
-    'view_published_catalog',
-)
-
+ 
 
 LOGIN_METHODS = {
     'google' : 1,
