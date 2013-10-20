@@ -1156,7 +1156,7 @@ class CatalogPricetag(ndb.Model):
 ################################################################################
 
 # done!
-class ProductTemplate(ndb.Expando):
+class Template(ndb.Expando):
     
     # ancestor DomainCatalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
@@ -1340,7 +1340,7 @@ class ProductTemplate(ndb.Expando):
                 i += 1
 
 # done!
-class ProductInstance(ndb.Expando):
+class Instance(ndb.Expando):
     
     # ancestor DomainProductTemplate
     #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
@@ -1384,7 +1384,7 @@ class ProductInstance(ndb.Expando):
         object_log.put()
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class ProductInventoryLog(ndb.Model):
+class InventoryLog(ndb.Model):
     
     # ancestor DomainProductInstance (namespace Domain)
     # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
@@ -1397,7 +1397,7 @@ class ProductInventoryLog(ndb.Model):
     balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
-class ProductInventoryAdjustment(ndb.Model):
+class InventoryAdjustment(ndb.Model):
     
     # ancestor DomainProductInstance (namespace Domain)
     # not logged ?
@@ -1430,7 +1430,7 @@ class ProductInventoryAdjustment(ndb.Model):
         new_product_inventory_log.put()
 
 # done!
-class ProductVariant(ndb.Model):
+class Variant(ndb.Model):
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # http://v6apps.openerp.com/addon/1809
@@ -1473,7 +1473,7 @@ class ProductVariant(ndb.Model):
         object_log.put()
 
 # done!
-class ProductContent(ndb.Model):
+class Content(ndb.Model):
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # composite index: ancestor:yes - title
