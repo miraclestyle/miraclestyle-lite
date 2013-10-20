@@ -8,6 +8,8 @@ from app import ndb, memcache, settings, oauth2
  
 class Session(ndb.BaseExpando):
     """A model to store session data. This is required for authenticating users."""
+    
+    KIND = 3
 
     #: Save time.
     updated = ndb.SuperDateTimeProperty(auto_now=True)
@@ -40,6 +42,8 @@ class Session(ndb.BaseExpando):
      
 class Identity(ndb.BaseModel):
     
+    KIND = 2
+    
     # StructuredProperty model
     identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
     email = ndb.StringProperty('2', required=True)
@@ -49,19 +53,18 @@ class Identity(ndb.BaseModel):
           
 class User(ndb.BaseExpando, ndb.Workflow):
     
+    KIND = 0
+    
     identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperIntegerProperty('3', required=True)
     
     _default_indexed = False
- 
-    #Expando
+  
     EXPANDO_FIELDS = {
-      'roles' : ndb.KeyProperty('4', kind='DomainRole', repeated=True)                 
+      'roles' : ndb.KeyProperty('4', kind='domain.acl.Role', repeated=True)                 
     }
-    
-    KIND_ID = 0
-    
+ 
     OBJECT_DEFAULT_STATE = 'su_active'
   
     OBJECT_STATES = {
@@ -99,8 +102,17 @@ class User(ndb.BaseExpando, ndb.Workflow):
         addr.put()
         return addr
     
-    def has_permission(self):
-        pass
+    def has_permission(self, action, obj):
+        return self.permission_check(self, action, obj)
+    
+    @classmethod
+    def permission_check(cls, usr, action, obj):
+        action_code = obj.resolve_action_code_by_name(action)
+        kind_id = obj._get_kind()
+        
+        perm = '%s-%s' % (action_code, kind_id)
+      
+        return False
     
     @classmethod
     def login(cls, **kwds):
@@ -179,7 +191,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
      
          usr.emails.append(email)
          usr.identities.append(Identity(identity=identity, email=email, primary=True, associated=True))
-         usr.put_state('su_active')
+         usr.set_state('su_active')
          usr.put()
          usr.new_action('register', agent=usr.key)
          usr.record_action()
@@ -189,9 +201,12 @@ class User(ndb.BaseExpando, ndb.Workflow):
       
 class IPAddress(ndb.BaseModel):
     
+    KIND = 4
+    
     # ancestor User
     # not logged
     # ako budemo radili per user istragu loga onda nam treba composite index: ancestor:yes - logged:desc
     logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
-    ip_address = ndb.SuperStringProperty('2', required=True, indexed=False)    
+    ip_address = ndb.SuperStringProperty('2', required=True, indexed=False)
+    
     

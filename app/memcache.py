@@ -4,13 +4,15 @@ Created on Oct 8, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+from webapp2_extras import local
 from google.appengine.api import memcache
+
+# Local memory for the app instance. _local must be released upon request completion
+_local = local.Local()
  
 """
  Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
-
 """
-__all__ = ['set', 'get', 'delete', 'tempcached', 'memcached', 'temp_memory_get', 'temp_memory_set', 'temp_memory_delete']
 
 def set(k, v, expire=0, **kwargs):
          temp_memory_set(k, v)
@@ -50,6 +52,10 @@ def delete(k):
     temp_memory_delete(k)
         
 def tempcached(func, k=None, d=None):
+        """
+          Does temporary caching of the provided function
+          temporary caching is the one that is done inside threads using webapp2_extras.local
+        """
         if k == None:
            k = func.__name__
            
@@ -83,30 +89,18 @@ def memcached(func, k=None, d=None):
          
 def temp_memory_get(k, d=None):
     # currently unsupported due decupling
-    return d
-
-    """
-    return getattr(webapp2._local, k, d)
-    """
+    return getattr(_local, k, d)
 
 def temp_memory_set(k, v):
     # currently unsupported due decupling
-    return
-
-    """
-    setattr(webapp2._local, k, v)
-    """
+    setattr(_local, k, v)
     
 def temp_memory_delete(k):
-    # currently unsupported due decupling
-    return
-
-    """
     try:
-      del webapp2._local[k]
+      del _local[k]
     except:
       pass   
-    """
+  
 # comply with memcache from google app engine, these methods will possibly overriden in favor of above methods  
 set_servers = memcache.set_servers
 disconnect_all = memcache.disconnect_all

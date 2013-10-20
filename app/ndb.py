@@ -71,68 +71,67 @@ class BaseModel(_BaseModel):
     @classmethod
     def _from_pb(cls, *args, **kwargs):
         """ Allows for model to get original values who get loaded from the protocol buffer  """
-          
         entity = super(_BaseModel, cls)._from_pb(*args, **kwargs) 
         entity.set_original_values()
         return entity
 
   
 class BaseExpando(_BaseModel, Expando):
-  """
-   Base class for all `ndb.Expando` entities
-  """
-  def has_expando_fields(self):
-      if hasattr(self, 'EXPANDO_FIELDS'):
-         return self.EXPANDO_FIELDS
-      else:
-         return False
+    """
+     Base class for all `ndb.Expando` entities
+    """
+    def has_expando_fields(self):
+        if hasattr(self, 'EXPANDO_FIELDS'):
+           return self.EXPANDO_FIELDS
+        else:
+           return False
+        
+    def __getattr__(self, name):
+       ex = self.has_expando_fields()
+       if ex:
+          vf = ex.get(name) 
+          if vf:
+             return vf._get_value(self)
+       return super(BaseExpando, self).__getattr__(name)
       
-  def __getattr__(self, name):
-     ex = self.has_expando_fields()
-     if ex:
-        vf = ex.get(name) 
-        if vf:
-           return vf._get_value(self)
-     return super(BaseExpando, self).__getattr__(name)
-    
-  def __setattr__(self, name, value):
-      ex = self.has_expando_fields()
-      if ex:
-         vf = ex.get(name) 
-         if vf:
-            vf._code_name = name
-            self._properties[name] = vf
-            vf._set_value(self, value)
-            return vf
-      return super(BaseExpando, self).__setattr__(name, value)
-    
-  def __delattr__(self, name):
-     ex = self.has_expando_fields()
-     if ex:
-        vf = ex.get(name) 
-        if vf:
-           vf._delete_value(self)
-           if vf in self.__class__._properties:
-               raise RuntimeError('Property %s still in the list of properties for the '
-                                     'base class.' % name)
-           del self._properties[name]
-     return super(BaseExpando, self).__delattr__(name)
+    def __setattr__(self, name, value):
+        ex = self.has_expando_fields()
+        if ex:
+           vf = ex.get(name) 
+           if vf:
+              vf._code_name = name
+              self._properties[name] = vf
+              vf._set_value(self, value)
+              return vf
+        return super(BaseExpando, self).__setattr__(name, value)
+      
+    def __delattr__(self, name):
+       ex = self.has_expando_fields()
+       if ex:
+          vf = ex.get(name) 
+          if vf:
+             vf._delete_value(self)
+             if vf in self.__class__._properties:
+                 raise RuntimeError('Property %s still in the list of properties for the '
+                                       'base class.' % name)
+             del self._properties[name]
+       return super(BaseExpando, self).__delattr__(name)
 
 class _BaseProperty(object):
+    
+    _writable = False
+    _visible = False
+    
+    def __init__(self, *args, **kwds):
+        self._writable = kwds.pop('writable', self._writable)
+        self._visible = kwds.pop('visible', self._visible)
   
-  _writable = False
-  _visible = False
- 
-  def __init__(self, *args, **kwds):
-      self._writable = kwds.pop('writable', self._writable)
-      self._visible = kwds.pop('visible', self._visible)
- 
-      super(_BaseProperty, self).__init__(*args, **kwds)
+        super(_BaseProperty, self).__init__(*args, **kwds)
 
 class BaseProperty(_BaseProperty, Property):
-  """
-   Base property class for all properties capable of having writable, and visible options
-  """
+   """
+    Base property class for all properties capable of having writable, and visible options
+   """
  
 class SuperStringProperty(_BaseProperty, StringProperty):
     pass
@@ -168,79 +167,79 @@ class SuperStateProperty(_BaseProperty, IntegerProperty):
       
  
 class DecimalProperty(SuperStringProperty):
-  """Decimal property that accepts only `decimal.Decimal`"""
-  
-  def _validate(self, value):
-    if not isinstance(value, (decimal.Decimal)):
-      raise TypeError('expected an decimal, got %s' % repr(value)) # explicitly allow only decimal
-
-  def _to_base_type(self, value):
-      return str(value) # Doesn't matter which type, always return in string format
-
-  def _from_base_type(self, value):
-      return decimal.Decimal(value)  # Always return a decimal
+    """Decimal property that accepts only `decimal.Decimal`"""
+    
+    def _validate(self, value):
+      if not isinstance(value, (decimal.Decimal)):
+        raise TypeError('expected an decimal, got %s' % repr(value)) # explicitly allow only decimal
+    
+    def _to_base_type(self, value):
+        return str(value) # Doesn't matter which type, always return in string format
+    
+    def _from_base_type(self, value):
+        return decimal.Decimal(value)  # Always return a decimal
 
       
 class ReferenceProperty(SuperKeyProperty):
+      
+    """Replicated property from `db` module"""
+      
+    def _validate(self, value):
+        if not isinstance(value, Model):
+           raise TypeError('expected an ndb.Model, got %s' % repr(value))
     
-  """Replicated property from `db` module"""
+    def _to_base_type(self, value):
+        return value.key
     
-  def _validate(self, value):
-      if not isinstance(value, Model):
-         raise TypeError('expected an ndb.Model, got %s' % repr(value))
-
-  def _to_base_type(self, value):
-      return value.key
-
-  def _from_base_type(self, value):
-      return value.get()
+    def _from_base_type(self, value):
+        return value.get()
 
 class SuperRelationProperty(dict):
-  """
-    This is a fake property that will `not` be stored in datastore,
-     it only represents on what one model can depend. Like so
-     
-     class UserChildEntity(ndb.BaseModel):
-           user = ndb.SuperRelationProperty(User)
-           name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
-           
-     foo = UserChildEntity(name='Edward', user=ndb.Key('User', 'foo').get())
-     foo.save()     
-     
-     The `Eval` will evaluate: self.user.state != 'active' and therefore the property
-     will validate itself to be read only
-     
-     This property only accepts model that needs validation, otherwise it will accept any value provided
-  """
-  def __get__(self, entity):
-      """Descriptor protocol: get the value on the entity."""
-      return self.model
-      
-  def __set__(self, entity, value):
-      """Descriptor protocol: set the value on the entity."""
-      if self.model_type:
-         if not isinstance(value, self.model_type):
-            raise TypeError('Expected %s, got %s' % (repr(self.model_type), repr(value)))
-      self.model = value
- 
-  def __init__(self, model=None):
-      self.model_type = model
-  
-  def __getitem__(self, item):
-     return getattr(self.model, item)
-      
-  def __getattr__(self, item):
-     try:
-        return self.__getitem__(item)
-     except KeyError, exception:
-        raise AttributeError(*exception.args)
-      
-  def get(self, item, default=None):
-     try:
-        return self.__getitem__(item)
-     except Exception:
-        pass
-     return super(SuperRelationProperty, self).get(item, default)     
+    """
+      This is a fake property that will `not` be stored in datastore,
+       it only represents on what one model can depend. Like so
+       
+       class UserChildEntity(ndb.BaseModel):
+             user = ndb.SuperRelationProperty(User)
+             name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
+             
+       foo = UserChildEntity(name='Edward', user=ndb.Key('User', 'foo').get())
+       foo.save()     
+       
+       The `Eval` will evaluate: self.user.state != 'active' and therefore the property
+       will validate itself to be read only
+       
+       This property only accepts model that needs validation, otherwise it will accept any value provided
+    """
+    def __get__(self, entity):
+        """Descriptor protocol: get the value on the entity."""
+        return self.model
+        
+    def __set__(self, entity, value):
+        """Descriptor protocol: set the value on the entity."""
+        if self.model_type:
+           if not isinstance(value, self.model_type):
+              raise TypeError('Expected %s, got %s' % (repr(self.model_type), repr(value)))
+        self.model = value
+    
+    def __init__(self, model=None):
+        self.model_type = model
+    
+    def __getitem__(self, item):
+       return getattr(self.model, item)
+        
+    def __getattr__(self, item):
+       try:
+          return self.__getitem__(item)
+       except KeyError, exception:
+          raise AttributeError(*exception.args)
+        
+    def get(self, item, default=None):
+       try:
+          return self.__getitem__(item)
+       except Exception:
+          pass
+       return super(SuperRelationProperty, self).get(item, default)     
  
  
 class WorkflowTransitionError(Exception):
@@ -278,7 +277,7 @@ class Workflow():
       @classmethod
       def resolve_state_code_by_name(cls, state_code):
           """
-          @return tuple (int, str)
+          Resolves state code by name
           """
           codes = cls.OBJECT_STATES
           code = codes.get(state_code)
@@ -289,7 +288,7 @@ class Workflow():
       @classmethod
       def resolve_action_code_by_name(cls, st):
           """
-          @return str
+          Resolves action code by name
           """
           actions = cls.OBJECT_ACTIONS
           action = actions.get(st, None)
@@ -300,7 +299,7 @@ class Workflow():
       @classmethod
       def resolve_action_name_by_code(cls, code):
           """
-          @return int
+         Resolves action name by code provided
           """
           for k, v in cls.OBJECT_ACTIONS.items():
               if v == code:
@@ -310,7 +309,7 @@ class Workflow():
       @classmethod
       def resolve_state_name_by_code(cls, code):
           """
-          @return str
+           Resolves state name by provided code
           """
           for k, value in cls.OBJECT_STATES.items():
               if value[0] == code:
@@ -318,14 +317,16 @@ class Workflow():
           raise WorkflowBadStateCodeError('Bad state code provided %s, possible names %s' % (code, cls.OBJECT_STATES.keys()))  
       
       def check_transition(self, state, action):
-       
+          """
+          Checks if the transition is valid based on state and action provided
+          """
           transitions = self.OBJECT_TRANSITIONS[action]
           
           if self.state not in transitions['from'] or state not in transitions['to']:
              raise WorkflowTransitionError('This object cannot go from state `%s` to state `%s`. It can only go from states `%s` to `%s`'
                                            % (self.state, state, transitions['from'], transitions['to']))
       
-      def put_state(self, state):
+      def set_state(self, state):
           self.state = self.resolve_state_code_by_name(state)
           
       @property
@@ -333,7 +334,7 @@ class Workflow():
           return self.resolve_state_name_by_code(self.state)
           
       def new_action(self, action, state=None, **kwargs):
-          """ Sets new state inited by some action, and returns instance of object log ready for put """
+          """ Sets new state inited by some action, and prepares object"""
           
           if state is not None: # if state is unchanged, no checks for transition needed?
               self.set_state(state)
@@ -343,9 +344,9 @@ class Workflow():
  
           if self.state == None:
              state = self.default_state()
-              
-          from app.core import logs
-          objlog = logs.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
+ 
+          from app.core import log
+          objlog = log.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
           
           self.__record_action.append(objlog)
 
@@ -359,29 +360,9 @@ class Workflow():
           if any_actions:
              return put_multi(self.__record_action)
  
-  
-class Validator:
-    
-  """
-   Validator class that can be used for keyword argument `validator` in properties
-   Example:
-      
-   def limit_count(prop, value, limit=100):
-       if len(value) > limit:
-           return False
-       return True
-      
-   ndb.StringProperty(validator=ndb.Validator(limit_count, limit=100))
-  """
-    
-  def __init__(self, callback, **kwargs):
-      self.kwargs = kwargs
-      self.callback = callback
-    
-  def __call__(self, prop, value):
-      return self.callback(prop, value, **self.kwargs)
-  
+   
 class Response(dict):
+    
     """ Response dict object used for preparing data which is returned to clients for parsing """
     
     def __setattr__(self, *args, **kwargs):

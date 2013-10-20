@@ -12,6 +12,7 @@ from jinja2 import FileSystemLoader
 
 from webapp2_extras import sessions, jinja2
 
+from app.memcache import _local
 from app import settings, ndb
 from app.util import import_module, logger
  
@@ -73,8 +74,8 @@ def wsgi_config(as_tuple=False):
        return _WSGI_CONFIG
     else:
        return tuple(_WSGI_CONFIG.items())
- 
-
+  
+  
 class Handler(webapp2.RequestHandler):
     
     """
@@ -86,12 +87,14 @@ class Handler(webapp2.RequestHandler):
     
     """
     
-    _USE_SESSION = True
-    
-    data = {}
-    template = {'base' : 'index.html'}
+    USE_SESSION = True
  
-    _current_user = None
+    def __init__(self, *args, **kwargs):
+        super(Handler, self).__init__(*args, **kwargs)
+        
+        self.data = {}
+        self._current_user = None
+        self.template = {'base' : 'index.html'}
       
     def for_guests(self, where=None):
         """ Does not allow logged in users """
@@ -187,13 +190,10 @@ class Handler(webapp2.RequestHandler):
         self.response.write('<h1>404 Not found</h1>')
  
     def dispatch(self):
-        
-        self.data = {}
-        self._current_user = None
-        
+         
         self.before_before()
   
-        if self._USE_SESSION:
+        if self.USE_SESSION:
             # Get a session store for this request.
             # request=self.request
             self.session_store = sessions.get_store()
@@ -208,9 +208,14 @@ class Handler(webapp2.RequestHandler):
             
         finally:
             # Save all sessions.
-            if self._USE_SESSION:
+            if self.USE_SESSION:
                self.session_store.save_sessions(self.response)
             self.after_after()
+            
+            # support the core's locals, and release them upon request complete
+            _local.__release_local__()
+            
+            
 
     @webapp2.cached_property
     def session(self):

@@ -14,7 +14,7 @@ class Login(Angular):
  
         self.for_guests()
 
-        usr = core.user.User
+        usr = core.acl.User
         if provider is not None:
            code = self.request.get('code')
            error = self.request.get('error')

@@ -8,7 +8,7 @@ import imp
 import os
 import json
  
-from app.core.user import Session
+from app.core.acl import Session
 from webapp2_extras import sessions
 
 class Jinja():
