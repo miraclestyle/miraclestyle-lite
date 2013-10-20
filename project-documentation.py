@@ -1,8 +1,6 @@
 #coding=UTF-8
 # http://www.python.org/dev/peps/pep-0008/
 
-#MASTER MODEL FILE
-
 # NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
@@ -62,28 +60,18 @@ update
 
 # struktura i konvencija imenovanja objekata:
 
-# package-i ce organizovati logicke celine aplikacije: 
+# postojace dve osnovne grupe modula koje su organizovane u dva package-a: 
+# - domain; 
+# - core.
 
-# app/
-# app/core
-# app/core/autorization.py
-# app/core/buyer.py
-# app/core/misc.py
-# app/core/order.py ? ovo treba dobro razmotriti gde staviti i kako organizovati!!!
-# app/core/logs.py
-# app/domain
-# app/domain/domain.py
-# app/domain/role.py
-# app/domain/user.py
-# app/domain/store.py
-# app/domain/tax.py
-# app/domain/carrier.py
-# app/domain/catalog.py
+# moduli unutar package-a ce se organizovati u logicke grupe, napr:
+# app/core/buyer.py ce imati sve klase koje su u kategoriji buyer;
+# app/domain/marketing.py ce imati sve klase koje su u kategoriji marketing.
 
-# moduli za domain ce se organizovati u entitetske grupe, pa makar to bio samo jedan model!
-# napr: store.py ce imati sve klase cija imana pocinju sa Store...
-# module za core ce se organizovati u logicke grupe!
-# napr: misc.py ce imati sve klase koje su u kategoriji misc.
+# app/ - glavni backend folder
+# app/domain/ - package koji organizuje domain module
+# app/core/ - package koji organizuje core module
+
 # Sto se tice ndb-a, konvencija prati sledece:
 # Kind ID-jevi su uvek UNIQUE UNUTAR CITAVE APLIKACIJE!
 # Svi ostali ndb ID-jevi su UNIQUE UNUTAR MODELA, i isto vazi za workflow konvenciju (states, transitions, actions....).
@@ -107,8 +95,21 @@ class DecimalProperty(ndb.StringProperty):
   def _from_base_type(self, value):
     return decimal.Decimal(value)  # Always return a decimal
 
+# neki primer toola za formatiranje Decimal vrednosti
+class DecTools(object):
+    
+    @staticmethod
+    def form(value, formater=None):
+        if (formater):
+            if (isinstance(formater, str)):
+                return Decimal(format(Decimal(value), formater))
+            else:
+                return Decimal(format(Decimal(value), '.' + formater.digits + 'f'))
+        else:
+            return Decimal(value)
+
 ################################################################################
-# DOMAIN - 20
+# /domain/access_control.py - ili neka skracenica od toga
 ################################################################################
 
 # done! - sudo kontrolisan model
@@ -459,6 +460,10 @@ class Company(ndb.Expando):
     # tax_id = ndb.StringProperty('14')
     # reference = ndb.StringProperty('15')
     
+################################################################################
+# /domain/sale.py
+################################################################################
+
 # done! - sudo kontrolisan model
 class Store(ndb.Expando):
     
@@ -904,6 +909,10 @@ class CarrierLineRule(ndb.Model):
     price = ndb.StringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: amount = 35.99 ili amount = weight[kg]*0.28
     # weight - kg; volume - m3; ili sta vec odlucimo, samo je bitno da se podudara sa measurementsima na ProductTemplate/ProductInstance
 
+################################################################################
+# /domain/marketing.py
+################################################################################
+
 # done! - sudo kontrolisan model
 class Catalog(ndb.Expando):
     
@@ -1141,6 +1150,10 @@ class CatalogPricetag(ndb.Model):
         object_log = ObjectLog(parent=catalog_pricetag_key, agent=agent_key, action='delete', state='none')
         object_log.put()
         catalog_pricetag_key.delete()
+
+################################################################################
+# /domain/product.py
+################################################################################
 
 # done!
 class ProductTemplate(ndb.Expando):
@@ -1498,7 +1511,7 @@ class ProductContent(ndb.Model):
         object_log.put()
 
 ################################################################################
-# CORE - 3
+# /core/access_control.py
 ################################################################################
 
 # ovde jos nedostaje i Role(ndb.Model) koji je isto sto i Role(ndb.Model) u domain modulu.
@@ -1640,11 +1653,11 @@ class UserIPAddress(ndb.Model):
     ip_address = ndb.StringProperty('2', required=True, indexed=False)
 
 ################################################################################
-# BUYER - 4
+# /core/buyer.py
 ################################################################################
 
 # done!
-class BuyerAddress(ndb.Expando):
+class Address(ndb.Expando):
     
     # ancestor User
     # composite index: ancestor:yes - name
@@ -1707,7 +1720,7 @@ class BuyerAddress(ndb.Expando):
         buyer_address_key.delete()
 
 # done!
-class BuyerCollection(ndb.Model):
+class Collection(ndb.Model):
     
     # ancestor User
     # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
@@ -1763,7 +1776,7 @@ class BuyerCollection(ndb.Model):
         buyer_collection_key.delete()
 
 # done!
-class BuyerCollectionStore(ndb.Model):
+class CollectionStore(ndb.Model):
     
     # ancestor User
     store = ndb.KeyProperty('1', kind=Store, required=True)
@@ -1810,7 +1823,7 @@ class BuyerCollectionStore(ndb.Model):
         # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key).fetch(keys_only=True))
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class AggregateBuyerCollectionCatalog(ndb.Model):
+class AggregateCollectionCatalog(ndb.Model):
     
     # ancestor User
     # not logged
@@ -1825,7 +1838,7 @@ class AggregateBuyerCollectionCatalog(ndb.Model):
     catalog_published_date = ndb.DateTimeProperty('5', required=True)
 
 ################################################################################
-# REQUEST - 2 - mozda prebaciti u misc
+# /core/misc.py
 ################################################################################
 
 # done! - sudo kontrolisan model 
@@ -2009,7 +2022,7 @@ class SupportRequest(ndb.Model):
         object_log.put()
 
 ################################################################################
-# TRADE - 11 - ili mozda da se zove order
+# app/core/order.py ? ovo treba dobro razmotriti gde staviti i kako organizovati!!!
 ################################################################################
 
 # done! - carrier funkcija za obracun i odabir carrier-a nije zavrsena! to cemo zavrsiti kad budemo radili dev trade modula..
@@ -3234,7 +3247,7 @@ class OrderFeedback(ndb.Model):
             # nedostaje agregaciona feedback statistika za store
 
 ################################################################################
-# MISC - 10
+# /core/misc.py
 ################################################################################
 
 # done!
@@ -3783,7 +3796,7 @@ class Message(ndb.Model):
         object_log.put()
 
 ################################################################################
-# LOGS - 1 - mozda prebaciti u core
+# /core/log.py
 ################################################################################
 
 # done!
@@ -3995,6 +4008,10 @@ class BillingLog(ndb.Model):
     amount = DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     balance = DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
+################################################################################
+# /core/misc.py
+################################################################################
+
 # done!
 class BillingCreditAdjustment(ndb.Model):
     
@@ -4026,18 +4043,3 @@ class BillingCreditAdjustment(ndb.Model):
         billing_log = BillingLog.query().order(-BillingLog.logged).fetch(1)
         new_billing_log = BillingLog(namespace=domain_key, id=str(billing_credit_adjustment_key), amount=billing_credit_adjustment.amount, balance=billing_log.balance + billing_credit_adjustment.amount)
         new_billing_log.put()
-
-# neki primer toola za formatiranje Decimal vrednosti
-class DecTools(object):
-    
-    @staticmethod
-    def form(value, formater=None):
-        if (formater):
-            if (isinstance(formater, str)):
-                return Decimal(format(Decimal(value), formater))
-            else:
-                return Decimal(format(Decimal(value), '.' + formater.digits + 'f'))
-        else:
-            return Decimal(value)
-        
-        
