@@ -14,7 +14,7 @@ class Template(ndb.BaseExpando):
     name = ndb.StringProperty('2', required=True)
     description = ndb.TextProperty('3', required=True)# soft limit 64kb
     product_uom = ndb.KeyProperty('4', kind='core.misc.ProductUOM', required=True, indexed=False)
-    unit_price = ndb.DecimalProperty('5', required=True)
+    unit_price = ndb.SuperDecimalProperty('5', required=True)
     availability = ndb.IntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     # availability: - ovo cemo pojasniti
     # 'in stock'
@@ -92,8 +92,8 @@ class InventoryLog(ndb.BaseModel):
     # not logged
     # composite index: ancestor:yes - logged:desc
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    quantity = ndb.DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    balance = ndb.DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    quantity = ndb.SuperDecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = ndb.SuperDecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
 class InventoryAdjustment(ndb.BaseModel):
@@ -102,11 +102,9 @@ class InventoryAdjustment(ndb.BaseModel):
     # not logged ?
     adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('2', kind='core.acl.User', required=True, indexed=False)
-    quantity = ndb.DecimalProperty('3', required=True, indexed=False, indexed=False)
+    quantity = ndb.SuperDecimalProperty('3', required=True, indexed=False)
     comment = ndb.StringProperty('4', required=True, indexed=False)
-    
-    _KIND = 0
-    
+ 
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {

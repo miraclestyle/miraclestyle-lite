@@ -17,7 +17,7 @@ class OrderCurrency(ndb.BaseModel):
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     code = ndb.StringProperty('3', required=True, indexed=False)
     numeric_code = ndb.StringProperty('4', indexed=False)
-    rounding = ndb.DecimalProperty('5', required=True, indexed=False)
+    rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     #formating
     grouping = ndb.StringProperty('7', required=True, indexed=False)
@@ -48,9 +48,9 @@ class Order(ndb.BaseExpando):
     store = ndb.KeyProperty('1', kind='domain.sale.Store', required=True)
     order_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout / or on completed ?
     currency = ndb.LocalStructuredProperty(OrderCurrency, '3', required=True)
-    untaxed_amount = ndb.DecimalProperty('4', required=True, indexed=False)
-    tax_amount = ndb.DecimalProperty('5', required=True, indexed=False)
-    total_amount = ndb.DecimalProperty('6', required=True)
+    untaxed_amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+    tax_amount = ndb.SuperDecimalProperty('5', required=True, indexed=False)
+    total_amount = ndb.SuperDecimalProperty('6', required=True)
     state = ndb.IntegerProperty('7', required=True) 
     updated = ndb.DateTimeProperty('8', auto_now=True, required=True)
     _default_indexed = False
@@ -131,9 +131,9 @@ class BillingOrder(ndb.BaseExpando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
     order_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
     currency = ndb.LocalStructuredProperty(OrderCurrency, '2', required=True)
-    untaxed_amount = ndb.DecimalProperty('3', required=True, indexed=False)
-    tax_amount = ndb.DecimalProperty('4', required=True, indexed=False)
-    total_amount = ndb.DecimalProperty('5', required=True, indexed=False)
+    untaxed_amount = ndb.SuperDecimalProperty('3', required=True, indexed=False)
+    tax_amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+    total_amount = ndb.SuperDecimalProperty('5', required=True, indexed=False)
     state = ndb.IntegerProperty('6', required=True, indexed=False) 
     updated = ndb.DateTimeProperty('7', auto_now=True, required=True, indexed=False)
     
@@ -184,7 +184,7 @@ class OrderLineProductUOM(ndb.BaseModel):
     name = ndb.StringProperty('1', required=True, indexed=False)
     symbol = ndb.StringProperty('2', required=True, indexed=False)
     category = ndb.StringProperty('3', required=True, indexed=False)# ProductUOMCategory.name
-    rounding = ndb.DecimalProperty('4', required=True, indexed=False)
+    rounding = ndb.SuperDecimalProperty('4', required=True, indexed=False)
     digits = ndb.IntegerProperty('5', required=True, indexed=False)
     
 
@@ -201,10 +201,10 @@ class OrderLine(ndb.BaseExpando):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L649
     # composite index: ancestor:yes - sequence
     description = ndb.TextProperty('1', required=True)# soft limit 64kb
-    quantity = ndb.DecimalProperty('2', required=True, indexed=False)
+    quantity = ndb.SuperDecimalProperty('2', required=True, indexed=False)
     product_uom = ndb.LocalStructuredProperty(OrderLineProductUOM, '3', required=True)
-    unit_price = ndb.DecimalProperty('4', required=True, indexed=False)
-    discount = ndb.DecimalProperty('5', default=0.00, indexed=False)
+    unit_price = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+    discount = ndb.SuperDecimalProperty('5', default=0.00, indexed=False)
     sequence = ndb.IntegerProperty('6', required=True)
     
     _default_indexed = False

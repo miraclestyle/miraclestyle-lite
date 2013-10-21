@@ -148,9 +148,9 @@ class ProductUOM(ndb.BaseModel):
     # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    rate = ndb.DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
-    factor = ndb.DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
-    rounding = ndb.DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
+    rate = ndb.SuperDecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
+    factor = ndb.SuperDecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
+    rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True)
    
@@ -175,7 +175,7 @@ class Currency(ndb.BaseModel):
     symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     code = ndb.StringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     numeric_code = ndb.StringProperty('4', indexed=False)
-    rounding = ndb.DecimalProperty('5', required=True, indexed=False)
+    rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True)
     #formating
@@ -253,7 +253,7 @@ class BillingCreditAdjustment(ndb.BaseModel):
     # not logged
     adjusted = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
     agent = ndb.KeyProperty('3', kind='core.acl.User', required=True, indexed=False)
-    amount = ndb.DecimalProperty('4', required=True, indexed=False)
+    amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
     message = ndb.TextProperty('5')# soft limit 64kb - to determine char count
     note = ndb.TextProperty('6')# soft limit 64kb - to determine char count
  

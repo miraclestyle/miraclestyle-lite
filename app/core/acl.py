@@ -9,7 +9,7 @@ from app import ndb, memcache, settings, oauth2
 class Session(ndb.BaseExpando):
     """A model to store session data. This is required for authenticating users."""
     
-    KIND = 3
+    KIND_ID = 3
 
     #: Save time.
     updated = ndb.SuperDateTimeProperty(auto_now=True)
@@ -42,7 +42,7 @@ class Session(ndb.BaseExpando):
      
 class Identity(ndb.BaseModel):
     
-    KIND = 2
+    KIND_ID = 2
     
     # StructuredProperty model
     identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
@@ -51,9 +51,9 @@ class Identity(ndb.BaseModel):
     primary = ndb.BooleanProperty('4', default=True)
           
           
-class User(ndb.BaseExpando, ndb.Workflow):
+class User(ndb.Workflow):
     
-    KIND = 0
+    KIND_ID = 0
     
     identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
@@ -97,6 +97,26 @@ class User(ndb.BaseExpando, ndb.Workflow):
         },
     }   
      
+    @classmethod
+    def current_user_read(cls, **kwds):
+        urlsafe = kwds.get('urlsafe')
+        key = kwds.get('key')
+        usr = None
+        
+        if urlsafe:
+            key = ndb.Key(urlsafe=urlsafe) 
+            
+        if key:
+           usr = key.get()
+           
+        return usr
+    
+    def has_identity(self, identity_id):
+        for i in self.identities:
+            if i.identity == identity_id:
+               return True
+        return False
+            
     def record_ip(self, ip):
         addr = IPAddress(ip_address=ip, parent=self.key)
         addr.put()
@@ -118,6 +138,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
     def login(cls, **kwds):
         response = ndb.Response()
         login_method = kwds.get('login_method')
+        current_user = kwds.get('current_user')
+        
         if login_method in settings.LOGIN_METHODS:
            cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
            cfg['redirect_uri'] = kwds.get('redirect_uri')
@@ -127,20 +149,20 @@ class User(ndb.BaseExpando, ndb.Workflow):
            cli = oauth2.Client(**cfg)
            
            if error:
-              response.error('oauth2_error', 'You rejected access to your account')
+              response.error('oauth2_error', 'rejected_account_access')
               return response
            
            if code:
               cli.get_token(code)
           
               if not cli.access_token:
-                 response.error('oauth2_error', 'Failed to retrieve access_token')
+                 response.error('oauth2_error', 'failed_access_token')
                  return response
               
               response['access_token'] = cli.access_token
               
               userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
-              info = cli.resource_request('GET', userinfo)
+              info = cli.resource_request(url=userinfo)
                
               if info and 'email' in info:
                  auth_id = settings.LOGIN_METHODS[login_method]
@@ -152,15 +174,26 @@ class User(ndb.BaseExpando, ndb.Workflow):
                     usr = usr = cls.query(cls.emails == email).get()
                  
                  if usr and usr.get_state != 'su_active':
-                        response.error('user', 'This user is not active')
+                        response.error('user', 'user_not_active')
                         return response
+                    
+                 if not usr and current_user:
+                    usr = current_user
                         
                  @ndb.transactional
                  def trans(usr): 
+                     put = False
                      if usr:
                          if email not in usr.emails:
                             usr.emails.append(email)
-                            usr.put() 
+                            put = True
+                         if not usr.has_identity(identity_id):
+                            usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
+                            put = True
+                            
+                         if put:
+                            usr.put()
+                            usr.new_action('update', agent=usr.key)
                      else:
                         usr = cls.register(email=email, identity=identity_id)
                      usr.record_ip(kwds.get('ip'))
@@ -173,12 +206,12 @@ class User(ndb.BaseExpando, ndb.Workflow):
                  
                  response['logged_in'] = usr
               else:
-                 response.error('oauth2_error', 'Failed to retrieve data from provider. Please try again.')
+                 response.error('oauth2_error', 'failed_data_fetch')
                   
            else:
               response['authorization_url'] = cli.get_authorization_code_uri()
         else:
-           response.error('login_method', 'Invalid login method selected.')
+           response.error('login_method', 'invalid_login_method')
            
         return response
     
@@ -190,7 +223,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
          identity = kwds.get('identity')
      
          usr.emails.append(email)
-         usr.identities.append(Identity(identity=identity, email=email, primary=True, associated=True))
+         usr.identities.append(Identity(identity=identity, email=email, primary=True))
          usr.set_state('su_active')
          usr.put()
          usr.new_action('register', agent=usr.key)
@@ -201,7 +234,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
       
 class IPAddress(ndb.BaseModel):
     
-    KIND = 4
+    KIND_ID = 4
     
     # ancestor User
     # not logged

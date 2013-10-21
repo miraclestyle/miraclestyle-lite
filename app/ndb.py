@@ -10,6 +10,7 @@ import hashlib
 from google.appengine.ext.ndb import *
 
 from app import pyson
+from app.util import import_module
  
 ctx = get_context()
 
@@ -125,7 +126,16 @@ class _BaseProperty(object):
     def __init__(self, *args, **kwds):
         self._writable = kwds.pop('writable', self._writable)
         self._visible = kwds.pop('visible', self._visible)
-  
+        
+        custom_kind = kwds.get('kind')
+        if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
+           custom_kinds = custom_kind.split('.')
+           far = custom_kinds[-1] 
+           del custom_kinds[-1] 
+           
+           # @todo not sure if i should put absolute import. not for example: core.acl.User, but app.core.acl.User?
+           kwds['kind'] = getattr(import_module('app.%s' % ".".join(custom_kinds)), far)
+             
         super(_BaseProperty, self).__init__(*args, **kwds)
 
 class BaseProperty(_BaseProperty, Property):
@@ -147,26 +157,8 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     pass
-   
-class SuperStateProperty(_BaseProperty, IntegerProperty):
-    
-    # @todo cant use this because its impossible to make it work with Model.query
-    def __get__(self, entity, unused_cls=None):
-        """Descriptor protocol: get the value from the entity."""
-        
-        value = super(SuperStateProperty, self).__get__(entity, unused_cls)
-        if entity is None:
-          return value  # __get__ called on class
-        return entity.resolve_state_name_by_code(value)
-
-    def __set__(self, entity, value):
-      """Descriptor protocol: set the value on the entity."""
-      
-      value = entity.resolve_state_code_by_name(value)
-      super(SuperStateProperty, self).__set__(entity, value)
-      
- 
-class DecimalProperty(SuperStringProperty):
+  
+class SuperDecimalProperty(SuperStringProperty):
     """Decimal property that accepts only `decimal.Decimal`"""
     
     def _validate(self, value):
@@ -180,7 +172,7 @@ class DecimalProperty(SuperStringProperty):
         return decimal.Decimal(value)  # Always return a decimal
 
       
-class ReferenceProperty(SuperKeyProperty):
+class SuperReferenceProperty(SuperKeyProperty):
       
     """Replicated property from `db` module"""
       
@@ -196,6 +188,9 @@ class ReferenceProperty(SuperKeyProperty):
 
 class SuperRelationProperty(dict):
     """
+      ################################################################################################   
+      ##### This property is not yet tested and yet to be decided whether should be used anyway! #####
+      ################################################################################################
       This is a fake property that will `not` be stored in datastore,
        it only represents on what one model can depend. Like so
        
@@ -241,7 +236,7 @@ class SuperRelationProperty(dict):
           pass
        return super(SuperRelationProperty, self).get(item, default)     
  
- 
+# Workflow error exceptions 
 class WorkflowTransitionError(Exception):
       pass
   
@@ -259,8 +254,18 @@ class WorkflowBadStateCodeError(Exception):
 
 class WorkflowBadActionCodeError(Exception):
       pass
- 
-class Workflow():
+
+class Workflow(BaseModel):
+    
+      """
+      Workflow is a subclass of BaseModel used for making the object capable of having
+      actions, states and transitions and every other aspect of ObjectLog concept.
+      
+      Example: 
+      
+      class User(ndb.Workflow)
+            ....
+      """
     
       OBJECT_DEFAULT_STATE = False
       OBJECT_STATES = {}
@@ -363,7 +368,10 @@ class Workflow():
    
 class Response(dict):
     
-    """ Response dict object used for preparing data which is returned to clients for parsing """
+    """ 
+      Response dict object used for preparing data which is returned to clients for parsing.
+      Usually every model method should return this type of response object.
+    """
     
     def __setattr__(self, *args, **kwargs):
         return dict.__setitem__(self, *args, **kwargs)
@@ -393,6 +401,11 @@ class Response(dict):
         
   
 class EvalEnvironment(dict):
+    
+  """
+    Eval environment is helper class for pyson.Eval in which creates context that helps pyson.Eval  
+    successfully evaluate expressions given trough its constructor.
+  """  
 
   def __init__(self, record):
      super(EvalEnvironment, self).__init__()

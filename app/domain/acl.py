@@ -8,7 +8,7 @@ from app import ndb, core
 
 class Domain(ndb.BaseExpando):
     
-    KIND = 6
+    KIND_ID = 6
     
     # root
     # composite index: ancestor:no - state,name
@@ -70,7 +70,7 @@ class Role(ndb.BaseModel):
     permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
     readonly = ndb.BooleanProperty('3', default=True, indexed=False)
     
-    KIND = 7
+    KIND_ID = 7
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -92,7 +92,7 @@ class User(ndb.BaseExpando):
     
     _default_indexed = False
  
-    KIND = 8
+    KIND_ID = 8
     
     OBJECT_DEFAULT_STATE = 'invited'
     

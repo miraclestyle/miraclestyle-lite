@@ -23,7 +23,7 @@ class ObjectLog(ndb.BaseExpando):
        'log' : ndb.PickleProperty('7')
     }
     
-class PayPalTransactionLog(ndb.Expando):
+class PayPalTransactionLog(ndb.BaseExpando):
     
     # ancestor Order, BillingOrder
     # not logged
@@ -53,5 +53,5 @@ class BillingLog(ndb.Model):
     # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    amount = ndb.DecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    balance = ndb.DecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    amount = ndb.SuperDecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    balance = ndb.SuperDecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query

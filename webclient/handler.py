@@ -13,7 +13,7 @@ from jinja2 import FileSystemLoader
 from webapp2_extras import sessions, jinja2
 
 from app.memcache import _local
-from app import settings, ndb
+from app import settings, core
 from app.util import import_module, logger
  
 from webclient import webclient_settings
@@ -113,7 +113,7 @@ class Handler(webapp2.RequestHandler):
     def set_current_user(self, usr):
         """ Sets the specified user into session """
         self._current_user = usr
-        self.session[webclient_settings.SESSION_USER_KEY] = usr
+        self.session[webclient_settings.SESSION_USER_KEY] = usr.key
       
     @property
     def current_user(self):
@@ -121,8 +121,8 @@ class Handler(webapp2.RequestHandler):
         k = webclient_settings.SESSION_USER_KEY
         if k in self.session and self._current_user is None:
            uid = self.session.get(k)
-           if uid and isinstance(uid, ndb.Key):
-              self._current_user = uid.get()
+           if uid:
+              self._current_user = core.acl.User.current_user_read(key=uid)
         return self._current_user
  
             
@@ -239,7 +239,7 @@ class Angular(Handler):
           self.data['redirect'] = self.uri_for(*args, **kwargs)
      
       def after(self):
-          if self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest':
+          if self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest' or self.request.get('force_ajax'):
              if not self.data:
                 self.data = {}
                 if self.response.status == 200:

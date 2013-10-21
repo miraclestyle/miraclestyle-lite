@@ -66,10 +66,13 @@ class Client(object):
         self.access_token = access_token
         self.scope = kwds.get('scope')
     
-    def resource_request(self, method, url, data=None):
+    def resource_request(self, method=None, url=None, data=None):
         """ Uses google urlfetch method for making http requests to external resources """
         if data is None:
            data = {}
+           
+        if method is None:
+           method = 'GET'
            
         method = getattr(urlfetch, method.upper())
  
