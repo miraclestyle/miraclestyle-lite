@@ -66,13 +66,20 @@ class Client(object):
         self.access_token = access_token
         self.scope = kwds.get('scope')
     
-    def resource_request(self, method=None, url=None, data=None):
-        """ Uses google urlfetch method for making http requests to external resources """
+    def resource_request(self, method=None, url=None, data=None, status=None):
+        """ 
+         Uses google urlfetch library for performing http requests to external resources. 
+         This method will return None if the response status code is not equal `status`.
+         Default value for `status` is 200.
+        """
         if data is None:
            data = {}
            
         if method is None:
            method = 'GET'
+           
+        if status is None:
+           status = 200
            
         method = getattr(urlfetch, method.upper())
  
@@ -82,7 +89,7 @@ class Client(object):
             if data is not None:
                data = urllib.urlencode(data)
             response = urlfetch.fetch(url=url, payload=data, method=method)
-            if response.status_code == 200:
+            if response.status_code == status:
                return json.loads(response.content)
             else:
                raise OAuth2ResourceError(getattr(response, 'content', None))

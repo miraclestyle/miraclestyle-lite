@@ -11,7 +11,7 @@ class ObjectLog(ndb.BaseExpando):
     KIND = 5
     
     logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
-    agent = ndb.SuperKeyProperty('2', kind='core.acl.User', required=True)
+    agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True)
     action = ndb.SuperIntegerProperty('3', required=True)
     state = ndb.SuperIntegerProperty('4', required=True) # verovatno ide u expando
     

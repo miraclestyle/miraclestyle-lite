@@ -117,12 +117,14 @@ class Handler(webapp2.RequestHandler):
       
     @property
     def current_user(self):
-        """ Retrieves the current user from the session, based on session from the browser """
+        """ Retrieves the current user from the session, based on session data from the browser """
         k = webclient_settings.SESSION_USER_KEY
+        uid = None
         if k in self.session and self._current_user is None:
            uid = self.session.get(k)
-           if uid:
-              self._current_user = core.acl.User.current_user_read(key=uid)
+           # uid contains serialized ndb.Key of the user
+        
+        self._current_user = core.acl.User.current_user_read(key=uid)
         return self._current_user
  
             

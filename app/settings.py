@@ -26,8 +26,7 @@ HASH_BINDER = u'-'
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DO_LOGS = True
  
-# user-specific settings
-USER_SESSION_KEY = 'user_key'
+# user settings
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
  

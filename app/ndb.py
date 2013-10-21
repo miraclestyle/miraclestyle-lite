@@ -133,8 +133,7 @@ class _BaseProperty(object):
            far = custom_kinds[-1] 
            del custom_kinds[-1] 
            
-           # @todo not sure if i should put absolute import. not for example: core.acl.User, but app.core.acl.User?
-           kwds['kind'] = getattr(import_module('app.%s' % ".".join(custom_kinds)), far)
+           kwds['kind'] = getattr(import_module(".".join(custom_kinds)), far)
              
         super(_BaseProperty, self).__init__(*args, **kwds)
 
@@ -156,6 +155,9 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     pass
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
+    pass
+
+class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
     pass
   
 class SuperDecimalProperty(SuperStringProperty):
@@ -255,15 +257,15 @@ class WorkflowBadStateCodeError(Exception):
 class WorkflowBadActionCodeError(Exception):
       pass
 
-class Workflow(BaseModel):
+class Workflow():
     
       """
-      Workflow is a subclass of BaseModel used for making the object capable of having
+      Workflow is a class used for making the object capable of having
       actions, states and transitions and every other aspect of ObjectLog concept.
       
       Example: 
       
-      class User(ndb.Workflow)
+      class User(ndb.BaseModel, ndb.Workflow)  or for expando class Expando(ndb.BaseExpando, ndb.Workflow)
             ....
       """
     

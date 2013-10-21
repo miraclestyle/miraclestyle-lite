@@ -51,7 +51,7 @@ class Identity(ndb.BaseModel):
     primary = ndb.BooleanProperty('4', default=True)
           
           
-class User(ndb.Workflow):
+class User(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 0
     
@@ -96,19 +96,41 @@ class User(ndb.Workflow):
            'to'   : ('su_suspended',),
         },
     }   
-     
+    
+    def is_anonymous(self):
+        """ Checks if the loaded model is an anonymous user. """
+        return self.key.id == settings.USER_ANONYMOUS_KEYNAME
+ 
     @classmethod
-    def current_user_read(cls, **kwds):
-        urlsafe = kwds.get('urlsafe')
-        key = kwds.get('key')
-        usr = None
+    def auth_or_anon(cls, what):
+        key_name = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
+        if key_name:
+           # always query these models from memory if any
+           result = cls.get_by_id(key_name, use_memcache=True, use_cache=True)
+           if result is None:
+              result = cls(id=key_name, state=cls.default_state())
+              result.put()
+           return result
+        return None
+    
+    @classmethod
+    def authenticated_user(cls):
+        """ Returns authenticated user entity. """
+        return cls.auth_or_anon('AUTHENTICATED')
+    
+    @classmethod
+    def anonymous_user(cls):
+        """ Returns anonymous user entity """
+        return cls.auth_or_anon('ANONYMOUS')
         
-        if urlsafe:
-            key = ndb.Key(urlsafe=urlsafe) 
-            
-        if key:
-           usr = key.get()
-           
+    @classmethod
+    def current_user_read(cls, key):
+        """ Performs `read` for current user """
+        if key is None:
+           return cls.anonymous_user()
+        else:
+           usr = key.get() 
+  
         return usr
     
     def has_identity(self, identity_id):

@@ -10,9 +10,8 @@ from webclient.handler import Angular
 class HomePage(Angular):
     
     def respond(self):
+        u = self.current_user
         self.data['hello'] = 'homepage'
-        self.data['user'] = self.current_user
-        
-        
-        
+        self.data['user'] = u
+         
 register(('/', HomePage, 'index'))

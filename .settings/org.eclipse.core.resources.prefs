@@ -16,6 +16,7 @@ encoding//app/pyson.py=utf-8
 encoding//app/settings.py=utf-8
 encoding//app/util.py=utf-8
 encoding//webclient/controllers/auth.py=utf-8
+encoding//webclient/controllers/home.py=utf-8
 encoding//webclient/controllers/tests.py=utf-8
 encoding//webclient/handler.py=utf-8
 encoding//webclient/route.py=utf-8
