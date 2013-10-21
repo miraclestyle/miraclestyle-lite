@@ -4,6 +4,9 @@
 # NAPOMENA!!! - Sve mapirane informacije koje se snimaju u datastore trebaju biti hardcoded, tj. u samom aplikativnom codu a ne u settings.py
 # u settings.py se cuvaju one informacije koje se ne cuvaju u datastore i koje se ne koriste u izgradnji datastore recorda...
 
+# handlanje sistemskih poruka (poruka koje generise sistem) treba biti uradjeno tako da backend salje kljinetu samo neki basic string, mozda kao code,
+# koji konkretno daje znacenje responsa, a onda web client UI treba za taj string ispisati pravu poruku useru.
+
 # pitanje je da li ce nam trebati composite indexi za query-je poput:
 # BuyerAddress.query(ancestor=key).order(BuyerAddress.name) ili AggregateUserPermission.query(AggregateUserPermission.reference == key, ancestor=key)
 # ali je highly unlikely, zato sto se ancestor ne mora ukljucivati u slucajevima composite indexa
