@@ -4,6 +4,8 @@ Created on Oct 11, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import datetime
+
 from app import ndb, memcache, settings, oauth2
  
 class Session(ndb.BaseExpando):
@@ -25,19 +27,18 @@ class Session(ndb.BaseExpando):
         :returns:
             An existing ``Session`` entity.
         """
-        data = memcache.get(sid)
-        if not data:
-            session = ndb.Key(cls, sid).get()
-            if session:
-                data = session.data
-                memcache.set(sid, data)
-
+        session = ndb.Key(cls, sid).get(use_memcache=True, use_cache=True)
+        data = None
+        if session:
+           data = (session.data, session.updated)
+           
         return data
-
-    def _put(self):
-        """Saves the session and updates the memcache entry."""
-        memcache.set(self._key.id(), self.data)
-        super(Session, self).put()
+        
+        
+class SavedSession(ndb.BaseModel):
+    
+      session = ndb.SuperKeyProperty('1', kind='app.core.acl.Session', indexed=False)
+      updated = ndb.SuperDateTimeProperty(indexed=False) 
  
      
 class Identity(ndb.BaseModel):
@@ -58,11 +59,12 @@ class User(ndb.BaseModel, ndb.Workflow):
     identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperIntegerProperty('3', required=True)
+    sessions = ndb.LocalStructuredProperty(SavedSession, '4', repeated=True)
     
     _default_indexed = False
   
     EXPANDO_FIELDS = {
-      'roles' : ndb.KeyProperty('4', kind='domain.acl.Role', repeated=True)                 
+      'roles' : ndb.KeyProperty('4', repeated=True)                 
     }
  
     OBJECT_DEFAULT_STATE = 'su_active'
@@ -97,9 +99,19 @@ class User(ndb.BaseModel, ndb.Workflow):
         },
     }   
     
-    def is_anonymous(self):
+    @property
+    def entity_is_authenticated(self):
+        """ Checks if the loaded model is an authenticated entity user. """
+        return self.key.id() == settings.USER_AUTHENTICATED_KEYNAME
+    
+    @property
+    def entity_is_anonymous(self):
         """ Checks if the loaded model is an anonymous user. """
-        return self.key.id == settings.USER_ANONYMOUS_KEYNAME
+        return self.key.id() == settings.USER_ANONYMOUS_KEYNAME
+    
+    @property
+    def is_guest(self):
+        return self.entity_is_anonymous
  
     @classmethod
     def auth_or_anon(cls, what):
@@ -124,12 +136,34 @@ class User(ndb.BaseModel, ndb.Workflow):
         return cls.auth_or_anon('ANONYMOUS')
         
     @classmethod
-    def current_user_read(cls, key):
+    def current_user_read(cls, key, session_id, session_updated):
         """ Performs `read` for current user """
         if key is None:
            return cls.anonymous_user()
         else:
-           usr = key.get() 
+           usr = key.get()
+           if session_updated and session_id:
+              session_key = ndb.Key(Session, session_id)
+              saved = SavedSession(session=session_key, updated=session_updated)
+              
+              if not usr.sessions:
+                 usr.sessions = list()
+                 
+              if saved not in usr.sessions:
+                 usr.sessions.append(saved)
+                 # ne znam da li treba da se ovdje poziva akcija `update` ipak, 
+                 # ovo je samo interno dodavanje session_key-a
+                 to_delete = list()
+                 for s in usr.sessions:
+                     # delete all sessions that are older then 6 months
+                     if s.updated < (datetime.datetime.now() -  datetime.timedelta(days=30*4)):
+                        usr.sessions.remove(s)
+                        to_delete.append(s.session)
+                 
+                 if len(to_delete):
+                    ndb.delete_multi(to_delete)
+                     
+                 usr.put()
   
         return usr
     
@@ -144,17 +178,72 @@ class User(ndb.BaseModel, ndb.Workflow):
         addr.put()
         return addr
     
-    def has_permission(self, action, obj):
-        return self.permission_check(self, action, obj)
+    def has_permission(self, action, obj, **kwds):
+        return self.permission_check(self, action, obj, **kwds)
     
     @classmethod
-    def permission_check(cls, usr, action, obj):
+    def permission_check(cls, usr, action, obj, **kwds):
+        
+        """ 
+           Checks if user can perform certian action on supplied object. 
+           :param usr: user on which the permission check will be performed
+           :param action: action which user wants to perform
+           :param obj: loaded entity of an object
+           :param kwds: keyword arguments needed for additional checks.
+        """
+        
+        if not kwds.get('anonymous_check') and not usr.entity_is_anonymous:
+           yes = cls.permission_check(User.anonymous_user(), action, obj, anonymous_check=1)
+           if yes:
+              return yes
+          
+        if not kwds.get('authenticated_check') and not usr.entity_is_authenticated:
+           yes = cls.permission_check(User.authenticated_user(), action, obj, authenticated_check=1)
+           if yes:
+              return yes
+        
         action_code = obj.resolve_action_code_by_name(action)
         kind_id = obj._get_kind()
+        namespace = obj.key.namespace()
         
-        perm = '%s-%s' % (action_code, kind_id)
+        permission = '%s-%s' % (kind_id, action_code)
+          
+        keys = list()
+        
+        for role in usr.roles:
+            if role.namespace() == namespace or role.kind() == Role._get_kind():
+               keys.append(role)
+               
+        roles = ndb.get_multi(keys)
+        perms = dict()
+        for role in roles:
+            for p in role.permissions:
+                perms[p] = p
+        
+        if permission in perms:
+           return True
       
         return False
+     
+    def logout(self):
+        
+        response = ndb.Response()
+        
+        @ndb.transactional
+        def transaction():
+            if self.sessions:
+               to_delete = [s.session for s in self.sessions]
+               ndb.delete_multi(to_delete)
+            self.new_action('logout', agent=self.key)
+            self.record_action()
+        
+        try:    
+            transaction()
+            response['logout'] = True
+        except Exception as e:
+            response['logout'] = False
+            return response.error('logout', 'failed_logout')
+    
     
     @classmethod
     def login(cls, **kwds):
@@ -217,7 +306,7 @@ class User(ndb.BaseModel, ndb.Workflow):
                             usr.put()
                             usr.new_action('update', agent=usr.key)
                      else:
-                        usr = cls.register(email=email, identity=identity_id)
+                        usr = cls.register(email=email, identity_id=identity_id)
                      usr.record_ip(kwds.get('ip'))
                      usr.new_action('login', agent=usr.key)
                      usr.record_action() 
@@ -229,7 +318,6 @@ class User(ndb.BaseModel, ndb.Workflow):
                  response['logged_in'] = usr
               else:
                  response.error('oauth2_error', 'failed_data_fetch')
-                  
            else:
               response['authorization_url'] = cli.get_authorization_code_uri()
         else:
@@ -242,10 +330,10 @@ class User(ndb.BaseModel, ndb.Workflow):
         
          usr = cls()
          email = kwds.get('email')
-         identity = kwds.get('identity')
+         identity_id = kwds.get('identity_id')
      
          usr.emails.append(email)
-         usr.identities.append(Identity(identity=identity, email=email, primary=True))
+         usr.identities.append(Identity(identity=identity_id, email=email, primary=True))
          usr.set_state('su_active')
          usr.put()
          usr.new_action('register', agent=usr.key)
@@ -263,5 +351,23 @@ class IPAddress(ndb.BaseModel):
     # ako budemo radili per user istragu loga onda nam treba composite index: ancestor:yes - logged:desc
     logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
     ip_address = ndb.SuperStringProperty('2', required=True, indexed=False)
+ 
+class Role(ndb.BaseModel):
     
+    # root
+    # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
+    # composite index: ancestor:yes - name
+    name = ndb.StringProperty('1', required=True)
+    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    
+    KIND_ID = 13
+    
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }   
     

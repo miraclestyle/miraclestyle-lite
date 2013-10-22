@@ -15,4 +15,4 @@ from app import settings
 from webclient.handler import wsgi_config
   
 cfg = wsgi_config()
-app = webapp2.WSGIApplication(cfg['ROUTES'], debug=settings.DEBUG, config=cfg['JINJA_CONFIG'])
+app = webapp2.WSGIApplication(cfg['ROUTES'], debug=settings.DEBUG, config=cfg['WSGI_CONFIG'])

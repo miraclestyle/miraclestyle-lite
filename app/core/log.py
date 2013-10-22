@@ -17,11 +17,20 @@ class ObjectLog(ndb.BaseExpando):
     
     _default_indexed = False
     
+    # logging the object as pickle
     EXPANDO_FIELDS = {
-       'message' : ndb.TextProperty('5'),
-       'note' : ndb.TextProperty('6'),
-       'log' : ndb.PickleProperty('7')
+       'message' : ndb.SuperTextProperty('5'),
+       'note' : ndb.SuperTextProperty('6'),
+       'log' : ndb.SuperPickleProperty('7')
     }
+    
+    # or log object's each property?
+    def log_object(self, obj):
+        for p in obj._properties:
+            prop = obj._properties.get(p)
+            setattr(self, p, prop._get_value(obj))
+            
+        return self
     
 class PayPalTransactionLog(ndb.BaseExpando):
     

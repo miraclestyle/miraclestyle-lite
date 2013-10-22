@@ -132,8 +132,9 @@ class _BaseProperty(object):
            custom_kinds = custom_kind.split('.')
            far = custom_kinds[-1] 
            del custom_kinds[-1] 
-           
+         
            kwds['kind'] = getattr(import_module(".".join(custom_kinds)), far)
+           
              
         super(_BaseProperty, self).__init__(*args, **kwds)
 
@@ -141,6 +142,12 @@ class BaseProperty(_BaseProperty, Property):
    """
     Base property class for all properties capable of having writable, and visible options
    """
+   
+class SuperPickleProperty(_BaseProperty, PickleProperty):
+    pass
+
+class SuperTextProperty(_BaseProperty, TextProperty):
+    pass
  
 class SuperStringProperty(_BaseProperty, StringProperty):
     pass
@@ -341,7 +348,9 @@ class Workflow():
           return self.resolve_state_name_by_code(self.state)
           
       def new_action(self, action, state=None, **kwargs):
-          """ Sets new state inited by some action, and prepares object"""
+          """ 
+            Sets new state inited by some action, and prepares object log for write
+          """
           
           if state is not None: # if state is unchanged, no checks for transition needed?
               self.set_state(state)
@@ -362,7 +371,7 @@ class Workflow():
       def record_action(self, skip_check=False):
           any_actions = len(self.__record_action)
           if not any_actions and not skip_check:
-             raise WorkflowActionNotReadyError('This entity did not have self.new_action called')
+             raise WorkflowActionNotReadyError('This entity did not have any self.new_action() called')
           
           if any_actions:
              return put_multi(self.__record_action)

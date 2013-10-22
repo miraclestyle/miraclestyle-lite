@@ -8,7 +8,8 @@ import imp
 import os
 import json
  
-from app.core.acl import Session
+from app import core
+
 from webapp2_extras import sessions
 
 class Jinja():
@@ -73,7 +74,7 @@ class DatastoreSessionFactory(sessions.CustomBackendSessionFactory):
     """
 
     #: The session model class.
-    session_model = Session
+    session_model = core.acl.Session
 
     def _get_by_sid(self, sid):
         """Returns a session given a session id."""
@@ -81,6 +82,8 @@ class DatastoreSessionFactory(sessions.CustomBackendSessionFactory):
             data = self.session_model.get_by_sid(sid)
             if data is not None:
                 self.sid = sid
+                data, updated = data
+                self.session_updated = updated
                 return sessions.SessionDict(self, data=data)
 
         self.sid = self._get_new_sid()

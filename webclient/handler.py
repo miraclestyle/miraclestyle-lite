@@ -48,9 +48,9 @@ def wsgi_config(as_tuple=False):
     
     logger('Webapp2 started, compiling stuff')
     
-    JINJA_CONFIG = {}
-    JINJA_CONFIG.update(webclient_settings.WEBAPP2_EXTRAS)
-    JINJA_CONFIG['webapp2_extras.jinja2'] = {
+    WSGI_CONFIG = {}
+    WSGI_CONFIG.update(webclient_settings.WEBAPP2_EXTRAS)
+    WSGI_CONFIG['webapp2_extras.jinja2'] = {
                  'template_path': 'templates',
                  'globals' : JINJA_GLOBALS,
                  'filters' : JINJA_FILTERS,
@@ -63,7 +63,7 @@ def wsgi_config(as_tuple=False):
     }
      
     
-    _WSGI_CONFIG = dict(JINJA_CONFIG=JINJA_CONFIG,
+    _WSGI_CONFIG = dict(WSGI_CONFIG=WSGI_CONFIG,
                         ROUTES=ROUTES,
                         JINJA_GLOBALS=JINJA_GLOBALS,
                         JINJA_FILTERS=JINJA_FILTERS,
@@ -124,7 +124,10 @@ class Handler(webapp2.RequestHandler):
            uid = self.session.get(k)
            # uid contains serialized ndb.Key of the user
         
-        self._current_user = core.acl.User.current_user_read(key=uid)
+        info = dict(key=uid, session_updated=getattr(self.session.container, 'session_updated', None),
+                    session_id=getattr(self.session.container, 'sid', None))
+        
+        self._current_user = core.acl.User.current_user_read(**info)
         return self._current_user
  
             

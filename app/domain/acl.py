@@ -4,7 +4,7 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb, core
+from app import ndb
 
 class Domain(ndb.BaseExpando):
     
@@ -13,7 +13,7 @@ class Domain(ndb.BaseExpando):
     # root
     # composite index: ancestor:no - state,name
     name = ndb.StringProperty('1', required=True)
-    primary_contact = ndb.KeyProperty('2', kind=core.acl.User, required=True, indexed=False)
+    primary_contact = ndb.KeyProperty('2', kind='app.core.User', required=True, indexed=False)
     updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
     created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
     state = ndb.IntegerProperty('5', required=True)
@@ -86,7 +86,7 @@ class User(ndb.BaseExpando):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:no - name
     name = ndb.StringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
-    user = ndb.KeyProperty('2', kind=core.acl.User, required=True)
+    user = ndb.KeyProperty('2', kind='app.core.User', required=True)
     roles = ndb.KeyProperty('3', kind=Role, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
     state = ndb.IntegerProperty('4', required=True)# invited/accepted
     
