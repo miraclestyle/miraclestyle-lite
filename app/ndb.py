@@ -24,6 +24,18 @@ class _BaseModel(Model):
   
   original_values = {}
   
+  def __json__(self):
+      """ This magic method is called by json encoder. 
+          The values that this method returns must be json compliant
+       """
+      dic = self.to_dict()
+      
+      if self.key:
+         dic['key'] = {}
+         dic['key']['urlsafe'] = self.key.urlsafe()
+         
+      return dic
+  
   def loaded(self):
       return self.key != None
   
@@ -134,8 +146,7 @@ class _BaseProperty(object):
            del custom_kinds[-1] 
          
            kwds['kind'] = getattr(import_module(".".join(custom_kinds)), far)
-           
-             
+            
         super(_BaseProperty, self).__init__(*args, **kwds)
 
 class BaseProperty(_BaseProperty, Property):
@@ -283,6 +294,10 @@ class Workflow():
       
       __record_action = []
       
+      def __init__(self, *args, **kwds):
+          self.__record_action = []
+          super(Workflow, self).__init(*args, **kwds)
+          
       @classmethod
       def default_state(cls):
         # returns default state for this model
@@ -340,7 +355,7 @@ class Workflow():
              raise WorkflowTransitionError('This object cannot go from state `%s` to state `%s`. It can only go from states `%s` to `%s`'
                                            % (self.state, state, transitions['from'], transitions['to']))
       
-      def set_state(self, state):
+      def set_state(self, state, check=False):
           self.state = self.resolve_state_code_by_name(state)
           
       @property
@@ -348,8 +363,8 @@ class Workflow():
           return self.resolve_state_name_by_code(self.state)
           
       def new_action(self, action, state=None, **kwargs):
-          """ 
-            Sets new state inited by some action, and prepares object log for write
+          """
+           Tries to record an action
           """
           
           if state is not None: # if state is unchanged, no checks for transition needed?
@@ -360,9 +375,15 @@ class Workflow():
  
           if self.state == None:
              state = self.default_state()
+             
+          obj = kwargs.pop('obj', None)
  
           from app.core import log
-          objlog = log.ObjectLog(state=self.state, action=action, parent=self.key, **kwargs)
+          
+          objlog = log.ObjectLog(action=action, parent=self.key, **kwargs)
+          
+          if obj is not None:
+             objlog.log_object(obj)
           
           self.__record_action.append(objlog)
 
@@ -383,6 +404,12 @@ class Response(dict):
       Response dict object used for preparing data which is returned to clients for parsing.
       Usually every model method should return this type of response object.
     """
+    def required_values(self, obj, *args):
+        for arg in args:
+            if arg not in obj:
+               self.error('required_values', 'required_%s' % arg)
+               
+        return self
     
     def __setattr__(self, *args, **kwargs):
         return dict.__setitem__(self, *args, **kwargs)
@@ -392,6 +419,8 @@ class Response(dict):
     
     def has_error(self, k=None):
         if k is None:
+           if self['errors'] is None:
+              return False
            return len(self['errors'].keys())
         else:
            return len(self['errors'][k])

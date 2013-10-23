@@ -33,6 +33,12 @@ class JSONEncoderHTML(json.JSONEncoder):
     with the usual entities (e.g. &amp;) because they are not expanded
     within <script> tags.
     """
+    
+    def default(self, o):
+        if hasattr(o, '__json__'):
+           return o.__json__()
+        else:
+           return json.JSONEncoder.default(self, o)
   
     def iterencode(self, o, _one_shot=False):
         chunks = super(JSONEncoderHTML, self).iterencode(o, _one_shot)

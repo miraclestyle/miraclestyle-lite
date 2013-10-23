@@ -4,7 +4,7 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-ACTIVE_CONTROLLERS = ('tests', 'home', 'auth')
+ACTIVE_CONTROLLERS = ('tests', 'home', 'auth', 'admin')
 
 TEMPLATE_CACHE = 0
 

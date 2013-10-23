@@ -88,11 +88,9 @@ def memcached(func, k=None, d=None):
         return dec        
          
 def temp_memory_get(k, d=None):
-    # currently unsupported due decupling
     return getattr(_local, k, d)
 
 def temp_memory_set(k, v):
-    # currently unsupported due decupling
     setattr(_local, k, v)
     
 def temp_memory_delete(k):

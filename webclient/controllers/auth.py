@@ -28,7 +28,6 @@ class Login(Angular):
               command['error'] = error
            response = usr.login(**command)
            logged_in = response.get('logged_in')
-           
            if logged_in:
               self.set_current_user(logged_in)
               
@@ -36,11 +35,17 @@ class Login(Angular):
            
         self.data['providers'] = settings.LOGIN_METHODS
  
-class Register(Angular):
+class Logout(Angular):
     
     def respond(self):
-        pass 
+        current = self.current_user
+        if not current.is_guest:
+           response = current.logout()
+           self.data['status'] = response
+        else:
+           self.data['status'] = {'already_logged_out' : True}
+            
     
 register((r'/login', Login, 'login'),
          (r'/login/<provider>', Login, 'login_provider'),
-         (r'/register', Register, 'register'))
+         (r'/logout', Logout, 'logout'))

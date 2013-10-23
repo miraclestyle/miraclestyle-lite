@@ -8,7 +8,7 @@ import sys
 import logging
 
 from app import settings
-
+ 
 def logger(msg, t=None):
     if t == None:
        t = 'info'

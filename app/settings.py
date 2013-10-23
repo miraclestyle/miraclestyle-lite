@@ -29,6 +29,7 @@ DO_LOGS = True
 # user settings
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
+ROOT_ADMINS = ('edis.sehalic@gmail.com', 'elvinkosova@gmail.com')
  
 
 LOGIN_METHODS = {

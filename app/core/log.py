@@ -8,23 +8,20 @@ from app import ndb
  
 class ObjectLog(ndb.BaseExpando):
     
-    KIND = 5
+    KIND_ID = 5
     
     logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
     agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True)
     action = ndb.SuperIntegerProperty('3', required=True)
-    state = ndb.SuperIntegerProperty('4', required=True) # verovatno ide u expando
-    
+ 
     _default_indexed = False
-    
-    # logging the object as pickle
+ 
     EXPANDO_FIELDS = {
        'message' : ndb.SuperTextProperty('5'),
        'note' : ndb.SuperTextProperty('6'),
-       'log' : ndb.SuperPickleProperty('7')
     }
     
-    # or log object's each property?
+    # log object's each property
     def log_object(self, obj):
         for p in obj._properties:
             prop = obj._properties.get(p)

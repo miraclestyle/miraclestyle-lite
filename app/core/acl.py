@@ -6,7 +6,7 @@ Created on Oct 11, 2013
 '''
 import datetime
 
-from app import ndb, memcache, settings, oauth2
+from app import ndb, settings, oauth2
  
 class Session(ndb.BaseExpando):
     """A model to store session data. This is required for authenticating users."""
@@ -191,22 +191,29 @@ class User(ndb.BaseModel, ndb.Workflow):
            :param obj: loaded entity of an object
            :param kwds: keyword arguments needed for additional checks.
         """
+        if usr.emails:
+           for e in usr.emails:
+               if e in settings.ROOT_ADMINS:
+                  return True
         
         if not kwds.get('anonymous_check') and not usr.entity_is_anonymous:
-           yes = cls.permission_check(User.anonymous_user(), action, obj, anonymous_check=1)
+           yes = cls.permission_check(User.anonymous_user(), action, obj, anonymous_check=1, **kwds)
            if yes:
               return yes
           
         if not kwds.get('authenticated_check') and not usr.entity_is_authenticated:
-           yes = cls.permission_check(User.authenticated_user(), action, obj, authenticated_check=1)
+           yes = cls.permission_check(User.authenticated_user(), action, obj, authenticated_check=1, **kwds)
            if yes:
               return yes
-        
-        action_code = obj.resolve_action_code_by_name(action)
-        kind_id = obj._get_kind()
+ 
         namespace = obj.key.namespace()
-        
-        permission = '%s-%s' % (kind_id, action_code)
+         
+        permissions = []
+        if isinstance(action, basestring):
+           action = (action, )
+       
+        for a in action:
+            permissions.append(Role.format_permission(a, obj))
           
         keys = list()
         
@@ -214,26 +221,34 @@ class User(ndb.BaseModel, ndb.Workflow):
             if role.namespace() == namespace or role.kind() == Role._get_kind():
                keys.append(role)
                
-        roles = ndb.get_multi(keys)
+        roles = ndb.get_multi(keys, use_cache=True)
         perms = dict()
         for role in roles:
             for p in role.permissions:
                 perms[p] = p
-        
-        if permission in perms:
-           return True
+                
+        strict = kwds.pop('strict', False)
+        for p in permissions:
+            if not strict:
+                if p in perms:
+                   return True
+            else:
+                if p not in perms:
+                   return False
       
-        return False
+        return strict
      
     def logout(self):
         
         response = ndb.Response()
         
-        @ndb.transactional
+        @ndb.transactional(xg=True)
         def transaction():
             if self.sessions:
-               to_delete = [s.session for s in self.sessions]
-               ndb.delete_multi(to_delete)
+               ndb.delete_multi([s.session for s in self.sessions], use_memcache=True, use_cache=True)
+               self.sessions = []
+               self.put()
+               
             self.new_action('logout', agent=self.key)
             self.record_action()
         
@@ -242,7 +257,9 @@ class User(ndb.BaseModel, ndb.Workflow):
             response['logout'] = True
         except Exception as e:
             response['logout'] = False
-            return response.error('logout', 'failed_logout')
+            response.error('logout', 'failed_logout')
+            
+        return response
     
     
     @classmethod
@@ -291,7 +308,7 @@ class User(ndb.BaseModel, ndb.Workflow):
                  if not usr and current_user:
                     usr = current_user
                         
-                 @ndb.transactional
+                 @ndb.transactional(xg=True)
                  def trans(usr): 
                      put = False
                      if usr:
@@ -369,5 +386,40 @@ class Role(ndb.BaseModel):
        'create' : 1,
        'update' : 2,
        'delete' : 3,
-    }   
+    }  
+    
+    @staticmethod
+    def format_permission(action, obj):
+        return '%s-%s' % (obj._get_kind(), obj.resolve_action_code_by_name(action))
+    
+    @classmethod
+    def list_roles(cls):
+        return cls.query().fetch()  
+  
+    @classmethod
+    def create(cls, **kwds):
+        response = ndb.Response()
+        response.required_values(kwds, 'current_user', 'name', 'actions', 'kind_id')
+        
+        if not response.has_error():
+               usr = kwds.get('current_user')
+               if usr.has_permission('create', cls):
+ 
+                  perms = []
+                  obj = ndb.BaseModel._kind_map.get(kwds.get('kind_id'))
+                   
+                  for action in kwds.get('actions'):
+                      perms.append(Role.format_permission(action, obj))
+                   
+                  @ndb.transactional 
+                  def transaction():
+                      create = cls(name=kwds.get('name'), permissions=perms)
+                      create.put()
+                      return create
+                  
+                  create = transaction()
+                  response['create'] = create
+        
+        return response
+    
     
