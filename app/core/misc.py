@@ -8,14 +8,15 @@ from app import ndb
 
 class Content(ndb.BaseModel):
     
+    KIND_ID = 14
     # root
     # composite index: ancestor:no - category,active,sequence
-    updated = ndb.DateTimeProperty('1', auto_now=True, required=True)
-    title = ndb.StringProperty('2', required=True)
-    category = ndb.IntegerProperty('3', required=True)
-    body = ndb.TextProperty('4', required=True)
-    sequence = ndb.IntegerProperty('5', required=True)
-    active = ndb.BooleanProperty('6', default=False)
+    updated = ndb.SuperDateTimeProperty('1', auto_now=True, required=True)
+    title = ndb.SuperStringProperty('2', required=True)
+    category = ndb.SuperIntegerProperty('3', required=True)
+    body = ndb.SuperTextProperty('4', required=True)
+    sequence = ndb.SuperIntegerProperty('5', required=True)
+    active = ndb.SuperBooleanProperty('6', default=False)
  
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -30,15 +31,17 @@ class Content(ndb.BaseModel):
 class Image(ndb.BaseModel):
     
     # base class/structured class
-    image = ndb.BlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
-    content_type = ndb.StringProperty('2', required=True, indexed=False)
-    size = ndb.FloatProperty('3', required=True, indexed=False)
-    width = ndb.IntegerProperty('4', required=True, indexed=False)
-    height = ndb.IntegerProperty('5', required=True, indexed=False)
-    sequence = ndb.IntegerProperty('6', required=True)
+    image = ndb.SuperBlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
+    content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
+    size = ndb.SuperFloatProperty('3', required=True, indexed=False)
+    width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
+    height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
+    sequence = ndb.SuperIntegerProperty('6', required=True)
 
 # done!
 class Country(ndb.BaseModel):
+    
+    KIND_ID = 15
     
     # root
     # http://hg.tryton.org/modules/country/file/tip/country.py#l8
@@ -47,9 +50,9 @@ class Country(ndb.BaseModel):
     # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
     # composite index: ancestor:no - active,name
-    code = ndb.StringProperty('1', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    name = ndb.StringProperty('2', required=True)
-    active = ndb.BooleanProperty('3', default=True)
+    code = ndb.SuperStringProperty('1', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    name = ndb.SuperStringProperty('2', required=True)
+    active = ndb.SuperBooleanProperty('3', default=True)
  
     
     OBJECT_DEFAULT_STATE = 'none'
@@ -64,17 +67,22 @@ class Country(ndb.BaseModel):
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
 class CountrySubdivision(ndb.BaseModel):
     
+    KIND_ID = 16
+    
     # ancestor Country
     # http://hg.tryton.org/modules/country/file/tip/country.py#l52
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
     # koliko cemo drilldown u ovoj strukturi zavisi od kasnijih odluka u vezi povezivanja lokativnih informacija sa informacijama ovog modela..
     # composite index: ancestor:yes - name; ancestor:yes - active,name
-    parent_record = ndb.KeyProperty('1', kind='CountrySubdivision', indexed=False)
-    code = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    name = ndb.StringProperty('3', required=True)
-    type = ndb.IntegerProperty('4', required=True, indexed=False)
-    active = ndb.BooleanProperty('5', default=True)
- 
+    
+    #  kind='app.core.misc.CountrySubdivision',
+    parent_record = ndb.SuperKeyProperty('1', indexed=False)
+    
+    code = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    name = ndb.SuperStringProperty('3', required=True)
+    type = ndb.SuperIntegerProperty('4', required=True, indexed=False)
+    active = ndb.SuperBooleanProperty('5', default=True)
+     
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {
@@ -88,7 +96,7 @@ class CountrySubdivision(ndb.BaseModel):
 class Location(ndb.BaseExpando):
     
     # base class/structured class
-    country = ndb.KeyProperty('1', kind=Country, required=True, indexed=False)
+    country = ndb.SuperKeyProperty('1', kind=Country, required=True, indexed=False)
     _default_indexed = False
  
     # Expando
@@ -101,15 +109,19 @@ class Location(ndb.BaseExpando):
 # done!
 class ProductCategory(ndb.BaseModel):
     
+    KIND_ID = 17
+    
     # root
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
     # https://support.google.com/merchants/answer/1705911
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L227
     # composite index: ancestor:no - status,name
-    parent_record = ndb.KeyProperty('1', kind='ProductCategory', indexed=False)
-    name = ndb.StringProperty('2', required=True)
-    complete_name = ndb.TextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
-    status = ndb.IntegerProperty('4', required=True)
+    
+    #  kind='app.core.misc.ProductCategory',
+    parent_record = ndb.SuperKeyProperty('1', indexed=False)
+    name = ndb.SuperStringProperty('2', required=True)
+    complete_name = ndb.SuperTextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
+    status = ndb.SuperIntegerProperty('4', required=True)
   
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -122,11 +134,13 @@ class ProductCategory(ndb.BaseModel):
 # done!
 class ProductUOMCategory(ndb.BaseModel):
     
+    KIND_ID = 18
+    
     # root
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # mozda da ovi entiteti budu non-deletable i non-editable ??
-    name = ndb.StringProperty('1', required=True)
+    name = ndb.SuperStringProperty('1', required=True)
   
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -140,19 +154,21 @@ class ProductUOMCategory(ndb.BaseModel):
 # done!
 class ProductUOM(ndb.BaseModel):
     
+    KIND_ID = 19
+    
     # ancestor ProductUOMCategory
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     # composite index: ancestor:no - active,name
-    name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    name = ndb.SuperStringProperty('1', required=True)
+    symbol = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     rate = ndb.SuperDecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
     factor = ndb.SuperDecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
     rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
-    digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True)
+    digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
+    active = ndb.SuperBooleanProperty('7', default=True)
    
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -165,31 +181,33 @@ class ProductUOM(ndb.BaseModel):
 # done!
 class Currency(ndb.BaseModel):
     
+    KIND_ID = 20
+    
     # root
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
     # composite index: ancestor:no - active,name
-    name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    code = ndb.StringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    numeric_code = ndb.StringProperty('4', indexed=False)
+    name = ndb.SuperStringProperty('1', required=True)
+    symbol = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    code = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    numeric_code = ndb.SuperStringProperty('4', indexed=False)
     rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-    digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True)
+    digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
+    active = ndb.SuperBooleanProperty('7', default=True)
     #formating
-    grouping = ndb.StringProperty('8', required=True, indexed=False)
-    decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
-    thousands_separator = ndb.StringProperty('10', indexed=False)
-    positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
-    negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
-    positive_sign = ndb.StringProperty('13', indexed=False)
-    negative_sign = ndb.StringProperty('14', indexed=False)
-    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
-    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
-    positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
-    negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
+    grouping = ndb.SuperStringProperty('8', required=True, indexed=False)
+    decimal_separator = ndb.SuperStringProperty('9', required=True, indexed=False)
+    thousands_separator = ndb.SuperStringProperty('10', indexed=False)
+    positive_sign_position = ndb.SuperIntegerProperty('11', required=True, indexed=False)
+    negative_sign_position = ndb.SuperIntegerProperty('12', required=True, indexed=False)
+    positive_sign = ndb.SuperStringProperty('13', indexed=False)
+    negative_sign = ndb.SuperStringProperty('14', indexed=False)
+    positive_currency_symbol_precedes = ndb.SuperBooleanProperty('15', default=True, indexed=False)
+    negative_currency_symbol_precedes = ndb.SuperBooleanProperty('16', default=True, indexed=False)
+    positive_separate_by_space = ndb.SuperBooleanProperty('17', default=True, indexed=False)
+    negative_separate_by_space = ndb.SuperBooleanProperty('18', default=True, indexed=False)
     
  
     OBJECT_DEFAULT_STATE = 'none'
@@ -205,10 +223,12 @@ class Currency(ndb.BaseModel):
 # ostaje da se ispita u preprodukciji!!
 class Message(ndb.BaseModel):
     
+    KIND_ID = 21
+    
     # root
-    outlet = ndb.IntegerProperty('1', required=True, indexed=False)
-    group = ndb.IntegerProperty('2', required=True, indexed=False)
-    state = ndb.IntegerProperty('3', required=True)
+    outlet = ndb.SuperIntegerProperty('1', required=True, indexed=False)
+    group = ndb.SuperIntegerProperty('2', required=True, indexed=False)
+    state = ndb.SuperIntegerProperty('3', required=True)
  
     OBJECT_DEFAULT_STATE = 'composing'
     
@@ -249,13 +269,15 @@ class Message(ndb.BaseModel):
     
 class BillingCreditAdjustment(ndb.BaseModel):
     
+    KIND_ID = 22
+    
     # root (namespace Domain)
     # not logged
-    adjusted = ndb.DateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
-    agent = ndb.KeyProperty('3', kind='core.acl.User', required=True, indexed=False)
+    adjusted = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
+    agent = ndb.SuperKeyProperty('3', kind='app.core.acl.User', required=True, indexed=False)
     amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
-    message = ndb.TextProperty('5')# soft limit 64kb - to determine char count
-    note = ndb.TextProperty('6')# soft limit 64kb - to determine char count
+    message = ndb.SuperTextProperty('5')# soft limit 64kb - to determine char count
+    note = ndb.SuperTextProperty('6')# soft limit 64kb - to determine char count
  
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -266,15 +288,17 @@ class BillingCreditAdjustment(ndb.BaseModel):
      
 class FeedbackRequest(ndb.Model):
     
+    KIND_ID = 23
+    
     # ancestor User
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
     # composite index:
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
-    reference = ndb.StringProperty('1', required=True, indexed=False)
-    state = ndb.IntegerProperty('2', required=True)
-    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    reference = ndb.SuperStringProperty('1', required=True, indexed=False)
+    state = ndb.SuperIntegerProperty('2', required=True)
+    updated = ndb.SuperDateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.SuperDateTimeProperty('4', auto_now_add=True, required=True)
  
     
     OBJECT_DEFAULT_STATE = 'new'
@@ -313,16 +337,18 @@ class FeedbackRequest(ndb.Model):
 # done! - sudo kontrolisan model
 class SupportRequest(ndb.Model):
     
+    KIND_ID = 24
+    
     # ancestor User
     # ako uopste bude vidljivo useru onda mozemo razmatrati indexing
     # ako hocemo da dozvolimo sva sortiranja, i dodatni filter po state-u uz sortiranje, onda nam trebaju slecedi indexi
     # composite index:
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
-    reference = ndb.StringProperty('1', required=True, indexed=False)
-    state = ndb.IntegerProperty('2', required=True)
-    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
+    reference = ndb.SuperStringProperty('1', required=True, indexed=False)
+    state = ndb.SuperIntegerProperty('2', required=True)
+    updated = ndb.SuperDateTimeProperty('3', auto_now=True, required=True)
+    created = ndb.SuperDateTimeProperty('4', auto_now_add=True, required=True)
  
     
     OBJECT_DEFAULT_STATE = 'new'

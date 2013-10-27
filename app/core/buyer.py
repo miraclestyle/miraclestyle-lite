@@ -44,7 +44,106 @@ class Address(ndb.BaseExpando, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+  
+    @classmethod
+    def manage(cls, **k):
+         
+        response = ndb.Response()
+        
+        from app import core
+        
+        current = core.acl.User.current_user()
+        
+        name = k.get('name')
+        country = k.get('country')
+        city = k.get('city')
+        postal_code = k.get('postal_code')
+        street_address = k.get('street_address')
+        default_shipping = k.get('default_shipping')
+        default_billing = k.get('default_billing')
+        
+        region = k.get('region')
+        street_address_2 = k.get('street_address_2')
+        email = k.get('email')
+        telephone = k.get('telephone')
+        
+        
+        to_update = {}
+        to_create = []
+        
+        i = -1
+        
+        for key_urlsafe in k.get('id', []):
+            
+            i += 1
+            
+            create = True
+            
+            try:
+                _country = ndb.Key(urlsafe=country[i])
+            except:
+                _country = None
+                
+            if not _country:
+               response.error('input_error_%s' % i, 'invalid_country_input')
+               continue
+            
+            data = dict(name=name[i], country=_country, city=city[i], postal_code=postal_code[i],
+                        street_address=street_address[i], default_shipping=default_shipping[i],
+                        default_billing=default_billing[i], street_address_2=street_address_2[i],
+                        telephone=telephone[i], email=email[i])
+       
+            if region[i]:
+                try:
+                    _region = ndb.Key(urlsafe=region[i])
+                except:
+                    _region = None
+                    
+                if not _region:
+                   response.error('input_error_%s' % i, 'invalid_region_input')
+                   continue
+            
+            if key_urlsafe:
+               key = ndb.Key(urlsafe=key_urlsafe)
+               if key:
+                  if key.parent() == current.key:
+                     to_update[key.id()] = data
+                     create = False
+            if create:
+               to_create.append(data)
+          
+        items = []    
  
+        if len(to_update):
+            to_put_multi = []
+            to_put_serial = []
+            entries = ndb.get_multi([ndb.Key(Address, id=k) for k,v in to_update.items()])
+            for ent in entries:
+                ent.populate(to_update[ent.key.id()])
+                items.append(ent)
+                log = ent.new_action('update', agent=current, log_object=ent)
+                to_put_multi.append(ent)
+                to_put_multi.append(ent)
+       
+        
+        if len(to_create):
+            for create in to_create:
+                to_put_serial.append(Address(**create))
+        
+        if len(to_put_serial):
+           for s in to_put_serial:
+               s.put()
+               items.append(s)
+               log = s.new_action('create', agent=current, log_object=s)
+               to_put_multi.append(log)
+                
+        if len(to_put_multi):
+           ndb.put_multi(to_put_multi)
+           
+        response['results'] = items
+           
+        return response
+            
 # done!
 class Collection(ndb.BaseModel):
     

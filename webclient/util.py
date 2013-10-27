@@ -7,10 +7,6 @@ Created on Oct 8, 2013
 import imp
 import os
 import json
- 
-from app import core
-
-from webapp2_extras import sessions
 
 class Jinja():
     
@@ -24,6 +20,12 @@ class Jinja():
     @staticmethod
     def register_global(cls, name, value):
         cls.globals[name] = value
+        
+        
+def to_json(s):
+    return json.dumps(s, cls=JSONEncoderHTML)
+            
+Jinja.register_filter('to_json', to_json)
  
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.
@@ -38,6 +40,8 @@ class JSONEncoderHTML(json.JSONEncoder):
         if hasattr(o, '__json__'):
            return o.__json__()
         else:
+           if hasattr(o, '__str__'):
+              return o.__str__()
            return json.JSONEncoder.default(self, o)
   
     def iterencode(self, o, _one_shot=False):
@@ -60,45 +64,3 @@ def package_contents(package_name):
     return set([os.path.splitext(module)[0]
         for module in os.listdir(pathname)
         if module.endswith(MODULE_EXTENSIONS)])
-    
-
-class DatastoreSessionFactory(sessions.CustomBackendSessionFactory):
-    """A session factory that stores data serialized in datastore.
-
-    To use datastore sessions, pass this class as the `factory` keyword to
-    :meth:`webapp2_extras.sessions.SessionStore.get_session`::
-
-        from webapp2_extras import sessions_ndb
-
-        # [...]
-
-        session = self.session_store.get_session(
-            name='db_session', factory=sessions_ndb.DatastoreSessionFactory)
-
-    See in :meth:`webapp2_extras.sessions.SessionStore` an example of how to
-    make sessions available in a :class:`webapp2.RequestHandler`.
-    """
-
-    #: The session model class.
-    session_model = core.acl.Session
-
-    def _get_by_sid(self, sid):
-        """Returns a session given a session id."""
-        if self._is_valid_sid(sid):
-            data = self.session_model.get_by_sid(sid)
-            if data is not None:
-                self.sid = sid
-                data, updated = data
-                self.session_updated = updated
-                return sessions.SessionDict(self, data=data)
-
-        self.sid = self._get_new_sid()
-        return sessions.SessionDict(self, new=True)
-
-    def save_session(self, response):
-        if self.session is None or not self.session.modified:
-            return
-
-        self.session_model(id=self.sid, data=dict(self.session))._put()
-        self.session_store.save_secure_cookie(
-            response, self.name, {'_sid': self.sid}, **self.session_args)

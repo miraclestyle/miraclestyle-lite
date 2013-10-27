@@ -163,6 +163,9 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 class SuperStringProperty(_BaseProperty, StringProperty):
     pass
 
+class SuperFloatProperty(_BaseProperty, FloatProperty):
+    pass
+
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
     pass
 
@@ -376,7 +379,7 @@ class Workflow():
           if self.state == None:
              state = self.default_state()
              
-          obj = kwargs.pop('obj', None)
+          obj = kwargs.pop('log_object', None)
  
           from app.core import log
           

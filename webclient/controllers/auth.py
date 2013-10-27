@@ -9,41 +9,34 @@ from webclient.route import register
 from webclient.handler import Angular
 
 class Login(Angular):
-    
+  
     def respond(self, provider=None):
  
-        usr = core.acl.User
         if provider is not None:
-           code = self.request.get('code')
-           error = self.request.get('error')
            command = {'login_method' : provider,
                       'redirect_uri' : self.uri_for('login_provider', provider=provider, _full=True),
                       'ip' : self.request.remote_addr,
-                      'current_user' : self.current_user,
+                      'code' : self.request.get('code'),
+                      'error' : self.request.get('error')
            }
-           if code:
-              command['code'] = code
-              
-           if error:
-              command['error'] = error
-           response = usr.login(**command)
-           logged_in = response.get('logged_in')
-           if logged_in:
-              self.set_current_user(logged_in)
-              
-           self.data['response'] = response
+             
+           response = core.acl.User.login(**command)
            
-        self.data['providers'] = settings.LOGIN_METHODS
+           if 'authorization_code' in response:
+               self.response.set_cookie('auth', response.get('authorization_code'), httponly=True)
+           
+           return response
+            
  
 class Logout(Angular):
     
     def respond(self):
-        current = self.current_user
-        if not current.is_guest:
-           response = current.logout()
-           self.data['status'] = response
-        else:
-           self.data['status'] = {'already_logged_out' : True}
+        usr = core.acl.User.current_user()
+        response = usr.logout(code=self.request.get('code'))
+        
+        self.response.delete_cookie('auth')
+        
+        return response
             
     
 register((r'/login', Login, 'login'),

@@ -5,40 +5,16 @@ Created on Oct 11, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import datetime
+import hashlib
 
-from app import ndb, settings, oauth2
+from app.util import random_chars
+from app import ndb, settings, oauth2, memcache
  
-class Session(ndb.BaseExpando):
-    """A model to store session data. This is required for authenticating users."""
-    
-    KIND_ID = 3
-
-    #: Save time.
-    updated = ndb.SuperDateTimeProperty(auto_now=True)
-    #: Session data, pickled.
-    data = ndb.PickleProperty()
-
-    @classmethod
-    def get_by_sid(cls, sid):
-        """Returns a ``Session`` instance by session id.
-
-        :param sid:
-            A session id.
-        :returns:
-            An existing ``Session`` entity.
-        """
-        session = ndb.Key(cls, sid).get(use_memcache=True, use_cache=True)
-        data = None
-        if session:
-           data = (session.data, session.updated)
-           
-        return data
         
-        
-class SavedSession(ndb.BaseModel):
+class Session(ndb.BaseModel):
     
-      session = ndb.SuperKeyProperty('1', kind='app.core.acl.Session', indexed=False)
-      updated = ndb.SuperDateTimeProperty(indexed=False) 
+      session_id = ndb.SuperStringProperty(indexed=False)
+      updated = ndb.SuperDateTimeProperty(auto_now_add=True, indexed=False) 
  
      
 class Identity(ndb.BaseModel):
@@ -56,10 +32,13 @@ class User(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 0
     
+    _use_cache = True
+    _use_memcache = True
+    
     identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperIntegerProperty('3', required=True)
-    sessions = ndb.LocalStructuredProperty(SavedSession, '4', repeated=True)
+    sessions = ndb.LocalStructuredProperty(Session, '4', repeated=True)
     
     _default_indexed = False
   
@@ -97,7 +76,23 @@ class User(ndb.BaseModel, ndb.Workflow):
            'from' : ('su_active', ),
            'to'   : ('su_suspended',),
         },
-    }   
+    }  
+    
+    def __json__(self):
+        d = super(User, self).__json__()
+        
+        d['logout_code'] = self.logout_code
+        d['is_guest'] = self.is_guest
+        
+        return d 
+    
+    @property
+    def logout_code(self):
+        session = self.current_user_session
+        if not session:
+           return None
+        return hashlib.md5(session.session_id).hexdigest()
+ 
     
     @property
     def entity_is_authenticated(self):
@@ -118,7 +113,7 @@ class User(ndb.BaseModel, ndb.Workflow):
         key_name = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
         if key_name:
            # always query these models from memory if any
-           result = cls.get_by_id(key_name, use_memcache=True, use_cache=True)
+           result = cls.get_by_id(key_name)
            if result is None:
               result = cls(id=key_name, state=cls.default_state())
               result.put()
@@ -134,39 +129,62 @@ class User(ndb.BaseModel, ndb.Workflow):
     def anonymous_user(cls):
         """ Returns anonymous user entity """
         return cls.auth_or_anon('ANONYMOUS')
+    
+    @classmethod
+    def set_current_user(cls, user, session=None):
+        memcache.temp_memory_set('_current_user', user)
+        memcache.temp_memory_set('_current_user_session', session)
         
     @classmethod
-    def current_user_read(cls, key, session_id, session_updated):
-        """ Performs `read` for current user """
-        if key is None:
-           return cls.anonymous_user()
-        else:
-           usr = key.get()
-           if session_updated and session_id:
-              session_key = ndb.Key(Session, session_id)
-              saved = SavedSession(session=session_key, updated=session_updated)
-              
-              if not usr.sessions:
-                 usr.sessions = list()
-                 
-              if saved not in usr.sessions:
-                 usr.sessions.append(saved)
-                 # ne znam da li treba da se ovdje poziva akcija `update` ipak, 
-                 # ovo je samo interno dodavanje session_key-a
-                 to_delete = list()
-                 for s in usr.sessions:
-                     # delete all sessions that are older then 6 months
-                     if s.updated < (datetime.datetime.now() -  datetime.timedelta(days=30*4)):
-                        usr.sessions.remove(s)
-                        to_delete.append(s.session)
-                 
-                 if len(to_delete):
-                    ndb.delete_multi(to_delete)
-                     
-                 usr.put()
-  
-        return usr
+    def current_user(cls):
+        return memcache.temp_memory_get('_current_user', cls.anonymous_user())
     
+    def generate_authorization_code(self, session):
+        return '%s|%s' % (self.key.urlsafe(), session.session_id)
+    
+    def new_session(self):
+        session_id = self.generate_session_id()
+        session = Session(session_id=session_id)
+        self.sessions.append(session)
+        
+        return session
+  
+    def session_by_id(self, sid):
+        for s in self.sessions:
+            if s.session_id == sid:
+               return s
+        return None
+    
+    def generate_session_id(self):
+        sids = [s.session_id for s in self.sessions]
+        while True:
+              random_str = hashlib.md5(random_chars(30)).hexdigest()
+              if random_str not in sids:
+                  break
+        return random_str
+    
+    @property
+    def current_user_session(self):
+        return memcache.temp_memory_get('_current_user_session')
+    
+    @classmethod
+    def login_from_authorization_code(cls, auth):
+        
+        if not auth:
+           return
+        
+        user_key_urlsafe, session_id = auth.split('|')
+        
+        if not session_id:
+           return
+        
+        user = ndb.Key(urlsafe=user_key_urlsafe).get()
+        if user:
+           session = user.session_by_id(session_id)
+           if session:
+              User.set_current_user(user, session)
+              
+              
     def has_identity(self, identity_id):
         for i in self.identities:
             if i.identity == identity_id:
@@ -238,19 +256,27 @@ class User(ndb.BaseModel, ndb.Workflow):
       
         return strict
      
-    def logout(self):
+    def logout(self, **kwds):
         
         response = ndb.Response()
+        
+        if self.is_guest:
+           return response.error('logout', 'already_logged_out')
+       
+        if not self.logout_code == kwds.get('code'):
+           return response.error('logout', 'invalid_code')
         
         @ndb.transactional(xg=True)
         def transaction():
             if self.sessions:
-               ndb.delete_multi([s.session for s in self.sessions], use_memcache=True, use_cache=True)
                self.sessions = []
-               self.put()
-               
+                
             self.new_action('logout', agent=self.key)
             self.record_action()
+            
+            self.put()
+            
+            User.set_current_user(User.anonymous_user())
         
         try:    
             transaction()
@@ -264,10 +290,14 @@ class User(ndb.BaseModel, ndb.Workflow):
     
     @classmethod
     def login(cls, **kwds):
-        response = ndb.Response()
-        login_method = kwds.get('login_method')
-        current_user = kwds.get('current_user')
         
+        response = ndb.Response() 
+        current_user = User.current_user()
+  
+        login_method = kwds.get('login_method')
+        
+        response['providers'] = settings.LOGIN_METHODS
+         
         if login_method in settings.LOGIN_METHODS:
            cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
            cfg['redirect_uri'] = kwds.get('redirect_uri')
@@ -277,15 +307,13 @@ class User(ndb.BaseModel, ndb.Workflow):
            cli = oauth2.Client(**cfg)
            
            if error:
-              response.error('oauth2_error', 'rejected_account_access')
-              return response
+              return response.error('oauth2_error', 'rejected_account_access')
            
            if code:
               cli.get_token(code)
           
               if not cli.access_token:
-                 response.error('oauth2_error', 'failed_access_token')
-                 return response
+                 return response.error('oauth2_error', 'failed_access_token')
               
               response['access_token'] = cli.access_token
               
@@ -299,31 +327,34 @@ class User(ndb.BaseModel, ndb.Workflow):
                  
                  usr = cls.query(cls.identities.identity == identity_id).get()
                  if not usr:
-                    usr = usr = cls.query(cls.emails == email).get()
+                    usr = cls.query(cls.emails == email).get()
                  
                  if usr and usr.get_state != 'su_active':
-                        response.error('user', 'user_not_active')
-                        return response
+                    return response.error('user', 'user_not_active')
                     
                  if not usr and current_user:
                     usr = current_user
                         
                  @ndb.transactional(xg=True)
                  def trans(usr): 
-                     put = False
-                     if usr:
+                     if not usr.is_guest:
                          if email not in usr.emails:
                             usr.emails.append(email)
-                            put = True
+                     
                          if not usr.has_identity(identity_id):
                             usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
-                            put = True
                             
-                         if put:
-                            usr.put()
-                            usr.new_action('update', agent=usr.key)
+                         session = usr.new_session()
+                         response['session'] = session
+                         usr.put()
+                         usr.new_action('update', agent=usr.key)
                      else:
-                        usr = cls.register(email=email, identity_id=identity_id)
+                        new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
+                        usr = new_user.get('user')
+                        session = new_user.get('session')
+                      
+                     response['authorization_code'] = usr.generate_authorization_code(session)
+                      
                      usr.record_ip(kwds.get('ip'))
                      usr.new_action('login', agent=usr.key)
                      usr.record_action() 
@@ -345,18 +376,32 @@ class User(ndb.BaseModel, ndb.Workflow):
     @classmethod
     def register(cls, **kwds):
         
+         response = ndb.Response()
+         
+         create_session = kwds.pop('create_session')
+         
          usr = cls()
          email = kwds.get('email')
          identity_id = kwds.get('identity_id')
+         do_not_record = kwds.pop('do_not_record', False)
      
          usr.emails.append(email)
          usr.identities.append(Identity(identity=identity_id, email=email, primary=True))
          usr.set_state('su_active')
+         
+         if create_session:
+            session = usr.new_session()
+            response['session'] = session
+         
          usr.put()
          usr.new_action('register', agent=usr.key)
-         usr.record_action()
          
-         return usr
+         if do_not_record:
+            usr.record_action()
+         
+         response['user'] = usr
+         
+         return response
  
       
 class IPAddress(ndb.BaseModel):

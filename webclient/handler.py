@@ -10,7 +10,7 @@ import webapp2
   
 from jinja2 import FileSystemLoader
 
-from webapp2_extras import sessions, jinja2
+from webapp2_extras import jinja2
 
 from app.memcache import _local
 from app import settings, core
@@ -74,6 +74,67 @@ def wsgi_config(as_tuple=False):
        return _WSGI_CONFIG
     else:
        return tuple(_WSGI_CONFIG.items())
+   
+class RequestData():
+    
+    # webapp2 request class `webapp2.Request`
+    request = None
+    
+    def __init__(self, request):
+        self.request = request
+         
+    def _pack(self, v, t):
+        if isinstance(v, (list, tuple)):
+           li = list()
+           for k in v:
+               if isinstance(k, (list, tuple)):
+                  li.append(self._pack(k, t))
+               else:
+                  li.append(t(k))
+           return li
+       
+        if isinstance(v, dict):
+             cdict = v
+             for b,l in v.items():
+                 cdict[b] = t(l)
+             return cdict
+        else:
+            return t(v)
+  
+    def get_str(self, k, d=None):                  
+        return self.get_type(k, str, d)
+    
+    def get_str_all(self, k, d=None):                  
+        return self.get_type(k, str, d, True)
+
+    def get_int(self, k, d=None):                  
+        return self.get_type(k, int, d)
+    
+    def get_int_all(self, k, d=None):                  
+        return self.get_type(k, int, d, True)
+ 
+    def get_type(self, k, t, d=None, multiple=False):
+        if isinstance(t, (int, long)):
+           if multiple:
+              return self._pack(self.request.get_all(k, d), t)
+           else:
+              return self._pack(self.request.get(k, d), t)
+        
+    def get_all(self, k, d):
+        if isinstance(k, (list, tuple)):
+           x = dict()
+           for i in k:
+               x[i] = self.request.get_all(k, d)
+           return x
+        return self.request.get_all(k, d)    
+    
+    def get(self, k, d):
+        if isinstance(k, (list, tuple)):
+           x = dict()
+           for i in k:
+               x[i] = self.request.get(k, d)
+           return x
+        return self.request.get(k, d)  
   
   
 class Handler(webapp2.RequestHandler):
@@ -87,7 +148,7 @@ class Handler(webapp2.RequestHandler):
     
     """
     
-    USE_SESSION = True
+    LOAD_CURRENT_USER = True
  
     def __init__(self, *args, **kwargs):
         super(Handler, self).__init__(*args, **kwargs)
@@ -95,42 +156,13 @@ class Handler(webapp2.RequestHandler):
         self.data = {}
         self._current_user = None
         self.template = {'base' : 'index.html'}
-      
-    def for_guests(self, where=None):
-        """ Does not allow logged in users """
-        
-        if where is None:
-           where = 'index'
-          
-        if self.current_user is not None:
-           self.redirect(self.uri_for(where))
-      
-    def ask_login(self):
-        """ Does not allow guests """
-        if self.current_user is None:
-           self.redirect(self.uri_for('login'))
-            
-    def set_current_user(self, usr):
-        """ Sets the specified user into session """
-        self._current_user = usr
-        self.session[webclient_settings.SESSION_USER_KEY] = usr.key
-      
-    @property
-    def current_user(self):
-        """ Retrieves the current user from the session, based on session data from the browser """
-        k = webclient_settings.SESSION_USER_KEY
-        uid = None
-        if k in self.session and self._current_user is None:
-           uid = self.session.get(k)
-           # uid contains serialized ndb.Key of the user
-        
-        info = dict(key=uid, session_updated=getattr(self.session.container, 'session_updated', None),
-                    session_id=getattr(self.session.container, 'sid', None))
-        
-        self._current_user = core.acl.User.current_user_read(**info)
-        return self._current_user
  
-            
+        
+    def initialize(self, request, response):
+        super(Handler, self).initialize(request, response)
+        self.reqdata = RequestData(self.request)
+        
+  
     def send_json(self, data):
         """ sends `data` to json format, accepts anything json compatible """
         ent = 'application/json;charset=utf-8'
@@ -160,18 +192,6 @@ class Handler(webapp2.RequestHandler):
         self.template.update(data)
         return self.render_response(tpl, **self.template)
     
-    def before_before(self):
-        """
-        This function fires even before the session init
-        """
-        pass
-    
-    def after_after(self):
-        """
-        This function fires after all executions are done
-        """
-        pass
-    
     def before(self):
         """
         This function is fired just before the handler, usefull for setting variables
@@ -185,47 +205,35 @@ class Handler(webapp2.RequestHandler):
         pass
     
     def get(self, *args, **kwargs):
-        self.respond(*args, **kwargs)
+        data = self.respond(*args, **kwargs)
+        if data:
+           self.data['data'] = data
         
     def post(self, *args, **kwargs):
-        self.respond(*args, **kwargs)
+        data = self.respond(*args, **kwargs)
+        if data:
+           self.data['data'] = data
         
     def respond(self, *args, **kwargs):
         self.abort(404)
         self.response.write('<h1>404 Not found</h1>')
  
     def dispatch(self):
-         
-        self.before_before()
-  
-        if self.USE_SESSION:
-            # Get a session store for this request.
-            # request=self.request
-            self.session_store = sessions.get_store()
-            
-        self.before()
-
+        
+        if self.LOAD_CURRENT_USER:
+           core.acl.User.login_from_authorization_code(self.request.cookies.get('auth'))
+ 
         try:
+            self.before()
             # Dispatch the request.
             webapp2.RequestHandler.dispatch(self)
             
             self.after()
             
         finally:
-            # Save all sessions.
-            if self.USE_SESSION:
-               self.session_store.save_sessions(self.response)
-            self.after_after()
-            
             # support the core's locals, and release them upon request complete
             _local.__release_local__()
-            
-            
-
-    @webapp2.cached_property
-    def session(self):
-        # Returns a session using the default cookie key.
-        return self.session_store.get_session(backend='webclient')
+ 
      
 class Segments(Handler):
       """
