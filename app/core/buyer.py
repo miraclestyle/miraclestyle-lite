@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-
+ 
 class Address(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 9
@@ -18,6 +18,13 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     street_address = ndb.SuperStringProperty('5', required=True, indexed=False)
     default_shipping = ndb.SuperBooleanProperty('6', default=True, indexed=False)
     default_billing = ndb.SuperBooleanProperty('7', default=True, indexed=False)
+    
+    """
+    region = ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', indexed=False)
+    street_address2 = ndb.SuperStringProperty('9', indexed=False)
+    email = ndb.SuperStringProperty('10', indexed=False)
+    telephone = ndb.SuperStringProperty('11', indexed=False)
+    """
     
     _default_indexed = False
  
@@ -44,15 +51,58 @@ class Address(ndb.BaseExpando, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
-  
+    
     @classmethod
-    def manage(cls, **k):
-         
+    def list(cls, parent=None):
+        response = ndb.Response()
+        if parent is None:
+           from app import core
+           parent = core.acl.User.current_user().key
+        response['items'] = cls.query(ancestor=parent).fetch(keys_only=True)
+        
+        return response
+    
+    @classmethod
+    def delete(cls, **k):
+        ids = k.get('id')
+        
         response = ndb.Response()
         
         from app import core
         
         current = core.acl.User.current_user()
+        
+        to_delete = []
+        for i in ids:
+            try:
+              key = ndb.Key(urlsafe=i)
+            except:
+              continue
+            
+            if key:
+               if key.parent() == current.key:
+                  to_delete.append(key)
+                  
+        if len(to_delete):
+           ndb.delete_multi(to_delete)
+           
+           
+        response['deleted'] = to_delete
+           
+        return response
+               
+  
+    @classmethod
+    def manage(cls, **k):
+         
+        response = ndb.Response()
+ 
+        from app import core
+        
+        current = core.acl.User.current_user()
+        
+        if current.is_guest:
+           return response.error('user', 'user_is_guest')
         
         name = k.get('name')
         country = k.get('country')
@@ -63,7 +113,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         default_billing = k.get('default_billing')
         
         region = k.get('region')
-        street_address_2 = k.get('street_address_2')
+        street_address2 = k.get('street_address2')
         email = k.get('email')
         telephone = k.get('telephone')
         
@@ -86,14 +136,21 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                 
             if not _country:
                response.error('input_error_%s' % i, 'invalid_country_input')
-               continue
-            
+  
             data = dict(name=name[i], country=_country, city=city[i], postal_code=postal_code[i],
-                        street_address=street_address[i], default_shipping=default_shipping[i],
-                        default_billing=default_billing[i], street_address_2=street_address_2[i],
-                        telephone=telephone[i], email=email[i])
-       
-            if region[i]:
+                        street_address=street_address[i], default_shipping=bool(int(default_shipping[i])),
+                        default_billing=bool(int(default_billing[i])))
+            
+            if len(street_address2[i]):
+               data['street_address2'] = street_address2[i]
+               
+            if len(email[i]):
+               data['email'] = email[i]
+               
+            if len(telephone[i]):
+               data['telephone'] = telephone[i]      
+    
+            if (len(region)-1) == i and region[i]:
                 try:
                     _region = ndb.Key(urlsafe=region[i])
                 except:
@@ -101,46 +158,56 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                     
                 if not _region:
                    response.error('input_error_%s' % i, 'invalid_region_input')
-                   continue
+            
+            if response.has_error('input_error_%s' % i):
+               continue       
             
             if key_urlsafe:
                key = ndb.Key(urlsafe=key_urlsafe)
                if key:
                   if key.parent() == current.key:
-                     to_update[key.id()] = data
+                     to_update[key.urlsafe()] = data
                      create = False
             if create:
                to_create.append(data)
           
         items = []    
+        to_put_multi = []
+        to_put_serial = []
  
         if len(to_update):
-            to_put_multi = []
-            to_put_serial = []
-            entries = ndb.get_multi([ndb.Key(Address, id=k) for k,v in to_update.items()])
+            entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
             for ent in entries:
-                ent.populate(to_update[ent.key.id()])
+                if not ent:
+                   continue
+                ent.populate(**to_update[ent.key.urlsafe()])
                 items.append(ent)
-                log = ent.new_action('update', agent=current, log_object=ent)
+                log = ent.new_action('update', agent=current.key, log_object=ent)
                 to_put_multi.append(ent)
-                to_put_multi.append(ent)
+                to_put_multi.append(log)
        
         
         if len(to_create):
             for create in to_create:
-                to_put_serial.append(Address(**create))
+                create['parent'] = current.key
+                to_put_serial.append(cls(**create))
         
         if len(to_put_serial):
-           for s in to_put_serial:
+           # transaction because of log
+           @ndb.transactional(xg=True)
+           def transaction(s, current):
                s.put()
                items.append(s)
-               log = s.new_action('create', agent=current, log_object=s)
-               to_put_multi.append(log)
-                
+               log = s.new_action('create', agent=current.key, log_object=s)
+               log.put()
+               
+           for s in to_put_serial:
+               transaction(s, current)
+                    
         if len(to_put_multi):
-           ndb.put_multi(to_put_multi)
+            ndb.put_multi(to_put_multi)        
            
-        response['results'] = items
+        response['items'] = items
            
         return response
             

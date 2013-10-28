@@ -5,7 +5,6 @@ Created on Jul 9, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import decimal
-import hashlib
  
 from google.appengine.ext.ndb import *
 
@@ -33,6 +32,10 @@ class _BaseModel(Model):
       if self.key:
          dic['key'] = {}
          dic['key']['urlsafe'] = self.key.urlsafe()
+         
+      for k,v in dic.items():
+          if isinstance(v, Key):
+             dic[k] = v.urlsafe()
          
       return dic
   
@@ -62,8 +65,7 @@ class _BaseModel(Model):
   def set_original_values(self):
       for p in self._properties:
           self.original_values[p] = self._properties[p]._get_value(self)
-       
-    
+ 
   @classmethod
   def _get_kind(cls):
     """Return the kind name for this class.
@@ -129,6 +131,36 @@ class BaseExpando(_BaseModel, Expando):
                                        'base class.' % name)
              del self._properties[name]
        return super(BaseExpando, self).__delattr__(name)
+   
+    def _get_property_for(self, p, indexed=True, depth=0):
+        """Internal helper to get the Property for a protobuf-level property."""
+        name = p.name()
+        parts = name.split('.')
+        if len(parts) <= depth:
+          # Apparently there's an unstructured value here.
+          # Assume it is a None written for a missing value.
+          # (It could also be that a schema change turned an unstructured
+          # value into a structured one.  In that case, too, it seems
+          # better to return None than to return an unstructured value,
+          # since the latter doesn't match the current schema.)
+          return None
+        next = parts[depth]
+    
+        prop = self._properties.get(next)
+        if prop is None:
+           expando = self.has_expando_fields()
+           if expando:
+              for k,v in expando.items():
+                  if v._name == next:
+                     v._code_name = k
+                     prop = v
+                     self._properties[v._name] = v
+                     break        
+        if prop:
+           print prop._code_name
+        if prop is None:
+          prop = self._fake_property(p, next, indexed)
+        return prop
 
 class _BaseProperty(object):
     
@@ -376,7 +408,7 @@ class Workflow():
               
           action = self.resolve_action_code_by_name(action)
  
-          if self.state == None:
+          if hasattr(self, 'state') and self.state == None:
              state = self.default_state()
              
           obj = kwargs.pop('log_object', None)
@@ -421,9 +453,11 @@ class Response(dict):
         return dict.__getitem__(self, *args, **kwargs)
     
     def has_error(self, k=None):
-        if k is None:
-           if self['errors'] is None:
+        
+        if self['errors'] is None:
               return False
+        
+        if k is None:
            return len(self['errors'].keys())
         else:
            return len(self['errors'][k])

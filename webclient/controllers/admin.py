@@ -11,8 +11,15 @@ from webclient.handler import Angular
 
 class RoleManager(Angular):
     
-    def respond(self, action):
+    def respond(self):
         pass
     
+class CountryManager(Angular):
     
-register(('/admin/manage_role/<action>', RoleManager))
+    def respond(self):
+        args = ('id', 'name', 'active', 'code')
+        return core.misc.Country.manage(**self.reqdata.get_all(args))
+    
+    
+register(('/admin/manage_role', RoleManager),
+         ('/admin/manage_country', CountryManager))

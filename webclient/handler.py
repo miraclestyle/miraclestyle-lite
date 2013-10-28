@@ -120,15 +120,17 @@ class RequestData():
            else:
               return self._pack(self.request.get(k, d), t)
         
-    def get_all(self, k, d):
+    def get_all(self, k, d=None):
+        if d == None:
+           d = []
         if isinstance(k, (list, tuple)):
            x = dict()
            for i in k:
-               x[i] = self.request.get_all(k, d)
+               x[i] = self.request.get_all(i, d)
            return x
         return self.request.get_all(k, d)    
     
-    def get(self, k, d):
+    def get(self, k, d=None):
         if isinstance(k, (list, tuple)):
            x = dict()
            for i in k:

@@ -39,7 +39,7 @@ class Image(ndb.BaseModel):
     sequence = ndb.SuperIntegerProperty('6', required=True)
 
 # done!
-class Country(ndb.BaseModel):
+class Country(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 15
     
@@ -62,6 +62,96 @@ class Country(ndb.BaseModel):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls):
+        response = ndb.Response()
+        
+        response['items'] = cls.query().fetch()
+        return response
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        from app import core
+        
+        current = core.acl.User.current_user()
+        if current.has_permission('create', cls):
+            
+           key_urlsafe = kwds.get('id', [])
+           name = kwds.get('name')
+           code = kwds.get('code')
+           active = kwds.get('active')
+           
+           i = -1
+           to_create = []
+           to_update = {}
+     
+           for urlsafe in key_urlsafe:
+               i +=1
+               if not len(name)-1 == i:
+                  response.error('input_error_%s' % i, 'invalid_name_input')
+               if not len(code)-1 == i:
+                  response.error('input_error_%s' % i, 'invalid_code_input')
+                  
+               if response.has_error('input_error_%s' % i):
+                  continue
+              
+               create = True
+               if urlsafe:
+                  try:
+                      update = ndb.Key(urlsafe=urlsafe)
+                      create = False
+                  except:
+                      pass
+                  
+               data = dict(active=bool(int(active[i])), name=name[i], code=code[i])
+               
+               if create:
+                  to_create.append(cls(**data))
+               else:
+                  to_update[update.urlsafe()] = data
+                   
+           items = []    
+           to_put_multi = []
+           to_put_serial = []
+           
+           if len(to_update):
+                entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
+                for ent in entries:
+                    ent.populate(**to_update[ent.key.urlsafe()])
+                    items.append(ent)
+                    log = ent.new_action('update', agent=current.key, log_object=ent)
+                    to_put_multi.append(ent)
+                    to_put_multi.append(log)
+           
+            
+           if len(to_create):
+                for create in to_create:
+                    to_put_serial.append(create)
+            
+           if len(to_put_serial):
+               # transaction because of log
+               @ndb.transactional(xg=True)
+               def transaction(s, current):
+                   s.put()
+                   items.append(s)
+                   log = s.new_action('create', agent=current.key, log_object=s)
+                   log.put()
+                   
+               for s in to_put_serial:
+                   transaction(s, current)
+                    
+           if len(to_put_multi):
+               ndb.put_multi(to_put_multi)       
+        else:
+           response.error('user', 'not_authorized')
+           
+        response['items'] = items
+    
+        return response
      
 
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!

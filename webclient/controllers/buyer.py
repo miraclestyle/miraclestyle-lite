@@ -12,7 +12,7 @@ from webclient.handler import Angular
 class BuyerAddressList(Angular):
     
     def respond(self):
-        return core.buyer.Address.list_addresses()
+        return core.buyer.Address.list()
 
 class BuyerAddressManage(Angular):
     
@@ -20,8 +20,14 @@ class BuyerAddressManage(Angular):
         args = ('id', 'name', 'country', 'city', 'postal_code', 'street_address',
                 'default_shipping', 'default_billing', 'region', 'street_address2',
                 'email', 'telephone')
-        return core.buyer.Address.update(**self.reqdata.get_all(args))
+        return core.buyer.Address.manage(**self.reqdata.get_all(args))
+    
+class BuyerAddressDelete(Angular):
+    
+    def respond(self):
+        return core.buyer.Address.delete(**self.reqdata.get_all(('id', )))
     
     
 register(('/buyer_address/list', BuyerAddressList, 'buyer_list'),
-         ('/buyer_address/manage', BuyerAddressManage, 'buyer_manage'))
+         ('/buyer_address/manage', BuyerAddressManage, 'buyer_manage'),
+         ('/buyer_address/delete', BuyerAddressDelete, 'buyer_delete'))
