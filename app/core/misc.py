@@ -78,81 +78,72 @@ class Country(ndb.BaseModel, ndb.Workflow):
         from app import core
         
         current = core.acl.User.current_user()
-        if current.has_permission('create', cls):
+        
+        if not current.has_permission('create', cls):
+           return response.error('user', 'not_authorized')
+       
+        new_data = cls.from_multiple_values(kwds)
+        
+        to_put_multi = [] # puts multiple entities
+        items = [] # prepares items for output
+        to_create = [] # items to be newly created
+        to_update = {} # items that need update
+        
+        i = -1
+        for new in new_data:
+            i += 1
+ 
+            if not len(new['code']):
+               response.error('input_error_%s' % i, 'invalid_code_input')
             
-           key_urlsafe = kwds.get('id', [])
-           name = kwds.get('name')
-           code = kwds.get('code')
-           active = kwds.get('active')
-           
-           i = -1
-           to_create = []
-           to_update = {}
-     
-           for urlsafe in key_urlsafe:
-               i +=1
-               if not len(name)-1 == i:
-                  response.error('input_error_%s' % i, 'invalid_name_input')
-               if not len(code)-1 == i:
-                  response.error('input_error_%s' % i, 'invalid_code_input')
-                  
-               if response.has_error('input_error_%s' % i):
-                  continue
-              
-               create = True
-               if urlsafe:
-                  try:
-                      update = ndb.Key(urlsafe=urlsafe)
-                      create = False
-                  except:
-                      pass
-                  
-               data = dict(active=bool(int(active[i])), name=name[i], code=code[i])
+            if not len(new['name']):
+               response.error('input_error_%s' % i, 'invalid_name_input')
                
-               if create:
-                  to_create.append(cls(**data))
-               else:
-                  to_update[update.urlsafe()] = data
-                   
-           items = []    
-           to_put_multi = []
-           to_put_serial = []
-           
-           if len(to_update):
-                entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
-                for ent in entries:
-                    ent.populate(**to_update[ent.key.urlsafe()])
-                    items.append(ent)
-                    log = ent.new_action('update', agent=current.key, log_object=ent)
-                    to_put_multi.append(ent)
-                    to_put_multi.append(log)
-           
+            new['active'] = bool(int(new['active']))
+          
+            if response.has_error('input_error_%s' % i):
+               continue
+                
+            create = False
+            key_urlsafe = new.pop('id')
+            try:
+              key = ndb.Key(urlsafe=key_urlsafe)
+            except:
+              create = True
             
-           if len(to_create):
-                for create in to_create:
-                    to_put_serial.append(create)
-            
-           if len(to_put_serial):
-               # transaction because of log
-               @ndb.transactional(xg=True)
-               def transaction(s, current):
-                   s.put()
-                   items.append(s)
-                   log = s.new_action('create', agent=current.key, log_object=s)
-                   log.put()
-                   
-               for s in to_put_serial:
-                   transaction(s, current)
-                    
-           if len(to_put_multi):
-               ndb.put_multi(to_put_multi)       
-        else:
-           response.error('user', 'not_authorized')
+            if create:      
+               to_create.append(cls(**new))
+            else:
+               to_update[key.urlsafe()] = new
+        
+        if len(to_update):
+           entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
+           for ent in entries:
+                ent.populate(**to_update[ent.key.urlsafe()])
+                items.append(ent)
+                log = ent.new_action('update', agent=current.key, log_object=ent)
+                to_put_multi.append(ent)
+                to_put_multi.append(log)
+               
+        if len(to_create):
+           # commit all creations in serial operation, however we can put here multi put because,
+           # logs dont need to be displayed right away - consistency wise?
+           @ndb.transactional(xg=True)
+           def transaction(s, current):
+               s.put()
+               items.append(s)
+               log = s.new_action('create', agent=current.key, log_object=s)
+               log.put()
+               
+           for s in to_create:
+               transaction(s, current)
+               
+        if len(to_put_multi):
+           response['put_multi'] = ndb.put_multi(to_put_multi)
            
         response['items'] = items
-    
+        
         return response
-     
 
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
 class CountrySubdivision(ndb.BaseModel):

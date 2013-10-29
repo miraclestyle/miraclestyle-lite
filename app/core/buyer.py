@@ -18,14 +18,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     street_address = ndb.SuperStringProperty('5', required=True, indexed=False)
     default_shipping = ndb.SuperBooleanProperty('6', default=True, indexed=False)
     default_billing = ndb.SuperBooleanProperty('7', default=True, indexed=False)
-    
-    """
-    region = ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', indexed=False)
-    street_address2 = ndb.SuperStringProperty('9', indexed=False)
-    email = ndb.SuperStringProperty('10', indexed=False)
-    telephone = ndb.SuperStringProperty('11', indexed=False)
-    """
-    
+  
     _default_indexed = False
  
     EXPANDO_FIELDS = {
@@ -58,7 +51,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         if parent is None:
            from app import core
            parent = core.acl.User.current_user().key
-        response['items'] = cls.query(ancestor=parent).fetch(keys_only=True)
+        response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
     
@@ -84,16 +77,15 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                   to_delete.append(key)
                   
         if len(to_delete):
-           ndb.delete_multi(to_delete)
-           
-           
+           to_delete = ndb.delete_multi(to_delete)
+            
         response['deleted'] = to_delete
            
         return response
                
   
     @classmethod
-    def manage(cls, **k):
+    def manage(cls, **kwds):
          
         response = ndb.Response()
  
@@ -104,96 +96,70 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         if current.is_guest:
            return response.error('user', 'user_is_guest')
         
-        name = k.get('name')
-        country = k.get('country')
-        city = k.get('city')
-        postal_code = k.get('postal_code')
-        street_address = k.get('street_address')
-        default_shipping = k.get('default_shipping')
-        default_billing = k.get('default_billing')
+        new_data = cls.from_multiple_values(kwds)
         
-        region = k.get('region')
-        street_address2 = k.get('street_address2')
-        email = k.get('email')
-        telephone = k.get('telephone')
-        
-        
-        to_update = {}
-        to_create = []
+        to_put_multi = [] # puts multiple entities
+        items = [] # prepares items for output
+        to_create = [] # items to be newly created
+        to_update = {} # items that need update
         
         i = -1
-        
-        for key_urlsafe in k.get('id', []):
-            
+        for new in new_data:
             i += 1
+            country = new.get('country')
+            try:
+               new['country'] = ndb.Key(urlsafe=country)
+            except:
+               response.error('input_error_%s' % i, 'invalid_country_input')
+
+                   
+            region = new.get('region')
+            if region and len(region):
+               try:
+                   new['region'] = ndb.Key(urlsafe=region)
+               except:
+                   response.error('input_error_%s' % i, 'invalid_region_input')
+         
+                   
+            if response.has_error('input_error_%s' % i):
+               continue
+               
+            new['default_billing'] = bool(int(new['default_billing']))
+            new['default_shipping'] = bool(int(new['default_shipping']))
             
-            create = True
+            create = False
+            key_urlsafe = new.pop('id')
             
             try:
-                _country = ndb.Key(urlsafe=country[i])
-            except:
-                _country = None
-                
-            if not _country:
-               response.error('input_error_%s' % i, 'invalid_country_input')
-  
-            data = dict(name=name[i], country=_country, city=city[i], postal_code=postal_code[i],
-                        street_address=street_address[i], default_shipping=bool(int(default_shipping[i])),
-                        default_billing=bool(int(default_billing[i])))
-            
-            if len(street_address2[i]):
-               data['street_address2'] = street_address2[i]
-               
-            if len(email[i]):
-               data['email'] = email[i]
-               
-            if len(telephone[i]):
-               data['telephone'] = telephone[i]      
-    
-            if (len(region)-1) == i and region[i]:
-                try:
-                    _region = ndb.Key(urlsafe=region[i])
-                except:
-                    _region = None
-                    
-                if not _region:
-                   response.error('input_error_%s' % i, 'invalid_region_input')
-            
-            if response.has_error('input_error_%s' % i):
-               continue       
-            
-            if key_urlsafe:
                key = ndb.Key(urlsafe=key_urlsafe)
-               if key:
-                  if key.parent() == current.key:
-                     to_update[key.urlsafe()] = data
-                     create = False
+            except:
+               create = True
+            
             if create:
-               to_create.append(data)
-          
-        items = []    
-        to_put_multi = []
-        to_put_serial = []
- 
+               # do not provide expando fields if they are empty
+               for delete in ['telephone', 'email', 'street_address2', 'region']:    
+                    if delete in new and not new.get(delete):
+                       del new[delete]
+               new['parent'] = current.key        
+               to_create.append(cls(**new))
+            else:
+               to_update[key.urlsafe()] = new
+        
         if len(to_update):
-            entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
-            for ent in entries:
-                if not ent:
+           entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
+           for ent in entries:
+                # if entity is not found or its not owned by the current user, skip any manipulations to it
+                if not ent or ent.key.parent() != current.key:
                    continue
                 ent.populate(**to_update[ent.key.urlsafe()])
                 items.append(ent)
                 log = ent.new_action('update', agent=current.key, log_object=ent)
                 to_put_multi.append(ent)
                 to_put_multi.append(log)
-       
-        
+               
         if len(to_create):
-            for create in to_create:
-                create['parent'] = current.key
-                to_put_serial.append(cls(**create))
-        
-        if len(to_put_serial):
-           # transaction because of log
+           # commit all creations in serial operation, however we can put here multi put because,
+           # logs dont need to be displayed right away - consistency wise?
            @ndb.transactional(xg=True)
            def transaction(s, current):
                s.put()
@@ -201,15 +167,16 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                log = s.new_action('create', agent=current.key, log_object=s)
                log.put()
                
-           for s in to_put_serial:
+           for s in to_create:
                transaction(s, current)
-                    
+               
         if len(to_put_multi):
-            ndb.put_multi(to_put_multi)        
+           response['put_multi'] = ndb.put_multi(to_put_multi)
            
         response['items'] = items
-           
+        
         return response
+         
             
 # done!
 class Collection(ndb.BaseModel):

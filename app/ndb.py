@@ -42,6 +42,36 @@ class _BaseModel(Model):
   def loaded(self):
       return self.key != None
   
+  @staticmethod
+  def from_multiple_values(data):
+      """ 
+        Formats dict from format:
+        dict = {
+           'id' : [1,3,4],
+           'name' : ['foo', 'bar', ['baz', 'foo']],
+        }
+        
+        into
+        
+        list = [ {'id' : 1, 'name' : 'foo'}, 
+                 {'id' : 3, 'name' : 'bar'},
+                 {'id' : 4, 'name' : ['baz', 'foo']}]
+      """
+      out = []
+      keys = data.keys()
+      i = -1
+      for _id in data.get('id', []):
+          i += 1
+          pdict = dict(id=_id)
+          for k in keys:
+              d = data.get(k)
+              if (len(d)-1) == i:
+                  pdict[k] = d[i]
+                  
+          out.append(pdict)
+                  
+      return out
+  
   def _pre_put_hook(self):
       for p in self._properties:
           prop = self._properties.get(p)
@@ -106,6 +136,8 @@ class BaseExpando(_BaseModel, Expando):
        if ex:
           vf = ex.get(name) 
           if vf:
+             if not hasattr(vf, '_code_name'):
+                vf._code_name = name
              return vf._get_value(self)
        return super(BaseExpando, self).__getattr__(name)
       
@@ -115,7 +147,7 @@ class BaseExpando(_BaseModel, Expando):
            vf = ex.get(name) 
            if vf:
               vf._code_name = name
-              self._properties[name] = vf
+              self._properties[vf._name] = vf
               vf._set_value(self, value)
               return vf
         return super(BaseExpando, self).__setattr__(name, value)
@@ -126,10 +158,11 @@ class BaseExpando(_BaseModel, Expando):
           vf = ex.get(name) 
           if vf:
              vf._delete_value(self)
+             pname = vf._name
              if vf in self.__class__._properties:
                  raise RuntimeError('Property %s still in the list of properties for the '
                                        'base class.' % name)
-             del self._properties[name]
+             del self._properties[pname]
        return super(BaseExpando, self).__delattr__(name)
    
     def _get_property_for(self, p, indexed=True, depth=0):
@@ -156,8 +189,7 @@ class BaseExpando(_BaseModel, Expando):
                      prop = v
                      self._properties[v._name] = v
                      break        
-        if prop:
-           print prop._code_name
+  
         if prop is None:
           prop = self._fake_property(p, next, indexed)
         return prop

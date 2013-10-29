@@ -8,6 +8,8 @@ import imp
 import os
 import json
 
+from app import ndb
+
 class Jinja():
     
     filters = {}
@@ -37,6 +39,10 @@ class JSONEncoderHTML(json.JSONEncoder):
     """
     
     def default(self, o):
+        
+        if isinstance(o, ndb.Key):
+           return o.urlsafe()
+        
         if hasattr(o, '__json__'):
            return o.__json__()
         else:
