@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# -- every comment that begins with "--" (including this one) is to be removed after applying sugested corrections
+# -- this file is not PEP 8 compliant http://www.python.org/dev/peps/pep-0008/#indentation
 '''
 Created on Oct 11, 2013
 
@@ -9,11 +11,11 @@ import hashlib
 from app.util import random_chars
 from app import ndb, settings, oauth2, memcache
  
-        
+  
 class Session(ndb.BaseModel):
     
-      session_id = ndb.SuperStringProperty(indexed=False)
-      updated = ndb.SuperDateTimeProperty(auto_now_add=True, indexed=False) 
+      session_id = ndb.SuperStringProperty(indexed=False)# -- add property datastore name
+      updated = ndb.SuperDateTimeProperty(auto_now_add=True, indexed=False)# -- add property datastore name
  
      
 class Identity(ndb.BaseModel):
@@ -42,7 +44,9 @@ class User(ndb.BaseExpando, ndb.Workflow):
     _default_indexed = False
   
     EXPANDO_FIELDS = {
+                      
       'roles' : ndb.KeyProperty('5', repeated=True, indexed=False)                 
+
     }
  
     OBJECT_DEFAULT_STATE = 'su_active'
