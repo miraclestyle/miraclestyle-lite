@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -- every comment that begins with "--" (including this one) is to be removed after applied corrections sugested
+# -- every comment that begins with "--" (including this one) is to be removed after applying sugested corrections
 # -- this file is not PEP 8 compliant http://www.python.org/dev/peps/pep-0008/#indentation
 '''
 Created on Oct 11, 2013
