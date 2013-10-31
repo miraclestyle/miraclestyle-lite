@@ -6,16 +6,18 @@ Created on Oct 20, 2013
 '''
 from app import ndb
 
-class Template(ndb.BaseExpando):
+class Template(ndb.BaseExpando, ndb.Workflow):
+    
+    KIND_ID = 38
     
     # ancestor DomainCatalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
-    product_category = ndb.KeyProperty('1', kind='core.misc.ProductCategory', required=True, indexed=False)
-    name = ndb.StringProperty('2', required=True)
-    description = ndb.TextProperty('3', required=True)# soft limit 64kb
-    product_uom = ndb.KeyProperty('4', kind='core.misc.ProductUOM', required=True, indexed=False)
+    product_category = ndb.SuperKeyProperty('1', kind='app.core.misc.ProductCategory', required=True, indexed=False)
+    name = ndb.SuperStringProperty('2', required=True)
+    description = ndb.SuperTextProperty('3', required=True)# soft limit 64kb
+    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.ProductUOM', required=True, indexed=False)
     unit_price = ndb.SuperDecimalProperty('5', required=True)
-    availability = ndb.IntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    availability = ndb.SuperIntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     # availability: - ovo cemo pojasniti
     # 'in stock'
     # 'available for order'
@@ -49,7 +51,9 @@ class Template(ndb.BaseExpando):
      
 
 # done!
-class Instance(ndb.BaseExpando):
+class Instance(ndb.BaseExpando, ndb.Workflow):
+    
+    KIND_ID = 39
     
     # ancestor DomainProductTemplate
     #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
@@ -59,7 +63,7 @@ class Instance(ndb.BaseExpando):
     #default vrednost code ce se graditi na osnovu sledecih informacija: ancestorkey-n, gde je n incremental integer koji se dodeljuje instanci prilikom njenog kreiranja
     #ukoliko user ne odabere multivariant opciju onda se za ProductTemplate generise samo jedna ProductInstance i njen key se gradi automatski.
     # composite index: ancestor:yes - code
-    code = ndb.StringProperty('1', required=True)
+    code = ndb.SuperStringProperty('1', required=True)
     
     _default_indexed = False
  
@@ -83,7 +87,9 @@ class Instance(ndb.BaseExpando):
   
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class InventoryLog(ndb.BaseModel):
+class InventoryLog(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 40
     
     # ancestor DomainProductInstance (namespace Domain)
     # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
@@ -91,19 +97,21 @@ class InventoryLog(ndb.BaseModel):
     # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     # composite index: ancestor:yes - logged:desc
-    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
     quantity = ndb.SuperDecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     balance = ndb.SuperDecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
 # done!
-class InventoryAdjustment(ndb.BaseModel):
+class InventoryAdjustment(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 41
     
     # ancestor DomainProductInstance (namespace Domain)
     # not logged ?
-    adjusted = ndb.DateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
-    agent = ndb.KeyProperty('2', kind='core.acl.User', required=True, indexed=False)
+    adjusted = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
+    agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True, indexed=False)
     quantity = ndb.SuperDecimalProperty('3', required=True, indexed=False)
-    comment = ndb.StringProperty('4', required=True, indexed=False)
+    comment = ndb.SuperStringProperty('4', required=True, indexed=False)
  
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -113,15 +121,17 @@ class InventoryAdjustment(ndb.BaseModel):
   
 
 # done!
-class Variant(ndb.BaseModel):
+class Variant(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 42
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # http://v6apps.openerp.com/addon/1809
     # composite index: ancestor:yes - name
-    name = ndb.StringProperty('1', required=True)
-    description = ndb.TextProperty('2')# soft limit 64kb
-    options = ndb.StringProperty('3', repeated=True, indexed=False)# soft limit 1000x
-    allow_custom_value = ndb.BooleanProperty('4', default=False, indexed=False)# ovu vrednost buyer upisuje u definisano polje a ona se dalje prepisuje u order line description prilikom Add to Cart
+    name = ndb.SuperStringProperty('1', required=True)
+    description = ndb.SuperTextProperty('2')# soft limit 64kb
+    options = ndb.SuperStringProperty('3', repeated=True, indexed=False)# soft limit 1000x
+    allow_custom_value = ndb.SuperBooleanProperty('4', default=False, indexed=False)# ovu vrednost buyer upisuje u definisano polje a ona se dalje prepisuje u order line description prilikom Add to Cart
   
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -132,12 +142,14 @@ class Variant(ndb.BaseModel):
    
 
 # done!
-class Content(ndb.BaseModel):
+class Content(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 43
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # composite index: ancestor:yes - title
-    title = ndb.StringProperty('1', required=True)
-    body = ndb.TextProperty('2', required=True)
+    title = ndb.SuperStringProperty('1', required=True)
+    body = ndb.SuperTextProperty('2', required=True)
  
     OBJECT_DEFAULT_STATE = 'none'
     

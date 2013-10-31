@@ -7,7 +7,9 @@ Created on Oct 20, 2013
 from app import ndb
 from app.core.misc import Image
 
-class Catalog(ndb.BaseExpando):
+class Catalog(ndb.BaseExpando, ndb.Workflow):
+    
+    KIND_ID = 35
     
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
@@ -69,7 +71,9 @@ class Catalog(ndb.BaseExpando):
      
 
 # done!
-class CatalogImage(Image):
+class CatalogImage(Image, ndb.Workflow):
+    
+    KIND_ID = 36
     
     # ancestor DomainCatalog (namespace Domain)
     # composite index: ancestor:yes - sequence
@@ -85,7 +89,9 @@ class CatalogImage(Image):
     
 
 # done!
-class CatalogPricetag(ndb.BaseModel):
+class CatalogPricetag(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 34
     
     # ancestor DomainCatalog (namespace Domain)
     product_template = ndb.KeyProperty('1', kind='domain.product.Template', required=True, indexed=False)

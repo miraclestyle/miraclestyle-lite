@@ -18,6 +18,7 @@ encoding//app/util.py=utf-8
 encoding//webclient/controllers/admin.py=utf-8
 encoding//webclient/controllers/auth.py=utf-8
 encoding//webclient/controllers/buyer.py=utf-8
+encoding//webclient/controllers/domain.py=utf-8
 encoding//webclient/controllers/home.py=utf-8
 encoding//webclient/controllers/tests.py=utf-8
 encoding//webclient/handler.py=utf-8

@@ -19,9 +19,46 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
+def format_permission(action, obj):
+    """ Formats the permission in format <kind>-<action> """
+    return '%s-%s' % (obj._get_kind(), obj.resolve_action_code_by_name(action))
+     
+def compile_permissions(*args):
+    """ Accepts list of models from which it will compile a list of permissions, based on 'public' and 'admin' param. """
+    args = list(args)
+    _type = args[0]
+    del args[0]
+    models = args
+    
+    out = []
+    
+    for model in models:
+        perms = []
+        if _type == 'public':
+           if hasattr(model, 'generate_public_permissions'): 
+              perms = model.generate_public_permissions()
+        else:
+           if hasattr(model, 'generate_admin_permissions'):  
+              perms = model.generate_admin_permissions()
+        
+        for perm in perms:
+            out.append(format_permission(perm, model))
+    return out
+    
+
+def compile_public_permissions(*args):
+    return compile_permissions('public', *args)
+
+def compile_admin_permissions(*args):
+    return compile_permissions('admin', *args)
+
 class _BaseModel(Model):
   
-  original_values = {}
+  __original_values = {}
+  
+  def __init__(self, *args, **kwds):
+      self.__original_values = {}
+      super(_BaseModel, self).__init__(*args, **kwds)
   
   def __json__(self):
       """ This magic method is called by json encoder. 
@@ -41,6 +78,53 @@ class _BaseModel(Model):
   
   def loaded(self):
       return self.key != None
+  
+  @classmethod
+  def manage(cls, **kwds):
+      response = Response()
+      response['items'] = list()
+      for data in cls.from_multiple_values(kwds):
+          response['items'].append(cls.manage_entity(**data))
+            
+      return response
+  
+  @classmethod
+  def load_from_values(cls, dataset, **kwds):
+      single = False
+      items = []
+      only = kwds.pop('only', None)
+      get = kwds.pop('get', None)
+      if not isinstance(dataset, (list, tuple)):
+          dataset = (dataset, )
+          single = True
+          
+      for data in dataset:    
+          try:
+            key = Key(urlsafe=data['id'])
+          except:
+            create = True
+            
+          if not create:      
+            data['key'] = key
+            
+          if only is not None:
+             new_data = {}
+             for i in only:
+                 if data.get(i):
+                    new_data[i] = data[i]
+             data = new_data
+                    
+          if create:
+             items.append(cls(**data))
+          elif get is not None:
+             items.append(key.get())
+          else:
+             items.append(cls(**data))
+ 
+      if single:
+        return items[0]
+      else:
+        return items
   
   @staticmethod
   def from_multiple_values(data):
@@ -67,6 +151,8 @@ class _BaseModel(Model):
               d = data.get(k)
               if (len(d)-1) == i:
                   pdict[k] = d[i]
+              else:
+                  pdict[k] = None
                   
           out.append(pdict)
                   
@@ -90,11 +176,11 @@ class _BaseModel(Model):
          check = pyson.PYSONDecoder(environ).decode(encoded)
          if not check:
             # if the evaluation is not true, set the original values because new value is not allowed to be set
-            prop._set_value(self, self.original_values.get(prop._name))
+            prop._set_value(self, self.__original_values.get(prop._name))
     
   def set_original_values(self):
       for p in self._properties:
-          self.original_values[p] = self._properties[p]._get_value(self)
+          self.__original_values[p] = self._properties[p]._get_value(self)
  
   @classmethod
   def _get_kind(cls):
@@ -116,7 +202,7 @@ class BaseModel(_BaseModel):
     @classmethod
     def _from_pb(cls, *args, **kwargs):
         """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(_BaseModel, cls)._from_pb(*args, **kwargs) 
+        entity = super(_BaseModel, cls)._from_pb(*args, **kwargs)
         entity.set_original_values()
         return entity
 
@@ -218,6 +304,12 @@ class BaseProperty(_BaseProperty, Property):
     Base property class for all properties capable of having writable, and visible options
    """
    
+class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
+      pass
+  
+class SuperStructuredProperty(_BaseProperty, StructuredProperty):
+      pass
+    
 class SuperPickleProperty(_BaseProperty, PickleProperty):
     pass
 
@@ -366,6 +458,30 @@ class Workflow():
           super(Workflow, self).__init(*args, **kwds)
           
       @classmethod
+      def generate_public_permissions(cls):
+        # by default it wont return permissions who start with `sudo`
+        actions = cls.OBJECT_ACTIONS.keys()
+        out = []
+        for action in actions:
+            if action.startswith('sudo'):
+               continue
+            
+            out.append(action)
+            
+        return out
+    
+      @classmethod
+      def generate_admin_permissions(cls):
+        # by default it will return permissions who start with `sudo`
+        actions = cls.OBJECT_ACTIONS.keys()
+        out = []
+        for action in actions:
+            if not action.startswith('sudo'):
+               continue
+            out.append(action)
+        return out
+          
+      @classmethod
       def default_state(cls):
         # returns default state for this model
         return cls.resolve_state_code_by_name(cls.OBJECT_DEFAULT_STATE)
@@ -431,7 +547,9 @@ class Workflow():
           
       def new_action(self, action, state=None, **kwargs):
           """
-           Tries to record an action
+           This function prepares ObjectLog for recording. This function will by default:
+           - set agent as current user if not provided
+           - log `self` object if its not provided otherwise (log_object=False)
           """
           
           if state is not None: # if state is unchanged, no checks for transition needed?
@@ -442,27 +560,46 @@ class Workflow():
  
           if hasattr(self, 'state') and self.state == None:
              state = self.default_state()
-             
-          obj = kwargs.pop('log_object', None)
- 
+          
+          # lower namespace for one step   
           from app.core import log
           
+          obj = kwargs.pop('log_object', True) # if obj is set to True it will log `self`
+          agent = kwargs.pop('agent', None) # if agent is none it will use current user
+          
+          if agent is None:
+             # lower namespace for one step
+             from app.core import acl
+             
+             agent = acl.User.current_user()
+             kwargs['agent'] = agent.key
+          else:
+             kwargs['agent'] = agent
+          
           objlog = log.ObjectLog(action=action, parent=self.key, **kwargs)
+ 
+          if obj is True:
+             obj = self
           
-          if obj is not None:
+          if obj:
              objlog.log_object(obj)
-          
+               
           self.__record_action.append(objlog)
 
           return objlog
       
+      
       def record_action(self, skip_check=False):
+          # records any actions that are stored by `new_action`
           any_actions = len(self.__record_action)
           if not any_actions and not skip_check:
              raise WorkflowActionNotReadyError('This entity did not have any self.new_action() called')
           
+          print self.__record_action 
           if any_actions:
              return put_multi(self.__record_action)
+          else:
+             return list()
  
    
 class Response(dict):
@@ -471,12 +608,12 @@ class Response(dict):
       Response dict object used for preparing data which is returned to clients for parsing.
       Usually every model method should return this type of response object.
     """
-    def required_values(self, obj, *args):
-        for arg in args:
-            if arg not in obj:
-               self.error('required_values', 'required_%s' % arg)
-               
-        return self
+    
+    def not_authorized(self):
+        self.error('user', 'not_authorized')
+        
+    def not_logged_in(self):
+        self.error('user', 'not_logged_in')
     
     def __setattr__(self, *args, **kwargs):
         return dict.__setitem__(self, *args, **kwargs)

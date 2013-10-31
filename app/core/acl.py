@@ -4,7 +4,6 @@ Created on Oct 11, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import datetime
 import hashlib
 
 from app.util import random_chars
@@ -22,28 +21,28 @@ class Identity(ndb.BaseModel):
     KIND_ID = 2
     
     # StructuredProperty model
-    identity = ndb.StringProperty('1', required=True)# spojen je i provider name sa id-jem
-    email = ndb.StringProperty('2', required=True)
-    associated = ndb.BooleanProperty('3', default=True)
-    primary = ndb.BooleanProperty('4', default=True)
+    identity = ndb.SuperStringProperty('1', required=True)# spojen je i provider name sa id-jem
+    email = ndb.SuperStringProperty('2', required=True)
+    associated = ndb.SuperBooleanProperty('3', default=True)
+    primary = ndb.SuperBooleanProperty('4', default=True)
           
           
-class User(ndb.BaseModel, ndb.Workflow):
+class User(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 0
     
     _use_cache = True
     _use_memcache = True
     
-    identities = ndb.StructuredProperty(Identity, '1', repeated=True)# soft limit 100x
+    identities = ndb.SuperStructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperIntegerProperty('3', required=True)
-    sessions = ndb.LocalStructuredProperty(Session, '4', repeated=True)
-    
+    sessions = ndb.SuperLocalStructuredProperty(Session, '4', repeated=True)
+ 
     _default_indexed = False
   
     EXPANDO_FIELDS = {
-      'roles' : ndb.KeyProperty('4', repeated=True)                 
+      'roles' : ndb.KeyProperty('5', repeated=True, indexed=False)                 
     }
  
     OBJECT_DEFAULT_STATE = 'su_active'
@@ -209,6 +208,7 @@ class User(ndb.BaseModel, ndb.Workflow):
            :param obj: loaded entity of an object
            :param kwds: keyword arguments needed for additional checks.
         """
+        
         if usr.emails:
            for e in usr.emails:
                if e in settings.ROOT_ADMINS:
@@ -225,6 +225,11 @@ class User(ndb.BaseModel, ndb.Workflow):
               return yes
  
         namespace = obj.key.namespace()
+        
+        override_namespace = kwds.pop('namespace', None)
+        
+        if override_namespace is not None:
+           namespace = override_namespace
          
         permissions = []
         if isinstance(action, basestring):
@@ -416,14 +421,15 @@ class IPAddress(ndb.BaseModel):
  
 class Role(ndb.BaseModel):
     
+    KIND_ID = 13
     # root
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:yes - name
-    name = ndb.StringProperty('1', required=True)
-    permissions = ndb.StringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    name = ndb.SuperStringProperty('1', required=True)
+    permissions = ndb.SuperStringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
+    readonly = ndb.SuperBooleanProperty('3', default=True, indexed=False)
     
-    KIND_ID = 13
+   
     
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -435,36 +441,6 @@ class Role(ndb.BaseModel):
     
     @staticmethod
     def format_permission(action, obj):
-        return '%s-%s' % (obj._get_kind(), obj.resolve_action_code_by_name(action))
-    
-    @classmethod
-    def list_roles(cls):
-        return cls.query().fetch()  
-  
-    @classmethod
-    def create(cls, **kwds):
-        response = ndb.Response()
-        response.required_values(kwds, 'current_user', 'name', 'actions', 'kind_id')
-        
-        if not response.has_error():
-               usr = kwds.get('current_user')
-               if usr.has_permission('create', cls):
- 
-                  perms = []
-                  obj = ndb.BaseModel._kind_map.get(kwds.get('kind_id'))
-                   
-                  for action in kwds.get('actions'):
-                      perms.append(Role.format_permission(action, obj))
-                   
-                  @ndb.transactional 
-                  def transaction():
-                      create = cls(name=kwds.get('name'), permissions=perms)
-                      create.put()
-                      return create
-                  
-                  create = transaction()
-                  response['create'] = create
-        
-        return response
+        return ndb.format_permission(action, obj)
     
     

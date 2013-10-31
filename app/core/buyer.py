@@ -22,7 +22,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     _default_indexed = False
  
     EXPANDO_FIELDS = {
-        'region' :  ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', required=True),
+        'region' :  ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision'),
         'street_address2' : ndb.SuperStringProperty('9'),
         'email' : ndb.SuperStringProperty('10'),
         'telephone' : ndb.SuperStringProperty('11'),
@@ -85,7 +85,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                
   
     @classmethod
-    def manage(cls, **kwds):
+    def manage_entity(cls, **kwds):
          
         response = ndb.Response()
  
@@ -94,89 +94,56 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         current = core.acl.User.current_user()
         
         if current.is_guest:
-           return response.error('user', 'user_is_guest')
+           return response.not_logged_in()
+       
+        kwds['default_billing'] = bool(int(kwds['default_billing']))
+        kwds['default_shipping'] = bool(int(kwds['default_shipping']))
         
-        new_data = cls.from_multiple_values(kwds)
-        
-        to_put_multi = [] # puts multiple entities
-        items = [] # prepares items for output
-        to_create = [] # items to be newly created
-        to_update = {} # items that need update
-        
-        i = -1
-        for new in new_data:
-            i += 1
-            country = new.get('country')
-            try:
-               new['country'] = ndb.Key(urlsafe=country)
-            except:
-               response.error('input_error_%s' % i, 'invalid_country_input')
-
-                   
-            region = new.get('region')
-            if region and len(region):
-               try:
-                   new['region'] = ndb.Key(urlsafe=region)
-               except:
-                   response.error('input_error_%s' % i, 'invalid_region_input')
-         
-                   
-            if response.has_error('input_error_%s' % i):
-               continue
-               
-            new['default_billing'] = bool(int(new['default_billing']))
-            new['default_shipping'] = bool(int(new['default_shipping']))
-            
-            create = False
-            key_urlsafe = new.pop('id')
-            
-            try:
-               key = ndb.Key(urlsafe=key_urlsafe)
-            except:
-               create = True
-            
-            if create:
-               # do not provide expando fields if they are empty
-               for delete in ['telephone', 'email', 'street_address2', 'region']:    
-                    if delete in new and not new.get(delete):
-                       del new[delete]
-               new['parent'] = current.key        
-               to_create.append(cls(**new))
-            else:
-               to_update[key.urlsafe()] = new
-        
-        if len(to_update):
-           entries = ndb.get_multi([ndb.Key(urlsafe=k) for k,v in to_update.items()])
-           for ent in entries:
-                # if entity is not found or its not owned by the current user, skip any manipulations to it
-                if not ent or ent.key.parent() != current.key:
-                   continue
-                ent.populate(**to_update[ent.key.urlsafe()])
-                items.append(ent)
-                log = ent.new_action('update', agent=current.key, log_object=ent)
-                to_put_multi.append(ent)
-                to_put_multi.append(log)
-               
-        if len(to_create):
-           # commit all creations in serial operation, however we can put here multi put because,
-           # logs dont need to be displayed right away - consistency wise?
-           @ndb.transactional(xg=True)
-           def transaction(s, current):
-               s.put()
-               items.append(s)
-               log = s.new_action('create', agent=current.key, log_object=s)
-               log.put()
-               
-           for s in to_create:
-               transaction(s, current)
-               
-        if len(to_put_multi):
-           response['put_multi'] = ndb.put_multi(to_put_multi)
+        try:
+           country_key = ndb.Key(urlsafe=kwds['country'])
+           if not country_key.get():
+              raise Exception('invalid_input')
+           kwds['country'] = country_key
+        except:
+           response.error('country', 'invalid_input')
            
-        response['items'] = items
+        if kwds['region']:
+           try:
+               region_key = ndb.Key(urlsafe=kwds['region'])
+               if not region_key:
+                  raise Exception('invalid_input')
+               kwds['region'] = region_key
+           except:
+               response.error('region', 'invalid_input')
+               
+        required = ('name', 'city', 'postal_code', 'street_address')
+        for req in required:
+            if not kwds[req]:
+               response.error(req, 'required')
+                
+        if response.has_error():
+           return response       
+    
+        entity = cls.load_from_values(kwds, get=True)
         
+        @ndb.transactional(xg=True)
+        def transaction():
+            if entity and entity.key:
+               # update
+               entity.put()
+               entity.new_action('update')
+               entity.record_action()
+            else:
+               # create
+               entity.parent = current.key
+               entity.put()
+               entity.new_action('create')
+               entity.record_action()
+               
+            return entity
+        
+        response['item'] = transaction()
         return response
-         
             
 # done!
 class Collection(ndb.BaseModel):

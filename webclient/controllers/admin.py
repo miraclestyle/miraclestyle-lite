@@ -9,17 +9,23 @@ from app import core
 from webclient.route import register
 from webclient.handler import Angular
 
-class RoleManager(Angular):
+class RoleManage(Angular):
     
     def respond(self):
         pass
     
-class CountryManager(Angular):
+class CountryList(Angular):
+    
+    def respond(self):
+        return core.misc.Country.list()  
+    
+class CountryManage(Angular):
     
     def respond(self):
         args = ('id', 'name', 'active', 'code')
         return core.misc.Country.manage(**self.reqdata.get_all(args))
     
     
-register(('/admin/manage_role', RoleManager),
-         ('/admin/manage_country', CountryManager))
+register(('/admin/role/manage', RoleManage),
+         ('/admin/country/manage', CountryManage),
+         ('/admin/country/list', CountryList))

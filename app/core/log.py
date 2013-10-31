@@ -10,15 +10,18 @@ class ObjectLog(ndb.BaseExpando):
     
     KIND_ID = 5
     
-    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
-    agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True)
-    action = ndb.SuperIntegerProperty('3', required=True)
+    # high numbers for field aliases here to not conflict with log object
+    
+    logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
+    agent = ndb.SuperKeyProperty('98', kind='app.core.acl.User', required=True)
+    action = ndb.SuperIntegerProperty('97', required=True)
  
     _default_indexed = False
  
     EXPANDO_FIELDS = {
-       'message' : ndb.SuperTextProperty('5'),
-       'note' : ndb.SuperTextProperty('6'),
+       'message' : ndb.SuperTextProperty('96'),
+       'note' : ndb.SuperTextProperty('95'),
+       
     }
     
     # log object's each property
@@ -31,11 +34,13 @@ class ObjectLog(ndb.BaseExpando):
     
 class PayPalTransactionLog(ndb.BaseExpando):
     
+    KIND_ID = 25
+    
     # ancestor Order, BillingOrder
     # not logged
     # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged:desc
-    logged = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
-    txn_id = ndb.StringProperty('2', required=True)
+    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+    txn_id = ndb.SuperStringProperty('2', required=True)
     
     _default_indexed = False
  
@@ -52,6 +57,8 @@ class PayPalTransactionLog(ndb.BaseExpando):
 
 # done!
 class BillingLog(ndb.Model):
+    
+    KIND_ID = 26
     
     # root (namespace Domain) / ancestor Domain ?
     # key za BillingLog ce se graditi na sledeci nacin:

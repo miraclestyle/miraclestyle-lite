@@ -7,7 +7,9 @@ Created on Oct 20, 2013
 from app import ndb
 from app.core.misc import Location
 
-class Store(ndb.BaseExpando):
+class Store(ndb.BaseExpando, ndb.Workflow):
+    
+    KIND_ID = 44
     
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
@@ -95,7 +97,9 @@ class Store(ndb.BaseExpando):
      
 
 # done!
-class StoreFeedback(ndb.BaseModel):
+class StoreFeedback(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 45
     
     # LocalStructuredProperty model
     # ovaj model dozvoljava da se radi feedback trending per month per year
@@ -110,7 +114,9 @@ class StoreFeedback(ndb.BaseModel):
     neutral_feedback_count = ndb.SuperIntegerProperty('5', required=True, indexed=False)
 
 # done!
-class StoreContent(ndb.BaseModel):
+class StoreContent(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 46
     
     # ancestor DomainStore (Catalog, for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
@@ -130,6 +136,8 @@ class StoreContent(ndb.BaseModel):
 # done!
 class StoreShippingExclusion(Location, ndb.Workflow):
     
+    KIND_ID = 47
+    
     # ancestor DomainStore (DomainCatalog, for caching) (namespace Domain)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
  
@@ -145,6 +153,8 @@ class StoreShippingExclusion(Location, ndb.Workflow):
 
 # done!
 class Tax(ndb.BaseExpando):
+    
+    KIND_ID = 48
     
     # root (namespace Domain)
     # composite index: ancestor:no - active,sequence
@@ -172,7 +182,9 @@ class Tax(ndb.BaseExpando):
     
 
 # done!
-class Carrier(ndb.BaseModel):
+class Carrier(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 49
     
     # root (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
@@ -191,7 +203,9 @@ class Carrier(ndb.BaseModel):
      
 
 # done!
-class CarrierLine(ndb.BaseExpando):
+class CarrierLine(ndb.BaseExpando, ndb.Workflow):
+    
+    KIND_ID = 50
     
     # ancestor DomainCarrier (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L170
@@ -218,6 +232,8 @@ class CarrierLine(ndb.BaseExpando):
 
 # done!
 class CarrierLineRule(ndb.BaseModel):
+    
+    KIND_ID = 51
     
     # LocalStructuredProperty model
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L226
