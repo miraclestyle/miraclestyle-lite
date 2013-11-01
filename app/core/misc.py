@@ -85,7 +85,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         required = ('name', 'code')
         for req in required:
             if not kwds[req]:
-               response.error(req, 'required')
+               response.required(req)
                
         if response.has_error():
            return response
@@ -106,7 +106,13 @@ class Country(ndb.BaseModel, ndb.Workflow):
                
             return entity
            
-        response['item'] = transaction()
+        try:
+            response['item'] = transaction()
+        except ndb.datastore_errors.Timeout:
+            response.transaction_timeout()
+        except ndb.datastore_errors.TransactionFailedError:
+            response.transaction_failed()
+            
         return response
          
         

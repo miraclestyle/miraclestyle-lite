@@ -105,7 +105,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
               raise Exception('invalid_input')
            kwds['country'] = country_key
         except:
-           response.error('country', 'invalid_input')
+           response.invalid('country')
            
         if kwds['region']:
            try:
@@ -114,12 +114,12 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                   raise Exception('invalid_input')
                kwds['region'] = region_key
            except:
-               response.error('region', 'invalid_input')
+               response.invalid('region')
                
         required = ('name', 'city', 'postal_code', 'street_address')
         for req in required:
             if not kwds[req]:
-               response.error(req, 'required')
+               response.required(req)
                 
         if response.has_error():
            return response       
@@ -142,7 +142,13 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                
             return entity
         
-        response['item'] = transaction()
+        try:
+            response['item'] = transaction()
+        except ndb.datastore_errors.Timeout:
+            response.transaction_timeout()
+        except ndb.datastore_errors.TransactionFailedError:
+            response.transaction_failed()
+            
         return response
             
 # done!

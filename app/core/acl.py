@@ -280,19 +280,22 @@ class User(ndb.BaseExpando, ndb.Workflow):
             if self.sessions:
                self.sessions = []
                 
-            self.new_action('logout', agent=self.key)
+            self.new_action('logout')
             self.record_action()
             
             self.put()
             
             User.set_current_user(User.anonymous_user())
         
-        try:    
+        response['logout'] = False
+        
+        try:
             transaction()
             response['logout'] = True
-        except Exception as e:
-            response['logout'] = False
-            response.error('logout', 'failed_logout')
+        except ndb.datastore_errors.Timeout:
+            response.transaction_timeout()
+        except ndb.datastore_errors.TransactionFailedError:
+            response.transaction_failed()
             
         return response
     
@@ -345,7 +348,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
                     usr = current_user
                         
                  @ndb.transactional(xg=True)
-                 def trans(usr): 
+                 def transaction(usr): 
                      if not usr.is_guest:
                          if email not in usr.emails:
                             usr.emails.append(email)
@@ -368,11 +371,16 @@ class User(ndb.BaseExpando, ndb.Workflow):
                      usr.new_action('login', agent=usr.key)
                      usr.record_action() 
                      
-                     return usr         
-                     
-                 usr = trans(usr)
-                 
-                 response['logged_in'] = usr
+                     return usr   
+                       
+                 try:    
+                    usr = transaction(usr)
+                    response['logged_in'] = usr
+                 except ndb.datastore_errors.Timeout:
+                    response.transaction_timeout()
+                 except ndb.datastore_errors.TransactionFailedError:
+                    response.transaction_failed()
+                  
               else:
                  response.error('oauth2_error', 'failed_data_fetch')
            else:

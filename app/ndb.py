@@ -5,7 +5,8 @@ Created on Jul 9, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import decimal
- 
+
+from google.appengine.ext.db import datastore_errors 
 from google.appengine.ext.ndb import *
 
 from app import pyson
@@ -575,12 +576,12 @@ class Workflow():
              kwargs['agent'] = agent.key
           else:
              kwargs['agent'] = agent
-          
+  
           objlog = log.ObjectLog(action=action, parent=self.key, **kwargs)
  
           if obj is True:
              obj = self
-          
+              
           if obj:
              objlog.log_object(obj)
                
@@ -595,9 +596,10 @@ class Workflow():
           if not any_actions and not skip_check:
              raise WorkflowActionNotReadyError('This entity did not have any self.new_action() called')
           
-          print self.__record_action 
           if any_actions:
-             return put_multi(self.__record_action)
+             recorded = put_multi(self.__record_action)
+             self.__record_action = []
+             return recorded
           else:
              return list()
  
@@ -608,6 +610,18 @@ class Response(dict):
       Response dict object used for preparing data which is returned to clients for parsing.
       Usually every model method should return this type of response object.
     """
+    
+    def transaction_timeout(self):
+        self.error('transaction_error', 'timeout')
+    
+    def transaction_failed(self):
+        self.error('transaction_error', 'failed')
+    
+    def required(self, k):
+        self.error(k, 'required')
+        
+    def invalid(self, k):
+        return self.error(k, 'invalid_input')
     
     def not_authorized(self):
         self.error('user', 'not_authorized')

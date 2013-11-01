@@ -102,7 +102,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
            return response.not_authorized()
        
         if not len(kwds.get('name')):
-           return response.error('name', 'required')
+           return response.required('name')
         
         # this transaction handles domain, role, objectlog, domain user, and user entity groups
         @ndb.transactional(xg=True)
@@ -174,8 +174,14 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                   
             return entity
         
-        response['item'] = transaction()
-        
+        # we really need to handle transaction errors, webclient needs to handle this, to warn user if the submission failed etc.
+        try:
+            response['item'] = transaction()
+        except ndb.datastore_errors.Timeout:
+            response.transaction_timeout()
+        except ndb.datastore_errors.TransactionFailedError:
+            response.transaction_failed()
+            
         return response
                 
                 
