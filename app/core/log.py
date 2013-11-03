@@ -32,7 +32,7 @@ class ObjectLog(ndb.BaseExpando):
             
         return self
     
-class PayPalTransactionLog(ndb.BaseExpando):
+class PayPalTransactionLog(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 25
     

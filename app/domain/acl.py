@@ -90,11 +90,107 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         return response 
     
     @classmethod
+    def suspend(cls, **kwds):
+        response = ndb.Response() 
+        entity = cls.load_from_values(kwds, get=True)
+        if entity and entity.key:
+           # check if user can do this
+           current = cls.get_current_user()
+           if current.has_permission('suspend', entity, namespace=entity.key.namespace()):
+              @ndb.transactional(xg=True)  
+              def transaction(): 
+                  entity.new_action('suspend', state='suspend', message=kwds.get('message'), note=kwds.get('note'))
+                  entity.record_action()
+                  response['suspended'] = entity
+              try:
+                  transaction()
+              except Exception as e:
+                  response.transaction_error(e)
+           else:
+               response.not_authorized()
+        else:
+            response.not_found()
+               
+        return response
+
+
+    @classmethod
+    def activate(cls, **kwds):
+        response = ndb.Response()
+        entity = cls.load_from_values(kwds, get=True)
+        if entity and entity.key:
+           # check if user can do this
+           current = cls.get_current_user()
+           if current.has_permission('activate', entity, namespace=entity.key.namespace()):
+              @ndb.transactional(xg=True)
+              def transaction(): 
+                  entity.new_action('activate', state='activate', message=kwds.get('message'), note=kwds.get('note'))
+                  entity.record_action()
+                  response['activate'] = entity
+              try:
+                  transaction()
+              except Exception as e:
+                  response.transaction_error(e)
+           else:
+               response.not_authorized()
+        else:
+            response.not_found()
+               
+        return response
+    
+    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
+    @classmethod
+    def sudo(cls, **kwds):
+        response = ndb.Response()
+        entity = cls.load_from_values(kwds, get=True)
+        if entity and entity.key:
+           # check if user can do this
+           current = cls.get_current_user()
+           if current.has_permission('sudo', entity, namespace=entity.key.namespace()): 
+              @ndb.transactional(xg=True) 
+              def transaction(): 
+                  entity.new_action('sudo', state=kwds.get('state'), message=kwds.get('message'), note=kwds.get('note'))
+                  entity.record_action()
+                  response['sudo'] = entity
+              try:
+                  transaction()
+              except Exception as e:
+                  response.transaction_error(e)
+           else:
+               response.not_authorized()
+        else:
+            response.not_found()
+               
+        return response
+    
+    @classmethod
+    def log_message(cls, kwds):
+        response = ndb.Response()
+        entity = cls.load_from_values(kwds, get=True)
+        if entity and entity.key:
+           # check if user can do this
+           current = cls.get_current_user()
+           if current.has_permission('log_message', entity, namespace=entity.key.namespace()):
+              @ndb.transactional(xg=True)  
+              def transaction(): 
+                  entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                  entity.record_action()
+                  response['log_message'] = entity
+              try:
+                  transaction()
+              except Exception as e:
+                  response.transaction_error(e)
+           else:
+               response.not_authorized()
+        else:
+            response.not_found()
+               
+        return response
+            
+    @classmethod
     def manage_entity(cls, **kwds):
         
-        from app import core
-        
-        current = core.acl.User.current_user()
+        current = cls.get_current_user()
         
         response = ndb.Response()
         
@@ -177,10 +273,8 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         # we really need to handle transaction errors, webclient needs to handle this, to warn user if the submission failed etc.
         try:
             response['item'] = transaction()
-        except ndb.datastore_errors.Timeout:
-            response.transaction_timeout()
-        except ndb.datastore_errors.TransactionFailedError:
-            response.transaction_failed()
+        except Exception as e:
+            response.transaction_error(e)
             
         return response
                 
@@ -244,3 +338,188 @@ class User(ndb.BaseExpando, ndb.Workflow):
             'to' : ('accepted',),
         },
     } 
+ 
+    
+    # Poziva novog usera u domenu, al čime da ga poziva? po mailu?
+    @classmethod
+    def invite(cls, domain_key, user_key, role_keys, name, **kwds):
+   
+        response = ndb.Response()
+        
+        if not name:
+           response.required('name')
+           
+        if not role_keys:
+           response.required('roles')
+           
+        if response.has_error():
+           return response
+        
+        current = cls.get_current_user()
+        domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+         
+        if domain and usr:
+            
+           if not current.has_permission('invite', domain, namespace=domain.key.namespace()):
+              return response.not_authorized()
+          
+           if domain.get_state != 'active':
+              return response.error('domain', 'not_active')
+            
+           roles = []
+           get_roles = ndb.get_multi([ndb.Key(urlsafe=k) for k in role_keys])
+           for role in get_roles:
+               if role.key.namespace() == domain.key.namespace():
+                  roles.append(role.key)
+           
+           @ndb.transactional(xg=True)       
+           def transaction():
+               domain_user_key = ndb.Key(namespace=domain.key.namespace(), id=str(usr.key.id()))
+               domain_user = domain_user_key.get()
+               if domain_user:
+                  response.status('already_invited')
+               else:
+                  domain_user = User(namespace=domain.key.namespace(), id=str(usr.key.id()), name=name, user=usr.key, roles=roles)
+                  domain_user.put()
+                  domain_user.new_action('invite')
+                  domain_user.record_action()
+                  response['invited'] = domain_user
+           try:
+               transaction()
+           except Exception as e:
+               response.transaction_error(e)
+        else:
+            response.not_found()       
+               
+        return response
+           
+            
+    
+    # Uklanja postojeceg usera iz domene
+    @classmethod
+    def remove(cls, domain_key, user_key, **kwds):
+        """
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'remove-DomainUser', ili agent koji je referenciran u entitetu (domain_user.user == agent).
+        # agent koji je referenciran u domain.primary_contact prop. ne moze biti izbacen iz domene i izgubiti dozvole za upravljanje domenom.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        user = domain_user.user.get()
+        for role in domain_user.roles:
+            user.roles.remove(role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='remove', state=domain_user.state)
+        object_log.put()
+        domain_user_key.delete()
+        """
+        
+        response = ndb.Response()
+  
+        current = cls.get_current_user()
+        domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+        
+        if domain and usr:
+            
+           if domain.get_state != 'active':
+              return response.error('domain', 'not_active') 
+            
+           if current.has_permission('remove', domain, namespace=domain.key.namespace()) or usr.key == current.key:
+              if domain.primary_contact != usr.user:
+                  
+                 @ndb.transactional(xg=True) 
+                 def transaction(): 
+                     far_user = usr.user.get()
+                     for role in usr.roles:
+                         far_user.roles.remove(role)
+                   
+                     usr.new_action('remove', log_object=False)
+                     usr.record_action()
+                     usr.key.delete()
+                     
+                     far_user.put()
+                     far_user.new_action('update')
+                     far_user.record_action()
+                     
+                 try:
+                    transaction()
+                    response['removed'] = usr
+                 except Exception as e:
+                    response.transaction_error(e)
+              else:
+                  return response.error('user', 'is_primary_contact')
+           else:
+              return response.not_authorized()
+        
+    
+    # Prihvata poziv novog usera u domenu
+    @classmethod
+    def accept(cls, user_key, **kwds):
+        """
+        # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (domain_user.user == agent).
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        domain_user.state = 'accepted'
+        domain_user_key = domain_user.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='accept', state=domain_user.state)
+        object_log.put()
+        user = domain_user.user.get()
+        for role in domain_user.roles:
+            user.roles.append(role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
+        """
+        response = ndb.Response()
+  
+        current = cls.get_current_user()
+        user_key = ndb.Key(urlsafe=user_key)
+        usr, domain = ndb.get_multi([user_key, ndb.Key(urlsafe=user_key.namespace())])
+        
+        if domain and usr:
+            
+           if domain.get_state != 'active':
+              return response.error('domain', 'not_active') 
+          
+           if current.key == usr.user:
+              @ndb.transactional(xg=True)
+              def transaction(): 
+                  usr.new_action('accept', state='accept', log_object=False)
+                  usr.record_action()
+                  user = usr.user.get()
+                  for role in usr.roles:
+                      user.roles.append(role)
+                      
+                  user.put()
+                  user.new_action('update')
+                  user.record_action()
+                  
+              try:
+                  transaction()
+                  response['accept'] = usr
+              except Exception as e:
+                  response.transaction_error(e)
+           else:
+               response.error('user', 'invalid_reciever')
+                  
+        return response
+    
+    # Azurira postojeceg usera u domeni
+    @classmethod
+    def update(cls, **kwds):
+        """
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainUser'.
+        # akcija se moze pozvati samo ako je domain.state == 'active'.
+        old_roles = domain_user.roles
+        domain_user.name = var_name
+        domain_user.roles = var_roles
+        domain_user_key = domain_user.put()
+        object_log = ObjectLog(parent=domain_user_key, agent=agent_key, action='update', state=domain_user.state, log=domain_user)
+        object_log.put()
+        user = domain_user.user.get()
+        for role in old_roles:
+            user.roles.remove(role)
+        for role in domain_user.roles:
+            user.roles.append(role)
+        user_key = user.put()
+        object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
+        object_log.put()
+        """

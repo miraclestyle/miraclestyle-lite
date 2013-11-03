@@ -270,10 +270,10 @@ class User(ndb.BaseExpando, ndb.Workflow):
         response = ndb.Response()
         
         if self.is_guest:
-           return response.error('logout', 'already_logged_out')
+           return response.status('already_logged_out')
        
         if not self.logout_code == kwds.get('code'):
-           return response.error('logout', 'invalid_code')
+           return response.status('invalid_code')
         
         @ndb.transactional(xg=True)
         def transaction():
@@ -292,10 +292,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
         try:
             transaction()
             response['logout'] = True
-        except ndb.datastore_errors.Timeout:
-            response.transaction_timeout()
-        except ndb.datastore_errors.TransactionFailedError:
-            response.transaction_failed()
+        except Exception as e:
+            response.transaction_error(e)
             
         return response
     
@@ -431,7 +429,7 @@ class IPAddress(ndb.BaseModel):
     logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
     ip_address = ndb.SuperStringProperty('2', required=True, indexed=False)
  
-class Role(ndb.BaseModel):
+class Role(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 13
     # root

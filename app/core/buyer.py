@@ -49,8 +49,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     def list(cls, parent=None):
         response = ndb.Response()
         if parent is None:
-           from app import core
-           parent = core.acl.User.current_user().key
+           parent = cls.get_current_user()
         response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
@@ -61,9 +60,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         
         response = ndb.Response()
         
-        from app import core
-        
-        current = core.acl.User.current_user()
+        current = cls.get_current_user()
         
         to_delete = []
         for i in ids:
@@ -89,9 +86,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
          
         response = ndb.Response()
  
-        from app import core
-        
-        current = core.acl.User.current_user()
+        current = cls.get_current_user()
         
         if current.is_guest:
            return response.not_logged_in()
@@ -144,10 +139,8 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         
         try:
             response['item'] = transaction()
-        except ndb.datastore_errors.Timeout:
-            response.transaction_timeout()
-        except ndb.datastore_errors.TransactionFailedError:
-            response.transaction_failed()
+        except Exception as e:
+            response.transaction_error(e)
             
         return response
             
@@ -173,7 +166,7 @@ class Collection(ndb.BaseModel):
  
 
 # done!
-class CollectionStore(ndb.BaseModel):
+class CollectionStore(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 11
     # ancestor User

@@ -6,7 +6,7 @@ Created on Oct 20, 2013
 '''
 from app import ndb
 
-class Content(ndb.BaseModel):
+class Content(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 14
     # root
@@ -75,9 +75,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         
         response = ndb.Response()
         
-        from app import core
-        
-        current = core.acl.User.current_user()
+        current = cls.get_current_user()
         
         if not current.has_permission('create', cls):
            return response.not_authorized()
@@ -108,17 +106,15 @@ class Country(ndb.BaseModel, ndb.Workflow):
            
         try:
             response['item'] = transaction()
-        except ndb.datastore_errors.Timeout:
-            response.transaction_timeout()
-        except ndb.datastore_errors.TransactionFailedError:
-            response.transaction_failed()
+        except Exception as e:
+            response.transaction_error(e)
             
         return response
          
         
 
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
-class CountrySubdivision(ndb.BaseModel):
+class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 16
     
@@ -160,7 +156,7 @@ class Location(ndb.BaseExpando):
     # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
 
 # done!
-class ProductCategory(ndb.BaseModel):
+class ProductCategory(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 17
     
@@ -185,7 +181,7 @@ class ProductCategory(ndb.BaseModel):
     } 
 
 # done!
-class ProductUOMCategory(ndb.BaseModel):
+class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 18
     
@@ -205,7 +201,7 @@ class ProductUOMCategory(ndb.BaseModel):
      
 
 # done!
-class ProductUOM(ndb.BaseModel):
+class ProductUOM(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 19
     
@@ -232,7 +228,7 @@ class ProductUOM(ndb.BaseModel):
     } 
 
 # done!
-class Currency(ndb.BaseModel):
+class Currency(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 20
     
@@ -274,7 +270,7 @@ class Currency(ndb.BaseModel):
 
 # done!
 # ostaje da se ispita u preprodukciji!!
-class Message(ndb.BaseModel):
+class Message(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 21
     
@@ -339,7 +335,7 @@ class BillingCreditAdjustment(ndb.BaseModel):
     }    
      
      
-class FeedbackRequest(ndb.Model):
+class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 23
     
@@ -388,7 +384,7 @@ class FeedbackRequest(ndb.Model):
   
 
 # done! - sudo kontrolisan model
-class SupportRequest(ndb.Model):
+class SupportRequest(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 24
     

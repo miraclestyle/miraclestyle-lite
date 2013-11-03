@@ -152,7 +152,7 @@ class StoreShippingExclusion(Location, ndb.Workflow):
    
 
 # done!
-class Tax(ndb.BaseExpando):
+class Tax(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 48
     
@@ -231,7 +231,7 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow):
      
 
 # done!
-class CarrierLineRule(ndb.BaseModel):
+class CarrierLineRule(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 51
     

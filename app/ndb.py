@@ -77,6 +77,14 @@ class _BaseModel(Model):
          
       return dic
   
+  @classmethod
+  def get_current_user(cls):
+      if hasattr('current_user', cls):
+         return cls.current_user()
+      # Shorthand for getting the current user
+      from app.core.acl import User
+      return User.current_user()
+  
   def loaded(self):
       return self.key != None
   
@@ -570,9 +578,7 @@ class Workflow():
           
           if agent is None:
              # lower namespace for one step
-             from app.core import acl
-             
-             agent = acl.User.current_user()
+             agent = self.get_current_user()
              kwargs['agent'] = agent.key
           else:
              kwargs['agent'] = agent
@@ -610,7 +616,14 @@ class Response(dict):
       Response dict object used for preparing data which is returned to clients for parsing.
       Usually every model method should return this type of response object.
     """
-    
+    def transaction_error(self, e):
+        if isinstance(e, datastore_errors.Timeout):
+           return self.transaction_timeout()
+        if isinstance(e, datastore_errors.TransactionFailedError):
+           return self.transaction_failed()
+        
+        raise e
+ 
     def transaction_timeout(self):
         self.error('transaction_error', 'timeout')
     
@@ -622,6 +635,14 @@ class Response(dict):
         
     def invalid(self, k):
         return self.error(k, 'invalid_input')
+    
+    def status(self, m):
+        # generic `status` of the response. 
+        # It informs most usual errors that might ocurr. E.g. object not found, etc.
+        self.error('status', m)
+    
+    def not_found(self):
+        self.error('status', 'not_found')
     
     def not_authorized(self):
         self.error('user', 'not_authorized')

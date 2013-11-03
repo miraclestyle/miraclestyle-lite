@@ -34,7 +34,7 @@ class OrderCurrency(ndb.BaseModel):
     positive_separate_by_space = ndb.SuperBooleanProperty('16', default=True, indexed=False)
     negative_separate_by_space = ndb.SuperBooleanProperty('17', default=True, indexed=False)
 
-class Order(ndb.BaseExpando):
+class Order(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 28
     
@@ -240,7 +240,7 @@ class OrderLineTax(ndb.BaseModel):
     amount = ndb.SuperStringProperty('2', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
 
 # done! - sudo kontrolisan model
-class OrderFeedback(ndb.BaseModel):
+class OrderFeedback(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 34
     
