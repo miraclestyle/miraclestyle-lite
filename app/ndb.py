@@ -20,6 +20,15 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
+def factory(module_model_path):
+    
+    custom_kinds = module_model_path.split('.')
+    far = custom_kinds[-1] 
+    del custom_kinds[-1] 
+         
+    return getattr(import_module(".".join(custom_kinds)), far)
+
+
 def format_permission(action, obj):
     """ Formats the permission in format <kind>-<action> """
     return '%s-%s' % (obj._get_kind(), obj.resolve_action_code_by_name(action))
@@ -79,7 +88,7 @@ class _BaseModel(Model):
   
   @classmethod
   def get_current_user(cls):
-      if hasattr('current_user', cls):
+      if hasattr(cls, 'current_user'):
          return cls.current_user()
       # Shorthand for getting the current user
       from app.core.acl import User
@@ -203,6 +212,14 @@ class _BaseModel(Model):
           raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__)) 
        return str(cls.KIND_ID)
     return cls.__name__
+ 
+  @classmethod
+  def get_property_names(cls):
+      out = []
+      for prop in cls._properties:
+          out.append(prop._code_name)
+      return out    
+      
 
 class BaseModel(_BaseModel):
     """
@@ -300,11 +317,7 @@ class _BaseProperty(object):
         
         custom_kind = kwds.get('kind')
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
-           custom_kinds = custom_kind.split('.')
-           far = custom_kinds[-1] 
-           del custom_kinds[-1] 
-         
-           kwds['kind'] = getattr(import_module(".".join(custom_kinds)), far)
+           kwds['kind'] = factory(custom_kind)
             
         super(_BaseProperty, self).__init__(*args, **kwds)
 
@@ -575,9 +588,9 @@ class Workflow():
           
           obj = kwargs.pop('log_object', True) # if obj is set to True it will log `self`
           agent = kwargs.pop('agent', None) # if agent is none it will use current user
+          puts = kwargs.pop('put', None)
           
           if agent is None:
-             # lower namespace for one step
              agent = self.get_current_user()
              kwargs['agent'] = agent.key
           else:
@@ -590,9 +603,9 @@ class Workflow():
               
           if obj:
              objlog.log_object(obj)
-               
+          
           self.__record_action.append(objlog)
-
+ 
           return objlog
       
       

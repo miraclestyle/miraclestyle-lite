@@ -10,7 +10,7 @@ class ObjectLog(ndb.BaseExpando):
     
     KIND_ID = 5
     
-    # high numbers for field aliases here to not conflict with log object
+    # high numbers for field aliases here to not conflict with logged object
     
     logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
     agent = ndb.SuperKeyProperty('98', kind='app.core.acl.User', required=True)

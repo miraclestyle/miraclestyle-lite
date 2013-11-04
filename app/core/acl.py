@@ -32,7 +32,7 @@ class Identity(ndb.BaseModel):
 class User(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 0
-    
+ 
     _use_cache = True
     _use_memcache = True
     
@@ -240,7 +240,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
            action = (action, )
        
         for a in action:
-            permissions.append(Role.format_permission(a, obj))
+            permissions.append(ndb.format_permission(a, obj))
           
         keys = list()
         
@@ -268,15 +268,16 @@ class User(ndb.BaseExpando, ndb.Workflow):
     def logout(self, **kwds):
         
         response = ndb.Response()
-        
-        if self.is_guest:
-           return response.status('already_logged_out')
-       
-        if not self.logout_code == kwds.get('code'):
-           return response.status('invalid_code')
-        
+
         @ndb.transactional(xg=True)
         def transaction():
+             
+            if self.is_guest:
+               return response.status('already_logged_out')
+           
+            if not self.logout_code == kwds.get('code'):
+               return response.status('invalid_code')
+         
             if self.sessions:
                self.sessions = []
                 
@@ -286,12 +287,11 @@ class User(ndb.BaseExpando, ndb.Workflow):
             self.put()
             
             User.set_current_user(User.anonymous_user())
-        
-        response['logout'] = False
+            
+            response.status('logged_out')
         
         try:
             transaction()
-            response['logout'] = True
         except Exception as e:
             response.transaction_error(e)
             
@@ -302,89 +302,88 @@ class User(ndb.BaseExpando, ndb.Workflow):
     def login(cls, **kwds):
         
         response = ndb.Response() 
-        current_user = User.current_user()
-  
-        login_method = kwds.get('login_method')
         
-        response['providers'] = settings.LOGIN_METHODS
-         
-        if login_method in settings.LOGIN_METHODS:
-           cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
-           cfg['redirect_uri'] = kwds.get('redirect_uri')
-           
-           code = kwds.get('code')
-           error = kwds.get('error')
-           cli = oauth2.Client(**cfg)
-           
-           if error:
-              return response.error('oauth2_error', 'rejected_account_access')
-           
-           if code:
-              cli.get_token(code)
-          
-              if not cli.access_token:
-                 return response.error('oauth2_error', 'failed_access_token')
+        @ndb.transactional(xg=True)
+        def transaction(): 
               
-              response['access_token'] = cli.access_token
+              current_user = cls.get_current_user()
+        
+              login_method = kwds.get('login_method')
               
-              userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
-              info = cli.resource_request(url=userinfo)
+              response['providers'] = settings.LOGIN_METHODS
                
-              if info and 'email' in info:
-                 auth_id = settings.LOGIN_METHODS[login_method]
-                 identity_id = '%s-%s' % (info['id'], auth_id)
-                 email = info['email']
+              if login_method in settings.LOGIN_METHODS:
+                 cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
+                 cfg['redirect_uri'] = kwds.get('redirect_uri')
                  
-                 usr = cls.query(cls.identities.identity == identity_id).get()
-                 if not usr:
-                    usr = cls.query(cls.emails == email).get()
+                 code = kwds.get('code')
+                 error = kwds.get('error')
+                 cli = oauth2.Client(**cfg)
                  
-                 if usr and usr.get_state != 'su_active':
-                    return response.error('user', 'user_not_active')
+                 if error:
+                    return response.error('oauth2_error', 'rejected_account_access')
+                 
+                 if code:
+                    cli.get_token(code)
+                
+                    if not cli.access_token:
+                       return response.error('oauth2_error', 'failed_access_token')
                     
-                 if not usr and current_user:
-                    usr = current_user
-                        
-                 @ndb.transactional(xg=True)
-                 def transaction(usr): 
-                     if not usr.is_guest:
-                         if email not in usr.emails:
-                            usr.emails.append(email)
+                    response['access_token'] = cli.access_token
+                    
+                    userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
+                    info = cli.resource_request(url=userinfo)
                      
-                         if not usr.has_identity(identity_id):
-                            usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
-                            
-                         session = usr.new_session()
-                         response['session'] = session
-                         usr.put()
-                         usr.new_action('update', agent=usr.key)
-                     else:
-                        new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
-                        usr = new_user.get('user')
-                        session = new_user.get('session')
-                      
-                     response['authorization_code'] = usr.generate_authorization_code(session)
-                      
-                     usr.record_ip(kwds.get('ip'))
-                     usr.new_action('login', agent=usr.key)
-                     usr.record_action() 
-                     
-                     return usr   
+                    if info and 'email' in info:
+                       auth_id = settings.LOGIN_METHODS[login_method]
+                       identity_id = '%s-%s' % (info['id'], auth_id)
+                       email = info['email']
                        
-                 try:    
-                    usr = transaction(usr)
-                    response['logged_in'] = usr
-                 except ndb.datastore_errors.Timeout:
-                    response.transaction_timeout()
-                 except ndb.datastore_errors.TransactionFailedError:
-                    response.transaction_failed()
-                  
+                       usr = cls.query(cls.identities.identity == identity_id).get()
+                       if not usr:
+                          usr = cls.query(cls.emails == email).get()
+                       
+                       if usr and usr.get_state != 'su_active':
+                          return response.error('user', 'user_not_active')
+                          
+                       if not usr and current_user:
+                          usr = current_user
+                            
+                          if not usr.is_guest:
+                               if email not in usr.emails:
+                                  usr.emails.append(email)
+                           
+                               if not usr.has_identity(identity_id):
+                                  usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
+                                  
+                               session = usr.new_session()
+                               response['session'] = session
+                               usr.put()
+                               usr.new_action('update', agent=usr.key)
+                          else:
+                              new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
+                              usr = new_user.get('user')
+                              session = new_user.get('session')
+                            
+                          response['authorization_code'] = usr.generate_authorization_code(session)
+                            
+                          usr.record_ip(kwds.get('ip'))
+                          usr.new_action('login', agent=usr.key)
+                          usr.record_action() 
+                          
+                          response.status(usr)
+ 
+                    else:
+                       response.error('oauth2_error', 'failed_data_fetch')
+                 else:
+                    response['authorization_url'] = cli.get_authorization_code_uri()
               else:
-                 response.error('oauth2_error', 'failed_data_fetch')
-           else:
-              response['authorization_url'] = cli.get_authorization_code_uri()
-        else:
-           response.error('login_method', 'invalid_login_method')
+                 response.error('login_method', 'invalid_login_method')
+                           
+        try:    
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)  
            
         return response
     
@@ -448,9 +447,5 @@ class Role(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }  
-    
-    @staticmethod
-    def format_permission(action, obj):
-        return ndb.format_permission(action, obj)
-    
+ 
     

@@ -91,118 +91,128 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
     
     @classmethod
     def suspend(cls, **kwds):
+        
         response = ndb.Response() 
-        entity = cls.load_from_values(kwds, get=True)
-        if entity and entity.key:
-           # check if user can do this
-           current = cls.get_current_user()
-           if current.has_permission('suspend', entity, namespace=entity.key.namespace()):
-              @ndb.transactional(xg=True)  
-              def transaction(): 
-                  entity.new_action('suspend', state='suspend', message=kwds.get('message'), note=kwds.get('note'))
-                  entity.record_action()
-                  response['suspended'] = entity
-              try:
-                  transaction()
-              except Exception as e:
-                  response.transaction_error(e)
-           else:
-               response.not_authorized()
-        else:
-            response.not_found()
-               
+         
+        @ndb.transactional(xg=True)  
+        def transaction():
+            entity = cls.load_from_values(kwds, get=True)
+            if entity and entity.key:
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('suspend', entity, namespace=entity.key.urlsafe()):
+                      entity.new_action('suspend', state='suspend', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)     
+             
         return response
 
 
     @classmethod
     def activate(cls, **kwds):
+        
         response = ndb.Response()
-        entity = cls.load_from_values(kwds, get=True)
-        if entity and entity.key:
-           # check if user can do this
-           current = cls.get_current_user()
-           if current.has_permission('activate', entity, namespace=entity.key.namespace()):
-              @ndb.transactional(xg=True)
-              def transaction(): 
-                  entity.new_action('activate', state='activate', message=kwds.get('message'), note=kwds.get('note'))
-                  entity.record_action()
-                  response['activate'] = entity
-              try:
-                  transaction()
-              except Exception as e:
-                  response.transaction_error(e)
-           else:
-               response.not_authorized()
-        else:
-            response.not_found()
-               
+         
+        @ndb.transactional(xg=True)
+        def transaction(): 
+            entity = cls.load_from_values(kwds, get=True)
+            if entity and entity.key:
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('activate', entity, namespace=entity.key.urlsafe()):
+                      entity.new_action('activate', state='activate', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)   
+                       
         return response
     
     # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
     def sudo(cls, **kwds):
+        
         response = ndb.Response()
-        entity = cls.load_from_values(kwds, get=True)
-        if entity and entity.key:
-           # check if user can do this
-           current = cls.get_current_user()
-           if current.has_permission('sudo', entity, namespace=entity.key.namespace()): 
-              @ndb.transactional(xg=True) 
-              def transaction(): 
-                  entity.new_action('sudo', state=kwds.get('state'), message=kwds.get('message'), note=kwds.get('note'))
-                  entity.record_action()
-                  response['sudo'] = entity
-              try:
-                  transaction()
-              except Exception as e:
-                  response.transaction_error(e)
-           else:
-               response.not_authorized()
-        else:
-            response.not_found()
+        
+        @ndb.transactional(xg=True) 
+        def transaction(): 
+            entity = cls.load_from_values(kwds, get=True)
+            if entity and entity.key:
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('sudo', entity, namespace=entity.key.urlsafe()):
+                      entity.new_action('sudo', state=kwds.get('state'), message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)   
                
         return response
     
     @classmethod
     def log_message(cls, kwds):
+        
         response = ndb.Response()
-        entity = cls.load_from_values(kwds, get=True)
-        if entity and entity.key:
-           # check if user can do this
-           current = cls.get_current_user()
-           if current.has_permission('log_message', entity, namespace=entity.key.namespace()):
-              @ndb.transactional(xg=True)  
-              def transaction(): 
-                  entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
-                  entity.record_action()
-                  response['log_message'] = entity
-              try:
-                  transaction()
-              except Exception as e:
-                  response.transaction_error(e)
-           else:
-               response.not_authorized()
-        else:
-            response.not_found()
+         
+        @ndb.transactional(xg=True)  
+        def transaction(): 
+            entity = cls.load_from_values(kwds, get=True)
+            if entity and entity.key:
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('log_message', entity, namespace=entity.key.urlsafe()):
+                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   response.not_authorized()
+            else:
+                response.not_found()
+                
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
                
         return response
             
     @classmethod
     def manage_entity(cls, **kwds):
-        
-        current = cls.get_current_user()
-        
+ 
         response = ndb.Response()
-        
-        if current.is_guest:
-           return response.not_authorized()
-       
-        if not len(kwds.get('name')):
-           return response.required('name')
-        
+          
         # this transaction handles domain, role, objectlog, domain user, and user entity groups
         @ndb.transactional(xg=True)
         def transaction():
+            
+            current = cls.get_current_user()
+         
+            if current.is_guest:
+               return response.not_authorized()
+           
+            if not kwds.get('name'):
+               return response.required('name')
+            
             if 'state' in kwds:
                kwds['state'] = cls.resolve_state_code_by_name(kwds['state'])
                
@@ -221,7 +231,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                from app.domain import marketing, product, sale
                
                # compile all public permissions provided by objects for this domain
-               perms = ndb.compile_public_permissions(cls, marketing.Catalog,
+               perms = ndb.compile_public_permissions(cls, Role, User, marketing.Catalog,
                                                       marketing.CatalogImage,
                                                       marketing.CatalogPricetag,
                                                       product.Content,
@@ -259,8 +269,10 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                current.record_action()
               
             else:
+               if entity.get_state != 'active':
+                  return response.error('domain', 'not_active')
                # entity is updating
-               if current.has_permission('update', entity, namespace=entity.key.urlsafe()) and entity.get_state != 'active':
+               if current.has_permission('update', entity, namespace=entity.key.urlsafe()):
                   entity.name = kwds.get('name')
                   entity.put()
                   entity.new_action('update')
@@ -268,11 +280,11 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                else:
                   response.not_authorized()
                   
-            return entity
+            response.status(entity)
         
         # we really need to handle transaction errors, webclient needs to handle this, to warn user if the submission failed etc.
         try:
-            response['item'] = transaction()
+            transaction()
         except Exception as e:
             response.transaction_error(e)
             
@@ -345,52 +357,61 @@ class User(ndb.BaseExpando, ndb.Workflow):
     def invite(cls, domain_key, user_key, role_keys, name, **kwds):
    
         response = ndb.Response()
-        
-        if not name:
-           response.required('name')
-           
-        if not role_keys:
-           response.required('roles')
-           
-        if response.has_error():
-           return response
-        
-        current = cls.get_current_user()
-        domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
-         
-        if domain and usr:
-            
-           if not current.has_permission('invite', domain, namespace=domain.key.namespace()):
-              return response.not_authorized()
-          
-           if domain.get_state != 'active':
-              return response.error('domain', 'not_active')
-            
-           roles = []
-           get_roles = ndb.get_multi([ndb.Key(urlsafe=k) for k in role_keys])
-           for role in get_roles:
-               if role.key.namespace() == domain.key.namespace():
-                  roles.append(role.key)
-           
-           @ndb.transactional(xg=True)       
-           def transaction():
-               domain_user_key = ndb.Key(namespace=domain.key.namespace(), id=str(usr.key.id()))
-               domain_user = domain_user_key.get()
-               if domain_user:
-                  response.status('already_invited')
-               else:
-                  domain_user = User(namespace=domain.key.namespace(), id=str(usr.key.id()), name=name, user=usr.key, roles=roles)
-                  domain_user.put()
-                  domain_user.new_action('invite')
-                  domain_user.record_action()
-                  response['invited'] = domain_user
-           try:
-               transaction()
-           except Exception as e:
-               response.transaction_error(e)
-        else:
-            response.not_found()       
+ 
+        @ndb.transactional(xg=True)       
+        def transaction():
+              
+            if not domain_key:
+               response.required('domain_key')
                
+            if not user_key:
+               response.required('user_key')
+            
+            if not name:
+               response.required('name')
+               
+            if not role_keys:
+               response.required('role_keys')
+               
+            if response.has_error():
+               return response
+            
+            current = cls.get_current_user()
+            
+            domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+             
+            if domain and usr:
+                
+               if not current.has_permission('invite', domain, namespace=domain.key.urlsafe()):
+                  return response.not_authorized()
+              
+               if domain.get_state != 'active':
+                  return response.error('domain', 'not_active')
+                
+               roles = []
+               get_roles = ndb.get_multi([ndb.Key(urlsafe=k) for k in role_keys])
+               for role in get_roles:
+                   if role.key.namespace() == domain.key.namespace():
+                      roles.append(role.key)
+                
+                   domain_user_key = ndb.Key(namespace=domain.key.namespace(), id=str(usr.key.id()))
+                   domain_user = domain_user_key.get()
+                   if domain_user:
+                      response.status('already_invited')
+                   else:
+                      domain_user = User(namespace=domain.key.namespace(), id=str(usr.key.id()), name=name, user=usr.key, roles=roles)
+                      domain_user.put()
+                      domain_user.new_action('invite')
+                      domain_user.record_action()
+                      response.status(domain_user)
+
+            else:
+                response.not_found()       
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+                      
         return response
            
             
@@ -414,41 +435,45 @@ class User(ndb.BaseExpando, ndb.Workflow):
         """
         
         response = ndb.Response()
-  
-        current = cls.get_current_user()
-        domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+   
+        @ndb.transactional(xg=True) 
+        def transaction(): 
+            
+            current = cls.get_current_user()
         
-        if domain and usr:
+            domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
             
-           if domain.get_state != 'active':
-              return response.error('domain', 'not_active') 
-            
-           if current.has_permission('remove', domain, namespace=domain.key.namespace()) or usr.key == current.key:
-              if domain.primary_contact != usr.user:
-                  
-                 @ndb.transactional(xg=True) 
-                 def transaction(): 
-                     far_user = usr.user.get()
-                     for role in usr.roles:
-                         far_user.roles.remove(role)
-                   
-                     usr.new_action('remove', log_object=False)
-                     usr.record_action()
-                     usr.key.delete()
-                     
-                     far_user.put()
-                     far_user.new_action('update')
-                     far_user.record_action()
-                     
-                 try:
-                    transaction()
-                    response['removed'] = usr
-                 except Exception as e:
-                    response.transaction_error(e)
-              else:
-                  return response.error('user', 'is_primary_contact')
-           else:
-              return response.not_authorized()
+            if domain and usr:
+                
+               if domain.get_state != 'active':
+                  return response.error('domain', 'not_active') 
+                
+               if current.has_permission('remove', usr) or usr.key == current.key:
+                  if domain.primary_contact != usr.user:
+               
+                         far_user = usr.user.get()
+                         for role in usr.roles:
+                             far_user.roles.remove(role)
+                       
+                         usr.new_action('remove', log_object=False)
+                         usr.record_action()
+                         usr.key.delete()
+                         
+                         far_user.put()
+                         far_user.new_action('update')
+                         far_user.record_action()
+                         response.status('removed')
+                         
+                  else:
+                      return response.error('user', 'is_primary_contact')
+               else:
+                  return response.not_authorized()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)  
+           
+        return response
         
     
     # Prihvata poziv novog usera u domenu
@@ -472,39 +497,42 @@ class User(ndb.BaseExpando, ndb.Workflow):
   
         current = cls.get_current_user()
         user_key = ndb.Key(urlsafe=user_key)
-        usr, domain = ndb.get_multi([user_key, ndb.Key(urlsafe=user_key.namespace())])
         
-        if domain and usr:
+        @ndb.transactional(xg=True)
+        def transaction():
+            usr, domain = ndb.get_multi([user_key, ndb.Key(urlsafe=user_key.namespace())])
             
-           if domain.get_state != 'active':
-              return response.error('domain', 'not_active') 
-          
-           if current.key == usr.user:
-              @ndb.transactional(xg=True)
-              def transaction(): 
-                  usr.new_action('accept', state='accept', log_object=False)
-                  usr.record_action()
-                  user = usr.user.get()
-                  for role in usr.roles:
-                      user.roles.append(role)
+            if domain and usr:
+                
+               if domain.get_state != 'active':
+                  return response.error('domain', 'not_active') 
+              
+               if current.key == usr.user:
+                      usr.new_action('accept', state='accept', log_object=False)
+                      usr.record_action()
+                      user = usr.user.get()
+                      for role in usr.roles:
+                          user.roles.append(role)
+                          
+                      user.put()
+                      user.new_action('update')
+                      user.record_action()
+                      response.status(usr)
                       
-                  user.put()
-                  user.new_action('update')
-                  user.record_action()
-                  
-              try:
-                  transaction()
-                  response['accept'] = usr
-              except Exception as e:
-                  response.transaction_error(e)
-           else:
-               response.error('user', 'invalid_reciever')
+               else:
+                   response.error('user', 'invalid_reciever')
+                      
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+               
                   
         return response
     
     # Azurira postojeceg usera u domeni
     @classmethod
-    def update(cls, **kwds):
+    def update(cls, name, role_keys, domain_user_key, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainUser'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
@@ -523,3 +551,61 @@ class User(ndb.BaseExpando, ndb.Workflow):
         object_log = ObjectLog(parent=user_key, agent=agent_key, action='update', state=user.state, log=user)
         object_log.put()
         """
+      
+        response = ndb.Response()
+        
+        @ndb.transactional(xg=True)
+        def transaction():
+                
+            current = cls.get_current_user()    
+            
+            if not domain_user_key:
+               response.required('domain_user_key')
+               
+            if not name:
+               response.required('name')
+               
+            if not role_keys:
+               response.required('role_keys')
+               
+            domain_user_key = ndb.Key(urlsafe=domain_user_key)
+            if domain_user_key:
+                   domain_user, domain = ndb.get_multi([domain_user_key, ndb.Key(urlsafe=domain_user_key.namespace())])
+                   if domain_user and domain:
+                      if current.has_permission('update', domain_user):
+                         domain_user.name = name
+                         old_roles = domain_user.roles
+                         _new_roles = ndb.get_multi([ndb.Key(urlsafe=rid) for rid in role_keys])
+                         new_roles = []
+                         for new in _new_roles:
+                             if new.key.namespace() == domain.key.urlsafe():
+                                new_roles.append(new)
+                                
+                         user = domain_user.user.get()       
+                         for old in old_roles:
+                             user.roles.remove(old)
+                         
+                         domain_user.roles = []
+                         for new in new_roles:
+                             user.roles.append(new)
+                             domain_user.roles.append(new)
+                             
+                         user.put()
+                         user.new_action('update')
+                         user.record_action()
+                         
+                         domain_user.put()
+                         domain_user.new_action('update')
+                         domain_user.record_action()
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+               
+        return response          
+        
+                 
+           
+        
+        

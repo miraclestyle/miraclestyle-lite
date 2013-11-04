@@ -74,26 +74,27 @@ class Country(ndb.BaseModel, ndb.Workflow):
     def manage_entity(cls, **kwds):
         
         response = ndb.Response()
-        
-        current = cls.get_current_user()
-        
-        if not current.has_permission('create', cls):
-           return response.not_authorized()
-       
-        required = ('name', 'code')
-        for req in required:
-            if not kwds[req]:
-               response.required(req)
-               
-        if response.has_error():
-           return response
-       
-        kwds['active'] = bool(int(kwds['active']))
-        
-        entity = cls.load_from_values(kwds)
-        
+
         @ndb.transactional(xg=True)
         def transaction():
+             
+            current = cls.get_current_user()
+            
+            if not current.has_permission('create', cls):
+               return response.not_authorized()
+           
+            required = ('name', 'code')
+            for req in required:
+                if not kwds[req]:
+                   response.required(req)
+                   
+            if response.has_error():
+               return response
+           
+            kwds['active'] = bool(int(kwds['active']))
+            
+            entity = cls.load_from_values(kwds)
+             
             if entity and entity.key:
                entity.put()
                entity.new_action('update')
@@ -102,10 +103,10 @@ class Country(ndb.BaseModel, ndb.Workflow):
                entity.put()
                entity.new_action('create')
                
-            return entity
+            response.status(entity)
            
         try:
-            response['item'] = transaction()
+            transaction()
         except Exception as e:
             response.transaction_error(e)
             

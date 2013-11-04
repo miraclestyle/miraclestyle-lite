@@ -85,44 +85,45 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     def manage_entity(cls, **kwds):
          
         response = ndb.Response()
- 
-        current = cls.get_current_user()
-        
-        if current.is_guest:
-           return response.not_logged_in()
-       
-        kwds['default_billing'] = bool(int(kwds['default_billing']))
-        kwds['default_shipping'] = bool(int(kwds['default_shipping']))
-        
-        try:
-           country_key = ndb.Key(urlsafe=kwds['country'])
-           if not country_key.get():
-              raise Exception('invalid_input')
-           kwds['country'] = country_key
-        except:
-           response.invalid('country')
-           
-        if kwds['region']:
-           try:
-               region_key = ndb.Key(urlsafe=kwds['region'])
-               if not region_key:
-                  raise Exception('invalid_input')
-               kwds['region'] = region_key
-           except:
-               response.invalid('region')
-               
-        required = ('name', 'city', 'postal_code', 'street_address')
-        for req in required:
-            if not kwds[req]:
-               response.required(req)
-                
-        if response.has_error():
-           return response       
-    
-        entity = cls.load_from_values(kwds, get=True)
-        
+  
         @ndb.transactional(xg=True)
         def transaction():
+             
+            current = cls.get_current_user()
+            
+            if current.is_guest:
+               return response.not_logged_in()
+           
+            kwds['default_billing'] = bool(int(kwds['default_billing']))
+            kwds['default_shipping'] = bool(int(kwds['default_shipping']))
+            
+            try:
+               country_key = ndb.Key(urlsafe=kwds['country'])
+               if not country_key.get():
+                  raise Exception('invalid_input')
+               kwds['country'] = country_key
+            except:
+               response.invalid('country')
+               
+            if kwds['region']:
+               try:
+                   region_key = ndb.Key(urlsafe=kwds['region'])
+                   if not region_key:
+                      raise Exception('invalid_input')
+                   kwds['region'] = region_key
+               except:
+                   response.invalid('region')
+                   
+            required = ('name', 'city', 'postal_code', 'street_address')
+            for req in required:
+                if not kwds[req]:
+                   response.required(req)
+                    
+            if response.has_error():
+               return response       
+        
+            entity = cls.load_from_values(kwds, get=True)
+            
             if entity and entity.key:
                # update
                entity.put()
@@ -135,10 +136,10 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                entity.new_action('create')
                entity.record_action()
                
-            return entity
+            response.status(entity)
         
         try:
-            response['item'] = transaction()
+            transaction()
         except Exception as e:
             response.transaction_error(e)
             
