@@ -65,13 +65,15 @@ class Country(ndb.BaseModel, ndb.Workflow):
     
     @classmethod
     def list(cls):
+        
         response = ndb.Response()
         
         response['items'] = cls.query().fetch()
+        
         return response
     
     @classmethod
-    def manage_entity(cls, **kwds):
+    def manage(cls, **kwds):
         
         response = ndb.Response()
 
@@ -80,6 +82,8 @@ class Country(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
             
+            kwds['parent'] = current.key
+            
             if not current.has_permission('create', cls):
                return response.not_authorized()
            
@@ -87,13 +91,17 @@ class Country(ndb.BaseModel, ndb.Workflow):
             for req in required:
                 if not kwds[req]:
                    response.required(req)
+            
+            try:
+                kwds['active'] = bool(int(kwds['active']))
+            except ValueError as e:
+                response.invalid('active')
+                
                    
             if response.has_error():
                return response
-           
-            kwds['active'] = bool(int(kwds['active']))
             
-            entity = cls.load_from_values(kwds)
+            entity = cls.load_from_values(kwds, only=('id', 'name', 'active', 'code'), get=True)
              
             if entity and entity.key:
                entity.put()
@@ -102,6 +110,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
             else:
                entity.put()
                entity.new_action('create')
+               entity.record_action()
                
             response.status(entity)
            

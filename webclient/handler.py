@@ -13,8 +13,7 @@ from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
 from app.memcache import _local
-from app import settings, core
-from app.util import import_module, logger
+from app import settings, core, util
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
@@ -36,7 +35,7 @@ def wsgi_config(as_tuple=False):
     TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
       
     for a in webclient_settings.ACTIVE_CONTROLLERS:
-        import_module('webclient.controllers.%s' % a)
+        util.import_module('webclient.controllers.%s' % a)
           
     JINJA_FILTERS = Jinja.filters
     JINJA_GLOBALS = Jinja.globals         
@@ -46,7 +45,7 @@ def wsgi_config(as_tuple=False):
     JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : ROUTES, 'settings' : settings, 'webclient_settings' : webclient_settings})
     TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)
     
-    logger('Webapp2 started, compiling stuff')
+    util.logger('Webapp2 started, compiling stuff')
     
     WSGI_CONFIG = {}
     WSGI_CONFIG.update(webclient_settings.WEBAPP2_EXTRAS)
@@ -137,15 +136,19 @@ class RequestData():
                x[i] = self.request.get(k, d)
            return x
         return self.request.get(k, d)  
+    
+    def params_all(self):
+        return self.get_all(self.request.params.keys())
+    
+    def params(self):
+        return self.get(self.request.params.keys())
   
   
 class Handler(webapp2.RequestHandler):
     
     """
     General-purpose handler that comes with:
-    self.session for session access
     self.template to send variables to render template
-    self.current_user to retrieve current user from session
     and other hooks like `after`, `before` etc.
     
     """
@@ -156,12 +159,13 @@ class Handler(webapp2.RequestHandler):
         super(Handler, self).__init__(*args, **kwargs)
         
         self.data = {}
-        self._current_user = None
         self.template = {'base' : 'index.html'}
  
         
     def initialize(self, request, response):
         super(Handler, self).initialize(request, response)
+        # this class is helper class used to retrieve data from GET and POST
+        # its just bunch of shorthands that are useful for parsing input
         self.reqdata = RequestData(self.request)
         
   
@@ -207,14 +211,10 @@ class Handler(webapp2.RequestHandler):
         pass
     
     def get(self, *args, **kwargs):
-        data = self.respond(*args, **kwargs)
-        if data:
-           self.data['data'] = data
+        return self.respond(*args, **kwargs)
         
     def post(self, *args, **kwargs):
-        data = self.respond(*args, **kwargs)
-        if data:
-           self.data['data'] = data
+        return self.respond(*args, **kwargs)
         
     def respond(self, *args, **kwargs):
         self.abort(404)
@@ -249,10 +249,19 @@ class Segments(Handler):
          
          
 class Angular(Handler):
-       
-      def angular_redirect(self, *args, **kwargs):
-          self.data['redirect'] = self.uri_for(*args, **kwargs)
-     
+    
+     # angular handles data differently, `respond` method can return value and that value will be force-set into self.data
+    
+      def get(self, *args, **kwargs):
+        data = self.respond(*args, **kwargs)
+        if data:
+           self.data['data'] = data
+        
+      def post(self, *args, **kwargs):
+        data = self.respond(*args, **kwargs)
+        if data:
+           self.data['data'] = data
+ 
       def after(self):
           if self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest' or self.request.get('force_ajax'):
              if not self.data:

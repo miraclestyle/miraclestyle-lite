@@ -53,36 +53,10 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
-    
-    @classmethod
-    def delete(cls, **k):
-        ids = k.get('id')
-        
-        response = ndb.Response()
-        
-        current = cls.get_current_user()
-        
-        to_delete = []
-        for i in ids:
-            try:
-              key = ndb.Key(urlsafe=i)
-            except:
-              continue
-            
-            if key:
-               if key.parent() == current.key:
-                  to_delete.append(key)
-                  
-        if len(to_delete):
-           to_delete = ndb.delete_multi(to_delete)
-            
-        response['deleted'] = to_delete
-           
-        return response
-               
+     
   
     @classmethod
-    def manage_entity(cls, **kwds):
+    def manage(cls, **kwds):
          
         response = ndb.Response()
   
@@ -94,8 +68,18 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
            
-            kwds['default_billing'] = bool(int(kwds['default_billing']))
-            kwds['default_shipping'] = bool(int(kwds['default_shipping']))
+            try:
+                kwds['default_billing'] = bool(int(kwds['default_billing']))
+            except ValueError as e:
+                response.invalid('default_billing')
+            
+            try:
+                kwds['default_shipping'] = bool(int(kwds['default_shipping']))
+            except ValueError as e:
+                response.invalid('default_shipping')
+            
+            
+            kwds['parent'] = current.key
             
             try:
                country_key = ndb.Key(urlsafe=kwds['country'])
@@ -105,7 +89,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             except:
                response.invalid('country')
                
-            if kwds['region']:
+            if kwds.get('region'):
                try:
                    region_key = ndb.Key(urlsafe=kwds['region'])
                    if not region_key:
@@ -116,11 +100,13 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                    
             required = ('name', 'city', 'postal_code', 'street_address')
             for req in required:
-                if not kwds[req]:
+                if not kwds.get(req):
                    response.required(req)
                     
             if response.has_error():
                return response       
+            
+            print kwds
         
             entity = cls.load_from_values(kwds, get=True)
             
@@ -131,7 +117,6 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                entity.record_action()
             else:
                # create
-               entity.parent = current.key
                entity.put()
                entity.new_action('create')
                entity.record_action()
@@ -144,6 +129,39 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             response.transaction_error(e)
             
         return response
+    
+    
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.load_from_values(kwds, only=('id',), get=True)
+               
+               if entity and entity.key:
+                  if entity.key.parent() == current.key:
+                     entity.new_action('delete', log_object=False) 
+                     entity.key.delete()
+                     entity.record_action()
+                     
+                     response.status(entity)
+                  else:
+                      response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response      
+
             
 # done!
 class Collection(ndb.BaseModel):
@@ -165,6 +183,100 @@ class Collection(ndb.BaseModel):
        'delete' : 3,
     }
  
+    @classmethod
+    def manage(cls, **kwds):
+        """
+        def create():
+            # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
+            for identity in user.identities:
+                if(identity.primary == True):
+                    var_primary_email = identity.email
+                    break
+            buyer_collection = BuyerCollection(parent=user_key, name=var_name, notify=var_notify, primary_email=var_primary_email)
+            buyer_collection_key = buyer_collection.put()
+            object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='create', state='none', log=buyer_collection)
+            object_log.put()
+        """
+        
+        response = ndb.Response()
+        
+        @ndb.transactional(xg=True)
+        def transaction():
+            
+            current = cls.get_current_user()
+            
+            try:
+               kwds['notify'] = bool(int(kwds.get('notify')))
+            except ValueError as e:
+               response.invalid('notify')
+               
+            kwds['parent'] = current.key
+            
+            if not kwds.get('name'):
+               response.required('name')
+                  
+            if not response.has_error():
+                
+                entity = cls.load_from_values(kwds, get=True)
+                 
+                if entity and entity.key:
+    
+                   if entity.key.parent() == current.key:
+                       entity.name = kwds.get('name')
+                       entity.primary_email = current.primary_email
+                       entity.notify = kwds.get('notify')
+                       entity.put()
+                       entity.new_action('update')
+                       entity.record_action()
+                       
+                       response.status(entity)
+                   else:
+                       response.not_authorized()
+                   
+                else:
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+                   
+                   response.status(entity)
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
+    
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.load_from_values(kwds, only=('id',), get=True)
+               
+               if entity and entity.key:
+                  if entity.key.parent() == current.key:
+                     entity.new_action('delete', log_object=False) 
+                     entity.key.delete()
+                     entity.record_action()
+                     
+                     response.status(entity)
+                  else:
+                      response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response  
+ 
 
 # done!
 class CollectionStore(ndb.BaseModel, ndb.Workflow):
@@ -181,7 +293,44 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
- 
+    
+    @classmethod
+    def manage(cls, **kwds):
+        pass
+    
+    """
+       
+    # Dodaje novi store u korisnikovoj listi i odredjuje clanstvo u korisnikovim kolekcijama
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
+        buyer_collection_store = BuyerCollectionStore(parent=user_key, store=var_store, collections=var_collections)
+        buyer_collection_store_key = buyer_collection_store.put()
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='create', state='none', log=buyer_collection_store)
+        object_log.put()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+    
+    # Menja clanstvo store u korisnikovim kolekcijama
+    @ndb.transactional
+    def update():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
+        buyer_collection_store.collections = var_collections
+        buyer_collection_store_key = buyer_collection_store.put()
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='update', state='none', log=buyer_collection_store)
+        object_log.put()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+    
+    # Brise store iz korisnikove liste
+    @ndb.transactional
+    def delete():
+        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
+        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='delete', state='none')
+        object_log.put()
+        buyer_collection_store_key.delete()
+        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
+        # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key).fetch(keys_only=True))
+
+    """
     
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateCollectionCatalog(ndb.BaseModel):

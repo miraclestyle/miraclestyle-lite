@@ -9,8 +9,7 @@ import decimal
 from google.appengine.ext.db import datastore_errors 
 from google.appengine.ext.ndb import *
 
-from app import pyson
-from app.util import import_module
+from app import pyson, util
  
 ctx = get_context()
 
@@ -26,7 +25,7 @@ def factory(module_model_path):
     far = custom_kinds[-1] 
     del custom_kinds[-1] 
          
-    return getattr(import_module(".".join(custom_kinds)), far)
+    return getattr(util.import_module(".".join(custom_kinds)), far)
 
 
 def format_permission(action, obj):
@@ -77,8 +76,7 @@ class _BaseModel(Model):
       dic = self.to_dict()
       
       if self.key:
-         dic['key'] = {}
-         dic['key']['urlsafe'] = self.key.urlsafe()
+         dic['id'] = self.key.urlsafe()
          
       for k,v in dic.items():
           if isinstance(v, Key):
@@ -96,15 +94,7 @@ class _BaseModel(Model):
   
   def loaded(self):
       return self.key != None
-  
-  @classmethod
-  def manage(cls, **kwds):
-      response = Response()
-      response['items'] = list()
-      for data in cls.from_multiple_values(kwds):
-          response['items'].append(cls.manage_entity(**data))
-            
-      return response
+ 
   
   @classmethod
   def load_from_values(cls, dataset, **kwds):
@@ -218,7 +208,12 @@ class _BaseModel(Model):
       out = []
       for prop in cls._properties:
           out.append(prop._code_name)
-      return out    
+          
+      if hasattr(cls, 'has_expando_fields'):
+         for prop in cls.has_expando_fields():
+             out.append(prop._code_name)
+      return out  
+ 
       
 
 class BaseModel(_BaseModel):
@@ -237,9 +232,10 @@ class BaseExpando(_BaseModel, Expando):
     """
      Base class for all `ndb.Expando` entities
     """
-    def has_expando_fields(self):
-        if hasattr(self, 'EXPANDO_FIELDS'):
-           return self.EXPANDO_FIELDS
+    @classmethod
+    def has_expando_fields(cls):
+        if hasattr(cls, 'EXPANDO_FIELDS'):
+           return cls.EXPANDO_FIELDS
         else:
            return False
         
@@ -630,6 +626,7 @@ class Response(dict):
       Usually every model method should return this type of response object.
     """
     def transaction_error(self, e):
+        
         if isinstance(e, datastore_errors.Timeout):
            return self.transaction_timeout()
         if isinstance(e, datastore_errors.TransactionFailedError):
@@ -638,13 +635,13 @@ class Response(dict):
         raise e
  
     def transaction_timeout(self):
-        self.error('transaction_error', 'timeout')
+        return self.error('transaction_error', 'timeout')
     
     def transaction_failed(self):
-        self.error('transaction_error', 'failed')
+        return self.error('transaction_error', 'failed')
     
     def required(self, k):
-        self.error(k, 'required')
+        return self.error(k, 'required')
         
     def invalid(self, k):
         return self.error(k, 'invalid_input')
@@ -652,16 +649,18 @@ class Response(dict):
     def status(self, m):
         # generic `status` of the response. 
         # It informs most usual errors that might ocurr. E.g. object not found, etc.
-        self.error('status', m)
+        self['status'] = m
+        return self
     
     def not_found(self):
-        self.error('status', 'not_found')
+        self['status'] = 'not_found'
+        return self
     
     def not_authorized(self):
-        self.error('user', 'not_authorized')
+        return self.error('user', 'not_authorized')
         
     def not_logged_in(self):
-        self.error('user', 'not_logged_in')
+        return self.error('user', 'not_logged_in')
     
     def __setattr__(self, *args, **kwargs):
         return dict.__setitem__(self, *args, **kwargs)

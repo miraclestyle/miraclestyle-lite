@@ -12,7 +12,7 @@ from app import domain
 class DomainList(Angular):
     
     def respond(self):
-        return domain.acl.Domain.list_domains()
+        return domain.acl.Domain.list()
 
 class DomainManage(Angular):
     

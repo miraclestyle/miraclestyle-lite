@@ -7,8 +7,8 @@ Created on Oct 11, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import hashlib
-
-from app.util import random_chars
+ 
+from app import util
 from app import ndb, settings, oauth2, memcache
  
   
@@ -90,6 +90,14 @@ class User(ndb.BaseExpando, ndb.Workflow):
         return d 
     
     @property
+    def primary_email(self):
+        for i in self.identities:
+            if i.primary == True:
+               return i.email
+           
+        return i.email
+    
+    @property
     def logout_code(self):
         session = self.current_user_session
         if not session:
@@ -161,7 +169,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
     def generate_session_id(self):
         sids = [s.session_id for s in self.sessions]
         while True:
-              random_str = hashlib.md5(random_chars(30)).hexdigest()
+              random_str = hashlib.md5(util.random_chars(30)).hexdigest()
               if random_str not in sids:
                   break
         return random_str
@@ -211,6 +219,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
            :param action: action which user wants to perform
            :param obj: loaded entity of an object
            :param kwds: keyword arguments needed for additional checks.
+           :param kwds.namespace: overrides namespace of the supplied entity
         """
         
         if usr.emails:
@@ -301,91 +310,94 @@ class User(ndb.BaseExpando, ndb.Workflow):
     @classmethod
     def login(cls, **kwds):
         
-        response = ndb.Response() 
+      response = ndb.Response() 
+       
+      current_user = cls.get_current_user()
+
+      login_method = kwds.get('login_method')
+      
+      response['providers'] = settings.LOGIN_METHODS
+       
+      if login_method in settings.LOGIN_METHODS:
+         cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
+         cfg['redirect_uri'] = kwds.get('redirect_uri')
+         
+         code = kwds.get('code')
+         error = kwds.get('error')
+         cli = oauth2.Client(**cfg)
+         
+         if error:
+            return response.error('oauth2_error', 'rejected_account_access')
+         
+         if code:
+            cli.get_token(code)
         
-        @ndb.transactional(xg=True)
-        def transaction(): 
-              
-              current_user = cls.get_current_user()
-        
-              login_method = kwds.get('login_method')
-              
-              response['providers'] = settings.LOGIN_METHODS
+            if not cli.access_token:
+               return response.error('oauth2_error', 'failed_access_token')
+            
+            response['access_token'] = cli.access_token
+            
+            userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
+            info = cli.resource_request(url=userinfo)
+             
+            if info and 'email' in info:
+               auth_id = settings.LOGIN_METHODS[login_method]
+               identity_id = '%s-%s' % (info['id'], auth_id)
+               email = info['email']
                
-              if login_method in settings.LOGIN_METHODS:
-                 cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
-                 cfg['redirect_uri'] = kwds.get('redirect_uri')
-                 
-                 code = kwds.get('code')
-                 error = kwds.get('error')
-                 cli = oauth2.Client(**cfg)
-                 
-                 if error:
-                    return response.error('oauth2_error', 'rejected_account_access')
-                 
-                 if code:
-                    cli.get_token(code)
-                
-                    if not cli.access_token:
-                       return response.error('oauth2_error', 'failed_access_token')
-                    
-                    response['access_token'] = cli.access_token
-                    
-                    userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
-                    info = cli.resource_request(url=userinfo)
-                     
-                    if info and 'email' in info:
-                       auth_id = settings.LOGIN_METHODS[login_method]
-                       identity_id = '%s-%s' % (info['id'], auth_id)
-                       email = info['email']
+               usr = cls.query(cls.identities.identity == identity_id).get()
+               if not usr:
+                  usr = cls.query(cls.emails == email).get()
+               
+               if usr and usr.get_state != 'su_active':
+                  return response.error('user', 'user_not_active')
+        
+               # non ancestor queries cannot be run inside transactions
+               # transactions may have arguments because of http://stackoverflow.com/a/5219055/376238  
+               @ndb.transactional(xg=True)
+               def transaction(usr): 
+            
+                   if not usr and current_user:
+                      usr = current_user
+                        
+                      if not usr.is_guest:
+                           if email not in usr.emails:
+                              usr.emails.append(email)
                        
-                       usr = cls.query(cls.identities.identity == identity_id).get()
-                       if not usr:
-                          usr = cls.query(cls.emails == email).get()
-                       
-                       if usr and usr.get_state != 'su_active':
-                          return response.error('user', 'user_not_active')
-                          
-                       if not usr and current_user:
-                          usr = current_user
-                            
-                          if not usr.is_guest:
-                               if email not in usr.emails:
-                                  usr.emails.append(email)
-                           
-                               if not usr.has_identity(identity_id):
-                                  usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
-                                  
-                               session = usr.new_session()
-                               response['session'] = session
-                               usr.put()
-                               usr.new_action('update', agent=usr.key)
-                          else:
-                              new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
-                              usr = new_user.get('user')
-                              session = new_user.get('session')
-                            
-                          response['authorization_code'] = usr.generate_authorization_code(session)
-                            
-                          usr.record_ip(kwds.get('ip'))
-                          usr.new_action('login', agent=usr.key)
-                          usr.record_action() 
-                          
-                          response.status(usr)
- 
-                    else:
-                       response.error('oauth2_error', 'failed_data_fetch')
-                 else:
-                    response['authorization_url'] = cli.get_authorization_code_uri()
-              else:
-                 response.error('login_method', 'invalid_login_method')
-                           
-        try:    
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)  
-           
-        return response
+                           if not usr.has_identity(identity_id):
+                              usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
+                              
+                           session = usr.new_session()
+                           response['session'] = session
+                           usr.put()
+                           usr.new_action('update', agent=usr.key)
+                        
+                      else:
+                          new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
+                          usr = new_user.get('user')
+                          session = new_user.get('session')
+                        
+                      response['authorization_code'] = usr.generate_authorization_code(session)
+                        
+                      usr.record_ip(kwds.get('ip'))
+                      usr.new_action('login', agent=usr.key)
+                      
+                      # records all invoked actions
+                      usr.record_action() 
+                      
+                      response.status(usr)
+               try:    
+                   transaction(usr)
+               except Exception as e:
+                   response.transaction_error(e)  
+            else:
+               response.error('oauth2_error', 'failed_data_fetch')
+         else:
+            response['authorization_url'] = cli.get_authorization_code_uri()
+      else:
+         response.error('login_method', 'invalid_login_method')
+   
+      return response
     
     @classmethod
     def register(cls, **kwds):

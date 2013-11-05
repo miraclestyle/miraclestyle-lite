@@ -70,7 +70,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         return ('suspend', 'activate', 'sudo')
     
     @classmethod
-    def list_domains(cls):
+    def list(cls):
         response = ndb.Response()
         
         # test the query and data
@@ -197,7 +197,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         return response
             
     @classmethod
-    def manage_entity(cls, **kwds):
+    def manage(cls, **kwds):
  
         response = ndb.Response()
           
@@ -604,8 +604,5 @@ class User(ndb.BaseExpando, ndb.Workflow):
             response.transaction_error(e)
                
         return response          
-        
-                 
-           
-        
+ 
         

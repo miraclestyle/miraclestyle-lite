@@ -4,7 +4,7 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import core, settings
+from app import core
 from webclient.route import register
 from webclient.handler import Angular
 
@@ -31,6 +31,7 @@ class Login(Angular):
 class Logout(Angular):
     
     def respond(self):
+        
         usr = core.acl.User.current_user()
         response = usr.logout(code=self.request.get('code'))
         
