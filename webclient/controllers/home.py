@@ -14,6 +14,6 @@ from webclient.handler import Angular
 class HomePage(Angular):
     
     def respond(self):
-        return {'os.environ' : dict(os.environ), 'user' : core.acl.User.current_user()}
+        return {'os.environ' : dict(os.environ), 'params' : self.reqdata.get_combined_params(), 'user' : core.acl.User.current_user()}
          
 register(('/', HomePage, 'index'))

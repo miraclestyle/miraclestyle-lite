@@ -96,7 +96,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction():
-            entity = cls.load_from_values(kwds, get=True)
+            entity = cls.get_or_prepare(kwds)
             if entity and entity.key:
                # check if user can do this
                current = cls.get_current_user()
@@ -105,7 +105,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                       entity.record_action()
                       response.status(entity)
                else:
-                   response.not_authorized()
+                   return response.not_authorized()
             else:
                 response.not_found()
         try:
@@ -123,7 +123,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)
         def transaction(): 
-            entity = cls.load_from_values(kwds, get=True)
+            entity = cls.get_or_prepare(kwds)
             if entity and entity.key:
                # check if user can do this
                current = cls.get_current_user()
@@ -132,7 +132,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                       entity.record_action()
                       response.status(entity)
                else:
-                   response.not_authorized()
+                   return response.not_authorized()
             else:
                 response.not_found()
         try:
@@ -150,7 +150,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         
         @ndb.transactional(xg=True) 
         def transaction(): 
-            entity = cls.load_from_values(kwds, get=True)
+            entity = cls.get_or_prepare(kwds)
             if entity and entity.key:
                # check if user can do this
                current = cls.get_current_user()
@@ -159,7 +159,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                       entity.record_action()
                       response.status(entity)
                else:
-                   response.not_authorized()
+                   return response.not_authorized()
             else:
                 response.not_found()
         try:
@@ -176,7 +176,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
-            entity = cls.load_from_values(kwds, get=True)
+            entity = cls.get_or_prepare(kwds)
             if entity and entity.key:
                # check if user can do this
                current = cls.get_current_user()
@@ -185,7 +185,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                       entity.record_action()
                       response.status(entity)
                else:
-                   response.not_authorized()
+                   return response.not_authorized()
             else:
                 response.not_found()
                 
@@ -210,13 +210,12 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_authorized()
            
-            if not kwds.get('name'):
-               return response.required('name')
+            response.are_required(kwds, ('name',))
             
             if 'state' in kwds:
                kwds['state'] = cls.resolve_state_code_by_name(kwds['state'])
                
-            entity = cls.load_from_values(kwds, only=('name',), get=True)
+            entity = cls.get_or_prepare(kwds, only=('name',))
         
             if not entity or entity.key is None: # if entity is not found or its a new one
                entity.primary_contact = current.key
@@ -278,7 +277,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                   entity.new_action('update')
                   entity.record_action()
                else:
-                  response.not_authorized()
+                  return response.not_authorized()
                   
             response.status(entity)
         
@@ -360,25 +359,19 @@ class User(ndb.BaseExpando, ndb.Workflow):
  
         @ndb.transactional(xg=True)       
         def transaction():
+            
+            type_valid = (('domain_key', ndb.Key), ('user_key', ndb.Key), ('name', unicode), ('role_keys', list))  
               
-            if not domain_key:
-               response.required('domain_key')
-               
-            if not user_key:
-               response.required('user_key')
-            
-            if not name:
-               response.required('name')
-               
-            if not role_keys:
-               response.required('role_keys')
-               
-            if response.has_error():
-               return response
-            
+            response.are_required(kwds, [k for k, _type in type_valid])
+            response.are_valid_types(kwds, type_valid)
+  
+            role_keys = kwds.get('role_keys')
+            domain_key = kwds.get('domain_key')
+            user_key = kwds.get('user_key')
+             
             current = cls.get_current_user()
             
-            domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+            domain, usr = ndb.get_multi([domain_key, user_key])
              
             if domain and usr:
                 
@@ -557,18 +550,13 @@ class User(ndb.BaseExpando, ndb.Workflow):
         @ndb.transactional(xg=True)
         def transaction():
                 
-            current = cls.get_current_user()    
+            current = cls.get_current_user()
             
-            if not domain_user_key:
-               response.required('domain_user_key')
-               
-            if not name:
-               response.required('name')
-               
-            if not role_keys:
-               response.required('role_keys')
-               
-            domain_user_key = ndb.Key(urlsafe=domain_user_key)
+            type_valid = (('domain_user_key', ndb.Key), ('name', unicode), ('role_keys', list))
+            
+            response.are_required(kwds, [k for k,_type in type_valid])
+            response.are_valid_types(kwds, type_valid)
+ 
             if domain_user_key:
                    domain_user, domain = ndb.get_multi([domain_user_key, ndb.Key(urlsafe=domain_user_key.namespace())])
                    if domain_user and domain:

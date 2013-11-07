@@ -127,7 +127,30 @@ class RequestData():
            for i in k:
                x[i] = self.request.get_all(i, d)
            return x
-        return self.request.get_all(k, d)    
+        return self.request.get_all(k, d)
+    
+    def get_combined_params(self):
+        return self.get_combined(None)
+    
+    def get_combined(self, k, d=None):
+        
+        if k == None:
+           k = self.request.params.keys()
+        
+        if d == None:
+           d = []
+        if isinstance(k, (list, tuple)):
+           x = dict()
+           for i in k:
+               dx = self.request.get_all(i, d)
+               if len(dx) == 1:
+                  dx = dx[0]
+               x[i] = dx
+           return x
+        dx = self.request.get_all(k, d)
+        if len(dx) == 1:
+           dx = dx[0]
+        return dx
     
     def get(self, k, d=None):
         if isinstance(k, (list, tuple)):

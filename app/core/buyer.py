@@ -28,15 +28,6 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         'telephone' : ndb.SuperStringProperty('11'),
     }
  
-    # Expando
-    # naredna dva polja su required!!!
-    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje 
-    # region = ndb.StringProperty('8', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # street_address2 = ndb.StringProperty('9') # ovo polje verovatno ne treba, s obzirom da je u street_address dozvoljeno 500 karaktera 
-    # email = ndb.StringProperty('10')
-    # telephone = ndb.StringProperty('11')
- 
-    
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {
@@ -68,47 +59,19 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
            
-            try:
-                kwds['default_billing'] = bool(int(kwds['default_billing']))
-            except ValueError as e:
-                response.invalid('default_billing')
-            
-            try:
-                kwds['default_shipping'] = bool(int(kwds['default_shipping']))
-            except ValueError as e:
-                response.invalid('default_shipping')
-            
-            
+            response.are_required(kwds, ('name', 'city', 'postal_code', 'street_address'))
+            response.are_valid_types(kwds, (('default_billing', bool), 
+                                            ('default_shipping', bool),
+                                            ('country', ndb.Key),
+                                            ('region', ndb.Key, False)
+                                    ))
+             
             kwds['parent'] = current.key
-            
-            try:
-               country_key = ndb.Key(urlsafe=kwds['country'])
-               if not country_key.get():
-                  raise Exception('invalid_input')
-               kwds['country'] = country_key
-            except:
-               response.invalid('country')
-               
-            if kwds.get('region'):
-               try:
-                   region_key = ndb.Key(urlsafe=kwds['region'])
-                   if not region_key:
-                      raise Exception('invalid_input')
-                   kwds['region'] = region_key
-               except:
-                   response.invalid('region')
-                   
-            required = ('name', 'city', 'postal_code', 'street_address')
-            for req in required:
-                if not kwds.get(req):
-                   response.required(req)
-                    
+   
             if response.has_error():
                return response       
-            
-            print kwds
-        
-            entity = cls.load_from_values(kwds, get=True)
+    
+            entity = cls.get_or_prepare(kwds)
             
             if entity and entity.key:
                # update
@@ -141,17 +104,18 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.load_from_values(kwds, only=('id',), get=True)
+               entity = cls.get_or_prepare(kwds, only=('id',))
                
                if entity and entity.key:
                   if entity.key.parent() == current.key:
-                     entity.new_action('delete', log_object=False) 
-                     entity.key.delete()
+                     entity.new_action('delete', log_object=False)
                      entity.record_action()
+                     entity.key.delete()
+                     
                      
                      response.status(entity)
                   else:
-                      response.not_authorized()
+                     return response.not_authorized()
                else:
                   response.not_found()      
             
@@ -205,19 +169,15 @@ class Collection(ndb.BaseModel):
             
             current = cls.get_current_user()
             
-            try:
-               kwds['notify'] = bool(int(kwds.get('notify')))
-            except ValueError as e:
-               response.invalid('notify')
-               
-            kwds['parent'] = current.key
+            if current.is_guest:
+               return response.not_logged_in()
             
-            if not kwds.get('name'):
-               response.required('name')
-                  
+            response.are_required(kwds, ('name'))
+            response.are_valid_types(kwds, (('notify', bool)))
+ 
             if not response.has_error():
                 
-                entity = cls.load_from_values(kwds, get=True)
+                entity = cls.get_or_prepare(kwds)
                  
                 if entity and entity.key:
     
@@ -231,7 +191,7 @@ class Collection(ndb.BaseModel):
                        
                        response.status(entity)
                    else:
-                       response.not_authorized()
+                       return response.not_authorized()
                    
                 else:
                    entity.put()
@@ -256,17 +216,17 @@ class Collection(ndb.BaseModel):
                        
                current = cls.get_current_user()
                
-               entity = cls.load_from_values(kwds, only=('id',), get=True)
+               entity = cls.get_or_prepare(kwds, only=('id',))
                
                if entity and entity.key:
                   if entity.key.parent() == current.key:
-                     entity.new_action('delete', log_object=False) 
-                     entity.key.delete()
+                     entity.new_action('delete', log_object=False)
                      entity.record_action()
-                     
+                     entity.key.delete()
+                      
                      response.status(entity)
                   else:
-                      response.not_authorized()
+                     return response.not_authorized()
                else:
                   response.not_found()      
             
@@ -295,9 +255,89 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
-    def manage(cls, **kwds):
-        pass
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=('id',))
+               
+               if entity and entity.key:
+                  if entity.key.parent() == current.key:
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response  
     
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        @ndb.transactional
+        def transaction():
+            
+            current = cls.get_current_user()
+            
+            if current.is_guest:
+               return response.not_logged_in()
+            
+            entity = cls.get_or_prepare(kwds)
+            
+            try:
+                collection_keys = [ndb.Key(urlsafe=k) for k in kwds.get('collections')]
+            except:
+                return response.invalid('collections')
+            
+            try:
+                store_key = ndb.Key(urlsafe=kwds.get('store'))
+            except:
+                return response.invalid('store')
+            
+            if entity is None:
+               return response.not_found()
+            
+            if entity.key:
+               if entity.parent() == current.key:
+                  entity.collections = []
+                  
+                  for c in collection_keys:
+                      if c.parent() == current.key:
+                         entity.collections.append(c)
+                  entity.put()
+                  entity.new_action('update')
+                  entity.record_action()
+               else:
+                  return response.not_authorized()
+            else:
+                entity = cls(parent=current.key, collections=collection_keys, store=store_key)
+                entity.put()
+                entity.new_action('create')
+                entity.record_action()
+                
+            # @todo izaziva se update AggregateBuyerCollectionCatalog preko task queue 
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
     """
        
     # Dodaje novi store u korisnikovoj listi i odredjuje clanstvo u korisnikovim kolekcijama

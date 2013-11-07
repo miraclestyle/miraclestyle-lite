@@ -20,7 +20,7 @@ class Endpoint(Angular):
          
         # cruel way of calling methods, but this is just for testing purposes to avoid creating individual controllers.
         # there is no absolute final decision on how the controllers will behave, except we know they will be dumb.
-        return getattr(model, method)(**self.request.params)
+        return getattr(model, method)(**self.request.get_combined_params())
          
  
 register(('/endpoint', Endpoint))

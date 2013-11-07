@@ -183,13 +183,16 @@ class User(ndb.BaseExpando, ndb.Workflow):
         
         if not auth:
            return
-        
-        user_key_urlsafe, session_id = auth.split('|')
+        try:
+           user_key, session_id = auth.split('|')
+        except:
+           # fail silently if the cookie is not set properly. 
+           return
         
         if not session_id:
            return
         
-        user = ndb.Key(urlsafe=user_key_urlsafe).get()
+        user = ndb.Key(urlsafe=user_key).get()
         if user:
            session = user.session_by_id(session_id)
            if session:
@@ -449,9 +452,7 @@ class Role(ndb.BaseModel, ndb.Workflow):
     name = ndb.SuperStringProperty('1', required=True)
     permissions = ndb.SuperStringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
     readonly = ndb.SuperBooleanProperty('3', default=True, indexed=False)
-    
-   
-    
+     
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {

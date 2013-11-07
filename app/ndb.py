@@ -19,6 +19,69 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
+def _validate_value(prop, value):
+    if prop._repeated:
+       if not isinstance(value, list):
+          value = [value]
+       out = []   
+       for v in value:
+           out.append(v)
+       return out
+    else:
+       return v
+
+def validate_string(prop, value):
+    value = _validate_value(prop, value)
+    if prop._repeated:
+       return [unicode(v) for v in value]
+    else:
+       return unicode(v)
+   
+def validate_int(prop, value):
+    value = _validate_value(prop, value)
+    if prop._repeated:
+       return [long(v) for v in value]
+    else:
+       return long(v)
+           
+def validate_ndb_key(prop, value):
+    value = _validate_value(prop, value)
+    if prop._repeated:
+       return [Key(v) for v in value]
+    else:
+       return Key(v)
+   
+def validate_float(prop, value):
+    value = _validate_value(prop, value)
+    if prop._repeated:
+       return [float(v) for v in value]
+    else:
+       return float(v)
+   
+def validate_bool(prop, value):
+    pass
+
+def validate_decimal(prop, value):
+    pass
+ 
+ 
+property_types_validator = {
+  'SuperStringProperty' : validate_string,
+  'SuperIntegerProperty' : validate_int,
+  'SuperLocalStructuredProperty' : False,
+  'SuperStructuredProperty' : False,
+  'SuperPickleProperty' : False,
+  'SuperTextProperty' : validate_string,
+  'SuperFloatProperty' : validate_float,
+  'SuperDateTimeProperty' : False,
+  'SuperKeyProperty' : validate_ndb_key,
+  'SuperBooleanProperty' : validate_bool,
+  'SuperBlobKeyProperty' : False,
+  'SuperDecimalProperty' : validate_decimal,
+  'SuperReferenceProperty' : validate_ndb_key,
+  'SuperRelationProperty' : False,
+}
+
 def factory(module_model_path):
     
     custom_kinds = module_model_path.split('.')
@@ -87,6 +150,7 @@ class _BaseModel(Model):
   @classmethod
   def get_current_user(cls):
       if hasattr(cls, 'current_user'):
+         # if the model is user, well call his function to prevent loop imports 
          return cls.current_user()
       # Shorthand for getting the current user
       from app.core.acl import User
@@ -94,46 +158,47 @@ class _BaseModel(Model):
   
   def loaded(self):
       return self.key != None
- 
   
   @classmethod
-  def load_from_values(cls, dataset, **kwds):
-      single = False
-      items = []
-      only = kwds.pop('only', None)
-      get = kwds.pop('get', None)
-      if not isinstance(dataset, (list, tuple)):
-          dataset = (dataset, )
-          single = True
-          
-      for data in dataset:    
-          try:
-            key = Key(urlsafe=data['id'])
-          except:
-            create = True
-            
-          if not create:      
-            data['key'] = key
-            
-          if only is not None:
-             new_data = {}
-             for i in only:
-                 if data.get(i):
-                    new_data[i] = data[i]
-             data = new_data
-                    
-          if create:
-             items.append(cls(**data))
-          elif get is not None:
-             items.append(key.get())
-          else:
-             items.append(cls(**data))
- 
-      if single:
-        return items[0]
+  def get_or_prepare(cls, dataset, **kwds):
+      """
+        This function prepares the object from the provided data, or gets the object if the `id` is provided in dataset.
+        If the id is provided, and the key.get does not find any data for the specified id, it will return None (@todo maybe raise Exception instead?).
+        
+        However, if the id is provided, and kwd param `get` is set to False, it will return populated entity in format:
+        Entity(key=ndb.Key(urlsafe=id), **dataset)
+        
+        By default it will strip away all keys that is not in the list of fields for the model,
+        unless you provide "only" param with the list of fields that the function will retrieve.
+      """
+      use_get = kwds.pop('get', True)
+      expect = kwds.pop('only', cls.get_property_names())
+      ctx_options = kwds.pop('ctx_options', {})
+      
+      create = False
+      if dataset.get('id'):
+         try:
+             load = Key(urlsafe=dataset.get('id'))
+         except:
+             create = True
+      
+      for f in expect:
+          if f not in dataset:
+             dataset[f] = None
+              
+      for k,v in dataset.items():
+          if k not in expect:
+             del dataset[k]
+              
+      if create:
+         return cls(**dataset)
       else:
-        return items
-  
+         if use_get:
+            return load.get(**ctx_options)
+         else:
+            dataset['key'] = load 
+            return cls(**dataset)
+ 
   @staticmethod
   def from_multiple_values(data):
       """ 
@@ -202,19 +267,56 @@ class _BaseModel(Model):
           raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__)) 
        return str(cls.KIND_ID)
     return cls.__name__
- 
+
   @classmethod
-  def get_property_names(cls):
+  def get_all_properties(cls):
       out = []
       for prop in cls._properties:
-          out.append(prop._code_name)
+          out.append(prop)
           
       if hasattr(cls, 'has_expando_fields'):
          for prop in cls.has_expando_fields():
-             out.append(prop._code_name)
-      return out  
+             out.append(prop)
+      return out
+  
+  @classmethod
+  def get_mapped_properties(cls):
+      return dict(**((prop._code_name, prop) for prop in cls.get_all_properties()))
  
-      
+  @classmethod
+  def get_property_names(cls):
+      return [prop._code_name for prop in cls.get_all_properties()]
+  
+  @classmethod
+  def delete(cls, **kwds):
+ 
+        response = Response()
+ 
+        @transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=('id',))
+               
+               if entity and entity.key:
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response 
 
 class BaseModel(_BaseModel):
     """
@@ -227,11 +329,20 @@ class BaseModel(_BaseModel):
         entity.set_original_values()
         return entity
 
+
   
 class BaseExpando(_BaseModel, Expando):
     """
      Base class for all `ndb.Expando` entities
     """
+  
+    @classmethod
+    def _from_pb(cls, *args, **kwargs):
+        """ Allows for model to get original values who get loaded from the protocol buffer  """
+        entity = super(BaseExpando, cls)._from_pb(*args, **kwargs)
+        entity.set_original_values()
+        return entity
+  
     @classmethod
     def has_expando_fields(cls):
         if hasattr(cls, 'EXPANDO_FIELDS'):
@@ -667,6 +778,57 @@ class Response(dict):
     
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
+    
+    def process_validation(self, kwds, obj):
+        fields = obj.get_mapped_properties()
+        for k,v in fields.items():
+            value = kwds.get(k)
+            if value is None:
+               if v._required:
+                  self.required(k)
+               
+               
+    
+    def are_valid_types(self, kwds, configs):
+        """
+          Validates input, and converts the values into proper type
+          :param kwds - data filtered
+          :param config - tuple with config, example: (('name', unicode), ('number', int), ('is_true', bool)) etc.
+        """
+        for config in configs:
+            k = config[0]
+            _type = config[1]
+            not_required = False
+            try:
+                not_required = config[2]
+            except IndexError as e:
+                pass
+            
+            value = kwds.get(k)
+            
+            if not_required and value is None:
+               continue
+            
+            try:
+                if _type.__name__ == 'bool':
+                   kwds[k] = bool(int(value))
+                elif _type.__name__ == 'int':
+                   kwds[k] = int(value)
+                elif _type == Key:
+                   kwds[k] = _type(urlsafe=value)
+                else:
+                   kwds[k] = _type(value)
+            except Exception as e:
+                self.invalid(k)
+                
+        return kwds
+    
+    def are_required(self, kwds, stuff):
+         for req in stuff:
+                if not kwds.get(req):
+                   self.required(req)
+                   
+         return self
     
     def has_error(self, k=None):
         

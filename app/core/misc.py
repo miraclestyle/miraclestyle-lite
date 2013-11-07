@@ -4,6 +4,8 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+from decimal import Decimal
+
 from app import ndb
 
 class Content(ndb.BaseModel, ndb.Workflow):
@@ -26,6 +28,58 @@ class Content(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('title', 'category', 'body', 'sequence'))
+            
+            try:
+                kwds['sequence'] = int(kwds['sequence'])
+            except ValueError as e:
+                response.invalid('sequence')
+            
+            try:
+                kwds['category'] = int(kwds['category'])
+            except ValueError as e:
+                response.invalid('category')    
+                   
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+     
  
 # done!
 class Image(ndb.BaseModel):
@@ -71,6 +125,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         response['items'] = cls.query().fetch()
         
         return response
+ 
     
     @classmethod
     def manage(cls, **kwds):
@@ -81,36 +136,29 @@ class Country(ndb.BaseModel, ndb.Workflow):
         def transaction():
              
             current = cls.get_current_user()
+     
+            response.are_required(kwds, ('name', 'code'))
+            response.are_valid_types(kwds, (('active', bool)))
             
-            kwds['parent'] = current.key
-            
-            if not current.has_permission('create', cls):
-               return response.not_authorized()
-           
-            required = ('name', 'code')
-            for req in required:
-                if not kwds[req]:
-                   response.required(req)
-            
-            try:
-                kwds['active'] = bool(int(kwds['active']))
-            except ValueError as e:
-                response.invalid('active')
-                
-                   
             if response.has_error():
                return response
             
-            entity = cls.load_from_values(kwds, only=('id', 'name', 'active', 'code'), get=True)
+            entity = cls.get_or_prepare(kwds)
              
             if entity and entity.key:
-               entity.put()
-               entity.new_action('update')
-               entity.record_action()
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
             else:
-               entity.put()
-               entity.new_action('create')
-               entity.record_action()
+               if current.has_permission('create', entity):
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
                
             response.status(entity)
            
@@ -149,6 +197,50 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     } 
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('code', 'name', 'type', 'active'))
+            response.are_valid_types(kwds, (('type', int), ('active', bool)))
+ 
+                   
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+ 
 
 
 # done!
@@ -188,8 +280,50 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
        'create' : 1,
        'update' : 2,
        'delete' : 3,
-    } 
+    }
 
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('name', 'complete_name', 'status'))
+            response.are_valid_types(kwds, (('status', int)))
+          
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response   
+    
 # done!
 class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
     
@@ -208,8 +342,46 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
-     
 
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('name', ))
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+ 
+ 
 # done!
 class ProductUOM(ndb.BaseModel, ndb.Workflow):
     
@@ -236,6 +408,48 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     } 
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('name', 'symbol', 'rate', 'sequence'))
+       
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+ 
 
 # done!
 class Currency(ndb.BaseModel, ndb.Workflow):
@@ -276,6 +490,58 @@ class Currency(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.are_required(kwds, ('title', 'category', 'body', 'sequence'))
+            
+            try:
+                kwds['sequence'] = int(kwds['sequence'])
+            except ValueError as e:
+                response.invalid('sequence')
+            
+            try:
+                kwds['category'] = int(kwds['category'])
+            except ValueError as e:
+                response.invalid('category')    
+                   
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.key:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+ 
      
 
 # done!
