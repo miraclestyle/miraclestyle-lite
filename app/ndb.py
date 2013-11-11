@@ -19,67 +19,83 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
-def _validate_value(prop, value):
-    if prop._repeated:
-       if not isinstance(value, list):
-          value = [value]
-       out = []   
-       for v in value:
-           out.append(v)
-       return out
-    else:
-       return v
-
-def validate_string(prop, value):
-    value = _validate_value(prop, value)
-    if prop._repeated:
-       return [unicode(v) for v in value]
-    else:
-       return unicode(v)
-   
-def validate_int(prop, value):
-    value = _validate_value(prop, value)
-    if prop._repeated:
-       return [long(v) for v in value]
-    else:
-       return long(v)
-           
-def validate_ndb_key(prop, value):
-    value = _validate_value(prop, value)
-    if prop._repeated:
-       return [Key(v) for v in value]
-    else:
-       return Key(v)
-   
-def validate_float(prop, value):
-    value = _validate_value(prop, value)
-    if prop._repeated:
-       return [float(v) for v in value]
-    else:
-       return float(v)
-   
-def validate_bool(prop, value):
-    pass
-
-def validate_decimal(prop, value):
-    pass
+class Formatter():
+    
+    @classmethod
+    def _value(cls, prop, value):
+        if prop._repeated:
+           if not isinstance(value, list):
+              value = [value]
+           out = []   
+           for v in value:
+               out.append(v)
+           return out
+        else:
+           return value
+       
+    @classmethod
+    def string(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [unicode(v) for v in value]
+        else:
+           return unicode(value)
+       
+    @classmethod   
+    def int(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [long(v) for v in value]
+        else:
+           return long(value)
+       
+    @classmethod           
+    def ndb_key(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [Key(urlsafe=v) for v in value]
+        else:
+           return Key(urlsafe=value)
+       
+    @classmethod   
+    def float(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [float(v) for v in value]
+        else:
+           return float(value)
+       
+    @classmethod   
+    def bool(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [bool(int(v)) for v in value]
+        else:
+           return bool(int(value))
+    
+    @classmethod
+    def decimal(cls, prop, value):
+        value = cls._value(prop, value)
+        if prop._repeated:
+           return [decimal.Decimal(v) for v in value]
+        else:
+           return decimal.Decimal(value)
  
- 
+  
 property_types_validator = {
-  'SuperStringProperty' : validate_string,
-  'SuperIntegerProperty' : validate_int,
+  'SuperStringProperty' : Formatter.string,
+  'SuperIntegerProperty' : Formatter.int,
   'SuperLocalStructuredProperty' : False,
   'SuperStructuredProperty' : False,
   'SuperPickleProperty' : False,
-  'SuperTextProperty' : validate_string,
-  'SuperFloatProperty' : validate_float,
+  'SuperTextProperty' : Formatter.string,
+  'SuperFloatProperty' : Formatter.float,
   'SuperDateTimeProperty' : False,
-  'SuperKeyProperty' : validate_ndb_key,
-  'SuperBooleanProperty' : validate_bool,
+  'SuperKeyProperty' : Formatter.ndb_key,
+  'SuperBooleanProperty' : Formatter.bool,
   'SuperBlobKeyProperty' : False,
-  'SuperDecimalProperty' : validate_decimal,
-  'SuperReferenceProperty' : validate_ndb_key,
-  'SuperRelationProperty' : False,
+  'SuperDecimalProperty' : Formatter.decimal,
+  'SuperReferenceProperty' : Formatter.ndb_key,
 }
 
 def factory(module_model_path):
@@ -157,7 +173,7 @@ class _BaseModel(Model):
       return User.current_user()
   
   def loaded(self):
-      return self.key != None
+      return self.key != None and self.key.id()
   
   @classmethod
   def get_or_prepare(cls, dataset, **kwds):
@@ -170,31 +186,38 @@ class _BaseModel(Model):
         
         By default it will strip away all keys that is not in the list of fields for the model,
         unless you provide "only" param with the list of fields that the function will retrieve.
+        
+        Kwds are arguments passed to __init__ for models. They can be namespace, parent etc..
       """
       use_get = kwds.pop('get', True)
       expect = kwds.pop('only', cls.get_property_names())
       ctx_options = kwds.pop('ctx_options', {})
+      populate = kwds.pop('populate', True)
       
-      create = False
-      if dataset.get('id'):
+      _id = dataset.pop('id', None)
+ 
+      create = True
+      if _id:
          try:
-             load = Key(urlsafe=dataset.get('id'))
+             load = Key(urlsafe=_id)
+             create = False
          except:
-             create = True
+             pass
+         
+      for i in dataset:
+          if i not in expect:
+             del dataset[i]
       
-      for f in expect:
-          if f not in dataset:
-             dataset[f] = None
-              
-      for k,v in dataset.items():
-          if k not in expect:
-             del dataset[k]
-              
+      dataset.update(kwds)
+      
       if create:
          return cls(**dataset)
       else:
          if use_get:
-            return load.get(**ctx_options)
+            entity = load.get(**ctx_options)
+            if populate:
+               entity.populate(**dataset)
+            return entity
          else:
             dataset['key'] = load 
             return cls(**dataset)
@@ -271,17 +294,17 @@ class _BaseModel(Model):
   @classmethod
   def get_all_properties(cls):
       out = []
-      for prop in cls._properties:
+      for prop_key,prop in cls._properties.items():
           out.append(prop)
           
       if hasattr(cls, 'has_expando_fields'):
-         for prop in cls.has_expando_fields():
+         for prop_key,prop in cls.has_expando_fields().items():
              out.append(prop)
       return out
   
   @classmethod
   def get_mapped_properties(cls):
-      return dict(**((prop._code_name, prop) for prop in cls.get_all_properties()))
+      return dict([(prop._code_name, prop) for prop in cls.get_all_properties()])
  
   @classmethod
   def get_property_names(cls):
@@ -299,7 +322,7 @@ class _BaseModel(Model):
                
                entity = cls.get_or_prepare(kwds, only=('id',))
                
-               if entity and entity.key:
+               if entity and entity.loaded():
                   if current.has_permission('delete', entity):
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
@@ -346,6 +369,11 @@ class BaseExpando(_BaseModel, Expando):
     @classmethod
     def has_expando_fields(cls):
         if hasattr(cls, 'EXPANDO_FIELDS'):
+           for i,v in cls.EXPANDO_FIELDS.items():
+               if not v._code_name:
+                  v._code_name = i 
+                  cls.EXPANDO_FIELDS[i] = v
+                   
            return cls.EXPANDO_FIELDS
         else:
            return False
@@ -355,8 +383,6 @@ class BaseExpando(_BaseModel, Expando):
        if ex:
           vf = ex.get(name) 
           if vf:
-             if not hasattr(vf, '_code_name'):
-                vf._code_name = name
              return vf._get_value(self)
        return super(BaseExpando, self).__getattr__(name)
       
@@ -365,7 +391,6 @@ class BaseExpando(_BaseModel, Expando):
         if ex:
            vf = ex.get(name) 
            if vf:
-              vf._code_name = name
               self._properties[vf._name] = vf
               vf._set_value(self, value)
               return vf
@@ -743,7 +768,7 @@ class Response(dict):
         if isinstance(e, datastore_errors.TransactionFailedError):
            return self.transaction_failed()
         
-        raise e
+        raise
  
     def transaction_timeout(self):
         return self.error('transaction_error', 'timeout')
@@ -779,16 +804,35 @@ class Response(dict):
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
     
-    def process_validation(self, kwds, obj):
+    def process_validation(self, kwds, obj, **kwargs):
+        
+        skip = kwargs.pop('skip', None)
         fields = obj.get_mapped_properties()
+        
         for k,v in fields.items():
+            
+            if skip and k in skip:
+               continue
+            
             value = kwds.get(k)
             if value is None:
                if v._required:
                   self.required(k)
+                  
+            if value is None and not v._required:
+               continue
+   
+            valid = property_types_validator.get(v.__class__.__name__)
+            
+            if valid: 
+               try: 
+                   kwds[k] = valid(v, value)
+               except (ValueError, TypeError) as e:
+                   self.invalid(k)
+                   
+        return self
                
                
-    
     def are_valid_types(self, kwds, configs):
         """
           Validates input, and converts the values into proper type
@@ -822,14 +866,8 @@ class Response(dict):
                 self.invalid(k)
                 
         return kwds
-    
-    def are_required(self, kwds, stuff):
-         for req in stuff:
-                if not kwds.get(req):
-                   self.required(req)
-                   
-         return self
-    
+  
+  
     def has_error(self, k=None):
         
         if self['errors'] is None:

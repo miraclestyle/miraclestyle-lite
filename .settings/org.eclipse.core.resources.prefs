@@ -15,6 +15,7 @@ encoding//app/oauth2.py=utf-8
 encoding//app/pyson.py=utf-8
 encoding//app/settings.py=utf-8
 encoding//app/util.py=utf-8
+encoding//dateutil/parser.py=iso-8859-1
 encoding//webclient/controllers/admin.py=utf-8
 encoding//webclient/controllers/auth.py=utf-8
 encoding//webclient/controllers/buyer.py=utf-8

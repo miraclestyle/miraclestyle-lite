@@ -37,10 +37,18 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     }
     
     @classmethod
-    def list(cls, parent=None):
+    def logs(cls, **kwds):
+        response = ndb.Response()
+        from app.core.log import ObjectLog
+        response['items'] = ObjectLog.query(ancestor=ndb.Key(urlsafe=kwds.get('key'))).fetch()
+        return response
+    
+    @classmethod
+    def list(cls, parent=None, **kwds):
+        
         response = ndb.Response()
         if parent is None:
-           parent = cls.get_current_user()
+           parent = cls.get_current_user().key
         response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
@@ -58,22 +66,15 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             
             if current.is_guest:
                return response.not_logged_in()
-           
-            response.are_required(kwds, ('name', 'city', 'postal_code', 'street_address'))
-            response.are_valid_types(kwds, (('default_billing', bool), 
-                                            ('default_shipping', bool),
-                                            ('country', ndb.Key),
-                                            ('region', ndb.Key, False)
-                                    ))
-             
-            kwds['parent'] = current.key
-   
+    
+            response.process_validation(kwds, cls)
+    
             if response.has_error():
                return response       
     
-            entity = cls.get_or_prepare(kwds)
-            
-            if entity and entity.key:
+            entity = cls.get_or_prepare(kwds, parent=current.key)
+      
+            if entity and entity.loaded():
                # update
                entity.put()
                entity.new_action('update')
@@ -104,9 +105,9 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=('id',))
+               entity = cls.get_or_prepare(kwds)
                
-               if entity and entity.key:
+               if entity and entity.loaded():
                   if entity.key.parent() == current.key:
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
@@ -128,7 +129,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
 
             
 # done!
-class Collection(ndb.BaseModel):
+class Collection(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 10
     
@@ -136,7 +137,7 @@ class Collection(ndb.BaseModel):
     # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
     # composite index: ancestor:yes - name
     name = ndb.SuperStringProperty('1', required=True)
-    notify = ndb.SuperBooleanProperty('2', default=False)
+    notify = ndb.SuperBooleanProperty('2', required=True, default=False)
     primary_email = ndb.SuperStringProperty('3', required=True, indexed=False)
    
     OBJECT_DEFAULT_STATE = 'none'
@@ -146,22 +147,18 @@ class Collection(ndb.BaseModel):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        
+        response['items'] = cls.query(ancestor=cls.get_current_user().key).fetch()
+        
+        return response
  
     @classmethod
     def manage(cls, **kwds):
-        """
-        def create():
-            # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-            for identity in user.identities:
-                if(identity.primary == True):
-                    var_primary_email = identity.email
-                    break
-            buyer_collection = BuyerCollection(parent=user_key, name=var_name, notify=var_notify, primary_email=var_primary_email)
-            buyer_collection_key = buyer_collection.put()
-            object_log = ObjectLog(parent=buyer_collection_key, agent=user_key, action='create', state='none', log=buyer_collection)
-            object_log.put()
-        """
-        
+   
         response = ndb.Response()
         
         @ndb.transactional(xg=True)
@@ -172,19 +169,18 @@ class Collection(ndb.BaseModel):
             if current.is_guest:
                return response.not_logged_in()
             
-            response.are_required(kwds, ('name'))
-            response.are_valid_types(kwds, (('notify', bool)))
- 
+            response.process_validation(kwds, cls, skip=('primary_email',))
+             
             if not response.has_error():
+ 
+                entity = cls.get_or_prepare(kwds, parent=current.key)
                 
-                entity = cls.get_or_prepare(kwds)
-                 
-                if entity and entity.key:
+                # we internally set primary_email, not from user input    
+                entity.primary_email = current.primary_email
+        
+                if entity and entity.loaded():
     
                    if entity.key.parent() == current.key:
-                       entity.name = kwds.get('name')
-                       entity.primary_email = current.primary_email
-                       entity.notify = kwds.get('notify')
                        entity.put()
                        entity.new_action('update')
                        entity.record_action()
@@ -216,9 +212,9 @@ class Collection(ndb.BaseModel):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=('id',))
+               entity = cls.get_or_prepare(kwds)
                
-               if entity and entity.key:
+               if entity and entity.loaded():
                   if entity.key.parent() == current.key:
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
@@ -264,9 +260,9 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=('id',))
+               entity = cls.get_or_prepare(kwds)
                
-               if entity and entity.key:
+               if entity and entity.loaded():
                   if entity.key.parent() == current.key:
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
@@ -297,23 +293,21 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
             
             if current.is_guest:
                return response.not_logged_in()
+           
+            response.process_validation(kwds, cls)
+            
+            if response.has_error():
+               return response
             
             entity = cls.get_or_prepare(kwds)
             
-            try:
-                collection_keys = [ndb.Key(urlsafe=k) for k in kwds.get('collections')]
-            except:
-                return response.invalid('collections')
-            
-            try:
-                store_key = ndb.Key(urlsafe=kwds.get('store'))
-            except:
-                return response.invalid('store')
-            
+            collection_keys = kwds.get('collections')
+            store_key = kwds.get('store')
+  
             if entity is None:
                return response.not_found()
             
-            if entity.key:
+            if entity.loaded():
                if entity.parent() == current.key:
                   entity.collections = []
                   

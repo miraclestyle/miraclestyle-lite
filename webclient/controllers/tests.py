@@ -17,10 +17,15 @@ class Endpoint(Angular):
         method = self.request.get('method')
         
         model = ndb.factory(model_path)
-         
+        
+        data = self.reqdata.get_combined_params()
+        
+        del data['method'], data['model']
+        
+          
         # cruel way of calling methods, but this is just for testing purposes to avoid creating individual controllers.
         # there is no absolute final decision on how the controllers will behave, except we know they will be dumb.
-        return getattr(model, method)(**self.request.get_combined_params())
+        return getattr(model, method)(**data)
          
  
 register(('/endpoint', Endpoint))

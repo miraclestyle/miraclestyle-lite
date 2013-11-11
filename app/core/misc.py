@@ -39,24 +39,14 @@ class Content(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('title', 'category', 'body', 'sequence'))
+            response.process_validation(kwds, cls)
             
-            try:
-                kwds['sequence'] = int(kwds['sequence'])
-            except ValueError as e:
-                response.invalid('sequence')
-            
-            try:
-                kwds['category'] = int(kwds['category'])
-            except ValueError as e:
-                response.invalid('category')    
-                   
             if response.has_error():
                return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -118,7 +108,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
-    def list(cls):
+    def list(cls, **kwds):
         
         response = ndb.Response()
         
@@ -137,15 +127,14 @@ class Country(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('name', 'code'))
-            response.are_valid_types(kwds, (('active', bool)))
+            response.process_validation(kwds, cls)
             
             if response.has_error():
                return response
-            
+           
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -208,16 +197,14 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('code', 'name', 'type', 'active'))
-            response.are_valid_types(kwds, (('type', int), ('active', bool)))
- 
-                   
+            response.process_validation(kwds, cls)
+            
             if response.has_error():
                return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -292,15 +279,14 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('name', 'complete_name', 'status'))
-            response.are_valid_types(kwds, (('status', int)))
-          
+            response.process_validation(kwds, cls)
+            
             if response.has_error():
                return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -353,11 +339,14 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('name', ))
+            response.process_validation(kwds, cls)
+            
+            if response.has_error():
+               return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -419,14 +408,14 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('name', 'symbol', 'rate', 'sequence'))
-       
+            response.process_validation(kwds, cls)
+            
             if response.has_error():
                return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -501,24 +490,14 @@ class Currency(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.are_required(kwds, ('title', 'category', 'body', 'sequence'))
+            response.process_validation(kwds, cls)
             
-            try:
-                kwds['sequence'] = int(kwds['sequence'])
-            except ValueError as e:
-                response.invalid('sequence')
-            
-            try:
-                kwds['category'] = int(kwds['category'])
-            except ValueError as e:
-                response.invalid('category')    
-                   
             if response.has_error():
                return response
             
             entity = cls.get_or_prepare(kwds)
              
-            if entity and entity.key:
+            if entity and entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
