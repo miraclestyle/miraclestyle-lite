@@ -81,8 +81,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
         },
     }  
     
-    def __json__(self):
-        d = super(User, self).__json__()
+    def __todict__(self):
+        d = super(User, self).__todict__()
         
         d['logout_code'] = self.logout_code
         d['is_guest'] = self.is_guest

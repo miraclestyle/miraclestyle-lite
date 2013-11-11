@@ -39,7 +39,7 @@ class Content(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -127,7 +127,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -197,7 +197,7 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -279,7 +279,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -339,7 +339,7 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -408,7 +408,7 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -490,7 +490,7 @@ class Currency(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response

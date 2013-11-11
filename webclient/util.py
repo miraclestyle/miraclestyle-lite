@@ -43,8 +43,8 @@ class JSONEncoderHTML(json.JSONEncoder):
         if isinstance(o, ndb.Key):
            return o.urlsafe()
         
-        if hasattr(o, '__json__'):
-           return o.__json__()
+        if hasattr(o, '__todict__'):
+           return o.__todict__()
         else:
            if hasattr(o, '__str__'):
               return o.__str__()

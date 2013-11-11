@@ -210,7 +210,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_authorized()
            
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls, only=('name',))
             
             if response.has_error():
                return response
@@ -310,6 +310,58 @@ class Role(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.validate_input(kwds, cls, convert=[('domain', ndb.Key)])
+          
+            if response.has_error():
+               return response
+           
+              
+            # this must be domain otherwise it must throw err
+            domain = kwds.get('domain').get()
+            
+            if domain is None:
+               return response.not_found()
+           
+            domain_namespace = domain.key.urlsafe()
+            
+            entity = cls.get_or_prepare(kwds, namespace=domain_namespace)
+             
+            if entity and entity.loaded():
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity, namespace=domain_namespace): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+        
+        
      
      
 class User(ndb.BaseExpando, ndb.Workflow):
@@ -355,51 +407,56 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     # Poziva novog usera u domenu, al čime da ga poziva? po mailu?
     @classmethod
-    def invite(cls, domain_key, user_key, role_keys, name, **kwds):
+    def invite(cls, **kwds):
    
         response = ndb.Response()
+             
+        response.validate_input(kwds, cls, skip=('state',), convert=[('domain', ndb.Key)])
  
+        if response.has_error():
+           return response
+            
+        name = kwds.get('name') 
+        get_roles = kwds.get('roles')
+        domain_key = kwds.get('domain')
+        user_key = kwds.get('user')
+         
+        get_roles = ndb.get_multi(get_roles)
+                
         @ndb.transactional(xg=True)       
         def transaction():
              
-            response.process_validation(kwds, cls)
-            
-            if response.has_error():
-               return response
-             
-            role_keys = kwds.get('role_keys')
-            domain_key = kwds.get('domain_key')
-            user_key = kwds.get('user_key')
-             
             current = cls.get_current_user()
-            
+          
             domain, usr = ndb.get_multi([domain_key, user_key])
              
             if domain and usr:
                 
-               if not current.has_permission('invite', domain, namespace=domain.key.urlsafe()):
+               domain_namespace = domain.key.urlsafe()
+                
+               if not current.has_permission('invite', domain, namespace=domain_namespace):
                   return response.not_authorized()
               
                if domain.get_state != 'active':
                   return response.error('domain', 'not_active')
                 
                roles = []
-               get_roles = ndb.get_multi([ndb.Key(urlsafe=k) for k in role_keys])
+              
                for role in get_roles:
-                   if role.key.namespace() == domain.key.namespace():
+                   if role.key.namespace() == domain_namespace:
                       roles.append(role.key)
                 
-                   domain_user_key = ndb.Key(namespace=domain.key.namespace(), id=str(usr.key.id()))
+                   domain_user_key = ndb.Key(User, str(usr.key.id()), namespace=domain_namespace)
                    domain_user = domain_user_key.get()
                    if domain_user:
                       response.status('already_invited')
                    else:
-                      domain_user = User(namespace=domain.key.namespace(), id=str(usr.key.id()), name=name, user=usr.key, roles=roles)
+                      domain_user = User(namespace=domain_namespace, id=str(usr.key.id()), name=name, user=usr.key, roles=roles)
+                      domain_user.set_state('invited')
                       domain_user.put()
                       domain_user.new_action('invite')
                       domain_user.record_action()
                       response.status(domain_user)
-
             else:
                 response.not_found()       
         try:
@@ -413,7 +470,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     # Uklanja postojeceg usera iz domene
     @classmethod
-    def remove(cls, domain_key, user_key, **kwds):
+    def remove(cls, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'remove-DomainUser', ili agent koji je referenciran u entitetu (domain_user.user == agent).
         # agent koji je referenciran u domain.primary_contact prop. ne moze biti izbacen iz domene i izgubiti dozvole za upravljanje domenom.
@@ -435,8 +492,16 @@ class User(ndb.BaseExpando, ndb.Workflow):
         def transaction(): 
             
             current = cls.get_current_user()
+            
+            response.validate_input(kwds, cls, only=False, convert=[('user', ndb.Key)])
+            
+            if response.has_error():
+               return response
+            
+            user_key = kwds.get('user')
+            domain_key = ndb.Key(urlsafe=user_key.namespace())
         
-            domain, usr = ndb.get_multi([ndb.Key(urlsafe=domain_key), ndb.Key(urlsafe=user_key)])
+            domain, usr = ndb.get_multi([domain_key, user_key])
             
             if domain and usr:
                 
@@ -447,8 +512,10 @@ class User(ndb.BaseExpando, ndb.Workflow):
                   if domain.primary_contact != usr.user:
                
                          far_user = usr.user.get()
+            
                          for role in usr.roles:
-                             far_user.roles.remove(role)
+                             if role in far_user.roles:
+                                 far_user.roles.remove(role)
                        
                          usr.new_action('remove', log_object=False)
                          usr.record_action()
@@ -473,7 +540,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     # Prihvata poziv novog usera u domenu
     @classmethod
-    def accept(cls, user_key, **kwds):
+    def accept(cls, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji je referenciran u entitetu (domain_user.user == agent).
         # akcija se moze pozvati samo ako je domain.state == 'active'.
@@ -494,21 +561,34 @@ class User(ndb.BaseExpando, ndb.Workflow):
         def transaction():
             
             current = cls.get_current_user()
-            user_key = ndb.Key(urlsafe=user_key)
             
-            usr, domain = ndb.get_multi([user_key, ndb.Key(urlsafe=user_key.namespace())])
+            response.validate_input(kwds, cls, only=False, convert=[('user', ndb.Key)])
+            
+            if response.has_error():
+               return response
+            
+            user_key = kwds.get('user')
+            domain_key = ndb.Key(urlsafe=user_key.namespace())
+            
+            usr, domain = ndb.get_multi([user_key, domain_key])
             
             if domain and usr:
                 
                if domain.get_state != 'active':
                   return response.error('domain', 'not_active') 
               
+               if usr.get_state == 'accepted':
+                  return response.error('user', 'already_accepted')
+              
                if current.key == usr.user:
-                      usr.new_action('accept', state='accept', log_object=False)
+                      usr.new_action('accept', state='accepted', log_object=False)
+                      usr.put()
                       usr.record_action()
                       user = usr.user.get()
+                      
                       for role in usr.roles:
-                          user.roles.append(role)
+                          if role not in usr.roles:
+                             user.roles.append(role)
                           
                       user.put()
                       user.new_action('update')
@@ -530,37 +610,50 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     # Azurira postojeceg usera u domeni
     @classmethod
-    def update(cls, name, role_keys, domain_user_key, **kwds):
+    def update(cls, **kwds):
  
         response = ndb.Response()
+        
+           
+        response.validate_input(kwds, cls, only=('roles', 'name'), convert=[('user', ndb.Key)])
+            
+        if response.has_error():
+           return response
+        
+        _new_roles = ndb.get_multi(kwds.get('roles'))
         
         @ndb.transactional(xg=True)
         def transaction():
                 
             current = cls.get_current_user()
-            
-            domain_user_key = ndb.Key(urlsafe=domain_user_key)
+          
+            domain_user_key = kwds.get('user')
              
             if domain_user_key:
                    domain_user, domain = ndb.get_multi([domain_user_key, ndb.Key(urlsafe=domain_user_key.namespace())])
                    if domain_user and domain:
                       if current.has_permission('update', domain_user):
-                         domain_user.name = name
+                         domain_user.name = kwds.get('name')
                          old_roles = domain_user.roles
-                         _new_roles = ndb.get_multi([ndb.Key(urlsafe=rid) for rid in role_keys])
+                         
                          new_roles = []
+                         
                          for new in _new_roles:
                              if new.key.namespace() == domain.key.urlsafe():
-                                new_roles.append(new)
+                                new_roles.append(new.key)
                                 
                          user = domain_user.user.get()       
                          for old in old_roles:
-                             user.roles.remove(old)
+                             if old in user.roles:
+                                user.roles.remove(old)
                          
                          domain_user.roles = []
                          for new in new_roles:
-                             user.roles.append(new)
-                             domain_user.roles.append(new)
+                             if new not in user.roles:
+                                user.roles.append(new)
+                                
+                             if new not in domain_user.roles:   
+                                domain_user.roles.append(new)
                              
                          user.put()
                          user.new_action('update')
@@ -569,6 +662,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
                          domain_user.put()
                          domain_user.new_action('update')
                          domain_user.record_action()
+                         
+                         response.status(domain_user)
            
         try:
             transaction()

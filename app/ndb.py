@@ -20,11 +20,11 @@ ctx.set_memcache_policy(False)
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
 class Formatter():
-    
+ 
     @classmethod
     def _value(cls, prop, value):
         if prop._repeated:
-           if not isinstance(value, list):
+           if not isinstance(value, (list, tuple)):
               value = [value]
            out = []   
            for v in value:
@@ -148,10 +148,13 @@ class _BaseModel(Model):
       self.__original_values = {}
       super(_BaseModel, self).__init__(*args, **kwds)
   
-  def __json__(self):
-      """ This magic method is called by json encoder. 
-          The values that this method returns must be json compliant
-       """
+  def __todict__(self):
+      """
+        This function can be used to make representation of the model into the dictionary.
+        The dictionary can be then used to be translated into other understandable code to clients, e.g. JSON
+        
+        Currently, this method calls native Model.to_dict() method which converts the values into dictionary format.
+      """
       dic = self.to_dict()
       
       if self.key:
@@ -204,7 +207,7 @@ class _BaseModel(Model):
          except:
              pass
          
-      for i in dataset:
+      for i in dataset.keys():
           if i not in expect:
              del dataset[i]
       
@@ -298,8 +301,10 @@ class _BaseModel(Model):
           out.append(prop)
           
       if hasattr(cls, 'has_expando_fields'):
-         for prop_key,prop in cls.has_expando_fields().items():
-             out.append(prop)
+         expandos = cls.has_expando_fields()
+         if expandos: 
+             for prop_key,prop in expandos.items():
+                 out.append(prop)
       return out
   
   @classmethod
@@ -459,10 +464,10 @@ class BaseProperty(_BaseProperty, Property):
    """
    
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
-      pass
+    pass
   
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
-      pass
+    pass
     
 class SuperPickleProperty(_BaseProperty, PickleProperty):
     pass
@@ -688,9 +693,11 @@ class Workflow():
           """
           transitions = self.OBJECT_TRANSITIONS[action]
           
-          if self.state not in transitions['from'] or state not in transitions['to']:
+          current_state = self.resolve_state_name_by_code(self.state)
+          
+          if current_state not in transitions['from'] or state not in transitions['to']:
              raise WorkflowTransitionError('This object cannot go from state `%s` to state `%s`. It can only go from states `%s` to `%s`'
-                                           % (self.state, state, transitions['from'], transitions['to']))
+                                           % (current_state, state, transitions['from'], transitions['to']))
       
       def set_state(self, state, check=False):
           self.state = self.resolve_state_code_by_name(state)
@@ -707,9 +714,9 @@ class Workflow():
           """
           
           if state is not None: # if state is unchanged, no checks for transition needed?
-              self.set_state(state)
               self.check_transition(state, action)
-              
+              self.set_state(state)
+               
           action = self.resolve_action_code_by_name(action)
  
           if hasattr(self, 'state') and self.state == None:
@@ -758,11 +765,46 @@ class Workflow():
 class Response(dict):
     
     """ 
-      Response dict object used for preparing data which is returned to clients for parsing.
-      Usually every model method should return this type of response object.
+      This response class is the main interface trough which the CLIENT will communicate between the model methods.
+      Each method that is capable of performing operations that will need some kind of answer need to return instance of 
+      this class. Such example
+      
+      class Example(ndb.BaseModel):
+      
+            name ... 
+            
+            def perform_operation(cls, **kwds):
+                response = ndb.Response()
+                
+                if not kwds.get('name'):
+                   response.required('name')
+                   
+                if not response.has_error():
+                   ... put() operations etc
+                
+                return response   
+                 
+      Each of those class methods must return `response` and the response will be interpreted by the client:
+      e.g. JSON.
+                
     """
     def transaction_error(self, e):
+        """
+        This function needs to be used in fashion:
         
+        @ndb.transacitonal
+        def transaction():
+            user.put()
+            ...
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        It will automatically set if the transaction failed because of google network.
+        
+        """
         if isinstance(e, datastore_errors.Timeout):
            return self.transaction_timeout()
         if isinstance(e, datastore_errors.TransactionFailedError):
@@ -771,31 +813,37 @@ class Response(dict):
         raise
  
     def transaction_timeout(self):
+        # sets error in the response that the transaction that was taking place has timed out
         return self.error('transaction_error', 'timeout')
     
     def transaction_failed(self):
+        # sets error in the response that the transaction that was taking place has failed
         return self.error('transaction_error', 'failed')
     
     def required(self, k):
+        # sets error that the field is required with name `k`
         return self.error(k, 'required')
         
     def invalid(self, k):
+        # sets error that the field is not in proper format with name `k`
         return self.error(k, 'invalid_input')
     
     def status(self, m):
         # generic `status` of the response. 
-        # It informs most usual errors that might ocurr. E.g. object not found, etc.
         self['status'] = m
         return self
     
     def not_found(self):
-        self['status'] = 'not_found'
+        # shorthand for informing the response that the entity, object, thing or other cannot be found with the provided params
+        self.error('status', 'not_found')
         return self
     
     def not_authorized(self):
+        # shorthand for informing the response that the user is not authorize to perform the operation
         return self.error('user', 'not_authorized')
         
     def not_logged_in(self):
+        # shorthand for informing the response that the user needs to login in order to perform the operation
         return self.error('user', 'not_logged_in')
     
     def __setattr__(self, *args, **kwargs):
@@ -804,16 +852,86 @@ class Response(dict):
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
     
-    def process_validation(self, kwds, obj, **kwargs):
+    def validate_input(self, kwds, obj, **kwargs):
+        
+        """
+          This method is used to format, and validate the user input based on the model property definition. 
+          Accepts:
+          kwds: dic with unformatted data
+          obj: `cls` or model class
+          **kwargs: skip: skips only the defined field names for validation
+                    only: only formats specified field names for validation
+                    convert: converts into specified data type. for example:
+                        kwds = {'domain' : 'large key...'}
+                        response.validate_input(kwds, obj, convert=[('domain', ndb.Key)])
+                        
+                        it will convert kwds['domain'] into ndb.Key(...)
+                    
+          Example:
+          
+          class Test(ndb.BaseModel):
+                name = ndb.SuperStringProperty(required=True)
+                number = ndb.SuperIntegerProperty(required=True)     
+                
+          ....
+          
+          data = {'name' : 52}
+          response.validate_input(data, Test)
+   
+          the formatter will adjust the dict to
+          
+          data = {'name' : '52'}
+          
+          also the error that the "number" is required will be placed in response:
+          
+          response['errors'] = {'number' : ['required']}
+          ...
+          
+        """
         
         skip = kwargs.pop('skip', None)
+        only = kwargs.pop('only', None)
+        convert = kwargs.pop('convert', None)
         fields = obj.get_mapped_properties()
+        
+        if convert:
+           for i in convert:
+               name = i[0]
+               _type = i[1]
+               try:
+                   can_skip = i[2]
+               except IndexError as e:
+                   can_skip = False
+                   
+               value = kwds.get(name)
+               if value is None and can_skip:
+                  continue
+              
+               try:
+                    if _type.__name__ == 'bool':
+                       kwds[name] = bool(int(value))
+                    elif _type.__name__ == 'int':
+                       kwds[name] = int(value)
+                    elif _type == Key:
+                       kwds[name] = _type(urlsafe=value)
+                    else:
+                       kwds[name] = _type(value)
+               except Exception as e:
+                    self.invalid(name)
+                  
         
         for k,v in fields.items():
             
             if skip and k in skip:
                continue
-            
+           
+            if only is False:
+               break
+           
+            if only:
+               if k not in only:
+                  continue
+                    
             value = kwds.get(k)
             if value is None:
                if v._required:

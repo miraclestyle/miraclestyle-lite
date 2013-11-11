@@ -67,7 +67,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
     
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
     
             if response.has_error():
                return response       
@@ -169,7 +169,7 @@ class Collection(ndb.BaseModel, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
             
-            response.process_validation(kwds, cls, skip=('primary_email',))
+            response.validate_input(kwds, cls, skip=('primary_email',))
              
             if not response.has_error():
  
@@ -294,7 +294,7 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
            
-            response.process_validation(kwds, cls)
+            response.validate_input(kwds, cls)
             
             if response.has_error():
                return response
