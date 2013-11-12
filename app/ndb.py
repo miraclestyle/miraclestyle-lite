@@ -99,7 +99,13 @@ property_types_validator = {
 }
 
 def factory(module_model_path):
-    
+    """
+     Retrieves model by its module path. e.g.
+     model = factory('app.core.misc.Country')
+     
+     will load Country class.
+     
+    """
     custom_kinds = module_model_path.split('.')
     far = custom_kinds[-1] 
     del custom_kinds[-1] 
@@ -193,11 +199,13 @@ class _BaseModel(Model):
         Kwds are arguments passed to __init__ for models. They can be namespace, parent etc..
       """
       use_get = kwds.pop('get', True)
-      expect = kwds.pop('only', cls.get_property_names())
+      expect = kwds.pop('only', cls.get_property_names() + ['id'])
       ctx_options = kwds.pop('ctx_options', {})
       populate = kwds.pop('populate', True)
       
-      _id = dataset.pop('id', None)
+      datasets = dict()
+      
+      _id = dataset.pop('key', None)
  
       create = True
       if _id:
@@ -207,23 +215,25 @@ class _BaseModel(Model):
          except:
              pass
          
-      for i in dataset.keys():
-          if i not in expect:
-             del dataset[i]
-      
-      dataset.update(kwds)
+      if expect is not False:   
+          for i in expect:
+              datasets[i] = dataset.get(i)
+      else:
+          datasets = dataset.copy()
+     
+      datasets.update(kwds)
       
       if create:
-         return cls(**dataset)
+         return cls(**datasets)
       else:
          if use_get:
             entity = load.get(**ctx_options)
             if populate:
-               entity.populate(**dataset)
+               entity.populate(**datasets)
             return entity
          else:
-            dataset['key'] = load 
-            return cls(**dataset)
+            datasets['key'] = load 
+            return cls(**datasets)
  
   @staticmethod
   def from_multiple_values(data):
@@ -325,7 +335,7 @@ class _BaseModel(Model):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=('id',))
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -434,7 +444,6 @@ class BaseExpando(_BaseModel, Expando):
            if expando:
               for k,v in expando.items():
                   if v._name == next:
-                     v._code_name = k
                      prop = v
                      self._properties[v._name] = v
                      break        
@@ -447,10 +456,12 @@ class _BaseProperty(object):
     
     _writable = False
     _visible = False
+    _max_size = False
     
     def __init__(self, *args, **kwds):
         self._writable = kwds.pop('writable', self._writable)
         self._visible = kwds.pop('visible', self._visible)
+        self._max_size = kwds.pop('max_size', self._max_size)
         
         custom_kind = kwds.get('kind')
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
@@ -734,7 +745,7 @@ class Workflow():
              kwargs['agent'] = agent.key
           else:
              kwargs['agent'] = agent
-  
+ 
           objlog = log.ObjectLog(action=action, parent=self.key, **kwargs)
  
           if obj is True:
@@ -857,7 +868,7 @@ class Response(dict):
         """
           This method is used to format, and validate the user input based on the model property definition. 
           Accepts:
-          kwds: dic with unformatted data
+          kwds: dict with unformatted data. This dict must be mutable in order for kwds to be formatted.
           obj: `cls` or model class
           **kwargs: skip: skips only the defined field names for validation
                     only: only formats specified field names for validation
@@ -908,11 +919,17 @@ class Response(dict):
                   continue
               
                try:
+                    if isinstance(value, _type):
+                          continue
                     if _type.__name__ == 'bool':
                        kwds[name] = bool(int(value))
-                    elif _type.__name__ == 'int':
-                       kwds[name] = int(value)
+                    elif _type.__name__ in ('int', 'long'):
+                       if isinstance(value, (int, long)):
+                          continue  
+                       kwds[name] = _type(value)
                     elif _type == Key:
+                       if isinstance(value, Key):
+                          continue 
                        kwds[name] = _type(urlsafe=value)
                     else:
                        kwds[name] = _type(value)
@@ -972,6 +989,9 @@ class Response(dict):
                continue
             
             try:
+                if isinstance(value, _type):
+                   continue 
+                
                 if _type.__name__ == 'bool':
                    kwds[k] = bool(int(value))
                 elif _type.__name__ == 'int':

@@ -4,9 +4,9 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from decimal import Decimal
-
 from app import ndb
+
+# done 80%, support request needs work
 
 class Content(ndb.BaseModel, ndb.Workflow):
     
@@ -28,6 +28,7 @@ class Content(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
     def manage(cls, **kwds):
@@ -108,6 +109,67 @@ class Country(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
+    def import_countries(cls, **kwds):
+        url = 'https://raw.github.com/tryton/country/develop/country.xml'
+        
+        from xml.etree import ElementTree
+        from google.appengine.api import urlfetch
+         
+        text = urlfetch.fetch(url) 
+         
+        tree = ElementTree.fromstring(text.content)
+        root = tree.findall('data')
+        
+        response = ndb.Response()
+        
+        response['countries'] = []
+        
+        for child in root[1]:
+            dat = dict()
+            dat['id'] = child.attrib['id']
+            for child2 in child:
+                name = child2.attrib.get('name')
+                if name is None:
+                   continue
+               
+                if child2.text:
+                   dat[name] = child2.text
+                
+            #response['countries'].append(dat)
+            res = cls.manage(name=dat['name'], id=dat['id'], code=dat['code'], active=True)
+            response['country'].append(res)
+            
+        response['subdivisions'] = []
+        
+        for child in root[2]:
+        
+            dat = dict()
+            dat['id'] = child.attrib['id']
+            for child2 in child:
+                k = child2.attrib.get('name')
+                if k is None:
+                   continue
+                if child2.text:
+                    dat[k] = child2.text
+                if 'ref' in child2.attrib:
+                    dat[k] = child2.attrib['ref']
+            
+            kw = dict(name=dat['name'], id=dat['id'], type=dat['type'], code=dat['code'])
+            
+            if 'country' in dat:
+                kw['parent'] = ndb.Key(Country, dat['parent'])
+                
+            if 'parent' in dat:
+                kw['parent_record'] = ndb.Key(CountrySubdivision, dat['parent'])
+             
+            res = CountrySubdivision.manage(**kw)        
+            response['subdivisions'].append(res)
+            
+ 
+        return response
+        
+    
+    @classmethod
     def list(cls, **kwds):
         
         response = ndb.Response()
@@ -115,7 +177,8 @@ class Country(ndb.BaseModel, ndb.Workflow):
         response['items'] = cls.query().fetch()
         
         return response
- 
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
     def manage(cls, **kwds):
@@ -186,6 +249,8 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     } 
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
     def manage(cls, **kwds):
@@ -268,6 +333,8 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
 
     @classmethod
     def manage(cls, **kwds):
@@ -328,6 +395,8 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
 
     @classmethod
     def manage(cls, **kwds):
@@ -397,6 +466,8 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     } 
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
     def manage(cls, **kwds):
@@ -479,6 +550,8 @@ class Currency(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
     def manage(cls, **kwds):

@@ -21,7 +21,6 @@ class ObjectLog(ndb.BaseExpando):
     EXPANDO_FIELDS = {
        'message' : ndb.SuperTextProperty('96'),
        'note' : ndb.SuperTextProperty('95'),
-       
     }
     
     # log object's each property

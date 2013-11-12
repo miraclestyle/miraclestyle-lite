@@ -5,6 +5,8 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
+
+# buyer is not fully done, collections are at 50%
  
 class Address(ndb.BaseExpando, ndb.Workflow):
     
@@ -35,20 +37,22 @@ class Address(ndb.BaseExpando, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
-    
+ 
     @classmethod
-    def logs(cls, **kwds):
+    def list(cls, **kwds):
+    
         response = ndb.Response()
-        from app.core.log import ObjectLog
-        response['items'] = ObjectLog.query(ancestor=ndb.Key(urlsafe=kwds.get('key'))).fetch()
-        return response
-    
-    @classmethod
-    def list(cls, parent=None, **kwds):
         
-        response = ndb.Response()
+        response.validate_input(kwds, cls, only=False, convert=[('parent', ndb.Key)])
+        
+        if response.has_error():
+           return response
+            
+        parent = kwds.get('parent')
+        
         if parent is None:
            parent = cls.get_current_user().key
+           
         response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
@@ -105,15 +109,14 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds)
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
                if entity and entity.loaded():
                   if entity.key.parent() == current.key:
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
                      entity.key.delete()
-                     
-                     
+                      
                      response.status(entity)
                   else:
                      return response.not_authorized()
@@ -212,7 +215,7 @@ class Collection(ndb.BaseModel, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds)
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
                if entity and entity.loaded():
                   if entity.key.parent() == current.key:
@@ -260,7 +263,7 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
                        
                current = cls.get_current_user()
                
-               entity = cls.get_or_prepare(kwds)
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
                if entity and entity.loaded():
                   if entity.key.parent() == current.key:
@@ -332,39 +335,7 @@ class CollectionStore(ndb.BaseModel, ndb.Workflow):
             response.transaction_error(e)
             
         return response
-    """
-       
-    # Dodaje novi store u korisnikovoj listi i odredjuje clanstvo u korisnikovim kolekcijama
-    @ndb.transactional
-    def create():
-        # ovu akciju moze izvrsiti samo registrovani autenticirani agent.
-        buyer_collection_store = BuyerCollectionStore(parent=user_key, store=var_store, collections=var_collections)
-        buyer_collection_store_key = buyer_collection_store.put()
-        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='create', state='none', log=buyer_collection_store)
-        object_log.put()
-        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
-    
-    # Menja clanstvo store u korisnikovim kolekcijama
-    @ndb.transactional
-    def update():
-        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
-        buyer_collection_store.collections = var_collections
-        buyer_collection_store_key = buyer_collection_store.put()
-        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='update', state='none', log=buyer_collection_store)
-        object_log.put()
-        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
-    
-    # Brise store iz korisnikove liste
-    @ndb.transactional
-    def delete():
-        # ovu akciju moze izvrsiti samo vlasnik entiteta (buyer_collection_store.parent == agent).
-        object_log = ObjectLog(parent=buyer_collection_store_key, agent=user_key, action='delete', state='none')
-        object_log.put()
-        buyer_collection_store_key.delete()
-        # izaziva se update AggregateBuyerCollectionCatalog preko task queue
-        # ndb.delete_multi(AggregateBuyerCollectionCatalog.query(AggregateBuyerCollectionCatalog.store == buyer_collection_store.store, ancestor=user_key).fetch(keys_only=True))
-
-    """
+  
     
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class AggregateCollectionCatalog(ndb.BaseModel):

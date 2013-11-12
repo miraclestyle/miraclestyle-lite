@@ -10,12 +10,13 @@ import hashlib
  
 from app import util
 from app import ndb, settings, oauth2, memcache
- 
+
+# core acl is also 90% done
   
 class Session(ndb.BaseModel):
     
-      session_id = ndb.SuperStringProperty(indexed=False)# -- add property datastore name
-      updated = ndb.SuperDateTimeProperty(auto_now_add=True, indexed=False)# -- add property datastore name
+      session_id = ndb.SuperStringProperty('1', indexed=False)
+      updated = ndb.SuperDateTimeProperty('2', auto_now_add=True, indexed=False)
  
      
 class Identity(ndb.BaseModel):
@@ -43,10 +44,8 @@ class User(ndb.BaseExpando, ndb.Workflow):
  
     _default_indexed = False
   
-    EXPANDO_FIELDS = {
-                      
-      'roles' : ndb.KeyProperty('5', repeated=True, indexed=False)                 
-
+    EXPANDO_FIELDS = {  
+      'roles' : ndb.KeyProperty('5', repeated=True, indexed=False)
     }
  
     OBJECT_DEFAULT_STATE = 'su_active'
@@ -99,7 +98,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     @property
     def logout_code(self):
-        session = self.current_user_session
+        session = self.current_user_session()
         if not session:
            return None
         return hashlib.md5(session.session_id).hexdigest()
@@ -174,22 +173,21 @@ class User(ndb.BaseExpando, ndb.Workflow):
                   break
         return random_str
     
-    @property
-    def current_user_session(self):
+    @classmethod
+    def current_user_session(cls):
         return memcache.temp_memory_get('_current_user_session')
     
     @classmethod
     def login_from_authorization_code(cls, auth):
-        
-        if not auth:
-           return
+ 
         try:
            user_key, session_id = auth.split('|')
         except:
-           # fail silently if the cookie is not set properly. 
+           # fail silently if the authorization code is not set properly, or its corrupted somehow
            return
         
         if not session_id:
+           # fail silently if the session id is not found in the split sequence
            return
         
         user = ndb.Key(urlsafe=user_key).get()
@@ -197,8 +195,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
            session = user.session_by_id(session_id)
            if session:
               User.set_current_user(user, session)
-              
-              
+               
     def has_identity(self, identity_id):
         for i in self.identities:
             if i.identity == identity_id:
@@ -285,10 +282,10 @@ class User(ndb.BaseExpando, ndb.Workflow):
         def transaction():
              
             if self.is_guest:
-               return response.status('already_logged_out')
+               return response.error('login', 'already_logged_in')
            
             if not self.logout_code == kwds.get('code'):
-               return response.status('invalid_code')
+               return response.error('login', 'invalid_code')
          
             if self.sessions:
                self.sessions = []
@@ -312,6 +309,15 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     @classmethod
     def login(cls, **kwds):
+        
+      """
+        kwds:
+        - logn_method
+        - redirect_uri
+        - code
+        - error
+        - ip
+      """  
         
       response = ndb.Response() 
        
@@ -354,52 +360,51 @@ class User(ndb.BaseExpando, ndb.Workflow):
                
                if usr and usr.get_state != 'su_active':
                   return response.error('user', 'user_not_active')
-        
+    
                # non ancestor queries cannot be run inside transactions
                # transactions may have arguments because of http://stackoverflow.com/a/5219055/376238  
                @ndb.transactional(xg=True)
                def transaction(usr): 
-            
-                   if not usr and current_user:
+    
+                  if not usr:
                       usr = current_user
                         
-                      if not usr.is_guest:
-                           if email not in usr.emails:
-                              usr.emails.append(email)
-                       
-                           if not usr.has_identity(identity_id):
-                              usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
-                              
-                           session = usr.new_session()
-                           response['session'] = session
-                           usr.put()
-                           usr.new_action('update', agent=usr.key)
-                        
-                      else:
-                          new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
-                          usr = new_user.get('user')
-                          session = new_user.get('session')
-                        
-                      response['authorization_code'] = usr.generate_authorization_code(session)
-                        
-                      usr.record_ip(kwds.get('ip'))
-                      usr.new_action('login', agent=usr.key)
-                      
-                      # records all invoked actions
-                      usr.record_action() 
-                      
-                      response.status(usr)
+                  if not usr.is_guest:
+                       if email not in usr.emails:
+                          usr.emails.append(email)
+                   
+                       if not usr.has_identity(identity_id):
+                          usr.identities.append(Identity(identity=identity_id, email=email, primary=False))
+                          
+                       session = usr.new_session()
+                       response['session'] = session
+                       usr.put()
+                       usr.new_action('update', agent=usr.key)
+                    
+                  else:
+                      new_user = cls.register(email=email, identity_id=identity_id, do_not_record=True, create_session=True)
+                      usr = new_user.get('user')
+                      session = new_user.get('session')
+                    
+                  response['authorization_code'] = usr.generate_authorization_code(session)
+                    
+                  usr.record_ip(kwds.get('ip'))
+                  usr.new_action('login', agent=usr.key)
+                  
+                  cls.set_current_user(usr, session)
+                 
+                  response.status(usr)
                try:    
-                   transaction(usr)
+                  transaction(usr)
                except Exception as e:
-                   response.transaction_error(e)  
+                  response.transaction_error(e)  
             else:
                response.error('oauth2_error', 'failed_data_fetch')
          else:
             response['authorization_url'] = cli.get_authorization_code_uri()
       else:
          response.error('login_method', 'invalid_login_method')
-   
+ 
       return response
     
     @classmethod
@@ -460,5 +465,49 @@ class Role(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }  
+    
+    
+    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+  
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.validate_input(kwds, cls)
+            
+            if response.has_error():
+               return response
+           
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.loaded():
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity):
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
  
     
