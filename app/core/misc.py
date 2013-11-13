@@ -8,12 +8,13 @@ from app import ndb
 
 # done 80%, support request needs work
 
+
 class Content(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 14
     # root
     # composite index: ancestor:no - category,active,sequence
-    updated = ndb.SuperDateTimeProperty('1', auto_now=True, required=True)
+    updated = ndb.SuperDateTimeProperty('1', auto_now=True)
     title = ndb.SuperStringProperty('2', required=True)
     category = ndb.SuperIntegerProperty('3', required=True)
     body = ndb.SuperTextProperty('4', required=True)
@@ -109,7 +110,8 @@ class Country(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
-    def import_countries(cls, **kwds):
+    def import_countries_and_subdivisions(cls, **kwds):
+        
         url = 'https://raw.github.com/tryton/country/develop/country.xml'
         
         from xml.etree import ElementTree
@@ -121,9 +123,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         root = tree.findall('data')
         
         response = ndb.Response()
-        
-        response['countries'] = []
-        
+         
         for child in root[1]:
             dat = dict()
             dat['id'] = child.attrib['id']
@@ -134,13 +134,9 @@ class Country(ndb.BaseModel, ndb.Workflow):
                
                 if child2.text:
                    dat[name] = child2.text
-                
-            #response['countries'].append(dat)
-            res = cls.manage(name=dat['name'], id=dat['id'], code=dat['code'], active=True)
-            response['country'].append(res)
-            
-        response['subdivisions'] = []
         
+            cls.manage(name=dat['name'], id=dat['id'], code=dat['code'], active=True)
+         
         for child in root[2]:
         
             dat = dict()
@@ -154,19 +150,17 @@ class Country(ndb.BaseModel, ndb.Workflow):
                 if 'ref' in child2.attrib:
                     dat[k] = child2.attrib['ref']
             
-            kw = dict(name=dat['name'], id=dat['id'], type=dat['type'], code=dat['code'])
+            kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 'unknown'), code=dat['code'], active=True)
             
             if 'country' in dat:
-                kw['parent'] = ndb.Key(Country, dat['parent'])
+                kw['parent'] = ndb.Key(Country, dat['country'])
                 
             if 'parent' in dat:
                 kw['parent_record'] = ndb.Key(CountrySubdivision, dat['parent'])
              
-            res = CountrySubdivision.manage(**kw)        
-            response['subdivisions'].append(res)
-            
- 
-        return response
+            CountrySubdivision.manage(**kw) 
+  
+        return response.status('ok')
         
     
     @classmethod
@@ -226,6 +220,96 @@ class Country(ndb.BaseModel, ndb.Workflow):
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
 class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     
+    TYPES = {
+        'unknown' : 1,
+        'municipalities': 81,
+        'included for completeness': 36,
+        'autonomous municipality': 53,
+        'overseas region/department': 33,
+        'london borough': 38,
+        'commune': 21,
+        'two-tier county': 37,
+        'district council area': 42,
+        'municipality': 10,
+        'arctic region': 70,
+        'entity': 12,
+        'county': 5,
+        'metropolitan region': 32,
+        'capital territory': 69,
+        'unitary authority (wales)': 44,
+        'overseas territorial collectivity': 34,
+        'rayon': 11,
+        'borough': 82,
+        'economic region': 61,
+        'chains (of islands)': 66,
+        'autonomous republic': 9,
+        'administrative region': 46,
+        'autonomous district': 78,
+        'city': 6,
+        'city with county rights': 49,
+        'outlying area': 84,
+        'capital metropolitan city': 57,
+        'district': 13,
+        'federal district': 19,
+        'development region': 71,
+        'parish': 1,
+        'capital city': 50,
+        'autonomous sector': 48,
+        'administration': 31,
+        'federal territories': 68,
+        'canton': 25,
+        'area': 75,
+        'state': 7,
+        'republic': 76,
+        'indigenous region': 73,
+        'department': 17,
+        'territorial unit': 64,
+        'territory': 8,
+        'union territory': 52,
+        'republican city': 59,
+        'council area': 41,
+        'province': 3,
+        'division': 14,
+        'emirate': 2,
+        'quarter': 62,
+        'island council': 83,
+        'island group': 54,
+        'geographical region': 28,
+        'metropolitan cities': 58,
+        'governorate': 16,
+        'popularates': 60,
+        'metropolitan district': 39,
+        'capital district': 24,
+        'local council': 67,
+        'special island authority': 72,
+        'self-governed part': 47,
+        'autonomous region': 26,
+        'federal dependency': 85,
+        'autonomous city': 30,
+        'prefecture': 22,
+        'autonomous province': 65,
+        'special municipality': 18,
+        'autonomous territorial unit': 63,
+        'autonomous community': 29,
+        'administrative territory': 77,
+        'country': 35,
+        'region': 15,
+        'economic prefecture': 23,
+        'oblast': 20,
+        'geographical unit': 51,
+        'dependency': 4,
+        'special zone': 45,
+        'special administrative region': 27,
+        'island': 55,
+        'town council': 79,
+        'geographical entity': 80,
+        'city corporation': 40,
+        'unitary authority (england)': 43,
+        'constitutional province': 74,
+        'special city': 56
+    }
+    
+        
     KIND_ID = 16
     
     # ancestor Country
@@ -650,7 +734,7 @@ class BillingCreditAdjustment(ndb.BaseModel):
     
     # root (namespace Domain)
     # not logged
-    adjusted = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
+    adjusted = ndb.SuperDateTimeProperty('2', auto_now_add=True, indexed=False)
     agent = ndb.SuperKeyProperty('3', kind='app.core.acl.User', required=True, indexed=False)
     amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
     message = ndb.SuperTextProperty('5')# soft limit 64kb - to determine char count
@@ -674,8 +758,8 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.SuperStringProperty('1', required=True, indexed=False)
     state = ndb.SuperIntegerProperty('2', required=True)
-    updated = ndb.SuperDateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.SuperDateTimeProperty('4', auto_now_add=True, required=True)
+    updated = ndb.SuperDateTimeProperty('3', auto_now=True)
+    created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
  
     
     OBJECT_DEFAULT_STATE = 'new'
@@ -724,8 +808,8 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.SuperStringProperty('1', required=True, indexed=False)
     state = ndb.SuperIntegerProperty('2', required=True)
-    updated = ndb.SuperDateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.SuperDateTimeProperty('4', auto_now_add=True, required=True)
+    updated = ndb.SuperDateTimeProperty('3', auto_now=True)
+    created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
  
     
     OBJECT_DEFAULT_STATE = 'new'

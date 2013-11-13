@@ -445,7 +445,7 @@ class IPAddress(ndb.BaseModel):
     # ancestor User
     # not logged
     # ako budemo radili per user istragu loga onda nam treba composite index: ancestor:yes - logged:desc
-    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
     ip_address = ndb.SuperStringProperty('2', required=True, indexed=False)
  
 class Role(ndb.BaseModel, ndb.Workflow):

@@ -147,11 +147,13 @@ def compile_admin_permissions(*args):
     return compile_permissions('admin', *args)
 
 class _BaseModel(Model):
-  
-  __original_values = {}
+ 
+  __tmp = {} #-- this property is used to store all values that will live inside one entity instance.
   
   def __init__(self, *args, **kwds):
-      self.__original_values = {}
+      self.__tmp = {}
+      self.register_tmp('original_values', {})
+      
       super(_BaseModel, self).__init__(*args, **kwds)
   
   def __todict__(self):
@@ -171,6 +173,26 @@ class _BaseModel(Model):
              dic[k] = v.urlsafe()
          
       return dic
+   
+   
+  def set_tmp(self, k, v):
+      if k not in self.__tmp:
+         raise Exception('%s key was not registered inside temp' % k)
+      else:
+        self.__tmp[k] = v
+ 
+  def register_tmp(self, k, v=None):
+      """
+         Registers a variable by key
+      """
+      if k not in self.__tmp:
+         if v is None:
+             return None
+         else:
+             self.__tmp[k] = v
+        
+         
+      return self.__tmp[k]
   
   @classmethod
   def get_current_user(cls):
@@ -217,7 +239,8 @@ class _BaseModel(Model):
          
       if expect is not False:   
           for i in expect:
-              datasets[i] = dataset.get(i)
+              if i in dataset:
+                 datasets[i] = dataset.get(i)
       else:
           datasets = dataset.copy()
      
@@ -285,11 +308,13 @@ class _BaseModel(Model):
          check = pyson.PYSONDecoder(environ).decode(encoded)
          if not check:
             # if the evaluation is not true, set the original values because new value is not allowed to be set
-            prop._set_value(self, self.__original_values.get(prop._name))
+            prop._set_value(self, self.register_tmp('original_values').get(prop._name))
     
   def set_original_values(self):
+      pack = dict()
       for p in self._properties:
-          self.__original_values[p] = self._properties[p]._get_value(self)
+          pack[p] = self._properties[p]._get_value(self)
+      self.set_tmp('original_values', pack)
  
   @classmethod
   def _get_kind(cls):
@@ -620,13 +645,7 @@ class Workflow():
       OBJECT_STATES = {}
       OBJECT_TRANSITIONS = {}
       OBJECT_ACTIONS = {}
-      
-      __record_action = []
-      
-      def __init__(self, *args, **kwds):
-          self.__record_action = []
-          super(Workflow, self).__init(*args, **kwds)
-          
+        
       @classmethod
       def generate_public_permissions(cls):
         # by default it wont return permissions who start with `sudo`
@@ -723,6 +742,7 @@ class Workflow():
            - set agent as current user if not provided
            - log `self` object if its not provided otherwise (log_object=False)
           """
+          self.register_tmp('record_actions', [])
           
           if state is not None: # if state is unchanged, no checks for transition needed?
               self.check_transition(state, action)
@@ -754,20 +774,24 @@ class Workflow():
           if obj:
              objlog.log_object(obj)
           
-          self.__record_action.append(objlog)
+          self.register_tmp('record_actions').append(objlog)
  
           return objlog
       
       
       def record_action(self, skip_check=False):
           # records any actions that are stored by `new_action`
-          any_actions = len(self.__record_action)
+          records = self.register_tmp('record_actions')
+          if records is None:
+             return list()
+         
+          any_actions = len(records)
           if not any_actions and not skip_check:
              raise WorkflowActionNotReadyError('This entity did not have any self.new_action() called')
           
           if any_actions:
-             recorded = put_multi(self.__record_action)
-             self.__record_action = []
+             recorded = put_multi(records)
+             self.set_tmp('record_actions', [])
              return recorded
           else:
              return list()

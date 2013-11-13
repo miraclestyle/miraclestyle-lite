@@ -50,13 +50,13 @@ class Order(ndb.BaseExpando, ndb.Workflow):
     # ancestor:no - state,updated:desc; ancestor:no - state,order_date:desc
     # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
     store = ndb.SuperKeyProperty('1', kind='app.domain.sale.Store', required=True)
-    order_date = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True)# updated on checkout / or on completed ?
+    order_date = ndb.SuperDateTimeProperty('2', auto_now_add=True)# updated on checkout / or on completed ?
     currency = ndb.SuperLocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
     tax_amount = ndb.SuperDecimalProperty('5', required=True, indexed=False)
     total_amount = ndb.SuperDecimalProperty('6', required=True)
     state = ndb.SuperIntegerProperty('7', required=True) 
-    updated = ndb.SuperDateTimeProperty('8', auto_now=True, required=True)
+    updated = ndb.SuperDateTimeProperty('8', auto_now=True)
     _default_indexed = False
  
     # Expando
@@ -135,13 +135,13 @@ class BillingOrder(ndb.BaseExpando):
     # http://doc.tryton.org/2.8/modules/sale/doc/index.html
     # http://doc.tryton.org/2.8/modules/purchase/doc/index.html
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/sale/sale.py#L48
-    order_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True, indexed=False)# updated on checkout
+    order_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, indexed=False)# updated on checkout
     currency = ndb.SuperLocalStructuredProperty(OrderCurrency, '2', required=True)
     untaxed_amount = ndb.SuperDecimalProperty('3', required=True, indexed=False)
     tax_amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)
     total_amount = ndb.SuperDecimalProperty('5', required=True, indexed=False)
     state = ndb.SuperIntegerProperty('6', required=True, indexed=False) 
-    updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True, indexed=False)
+    updated = ndb.SuperDateTimeProperty('7', auto_now=True, indexed=False)
     
     _default_indexed = False
  
@@ -251,8 +251,8 @@ class OrderFeedback(ndb.BaseModel, ndb.Workflow):
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     state = ndb.SuperIntegerProperty('1', required=True, indexed=False)
-    updated = ndb.SuperDateTimeProperty('2', auto_now=True, required=True)
-    created = ndb.SuperDateTimeProperty('3', auto_now_add=True, required=True)
+    updated = ndb.SuperDateTimeProperty('2', auto_now=True)
+    created = ndb.SuperDateTimeProperty('3', auto_now_add=True)
  
     OBJECT_DEFAULT_STATE = 'none'
     

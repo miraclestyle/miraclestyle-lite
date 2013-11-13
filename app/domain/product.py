@@ -97,7 +97,7 @@ class InventoryLog(ndb.BaseModel, ndb.Workflow):
     # idempotency je moguc ako se pre inserta proverava da li postoji record sa id-jem reference_key
     # not logged
     # composite index: ancestor:yes - logged:desc
-    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
     quantity = ndb.SuperDecimalProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     balance = ndb.SuperDecimalProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
 
@@ -108,7 +108,7 @@ class InventoryAdjustment(ndb.BaseModel, ndb.Workflow):
     
     # ancestor DomainProductInstance (namespace Domain)
     # not logged ?
-    adjusted = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
+    adjusted = ndb.SuperDateTimeProperty('1', auto_now_add=True, indexed=False)
     agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True, indexed=False)
     quantity = ndb.SuperDecimalProperty('3', required=True, indexed=False)
     comment = ndb.SuperStringProperty('4', required=True, indexed=False)

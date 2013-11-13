@@ -38,7 +38,7 @@ class PayPalTransactionLog(ndb.BaseExpando, ndb.Workflow):
     # ancestor Order, BillingOrder
     # not logged
     # ako budemo radili analizu sa pojedinacnih ordera onda nam treba composite index: ancestor:yes - logged:desc
-    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+    logged = ndb.SuperDateTimeProperty('1', auto_now_add=True)
     txn_id = ndb.SuperStringProperty('2', required=True)
     
     _default_indexed = False

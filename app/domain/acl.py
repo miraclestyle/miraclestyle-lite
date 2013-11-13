@@ -16,8 +16,8 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
     # composite index: ancestor:no - state,name
     name = ndb.SuperStringProperty('1', required=True)
     primary_contact = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True, indexed=False)
-    updated = ndb.SuperDateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.SuperDateTimeProperty('4', auto_now_add=True, required=True)
+    updated = ndb.SuperDateTimeProperty('3', auto_now=True)
+    created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
     state = ndb.SuperIntegerProperty('5', required=True)
     
     _default_indexed = False
@@ -77,6 +77,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         response = ndb.Response()
         
         # test the query and data
+ 
         
         items = []
         
