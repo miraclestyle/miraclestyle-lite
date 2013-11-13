@@ -241,6 +241,11 @@ class _BaseModel(Model):
           for i in expect:
               if i in dataset:
                  datasets[i] = dataset.get(i)
+              else:
+                 gets = getattr(cls, 'default_%s' % i, None)
+                 if gets is not None:
+                    datasets[i] = gets()
+                    
       else:
           datasets = dataset.copy()
      
@@ -379,6 +384,47 @@ class _BaseModel(Model):
         except Exception as e:
            response.transaction_error(e)
            
+        return response 
+    
+  @classmethod
+  def manage(cls, **kwds):
+        
+        response = Response()
+    
+        @transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.validate_input(kwds, cls)
+            
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity and entity.loaded():
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
         return response 
 
 class BaseModel(_BaseModel):

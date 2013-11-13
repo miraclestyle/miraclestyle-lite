@@ -793,7 +793,96 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
            'to'   : ('su_duplicate', 'su_accepted', 'su_dismissed',),
         },
     }
+
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.validate_input(kwds, cls)
+            
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds)
+      
+            if not entity or not entity.loaded():
+               if not current.is_guest: 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response 
   
+    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
+    @classmethod
+    def sudo(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        @ndb.transactional(xg=True) 
+        def transaction(): 
+            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            if entity and entity.loaded():
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('sudo', entity):
+                      state = kwds.get('state')
+                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.put()
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   return response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)   
+               
+        return response
+    
+    @classmethod
+    def log_message(cls, **kwds):
+        
+        response = ndb.Response()
+         
+        @ndb.transactional(xg=True)  
+        def transaction(): 
+            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            if entity and entity.loaded():
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('log_message', entity):
+                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   return response.not_authorized()
+            else:
+                response.not_found()
+                
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+               
+        return response
 
 # done! - sudo kontrolisan model
 class SupportRequest(ndb.BaseModel, ndb.Workflow):
@@ -847,4 +936,140 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
            'to'   : ('closed',),
         },
     }
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        
+        response['items'] = cls.query().order(-cls.created).fetch()
+        
+        return response
+  
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+     
+            response.validate_input(kwds, cls, only=('reference',))
+            
+            if response.has_error():
+               return response
+            
+            entity = cls.get_or_prepare(kwds, parent=current.key)
+      
+            if not entity or not entity.loaded():
+               if not current.is_guest:
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response 
+  
+    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
+    @classmethod
+    def sudo(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        @ndb.transactional(xg=True) 
+        def transaction(): 
+            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            if entity and entity.loaded():
+               # check if user can do this
+               current = cls.get_current_user()
+               if current.has_permission('sudo', entity):
+                      state = kwds.get('state')
+                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.put()
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   return response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)   
+               
+        return response
+    
+    @classmethod
+    def log_message(cls, **kwds):
+        
+        response = ndb.Response()
+         
+        @ndb.transactional(xg=True)  
+        def transaction(): 
+            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            if entity and entity.loaded():
+               # check if user can do this
+               current = cls.get_current_user()
+              
+               if entity.get_state not in ('new', 'su_opened'):
+                  return response.not_authorized()
+              
+               if current.has_permission('log_message', entity):
+                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   return response.not_authorized()
+            else:
+                response.not_found()
+                
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+               
+        return response
+    
+    @classmethod
+    def close(cls, **kwds):
+        
+        response = ndb.Response()
+         
+        @ndb.transactional(xg=True)
+        def transaction(): 
+            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            if entity and entity.loaded():
+               # check if user can do this
+               current = cls.get_current_user()
+               """
+               su_opened
+               su_awaiting_closure
+               """
+               if entity.get_state not in ('su_opened', 'su_awaiting_closure'):
+                  return response.not_authorized()
+               
+               if current.has_permission('close', entity) or current.key == entity.key.parent():
+                      entity.new_action('close', state='closed', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.put()
+                      entity.record_action()
+                      response.status(entity)
+               else:
+                   return response.not_authorized()
+            else:
+                response.not_found()
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)   
+                       
+        return response
    
