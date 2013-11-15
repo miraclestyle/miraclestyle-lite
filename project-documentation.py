@@ -468,47 +468,48 @@ class Company(ndb.Expando):
 ################################################################################
 
 # done! - sudo kontrolisan model
-class Store(ndb.Expando):
+class Company(ndb.Expando):
     
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
-    name = ndb.StringProperty('1', required=True)
-    logo = blobstore.BlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
-    updated = ndb.DateTimeProperty('3', auto_now=True, required=True)
-    created = ndb.DateTimeProperty('4', auto_now_add=True, required=True)
-    state = ndb.IntegerProperty('5', required=True)
+    parent_record = ndb.KeyProperty('1', kind=Company, indexed=False)
+    name = ndb.StringProperty('2', required=True)
+    logo = blobstore.BlobKeyProperty('3', required=True)# blob ce se implementirati na GCS
+    updated = ndb.DateTimeProperty('4', auto_now=True, required=True)
+    created = ndb.DateTimeProperty('5', auto_now_add=True, required=True)
+    state = ndb.IntegerProperty('6', required=True)
     _default_indexed = False
     pass
     #Expando
     #
     # Company
-    # company_name = ndb.StringProperty('6', required=True)
-    # company_country = ndb.KeyProperty('7', kind=Country, required=True)
-    # company_region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # company_region = ndb.StringProperty('9', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # company_city = ndb.StringProperty('10', required=True)
-    # company_postal_code = ndb.StringProperty('11', required=True)
-    # company_street_address = ndb.StringProperty('12', required=True)
-    # company_street_address2 = ndb.StringProperty('13')
-    # company_email = ndb.StringProperty('14')
-    # company_telephone = ndb.StringProperty('15')
+    # country = ndb.KeyProperty('7', kind=Country, required=True)
+    # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # region = ndb.StringProperty('9', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+    # city = ndb.StringProperty('10', required=True)
+    # postal_code = ndb.StringProperty('11', required=True)
+    # street_address = ndb.StringProperty('12', required=True)
+    # street_address2 = ndb.StringProperty('13')
+    # email = ndb.StringProperty('14')
+    # telephone = ndb.StringProperty('15')
+    # tax_id = ndb.StringProperty('16')
     #
     # Payment
-    # currency = ndb.KeyProperty('16', kind=Currency, required=True)
+    # currency = ndb.KeyProperty('17', kind=Currency, required=True)
     # tax_buyer_on ?
-    # paypal_email = ndb.StringProperty('17')
+    # paypal_email = ndb.StringProperty('18')
     # paypal_shipping ?
     #
     # Analytics 
-    # tracking_id = ndb.StringProperty('18')
+    # tracking_id = ndb.StringProperty('19')
     #
     # Feedback
-    # feedbacks = ndb.LocalStructuredProperty(StoreFeedback, '19', repeated=True)# soft limit 120x
+    # feedbacks = ndb.LocalStructuredProperty(CompanyFeedback, '20', repeated=True)# soft limit 120x
     #
     # Shipping Exclusion Settings
     # Shipping everywhere except at the following locations: location_exclusion = False
     # Shipping only at the following locations: location_exclusion = True
-    # location_exclusion = ndb.BooleanProperty('20', default=False)
+    # location_exclusion = ndb.BooleanProperty('21', default=False)
     
     
     _KIND = 0
@@ -620,7 +621,7 @@ class Store(ndb.Expando):
         object_log.put()
 
 # done!
-class StoreFeedback(ndb.Model):
+class CompanyFeedback(ndb.Model):
     
     # LocalStructuredProperty model
     # ovaj model dozvoljava da se radi feedback trending per month per year
@@ -635,9 +636,9 @@ class StoreFeedback(ndb.Model):
     neutral_feedback_count = ndb.IntegerProperty('5', required=True, indexed=False)
 
 # done!
-class StoreContent(ndb.Model):
+class CompanyContent(ndb.Model):
     
-    # ancestor DomainStore (Catalog, for caching) (namespace Domain)
+    # ancestor Company (Catalog, for caching) (namespace Domain)
     # composite index: ancestor:yes - sequence
     title = ndb.StringProperty('1', required=True)
     body = ndb.TextProperty('2', required=True)
@@ -685,9 +686,9 @@ class StoreContent(ndb.Model):
         store_content_key.delete()
 
 # done!
-class StoreShippingExclusion(Location):
+class CompanyShippingExclusion(Location):
     
-    # ancestor DomainStore (DomainCatalog, for caching) (namespace Domain)
+    # ancestor Comapny (DomainCatalog, for caching) (namespace Domain)
     # ovde bi se indexi mozda mogli dobro iskoristiti?
     
     _KIND = 0
