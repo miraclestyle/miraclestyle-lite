@@ -258,6 +258,9 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                kwds['state'] = cls.resolve_state_code_by_name(kwds['state'])
                
             entity = cls.get_or_prepare(kwds, only=('name',))
+            
+            if entity is None:
+               return response.not_found()
         
             if not entity or not entity.loaded(): # if entity is not found or its a new one
                entity.primary_contact = current.key
@@ -401,6 +404,9 @@ class Role(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                return response
          
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
      

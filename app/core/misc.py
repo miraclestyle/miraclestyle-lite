@@ -47,6 +47,9 @@ class Content(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -190,6 +193,9 @@ class Country(ndb.BaseModel, ndb.Workflow):
                return response
            
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -352,6 +358,9 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -436,6 +445,9 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -498,6 +510,9 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -569,6 +584,9 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -653,6 +671,9 @@ class Currency(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                if current.has_permission('update', entity):
@@ -810,6 +831,9 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
       
             if not entity or not entity.loaded():
                if not current.is_guest: 
@@ -961,6 +985,9 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds, parent=current.key)
+            
+            if entity is None:
+               return response.not_found()
       
             if not entity or not entity.loaded():
                if not current.is_guest:

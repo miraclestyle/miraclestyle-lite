@@ -80,6 +80,9 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                return response
   
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
  
@@ -218,6 +221,9 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                return response
   
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
  
@@ -372,6 +378,9 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                return response
   
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
  
@@ -623,6 +632,9 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
  
                    
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                 
@@ -749,6 +761,9 @@ class CompanyShippingExclusion(Location, ndb.Workflow):
  
                    
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
                 
@@ -886,6 +901,9 @@ class Tax(ndb.BaseExpando, ndb.Workflow):
                return response
   
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
             if entity and entity.loaded():
  

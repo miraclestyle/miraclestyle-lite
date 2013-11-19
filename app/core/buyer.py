@@ -77,12 +77,18 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                return response       
     
             entity = cls.get_or_prepare(kwds, parent=current.key)
+            
+            if entity is None:
+               return response.not_found()
       
             if entity and entity.loaded():
                # update
-               entity.put()
-               entity.new_action('update')
-               entity.record_action()
+               if current.key == entity.key.parent():
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                  return response.not_authorized()
             else:
                # create
                entity.put()
@@ -180,6 +186,9 @@ class Collection(ndb.BaseModel, ndb.Workflow):
                 
                 # we internally set primary_email, not from user input    
                 entity.primary_email = current.primary_email
+                
+                if entity is None:
+                    return response.not_found()
         
                 if entity and entity.loaded():
     
@@ -303,6 +312,9 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
                return response
             
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
             
             collection_keys = kwds.get('collections')
             store_key = kwds.get('store')

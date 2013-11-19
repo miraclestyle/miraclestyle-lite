@@ -485,8 +485,11 @@ class Role(ndb.BaseModel, ndb.Workflow):
                return response
            
             entity = cls.get_or_prepare(kwds)
+            
+            if entity is None:
+               return response.not_found()
              
-            if entity and entity.loaded():
+            if entity.loaded():
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
