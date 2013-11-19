@@ -49,7 +49,7 @@ class Order(ndb.BaseExpando, ndb.Workflow):
     # ancestor:no - store,state,updated:desc; ancestor:no - store,state,order_date:desc
     # ancestor:no - state,updated:desc; ancestor:no - state,order_date:desc
     # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
-    store = ndb.SuperKeyProperty('1', kind='app.domain.sale.Store', required=True)
+    company = ndb.SuperKeyProperty('1', kind='app.domain.sale.Company', required=True)
     order_date = ndb.SuperDateTimeProperty('2', auto_now_add=True)# updated on checkout / or on completed ?
     currency = ndb.SuperLocalStructuredProperty(OrderCurrency, '3', required=True)
     untaxed_amount = ndb.SuperDecimalProperty('4', required=True, indexed=False)

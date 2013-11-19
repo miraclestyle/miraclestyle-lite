@@ -14,7 +14,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow):
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     # composite index: ???
-    store = ndb.KeyProperty('1', kind='domain.sale.Store', required=True)
+    company = ndb.KeyProperty('1', kind='domain.sale.Company', required=True)
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days

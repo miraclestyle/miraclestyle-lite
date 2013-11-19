@@ -319,7 +319,7 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     # composite index: ancestor:yes - name; ancestor:yes - active,name
     
     #  kind='app.core.misc.CountrySubdivision',
-    parent_record = ndb.SuperKeyProperty('1', indexed=False)
+    parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
     
     code = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.SuperStringProperty('3', required=True)
@@ -405,7 +405,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
     # composite index: ancestor:no - status,name
     
     #  kind='app.core.misc.ProductCategory',
-    parent_record = ndb.SuperKeyProperty('1', indexed=False)
+    parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     complete_name = ndb.SuperTextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
     status = ndb.SuperIntegerProperty('4', required=True)

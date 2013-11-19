@@ -8,7 +8,33 @@ from app import ndb
 
 # acl domain is 90% done.
 
+class NamespaceDomain():
+    """
+    This class should be inherited on all domain specific models,
+    because it contains some hepler methods for the domain handling
+    """
+    
+    @property
+    def get_domain(self):
+        # this will throw error if the namespace is not set
+        k = ndb.Key(urlsafe=self.key.namespace())
+        return k.get()
+    
+    @property
+    def domain_is_active(self):
+        dom = self.get_domain
+        if dom:
+           return dom.is_active
+        else:
+           return None
+        
+        
 class Domain(ndb.BaseExpando, ndb.Workflow):
+    
+    # domain will use in-memory cache and memcache
+    
+    _use_cache = True
+    _use_memcache = True
     
     KIND_ID = 6
     
@@ -62,6 +88,10 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
            'to'   : ('su_suspended',),
         },
     }
+    
+    @property
+    def is_active(self):
+        return self.get_state == 'active'
     
     @classmethod
     def generate_public_permissions(cls):
@@ -253,10 +283,10 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                                                       product.Variant,
                                                       sale.Carrier,
                                                       sale.CarrierLine,
-                                                      sale.Store,
-                                                      sale.StoreContent,
-                                                      sale.StoreFeedback,
-                                                      sale.StoreShippingExclusion,
+                                                      sale.Company,
+                                                      sale.CompanyContent,
+                                                      sale.CompanyFeedback,
+                                                      sale.CompanyShippingExclusion,
                                                       sale.Tax,
                                                       )
                 
@@ -301,7 +331,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         return response
                 
                 
-class Role(ndb.BaseModel, ndb.Workflow):
+class Role(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
     # root (namespace Domain)
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
@@ -320,7 +350,40 @@ class Role(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  
+                  if not entity.domain_is_active:
+                     return response.error('domain', 'not_active')
+      
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
     @classmethod
     def manage(cls, **kwds):
@@ -332,23 +395,18 @@ class Role(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key)])
+            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True)])
           
             if response.has_error():
                return response
-           
-              
-            # this must be domain otherwise it must throw err
-            domain = kwds.get('domain').get()
-            
-            if domain is None:
-               return response.not_found()
-           
-            domain_namespace = domain.key.urlsafe()
-            
-            entity = cls.get_or_prepare(kwds, namespace=domain_namespace)
+         
+            entity = cls.get_or_prepare(kwds)
              
             if entity and entity.loaded():
+     
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+                
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -356,7 +414,13 @@ class Role(ndb.BaseModel, ndb.Workflow):
                else:
                    return response.not_authorized()
             else:
-               if current.has_permission('create', entity, namespace=domain_namespace): 
+ 
+               entity = cls.get_or_prepare(kwds, namespace=kwds.get('domain').urlsafe())
+     
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+                
+               if current.has_permission('create', entity): 
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -375,7 +439,7 @@ class Role(ndb.BaseModel, ndb.Workflow):
         
      
      
-class User(ndb.BaseExpando, ndb.Workflow):
+class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     # root (namespace Domain) - id = str(user_key.id())
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
@@ -448,7 +512,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
                if not current.has_permission('invite', domain, namespace=domain_namespace):
                   return response.not_authorized()
               
-               if domain.get_state != 'active':
+               if not domain.is_active:
                   return response.error('domain', 'not_active')
                 
                roles = []
@@ -502,7 +566,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
             
             if domain and usr:
                 
-               if domain.get_state != 'active':
+               if not domain.is_active:
                   return response.error('domain', 'not_active') 
                 
                if current.has_permission('remove', usr) or usr.key == current.key:
@@ -558,7 +622,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
             
             if domain and usr:
                 
-               if domain.get_state != 'active':
+               if not domain.is_active:
                   return response.error('domain', 'not_active') 
               
                if usr.get_state == 'accepted':
@@ -615,6 +679,10 @@ class User(ndb.BaseExpando, ndb.Workflow):
             if domain_user_key:
                    domain_user, domain = ndb.get_multi([domain_user_key, ndb.Key(urlsafe=domain_user_key.namespace())])
                    if domain_user and domain:
+                      
+                      if not domain.is_active:
+                         return response.error('domain', 'not_active')
+                       
                       if current.has_permission('update', domain_user):
                          domain_user.name = kwds.get('name')
                          old_roles = domain_user.roles

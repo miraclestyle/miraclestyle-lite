@@ -15,6 +15,7 @@ ctx = get_context()
 
 # memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
 ctx.set_memcache_policy(False)
+ctx.set_cache_policy(False)
 
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
@@ -72,6 +73,18 @@ class Formatter():
            return [bool(int(v)) for v in value]
         else:
            return bool(int(value))
+       
+    @classmethod
+    def blobfile(cls, prop, value):
+        # the provided file must have `read` file-like interface
+        value = cls._value(prop, value)
+        if prop._repeated:
+           for v in value:
+               getattr(v, 'read')
+           return value
+        else:
+           getattr(value, 'read') 
+           return value
     
     @classmethod
     def decimal(cls, prop, value):
@@ -145,6 +158,15 @@ def compile_public_permissions(*args):
 
 def compile_admin_permissions(*args):
     return compile_permissions('admin', *args)
+
+class GcsFileApi():
+ 
+      def __init__(self, data):
+          self.data = {}
+          self.blob = data
+      
+      def to_datastore(self):
+          pass
 
 class _BaseModel(Model):
  
@@ -437,8 +459,7 @@ class BaseModel(_BaseModel):
         entity = super(_BaseModel, cls)._from_pb(*args, **kwargs)
         entity.set_original_values()
         return entity
-
-
+ 
   
 class BaseExpando(_BaseModel, Expando):
     """
@@ -535,6 +556,7 @@ class _BaseProperty(object):
         self._max_size = kwds.pop('max_size', self._max_size)
         
         custom_kind = kwds.get('kind')
+  
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
            kwds['kind'] = factory(custom_kind)
             
@@ -577,8 +599,12 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
     pass
+
+class SuperJsonProperty(_BaseProperty, JsonProperty):
+    pass
   
 class SuperDecimalProperty(SuperStringProperty):
+    
     """Decimal property that accepts only `decimal.Decimal`"""
     
     def _validate(self, value):
@@ -593,7 +619,7 @@ class SuperDecimalProperty(SuperStringProperty):
 
       
 class SuperReferenceProperty(SuperKeyProperty):
-      
+    
     """Replicated property from `db` module"""
       
     def _validate(self, value):
@@ -605,12 +631,26 @@ class SuperReferenceProperty(SuperKeyProperty):
     
     def _from_base_type(self, value):
         return value.get()
+    
+class SuperImageGCSProperty(SuperJsonProperty):
+ 
+    def _validate(self, value):
+        if not hasattr(value, 'read'):
+           raise TypeError('expected an file-like object, got %s' % repr(value))
+ 
+    def _to_base_type(self, value):
+        return value.key
+    
+    def _from_base_type(self, value):
+        return value.get()
+    
+    
 
 class SuperRelationProperty(dict):
-    """
-      ################################################################################################   
-      ##### This property is not yet tested and yet to be decided whether should be used anyway! #####
-      ################################################################################################
+    
+    """ 
+      !!This property is not yet tested and yet to be decided whether should be used anyway!
+ 
       This is a fake property that will `not` be stored in datastore,
        it only represents on what one model can depend. Like so
        
@@ -626,6 +666,7 @@ class SuperRelationProperty(dict):
        
        This property only accepts model that needs validation, otherwise it will accept any value provided
     """
+    
     def __get__(self, entity):
         """Descriptor protocol: get the value on the entity."""
         return self.model
@@ -938,7 +979,7 @@ class Response(dict):
         """
           This method is used to format, and validate the user input based on the model property definition. 
           Accepts:
-          kwds: dict with unformatted data. This dict must be mutable in order for kwds to be formatted.
+          kwds: dict with unformatted data. Value can be immutable
           obj: `cls` or model class
           **kwargs: skip: skips only the defined field names for validation
                     only: only formats specified field names for validation
@@ -958,12 +999,8 @@ class Response(dict):
           
           data = {'name' : 52}
           response.validate_input(data, Test)
-   
-          the formatter will adjust the dict to
-          
-          data = {'name' : '52'}
-          
-          also the error that the "number" is required will be placed in response:
+    
+          if the "number" is required will be placed in response:
           
           response['errors'] = {'number' : ['required']}
           ...
@@ -1036,46 +1073,7 @@ class Response(dict):
                    self.invalid(k)
                    
         return self
-               
-               
-    def are_valid_types(self, kwds, configs):
-        """
-          Validates input, and converts the values into proper type
-          :param kwds - data filtered
-          :param config - tuple with config, example: (('name', unicode), ('number', int), ('is_true', bool)) etc.
-        """
-        for config in configs:
-            k = config[0]
-            _type = config[1]
-            not_required = False
-            try:
-                not_required = config[2]
-            except IndexError as e:
-                pass
-            
-            value = kwds.get(k)
-            
-            if not_required and value is None:
-               continue
-            
-            try:
-                if isinstance(value, _type):
-                   continue 
-                
-                if _type.__name__ == 'bool':
-                   kwds[k] = bool(int(value))
-                elif _type.__name__ == 'int':
-                   kwds[k] = int(value)
-                elif _type == Key:
-                   kwds[k] = _type(urlsafe=value)
-                else:
-                   kwds[k] = _type(value)
-            except Exception as e:
-                self.invalid(k)
-                
-        return kwds
-  
-  
+      
     def has_error(self, k=None):
         
         if self['errors'] is None:
