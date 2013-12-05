@@ -4,11 +4,14 @@ Created on Jul 9, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import cgi
 import decimal
 
 from google.appengine.ext.db import datastore_errors 
 from google.appengine.ext.ndb import *
 
+from google.appengine.ext import blobstore
+ 
 from app import pyson, util
  
 ctx = get_context()
@@ -19,6 +22,10 @@ ctx.set_cache_policy(False)
 
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
+
+class DescriptiveError(Exception):
+      # executes an exception in a way that it will have its own meaning instead of just "invalid"
+      pass
 
 class Formatter():
  
@@ -51,12 +58,35 @@ class Formatter():
            return long(value)
        
     @classmethod           
-    def ndb_key(cls, prop, value):
+    def ndb_key(cls, prop, value, **kwds):
         value = cls._value(prop, value)
         if prop._repeated:
-           return [Key(urlsafe=v) for v in value]
+           returns = [Key(urlsafe=v) for v in value]
+           single = False
         else:
-           return Key(urlsafe=value)
+           returns = [Key(urlsafe=value)]
+           single = True
+           
+        for k in returns:
+            if prop._kind and k.kind() != prop._kind:
+               raise DescriptiveError('invalid_kind')
+        
+        items = get_multi(returns, use_cache=True)
+        
+        for item in items:
+            if item is None:
+               raise DescriptiveError('not_found')
+            else:
+               if hasattr(item, 'is_usable') and kwds.get('skip_usable_check', None) is None:
+                  can = item.is_usable
+                  if not can:
+                     raise DescriptiveError('not_usable')
+                 
+        if single:
+           return returns[0]
+        else:
+           return returns
+ 
        
     @classmethod   
     def float(cls, prop, value):
@@ -76,15 +106,25 @@ class Formatter():
        
     @classmethod
     def blobfile(cls, prop, value):
-        # the provided file must have `read` file-like interface
+        # to validate blob file, it must have fully validated, uploaded blob
         value = cls._value(prop, value)
         if prop._repeated:
+           new = []
            for v in value:
-               getattr(v, 'read')
-           return value
+               if not isinstance(v, cgi.FieldStorage) or 'blob-key' not in v.type_options:
+                  raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save,\
+                   got %r instead.' % v)
+               else:
+                  v = blobstore.parse_blob_info(v)
+               new.append(v.key())
+           return new
         else:
-           getattr(value, 'read') 
-           return value
+           if not isinstance(value, cgi.FieldStorage) or 'blob-key' not in value.type_options:
+              raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
+              b got %r instead.' % value)
+           else:
+               value = blobstore.parse_blob_info(value)
+           return value.key()
     
     @classmethod
     def decimal(cls, prop, value):
@@ -93,6 +133,20 @@ class Formatter():
            return [decimal.Decimal(v) for v in value]
         else:
            return decimal.Decimal(value)
+       
+    @classmethod
+    def imagefile(cls, prop, value):
+        is_blob = cls.blobfile(prop, value)
+        if is_blob:
+           if prop._repeated:
+               for v in value:
+                   info = blobstore.parse_file_info(value)
+                   
+                   meta_required = ('image/jpeg', 'image/jpg', 'image/png')
+                   if info.content_type in meta_required:
+                      raise ValueError('file uploaded is not %s' % meta_required)
+           
+        return is_blob
  
   
 property_types_validator = {
@@ -106,7 +160,8 @@ property_types_validator = {
   'SuperDateTimeProperty' : False,
   'SuperKeyProperty' : Formatter.ndb_key,
   'SuperBooleanProperty' : Formatter.bool,
-  'SuperBlobKeyProperty' : False,
+  'SuperBlobKeyProperty' : Formatter.blobfile,
+  'SuperImageKeyProperty' : Formatter.imagefile,
   'SuperDecimalProperty' : Formatter.decimal,
   'SuperReferenceProperty' : Formatter.ndb_key,
 }
@@ -116,7 +171,7 @@ def factory(module_model_path):
      Retrieves model by its module path. e.g.
      model = factory('app.core.misc.Country')
      
-     will load Country class.
+     `model` will be a Country class.
      
     """
     custom_kinds = module_model_path.split('.')
@@ -158,16 +213,8 @@ def compile_public_permissions(*args):
 
 def compile_admin_permissions(*args):
     return compile_permissions('admin', *args)
-
-class GcsFileApi():
- 
-      def __init__(self, data):
-          self.data = {}
-          self.blob = data
-      
-      def to_datastore(self):
-          pass
-
+  
+  
 class _BaseModel(Model):
  
   __tmp = {} #-- this property is used to store all values that will live inside one entity instance.
@@ -227,7 +274,7 @@ class _BaseModel(Model):
   
   def loaded(self):
       return self.key != None and self.key.id()
-  
+ 
   @classmethod
   def get_or_prepare(cls, dataset, **kwds):
       """
@@ -244,6 +291,7 @@ class _BaseModel(Model):
       """
       use_get = kwds.pop('get', True)
       expect = kwds.pop('only', cls.get_property_names() + ['id'])
+      skip = kwds.pop('skip', None)
       ctx_options = kwds.pop('ctx_options', {})
       populate = kwds.pop('populate', True)
       
@@ -261,6 +309,11 @@ class _BaseModel(Model):
          
       if expect is not False:   
           for i in expect:
+              
+              if skip is not None and isinstance(skip, (tuple, list)):
+                 if i in skip:
+                     continue
+            
               if i in dataset:
                  datasets[i] = dataset.get(i)
               else:
@@ -272,7 +325,7 @@ class _BaseModel(Model):
           datasets = dataset.copy()
      
       datasets.update(kwds)
-      
+     
       if create:
          return cls(**datasets)
       else:
@@ -418,7 +471,7 @@ class _BaseModel(Model):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -552,12 +605,12 @@ class _BaseProperty(object):
     _writable = False
     _visible = False
     _max_size = False
-    
+ 
     def __init__(self, *args, **kwds):
         self._writable = kwds.pop('writable', self._writable)
         self._visible = kwds.pop('visible', self._visible)
         self._max_size = kwds.pop('max_size', self._max_size)
-        
+         
         custom_kind = kwds.get('kind')
   
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
@@ -601,6 +654,9 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     pass
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
+    pass
+
+class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     pass
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
@@ -647,8 +703,7 @@ class SuperImageGCSProperty(SuperJsonProperty):
     def _from_base_type(self, value):
         return value.get()
     
-    
-
+     
 class SuperRelationProperty(dict):
     
     """ 
@@ -977,20 +1032,25 @@ class Response(dict):
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
     
-    def validate_input(self, kwds, obj, **kwargs):
+    def process_input(self, kwds, obj, **kwargs):
         
         """
-          This method is used to format, and validate the user input based on the model property definition. 
+          This method is used to format, and validate the provided input based on the model property definition. 
           Accepts:
-          kwds: dict with unformatted data. Value can be immutable
-          obj: `cls` or model class
-          **kwargs: skip: skips only the defined field names for validation
-                    only: only formats specified field names for validation
-                    convert: converts into specified data type. for example:
+          kwds: dict with unformatted data. note that this data will mutate into the values that are defined by model,
+          or the `convert` keyword argument.
+          obj: definition of the model from which the properties will be prospected
+          **kwargs: skip: skips the processing on specified field names
+                    only: only does processing on specified field names
+                    convert: converts `kwds` into specified data type. for example:
                         kwds = {'domain' : 'large key...'}
-                        response.validate_input(kwds, obj, convert=[('domain', ndb.Key)])
+                        response.process_input(kwds, obj, convert=[('domain', Domain)])
                         
-                        it will convert kwds['domain'] into ndb.Key(...)
+                        
+                        it will convert kwds['domain'] into ndb.Key(...) and also perform checks wether the 
+                        domain is existing and if its usable
+                        
+                        note: the third argument in tuple renders if the value will be converted or not if its not present.
                     
           Example:
           
@@ -1001,7 +1061,7 @@ class Response(dict):
           ....
           
           data = {'name' : 52}
-          response.validate_input(data, Test)
+          response.process_input(data, Test)
     
           if the "number" is required will be placed in response:
           
@@ -1013,6 +1073,8 @@ class Response(dict):
         skip = kwargs.pop('skip', None)
         only = kwargs.pop('only', None)
         convert = kwargs.pop('convert', None)
+        convert_args = kwargs.pop('convert_args', {})
+        prefix = kwargs.pop('prefix', '')
         fields = obj.get_mapped_properties()
         
         if convert:
@@ -1025,6 +1087,11 @@ class Response(dict):
                    can_skip = False
                    
                value = kwds.get(name)
+               
+               if value == '':
+                  # an empty value is considered as `None`
+                  value = None
+                  
                if value is None and can_skip:
                   continue
               
@@ -1037,14 +1104,33 @@ class Response(dict):
                        if isinstance(value, (int, long)):
                           continue  
                        kwds[name] = _type(value)
-                    elif _type == Key:
-                       if isinstance(value, Key):
-                          continue 
-                       kwds[name] = _type(urlsafe=value)
+                    elif _type == Key or issubclass(_type, _BaseModel):
+ 
+                       if not isinstance(value, Key):
+                          value = Key(urlsafe=value)
+                                   
+                       if issubclass(_type, _BaseModel):   
+                           if value.kind() != _type._get_kind():
+                              raise DescriptiveError('invalid_kind')
+                          
+                       gets = value.get(use_cache=True)   
+                       
+                       if gets is None:
+                          raise DescriptiveError('not_found')
+                       else:
+                          if hasattr(gets, 'is_usable') and convert_args.get('skip_usable_check', None) is None:
+                             can = gets.is_usable
+                             if not can:
+                                raise DescriptiveError('not_usable')
+                       
+                       kwds[name] = value
                     else:
                        kwds[name] = _type(value)
-               except Exception as e:
-                    self.invalid(name)
+               except DescriptiveError as e:
+                    self.error('%s%s' % (prefix, name), e)        
+               except Exception as e:#-- if for any reason `_type` function or class raises an error, the conversion will be marked invalid
+                    util.logger(e, 'exception')
+                    self.invalid('%s%s' % (prefix, name))
                   
         
         for k,v in fields.items():
@@ -1060,9 +1146,14 @@ class Response(dict):
                   continue
                     
             value = kwds.get(k)
+            
+            if value == '':
+               # if value is empty its considered as `None` 
+               value = None
+            
             if value is None:
                if v._required:
-                  self.required(k)
+                  self.required('%s%s' % (prefix, k))
                   
             if value is None and not v._required:
                continue
@@ -1072,11 +1163,12 @@ class Response(dict):
             if valid: 
                try: 
                    kwds[k] = valid(v, value)
-               except (ValueError, TypeError) as e:
-                   self.invalid(k)
+               except Exception as e:#-- usually the properties throw these types of exceptions
+                   util.logger(e, 'exception')
+                   self.invalid('%s%s' % (prefix, k))
                    
-        return self
-      
+        return kwds
+ 
     def has_error(self, k=None):
         
         if self['errors'] is None:
@@ -1100,6 +1192,57 @@ class Response(dict):
     
     def __init__(self):
         self['errors'] = None
+        
+    
+    def group_values(self, start, kwds, **kwargs):
+        
+        prefix = kwargs.pop('prefix', '')
+        only = kwargs.pop('only', None)
+         
+        values = self.group_by_prefix(prefix, kwds, multiple=True)
+        group_values = list()
+        
+        start = values.get(start)
+        
+        if start is None:
+           return group_values
+ 
+        x = 0
+        for i in start:
+            new = dict()
+            for k in values.keys():
+                if only:
+                   if k not in only:
+                      continue
+                  
+                o = values.get(k)
+                try:
+                  o = o[x]
+                except IndexError as e:
+                  o = None
+                new[k] = o
+            
+            group_values.append(new)
+            x += 1
+            
+        return group_values
+               
+        
+        
+    def group_by_prefix(self, prefix, kwds, **kwargs):
+        
+        multiple = kwargs.pop('multiple', None)
+        
+        new_dict = dict()
+        for i,v in kwds.items():
+            if i.startswith(prefix):
+               new_key = i[len(prefix):] 
+               if multiple:
+                  if not isinstance(v, (list, tuple)):
+                     v = [v]
+               new_dict[new_key] = v
+ 
+        return new_dict
         
   
 class EvalEnvironment(dict):

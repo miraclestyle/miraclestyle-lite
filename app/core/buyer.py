@@ -43,7 +43,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     
         response = ndb.Response()
         
-        response.validate_input(kwds, cls, only=False, convert=[('parent', ndb.Key)])
+        response.process_input(kwds, cls, only=False, convert=[('parent', ndb.Key)])
         
         if response.has_error():
            return response
@@ -62,6 +62,9 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     def manage(cls, **kwds):
          
         response = ndb.Response()
+        
+        # if default_shipping is set to true, update all other buyer entities to default_shipping = False
+        # if default_billing is set to true, update all other buyer entities to default_billing = False 
   
         @ndb.transactional(xg=True)
         def transaction():
@@ -71,7 +74,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
     
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
     
             if response.has_error():
                return response       
@@ -94,6 +97,23 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                entity.put()
                entity.new_action('create')
                entity.record_action()
+               
+            run = False
+            if kwds.get('default_billing') or kwds.get('default_shipping'):
+               run = True
+               
+            if run:
+                  allbuyer = cls.query(ancestor=entity.key).fetch()
+                  to_put = []
+                  for a in allbuyer:
+                      if a.key != entity.key:
+                         if kwds.get('default_billing'):
+                            a.default_billing = False
+                         if kwds.get('default_shipping'):
+                            a.default_shipping = False
+                         to_put.append(a)
+                         
+                  ndb.put_multi(to_put)
                
             response.status(entity)
         
@@ -178,7 +198,7 @@ class Collection(ndb.BaseModel, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
             
-            response.validate_input(kwds, cls, skip=('primary_email',))
+            response.process_input(kwds, cls, skip=('primary_email',))
              
             if not response.has_error():
  
@@ -306,7 +326,7 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
             if current.is_guest:
                return response.not_logged_in()
            
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -317,7 +337,7 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
                return response.not_found()
             
             collection_keys = kwds.get('collections')
-            store_key = kwds.get('store')
+            company_key = kwds.get('company')
   
             if entity is None:
                return response.not_found()
@@ -335,7 +355,7 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
                else:
                   return response.not_authorized()
             else:
-                entity = cls(parent=current.key, collections=collection_keys, store=store_key)
+                entity = cls(parent=current.key, collections=collection_keys, company=company_key)
                 entity.put()
                 entity.new_action('create')
                 entity.record_action()

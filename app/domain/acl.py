@@ -90,6 +90,10 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
     }
     
     @property
+    def is_usable(self):
+        return self.is_active
+    
+    @property
     def is_active(self):
         return self.get_state == 'active'
     
@@ -190,10 +194,16 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
             entity = cls.get_or_prepare(kwds, populate=False, only=False)
             if entity and entity.loaded():
                # check if user can do this
+ 
+               action = kwds.get('action')
+               
+               if not action.startswith('su_'):
+                  return response.not_authorized()
+               
                current = cls.get_current_user()
-               if current.has_permission('sudo', entity, namespace=entity.key.urlsafe()):
+               if current.has_permission(action, entity):
                       state = kwds.get('state')
-                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -245,26 +255,24 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         def transaction():
             
             current = cls.get_current_user()
+            only = ('name',)
          
             if current.is_guest:
                return response.not_authorized()
-           
-            response.validate_input(kwds, cls, only=('name',))
+            
+            response.process_input(kwds, cls, only=only)
             
             if response.has_error():
                return response
-            
-            if 'state' in kwds:
-               kwds['state'] = cls.resolve_state_code_by_name(kwds['state'])
-               
-            entity = cls.get_or_prepare(kwds, only=('name',))
+ 
+            entity = cls.get_or_prepare(kwds, only=only)
             
             if entity is None:
                return response.not_found()
         
             if not entity or not entity.loaded(): # if entity is not found or its a new one
                entity.primary_contact = current.key
-               entity.set_state('active')
+               entity.set_state(cls.OBJECT_DEFAULT_STATE)
                entity.put()
                entity.new_action('create')
                entity.record_action()
@@ -398,7 +406,7 @@ class Role(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True)])
+            response.process_input(kwds, cls, convert=[('domain', Domain, True)])
           
             if response.has_error():
                return response
@@ -492,7 +500,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
    
         response = ndb.Response()
              
-        response.validate_input(kwds, cls, skip=('state',), convert=[('domain', ndb.Key)])
+        response.process_input(kwds, cls, skip=('state',), convert=[('domain', Domain)])
  
         if response.has_error():
            return response
@@ -560,7 +568,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             current = cls.get_current_user()
             
-            response.validate_input(kwds, cls, only=False, convert=[('user', ndb.Key)])
+            response.process_input(kwds, cls, only=False, convert=[('user', User)])
             
             if response.has_error():
                return response
@@ -616,7 +624,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             current = cls.get_current_user()
             
-            response.validate_input(kwds, cls, only=False, convert=[('user', ndb.Key)])
+            response.process_input(kwds, cls, only=False, convert=[('user', User)])
             
             if response.has_error():
                return response
@@ -668,7 +676,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
  
         response = ndb.Response()
          
-        response.validate_input(kwds, cls, only=('roles', 'name'), convert=[('user', ndb.Key)])
+        response.process_input(kwds, cls, only=('roles', 'name'), convert=[('user', User)])
             
         if response.has_error():
            return response

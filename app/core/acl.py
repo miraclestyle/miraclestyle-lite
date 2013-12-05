@@ -45,7 +45,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
     _default_indexed = False
   
     EXPANDO_FIELDS = {  
-      'roles' : ndb.KeyProperty('5', repeated=True, indexed=False)
+      'roles' : ndb.SuperKeyProperty('5', kind='13', repeated=True, indexed=False)
     }
  
     OBJECT_DEFAULT_STATE = 'su_active'
@@ -80,6 +80,10 @@ class User(ndb.BaseExpando, ndb.Workflow):
         },
     }  
     
+    @property
+    def is_usable(self):
+        return self.get_state == 'su_active'
+    
     def __todict__(self):
         d = super(User, self).__todict__()
         
@@ -102,8 +106,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
         if not session:
            return None
         return hashlib.md5(session.session_id).hexdigest()
- 
-    
+  
     @property
     def entity_is_authenticated(self):
         """ Checks if the loaded model is an authenticated entity user. """
@@ -479,7 +482,7 @@ class Role(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response

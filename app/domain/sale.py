@@ -4,9 +4,13 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
+from app import ndb, settings
 from app.core.misc import Location
-from app.domain.acl import NamespaceDomain
+from app.domain.acl import NamespaceDomain, Domain
+
+from google.appengine.api import images
+from google.appengine.ext import blobstore
+ 
 
 # done!
 class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
@@ -27,6 +31,13 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        response['items'] = cls.query(namespace=kwds.get('domain')).fetch()
+        return response
+ 
     
     @classmethod
     def delete(cls, **kwds):
@@ -74,7 +85,7 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
             current = cls.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True)])
+            response.process_input(kwds, cls, convert=[('domain', Domain, True)])
           
             if response.has_error():
                return response
@@ -99,14 +110,13 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                 
                domain = kwds.get('domain')
                if not domain:
-                  return response.requred('domain')
+                  return response.required('domain')
          
                entity = cls.get_or_prepare(kwds, namespace=domain.urlsafe())
               
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')  
-   
-                
+    
                if current.has_permission('create', entity): 
                    entity.put()
                    entity.new_action('create')
@@ -157,8 +167,8 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     # rules = ndb.LocalStructuredProperty(CarrierLineRule, '6', repeated=True)# soft limit 300x
     
     EXPANDO_FIELDS = {
-       'locations' : ndb.LocalStructuredProperty(Location, '5', repeated=True),
-       'rules' : ndb.LocalStructuredProperty(CarrierLineRule, '6', repeated=True)           
+       'locations' : ndb.SuperLocalStructuredProperty(Location, '5', repeated=True),
+       'rules' : ndb.SuperLocalStructuredProperty(CarrierLineRule, '6', repeated=True)           
     }
    
     OBJECT_DEFAULT_STATE = 'none'
@@ -168,6 +178,14 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'delete' : 3,
     }
+ 
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        response.process_input(kwds, cls, only=False, convert=(('carrier', Carrier),))
+        response['items'] = cls.query(ancestor=kwds.get('carrier')).fetch()
+        return response
 
     @classmethod
     def delete(cls, **kwds):
@@ -215,8 +233,24 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             current = cls.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True)])
-          
+            response.process_input(kwds, cls, convert=[('carrier', Carrier, True)])
+            
+            location_ = 'location_'
+            location = response.group_values('country', kwds, prefix=location_, only=Location.get_property_names())
+            any_locations = len(location)
+           
+            if any_locations:
+                for loc in location:
+                    response.process_input(loc, Location, prefix='location_')
+                    
+            rule_ = 'rule_'
+            rule = response.group_values('condition', kwds, prefix=rule_, only=CarrierLineRule.get_property_names())
+            any_rules = len(rule)
+           
+            if any_rules:
+                for ru in rule:
+                    response.process_input(ru, CarrierLineRule, prefix='rule_')
+ 
             if response.has_error():
                return response
   
@@ -224,6 +258,20 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             if entity is None:
                return response.not_found()
+           
+            locations = [] 
+            if any_locations:
+               for loc in location:
+                   locations.append(Location(**loc))
+               entity.locations = locations
+               
+               
+            rules = [] 
+            if any_rules:
+               for ru in rule:
+                   rules.append(CarrierLineRule(**ru))
+               entity.rules = rules
+             
              
             if entity and entity.loaded():
  
@@ -238,17 +286,26 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                    return response.not_authorized()
             else:
                 
-               domain = kwds.get('domain')
-               if not domain:
-                  return response.requred('domain')
+               carrier = kwds.get('carrier')
+               if not carrier:
+                  return response.required('carrier')
+              
+               if not carrier.get():
+                  return response.error('carrier', 'not_found')
          
-               entity = cls.get_or_prepare(kwds, namespace=domain.urlsafe())
+               entity = cls.get_or_prepare(kwds, parent=carrier)
               
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')  
    
                 
                if current.has_permission('create', entity): 
+                   if len(locations):
+                      entity.locations = locations
+                      
+                   if len(rules):
+                      entity.rules = rules
+                      
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -289,30 +346,30 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     # root (namespace Domain)
     # composite index: ancestor:no - state,name
     parent_record = ndb.SuperKeyProperty('1', kind='44', indexed=False)
-    name = ndb.SuperStringProperty('1', required=True)
-    logo = ndb.SuperBlobKeyProperty('2', required=True)# blob ce se implementirati na GCS
-    updated = ndb.SuperDateTimeProperty('3', auto_now=True)
-    created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
-    state = ndb.SuperIntegerProperty('5', required=True)
+    name = ndb.SuperStringProperty('2', required=True)
+    logo = ndb.SuperImageKeyProperty('3', required=True)# blob ce se implementirati na GCS
+    updated = ndb.SuperDateTimeProperty('4', auto_now=True)
+    created = ndb.SuperDateTimeProperty('5', auto_now_add=True)
+    state = ndb.SuperIntegerProperty('6', required=True)
     
     _default_indexed = False
- 
+  
     EXPANDO_FIELDS = {
                       
-       'country' : ndb.SuperKeyProperty('7', kind='app.core.misc.Country', required=True),
-       'region' : ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', required=True),
-       'city' : ndb.SuperStringProperty('10', required=True),
-       'postal_code' : ndb.SuperStringProperty('11', required=True),
-       'street_address' : ndb.SuperStringProperty('12', required=True),
-       'street_address2' : ndb.SuperStringProperty('12', required=True),
+       'country' : ndb.SuperKeyProperty('7', kind='app.core.misc.Country', required=False),
+       'region' : ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', required=False),
+       'city' : ndb.SuperStringProperty('10', required=False),
+       'postal_code' : ndb.SuperStringProperty('11', required=False),
+       'street_address' : ndb.SuperStringProperty('12', required=False),
+       'street_address2' : ndb.SuperStringProperty('12', required=False),
        'email' : ndb.SuperStringProperty('14'),
        'telephone' : ndb.SuperStringProperty('15'),
        
-       'currency' : ndb.SuperKeyProperty('16', kind='app.core.misc.Country', required=True),
+       'currency' : ndb.SuperKeyProperty('16', kind='app.core.misc.Currency', required=False),
        'paypal_email' : ndb.SuperStringProperty('17'),
        
        'tracking_id' : ndb.SuperStringProperty('18'),
-       'feedbacks' : ndb.SuperLocalStructuredProperty(CompanyFeedback, '19', repeated=True),
+       'feedbacks' : ndb.SuperLocalStructuredProperty(CompanyFeedback, '19', repeated=False),
        
        'location_exclusion' : ndb.SuperBooleanProperty('20', default=False) 
     }
@@ -335,8 +392,9 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'close' : 3,
        'open' : 4,
-       'sudo' : 5, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
-       'log_message' : 6, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
+       'log_message' : 5, # Ovo je samo ako nam bude trebala kontrola nad DomainStore.
+       'su_open' : 6,
+       'su_close' : 7,
     }
     
     OBJECT_TRANSITIONS = {
@@ -360,6 +418,26 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         },
     }
     
+    @property
+    def is_usable(self):
+        return self.get_state == 'open'
+    
+    def to_dict(self, *args, **kwargs):
+        dic = super(Company, self).to_dict(*args, **kwargs)
+        
+        dic['logo'] = images.get_serving_url(self.logo, 240)
+        
+        return dic
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        response.process_input(kwds, cls, only=False, convert=[('domain', Domain)])
+        if response.has_error():
+           return response
+        response['items'] = cls.query(namespace=kwds.get('domain').urlsafe()).fetch()
+        return response
+    
     
     @classmethod
     def manage(cls, **kwds):
@@ -372,25 +450,45 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             current = cls.get_current_user()
             
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, only=('name', 'logo'), convert=[('domain', ndb.Key, True)])
-          
+            only = ('name', 'country', 'region', 'city', 'postal_code', 'street_address',
+                    'street_address2', 'email', 'telephone', 'currency', 'paypal_email', 'tracking_id')
+            response.process_input(kwds, cls, only=only, convert=[('domain', Domain, True)])
+      
             if response.has_error():
                return response
+           
+                 
+            if kwds.get('upload_url'):
+               response['upload_url'] = blobstore.create_upload_url(kwds.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+               
   
-            entity = cls.get_or_prepare(kwds)
-            
+            entity = cls.get_or_prepare(kwds, only=only)
+             
             if entity is None:
                return response.not_found()
              
             if entity and entity.loaded():
- 
+                
+               new_logo = 'logo' in kwds
+                
+               if new_logo:
+                   response.process_input(kwds, cls, only=('logo',))
+                 
                if not entity.domain_is_active:
-                  return response.error('domain', 'not_active') 
+                  response.error('domain', 'not_active') 
               
-               if not entity.get_state != 'open':
-                  return response.error('company', 'not_open') 
+               if entity.get_state != 'open':
+                  response.error('company', 'not_open') 
+                  
+               if response.has_error():
+                  return response
                 
                if current.has_permission('update', entity):
+                   
+                   if new_logo:
+                      blobstore.delete(entity.logo)
+                      entity.logo = kwds.get('logo')
+                   
                    entity.put()
                    entity.new_action('update')
                    entity.record_action()
@@ -399,9 +497,13 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             else:
                 
                domain = kwds.get('domain')
-               
+               response.process_input(kwds, cls, only=('name', 'logo'))
+          
                if not domain:
-                  return response.required('domain')
+                  response.required('domain')
+                  
+               if response.has_error():
+                  return response
                    
                entity = cls.get_or_prepare(kwds, namespace=domain.urlsafe())
      
@@ -409,6 +511,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   return response.error('domain', 'not_active')
             
                if current.has_permission('create', entity): 
+                   entity.set_state(cls.OBJECT_DEFAULT_STATE)
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -425,7 +528,6 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         return response  
         
   
-    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
     def sudo(cls, **kwds):
         
@@ -436,11 +538,16 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             entity = cls.get_or_prepare(kwds, populate=False, only=False)
             if entity and entity.loaded():
                # check if user can do this
+ 
+               action = kwds.get('action')
+               
+               if not action.startswith('su_'):
+                  return response.not_authorized()
                
                current = cls.get_current_user()
-               if current.has_permission('sudo', entity):
+               if current.has_permission(action, entity):
                       state = kwds.get('state')
-                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -501,10 +608,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   return response.error('domain', 'not_active') 
               
                current = cls.get_current_user()
-          
-               if entity.get_state not in ('open',):
-                  return response.not_authorized()
-               
+           
                if current.has_permission('close', entity):
                       entity.new_action('close', state='closed', message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
@@ -536,10 +640,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   return response.error('domain', 'not_active') 
                
                current = cls.get_current_user()
-          
-               if entity.get_state not in ('closed',):
-                  return response.not_authorized()
-               
+         
                if current.has_permission('open', entity):
                       entity.new_action('open', state='open', message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
@@ -593,7 +694,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
                   if not entity.domain_is_active:
                      return response.error('domain', 'not_active')
                  
-                  if not entity.get_state != 'open':
+                  if entity.get_state != 'open':
                      return response.error('store', 'not_open') 
                        
                   if current.has_permission('delete', entity):
@@ -625,7 +726,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
             current = cls.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True), ('company', ndb.Key, True)])
+            response.process_input(kwds, cls, convert=[('domain', Domain, True), ('company', Company, True)])
           
             if response.has_error():
                return response
@@ -653,16 +754,12 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
                else:
                    return response.not_authorized()
             else:
-                
-               domain = kwds.get('domain')
-               if not domain:
-                  return response.requred('domain')
-                
+ 
                company = kwds.get('company')  
                if not company:
                   return response.required('company')
                
-               entity = cls.get_or_prepare(kwds, namespace=domain.urlsafe(), parent=company)
+               entity = cls.get_or_prepare(kwds, parent=company)
               
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')  
@@ -690,7 +787,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
      
 
 # done!
-class CompanyShippingExclusion(Location, ndb.Workflow):
+class CompanyShippingExclusion(Location, ndb.Workflow, NamespaceDomain):
     
     KIND_ID = 47
     
@@ -722,7 +819,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow):
                   if not entity.domain_is_active:
                      return response.error('domain', 'not_active')
                  
-                  if not entity.get_state != 'open':
+                  if entity.get_state != 'open':
                      return response.error('store', 'not_open') 
                        
                   if current.has_permission('delete', entity):
@@ -754,7 +851,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow):
             current = cls.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True), ('company', ndb.Key, True)])
+            response.process_input(kwds, cls, convert=[('domain', Domain, True), ('company', Company, True)])
           
             if response.has_error():
                return response
@@ -785,7 +882,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow):
                 
                domain = kwds.get('domain')
                if not domain:
-                  return response.requred('domain')
+                  return response.required('domain')
                 
                company = kwds.get('company')  
                if not company:
@@ -819,7 +916,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow):
    
 
 # done!
-class Tax(ndb.BaseExpando, ndb.Workflow):
+class Tax(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     KIND_ID = 48
     
@@ -848,6 +945,12 @@ class Tax(ndb.BaseExpando, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls, **kwds):
+        response = ndb.Response()
+        response['items'] = cls.query(namespace=kwds.get('domain')).fetch()
+        return response
     
     @classmethod
     def delete(cls, **kwds):
@@ -895,7 +998,15 @@ class Tax(ndb.BaseExpando, ndb.Workflow):
             current = cls.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.validate_input(kwds, cls, convert=[('domain', ndb.Key, True)])
+            response.process_input(kwds, cls, convert=[('domain', Domain, True)])
+            
+            location_ = 'location_'
+            location = response.group_values('country', kwds, prefix=location_, only=Location.get_property_names())
+            any_locations = len(location)
+           
+            if any_locations:
+                for loc in location:
+                    response.process_input(loc, Location, prefix='location_')
           
             if response.has_error():
                return response
@@ -904,7 +1015,13 @@ class Tax(ndb.BaseExpando, ndb.Workflow):
             
             if entity is None:
                return response.not_found()
-             
+            
+            locations = [] 
+            if any_locations:
+               for loc in location:
+                   locations.append(Location(**loc))
+               entity.locations = locations
+                
             if entity and entity.loaded():
  
                if not entity.domain_is_active:
@@ -920,7 +1037,7 @@ class Tax(ndb.BaseExpando, ndb.Workflow):
                 
                domain = kwds.get('domain')
                if not domain:
-                  return response.requred('domain')
+                  return response.required('domain')
          
                entity = cls.get_or_prepare(kwds, namespace=domain.urlsafe())
               

@@ -5,11 +5,12 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import os
+import cgi
 import json
 import webapp2
+import collections
   
 from jinja2 import FileSystemLoader
-
 from webapp2_extras import jinja2
 
 from app.memcache import _local
@@ -18,6 +19,8 @@ from app import settings, core, util
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
 from webclient.route import get_routes
+
+from google.appengine.ext import blobstore
 
 _WSGI_CONFIG = None
  
@@ -81,6 +84,64 @@ class RequestData():
     
     def __init__(self, request):
         self.request = request
+        
+    def request_get(self, argument_name, default_value='', allow_multiple=False):
+        """Returns the query or POST argument with the given name.
+
+        We parse the query string and POST payload lazily, so this will be a
+        slower operation on the first call.
+
+        :param argument_name:
+            The name of the query or POST argument.
+        :param default_value:
+            The value to return if the given argument is not present.
+        :param allow_multiple:
+            Return a list of values with the given name (deprecated).
+        :returns:
+            If allow_multiple is False (which it is by default), we return
+            the first value with the given name given in the request. If it
+            is True, we always return a list.
+        """
+        param_value = self.get_all(argument_name)
+ 
+        if len(param_value) > 0:
+            if allow_multiple:
+                return param_value
+
+            return param_value[0]
+        else:
+            if allow_multiple and not default_value:
+                return []
+
+            return default_value
+        
+    def request_get_all(self, argument_name, default_value=None):
+        """Returns a list of query or POST arguments with the given name.
+
+        We parse the query string and POST payload lazily, so this will be a
+        slower operation on the first call.
+
+        :param argument_name:
+            The name of the query or POST argument.
+        :param default_value:
+            The value to return if the given argument is not present,
+            None may not be used as a default, if it is then an empty
+            list will be returned instead.
+        :returns:
+            A (possibly empty) list of values.
+        """
+        if self.request.charset:
+            argument_name = argument_name.encode(self.request.charset)
+
+        if default_value is None:
+            default_value = []
+
+        param_value = self.request.params.getall(argument_name)
+
+        if param_value is None or len(param_value) == 0:
+            return default_value
+  
+        return param_value
          
     def _pack(self, v, t):
         if isinstance(v, (list, tuple)):
@@ -115,9 +176,9 @@ class RequestData():
     def get_type(self, k, t, d=None, multiple=False):
         if isinstance(t, (int, long)):
            if multiple:
-              return self._pack(self.request.get_all(k, d), t)
+              return self._pack(self.request_get_all(k, d), t)
            else:
-              return self._pack(self.request.get(k, d), t)
+              return self._pack(self.request_get(k, d), t)
         
     def get_all(self, k, d=None):
         if d == None:
@@ -125,9 +186,9 @@ class RequestData():
         if isinstance(k, (list, tuple)):
            x = dict()
            for i in k:
-               x[i] = self.request.get_all(i, d)
+               x[i] = self.request_get_all(i, d)
            return x
-        return self.request.get_all(k, d)
+        return self.request_get_all(k, d)
     
     def get_combined_params(self):
         return self.get_combined(None)
@@ -136,19 +197,20 @@ class RequestData():
         
         if k == None:
            k = self.request.params.keys()
-        
+ 
         if d == None:
            d = []
         if isinstance(k, (list, tuple)):
            x = dict()
            for i in k:
-               dx = self.request.get_all(i, d)
-               if len(dx) == 1:
+               dx = self.request_get_all(i, d)
+               if isinstance(dx, (tuple, list)) and len(dx) == 1:
                   dx = dx[0]
                x[i] = dx
+            
            return x
-        dx = self.request.get_all(k, d)
-        if len(dx) == 1:
+        dx = self.request_get_all(k, d)
+        if isinstance(dx, (tuple, list)) and len(dx) == 1:
            dx = dx[0]
         return dx
     
@@ -180,9 +242,62 @@ class Handler(webapp2.RequestHandler):
  
     def __init__(self, *args, **kwargs):
         super(Handler, self).__init__(*args, **kwargs)
-        
         self.data = {}
         self.template = {'base' : 'index.html'}
+        self.__uploads = None
+        self.__file_infos = None
+        
+        
+    def get_uploads(self, field_name=None):
+        """Get uploads sent to this handler.
+    
+        Args:
+          field_name: Only select uploads that were sent as a specific field.
+    
+        Returns:
+          A list of BlobInfo records corresponding to each upload.
+          Empty list if there are no blob-info records for field_name.
+        """
+        if self.__uploads is None:
+          self.__uploads = collections.defaultdict(list)
+          for key, value in self.request.params.items():
+            if isinstance(value, cgi.FieldStorage):
+              if 'blob-key' in value.type_options:
+                self.__uploads[key].append(blobstore.parse_blob_info(value))
+    
+        if field_name:
+          return list(self.__uploads.get(field_name, []))
+        else:
+          results = []
+          for uploads in self.__uploads.itervalues():
+            results.extend(uploads)
+          return results
+
+    def get_file_infos(self, field_name=None):
+        """Get the file infos associated to the uploads sent to this handler.
+    
+        Args:
+          field_name: Only select uploads that were sent as a specific field.
+            Specify None to select all the uploads.
+    
+        Returns:
+          A list of FileInfo records corresponding to each upload.
+          Empty list if there are no FileInfo records for field_name.
+        """
+        if self.__file_infos is None:
+          self.__file_infos = collections.defaultdict(list)
+          for key, value in self.request.params.items():
+            if isinstance(value, cgi.FieldStorage):
+              if 'blob-key' in value.type_options:
+                self.__file_infos[key].append(blobstore.parse_file_info(value))
+    
+        if field_name:
+          return list(self.__file_infos.get(field_name, []))
+        else:
+          results = []
+          for uploads in self.__file_infos.itervalues():
+            results.extend(uploads)
+          return results    
  
         
     def initialize(self, request, response):

@@ -6,8 +6,7 @@ Created on Oct 20, 2013
 '''
 from app import ndb
 
-# done 80%, support request needs work
-
+# done 80%
 
 class Content(ndb.BaseModel, ndb.Workflow):
     
@@ -41,7 +40,7 @@ class Content(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -74,13 +73,14 @@ class Content(ndb.BaseModel, ndb.Workflow):
             response.transaction_error(e)
             
         return response  
+
      
  
 # done!
 class Image(ndb.BaseModel):
     
     # base class/structured class
-    image = ndb.SuperBlobKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
+    image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
     content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
     size = ndb.SuperFloatProperty('3', required=True, indexed=False)
     width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
@@ -112,8 +112,15 @@ class Country(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
+    @property
+    def is_usable(self):
+        # makes a check wether is this possible to be used somewhere
+        return self.action
+    
     @classmethod
     def import_countries_and_subdivisions(cls, **kwds):
+        
+        # this function cannot do all this many imports because the appengine hangs
         
         url = 'https://raw.github.com/tryton/country/develop/country.xml'
         
@@ -187,7 +194,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -340,6 +347,10 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     } 
     
+    @property
+    def is_usable(self):
+        return self.active
+    
     # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
@@ -352,7 +363,7 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -393,14 +404,16 @@ class Location(ndb.BaseExpando):
     
     # base class/structured class
     country = ndb.SuperKeyProperty('1', kind=Country, required=True, indexed=False)
+    
     _default_indexed = False
+    
+    EXPANDO_FIELDS = {
+      'region' : ndb.SuperKeyProperty('2', kind=CountrySubdivision), # ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
+      'postal_code_from' : ndb.SuperStringProperty('3'),
+      'postal_code_to' : ndb.SuperStringProperty('4'),
+      'city' : ndb.SuperStringProperty('5')# ako se javi potreba za ovim ??                      
+    }
  
-    # Expando
-    # region = ndb.KeyProperty('2', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # region = ndb.StringProperty('2')# ako je potreban key val onda se ovo preksace / tryton ima CountrySubdivision za skoro sve zemlje
-    # postal_code_from = ndb.StringProperty('3')
-    # postal_code_to = ndb.StringProperty('4')
-    # city = ndb.StringProperty('5')# ako se javi potreba za ovim ??
 
 # done!
 class ProductCategory(ndb.BaseModel, ndb.Workflow):
@@ -427,6 +440,10 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
+    @property
+    def is_usable(self):
+        return self.status
+    
     # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
 
     @classmethod
@@ -439,7 +456,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -504,7 +521,7 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -578,7 +595,7 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -653,6 +670,10 @@ class Currency(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     }
     
+    @property
+    def is_usable(self):
+        return self.active
+    
     # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
@@ -665,7 +686,7 @@ class Currency(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls)
             
             if response.has_error():
                return response
@@ -701,8 +722,7 @@ class Currency(ndb.BaseModel, ndb.Workflow):
  
      
 
-# done!
-# ostaje da se ispita u preprodukciji!!
+# @todo
 class Message(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 21
@@ -749,6 +769,7 @@ class Message(ndb.BaseModel, ndb.Workflow):
         },
     }
     
+# @todo
 class BillingCreditAdjustment(ndb.BaseModel):
     
     KIND_ID = 22
@@ -825,7 +846,7 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls)
+            response.process_input(kwds, cls, only=('reference',))
             
             if response.has_error():
                return response
@@ -836,7 +857,8 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
                return response.not_found()
       
             if not entity or not entity.loaded():
-               if not current.is_guest: 
+               if not current.is_guest:
+                   entity.set_state(cls.OBJECT_DEFAULT_STATE)
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -852,7 +874,6 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
             
         return response 
   
-    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
     def sudo(cls, **kwds):
         
@@ -863,10 +884,16 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
             entity = cls.get_or_prepare(kwds, populate=False, only=False)
             if entity and entity.loaded():
                # check if user can do this
+ 
+               action = kwds.get('action')
+               
+               if not action.startswith('su_'):
+                  return response.not_authorized()
+               
                current = cls.get_current_user()
-               if current.has_permission('sudo', entity):
+               if current.has_permission(action, entity):
                       state = kwds.get('state')
-                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -979,7 +1006,7 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
              
             current = cls.get_current_user()
      
-            response.validate_input(kwds, cls, only=('reference',))
+            response.process_input(kwds, cls, only=('reference',))
             
             if response.has_error():
                return response
@@ -991,6 +1018,7 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
       
             if not entity or not entity.loaded():
                if not current.is_guest:
+                   entity.set_state(cls.OBJECT_DEFAULT_STATE)
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -1006,7 +1034,6 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
             
         return response 
   
-    # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
     def sudo(cls, **kwds):
         
@@ -1017,10 +1044,16 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
             entity = cls.get_or_prepare(kwds, populate=False, only=False)
             if entity and entity.loaded():
                # check if user can do this
+ 
+               action = kwds.get('action')
+               
+               if not action.startswith('su_'):
+                  return response.not_authorized()
+               
                current = cls.get_current_user()
-               if current.has_permission('sudo', entity):
+               if current.has_permission(action, entity):
                       state = kwds.get('state')
-                      entity.new_action('sudo', state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
