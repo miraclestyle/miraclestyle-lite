@@ -435,39 +435,13 @@ class Field(ndb.Model):
     name = ndb.StringProperty('1', required=True, indexed=False)
     writable = ndb.BooleanProperty('2', default=True, indexed=False)
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
-
-# future implementation - prototype!
-class Company(ndb.Expando):
-    
-    # root (namespace Domain)
-    # composite index: ancestor:no - active,name
-    parent_record = ndb.KeyProperty('1', kind=DomainBusinessUnit, indexed=False)
-    name = ndb.StringProperty('2', required=True)
-    active = ndb.BooleanProperty('3', default=True)
-    _default_indexed = False
-    pass
-    #Expando
-    #
-    # logo = blobstore.BlobKeyProperty('4', required=True)# blob ce se implementirati na GCS
-    #
-    # Address
-    # country = ndb.KeyProperty('5', kind=Country)
-    # region = ndb.KeyProperty('6', kind=CountrySubdivision)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # region = ndb.StringProperty('7')# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # city = ndb.StringProperty('8')
-    # postal_code = ndb.StringProperty('9')
-    # street_address = ndb.StringProperty('10')
-    # street_address2 = ndb.StringProperty('11')
-    # email = ndb.StringProperty('12')
-    # telephone = ndb.StringProperty('13')
-    # tax_id = ndb.StringProperty('14')
-    # reference = ndb.StringProperty('15')
     
 ################################################################################
-# /domain/sale.py
+# /domain/company.py, verovatno se onda treba rename Company classa u nesto
+# drugo, da ne bude dupliciranih imenica napr: company.Company...
 ################################################################################
 
-# done! - sudo kontrolisan model
+# done!
 class Company(ndb.Expando):
     
     # root (namespace Domain)
@@ -485,31 +459,30 @@ class Company(ndb.Expando):
     # Company
     # country = ndb.KeyProperty('7', kind=Country, required=True)
     # region = ndb.KeyProperty('8', kind=CountrySubdivision, required=True)# ako je potreban string val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # region = ndb.StringProperty('9', required=True)# ako je potreban key val onda se ovo preskace / tryton ima CountrySubdivision za skoro sve zemlje
-    # city = ndb.StringProperty('10', required=True)
-    # postal_code = ndb.StringProperty('11', required=True)
-    # street_address = ndb.StringProperty('12', required=True)
-    # street_address2 = ndb.StringProperty('13')
-    # email = ndb.StringProperty('14')
-    # telephone = ndb.StringProperty('15')
-    # tax_id = ndb.StringProperty('16')
+    # city = ndb.StringProperty('9', required=True)
+    # postal_code = ndb.StringProperty('10', required=True)
+    # street_address = ndb.StringProperty('11', required=True)
+    # street_address2 = ndb.StringProperty('12')
+    # email = ndb.StringProperty('13')
+    # telephone = ndb.StringProperty('14')
+    # tax_id = ndb.StringProperty('15')
     #
     # Payment
-    # currency = ndb.KeyProperty('17', kind=Currency, required=True)
+    # currency = ndb.KeyProperty('16', kind=Currency, required=True)
     # tax_buyer_on ?
-    # paypal_email = ndb.StringProperty('18')
+    # paypal_email = ndb.StringProperty('17')
     # paypal_shipping ?
     #
     # Analytics 
-    # tracking_id = ndb.StringProperty('19')
+    # tracking_id = ndb.StringProperty('18')
     #
     # Feedback
-    # feedbacks = ndb.LocalStructuredProperty(CompanyFeedback, '20', repeated=True)# soft limit 120x
+    # feedbacks = ndb.LocalStructuredProperty(CompanyFeedback, '19', repeated=True)# soft limit 120x
     #
     # Shipping Exclusion Settings
     # Shipping everywhere except at the following locations: location_exclusion = False
     # Shipping only at the following locations: location_exclusion = True
-    # location_exclusion = ndb.BooleanProperty('21', default=False)
+    # location_exclusion = ndb.BooleanProperty('20', default=False)
     
     
     _KIND = 0
@@ -524,7 +497,6 @@ class Company(ndb.Expando):
         # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
         'open' : (1, ),
         'closed' : (2, ),
-        'su_closed' : (3, ), # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
     }
     
     OBJECT_ACTIONS = {
@@ -532,8 +504,6 @@ class Company(ndb.Expando):
        'update' : 2,
        'close' : 3,
        'open' : 4,
-       'sudo' : 5, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
-       'log_message' : 6, # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
     }
     
     OBJECT_TRANSITIONS = {
@@ -544,16 +514,6 @@ class Company(ndb.Expando):
         'close' : {
            'from' : ('open', ),
            'to'   : ('closed',),
-        },
-        # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
-        'su_open' : {
-            'from' : ('su_closed', 'closed',),
-            'to' : ('open',),
-         },
-         # Ovo je samo ako nam bude trebala kontrola nad DomainStore. 
-        'su_close' : {
-           'from' : ('open', 'closed',),
-           'to'   : ('su_closed',),
         },
     }
     
@@ -596,28 +556,6 @@ class Company(ndb.Expando):
         store.state = 'open'
         store_key = store.put()
         object_log = ObjectLog(parent=store_key, agent=agent_key, action='open', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-    
-    # Ova akcija otvara ili zatvara store. Ovo je samo ako nam bude trebala kontrola nad DomainStore. Ovde cemo dalje opisati posledice suspenzije
-    @ndb.transactional
-    def sudo():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'sudo-DomainStore'.
-        # akcija se moze pozvati samo ako je store.state == *. '*' znaci bilo koji state.
-        # var_state moze biti: 'open', 'su_closed'
-        store.state = var_state
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=agent_key, action='sudo', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
-        object_log.put()
-    
-    # Ovo je samo ako nam bude trebala kontrola nad DomainStore.
-    @ndb.transactional
-    def log_message():
-        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'log_message-DomainStore',
-        # ili agent koji ima globalnu dozvolu 'sudo-DomainStore'.
-        # akcija se moze pozvati samo ako je domain.state == 'active' i store.state == *. '*' znaci bilo koji state.
-        # radi se update DomainStore-a bez izmena na bilo koji prop. (u cilju izazivanja promene na DomainStore.updated prop.)
-        store_key = store.put()
-        object_log = ObjectLog(parent=store_key, agent=user_key, action='log_message', state=store.state, message='poruka od agenta - obavezno polje!', note='privatni komentar agenta (dostupan samo privilegovanim agentima) - obavezno polje!')
         object_log.put()
 
 # done!
@@ -734,18 +672,19 @@ class CompanyShippingExclusion(Location):
 class Tax(ndb.Expando):
     
     # root (namespace Domain)
-    # composite index: ancestor:no - active,sequence
+    # composite index: ancestor:no - company,active,sequence
     name = ndb.StringProperty('1', required=True)
     sequence = ndb.IntegerProperty('2', required=True)
-    amount = ndb.StringProperty('3', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
-    location_exclusion = ndb.BooleanProperty('4', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
-    active = ndb.BooleanProperty('5', default=True)
+    company = ndb.KeyProperty('3', kind=Company, required=True)
+    amount = ndb.StringProperty('4', required=True, indexed=False)# prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency
+    location_exclusion = ndb.BooleanProperty('5', default=False, indexed=False)# applies to all locations except/applies to all locations listed below
+    active = ndb.BooleanProperty('6', default=True)
     _default_indexed = False
     pass
     # Expando
-    # locations = ndb.LocalStructuredProperty(Location, '6', repeated=True)# soft limit 300x
-    # product_categories = ndb.KeyProperty('7', kind=ProductCategory, repeated=True)# soft limit 100x
-    # carriers = ndb.KeyProperty('8', kind=DomainCarrier, repeated=True)# soft limit 100x
+    # locations = ndb.LocalStructuredProperty(Location, '7', repeated=True)# soft limit 300x
+    # product_categories = ndb.KeyProperty('8', kind=ProductCategory, repeated=True)# soft limit 100x
+    # carriers = ndb.KeyProperty('9', kind=DomainCarrier, repeated=True)# soft limit 100x
     
     _KIND = 0
     
@@ -762,7 +701,7 @@ class Tax(ndb.Expando):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainTax'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        tax = DomainTax(name=var_name, sequence=var_sequence, amount=var_amount, location_exclusion=var_location_exclusion, active=True)
+        tax = DomainTax(name=var_name, sequence=var_sequence, company=var_company, amount=var_amount, location_exclusion=var_location_exclusion, active=True)
         tax_key = tax.put()
         object_log = ObjectLog(parent=tax_key, agent=agent_key, action='create', state='none', log=tax)
         object_log.put()
@@ -774,6 +713,7 @@ class Tax(ndb.Expando):
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         tax.name = var_name
         tax.sequence = var_sequence
+        tax.company = var_company
         tax.amount = var_amount
         tax.location_exclusion = var_location_exclusion
         tax.active = var_active
@@ -796,9 +736,10 @@ class Carrier(ndb.Model):
     # root (namespace Domain)
     # http://bazaar.launchpad.net/~openerp/openobject-addons/saas-1/view/head:/delivery/delivery.py#L27
     # http://hg.tryton.org/modules/carrier/file/tip/carrier.py#l10
-    # composite index: ancestor:no - active,name
+    # composite index: ancestor:no - company,active,name
     name = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)
+    company = ndb.KeyProperty('2', kind=Company, required=True)
+    active = ndb.BooleanProperty('3', default=True)
     
     _KIND = 0
     
@@ -815,7 +756,7 @@ class Carrier(ndb.Model):
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainCarrier'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
-        carrier = DomainCarrier(name=var_name, active=True)
+        carrier = DomainCarrier(name=var_name, company=var_company, active=True)
         carrier_key = carrier.put()
         object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='create', state='none', log=carrier)
         object_log.put()
@@ -826,6 +767,7 @@ class Carrier(ndb.Model):
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'update-DomainCarrier'.
         # akcija se moze pozvati samo ako je domain.state == 'active'.
         carrier.name = var_name
+        carrier.company = var_company
         carrier.active = var_active
         carrier_key = carrier.put()
         object_log = ObjectLog(parent=carrier_key, agent=agent_key, action='update', state='none', log=carrier)
@@ -923,7 +865,7 @@ class Catalog(ndb.Expando):
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     # composite index: ???
-    store = ndb.KeyProperty('1', kind=DomainStore, required=True)
+    company = ndb.KeyProperty('1', kind=Company, required=True)
     name = ndb.StringProperty('2', required=True)
     publish = ndb.DateTimeProperty('3', required=True)# today
     discontinue = ndb.DateTimeProperty('4', required=True)# +30 days
@@ -3494,14 +3436,16 @@ class ProductCategory(ndb.Model):
         object_log.put()
         product_category_key.delete()
 
-# done!
-class ProductUOMCategory(ndb.Model):
+# done! u teoriji i Currency je jedan Measurement, sa mnogobrojno UOM-ova (valuta)
+# http://en.wikipedia.org/wiki/Systems_of_measurement#Units_of_currency
+class Measurement(ndb.Model):
     
     # root
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     name = ndb.StringProperty('1', required=True)
+    uoms = ndb.StructuredProperty(UOM, '2', repeated=True)# soft limit 500x
     
     _KIND = 0
     
@@ -3517,91 +3461,46 @@ class ProductUOMCategory(ndb.Model):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOMCategory'.
-        product_uom_category = ProductUOMCategory(name=var_name)
-        product_uom_category_key = product_uom_category.put()
-        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='create', state='none', log=product_uom_category)
+        var_uoms = []
+        var_uoms.append(UOM(name=var_name, symbol=var_symbol, rate=var_rate, factor=var_factor, rounding=var_rounting, digits=var_digits, active=True))
+        measurement = Measurement(name=var_name, uoms=var_uoms)
+        measurement_key = measurement.put()
+        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='create', state='none', log=measurement)
         object_log.put()
     
     # Ova akcija azurira product uom category.
     @ndb.transactional
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOMCategory'.
-        product_uom_category.name = var_name
-        product_uom_category_key = product_uom_category.put()
-        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='update', state='none', log=product_uom_category)
+        measurement.name = var_name
+        measurement.uoms = var_uoms
+        measurement_key = measurement.put()
+        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='update', state='none', log=measurement)
         object_log.put()
     
     # Ova akcija brise product uom category.
     @ndb.transactional
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOMCategory'.
-        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='delete', state='none')
+        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        product_uoms = ProductUOM.query(ancestor=product_uom_category_key).fetch(keys_only=True)
-        # ovaj metod ne loguje brisanje pojedinacno svakog product_uom entiteta, pa se trebati ustvari pozivati ProductUOM.delete() sa listom kljuceva.
-        # ProductUOM.delete() nije za sada nije opisana da radi multi key delete.
-        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductUOMCategory entiteta podrazumvea da su svi potomci izbrisani!!
-        ndb.delete_multi(product_uoms)
-        product_uom_category_key.delete()
+        measurement_key.delete()
 
 # done!
-class ProductUOM(ndb.Model):
+class UOM(ndb.Model):
     
-    # ancestor ProductUOMCategory
+    # StructuredProperty model
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
     # mozda da ovi entiteti budu non-deletable i non-editable ??
-    # composite index: ancestor:no - active,name
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
     factor = DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
     rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True)
-    
-    _KIND = 0
-    
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
-    # Ova akcija kreira novi product uom.
-    @ndb.transactional
-    def create():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOM'.
-        product_uom = ProductUOM(parent=product_uom_category_key, name=var_name, symbol=var_symbol, rate=var_rate, factor=var_factor, rounding=var_rounding, digits=var_digits, active=var_active)
-        product_uom_key = product_uom.put()
-        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='create', state='none', log=product_uom)
-        object_log.put()
-    
-    # Ova akcija azurira product uom.
-    @ndb.transactional
-    def update():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOM'.
-        product_uom.name = var_name
-        product_uom.symbol = var_symbol
-        product_uom.rate = var_rate
-        product_uom.factor = var_factor
-        product_uom.rounding = var_rounding
-        product_uom.digits = var_digits
-        product_uom.active = var_active
-        product_uom_key = product_uom.put()
-        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='update', state='none', log=product_uom)
-        object_log.put()
-    
-    # Ova akcija brise product uom.
-    @ndb.transactional
-    def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOM'.
-        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='delete', state='none')
-        object_log.put()
-        product_uom_key.delete()
+    active = ndb.BooleanProperty('7', default=True)    
 
 # done!
 class Currency(ndb.Model):
