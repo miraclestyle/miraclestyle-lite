@@ -1,73 +1,91 @@
-# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
-# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
-# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
+# ovo je neka klasa u tools.py gde su sve ostale klase koje implementiraju aktivnu logiku
+# ova klasa se instacira u nekoj pickle klasi koja je storana kao company child entity na datastore
+# na isti princip se implementira carrier
+# aktuelni dizajn order klase implementira centralizovane funkcije koje rade agregaciju parametara iz
+# datastore, primaju neke parametre i vracaju neke druge, pa se kasnije vraceni parametri upisuju u order objekat
+# ovaj novi dizajn radi tako sto se order objekat provlaci kroz niz klasa (i njihovih osnovnih funkcija) 
+# koje ga transformisu ako je to neophodno
+# samim tim ovaj dizajn prati context passing strategiju koja dozvoljava vecu fleksibilnost i skaliranje logike
+# sto u aktuelnom dizajnu nije moguce.
+# za samu implementaciju novog dizajna Tax i Carrier ndb modeli nisu potrebni, vec neki entiteti koji ce cuvati pickle
+# prilikom implementacije order klase treba se uraditi refactoring postojeceg code base
+# treba imati na umu da ce order klasa trpiti izmene zbog novog accounting koncepta.
+class Tax():
+  unique_id = 'neki unique random ID'
+  name = 'VAT'
+  sequence = 1
+  company = ndb.KeyProperty('3', kind=Company, required=True)
+  formula = 'prekompajlirane vrednosti iz UI, napr: 17.00[%] ili 10.00[c] gde je [c] = currency'
+  location_exclusion = True # applies to all locations except/applies to all locations listed below
+  shipping_address = True # decides wheather tax location is order.shipping_address or order.billing_address
+  active = True
+  locations = []
+  product_categories = []
+  carriers = []
 
-class Journal(ndb.Model):
-  # root (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L709
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/journal.py#l92
-  name = ndb.StringProperty('1', required=True)
-  code = ndb.StringProperty('2', required=True)
-  active = ndb.BooleanProperty('4', default=True)
-  type = 
-  view = 
-  sequence = 
-  update_posted = 
-
-class Period(ndb.Model):
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/fiscalyear.py
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/period.py
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L861
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L957
-  name = 
-
-class Category(ndb.Expando):
-  # root (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
-  parent_record = ndb.KeyProperty('1', kind=Account, required=True)
-  name = ndb.StringProperty('1', required=True)
-  code = ndb.StringProperty('2', required=True)
-  active = ndb.BooleanProperty('7', default=True)
-  company = ndb.KeyProperty('6', kind=Company, required=True)
-  currency = ndb.LocalStructuredProperty(Currency, '3', required=True)
-  second_currency = ndb.LocalStructuredProperty(Currency, '3', required=True)
-  type = ndb.KeyProperty('4', kind=AccountType, required=True)
-  reconcile = 
-  deferral = 
-
-class Group(ndb.Model):
-  # root (namespace Domain)
-  
-class Entry(ndb.Expando):
-  # ancestor Group (namespace Domain)
-  # domain = ndb.KeyProperty('5', kind=Domain, required=True) ??
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
-  # composite index: 
-  # ancestor:no - journal,company,state,updated:desc; ancestor:no - company,state,date:desc
-  # ancestor:no - state,updated:desc; ancestor:no - state,date:desc
-  # ancestor:yes - state,updated:desc; ancestor:yes - state,order_date:desc
-  journal = ndb.KeyProperty('1', kind=Journal, required=True)
-  company = ndb.KeyProperty('2', kind=Company, required=True)
-  period = ndb.KeyProperty('3', kind=Period, required=True)
-  state = ndb.IntegerProperty('4', required=True)
-  created = ndb.DateTimeProperty('5', auto_now_add=True, required=True)
-  updated = ndb.DateTimeProperty('6', auto_now=True, required=True)
-  date = ndb.DateTimeProperty('7', required=True)# updated on specific state or manually
-  party = ndb.KeyProperty('2')
-  # Expando
-  
-
-class Line(ndb.Expando):
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # composite index: ancestor:yes - sequence
-  sequence = ndb.IntegerProperty('1', required=True)
-  categories = ndb.KeyProperty('2', kind=Category, repeated=True)
-  debit = DecimalProperty('3', required=True, indexed=False)
-  credit = DecimalProperty('4', required=True, indexed=False)
+  def calculate(**kwargs):
+    order = kwargs.get('order')
+    if (tax.shipping_address):
+      location = order.shipping_address
+    else:
+      location = order.billing_address
+    tax_allowed = False
+    # location parametar se uvek mora proslediti metodi, kako bi se uradila ispravna validacija.
+    if (tax.locations):
+      # Tax everywhere except at the following locations
+      if not (tax.location_exclusion):
+        tax_allowed = True
+        for tax_location in tax.locations:
+          p = tax_location._properties
+          if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+            if (location.country == tax_location.country):
+              tax_allowed = False
+              break
+          elif not (p['postal_code_from'] and p['postal_code_to']):
+            if (location.country == tax_location.country and location.region == tax_location.region):
+              tax_allowed = False
+              break
+          else:
+            if (location.country == tax_location.country and location.region == tax_location.region and (location.postal_code >= tax_location.postal_code_from and location.postal_code <= tax_location.postal_code_to)):
+              tax_allowed = False
+              break
+      else:
+        # Tax only at the following locations
+        for tax_location in tax.locations:
+          p = tax_location._properties
+          if not (p['region'] and p['postal_code_from'] and p['postal_code_to']):
+            if (location.country == tax_location.country):
+              tax_allowed = True
+              break
+          elif not (p['postal_code_from'] and p['postal_code_to']):
+            if (location.country == tax_location.country and location.region == tax_location.region):
+              tax_allowed = True
+              break
+          else:
+            if (location.country == tax_location.country and location.region == tax_location.region and (location.postal_code >= tax_location.postal_code_from and location.postal_code <= tax_location.postal_code_to)):
+              tax_allowed = True
+              break
+    else:
+      # u slucaju da taxa nema konfigurisane location exclusions-e onda se odnosi na sve lokacije/onda je to globalna taxa
+      tax_allowed = True
+    # ako je tax_allowed nakon location check-a onda radimo validaciju po carrier-u i product_category-ju
+    if (tax_allowed):
+      if (tax.carriers) and (tax.carriers.count(order.carrier_reference)):
+        order.carrier_tax_reference = tax.unique_id
+      elif not (tax.carriers):
+        lines = order.lines
+        order.lines = []
+        for line in lines:
+          if (tax.product_categories) and (tax.product_categories.count(line.product_category)):
+            if not (line.tax_references.count(tax.unique_id)):
+              line.tax_references.append(tax.unique_id)
+          elif not (tax.product_categories):
+            if not (line.tax_references.count(tax.unique_id)):
+              line.tax_references.append(tax.unique_id)
+          order.lines.append(line)
+    lines = order.lines
+    order.lines = []
+    for line in lines:
+      tax_subtotal = DecTools.form('0', order.currency)
+      for tax in line.tax_references:
+        ....
