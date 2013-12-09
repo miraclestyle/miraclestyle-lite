@@ -1,15 +1,18 @@
-# ovo je neka klasa u tools.py gde su sve ostale klase koje implementiraju aktivnu logiku
-# ova klasa se instacira u nekoj pickle klasi koja je storana kao company child entity na datastore
-# na isti princip se implementira carrier
 # aktuelni dizajn order klase implementira centralizovane funkcije koje rade agregaciju parametara iz
 # datastore, primaju neke parametre i vracaju neke druge, pa se kasnije vraceni parametri upisuju u order objekat
+# aktuelni dizajn svu logiku cuva u order klasi i time ne dozvoljava bilo kakvo skaliranje bez izmena na order code base...
 # ovaj novi dizajn radi tako sto se order objekat provlaci kroz niz klasa (i njihovih osnovnih funkcija) 
 # koje ga transformisu ako je to neophodno
 # samim tim ovaj dizajn prati context passing strategiju koja dozvoljava vecu fleksibilnost i skaliranje logike
 # sto u aktuelnom dizajnu nije moguce.
-# za samu implementaciju novog dizajna Tax i Carrier ndb modeli nisu potrebni, vec neki entiteti koji ce cuvati pickle
-# prilikom implementacije order klase treba se uraditi refactoring postojeceg code base
-# treba imati na umu da ce order klasa trpiti izmene zbog novog accounting koncepta.
+# za samu implementaciju novog dizajna Tax, Carrier i Shipping Exclusion ndb modeli nisu potrebni, 
+# vec neki entiteti koji ce cuvati pickle....
+# prilikom implementacije order klase treba se uraditi refactoring postojeceg code base tako da se on rsclani na 
+# odvojene namenske klase koje ce postojati u tools.py, napr: Tax, Carrier, Shipping...
+# treba imati na umu da ce order klasa obavezno trpiti izmene zbog novog accounting koncepta...
+# ovo je primer Tax klase u tools.py gde se nalaze sve ostale klase koje implementiraju aktivnu logiku...
+# ova klasa se instacira u nekoj pickle klasi koja je storana kao company child entity na datastore...
+# na isti princip se implementira carrier i shipping exclusion logika..
 class Tax():
   unique_id = 'neki unique random ID'
   name = 'VAT'
