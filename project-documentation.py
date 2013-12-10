@@ -437,8 +437,7 @@ class Field(ndb.Model):
     visible = ndb.BooleanProperty('3', default=True, indexed=False)
     
 ################################################################################
-# /domain/company.py, verovatno se onda treba rename Company classa u nesto
-# drugo, da ne bude dupliciranih imenica napr: company.Company...
+# /domain/business.py
 ################################################################################
 
 # done!
@@ -623,6 +622,8 @@ class CompanyContent(ndb.Model):
         object_log.put()
         store_content_key.delete()
 
+class CompanyLogic(ndb.Model):
+  
 # done!
 class CompanyShippingExclusion(Location):
     
