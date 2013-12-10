@@ -10,8 +10,8 @@ import string
 import random
  
 from app import settings
- 
- 
+  
+  
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
  

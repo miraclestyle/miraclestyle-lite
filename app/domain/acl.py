@@ -32,8 +32,7 @@ class NamespaceDomain():
 class Domain(ndb.BaseExpando, ndb.Workflow):
     
     # domain will use in-memory cache and memcache
-    
-    _use_cache = True
+     
     _use_memcache = True
     
     KIND_ID = 6
@@ -118,7 +117,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         for item in cls.query().fetch():
             namespace = item.key.urlsafe()
             items.append({
-                'entity' : item,
+                'domain' : item,
                 'roles' : Role.query(namespace=namespace).fetch(),
                 'users' : User.query(namespace=namespace).fetch(),
             })

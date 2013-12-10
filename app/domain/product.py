@@ -4,8 +4,12 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
-from app.domain.acl import Domain, NamespaceDomain
+import itertools
+import hashlib
+ 
+from app import ndb, util
+from app.domain.marketing import Catalog
+from app.domain.acl import NamespaceDomain
 from app.core.misc import Image
 
 # done!
@@ -24,7 +28,97 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
        'create' : 1,
        'update' : 2,
     }
+
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  
+                  if not entity.domain_is_active:
+                     return response.error('domain', 'not_active')
+                 
+                  if not entity.key.parent().get().is_usable:
+                     return response.error('catalog', 'not_unpublished') 
+                       
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+ 
+            response.process_input(kwds, cls, convert=[('catalog', Catalog, True)])
+          
+            if response.has_error():
+               return response
+ 
+                   
+            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            
+            if entity is None:
+               return response.not_found()
+             
+            if entity and entity.loaded():
+                 
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+              
+               if not entity.key.parent().get().is_usable:
+                  return response.error('catalog', 'not_unpublished') 
+                   
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response  
+     
   
 
 # done!
@@ -46,6 +140,96 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
        'create' : 1,
        'update' : 2,
     }
+    
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  
+                  if not entity.domain_is_active:
+                     return response.error('domain', 'not_active')
+                 
+                  if not entity.key.parent().get().is_usable:
+                     return response.error('catalog', 'not_unpublished') 
+                       
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+ 
+            response.process_input(kwds, cls, convert=[('catalog', Catalog, True)])
+          
+            if response.has_error():
+               return response
+ 
+                   
+            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            
+            if entity is None:
+               return response.not_found()
+             
+            if entity and entity.loaded():
+                 
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+              
+               if not entity.key.parent().get().is_usable:
+                  return response.error('catalog', 'not_unpublished') 
+                   
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
 
 class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
@@ -90,6 +274,190 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'delete' : 3,
        'generate_product_instances' : 4,
     }
+    
+    @classmethod
+    def generate_product_instances(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        @ndb.transactional(xg=True)
+        def transaction():
+            
+            current = cls.get_current_user()
+            
+            response.process_input(kwds, cls, convert=[('template', Template)])
+            
+            if response.has_error():
+               return response
+           
+            product_template_key = kwds.get('template')
+            product_template = product_template_key.get()
+           
+            if current.has_permission('generate_product_instances', product_template):
+            
+                ndb.delete_multi(Instance.query(ancestor=product_template_key).fetch(keys_only=True))
+                
+                ndb.delete_multi(InventoryLog.query(ancestor=product_template_key).fetch(keys_only=True))
+                
+                ndb.delete_multi(InventoryAdjustment.query(ancestor=product_template_key).fetch(keys_only=True))
+                 
+                variants = ndb.get_multi(product_template.variants)
+                packer = list()
+                
+                for v in variants:
+                    packer.append(v.options)
+                    
+                if not packer:
+                   return response.error('generator', 'empty_generator')
+                    
+                create_variations = itertools.product(*packer)
+                
+                response['instances'] = list()
+                
+                i = 1
+                for c in create_variations:
+                    code = '%s_%s' % (product_template_key.urlsafe(), i)
+                    compiled = Instance.md5_variation_combination(product_template_key, c)
+                    inst = Instance(parent=product_template_key, id=compiled, code=code)
+                    inst.put()
+                    inst.new_action('create')
+                    inst.record_action()
+                    i += 1
+                    
+                    response['instances'].append(inst)
+                 
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+        
+        return response
+    
+    
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  
+                  if not entity.domain_is_active:
+                     return response.error('domain', 'not_active')
+                 
+                  if not entity.key.parent().get().is_usable:
+                     return response.error('catalog', 'not_unpublished') 
+                       
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+        
+        do_not_delete = []
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+            
+            skip = ('low_stock_quantity', 'images', 'product_instance_count')
+            response.process_input(kwds, cls, skip=skip, convert=[('catalog', Catalog, True)])
+          
+            if response.has_error():
+               return response
+           
+            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            
+            if entity is None:
+               return response.not_found()
+           
+            if current.has_permission(('update', 'create'), entity):
+            
+                images = kwds.get('images')
+                if images:
+                   sq = 0
+                   for img in images:
+                      
+                       infodata = {'image' : img}
+                       delete_file = True
+                       response.process_input(infodata, Image, only=('image',), prefix='images_%s' % sq)
+                       
+                       if not response.has_error():
+                          try: 
+                              new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
+                              entity.images.append(Image(sequence=sq, **new_image))
+                              sq += 1
+                              delete_file = False
+                          except Exception as e:
+                              util.logger(e, 'exception')
+                              delete_file = True
+                              
+                       if not delete_file:
+                           do_not_delete.append(img)
+    
+            if entity and entity.loaded():
+                 
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+              
+               if not entity.key.parent().get().is_usable:
+                  return response.error('catalog', 'not_unpublished') 
+                   
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               
+               if not kwds.get('catalog'):
+                  response.required('catalog') 
+                  
+               if response.has_error():
+                  return response
+                
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+            if len(do_not_delete):
+               ndb.BlobManager.field_storage_used_blob(do_not_delete)
+        except Exception as e:
+            response.transaction_error(e)
+       
+        return response  
      
 
 # done!
@@ -125,8 +493,90 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     OBJECT_ACTIONS = {
        'update' : 1,
+       'create' : 2,
     }
   
+    @classmethod
+    def md5_variation_combination(cls, product_template_key, codes):
+        codes = list(codes)
+        codes.insert(0, product_template_key.urlsafe())
+        return hashlib.md5(u'-'.join(codes)).hexdigest()
+    
+    @classmethod
+    def manage(cls, **kwds):
+        
+        response = ndb.Response()
+        do_not_delete = []
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = cls.get_current_user()
+            
+            only = ('availability', 'description', 'unit_price', 'contents',
+                    'low_stock_quantity', 'weight', 'volume')
+ 
+            response.process_input(kwds, cls, only=only)
+          
+            if response.has_error():
+               return response
+  
+            entity = cls.get_or_prepare(kwds)
+             
+            if entity is None:
+               return response.not_found()
+           
+            product_template = entity.key.parent().get()
+            catalog = product_template.parent().get()
+           
+            if not catalog.is_usable:
+                entity = cls.get_or_prepare(kwds, cls, only=('availability', 'low_stock_quantity'))
+             
+            if entity and entity.loaded():
+                 
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+               
+               if current.has_permission('update', entity):
+                   images = kwds.get('images')
+                   if images:
+                       sq = 0
+                       for img in images:
+                 
+                           infodata = {'image' : img}
+                           delete_file = True
+                           response.process_input(infodata, Image, only=('image',), prefix='images_%s' % sq)
+                           
+                           if not response.has_error():
+                              try: 
+                                  new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
+                                  entity.images.append(Image(sequence=sq, **new_image))
+                                  sq += 1
+                                  delete_file = False
+                              except Exception as e:
+                                  util.logger(e, 'exception')
+                                  
+                           if not delete_file:
+                              do_not_delete.append(img)
+                          
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+            if len(do_not_delete):
+               ndb.BlobManager.field_storage_used_blob(do_not_delete)
+        except Exception as e:
+            response.transaction_error(e)
+ 
+        return response  
 
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class InventoryLog(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
@@ -160,4 +610,25 @@ class InventoryAdjustment(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     OBJECT_ACTIONS = {
        'create' : 1,
     }
+    
+    """
+        # Ova akcija azurira product inventory.
+    @ndb.transactional
+    def create():
+        # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'create-DomainProductInventoryAdjustment'.
+        # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'published'. - mozda budemo dozvolili adjustment bez obzira na catalog.state
+        product_inventory_adjustment = DomainProductInventoryAdjustment(parent=product_instance_key, agent=agent_key, quantity=var_quantity, comment=var_comment)
+        product_inventory_adjustment_key = product_inventory_adjustment.put()
+        object_log = ObjectLog(parent=product_inventory_adjustment_key, agent=agent_key, action='create', state='none', log=product_inventory_adjustment)
+        object_log.put()
+        # ovo bi trebalo ici preko task queue
+        # idempotency je moguc ako se pre inserta proverava da li je record sa tim reference-om upisan
+        product_inventory_log = DomainProductInventoryLog.query().order(-DomainProductInventoryLog.logged).fetch(1)
+        new_product_inventory_log = DomainProductInventoryLog(parent=product_instance_key, id=str(product_inventory_adjustment_key), quantity=product_inventory_adjustment.quantity, balance=product_inventory_log.balance + product_inventory_adjustment.quantity)
+        new_product_inventory_log.put()
+    """
+    
+    @classmethod
+    def manage(cls, **kwds):
+        pass
 

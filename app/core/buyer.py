@@ -57,6 +57,36 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         
         return response
      
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if entity.key.parent() == current.key:
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
   
     @classmethod
     def manage(cls, **kwds):
@@ -75,7 +105,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                return response.not_logged_in()
     
             response.process_input(kwds, cls)
-    
+ 
             if response.has_error():
                return response       
     
@@ -124,38 +154,6 @@ class Address(ndb.BaseExpando, ndb.Workflow):
             
         return response
     
-    
-    @classmethod
-    def delete(cls, **kwds):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = cls.get_current_user()
-               
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
-               
-               if entity and entity.loaded():
-                  if entity.key.parent() == current.key:
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response      
-
             
 # done!
 class Collection(ndb.BaseModel, ndb.Workflow):
@@ -247,7 +245,7 @@ class Collection(ndb.BaseModel, ndb.Workflow):
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
                if entity and entity.loaded():
-                  if entity.key.parent() == current.key:
+                  if current.has_permission('delete', entity):
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
                      entity.key.delete()

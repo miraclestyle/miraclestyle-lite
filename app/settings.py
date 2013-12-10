@@ -31,7 +31,7 @@ USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
 ROOT_ADMINS = ('edis.sehalic@gmail.com', 'elvinkosova@gmail.com')
 
-COMPANY_LOGO_BUCKET = 'development_bucket/public'
+COMPANY_LOGO_BUCKET = 'user_input/company_logo'
  
 
 LOGIN_METHODS = {
@@ -66,7 +66,7 @@ FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'
 # maybe we will use this to map what methods can be called by the public endpoints,
 # to prevent calling restricted/protected methods
 ENDPOINTS = {
-   'app.core.acl' : {
+    'app.core.acl' : {
          'User' : ('login', 'logout'),
     },
     'app.core.buyer' : {},

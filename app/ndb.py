@@ -6,19 +6,21 @@ Created on Jul 9, 2013
 '''
 import cgi
 import decimal
+import cloudstorage
 
-from google.appengine.ext.db import datastore_errors 
-from google.appengine.ext.ndb import *
-
+from google.appengine.api import images
+from google.appengine.ext.db import datastore_errors
 from google.appengine.ext import blobstore
+
+from google.appengine.ext.ndb import *
  
-from app import pyson, util
+from app import pyson, util, memcache
  
 ctx = get_context()
 
 # memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
 ctx.set_memcache_policy(False)
-ctx.set_cache_policy(False)
+#ctx.set_cache_policy(False)
 
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
@@ -26,7 +28,7 @@ ctx.set_cache_policy(False)
 class DescriptiveError(Exception):
       # executes an exception in a way that it will have its own meaning instead of just "invalid"
       pass
-
+ 
 class Formatter():
  
     @classmethod
@@ -138,18 +140,26 @@ class Formatter():
     def imagefile(cls, prop, value):
         is_blob = cls.blobfile(prop, value)
         if is_blob:
-           if prop._repeated:
-               for v in value:
-                   info = blobstore.parse_file_info(value)
+           single = False
+           if not prop._repeated:
+              single = True
+              value = [value]
+           for v in value:
+               info = blobstore.parse_file_info(v)
+               meta_required = ('image/jpeg', 'image/jpg', 'image/png')
+               if info.content_type not in meta_required:
+                  raise DescriptiveError('invalid_file_type')
+               else:
                    
-                   meta_required = ('image/jpeg', 'image/jpg', 'image/png')
-                   if info.content_type in meta_required:
-                      raise ValueError('file uploaded is not %s' % meta_required)
+                  try:
+                      BlobManager.field_storage_get_image_sizes(v)
+                  except Exception as e:
+                      raise DescriptiveError('invalid_image: %s' % e)
            
         return is_blob
  
   
-property_types_validator = {
+property_types_formatter = {
   'SuperStringProperty' : Formatter.string,
   'SuperIntegerProperty' : Formatter.int,
   'SuperLocalStructuredProperty' : False,
@@ -165,6 +175,11 @@ property_types_validator = {
   'SuperDecimalProperty' : Formatter.decimal,
   'SuperReferenceProperty' : Formatter.ndb_key,
 }
+
+def get_current_user():
+    
+    from app.core.acl import User
+    return User.current_user()
 
 def factory(module_model_path):
     """
@@ -262,50 +277,44 @@ class _BaseModel(Model):
         
          
       return self.__tmp[k]
-  
-  @classmethod
-  def get_current_user(cls):
-      if hasattr(cls, 'current_user'):
-         # if the model is user, well call his function to prevent loop imports 
-         return cls.current_user()
-      # Shorthand for getting the current user
-      from app.core.acl import User
-      return User.current_user()
+ 
   
   def loaded(self):
       return self.key != None and self.key.id()
+  
+  @classmethod
+  def prepare_create(cls, dataset, **kwds):
+      return cls.prepare(True, dataset, **kwds)
+  
+  @classmethod
+  def prepare_update(cls, dataset, **kwds):
+      return cls.prepare(False, dataset, **kwds)
  
   @classmethod
-  def get_or_prepare(cls, dataset, **kwds):
-      """
-        This function prepares the object from the provided data, or gets the object if the `id` is provided in dataset.
-        If the id is provided, and the key.get does not find any data for the specified id, it will return None (@todo maybe raise Exception instead?).
-        
-        However, if the id is provided, and kwd param `get` is set to False, it will return populated entity in format:
-        Entity(key=ndb.Key(urlsafe=id), **dataset)
-        
-        By default it will strip away all keys that is not in the list of fields for the model,
-        unless you provide "only" param with the list of fields that the function will retrieve.
-        
-        Kwds are arguments passed to __init__ for models. They can be namespace, parent etc..
-      """
-      use_get = kwds.pop('get', True)
+  def prepare(cls, create, dataset, **kwds):
+      
+      use_get = kwds.pop('use_get', True)
+      get_only = kwds.pop('get_only', False)
       expect = kwds.pop('only', cls.get_property_names() + ['id'])
       skip = kwds.pop('skip', None)
       ctx_options = kwds.pop('ctx_options', {})
       populate = kwds.pop('populate', True)
       
+      if get_only:
+         expect = False
+         populate = False
+      
       datasets = dict()
       
       _id = dataset.pop('key', None)
- 
-      create = True
-      if _id:
+      
+      if not create:
+         if not _id:
+            return None
          try:
              load = Key(urlsafe=_id)
-             create = False
          except:
-             pass
+             return None
          
       if expect is not False:   
           for i in expect:
@@ -320,7 +329,6 @@ class _BaseModel(Model):
                  gets = getattr(cls, 'default_%s' % i, None)
                  if gets is not None:
                     datasets[i] = gets()
-                    
       else:
           datasets = dataset.copy()
      
@@ -337,38 +345,6 @@ class _BaseModel(Model):
          else:
             datasets['key'] = load 
             return cls(**datasets)
- 
-  @staticmethod
-  def from_multiple_values(data):
-      """ 
-        Formats dict from format:
-        dict = {
-           'id' : [1,3,4],
-           'name' : ['foo', 'bar', ['baz', 'foo']],
-        }
-        
-        into
-        
-        list = [ {'id' : 1, 'name' : 'foo'}, 
-                 {'id' : 3, 'name' : 'bar'},
-                 {'id' : 4, 'name' : ['baz', 'foo']}]
-      """
-      out = []
-      keys = data.keys()
-      i = -1
-      for _id in data.get('id', []):
-          i += 1
-          pdict = dict(id=_id)
-          for k in keys:
-              d = data.get(k)
-              if (len(d)-1) == i:
-                  pdict[k] = d[i]
-              else:
-                  pdict[k] = None
-                  
-          out.append(pdict)
-                  
-      return out
   
   def _pre_put_hook(self):
       for p in self._properties:
@@ -429,82 +405,21 @@ class _BaseModel(Model):
   @classmethod
   def get_property_names(cls):
       return [prop._code_name for prop in cls.get_all_properties()]
-  
+ 
   @classmethod
-  def delete(cls, **kwds):
- 
-        response = Response()
- 
-        @transactional(xg=True)
-        def transaction():
-                       
-               current = cls.get_current_user()
-               
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response 
+  def create(cls, values, **kwargs):
+        if not hasattr(cls, 'manage'):
+           response = Response()
+           return response.not_implemented()
+        return cls.manage(True, values, **kwargs)
     
   @classmethod
-  def manage(cls, **kwds):
-        
-        response = Response()
-    
-        @transactional(xg=True)
-        def transaction():
-             
-            current = cls.get_current_user()
-     
-            response.process_input(kwds, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.get_or_prepare(kwds)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if entity and entity.loaded():
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response 
-
+  def update(cls, values, **kwargs):
+        if not hasattr(cls, 'manage'):
+           response = Response()
+           return response.not_implemented()
+        return cls.manage(False, values, **kwargs)
+ 
 class BaseModel(_BaseModel):
     """
       Base class for all `ndb.Model` entities
@@ -675,7 +590,18 @@ class SuperDecimalProperty(SuperStringProperty):
     
     def _from_base_type(self, value):
         return decimal.Decimal(value)  # Always return a decimal
+    
+    """
 
+    def _db_set_value(self, v, unused_p, value):
+        value = str(value)
+        return super(SuperDecimalProperty, self)._db_set_value(v, unused_p, value)
+    
+    def _db_get_value(self, v, unused_p):
+        return decimal.Decimal(v.stringvalue())
+        
+    """    
+ 
       
 class SuperReferenceProperty(SuperKeyProperty):
     
@@ -850,7 +776,7 @@ class Workflow():
           for k, v in cls.OBJECT_ACTIONS.items():
               if v == code:
                  return k
-          raise WorkflowBadActionCodeError('Bad action coded provided %s, possible names %s' % (code, cls.OBJECT_ACTIONS.keys()))  
+          raise WorkflowBadActionCodeError('Bad action code provided %s, possible names %s' % (code, cls.OBJECT_ACTIONS.keys()))  
       
       @classmethod
       def resolve_state_name_by_code(cls, code):
@@ -903,8 +829,7 @@ class Workflow():
           
           obj = kwargs.pop('log_object', True) # if obj is set to True it will log `self`
           agent = kwargs.pop('agent', None) # if agent is none it will use current user
-          puts = kwargs.pop('put', None)
-          
+      
           if agent is None:
              agent = self.get_current_user()
              kwargs['agent'] = agent.key
@@ -991,6 +916,9 @@ class Response(dict):
            return self.transaction_failed()
         
         raise
+    
+    def not_implemented(self):
+        return self.error('system', 'not_implemented')
  
     def transaction_timeout(self):
         # sets error in the response that the transaction that was taking place has timed out
@@ -1158,11 +1086,11 @@ class Response(dict):
             if value is None and not v._required:
                continue
    
-            valid = property_types_validator.get(v.__class__.__name__)
+            formatter = property_types_formatter.get(v.__class__.__name__)
             
-            if valid: 
+            if formatter: 
                try: 
-                   kwds[k] = valid(v, value)
+                   kwds[k] = formatter(v, value)
                except Exception as e:#-- usually the properties throw these types of exceptions
                    util.logger(e, 'exception')
                    self.invalid('%s%s' % (prefix, k))
@@ -1284,3 +1212,123 @@ class EvalEnvironment(dict):
 
   def __nonzero__(self):
       return bool(self._record)
+  
+  
+class BlobManager():
+    
+    """
+    This class handles deletations of blobs trough the application. This approach needs to be like this,
+    because ndb does not support some of the blobstore query functions.
+   
+    """
+    
+    _UNUSED_BLOB_KEY = '_unused_blob_key'
+  
+    @classmethod
+    def blob_keys_from_field_storage(cls, field_storages):
+        
+        if not isinstance(field_storages, (list, tuple)):
+            field_storages = [field_storages]
+        
+        out = []       
+        for i in field_storages:
+            
+            if isinstance(i, blobstore.BlobKey):
+                out.append(i)
+                continue
+            
+            if isinstance(i, cgi.FieldStorage):
+                try:
+                    blobinfo = blobstore.parse_blob_info(i)
+                    out.append(blobinfo.key())
+                except blobstore.BlobInfoParseError as e:
+                    pass
+        return out
+  
+    @classmethod
+    def unused_blobs(cls):
+        return memcache.temp_memory_get(cls._UNUSED_BLOB_KEY, [])
+    
+    @classmethod
+    def field_storage_used_blob(cls, field_storages):
+        
+        gets = cls.unused_blobs()
+        
+        removes = cls.blob_keys_from_field_storage(field_storages)
+        
+        for remove in removes:
+            gets.remove(remove)
+            
+        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, gets)
+ 
+    @classmethod
+    def field_storage_unused_blob(cls, field_storages):
+  
+        gets = cls.unused_blobs()
+        
+        gets.extend(cls.blob_keys_from_field_storage(field_storages))
+        
+        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, gets)
+  
+    
+    @classmethod
+    def delete_unused_blobs(cls):
+        
+        k = cls._UNUSED_BLOB_KEY
+     
+        deletes = cls.unused_blobs()
+ 
+        if len(deletes):
+           blobstore.delete(deletes)
+ 
+           memcache.temp_memory_set(k, [])
+ 
+    @classmethod
+    def field_storage_get_image_sizes(cls, field_storages):
+         
+        @non_transactional
+        def operation(field_storages):
+            
+            sizes = dict()
+            single = False
+            
+            if not isinstance(field_storages, (list, tuple)):
+               field_storages = [field_storages]
+               single = True
+               
+            out = []
+               
+            for field_storage in field_storages:
+                
+                fileinfo = blobstore.parse_file_info(field_storage)
+                blobinfo = blobstore.parse_blob_info(field_storage)
+                
+                sizes = {}
+      
+                f = cloudstorage.open(fileinfo.gs_object_name[3:])
+                blob = f.read()
+        
+                image = images.Image(image_data=blob)
+                sizes = {}
+           
+                sizes['width'] = image.width
+                sizes['height'] = image.height
+                 
+                sizes['size'] = fileinfo.size
+                sizes['content_type'] = fileinfo.content_type
+                sizes['image'] = blobinfo.key()
+         
+                if not single:
+                   out.append(sizes)
+                else:
+                   out = sizes
+                 
+                # free buffer memory   
+                f.close()
+                
+                del blob
+                  
+            return out 
+        
+        return operation(field_storages)
+        

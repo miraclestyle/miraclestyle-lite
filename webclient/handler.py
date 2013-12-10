@@ -14,14 +14,14 @@ from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
 from app.memcache import _local
-from app import settings, core, util
+from app import settings, core, util, ndb
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
 from webclient.route import get_routes
 
 from google.appengine.ext import blobstore
-
+ 
 _WSGI_CONFIG = None
  
 def wsgi_config(as_tuple=False):
@@ -306,6 +306,10 @@ class Handler(webapp2.RequestHandler):
         # its just bunch of shorthands that are useful for parsing input
         self.reqdata = RequestData(self.request)
         
+        for param in self.request.params.items():
+            # register all blobs that got uploaded
+            ndb.BlobManager.field_storage_unused_blob(param)
+        
   
     def send_json(self, data):
         """ sends `data` to json format, accepts anything json compatible """
@@ -371,8 +375,13 @@ class Handler(webapp2.RequestHandler):
             self.after()
             
         finally:
+            
+            # delete all blobs that did not got used in the application execution
+            # ndb.BlobManager.delete_unused_blobs()
+            
             # support the core's locals, and release them upon request complete
             _local.__release_local__()
+         
  
      
 class Segments(Handler):

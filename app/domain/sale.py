@@ -32,6 +32,11 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
        'delete' : 3,
     }
     
+    @property
+    def is_usable(self):
+        # makes a check wether is this possible to be used somewhere
+        return self.action
+    
     @classmethod
     def list(cls, **kwds):
         response = ndb.Response()
@@ -178,6 +183,11 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'delete' : 3,
     }
+
+    @property
+    def is_usable(self):
+        # makes a check wether is this possible to be used somewhere
+        return self.action
  
     
     @classmethod
@@ -441,8 +451,9 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     @classmethod
     def manage(cls, **kwds):
-        
+       
         response = ndb.Response()
+        do_not_delete = []
 
         @ndb.transactional(xg=True)
         def transaction():
@@ -488,6 +499,8 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                    if new_logo:
                       blobstore.delete(entity.logo)
                       entity.logo = kwds.get('logo')
+                      do_not_delete.append(entity.logo)
+                       
                    
                    entity.put()
                    entity.new_action('update')
@@ -522,6 +535,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
            
         try:
             transaction()
+            ndb.BlobManager.field_storage_used_blob(do_not_delete)
         except Exception as e:
             response.transaction_error(e)
             
@@ -695,7 +709,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
                      return response.error('domain', 'not_active')
                  
                   if entity.get_state != 'open':
-                     return response.error('store', 'not_open') 
+                     return response.error('company', 'not_open') 
                        
                   if current.has_permission('delete', entity):
                      entity.new_action('delete', log_object=False)
@@ -820,7 +834,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow, NamespaceDomain):
                      return response.error('domain', 'not_active')
                  
                   if entity.get_state != 'open':
-                     return response.error('store', 'not_open') 
+                     return response.error('company', 'not_open') 
                        
                   if current.has_permission('delete', entity):
                      entity.new_action('delete', log_object=False)
@@ -945,6 +959,11 @@ class Tax(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @property
+    def is_usable(self):
+        # makes a check wether is this possible to be used somewhere
+        return self.action
     
     @classmethod
     def list(cls, **kwds):

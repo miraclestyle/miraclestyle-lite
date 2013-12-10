@@ -34,7 +34,6 @@ class User(ndb.BaseExpando, ndb.Workflow):
     
     KIND_ID = 0
  
-    _use_cache = True
     _use_memcache = True
     
     identities = ndb.SuperStructuredProperty(Identity, '1', repeated=True)# soft limit 100x
@@ -324,7 +323,7 @@ class User(ndb.BaseExpando, ndb.Workflow):
         
       response = ndb.Response() 
        
-      current_user = cls.get_current_user()
+      current_user = ndb.get_current_user()
 
       login_method = kwds.get('login_method')
       
@@ -470,29 +469,59 @@ class Role(ndb.BaseModel, ndb.Workflow):
     }  
     
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, values):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.prepare(False, only_get=True)
+               
+               if entity and entity.loaded():
+                  if entity.key.parent() == current.key:
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response  
+
   
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
            
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')

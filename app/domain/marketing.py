@@ -8,7 +8,8 @@ import datetime
 
 from app import ndb, settings
 from app.core.misc import Image
-from app.domain.acl import NamespaceDomain
+from app.domain.acl import Domain, NamespaceDomain
+from app.domain.sale import Company
 
 from google.appengine.ext import blobstore
 
@@ -64,7 +65,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                   response.error('domain', 'not_active') 
                
                catalog = entity.parent().get()   
-               if not catalog or catalog.get_state != 'unpublished':
+               if not catalog or not catalog.is_usable:
                   response.error('catalog', 'not_unpublished')
  
                if response.has_error():
@@ -142,7 +143,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                      
                      catalog = entity.parent().get()
                      
-                     if not catalog or catalog.get_state != 'unpublished':
+                     if not catalog or not catalog.is_usable:
                         response.error('catalog', 'not_unpublished')
                      
                      if response.has_error():
@@ -261,8 +262,8 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
              
             current = cls.get_current_user()
             
-            only = ('name', 'company')
-            response.process_input(kwds, cls, only=only)
+            only = ('name',)
+            response.process_input(kwds, cls, only=only, convert=[('company', Company, True)])
       
             if response.has_error():
                return response
@@ -277,8 +278,11 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   response.error('domain', 'not_active') 
                   
-               if entity.get_state != 'unpublished':
+               if not entity.is_usable:
                   response.error('catalog', 'not_unpublished')
+                  
+               if not entity.key.parent().is_usable:
+                  response.error('company', 'not_open')
                    
                if response.has_error():
                   return response
@@ -290,7 +294,11 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                else:
                    return response.not_authorized()
             else:
- 
+               
+               company = kwds.get('company').get(use_cache=True)
+               
+               entity = cls.get_or_prepare(kwds, only=('name', 'company'), namespace=company.key.namespace())
+           
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
             
@@ -532,7 +540,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                
                catalog = entity.parent().get()
                
-               if not catalog or catalog.get_state != 'unpublished':
+               if not catalog or not catalog.is_usable:
                   response.error('catalog', 'not_unpublished')
                
                     
@@ -553,9 +561,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
       
                if not catalog:
                   response.required('catalog')
-               elif catalog.get_state != 'unpublished':
-                  response.error('catalog', 'not_unpublished')   
-                
+               
                if response.has_error():
                   return response
                    
@@ -602,7 +608,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                       
                      catalog = entity.parent().get()
                      
-                     if not catalog or catalog.get_state != 'unpublished':
+                     if not catalog or not catalog.is_usable:
                         response.error('catalog', 'not_unpublished')
                         
                      if response.has_error():

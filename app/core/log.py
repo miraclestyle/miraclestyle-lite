@@ -4,6 +4,8 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import decimal
+
 from app import ndb
  
 class ObjectLog(ndb.BaseExpando):
@@ -27,7 +29,10 @@ class ObjectLog(ndb.BaseExpando):
     def log_object(self, obj):
         for p in obj._properties:
             prop = obj._properties.get(p)
-            setattr(self, p, prop._get_value(obj))
+            v = prop._get_value(obj)
+            if isinstance(v, decimal.Decimal):
+               v = str(v)
+            setattr(self, p, v)
             
         return self
     

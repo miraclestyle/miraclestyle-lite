@@ -4,6 +4,11 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import cloudstorage
+
+from google.appengine.ext import blobstore
+from google.appengine.api import images
+
 from app import ndb
 
 # done 80%
@@ -27,6 +32,10 @@ class Content(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @property
+    def is_usable(self):
+        return self.active
     
     # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
@@ -86,7 +95,8 @@ class Image(ndb.BaseModel):
     width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
     height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
     sequence = ndb.SuperIntegerProperty('6', required=True)
-
+ 
+ 
 # done!
 class Country(ndb.BaseModel, ndb.Workflow):
     
@@ -182,7 +192,36 @@ class Country(ndb.BaseModel, ndb.Workflow):
         
         return response
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
     @classmethod
     def manage(cls, **kwds):
@@ -351,7 +390,36 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     def is_usable(self):
         return self.active
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
     @classmethod
     def manage(cls, **kwds):
@@ -444,7 +512,36 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
     def is_usable(self):
         return self.status
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
 
     @classmethod
     def manage(cls, **kwds):
@@ -508,8 +605,37 @@ class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
-    
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
 
     @classmethod
     def manage(cls, **kwds):
@@ -583,7 +709,40 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
        'delete' : 3,
     } 
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @property
+    def is_usable(self):
+        return self.active
+    
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
     @classmethod
     def manage(cls, **kwds):
@@ -674,7 +833,36 @@ class Currency(ndb.BaseModel, ndb.Workflow):
     def is_usable(self):
         return self.active
     
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    @classmethod
+    def delete(cls, **kwds):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = cls.get_current_user()
+               
+               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
     
     @classmethod
     def manage(cls, **kwds):
