@@ -831,7 +831,7 @@ class Workflow():
           agent = kwargs.pop('agent', None) # if agent is none it will use current user
       
           if agent is None:
-             agent = self.get_current_user()
+             agent = get_current_user()
              kwargs['agent'] = agent.key
           else:
              kwargs['agent'] = agent
@@ -960,22 +960,22 @@ class Response(dict):
     def __getattr__(self, *args, **kwargs):
         return dict.__getitem__(self, *args, **kwargs)
     
-    def process_input(self, kwds, obj, **kwargs):
+    def process_input(self, values, obj, **kwargs):
         
         """
           This method is used to format, and validate the provided input based on the model property definition. 
           Accepts:
-          kwds: dict with unformatted data. note that this data will mutate into the values that are defined by model,
+          values: dict with unformatted data. note that this data will mutate into the values that are defined by model,
           or the `convert` keyword argument.
           obj: definition of the model from which the properties will be prospected
           **kwargs: skip: skips the processing on specified field names
                     only: only does processing on specified field names
-                    convert: converts `kwds` into specified data type. for example:
-                        kwds = {'domain' : 'large key...'}
-                        response.process_input(kwds, obj, convert=[('domain', Domain)])
+                    convert: converts `values` into specified data type. for example:
+                        values = {'domain' : 'large key...'}
+                        response.process_input(values, obj, convert=[('domain', Domain)])
                         
                         
-                        it will convert kwds['domain'] into ndb.Key(...) and also perform checks wether the 
+                        it will convert values['domain'] into ndb.Key(...) and also perform checks wether the 
                         domain is existing and if its usable
                         
                         note: the third argument in tuple renders if the value will be converted or not if its not present.
@@ -1014,7 +1014,7 @@ class Response(dict):
                except IndexError as e:
                    can_skip = False
                    
-               value = kwds.get(name)
+               value = values.get(name)
                
                if value == '':
                   # an empty value is considered as `None`
@@ -1027,11 +1027,11 @@ class Response(dict):
                     if isinstance(value, _type):
                           continue
                     if _type.__name__ == 'bool':
-                       kwds[name] = bool(int(value))
+                       values[name] = bool(int(value))
                     elif _type.__name__ in ('int', 'long'):
                        if isinstance(value, (int, long)):
                           continue  
-                       kwds[name] = _type(value)
+                       values[name] = _type(value)
                     elif _type == Key or issubclass(_type, _BaseModel):
  
                        if not isinstance(value, Key):
@@ -1051,9 +1051,9 @@ class Response(dict):
                              if not can:
                                 raise DescriptiveError('not_usable')
                        
-                       kwds[name] = value
+                       values[name] = value
                     else:
-                       kwds[name] = _type(value)
+                       values[name] = _type(value)
                except DescriptiveError as e:
                     self.error('%s%s' % (prefix, name), e)        
                except Exception as e:#-- if for any reason `_type` function or class raises an error, the conversion will be marked invalid
@@ -1073,7 +1073,7 @@ class Response(dict):
                if k not in only:
                   continue
                     
-            value = kwds.get(k)
+            value = values.get(k)
             
             if value == '':
                # if value is empty its considered as `None` 
@@ -1090,12 +1090,12 @@ class Response(dict):
             
             if formatter: 
                try: 
-                   kwds[k] = formatter(v, value)
+                   values[k] = formatter(v, value)
                except Exception as e:#-- usually the properties throw these types of exceptions
                    util.logger(e, 'exception')
                    self.invalid('%s%s' % (prefix, k))
                    
-        return kwds
+        return values
  
     def has_error(self, k=None):
         

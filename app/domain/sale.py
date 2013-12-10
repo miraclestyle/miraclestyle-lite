@@ -52,7 +52,7 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
@@ -87,7 +87,7 @@ class Carrier(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
             response.process_input(kwds, cls, convert=[('domain', Domain, True)])
@@ -205,7 +205,7 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
@@ -240,7 +240,7 @@ class CarrierLine(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
             response.process_input(kwds, cls, convert=[('carrier', Carrier, True)])
@@ -458,7 +458,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             # domain param is not mandatory, however needs to be provided when we want to create new company
             only = ('name', 'country', 'region', 'city', 'postal_code', 'street_address',
@@ -558,7 +558,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if not action.startswith('su_'):
                   return response.not_authorized()
                
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission(action, entity):
                       state = kwds.get('state')
                       entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
@@ -590,7 +590,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
     
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
                       entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
                       entity.record_action()
@@ -621,7 +621,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
               
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
            
                if current.has_permission('close', entity):
                       entity.new_action('close', state='closed', message=kwds.get('message'), note=kwds.get('note'))
@@ -653,7 +653,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
                
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
          
                if current.has_permission('open', entity):
                       entity.new_action('open', state='open', message=kwds.get('message'), note=kwds.get('note'))
@@ -699,7 +699,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
@@ -737,7 +737,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
             response.process_input(kwds, cls, convert=[('domain', Domain, True), ('company', Company, True)])
@@ -824,7 +824,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
@@ -862,7 +862,7 @@ class CompanyShippingExclusion(Location, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
             response.process_input(kwds, cls, convert=[('domain', Domain, True), ('company', Company, True)])
@@ -979,7 +979,7 @@ class Tax(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.get_or_prepare(kwds, only=False, populate=False)
                
@@ -1014,7 +1014,7 @@ class Tax(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
             response.process_input(kwds, cls, convert=[('domain', Domain, True)])

@@ -17,7 +17,7 @@ class ObjectLog(ndb.BaseExpando):
     logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
     agent = ndb.SuperKeyProperty('98', kind='app.core.acl.User', required=True)
     action = ndb.SuperIntegerProperty('97', required=True)
- 
+  
     _default_indexed = False
  
     EXPANDO_FIELDS = {

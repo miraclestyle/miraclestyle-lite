@@ -4,11 +4,6 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import cloudstorage
-
-from google.appengine.ext import blobstore
-from google.appengine.api import images
-
 from app import ndb
 
 # done 80%
@@ -40,26 +35,26 @@ class Content(ndb.BaseModel, ndb.Workflow):
     # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -128,7 +123,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         return self.action
     
     @classmethod
-    def import_countries_and_subdivisions(cls, **kwds):
+    def import_countries_and_subdivisions(cls, values):
         
         # this function cannot do all this many imports because the appengine hangs
         
@@ -184,7 +179,7 @@ class Country(ndb.BaseModel, ndb.Workflow):
         
     
     @classmethod
-    def list(cls, **kwds):
+    def list(cls, values):
         
         response = ndb.Response()
         
@@ -193,16 +188,16 @@ class Country(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -224,26 +219,26 @@ class Country(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
            
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -391,16 +386,16 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
         return self.active
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -422,26 +417,26 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -513,16 +508,16 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
         return self.status
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -544,26 +539,26 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
         return response
 
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -586,104 +581,10 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
             response.transaction_error(e)
             
         return response   
-    
-# done!
-class ProductUOMCategory(ndb.BaseModel, ndb.Workflow):
-    
-    KIND_ID = 18
-    
-    # root
-    # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
-    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
-    # mozda da ovi entiteti budu non-deletable i non-editable ??
-    name = ndb.SuperStringProperty('1', required=True)
-  
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
 
-    @classmethod
-    def delete(cls, **kwds):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = cls.get_current_user()
-               
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response
-
-    @classmethod
-    def manage(cls, **kwds):
-        
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = cls.get_current_user()
-     
-            response.process_input(kwds, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.get_or_prepare(kwds)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if entity and entity.loaded():
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response  
- 
  
 # done!
-class ProductUOM(ndb.BaseModel, ndb.Workflow):
+class UOM(ndb.BaseModel):
     
     KIND_ID = 19
     
@@ -700,30 +601,40 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
     rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
     active = ndb.SuperBooleanProperty('7', default=True)
-   
+    
+
+    
+# done!  @todo make uoms puttable
+class Measurement(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 18
+    
+    # root
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l16
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
+    # mozda da ovi entiteti budu non-deletable i non-editable ??
+    name = ndb.SuperStringProperty('1', required=True)
+    uoms = ndb.SuperStructuredProperty(UOM, '2', required=True)
+  
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {
        'create' : 1,
        'update' : 2,
        'delete' : 3,
-    } 
-    
-    @property
-    def is_usable(self):
-        return self.active
-    
+    }
+
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -743,28 +654,28 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
            response.transaction_error(e)
            
         return response
-    
+
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -786,8 +697,9 @@ class ProductUOM(ndb.BaseModel, ndb.Workflow):
         except Exception as e:
             response.transaction_error(e)
             
-        return response  
- 
+        return response
+
+
 
 # done!
 class Currency(ndb.BaseModel, ndb.Workflow):
@@ -834,16 +746,16 @@ class Currency(ndb.BaseModel, ndb.Workflow):
         return self.active
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -863,28 +775,28 @@ class Currency(ndb.BaseModel, ndb.Workflow):
            response.transaction_error(e)
            
         return response
-    
+
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                if current.has_permission('update', entity):
                    entity.put()
                    entity.new_action('update')
@@ -906,7 +818,7 @@ class Currency(ndb.BaseModel, ndb.Workflow):
         except Exception as e:
             response.transaction_error(e)
             
-        return response  
+        return response
  
      
 
@@ -1025,26 +937,26 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
     }
 
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwdss):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls, only=('reference',))
+            response.process_input(values, cls, only=('reference',))
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
       
-            if not entity or not entity.loaded():
+            if create:
                if not current.is_guest:
                    entity.set_state(cls.OBJECT_DEFAULT_STATE)
                    entity.put()
@@ -1063,25 +975,25 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
         return response 
   
     @classmethod
-    def sudo(cls, **kwds):
+    def sudo(cls, values, **kwds):
         
         response = ndb.Response()
         
         @ndb.transactional(xg=True) 
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
  
-               action = kwds.get('action')
+               action = values.get('action')
                
                if not action.startswith('su_'):
                   return response.not_authorized()
                
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission(action, entity):
-                      state = kwds.get('state')
-                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      state = values.get('state')
+                      entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -1097,18 +1009,18 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def log_message(cls, **kwds):
+    def log_message(cls, values, **kwds):
         
         response = ndb.Response()
          
         @ndb.transactional(xg=True)  
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
                       response.status(entity)
                else:
@@ -1185,21 +1097,21 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
         return response
   
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
      
-            response.process_input(kwds, cls, only=('reference',))
+            response.process_input(values, cls, only=('reference',))
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds, parent=current.key)
+            entity = cls.prepare(create, values, parent=current.key)
             
             if entity is None:
                return response.not_found()
@@ -1223,25 +1135,25 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
         return response 
   
     @classmethod
-    def sudo(cls, **kwds):
+    def sudo(cls, values, **kwds):
         
         response = ndb.Response()
         
         @ndb.transactional(xg=True) 
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
  
-               action = kwds.get('action')
+               action = values.get('action')
                
                if not action.startswith('su_'):
                   return response.not_authorized()
                
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission(action, entity):
-                      state = kwds.get('state')
-                      entity.new_action(action, state=state, message=kwds.get('message'), note=kwds.get('note'))
+                      state = values.get('state')
+                      entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -1257,22 +1169,22 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def log_message(cls, **kwds):
+    def log_message(cls, values, **kwds):
         
         response = ndb.Response()
          
         @ndb.transactional(xg=True)  
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
               
                if entity.get_state not in ('new', 'su_opened'):
                   return response.not_authorized()
               
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
                       response.status(entity)
                else:
@@ -1288,16 +1200,16 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def close(cls, **kwds):
+    def close(cls, values, **kwds):
         
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                """
                su_opened
                su_awaiting_closure
@@ -1306,7 +1218,7 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
                   return response.not_authorized()
                
                if current.has_permission('close', entity) or current.key == entity.key.parent():
-                      entity.new_action('close', state='closed', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('close', state='closed', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)

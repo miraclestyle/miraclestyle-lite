@@ -31,7 +31,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
      
      
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         ## this should be multiple upload thing, this needs work :@
         
@@ -40,26 +40,26 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             skip = ('image',)
             
-            if kwds.get('upload_url') or not kwds.get('image'):
-               response['upload_url'] = blobstore.create_upload_url(kwds.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+            if values.get('upload_url') or not values.get('image'):
+               response['upload_url'] = blobstore.create_upload_url(values.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
                return response
             
-            new_image = 'image' in kwds
+            new_image = 'image' in values
  
-            response.process_input(kwds, cls, skip=skip, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, True)])
       
             if response.has_error():
                return response
        
-            entity = cls.get_or_prepare(kwds, skip=skip)
+            entity = cls.prepare(create, values, skip=skip)
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
   
                if not entity.domain_is_active:
                   response.error('domain', 'not_active') 
@@ -75,7 +75,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                    
                    if new_image:
                       blobstore.delete(entity.image)
-                      entity.image = kwds.get('image')
+                      entity.image = values.get('image')
   
                    entity.put()
                    entity.new_action('update')
@@ -84,14 +84,14 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                    return response.not_authorized()
             else:
                 
-               response.process_input(kwds, cls)
+               response.process_input(values, cls)
                
                if response.has_error():
                   return response
                
-               entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+               entity = cls.prepare(create, values, parent=values.get('catalog'))
  
-               catalog = kwds.get('catalog')
+               catalog = values.get('catalog')
                
                if not new_image:
                   response.required('image')
@@ -123,16 +123,16 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
     
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   
@@ -239,36 +239,36 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         return self.get_state == 'unpublished'
 
     @classmethod
-    def duplicate(cls, **kwds):
+    def duplicate(cls, values, **kwds):
         pass
     
     @classmethod
-    def list(cls, **kwds):
+    def list(cls, values, **kwds):
         response = ndb.Response()
-        response.process_input(kwds, cls, only=False, convert=[('domain', ndb.factory('app.domain.acl.Domain'))])
+        response.process_input(values, cls, only=False, convert=[('domain', ndb.factory('app.domain.acl.Domain'))])
         if response.has_error():
            return response
-        response['items'] = cls.query(namespace=kwds.get('domain').urlsafe()).fetch()
+        response['items'] = cls.query(namespace=values.get('domain').urlsafe()).fetch()
         return response
       
 
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             only = ('name',)
-            response.process_input(kwds, cls, only=only, convert=[('company', Company, True)])
+            response.process_input(values, cls, only=only, convert=[('company', Company, True)])
       
             if response.has_error():
                return response
   
-            entity = cls.get_or_prepare(kwds, only=only)
+            entity = cls.prepare(create, values, only=only)
             
             if entity is None:
                return response.not_found()
@@ -295,9 +295,9 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                    return response.not_authorized()
             else:
                
-               company = kwds.get('company').get(use_cache=True)
+               company = values.get('company').get()
                
-               entity = cls.get_or_prepare(kwds, only=('name', 'company'), namespace=company.key.namespace())
+               entity = cls.prepare(create, values, only=('name', 'company'), namespace=company.key.namespace())
            
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
@@ -321,22 +321,22 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     
     @classmethod
-    def log_message(cls, **kwds):
+    def log_message(cls, values, **kwds):
         
         response = ndb.Response()
          
         @ndb.transactional(xg=True)  
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
                
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
     
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
                       response.status(entity)
                else:
@@ -353,7 +353,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     # Ova akcija zakljucava unpublished catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @classmethod
-    def lock(cls, **kwds):
+    def lock(cls, values, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'unpublished'.
@@ -374,14 +374,14 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
          
         @ndb.transactional(xg=True)
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
                # check if user can do this
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
               
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
           
                if current.has_permission('lock', entity) or current.has_permission('sudo', entity):
                       
@@ -390,7 +390,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                       if cover:
                          entity.cover = cover
                       
-                      entity.new_action('lock', state='locked', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('lock', state='locked', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -407,7 +407,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         
     # Ova akcija objavljuje locked catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @classmethod
-    def publish(cls, **kwds):
+    def publish(cls, values, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'publish-DomainCatalog'.
         # akcija se moze pozvati samo ako je domain.state == 'active' i catalog.state == 'locked'.
@@ -421,18 +421,18 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
          
         @ndb.transactional(xg=True)
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
                # check if user can do this
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
               
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
           
                if current.has_permission('publish', entity) or current.has_permission('sudo', entity):
                       entity.publish_date = datetime.datetime.today()
-                      entity.new_action('publish', state='published', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('publish', state='published', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -449,7 +449,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     # Ova akcija prekida objavljen catalog. Ovde cemo dalje opisati posledice zatvaranja...
     @classmethod
-    def discontinue(cls, **kwds):
+    def discontinue(cls, values, **kwds):
         """
         # ovu akciju moze izvrsiti samo agent koji ima domain-specific dozvolu 'discontinue-DomainCatalog',
         # ili agent koji ima globalnu dozvolu 'sudo-DomainCatalog'.
@@ -464,17 +464,17 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
          
         @ndb.transactional(xg=True)
         def transaction(): 
-            entity = cls.get_or_prepare(kwds, populate=False, only=False)
+            entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
                # check if user can do this
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
               
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
           
                if current.has_permission('discontinue', entity) or current.has_permission('sudo', entity):
-                      entity.new_action('discontinue', state='discontinued', message=kwds.get('message'), note=kwds.get('note'))
+                      entity.new_action('discontinue', state='discontinued', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
                       response.status(entity)
@@ -514,21 +514,21 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
 
      
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
-            response.process_input(kwds, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
       
             if response.has_error():
                return response
  
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.preare(create, values)
             
             if entity is None:
                return response.not_found()
@@ -555,9 +555,9 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                    return response.not_authorized()
             else:
         
-               catalog = kwds.get('catalog')
+               catalog = values.get('catalog')
                
-               response.process_input(kwds, cls)
+               response.process_input(values, cls)
       
                if not catalog:
                   response.required('catalog')
@@ -565,7 +565,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                if response.has_error():
                   return response
                    
-               entity = cls.get_or_prepare(kwds, parent=catalog)
+               entity = cls.prepare(create, values, parent=catalog)
      
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
@@ -588,16 +588,16 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   

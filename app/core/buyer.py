@@ -39,35 +39,35 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     }
  
     @classmethod
-    def list(cls, **kwds):
+    def list(cls, values):
     
         response = ndb.Response()
         
-        response.process_input(kwds, cls, only=False, convert=[('parent', ndb.Key)])
+        response.process_input(values, cls, only=False, convert=[('parent', ndb.Key)])
         
         if response.has_error():
            return response
             
-        parent = kwds.get('parent')
+        parent = values.get('parent')
         
         if parent is None:
-           parent = cls.get_current_user().key
+           parent = ndb.get_current_user().key
            
         response['items'] = cls.query(ancestor=parent).fetch()
         
         return response
      
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if entity.key.parent() == current.key:
@@ -89,7 +89,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         return response
   
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
          
         response = ndb.Response()
         
@@ -99,22 +99,22 @@ class Address(ndb.BaseExpando, ndb.Workflow):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             if current.is_guest:
                return response.not_logged_in()
     
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
  
             if response.has_error():
                return response       
     
-            entity = cls.get_or_prepare(kwds, parent=current.key)
+            entity = cls.prepare(create, values, parent=current.key)
             
             if entity is None:
                return response.not_found()
       
-            if entity and entity.loaded():
+            if not create:
                # update
                if current.key == entity.key.parent():
                    entity.put()
@@ -129,7 +129,7 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                entity.record_action()
                
             run = False
-            if kwds.get('default_billing') or kwds.get('default_shipping'):
+            if values.get('default_billing') or values.get('default_shipping'):
                run = True
                
             if run:
@@ -137,9 +137,9 @@ class Address(ndb.BaseExpando, ndb.Workflow):
                   to_put = []
                   for a in allbuyer:
                       if a.key != entity.key:
-                         if kwds.get('default_billing'):
+                         if values.get('default_billing'):
                             a.default_billing = False
-                         if kwds.get('default_shipping'):
+                         if values.get('default_shipping'):
                             a.default_shipping = False
                          to_put.append(a)
                          
@@ -176,31 +176,31 @@ class Collection(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
-    def list(cls, **kwds):
+    def list(cls, values):
         response = ndb.Response()
         
-        response['items'] = cls.query(ancestor=cls.get_current_user().key).fetch()
+        response['items'] = cls.query(ancestor=ndb.get_current_user().key).fetch()
         
         return response
  
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
    
         response = ndb.Response()
         
         @ndb.transactional(xg=True)
         def transaction():
             
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             if current.is_guest:
                return response.not_logged_in()
             
-            response.process_input(kwds, cls, skip=('primary_email',))
+            response.process_input(values, cls, skip=('primary_email',))
              
             if not response.has_error():
  
-                entity = cls.get_or_prepare(kwds, parent=current.key)
+                entity = cls.prepare(create, values, parent=current.key)
                 
                 # we internally set primary_email, not from user input    
                 entity.primary_email = current.primary_email
@@ -208,7 +208,7 @@ class Collection(ndb.BaseModel, ndb.Workflow):
                 if entity is None:
                     return response.not_found()
         
-                if entity and entity.loaded():
+                if not create:
     
                    if entity.key.parent() == current.key:
                        entity.put()
@@ -233,16 +233,16 @@ class Collection(ndb.BaseModel, ndb.Workflow):
         return response
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if current.has_permission('delete', entity):
@@ -281,16 +281,16 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
     }
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   if entity.key.parent() == current.key:
@@ -312,41 +312,42 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
         return response  
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
         
         @ndb.transactional
         def transaction():
             
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             if current.is_guest:
                return response.not_logged_in()
            
-            response.process_input(kwds, cls)
+            response.process_input(values, cls)
             
             if response.has_error():
                return response
             
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
             
             if entity is None:
                return response.not_found()
             
-            collection_keys = kwds.get('collections')
-            company_key = kwds.get('company')
+            collection_keys = values.get('collections')
+            company_key = values.get('company')
   
             if entity is None:
                return response.not_found()
-            
-            if entity.loaded():
-               if entity.parent() == current.key:
-                  entity.collections = []
+           
+            entity.collections = []
                   
-                  for c in collection_keys:
-                      if c.parent() == current.key:
-                         entity.collections.append(c)
+            for c in collection_keys:
+                if c.parent() == current.key:
+                     entity.collections.append(c)
+            
+            if not create:
+               if entity.parent() == current.key:
                   entity.put()
                   entity.new_action('update')
                   entity.record_action()

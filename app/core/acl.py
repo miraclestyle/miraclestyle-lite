@@ -470,14 +470,14 @@ class Role(ndb.BaseModel, ndb.Workflow):
     
     
     @classmethod
-    def delete(cls, values):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
                entity = cls.prepare(False, only_get=True)
                

@@ -30,16 +30,16 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     }
 
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   
@@ -68,27 +68,27 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
         return response
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
  
-            response.process_input(kwds, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
           
             if response.has_error():
                return response
  
                    
-            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            entity = cls.prepare(create, values, parent=values.get('catalog'))
             
             if entity is None:
                return response.not_found()
              
-            if entity and entity.loaded():
+            if not create:
                  
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
@@ -142,16 +142,16 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     }
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, get_only=True)
                
                if entity and entity.loaded():
                   
@@ -180,22 +180,22 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
         return response
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
 
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
  
-            response.process_input(kwds, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
           
             if response.has_error():
                return response
  
                    
-            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            entity = cls.prepare(values, parent=values.get('catalog'))
             
             if entity is None:
                return response.not_found()
@@ -240,7 +240,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     product_category = ndb.SuperKeyProperty('1', kind='app.core.misc.ProductCategory', required=True, indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     description = ndb.SuperTextProperty('3', required=True)# soft limit 64kb
-    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.ProductUOM', required=True, indexed=False)
+    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.Measurement', required=True, indexed=False)
     unit_price = ndb.SuperDecimalProperty('5', required=True)
     availability = ndb.SuperIntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     
@@ -276,21 +276,21 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     }
     
     @classmethod
-    def generate_product_instances(cls, **kwds):
+    def generate_product_instances(cls, values, **kwds):
         
         response = ndb.Response()
         
         @ndb.transactional(xg=True)
         def transaction():
             
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
-            response.process_input(kwds, cls, convert=[('template', Template)])
+            response.process_input(values, cls, convert=[('template', Template)])
             
             if response.has_error():
                return response
            
-            product_template_key = kwds.get('template')
+            product_template_key = values.get('template')
             product_template = product_template_key.get()
            
             if current.has_permission('generate_product_instances', product_template):
@@ -335,16 +335,16 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
     
     @classmethod
-    def delete(cls, **kwds):
+    def delete(cls, values, **kwds):
  
         response = ndb.Response()
  
         @ndb.transactional(xg=True)
         def transaction():
                        
-               current = cls.get_current_user()
+               current = ndb.get_current_user()
                
-               entity = cls.get_or_prepare(kwds, only=False, populate=False)
+               entity = cls.prepare(False, values, only=False, populate=False)
                
                if entity and entity.loaded():
                   
@@ -373,7 +373,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         return response
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         
         response = ndb.Response()
         
@@ -382,22 +382,22 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             skip = ('low_stock_quantity', 'images', 'product_instance_count')
-            response.process_input(kwds, cls, skip=skip, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, True)])
           
             if response.has_error():
                return response
            
-            entity = cls.get_or_prepare(kwds, parent=kwds.get('catalog'))
+            entity = cls.prepare(False, values, parent=values.get('catalog'))
             
             if entity is None:
                return response.not_found()
            
             if current.has_permission(('update', 'create'), entity):
             
-                images = kwds.get('images')
+                images = values.get('images')
                 if images:
                    sq = 0
                    for img in images:
@@ -419,7 +419,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                        if not delete_file:
                            do_not_delete.append(img)
     
-            if entity and entity.loaded():
+            if not create:
                  
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active') 
@@ -435,7 +435,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                    return response.not_authorized()
             else:
                
-               if not kwds.get('catalog'):
+               if not values.get('catalog'):
                   response.required('catalog') 
                   
                if response.has_error():
@@ -503,7 +503,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         return hashlib.md5(u'-'.join(codes)).hexdigest()
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwdss):
         
         response = ndb.Response()
         do_not_delete = []
@@ -511,17 +511,17 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
-            current = cls.get_current_user()
+            current = ndb.get_current_user()
             
             only = ('availability', 'description', 'unit_price', 'contents',
                     'low_stock_quantity', 'weight', 'volume')
  
-            response.process_input(kwds, cls, only=only)
+            response.process_input(values, cls, only=only)
           
             if response.has_error():
                return response
   
-            entity = cls.get_or_prepare(kwds)
+            entity = cls.prepare(create, values)
              
             if entity is None:
                return response.not_found()
@@ -530,7 +530,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             catalog = product_template.parent().get()
            
             if not catalog.is_usable:
-                entity = cls.get_or_prepare(kwds, cls, only=('availability', 'low_stock_quantity'))
+                entity = cls.prepare(create, values, cls, only=('availability', 'low_stock_quantity'))
              
             if entity and entity.loaded():
                  
@@ -538,7 +538,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   return response.error('domain', 'not_active') 
                
                if current.has_permission('update', entity):
-                   images = kwds.get('images')
+                   images = values.get('images')
                    if images:
                        sq = 0
                        for img in images:
@@ -629,6 +629,6 @@ class InventoryAdjustment(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     """
     
     @classmethod
-    def manage(cls, **kwds):
+    def manage(cls, create, values, **kwds):
         pass
 
