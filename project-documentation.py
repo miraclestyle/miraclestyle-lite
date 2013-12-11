@@ -3974,43 +3974,17 @@ class BillingCreditAdjustment(ndb.Model):
 # so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
 # https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
 
-class FiscalYear(ndb.Model):
-  # root (namespace Domain)
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/fiscalyear.py#l22
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L861
-  name = ndb.StringProperty('1', required=True)
-  code = ndb.StringProperty('2', required=True)
-  start_date = ndb.DateTimeProperty('3', required=True)# January the 1st of the current year
-  end_date = ndb.DateTimeProperty('4', required=True)# December the 31st of the current year
-  company = ndb.KeyProperty('5', kind=Company, required=True)
-  state = ndb.IntegerProperty('6', required=True)
-
-class Period(ndb.Model):
-  # ancestor FiscalYear (namespace Domain)
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/period.py#l19
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L957
-  name = ndb.StringProperty('1', required=True)
-  code = ndb.StringProperty('2', required=True)# required=False ?
-  start_date = ndb.DateTimeProperty('3', required=True)# January the 1st of the current year
-  end_date = ndb.DateTimeProperty('4', required=True)# December the 31st of the current year
-  company = ndb.KeyProperty('5', kind=Company, required=True)
-  state = ndb.IntegerProperty('6', required=True)
-  
-
 class Journal(ndb.Model):
+
   # root (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L709
   # http://hg.tryton.org/modules/account/file/933f85b58a36/journal.py#l92
   name = ndb.StringProperty('1', required=True)
   code = ndb.StringProperty('2', required=True)
-  active = ndb.BooleanProperty('4', default=True)
-  type = 
-  view = 
-  sequence = 
-  update_posted = 
-
+  active = ndb.BooleanProperty('3', default=True)
 
 class Category(ndb.Expando):
+
   # root (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
   # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
