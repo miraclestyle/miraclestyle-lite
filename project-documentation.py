@@ -3947,3 +3947,130 @@ class BillingCreditAdjustment(ndb.Model):
         billing_log = BillingLog.query().order(-BillingLog.logged).fetch(1)
         new_billing_log = BillingLog(namespace=domain_key, id=str(billing_credit_adjustment_key), amount=billing_credit_adjustment.amount, balance=billing_log.balance + billing_credit_adjustment.amount)
         new_billing_log.put()
+
+################################################################################
+# /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
+# company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
+################################################################################
+
+# upiti sa strane usera, ako je na grupi postavljen namespace, ce se resavati odvojenim recordima
+# koji ce cuvati kljuceve na recorde a biti vezani ancestor pathom na usera.
+
+# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
+# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
+# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
+
+# prvo definisati minimalne pasivne modele: category
+# definisati im osnovne funkcije i indexe
+# potom definisati transakcione modele: group, entry, line
+# definisati im osnovne funkcije i indexe
+# nakon toga definisati aktivne kompozitne indexe
+# pregledati order modele i prepraviti ih da rade sa transakcionim modelima
+
+# App Engine clock times are always expressed in coordinated universal time (UTC). 
+# This becomes relevant if you use the current date or time (datetime.datetime.now()) 
+# as a value or convert between datetime objects and POSIX timestamps or time tuples. 
+# However, no explicit time zone information is stored in the Datastore, 
+# so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
+# https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
+
+class FiscalYear(ndb.Model):
+  # root (namespace Domain)
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/fiscalyear.py#l22
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L861
+  name = ndb.StringProperty('1', required=True)
+  code = ndb.StringProperty('2', required=True)
+  start_date = ndb.DateTimeProperty('3', required=True)# January the 1st of the current year
+  end_date = ndb.DateTimeProperty('4', required=True)# December the 31st of the current year
+  company = ndb.KeyProperty('5', kind=Company, required=True)
+  state = ndb.IntegerProperty('6', required=True)
+
+class Period(ndb.Model):
+  # ancestor FiscalYear (namespace Domain)
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/period.py#l19
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L957
+  name = ndb.StringProperty('1', required=True)
+  code = ndb.StringProperty('2', required=True)# required=False ?
+  start_date = ndb.DateTimeProperty('3', required=True)# January the 1st of the current year
+  end_date = ndb.DateTimeProperty('4', required=True)# December the 31st of the current year
+  company = ndb.KeyProperty('5', kind=Company, required=True)
+  state = ndb.IntegerProperty('6', required=True)
+  
+
+class Journal(ndb.Model):
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L709
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/journal.py#l92
+  name = ndb.StringProperty('1', required=True)
+  code = ndb.StringProperty('2', required=True)
+  active = ndb.BooleanProperty('4', default=True)
+  type = 
+  view = 
+  sequence = 
+  update_posted = 
+
+
+class Category(ndb.Expando):
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
+  # composite index: 
+  # ancestor:no - active,name;
+  # ancestor:no - active,code;
+  # ancestor:no - active,company,name; ?
+  # ancestor:no - active,company,code; ?
+  parent_record = ndb.KeyProperty('1', kind=Account, required=True)
+  name = ndb.StringProperty('2', required=True)
+  code = ndb.StringProperty('3', required=True)
+  active = ndb.BooleanProperty('4', default=True)
+  company = ndb.KeyProperty('5', kind=Company, required=True)
+
+class Group(ndb.Model):
+  
+  # root (namespace Domain)
+  
+class Entry(ndb.Expando):
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc; 
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc; 
+  # ancestor:no - journal,company,state,party,created:desc;
+  # ancestor:no - journal,company,state,party,updated:desc;
+  name = ndb.StringProperty('1', required=True)
+  journal = ndb.KeyProperty('2', kind=Journal, required=True)
+  company = ndb.KeyProperty('3', kind=Company, required=True)
+  state = ndb.IntegerProperty('4', required=True)
+  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+  party = ndb.KeyProperty('8')
+  # Expando
+  # expando indexi se programski ukljucuju ili gase po potrebi
+
+  
+class Line(ndb.Expando):
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
+  sequence = ndb.IntegerProperty('1', required=True)
+  categories = ndb.KeyProperty('2', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = DecimalProperty('4', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopitranjem polja iz Entry-ja u Line-ove
