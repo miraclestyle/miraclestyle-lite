@@ -447,6 +447,7 @@ class Company(ndb.Expando):
     # composite index: ancestor:no - state,name
     parent_record = ndb.KeyProperty('1', kind=Company, indexed=False)
     name = ndb.StringProperty('2', required=True)
+    complete_name = ndb.TextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
     logo = blobstore.BlobKeyProperty('3', required=True)# blob ce se implementirati na GCS
     updated = ndb.DateTimeProperty('4', auto_now=True, required=True)
     created = ndb.DateTimeProperty('5', auto_now_add=True, required=True)
@@ -3437,8 +3438,8 @@ class ProductCategory(ndb.Model):
         object_log.put()
         product_category_key.delete()
 
-# done! u teoriji i Currency je jedan Measurement, sa mnogobrojno UOM-ova (valuta)
-# http://en.wikipedia.org/wiki/Systems_of_measurement#Units_of_currency
+        
+# done!
 class Measurement(ndb.Model):
     
     # root
@@ -3446,7 +3447,6 @@ class Measurement(ndb.Model):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     name = ndb.StringProperty('1', required=True)
-    uoms = ndb.StructuredProperty(UOM, '2', repeated=True)# soft limit 500x
     
     _KIND = 0
     
@@ -3462,75 +3462,74 @@ class Measurement(ndb.Model):
     @ndb.transactional
     def create():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOMCategory'.
-        var_uoms = []
-        var_uoms.append(UOM(name=var_name, symbol=var_symbol, rate=var_rate, factor=var_factor, rounding=var_rounting, digits=var_digits, active=True))
-        measurement = Measurement(name=var_name, uoms=var_uoms)
-        measurement_key = measurement.put()
-        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='create', state='none', log=measurement)
+        product_uom_category = ProductUOMCategory(name=var_name)
+        product_uom_category_key = product_uom_category.put()
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='create', state='none', log=product_uom_category)
         object_log.put()
     
     # Ova akcija azurira product uom category.
     @ndb.transactional
     def update():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOMCategory'.
-        measurement.name = var_name
-        measurement.uoms = var_uoms
-        measurement_key = measurement.put()
-        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='update', state='none', log=measurement)
+        product_uom_category.name = var_name
+        product_uom_category_key = product_uom_category.put()
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='update', state='none', log=product_uom_category)
         object_log.put()
     
     # Ova akcija brise product uom category.
     @ndb.transactional
     def delete():
         # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOMCategory'.
-        object_log = ObjectLog(parent=measurement_key, agent=agent_key, action='delete', state='none')
+        object_log = ObjectLog(parent=product_uom_category_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        measurement_key.delete()
+        product_uoms = ProductUOM.query(ancestor=product_uom_category_key).fetch(keys_only=True)
+        # ovaj metod ne loguje brisanje pojedinacno svakog product_uom entiteta, pa se trebati ustvari pozivati ProductUOM.delete() sa listom kljuceva.
+        # ProductUOM.delete() nije za sada nije opisana da radi multi key delete.
+        # a mozda je ta tehnika nepotrebna, posto se logovanje brisanja samog ProductUOMCategory entiteta podrazumvea da su svi potomci izbrisani!!
+        ndb.delete_multi(product_uoms)
+        product_uom_category_key.delete()
 
 # done!
-class UOM(ndb.Model):
+class Unit(ndb.Expando):
     
-    # StructuredProperty model
+    # ancestor Measurement
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
     # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
-    # mozda da ovi entiteti budu non-deletable i non-editable ??
-    name = ndb.StringProperty('1', required=True)
-    symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
-    factor = DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
-    rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
-    digits = ndb.IntegerProperty('6', required=True, indexed=False)
-    active = ndb.BooleanProperty('7', default=True)    
-
-# done!
-class Currency(ndb.Model):
-    
-    # root
     # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
     # http://en.wikipedia.org/wiki/ISO_4217
     # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
     # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # composite index: ancestor:no - active,name
+    # done! u teoriji i Currency je jedan Measurement, sa mnogobrojno UOM-ova (valuta)
+    # http://en.wikipedia.org/wiki/Systems_of_measurement#Units_of_currency
+    # composite index:
+    # ancestor:no - active,name
+    # ancestor:yes - active,name
     name = ndb.StringProperty('1', required=True)
     symbol = ndb.StringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    code = ndb.StringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    numeric_code = ndb.StringProperty('4', indexed=False)
-    rounding = DecimalProperty('5', required=True, indexed=False)
+    rounding = DecimalProperty('5', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.IntegerProperty('6', required=True, indexed=False)
     active = ndb.BooleanProperty('7', default=True)
+    # Expando
+    # rate = DecimalProperty('3', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
+    # factor = DecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
+    # code = ndb.StringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    # numeric_code = ndb.StringProperty('4', indexed=False)
+    # rounding = DecimalProperty('5', required=True, indexed=False)
+    # digits = ndb.IntegerProperty('6', required=True, indexed=False)
+    # active = ndb.BooleanProperty('7', default=True)
     #formating
-    grouping = ndb.StringProperty('8', required=True, indexed=False)
-    decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
-    thousands_separator = ndb.StringProperty('10', indexed=False)
-    positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
-    negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
-    positive_sign = ndb.StringProperty('13', indexed=False)
-    negative_sign = ndb.StringProperty('14', indexed=False)
-    positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
-    negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
-    positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
-    negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
+    # grouping = ndb.StringProperty('8', required=True, indexed=False)
+    # decimal_separator = ndb.StringProperty('9', required=True, indexed=False)
+    # thousands_separator = ndb.StringProperty('10', indexed=False)
+    # positive_sign_position = ndb.IntegerProperty('11', required=True, indexed=False)
+    # negative_sign_position = ndb.IntegerProperty('12', required=True, indexed=False)
+    # positive_sign = ndb.StringProperty('13', indexed=False)
+    # negative_sign = ndb.StringProperty('14', indexed=False)
+    # positive_currency_symbol_precedes = ndb.BooleanProperty('15', default=True, indexed=False)
+    # negative_currency_symbol_precedes = ndb.BooleanProperty('16', default=True, indexed=False)
+    # positive_separate_by_space = ndb.BooleanProperty('17', default=True, indexed=False)
+    # negative_separate_by_space = ndb.BooleanProperty('18', default=True, indexed=False)
     
     _KIND = 0
     
@@ -3542,66 +3541,37 @@ class Currency(ndb.Model):
        'delete' : 3,
     }
     
-    # Ova akcija kreira novi currency.
+    # Ova akcija kreira novi product uom.
     @ndb.transactional
     def create():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-Currency'.
-        currency = Currency()
-        currency.name = var_name
-        currency.symbol = var_symbol
-        currency.code = var_code
-        currency.numeric_code = var_numeric_code
-        currency.rounding = var_rounding
-        currency.digits = var_digits
-        currency.active = var_active
-        currency.grouping = var_grouping
-        currency.decimal_separator = var_decimal_separator
-        currency.thousands_separator = var_thousands_separator
-        currency.positive_sign_position = var_positive_sign_position
-        currency.negative_sign_position = var_negative_sign_position
-        currency.positive_sign = var_positive_sign
-        currency.negative_sign = var_negative_sign
-        currency.positive_currency_symbol_precedes = var_positive_currency_symbol_precedes
-        currency.negative_currency_symbol_precedes = var_negative_currency_symbol_precedes
-        currency.positive_separate_by_space = var_positive_separate_by_space
-        currency.negative_separate_by_space = var_negative_separate_by_space
-        currency_key = currency.put()
-        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='create', state='none', log=currency)
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'create-ProductUOM'.
+        product_uom = ProductUOM(parent=product_uom_category_key, name=var_name, symbol=var_symbol, rate=var_rate, factor=var_factor, rounding=var_rounding, digits=var_digits, active=var_active)
+        product_uom_key = product_uom.put()
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='create', state='none', log=product_uom)
         object_log.put()
     
-    # Ova akcija azurira currency.
+    # Ova akcija azurira product uom.
     @ndb.transactional
     def update():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-Currency'.
-        currency.name = var_name
-        currency.symbol = var_symbol
-        currency.code = var_code
-        currency.numeric_code = var_numeric_code
-        currency.rounding = var_rounding
-        currency.digits = var_digits
-        currency.active = var_active
-        currency.grouping = var_grouping
-        currency.decimal_separator = var_decimal_separator
-        currency.thousands_separator = var_thousands_separator
-        currency.positive_sign_position = var_positive_sign_position
-        currency.negative_sign_position = var_negative_sign_position
-        currency.positive_sign = var_positive_sign
-        currency.negative_sign = var_negative_sign
-        currency.positive_currency_symbol_precedes = var_positive_currency_symbol_precedes
-        currency.negative_currency_symbol_precedes = var_negative_currency_symbol_precedes
-        currency.positive_separate_by_space = var_positive_separate_by_space
-        currency.negative_separate_by_space = var_negative_separate_by_space
-        currency_key = currency.put()
-        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='update', state='none', log=currency)
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'update-ProductUOM'.
+        product_uom.name = var_name
+        product_uom.symbol = var_symbol
+        product_uom.rate = var_rate
+        product_uom.factor = var_factor
+        product_uom.rounding = var_rounding
+        product_uom.digits = var_digits
+        product_uom.active = var_active
+        product_uom_key = product_uom.put()
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='update', state='none', log=product_uom)
         object_log.put()
     
-    # Ova akcija brise currency.
+    # Ova akcija brise product uom.
     @ndb.transactional
     def delete():
-        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-Currency'.
-        object_log = ObjectLog(parent=currency_key, agent=agent_key, action='delete', state='none')
+        # ovu akciju moze izvrsiti samo agent koji ima globalnu dozvolu 'delete-ProductUOM'.
+        object_log = ObjectLog(parent=product_uom_key, agent=agent_key, action='delete', state='none')
         object_log.put()
-        currency_key.delete()
+        product_uom_key.delete()        
 
 # done!
 # ostaje da se ispita u preprodukciji!!
@@ -3947,3 +3917,104 @@ class BillingCreditAdjustment(ndb.Model):
         billing_log = BillingLog.query().order(-BillingLog.logged).fetch(1)
         new_billing_log = BillingLog(namespace=domain_key, id=str(billing_credit_adjustment_key), amount=billing_credit_adjustment.amount, balance=billing_log.balance + billing_credit_adjustment.amount)
         new_billing_log.put()
+
+################################################################################
+# /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
+# company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
+################################################################################
+
+# upiti sa strane usera, ako je na grupi postavljen namespace, ce se resavati odvojenim recordima
+# koji ce cuvati kljuceve na recorde a biti vezani ancestor pathom na usera.
+
+# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
+# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
+# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
+
+# prvo definisati minimalne pasivne modele: category
+# definisati im osnovne funkcije i indexe
+# potom definisati transakcione modele: group, entry, line
+# definisati im osnovne funkcije i indexe
+# nakon toga definisati aktivne kompozitne indexe
+# pregledati order modele i prepraviti ih da rade sa transakcionim modelima
+
+# App Engine clock times are always expressed in coordinated universal time (UTC). 
+# This becomes relevant if you use the current date or time (datetime.datetime.now()) 
+# as a value or convert between datetime objects and POSIX timestamps or time tuples. 
+# However, no explicit time zone information is stored in the Datastore, 
+# so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
+# https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
+
+class Journal(ndb.Model):
+
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L709
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/journal.py#l92
+  name = ndb.StringProperty('1', required=True)
+  code = ndb.StringProperty('2', required=True)
+  active = ndb.BooleanProperty('3', default=True)
+
+class Category(ndb.Expando):
+
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
+  # composite index: 
+  # ancestor:no - active,name;
+  # ancestor:no - active,code;
+  # ancestor:no - active,company,name; ?
+  # ancestor:no - active,company,code; ?
+  parent_record = ndb.KeyProperty('1', kind=Account, required=True)
+  name = ndb.StringProperty('2', required=True)
+  code = ndb.StringProperty('3', required=True)
+  active = ndb.BooleanProperty('4', default=True)
+  company = ndb.KeyProperty('5', kind=Company, required=True)
+  complete_name = ndb.TextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
+
+class Group(ndb.Model):
+  
+  # root (namespace Domain)
+  
+class Entry(ndb.Expando):
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc;
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc;
+  # ancestor:no - journal,company,state,party,created:desc;
+  # ancestor:no - journal,company,state,party,updated:desc;
+  name = ndb.StringProperty('1', required=True)
+  journal = ndb.KeyProperty('2', kind=Journal, required=True)
+  company = ndb.KeyProperty('3', kind=Company, required=True)
+  state = ndb.IntegerProperty('4', required=True)
+  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+  party = ndb.KeyProperty('8')
+  # Expando
+  # expando indexi se programski ukljucuju ili gase po potrebi
+  
+class Line(ndb.Expando):
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
+  sequence = ndb.IntegerProperty('1', required=True)
+  categories = ndb.KeyProperty('2', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = DecimalProperty('4', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopitranjem polja iz Entry-ja u Line-ove
