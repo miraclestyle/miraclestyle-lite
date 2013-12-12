@@ -79,7 +79,7 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
  
-            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
           
             if response.has_error():
                return response
@@ -191,7 +191,7 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
  
-            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
           
             if response.has_error():
                return response
@@ -391,7 +391,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             current = ndb.get_current_user()
             
             skip = ('low_stock_quantity', 'images', 'product_instance_count')
-            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, not create)])
           
             if response.has_error():
                return response

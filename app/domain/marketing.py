@@ -531,7 +531,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
             
-            response.process_input(values, cls, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
       
             if response.has_error():
                return response
@@ -564,9 +564,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
             else:
         
                catalog = values.get('catalog')
-               
-               response.process_input(values, cls)
-      
+            
                if not catalog:
                   response.required('catalog')
                

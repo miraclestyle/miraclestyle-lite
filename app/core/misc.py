@@ -584,7 +584,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
 
  
 # done!
-class UOM(ndb.BaseModel):
+class UOM(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 19
     
@@ -602,6 +602,90 @@ class UOM(ndb.BaseModel):
     digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
     active = ndb.SuperBooleanProperty('7', default=True)
     
+    OBJECT_DEFAULT_STATE = 'none'
+    
+    OBJECT_ACTIONS = {
+       'create' : 1,
+       'update' : 2,
+       'delete' : 3,
+    }
+
+    
+    @classmethod
+    def delete(cls, values):
+ 
+        response = ndb.Response()
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+                       
+               current = ndb.get_current_user()
+               
+               entity = cls.prepare(False, values, get_only=True)
+               
+               if entity and entity.loaded():
+                  if current.has_permission('delete', entity):
+                     entity.new_action('delete', log_object=False)
+                     entity.record_action()
+                     entity.key.delete()
+                      
+                     response.status(entity)
+                  else:
+                     return response.not_authorized()
+               else:
+                  response.not_found()      
+            
+        try:
+           transaction()
+        except Exception as e:
+           response.transaction_error(e)
+           
+        return response
+
+    @classmethod
+    def manage(cls, create, values, **kwds):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = ndb.get_current_user()
+     
+            response.process_input(values, cls, only=('name',), convert=[('measurement', Measurement, not create)])
+            
+            if response.has_error():
+               return response
+             
+            entity = cls.prepare(create, values, parent=values.get('measurement'))
+            
+            if entity is None:
+               return response.not_found()
+             
+            if not create:
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
+    
 
     
 # done!
@@ -614,8 +698,7 @@ class Measurement(ndb.BaseModel, ndb.Workflow):
     # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L81
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     name = ndb.SuperStringProperty('1', required=True)
-    uoms = ndb.SuperStructuredProperty(UOM, '2', required=True)
-  
+ 
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {

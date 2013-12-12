@@ -135,9 +135,13 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             current = ndb.get_current_user()
             
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            only = ('name', 'country', 'region', 'city', 'postal_code', 'street_address',
-                    'street_address2', 'email', 'telephone', 'currency', 'paypal_email', 'tracking_id')
-            response.process_input(values, cls, only=only, convert=[('domain', Domain, True)])
+            only = ['name', 'country', 'region', 'city', 'postal_code', 'street_address',
+                    'street_address2', 'email', 'telephone', 'currency', 'paypal_email', 'tracking_id']
+        
+            if 'logo' in values or create:
+                only.append('logo')
+        
+            response.process_input(values, cls, only=only, convert=[('domain', Domain, not create)])
       
             if response.has_error():
                return response
@@ -150,10 +154,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             if entity and entity.loaded():
                 
                new_logo = 'logo' in values
-                
-               if new_logo:
-                   response.process_input(values, cls, only=('logo',))
-                 
+           
                if not entity.domain_is_active:
                   response.error('domain', 'not_active') 
               
@@ -179,8 +180,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             else:
                 
                domain = values.get('domain')
-               response.process_input(values, cls, only=('name', 'logo'))
-          
+       
                if not domain:
                   response.required('domain')
                   
