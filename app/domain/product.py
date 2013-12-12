@@ -7,10 +7,12 @@ Created on Oct 20, 2013
 import itertools
 import hashlib
  
-from app import ndb, util
+from app import ndb, util, settings
 from app.domain.marketing import Catalog
 from app.domain.acl import NamespaceDomain
 from app.core.misc import Image
+
+from google.appengine.ext import blobstore
 
 # done!
 class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
@@ -382,6 +384,10 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         @ndb.transactional(xg=True)
         def transaction():
              
+            if values.get('upload_url'):
+               response['upload_url'] = blobstore.create_upload_url(values.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+               return response 
+             
             current = ndb.get_current_user()
             
             skip = ('low_stock_quantity', 'images', 'product_instance_count')
@@ -394,7 +400,8 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             if entity is None:
                return response.not_found()
-           
+            
+               
             if current.has_permission(('update', 'create'), entity):
             
                 images = values.get('images')
@@ -510,6 +517,10 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
 
         @ndb.transactional(xg=True)
         def transaction():
+            
+            if values.get('upload_url'):
+               response['upload_url'] = blobstore.create_upload_url(values.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+               return response
              
             current = ndb.get_current_user()
             

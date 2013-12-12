@@ -123,7 +123,7 @@ class Formatter():
         else:
            if not isinstance(value, cgi.FieldStorage) or 'blob-key' not in value.type_options:
               raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
-              b got %r instead.' % value)
+              got %r instead.' % value)
            else:
                value = blobstore.parse_blob_info(value)
            return value.key()
@@ -1004,7 +1004,7 @@ class Response(dict):
         convert_args = kwargs.pop('convert_args', {})
         prefix = kwargs.pop('prefix', '')
         fields = obj.get_mapped_properties()
-        
+    
         if convert:
            for i in convert:
                name = i[0]
@@ -1059,7 +1059,7 @@ class Response(dict):
                except Exception as e:#-- if for any reason `_type` function or class raises an error, the conversion will be marked invalid
                     util.logger(e, 'exception')
                     self.invalid('%s%s' % (prefix, name))
-                  
+ 
         
         for k,v in fields.items():
             

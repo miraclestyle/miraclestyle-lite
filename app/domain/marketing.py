@@ -9,7 +9,7 @@ import datetime
 from app import ndb, settings
 from app.core.misc import Image
 from app.domain.acl import Domain, NamespaceDomain
-from app.domain.sale import Company
+from app.domain.business import Company
 
 from google.appengine.ext import blobstore
 
@@ -36,25 +36,30 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
         ## this should be multiple upload thing, this needs work :@
         
         response = ndb.Response()
+        
+        do_not_delete = []
 
         @ndb.transactional(xg=True)
         def transaction():
              
             current = ndb.get_current_user()
-            skip = ('image',)
-            
-            if values.get('upload_url') or not values.get('image'):
+            the_image = values.get('image')
+         
+            if values.get('upload_url'):
                response['upload_url'] = blobstore.create_upload_url(values.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
                return response
             
-            new_image = 'image' in values
- 
-            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, True)])
+            only = ['sequence',]
+            
+            if create:
+               only.append('image')
+            
+            response.process_input(values, cls, only=only, convert=[('catalog', Catalog, True)])
       
             if response.has_error():
                return response
-       
-            entity = cls.prepare(create, values, skip=skip)
+ 
+            entity = cls.prepare(create, values, get_only=True)
             
             if entity is None:
                return response.not_found()
@@ -73,9 +78,10 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                 
                if current.has_permission('update', entity):
                    
-                   if new_image:
+                   if 'image' in values:
                       blobstore.delete(entity.image)
-                      entity.image = values.get('image')
+                      sizes = ndb.BlobManager.field_storage_get_image_sizes(the_image)
+                      entity.populate(**sizes)
   
                    entity.put()
                    entity.new_action('update')
@@ -83,17 +89,10 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                else:
                    return response.not_authorized()
             else:
-                
-               response.process_input(values, cls)
-               
-               if response.has_error():
-                  return response
-               
-               entity = cls.prepare(create, values, parent=values.get('catalog'))
- 
+  
                catalog = values.get('catalog')
                
-               if not new_image:
+               if not the_image:
                   response.required('image')
  
                if not catalog:
@@ -101,6 +100,13 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
              
                if response.has_error():
                   return response
+           
+               data = ndb.BlobManager.field_storage_get_image_sizes(the_image)
+               data['parent'] = catalog
+               
+               do_not_delete.append(the_image)
+              
+               entity = cls(**data)
   
                if not entity.domain_is_active:
                   return response.error('domain', 'not_active')
@@ -116,6 +122,8 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
            
         try:
             transaction()
+            if len(do_not_delete):
+               ndb.BlobManager.field_storage_used_blob(do_not_delete)
         except Exception as e:
             response.transaction_error(e)
             
@@ -173,7 +181,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     # root (namespace Domain)
     # https://support.google.com/merchants/answer/188494?hl=en&hlrm=en#other
     # composite index: ???
-    company = ndb.SuperKeyProperty('1', kind='app.domain.sale.Company', required=True)
+    company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
     name = ndb.SuperStringProperty('2', required=True)
     publish_date = ndb.SuperDateTimeProperty('3')# today
     discontinue_date = ndb.SuperDateTimeProperty('4')# +30 days

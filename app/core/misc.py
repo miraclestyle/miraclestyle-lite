@@ -604,7 +604,7 @@ class UOM(ndb.BaseModel):
     
 
     
-# done!  @todo make uoms puttable
+# done!
 class Measurement(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 18
@@ -665,11 +665,11 @@ class Measurement(ndb.BaseModel, ndb.Workflow):
              
             current = ndb.get_current_user()
      
-            response.process_input(values, cls)
+            response.process_input(values, cls, only=('name',))
             
             if response.has_error():
                return response
-            
+             
             entity = cls.prepare(create, values)
             
             if entity is None:

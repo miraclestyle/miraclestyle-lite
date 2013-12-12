@@ -279,7 +279,7 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                # begin namespace
                namespace = entity.key.urlsafe()
                # lower the module namespace to avoid loop
-               from app.domain import marketing, product, sale
+               from app.domain import marketing, product, business
                
                # compile all public permissions provided by objects for this domain
                perms = ndb.compile_public_permissions(cls, Role, User, marketing.Catalog,
@@ -291,13 +291,9 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                                                       product.InventoryLog,
                                                       product.Template,
                                                       product.Variant,
-                                                      sale.Carrier,
-                                                      sale.CarrierLine,
-                                                      sale.Company,
-                                                      sale.CompanyContent,
-                                                      sale.CompanyFeedback,
-                                                      sale.CompanyShippingExclusion,
-                                                      sale.Tax,
+                                                      business.Company,
+                                                      business.CompanyContent,
+                                                      business.CompanyFeedback,
                                                       )
                 
                # crete role

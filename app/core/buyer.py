@@ -269,7 +269,7 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 11
     # ancestor User
-    company = ndb.SuperKeyProperty('1', kind='app.domain.sale.Company', required=True)
+    company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
     collections = ndb.SuperKeyProperty('2', kind='app.core.buyer.Collection', repeated=True)# soft limit 500x
    
     OBJECT_DEFAULT_STATE = 'none'
@@ -379,7 +379,7 @@ class AggregateCollectionCatalog(ndb.BaseModel):
     # mogao bi da se uvede index na collections radi filtera: AggregateBuyerCollectionCatalog.collections = 'collection', 
     # ovaj model bi se trebao ukinuti u korist MapReduce resenja, koje bi bilo superiornije od ovog
     # composite index: ancestor:yes - catalog_published_date:desc
-    company = ndb.SuperKeyProperty('1', kind='app.domain.sale.Company', required=True)
+    company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
     collections = ndb.SuperKeyProperty('2', kind='app.core.buyer.Collection', repeated=True, indexed=False)# soft limit 500x
     catalog = ndb.SuperKeyProperty('3', kind='app.domain.marketing.Catalog', required=True, indexed=False)
     catalog_cover = ndb.SuperBlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
