@@ -79,7 +79,7 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
  
-            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
           
             if response.has_error():
                return response
@@ -144,6 +144,19 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     }
     
     @classmethod
+    def list(cls, values, **kwds):
+        
+        response = ndb.Response()
+        
+        response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=True)])
+        if response.has_error():
+           return response
+       
+        response['items'] = cls.query(ancestor=values.get('catalog')).fetch()
+       
+        return response
+    
+    @classmethod
     def delete(cls, values, **kwds):
  
         response = ndb.Response()
@@ -191,13 +204,13 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
  
-            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
           
             if response.has_error():
                return response
  
                    
-            entity = cls.prepare(values, parent=values.get('catalog'))
+            entity = cls.prepare(create, values, parent=values.get('catalog'))
             
             if entity is None:
                return response.not_found()
@@ -242,7 +255,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     product_category = ndb.SuperKeyProperty('1', kind='app.core.misc.ProductCategory', required=True, indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     description = ndb.SuperTextProperty('3', required=True)# soft limit 64kb
-    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.Measurement', required=True, indexed=False)
+    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.Unit', required=True, indexed=False)
     unit_price = ndb.SuperDecimalProperty('5', required=True)
     availability = ndb.SuperIntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     
@@ -278,6 +291,15 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     }
     
     @classmethod
+    def list(cls, values, **kwds):
+        response = ndb.Response()
+        response.process_input(values, cls, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=True)])
+        if not response.has_error():
+           response['items'] = cls.query(ancestor=values.get('catalog')).fetch()
+           
+        return response
+    
+    @classmethod
     def generate_product_instances(cls, values, **kwds):
         
         response = ndb.Response()
@@ -287,7 +309,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             current = ndb.get_current_user()
             
-            response.process_input(values, cls, convert=[('template', Template)])
+            response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('template', kind=Template, required=True)])
             
             if response.has_error():
                return response
@@ -353,6 +375,8 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   if not entity.domain_is_active:
                      return response.error('domain', 'not_active')
                  
+                  print entity.key.urlsafe()
+                 
                   if not entity.key.parent().get().is_usable:
                      return response.error('catalog', 'not_unpublished') 
                        
@@ -390,41 +414,56 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
             
-            skip = ('low_stock_quantity', 'images', 'product_instance_count')
-            response.process_input(values, cls, skip=skip, convert=[('catalog', Catalog, not create)])
-          
+            skip = ['images', 'product_instance_count']
+  
+            response.process_input(values, cls, skip=skip, create=create, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
+   
             if response.has_error():
                return response
            
-            entity = cls.prepare(False, values, parent=values.get('catalog'))
+            entity = cls.prepare(create, values, skip=skip, parent=values.get('catalog'))
             
             if entity is None:
                return response.not_found()
+           
+            print entity.key.namespace()
+           
+                      
+            if 'contents' in values:
+                i = 0
+                for c in values.get('contents'):
+                    if c.namespace() != entity.key.namespace():
+                       response.invalid('contents_%' % i)
+                       i += 1
             
-               
+            if 'variants' in values:
+                i = 0
+                for v in values.get('variants'):
+                    if v.namespace() != entity.key.namespace():
+                       response.invalid('variants_%' % i)
+                       i += 1
+                       
+            if response.has_error():
+               return response
+              
             if current.has_permission(('update', 'create'), entity):
-            
+          
                 images = values.get('images')
                 if images:
-                   sq = 0
-                   for img in images:
-                      
-                       infodata = {'image' : img}
-                       delete_file = True
-                       response.process_input(infodata, Image, only=('image',), prefix='images_%s' % sq)
+                    
+                   if not entity.images:
+                      entity.images = []
                        
-                       if not response.has_error():
-                          try: 
-                              new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
-                              entity.images.append(Image(sequence=sq, **new_image))
-                              sq += 1
-                              delete_file = False
-                          except Exception as e:
-                              util.logger(e, 'exception')
-                              delete_file = True
-                              
-                       if not delete_file:
+                   sq = len(entity.images)   
+                   for img in images:
+                       try: 
+                           new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
+                           entity.images.append(Image(sequence=sq, **new_image))
+                           sq += 1
                            do_not_delete.append(img)
+                       except Exception as e:
+                           util.logger(e, 'exception')
+                     
     
             if not create:
                  
@@ -502,7 +541,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 1,
        'create' : 2,
     }
-  
+ 
     @classmethod
     def md5_variation_combination(cls, product_template_key, codes):
         codes = list(codes)
@@ -524,19 +563,30 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
             
-            only = ('availability', 'description', 'unit_price', 'contents',
-                    'low_stock_quantity', 'weight', 'volume')
- 
+            only = ['availability', 'description', 'unit_price', 'contents',
+                    'low_stock_quantity', 'weight', 'volume']
+  
             response.process_input(values, cls, only=only)
           
             if response.has_error():
                return response
   
-            entity = cls.prepare(create, values)
+            entity = cls.prepare(False, values, only=only)
              
             if entity is None:
                return response.not_found()
-           
+            
+            if 'contents' in values:
+                i = 0
+                for c in values.get('contents'):
+                    if c.namespace() != entity.key.namespace():
+                       response.invalid('contents_%' % i)
+                       i += 1
+            
+            if response.has_error():
+               return response
+            
+            
             product_template = entity.key.parent().get()
             catalog = product_template.parent().get()
            
@@ -551,25 +601,21 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                if current.has_permission('update', entity):
                    images = values.get('images')
                    if images:
-                       sq = 0
+                       
+                       if not entity.images:
+                          entity.images = []
+                       
+                       sq = len(entity.images)   
                        for img in images:
-                 
-                           infodata = {'image' : img}
-                           delete_file = True
-                           response.process_input(infodata, Image, only=('image',), prefix='images_%s' % sq)
                            
-                           if not response.has_error():
-                              try: 
-                                  new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
-                                  entity.images.append(Image(sequence=sq, **new_image))
-                                  sq += 1
-                                  delete_file = False
-                              except Exception as e:
-                                  util.logger(e, 'exception')
-                                  
-                           if not delete_file:
+                           try: 
+                              new_image = ndb.BlobManager.field_storage_get_image_sizes(img)
+                              entity.images.append(Image(sequence=sq, **new_image))
+                              sq += 1
                               do_not_delete.append(img)
-                          
+                           except Exception as e:
+                              util.logger(e, 'exception')
+          
                    entity.put()
                    entity.new_action('update')
                    entity.record_action()
@@ -614,7 +660,7 @@ class InventoryAdjustment(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     adjusted = ndb.SuperDateTimeProperty('1', auto_now_add=True, indexed=False)
     agent = ndb.SuperKeyProperty('2', kind='app.core.acl.User', required=True, indexed=False)
     quantity = ndb.SuperDecimalProperty('3', required=True, indexed=False)
-    comment = ndb.SuperStringProperty('4', required=True, indexed=False)
+    comment = ndb.SuperStringProperty('4', indexed=False)
  
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -641,5 +687,47 @@ class InventoryAdjustment(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
     @classmethod
     def manage(cls, create, values, **kwds):
-        pass
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = ndb.get_current_user()
+ 
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('instance', kind=Instance, required=True)])
+    
+            if response.has_error():
+               return response
+           
+            values['agent'] = current.key
+            
+            product_instance_key = values.get('instance')
+  
+            entity = cls.prepare(create, values, only=('quantity', 'comment'), parent=product_instance_key)
+            
+            if entity is None:
+               return response.not_found()
+             
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+                
+                   product_inventory_log = InventoryLog.query(parent=product_instance_key).order(-InventoryLog.logged).get()
+                   new_product_inventory_log = InventoryLog(parent=product_instance_key, id=entity.key.urlsafe(), quantity=entity.quantity, balance=product_inventory_log.balance + entity.quantity)
+                   new_product_inventory_log.put()
+                   
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
+
 

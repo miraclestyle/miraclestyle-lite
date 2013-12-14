@@ -176,6 +176,35 @@ property_types_formatter = {
   'SuperReferenceProperty' : Formatter.ndb_key,
 }
 
+def make_complete_name(entity, property_name, parent=None, separator=None):
+    
+    if separator is None:
+       separator = unicode(' / ')
+       
+    gets_entity = entity
+    names = []
+    while True:
+        
+        if parent is None:
+           parents = gets_entity.key.parent() 
+           parents = parents.get()
+        else:
+           parents = getattr(gets_entity, parent)
+           if parents:
+              parents = parents.get()
+ 
+        if not parents:
+           names.append(getattr(gets_entity, property_name))
+           break
+        else:
+           value = getattr(gets_entity, property_name)
+           names.append(value)
+           gets_entity = parents
+ 
+    names.reverse()
+    return separator.join(names)
+           
+
 def get_current_user():
     
     from app.core.acl import User
@@ -331,8 +360,9 @@ class _BaseModel(Model):
                     datasets[i] = gets()
       else:
           datasets = dataset.copy()
-     
-      datasets.update(kwds)
+      
+      if create:
+         datasets.update(kwds)
      
       if create:
          return cls(**datasets)
@@ -971,12 +1001,12 @@ class Response(dict):
           **kwargs: skip: skips the processing on specified field names
                     only: only does processing on specified field names
                     convert: converts `values` into specified data type. for example:
-                        values = {'domain' : 'large key...'}
-                        response.process_input(values, obj, convert=[('domain', Domain)])
+                        values = {'catalog' : 'large key...'}
+                        response.process_input(values, obj, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
                         
                         
-                        it will convert values['domain'] into ndb.Key(...) and also perform checks wether the 
-                        domain is existing and if its usable
+                        it will convert values['catalog'] into ndb.Key(...) and also perform checks wether the 
+                        catalog exists and if its usable
                         
                         note: the third argument in tuple renders if the value will be converted or not if its not present.
                     
@@ -1001,64 +1031,30 @@ class Response(dict):
         skip = kwargs.pop('skip', None)
         only = kwargs.pop('only', None)
         convert = kwargs.pop('convert', None)
-        convert_args = kwargs.pop('convert_args', {})
+        create = kwargs.pop('create', True)
         prefix = kwargs.pop('prefix', '')
         fields = obj.get_mapped_properties()
     
         if convert:
            for i in convert:
-               name = i[0]
-               _type = i[1]
-               try:
-                   can_skip = i[2]
-               except IndexError as e:
-                   can_skip = False
-                   
-               value = values.get(name)
-               
-               if value == '':
-                  # an empty value is considered as `None`
-                  value = None
-                  
-               if value is None and can_skip:
-                  continue
-              
-               try:
-                    if isinstance(value, _type):
-                          continue
-                    if _type.__name__ == 'bool':
-                       values[name] = bool(int(value))
-                    elif _type.__name__ in ('int', 'long'):
-                       if isinstance(value, (int, long)):
-                          continue  
-                       values[name] = _type(value)
-                    elif _type == Key or issubclass(_type, _BaseModel):
+               if issubclass(i.__class__, Property):
+                  name = i._name
+                  value = values.get(i._name, False) 
+                  if i._required:
+                     if value is False:
+                        self.required('%s%s' % (prefix, name))
+                     else:
+                        formatter = property_types_formatter.get(i.__class__.__name__)
+                        if formatter:
+                           try: 
+                               values[name] = formatter(i, value)
+                           except DescriptiveError as e:
+                               self.error('%s%s' % (prefix, name), e)         
+                           except Exception as e:#-- usually the properties throw these types of exceptions
+                               util.logger(e, 'exception')
+                               self.invalid('%s%s' % (prefix, name))
+                  continue  
  
-                       if not isinstance(value, Key):
-                          value = Key(urlsafe=value)
-                                   
-                       if issubclass(_type, _BaseModel):   
-                           if value.kind() != _type._get_kind():
-                              raise DescriptiveError('invalid_kind')
-                          
-                       gets = value.get(use_cache=True)   
-                       
-                       if gets is None:
-                          raise DescriptiveError('not_found')
-                       else:
-                          if hasattr(gets, 'is_usable') and convert_args.get('skip_usable_check', None) is None:
-                             can = gets.is_usable
-                             if not can:
-                                raise DescriptiveError('not_usable')
-                       
-                       values[name] = value
-                    else:
-                       values[name] = _type(value)
-               except DescriptiveError as e:
-                    self.error('%s%s' % (prefix, name), e)        
-               except Exception as e:#-- if for any reason `_type` function or class raises an error, the conversion will be marked invalid
-                    util.logger(e, 'exception')
-                    self.invalid('%s%s' % (prefix, name))
  
         
         for k,v in fields.items():
@@ -1073,17 +1069,20 @@ class Response(dict):
                if k not in only:
                   continue
                     
-            value = values.get(k)
+            value = values.get(k, False)
+            
+            if value is False and not create:
+               continue
             
             if value == '':
                # if value is empty its considered as `None` 
                value = None
             
-            if value is None:
+            if value is (None or False):
                if v._required:
                   self.required('%s%s' % (prefix, k))
                   
-            if value is None and not v._required:
+            if value is False and not v._required:
                continue
    
             formatter = property_types_formatter.get(v.__class__.__name__)
@@ -1091,6 +1090,8 @@ class Response(dict):
             if formatter: 
                try: 
                    values[k] = formatter(v, value)
+               except DescriptiveError as e:
+                   self.error('%s%s' % (prefix, k), e)    
                except Exception as e:#-- usually the properties throw these types of exceptions
                    util.logger(e, 'exception')
                    self.invalid('%s%s' % (prefix, k))

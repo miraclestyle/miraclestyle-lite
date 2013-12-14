@@ -36,17 +36,18 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     # composite index: ancestor:no - state,name
     parent_record = ndb.SuperKeyProperty('1', kind='44', indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
-    logo = ndb.SuperImageKeyProperty('3', required=True)# blob ce se implementirati na GCS
-    updated = ndb.SuperDateTimeProperty('4', auto_now=True)
-    created = ndb.SuperDateTimeProperty('5', auto_now_add=True)
-    state = ndb.SuperIntegerProperty('6', required=True)
+    complete_name = ndb.SuperTextProperty('3')
+    logo = ndb.SuperImageKeyProperty('4', required=True)# blob ce se implementirati na GCS
+    updated = ndb.SuperDateTimeProperty('5', auto_now=True)
+    created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
+    state = ndb.SuperIntegerProperty('7', required=True)
     
     _default_indexed = False
   
     EXPANDO_FIELDS = {
                       
-       'country' : ndb.SuperKeyProperty('7', kind='app.core.misc.Country', required=False),
-       'region' : ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision', required=False),
+       'country' : ndb.SuperKeyProperty('8', kind='app.core.misc.Country', required=False),
+       'region' : ndb.SuperKeyProperty('9', kind='app.core.misc.CountrySubdivision', required=False),
        'city' : ndb.SuperStringProperty('10', required=False),
        'postal_code' : ndb.SuperStringProperty('11', required=False),
        'street_address' : ndb.SuperStringProperty('12', required=False),
@@ -54,7 +55,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'email' : ndb.SuperStringProperty('14'),
        'telephone' : ndb.SuperStringProperty('15'),
        
-       'currency' : ndb.SuperKeyProperty('16', kind='app.core.misc.Currency', required=False),
+       'currency' : ndb.SuperKeyProperty('16', kind='app.core.misc.Unit', required=False),
        'paypal_email' : ndb.SuperStringProperty('17'),
        
        'tracking_id' : ndb.SuperStringProperty('18'),
@@ -112,7 +113,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     @classmethod
     def list(cls, values, **kwds):
         response = ndb.Response()
-        response.process_input(values, cls, only=False, convert=[('domain', Domain)])
+        response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=True)])
         if response.has_error():
            return response
         response['items'] = cls.query(namespace=values.get('domain').urlsafe()).fetch()
@@ -135,13 +136,13 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             current = ndb.get_current_user()
             
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            only = ['name', 'country', 'region', 'city', 'postal_code', 'street_address',
+            only = ['name', 'parent_record', 'country', 'region', 'city', 'postal_code', 'street_address',
                     'street_address2', 'email', 'telephone', 'currency', 'paypal_email', 'tracking_id']
         
             if 'logo' in values or create:
                 only.append('logo')
         
-            response.process_input(values, cls, only=only, convert=[('domain', Domain, not create)])
+            response.process_input(values, cls, only=only, convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=create)])
       
             if response.has_error():
                return response
@@ -171,7 +172,8 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                       entity.logo = values.get('logo')
                       do_not_delete.append(entity.logo)
                        
-                   
+                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
+                   # add task que to update all children
                    entity.put()
                    entity.new_action('update')
                    entity.record_action()
@@ -194,6 +196,8 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
                if current.has_permission('create', entity): 
                    entity.set_state(cls.OBJECT_DEFAULT_STATE)
+                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
+                   # add task que to update all children
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -218,6 +222,16 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(create, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -227,9 +241,9 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
                current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -248,7 +262,17 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
-        def transaction(): 
+        def transaction():
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+             
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
@@ -280,7 +304,17 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
-        def transaction(): 
+        def transaction():
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -291,10 +325,10 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                current = ndb.get_current_user()
          
                if current.has_permission('open', entity):
-                      entity.new_action('open', state='open', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('open', state='open', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -375,7 +409,7 @@ class CompanyContent(ndb.BaseModel, ndb.Workflow):
             current = ndb.get_current_user()
      
             # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.process_input(values, cls, convert=[('domain', Domain, True), ('company', Company, True)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('company', kind=Company, required=create)])
           
             if response.has_error():
                return response

@@ -43,7 +43,9 @@ class Address(ndb.BaseExpando, ndb.Workflow):
     
         response = ndb.Response()
         
-        response.process_input(values, cls, only=False, convert=[('parent', ndb.Key)])
+        from app.core.acl import User
+        
+        response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('user', kind=User, required=True)])
         
         if response.has_error():
            return response
@@ -347,7 +349,7 @@ class CollectionCompany(ndb.BaseModel, ndb.Workflow):
                      entity.collections.append(c)
             
             if not create:
-               if entity.parent() == current.key:
+               if entity.key.parent() == current.key:
                   entity.put()
                   entity.new_action('update')
                   entity.record_action()

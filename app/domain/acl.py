@@ -133,16 +133,26 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction():
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
                current = ndb.get_current_user()
                if current.has_permission('suspend', entity, namespace=entity.key.urlsafe()):
-                      entity.new_action('suspend', state='suspended', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('suspend', state='suspended', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -162,15 +172,25 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
                current = ndb.get_current_user()
                if current.has_permission('activate', entity, namespace=entity.key.urlsafe()):
-                      entity.new_action('activate', state='active', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('activate', state='active', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -190,6 +210,17 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
         
         @ndb.transactional(xg=True) 
         def transaction(): 
+            
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -202,10 +233,10 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
                current = ndb.get_current_user()
                if current.has_permission(action, entity):
                       state = values.get('state')
-                      entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -224,14 +255,24 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
                current = ndb.get_current_user()
                if current.has_permission('log_message', entity, namespace=entity.key.urlsafe()):
-                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -401,7 +442,7 @@ class Role(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
      
-            response.process_input(values, cls, convert=[('domain', Domain, True)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=create)])
           
             if response.has_error():
                return response
@@ -495,7 +536,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
    
         response = ndb.Response()
              
-        response.process_input(values, cls, skip=('state',), convert=[('domain', Domain)])
+        response.process_input(values, cls, skip=('state',), convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=True)])
  
         if response.has_error():
            return response
@@ -563,7 +604,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             current = ndb.get_current_user()
             
-            response.process_input(values, cls, only=False, convert=[('user', User)])
+            response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('user', kind=User, required=True)])
             
             if response.has_error():
                return response
@@ -619,7 +660,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             current = ndb.get_current_user()
             
-            response.process_input(values, cls, only=False, convert=[('user', User)])
+            response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('user', kind=User, required=True)])
             
             if response.has_error():
                return response
@@ -671,7 +712,7 @@ class User(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
  
         response = ndb.Response()
          
-        response.process_input(values, cls, only=('roles', 'name'), convert=[('user', User)])
+        response.process_input(values, cls, only=('roles', 'name'), convert=[ndb.SuperKeyProperty('user', kind=User, required=True)])
             
         if response.has_error():
            return response

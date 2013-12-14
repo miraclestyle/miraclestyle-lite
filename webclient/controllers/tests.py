@@ -9,6 +9,11 @@ from webclient.handler import Angular, Handler
  
 from app import ndb
 
+class Submitter(Handler):
+    
+    def respond(self):
+        self.render('submitter.html')
+
 class FormSubmit(Handler):
     
     def respond(self):
@@ -40,4 +45,4 @@ class Endpoint(Angular):
         return getattr(model, method)(data)
          
  
-register(('/endpoint', Endpoint), ('/submit', FormSubmit))
+register(('/endpoint', Endpoint), ('/submit', FormSubmit), ('/submitter', Submitter))

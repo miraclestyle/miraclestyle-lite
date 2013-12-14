@@ -25,7 +25,7 @@ class Jinja():
         
         
 def to_json(s):
-    return json.dumps(s, cls=JSONEncoderHTML)
+    return json.dumps(s, indent=2, cls=JSONEncoderHTML)
             
 Jinja.register_filter('to_json', to_json)
  

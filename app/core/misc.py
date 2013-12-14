@@ -367,11 +367,12 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     
     #  kind='app.core.misc.CountrySubdivision',
     parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
-    
+     
     code = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.SuperStringProperty('3', required=True)
-    type = ndb.SuperIntegerProperty('4', required=True, indexed=False)
-    active = ndb.SuperBooleanProperty('5', default=True)
+    complete_name = ndb.SuperTextProperty('4')
+    type = ndb.SuperIntegerProperty('5', required=True, indexed=False)
+    active = ndb.SuperBooleanProperty('6', default=True)
      
     OBJECT_DEFAULT_STATE = 'none'
     
@@ -492,7 +493,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
     #  kind='app.core.misc.ProductCategory',
     parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
-    complete_name = ndb.SuperTextProperty('3', required=True)# da je ovo indexable bilo bi idealno za projection query
+    complete_name = ndb.SuperTextProperty('3')# da je ovo indexable bilo bi idealno za projection query
     status = ndb.SuperIntegerProperty('4', required=True)
   
     OBJECT_DEFAULT_STATE = 'none'
@@ -560,6 +561,8 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
              
             if not create:
                if current.has_permission('update', entity):
+                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
+                   # add task que to update all children
                    entity.put()
                    entity.new_action('update')
                    entity.record_action()
@@ -567,6 +570,8 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
                    return response.not_authorized()
             else:
                if current.has_permission('create', entity): 
+                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
+                   # add task que to update all children
                    entity.put()
                    entity.new_action('create')
                    entity.record_action()
@@ -584,7 +589,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
 
  
 # done!
-class UOM(ndb.BaseModel, ndb.Workflow):
+class Unit(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 19
     
@@ -602,6 +607,22 @@ class UOM(ndb.BaseModel, ndb.Workflow):
     digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
     active = ndb.SuperBooleanProperty('7', default=True)
     
+    EXPANDO_FIELDS = {
+        'code' : ndb.SuperStringProperty('3', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
+        'numeric_code' : ndb.SuperStringProperty('4', indexed=False),
+        'grouping' : ndb.SuperStringProperty('8', required=True, indexed=False),
+        'decimal_separator' : ndb.SuperStringProperty('9', required=True, indexed=False),
+        'thousands_separator' : ndb.SuperStringProperty('10', indexed=False),
+        'positive_sign_position' : ndb.SuperIntegerProperty('11', required=True, indexed=False),
+        'negative_sign_position' : ndb.SuperIntegerProperty('12', required=True, indexed=False),
+        'positive_sign' : ndb.SuperStringProperty('13', indexed=False),
+        'negative_sign' : ndb.SuperStringProperty('14', indexed=False),
+        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('15', default=True, indexed=False),
+        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('16', default=True, indexed=False),
+        'positive_separate_by_space' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
+        'negative_separate_by_space' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
+    }
+    
     OBJECT_DEFAULT_STATE = 'none'
     
     OBJECT_ACTIONS = {
@@ -609,6 +630,12 @@ class UOM(ndb.BaseModel, ndb.Workflow):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls, values, **kwds):
+        response = ndb.Response()
+        response['items'] = cls.query().fetch()
+        return response
 
     
     @classmethod
@@ -652,7 +679,7 @@ class UOM(ndb.BaseModel, ndb.Workflow):
              
             current = ndb.get_current_user()
      
-            response.process_input(values, cls, only=('name',), convert=[('measurement', Measurement, not create)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('measurement', kind=Measurement, required=create)])
             
             if response.has_error():
                return response
@@ -781,129 +808,7 @@ class Measurement(ndb.BaseModel, ndb.Workflow):
             response.transaction_error(e)
             
         return response
-
-
-
-# done!
-class Currency(ndb.BaseModel, ndb.Workflow):
-    
-    KIND_ID = 20
-    
-    # root
-    # http://hg.tryton.org/modules/currency/file/tip/currency.py#l14
-    # http://en.wikipedia.org/wiki/ISO_4217
-    # http://hg.tryton.org/modules/currency/file/tip/currency.xml#l107
-    # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_currency.py#L32
-    # composite index: ancestor:no - active,name
-    name = ndb.SuperStringProperty('1', required=True)
-    symbol = ndb.SuperStringProperty('2', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    code = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    numeric_code = ndb.SuperStringProperty('4', indexed=False)
-    rounding = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-    digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
-    active = ndb.SuperBooleanProperty('7', default=True)
-    #formating
-    grouping = ndb.SuperStringProperty('8', required=True, indexed=False)
-    decimal_separator = ndb.SuperStringProperty('9', required=True, indexed=False)
-    thousands_separator = ndb.SuperStringProperty('10', indexed=False)
-    positive_sign_position = ndb.SuperIntegerProperty('11', required=True, indexed=False)
-    negative_sign_position = ndb.SuperIntegerProperty('12', required=True, indexed=False)
-    positive_sign = ndb.SuperStringProperty('13', indexed=False)
-    negative_sign = ndb.SuperStringProperty('14', indexed=False)
-    positive_currency_symbol_precedes = ndb.SuperBooleanProperty('15', default=True, indexed=False)
-    negative_currency_symbol_precedes = ndb.SuperBooleanProperty('16', default=True, indexed=False)
-    positive_separate_by_space = ndb.SuperBooleanProperty('17', default=True, indexed=False)
-    negative_separate_by_space = ndb.SuperBooleanProperty('18', default=True, indexed=False)
-    
  
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
-    @property
-    def is_usable(self):
-        return self.active
-    
-    @classmethod
-    def delete(cls, values):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
-               
-               entity = cls.prepare(False, values, get_only=True)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response
-
-    @classmethod
-    def manage(cls, create, values, **kwds):
-        
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response
- 
-     
 
 # @todo
 class Message(ndb.BaseModel, ndb.Workflow):
@@ -1064,6 +969,16 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
         
         @ndb.transactional(xg=True) 
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -1076,10 +991,10 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
                current = ndb.get_current_user()
                if current.has_permission(action, entity):
                       state = values.get('state')
-                      entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -1098,14 +1013,24 @@ class FeedbackRequest(ndb.BaseModel, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
                current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -1224,6 +1149,16 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
         
         @ndb.transactional(xg=True) 
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -1236,10 +1171,10 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
                current = ndb.get_current_user()
                if current.has_permission(action, entity):
                       state = values.get('state')
-                      entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -1258,6 +1193,16 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -1267,9 +1212,9 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
                   return response.not_authorized()
               
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -1289,6 +1234,16 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
          
         @ndb.transactional(xg=True)
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -1301,10 +1256,10 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
                   return response.not_authorized()
                
                if current.has_permission('close', entity) or current.key == entity.key.parent():
-                      entity.new_action('close', state='closed', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('close', state='closed', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:

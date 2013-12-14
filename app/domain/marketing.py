@@ -6,7 +6,7 @@ Created on Oct 20, 2013
 '''
 import datetime
 
-from app import ndb, settings
+from app import ndb, settings, util
 from app.core.misc import Image
 from app.domain.acl import Domain, NamespaceDomain
 from app.domain.business import Company
@@ -28,6 +28,72 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
        'update' : 2,
        'delete' : 3,
     }
+    
+    @classmethod
+    def list(cls, values, **kwds):
+        response = ndb.Response()
+        response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=True)])
+        if not response.has_error():
+           response['items'] = cls.query(ancestor=values.get('catalog')).order(cls.sequence).fetch()
+           if values.get('delete'):
+              for item in response['items']:
+                  cls.delete({'key' : item.key.urlsafe()})
+           
+        return response
+    
+    @classmethod
+    def multiple_upload(cls, values, **kwds):
+        
+        response = ndb.Response()
+        do_not_delete = []
+        
+        @ndb.transactional(xg=True)
+        def transaction():
+            
+            current = ndb.get_current_user()
+            
+            if values.get('upload_url'):
+               response['upload_url'] = blobstore.create_upload_url(values.get('upload_url'), gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+               return response
+             
+            images = values.get('images')
+            
+            response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=True)])
+            
+            if not images:
+               response.required('images')
+              
+            if response.has_error():
+               return response
+            
+            i = 0
+            catalog = values.get('catalog')
+            response['items'] = []
+            for image in images:
+                try:
+                    image_data = ndb.BlobManager.field_storage_get_image_sizes(image)
+                    image_data['sequence'] = i
+                    image_data['parent'] = catalog
+                    ent = cls(**image_data)
+                    if current.has_permission('create', ent):
+                       ent.put()
+                       ent.new_action('create')
+                       ent.record_action()
+                       response['items'].append(ent)
+                   
+                    do_not_delete.append(image)
+                    i += 1
+                except Exception as e:
+                    util.logger(e, 'exception')
+                     
+        try:
+            transaction()
+            if len(do_not_delete):
+               ndb.BlobManager.field_storage_used_blob(do_not_delete)
+        except Exception as e:
+            response.transaction_error(e)
+        
+        return response
      
      
     @classmethod
@@ -54,7 +120,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
             if create:
                only.append('image')
             
-            response.process_input(values, cls, only=only, convert=[('catalog', Catalog, True)])
+            response.process_input(values, cls, only=only, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
       
             if response.has_error():
                return response
@@ -69,7 +135,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   response.error('domain', 'not_active') 
                
-               catalog = entity.parent().get()   
+               catalog = entity.key.parent().get()   
                if not catalog or not catalog.is_usable:
                   response.error('catalog', 'not_unpublished')
  
@@ -79,9 +145,13 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
                if current.has_permission('update', entity):
                    
                    if 'image' in values:
-                      blobstore.delete(entity.image)
-                      sizes = ndb.BlobManager.field_storage_get_image_sizes(the_image)
-                      entity.populate(**sizes)
+                      try: 
+                          sizes = ndb.BlobManager.field_storage_get_image_sizes(the_image) 
+                          blobstore.delete(entity.image)
+                          entity.populate(**sizes)
+                          do_not_delete.append(the_image)
+                      except Exception as e:
+                          util.logger(e, 'exception')
   
                    entity.put()
                    entity.new_action('update')
@@ -97,15 +167,18 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
  
                if not catalog:
                   response.required('catalog')
+                  
+               try:
+                   data = ndb.BlobManager.field_storage_get_image_sizes(the_image)
+                   data['parent'] = catalog
+                   do_not_delete.append(the_image)
+               except Exception as e:
+                   util.logger(e, 'exception')
+                   response.invalid('image')
              
                if response.has_error():
                   return response
-           
-               data = ndb.BlobManager.field_storage_get_image_sizes(the_image)
-               data['parent'] = catalog
-               
-               do_not_delete.append(the_image)
-              
+             
                entity = cls(**data)
   
                if not entity.domain_is_active:
@@ -149,7 +222,7 @@ class CatalogImage(Image, ndb.Workflow, NamespaceDomain):
        
                   if current.has_permission('delete', entity):
                      
-                     catalog = entity.parent().get()
+                     catalog = entity.key.parent().get()
                      
                      if not catalog or not catalog.is_usable:
                         response.error('catalog', 'not_unpublished')
@@ -253,7 +326,7 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     @classmethod
     def list(cls, values, **kwds):
         response = ndb.Response()
-        response.process_input(values, cls, only=False, convert=[('domain', ndb.factory('app.domain.acl.Domain'))])
+        response.process_input(values, cls, only=False, convert=[ndb.SuperKeyProperty('domain', kind='app.domain.acl.Domain', required=True)])
         if response.has_error():
            return response
         response['items'] = cls.query(namespace=values.get('domain').urlsafe()).fetch()
@@ -270,8 +343,8 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
             
-            only = ('name',)
-            response.process_input(values, cls, only=only, convert=[('company', Company, True)])
+            only = ('name', 'company')
+            response.process_input(values, cls, only=only)
       
             if response.has_error():
                return response
@@ -335,6 +408,16 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
          
         @ndb.transactional(xg=True)  
         def transaction(): 
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                # check if user can do this
@@ -344,9 +427,9 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
                current = ndb.get_current_user()
                if current.has_permission('log_message', entity):
-                      entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -381,7 +464,17 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
-        def transaction(): 
+        def transaction():
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
@@ -398,10 +491,10 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                       if cover:
                          entity.cover = cover
                       
-                      entity.new_action('lock', state='locked', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('lock', state='locked', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -428,7 +521,18 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
-        def transaction(): 
+        def transaction():
+            
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
@@ -440,10 +544,10 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
           
                if current.has_permission('publish', entity) or current.has_permission('sudo', entity):
                       entity.publish_date = datetime.datetime.today()
-                      entity.new_action('publish', state='published', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('publish', state='published', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -471,7 +575,17 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
         response = ndb.Response()
          
         @ndb.transactional(xg=True)
-        def transaction(): 
+        def transaction():
+            
+            convert = [
+                ndb.SuperStringProperty('message', required=True),
+                ndb.SuperStringProperty('note', required=True)
+            ]
+            
+            response.process_input(values, cls, only=False, convert=convert)
+            if response.has_error():
+               return response
+            
             entity = cls.prepare(False, values, get_only=True)
             if entity and entity.loaded():
                 
@@ -482,10 +596,10 @@ class Catalog(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                current = ndb.get_current_user()
           
                if current.has_permission('discontinue', entity) or current.has_permission('sudo', entity):
-                      entity.new_action('discontinue', state='discontinued', message=values.get('message'), note=values.get('note'))
+                      action = entity.new_action('discontinue', state='discontinued', message=values.get('message'), note=values.get('note'))
                       entity.put()
                       entity.record_action()
-                      response.status(entity)
+                      response.status([entity, action])
                else:
                    return response.not_authorized()
             else:
@@ -531,7 +645,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             current = ndb.get_current_user()
             
-            response.process_input(values, cls, convert=[('catalog', Catalog, not create)])
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('catalog', kind=Catalog, required=create)])
       
             if response.has_error():
                return response
@@ -546,7 +660,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                if not entity.domain_is_active:
                   response.error('domain', 'not_active') 
                
-               catalog = entity.parent().get()
+               catalog = entity.key.parent().get()
                
                if not catalog or not catalog.is_usable:
                   response.error('catalog', 'not_unpublished')
@@ -612,7 +726,7 @@ class CatalogPricetag(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
        
                   if current.has_permission('delete', entity):
                       
-                     catalog = entity.parent().get()
+                     catalog = entity.key.parent().get()
                      
                      if not catalog or not catalog.is_usable:
                         response.error('catalog', 'not_unpublished')

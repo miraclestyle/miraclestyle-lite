@@ -32,6 +32,9 @@ USER_ANONYMOUS_KEYNAME = 'anonymous_user'
 ROOT_ADMINS = ('edis.sehalic@gmail.com', 'elvinkosova@gmail.com')
 
 COMPANY_LOGO_BUCKET = 'user_input/company_logo'
+CATALOG_IMAGE_BUCKET = 'user_input/catalog_image'
+PRODUCT_TEMPLATE_BUCKET = 'user_input/product_template_image'
+PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
  
 
 LOGIN_METHODS = {

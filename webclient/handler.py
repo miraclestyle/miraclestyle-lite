@@ -316,7 +316,7 @@ class Handler(webapp2.RequestHandler):
         ent = 'application/json;charset=utf-8'
         if self.response.headers.get('Content-Type') != ent:
            self.response.headers['Content-Type'] = ent
-        self.response.write(json.dumps(data, cls=JSONEncoderHTML))
+        self.response.write(json.dumps(data, indent=2, cls=JSONEncoderHTML))
      
     def is_post(self):
         """

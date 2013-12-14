@@ -1,6 +1,5 @@
 indexes:
-- kind: TestChild
+- kind: "36"
   ancestor: yes
   properties:
-  - name: childname
-    direction: asc
+  - name: "6"
