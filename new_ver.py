@@ -1,11 +1,47 @@
-class Bot:
+class Journal:
   
-  def __init__(self):
+  def __init__(self, name, code, active, states, transitions, expando_entry_fields, expando_line_fields, events):
     # uradi query na CompanyLogic
     # pokupi sve picle-ove i onda ih zaloopa
     # i u svakom item-u pokrene run() funkciju, prilikom cega prosledjuje parametre
     
 
+  def run(self, **kwargs):
+
+
+class Field:
+    
+    def __init__(self, name, writable, visible):
+      self.name = name
+      self.writable = writable
+      self.visible = visible
+
+    
+class Transition:
+  
+  def __init__(self, name, from_state, to_state, condition):
+    self.name = name # ??
+    self.from_state = from_state
+    self.to_state = to_state
+    self.condition = condition
+    
+  def run(self, journal, entry, state):
+    # prvo se radi matching state-ova
+    if (entry.state == self.from_state and state == self.to_state):
+      # onda se radi validacija uslova
+      if (validate_condition(self, journal, entry)):
+        entry.state = state
+        return entry
+      else:
+        return 'ABORT'
+    else:
+      # ovde se radi samo skip bez aborta 
+    
+  def validate_condition(self, journal, entry):
+    # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
+    # entry.line-a sa vrednostima u condition-u
+    
+    
 class Location:
   
   def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
@@ -19,38 +55,37 @@ class Location:
 class CartInit:
   
   def run(user_key, catalog_key):
+    # ucitaj postojeci entry na kojem ce se raditi write
     catalog = catalog_key.get()
     company = catalog.company.get()
     entry = Entry.query(Entry.journal == ndb.Key('Journal', 'order'), 
                         Entry.company == company, Entry.state.IN(['cart', 'checkout', 'processing']),
                         Entry.party == user_key
                         ).get()
-    # ako entry postoji onda ne pravimo novi entry
-    if (entry):
-      # proveravamo da li je entry u state-u 'cart'
-      if (entry.state != 'cart'):
-        # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
-        # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
-        return None
-      else:
-        return entry
-    # ako entry ne postoji, instancirati novi entry
-    else:
+    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
+    if not (entry):
       entry = Entry()
       entry.journal = ndb.Key('Journal', 'order')
       entry.company = company
       entry.state = 'cart'
       entry.date = datetime.datetime.today()
       entry.party = user_key
+    # proveravamo da li je entry u state-u 'cart'
+    if (entry.state != 'cart'):
+      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
+      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
+      return 'ABORT'
+    else:
       return entry
 
       
 class AddressRule:
   
-  def __init__(self, exclusion, address_type, locations):
+  def __init__(self, exclusion, address_type, locations, allowed_states=None):
     self.exclusion = exclusion
     self.address_type = address_type
     self.locations = locations
+    self.allowed_states = allowed_states
   
   def run(self, entry):
     buyer_addresses = []
@@ -92,7 +127,7 @@ class AddressRule:
                                     )
         return entry
       else:
-        return None
+        return 'ABORT'
     elif (self.address_type == 'shipping'):
       if (p['shipping_address_reference']):
         buyer_addresses.append(entry.shipping_address_reference.get())
@@ -127,7 +162,7 @@ class AddressRule:
                                      )
         return entry
       else:
-        return None
+        return 'ABORT'
   
   def validate_address(rule, address):
     allowed = False
@@ -165,6 +200,91 @@ class AddressRule:
     return allowed
 
 
+  
+class ProductToLine:
+    
+  def run(self, journal, entry, catalog_pricetag_key, product_template_key, product_instance_key, variant_signature, custom_variants):
+    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
+    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
+    line_exists = False
+    for line in entry.lines:
+      if ('catalog_pricetag_reference' in line._properties
+          and catalog_pricetag_key == line.catalog_pricetag_reference
+          and 'product_instance_reference' in line._properties
+          and product_instance_key == line.product_instance_reference):
+        line.quantity = line.quantity + 1 # decmail formating required
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.debit = 0.0 # decimal formating required
+        line.credit = new_line.discount_subtotal # decimal formating required
+        line_exists = True
+        break
+    if not (line_exists):
+      product_template = product_template_key.get()
+      product_instance = product_instance_key.get()
+      product_category = product_template.product_category.get()
+      product_category_complete_name = product_category.complete_name
+      product_uom = product_template.product_uom.get()
+      product_uom_category = product_uom.key.parent().get()
+      
+      new_line = Line()
+      new_line.sequence = entry.lines[-1].sequence + 1
+      new_line.categories.append('Sales Account') # ovde ide ndb.Key('Category', 'key')
+      new_line.description = product_template.name
+      if ('product_instance_count' in product_template._properties and product_template.product_instance_count > 1000):
+        new_line.description # += '\n' + variant_signature
+      else:
+        if (custom_variants):
+          new_line.description # += '\n' + variant_signature
+      new_line.uom = LineUOM(
+                             category=uom_category.name, 
+                             name=uom.name, 
+                             symbol=uom.symbol, 
+                             rounding=uom.rounding, 
+                             digits=uom.digits
+                             ) # currency uom!!
+      new_line.product_uom = LineUOM(
+                                     category=product_uom_category.name, 
+                                     name=product_uom.name, 
+                                     symbol=product_uom.symbol, 
+                                     rounding=product_uom.rounding, 
+                                     digits=product_uom.digits
+                                     )
+      new_line.product_category_complete_name = product_category_complete_name
+      new_line.product_category_reference = product_template.product_category
+      new_line.catalog_pricetag_reference = catalog_pricetag_key
+      new_line.product_instance_reference = product_instance_key
+      if ('unit_price' in product_instance._properties):
+        new_line.unit_price = product_instance.unit_price
+      else:
+        new_line.unit_price = product_template.unit_price
+      new_line.quantity = 1 # decimal formating required
+      new_line.discount = 0.0 # decimal formating required
+      new_line.subtotal = new_line.unit_price * new_line.quantity # decimal formating required
+      new_line.discount_subtotal = new_line.subtotal - (new_line.subtotal * new_line.discount) # decimal formating required
+      new_line.debit = 0.0 # decimal formating required
+      new_line.credit = new_line.discount_subtotal # decimal formating required
+      
+      
+      
+# done!
+class OrderLine(ndb.Expando):
+    
+    
+    description = ndb.TextProperty('1', required=True)# soft limit 64kb
+
+    
+    
+    
+    _default_indexed = False
+    pass
+    # Expando
+    # taxes = ndb.LocalStructuredProperty(OrderLineTax, '7', repeated=True)# soft limit 500x
+    
+    # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
+    
+    
+    
 class Tax:
   
   def __init__(self, name, formula, loacation_exclusion, locations=None, product_categories=None, carrieres=None, address_type=False):
