@@ -1,13 +1,21 @@
+################################################################################
+# /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
+# company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
+################################################################################
+
+
 class Journal(ndb.Model):
   
   # root (namespace Domain)
   # key.id() = code.code
   company = ndb.KeyProperty('1', kind=Company, required=True)
-  active = ndb.BooleanProperty('2', default=True)
-  subscriptions = ndb.StringProperty('3', repeated=True)
-  code = ndb.PickleProperty('4', required=True, compressed=False)
-  # sequencing, counter,....
+  sequence = ndb.IntegerProperty('2', required=True)
+  active = ndb.BooleanProperty('3', default=True)
+  subscriptions = ndb.StringProperty('4', repeated=True)
+  code = ndb.PickleProperty('5', required=True, compressed=False)
+  # sequencing counter....
 
+  
 class Bot(ndb.Model):
   
   # ancestor Journal (namespace Domain)
@@ -17,19 +25,77 @@ class Bot(ndb.Model):
   subscriptions = ndb.StringProperty('3', repeated=True)
   code = ndb.PickleProperty('4', required=True, compressed=False)
 
+  
+class Engine:
+  
+  @staticmethod
+  def run(company, event):
+    # event bi trebao da je dict ili neki drugi objekat sa argumentima
+    # verovatno da treba neki mehanizam da prepozna da li se radi recording ili reading
+    # sto se tice entry-ja, iz crud operacija se izbacuje delete,
+    # tako da ce imati samo read = ndb.Query() i create/update = write = ndb.put()
+    # dole je prikazan neki basic za write operacije.
+    entries = []
+    journals = Journal.query(
+                             Journal.active == True, 
+                             Journal.company == company, 
+                             Journal.subscriptions == event.id).order(Journal.sequence).fetch()
+    for journal in journals:
+      # ovde bi trebala da postoji logika koja iz return vrednosti uzima akcije koje se trebaju naknadno pozvati
+      # napr: ako je neki bot upisao callback koji se treba izvrsiti
+      # callback se treba inicirati nakon transackije i treba mu se proslediti group_key kao i entries kako bi 
+      # callback znao gde da commita nove entrije...
+      entries.append(journal.run(company, event))
+    
+    result = slef.transaction(entries)
+    # eventualni callback-ovi se pozivaju i prosledjuje im se result
+    return result
+    
+    
+  @ndb.transactional
+  def transaction(entries):
+    group = Group()
+    group_key = group.put()
+    for entry in entries:
+      #..... entry se procesira, eventualne pripreme pre toga, ako vec nesto treba...
+      entry.parent = group_key
+      entry_key = entry.put()
+      for line in entry.lines:
+        line.parent = entry_key
+        line.put()
+        # object log....
+      # object log....
+ 
+  
 class Master:
   
-  def __init__(self, name, code, active, entry_fields, line_fields, workflow):
+  def __init__(self, name, code, workflow, entry_fields, line_fields, bot_groups, subscriptions):
+    self.name = name
+    self.code = code
+    self.workflow = workflow
     self.entry_fields = entry_fields
     self.line_fields = line_fields
+    self.bot_groups = bot_groups
+    self.subscriptions = subscriptions
     # entry_fields = {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
     # uradi query na CompanyLogic
     # pokupi sve picle-ove i onda ih zaloopa
     # i u svakom item-u pokrene run() funkciju, prilikom cega prosledjuje parametre
-
-  
-  
     
+  def run(company, event):
+    master_key = ndb.Key('Journal', self.code)
+    bots = Bot.query(ancestor= master_key, Bot.active == True, Bot.subscriptions == self.subscriptions).order(Bot.sequence).fetch()
+    for group in self.bot_groups:
+      for bot in bots:
+        if (group == bot.group):
+          bot.run(self, company, event, context)
+    self.workflow.run(company, event, context) # mozda pre kraja proslediti parametre na workflow
+    return context.entries # mozda tako nekako....
+    
+################################################################################
+# /domain/transaction.py - end
+################################################################################
+
 class Field:
     
     def __init__(self, writable, visible):
