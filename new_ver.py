@@ -1,18 +1,38 @@
-class Journal:
+class Journal(ndb.Model):
   
-  def __init__(self, name, code, active, states, transitions, expando_entry_fields, expando_line_fields, events):
+  # root (namespace Domain)
+  # key.id() = code.code
+  company = ndb.KeyProperty('1', kind=Company, required=True)
+  active = ndb.BooleanProperty('2', default=True)
+  subscriptions = ndb.StringProperty('3', repeated=True)
+  code = ndb.PickleProperty('4', required=True, compressed=False)
+  # sequencing, counter,....
+
+class Bot(ndb.Model):
+  
+  # ancestor Journal (namespace Domain)
+  # composite index: ancestor:yes - sequence
+  sequence = ndb.IntegerProperty('1', required=True)
+  active = ndb.BooleanProperty('2', default=True)
+  subscriptions = ndb.StringProperty('3', repeated=True)
+  code = ndb.PickleProperty('4', required=True, compressed=False)
+
+class Master:
+  
+  def __init__(self, name, code, active, entry_fields, line_fields, workflow):
+    self.entry_fields = entry_fields
+    self.line_fields = line_fields
+    # entry_fields = {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
     # uradi query na CompanyLogic
     # pokupi sve picle-ove i onda ih zaloopa
     # i u svakom item-u pokrene run() funkciju, prilikom cega prosledjuje parametre
+
+  
+  
     
-
-  def run(self, **kwargs):
-
-
 class Field:
     
-    def __init__(self, name, writable, visible):
-      self.name = name
+    def __init__(self, writable, visible):
       self.writable = writable
       self.visible = visible
 
@@ -213,10 +233,6 @@ class ProductToLine:
           and 'product_instance_reference' in line._properties
           and product_instance_key == line.product_instance_reference):
         line.quantity = line.quantity + 1 # decmail formating required
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = 0.0 # decimal formating required
-        line.credit = new_line.discount_subtotal # decimal formating required
         line_exists = True
         break
     if not (line_exists):
@@ -260,10 +276,19 @@ class ProductToLine:
         new_line.unit_price = product_template.unit_price
       new_line.quantity = 1 # decimal formating required
       new_line.discount = 0.0 # decimal formating required
-      new_line.subtotal = new_line.unit_price * new_line.quantity # decimal formating required
-      new_line.discount_subtotal = new_line.subtotal - (new_line.subtotal * new_line.discount) # decimal formating required
-      new_line.debit = 0.0 # decimal formating required
-      new_line.credit = new_line.discount_subtotal # decimal formating required
+      entry.lines.append(new_line)
+
+      
+class ProductSubtotalCalculate:
+  
+  def run(self, journal, entry):
+    for line in entry.lines:
+      if ('product_instance_reference' in line._properties):
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.debit = 0.0 # decimal formating required
+        line.credit = new_line.discount_subtotal # decimal formating required
+      
       
       
       
