@@ -36,11 +36,14 @@ class Engine:
     # tako da ce imati samo read = ndb.Query() i create/update = write = ndb.put()
     # dole je prikazan neki basic za write operacije.
     entries = []
+    # prvo se ucitavaju svi hard-coded journals
+    all_journals = defaults.Journals()
     journals = Journal.query(
                              Journal.active == True, 
                              Journal.company == company, 
                              Journal.subscriptions == event.id).order(Journal.sequence).fetch()
-    for journal in journals:
+    all_journals.extend(journals)
+    for journal in all_journals:
       # ovde bi trebala da postoji logika koja iz return vrednosti uzima akcije koje se trebaju naknadno pozvati
       # napr: ako je neki bot upisao callback koji se treba izvrsiti
       # callback se treba inicirati nakon transackije i treba mu se proslediti group_key kao i entries kako bi 
@@ -91,7 +94,51 @@ class Master:
           bot.run(self, company, event, context)
     self.workflow.run(company, event, context) # mozda pre kraja proslediti parametre na workflow
     return context.entries # mozda tako nekako....
-    
+  
+class Entry(ndb.Expando):
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc;
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc; ?
+  # ancestor:no - journal,company,state,party,created:desc; ?
+  # ancestor:no - journal,company,state,party,updated:desc; ?
+  name = ndb.StringProperty('1', required=True)
+  journal = ndb.KeyProperty('2', kind=Journal, required=True)
+  company = ndb.KeyProperty('3', kind=Company, required=True)
+  state = ndb.IntegerProperty('4', required=True)
+  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+  # Expando
+  # 
+  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
+  # expando indexi se programski ukljucuju ili gase po potrebi
+  
+class Line(ndb.Expando):
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
+  sequence = ndb.IntegerProperty('1', required=True)
+  categories = ndb.KeyProperty('2', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = DecimalProperty('4', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
 ################################################################################
 # /domain/transaction.py - end
 ################################################################################
@@ -509,4 +556,4 @@ class Line(ndb.Expando):
   uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopitranjem polja iz Entry-ja u Line-ove
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
