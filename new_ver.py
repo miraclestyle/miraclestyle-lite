@@ -3,6 +3,101 @@
 # company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
 ################################################################################
 
+# upiti sa strane usera, ako je na grupi postavljen namespace, ce se resavati odvojenim recordima
+# koji ce cuvati kljuceve na recorde a biti vezani ancestor pathom na usera.
+
+# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
+# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
+# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
+
+# prvo definisati minimalne pasivne modele: category
+# definisati im osnovne funkcije i indexe
+# potom definisati transakcione modele: group, entry, line
+# definisati im osnovne funkcije i indexe
+# nakon toga definisati aktivne kompozitne indexe
+# pregledati order modele i prepraviti ih da rade sa transakcionim modelima
+
+# App Engine clock times are always expressed in coordinated universal time (UTC). 
+# This becomes relevant if you use the current date or time (datetime.datetime.now()) 
+# as a value or convert between datetime objects and POSIX timestamps or time tuples. 
+# However, no explicit time zone information is stored in the Datastore, 
+# so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
+# https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
+
+class Category(ndb.Expando):
+
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
+  # composite index: 
+  # ancestor:no - active,name;
+  # ancestor:no - active,code;
+  # ancestor:no - active,company,name; ?
+  # ancestor:no - active,company,code; ?
+  parent_record = ndb.KeyProperty('1', kind=Account, required=True)
+  name = ndb.StringProperty('2', required=True)
+  code = ndb.StringProperty('3', required=True)
+  active = ndb.BooleanProperty('4', default=True)
+  company = ndb.KeyProperty('5', kind=Company, required=True)
+  complete_name = ndb.TextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
+  # Expando
+
+class Group(ndb.Expando):
+  pass
+  
+  # root (namespace Domain)
+  # verovatno cemo ostaviti da bude expando za svaki slucaj!
+  
+class Entry(ndb.Expando):
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc;
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc; ?
+  # ancestor:no - journal,company,state,party,created:desc; ?
+  # ancestor:no - journal,company,state,party,updated:desc; ?
+  name = ndb.StringProperty('1', required=True)
+  journal = ndb.KeyProperty('2', kind=Journal, required=True)
+  company = ndb.KeyProperty('3', kind=Company, required=True)
+  state = ndb.IntegerProperty('4', required=True)
+  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
+  # Expando
+  # 
+  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
+  # expando indexi se programski ukljucuju ili gase po potrebi
+  
+class Line(ndb.Expando):
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
+  journal = ndb.KeyProperty('1', kind=Journal, required=True)
+  company = ndb.KeyProperty('2', kind=Company, required=True)
+  state = ndb.IntegerProperty('3', required=True)
+  date = ndb.DateTimeProperty('4', required=True)# updated on specific state or manually
+  sequence = ndb.IntegerProperty('5', required=True)
+  categories = ndb.KeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = DecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = DecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = ndb.LocalStructuredProperty(UOM, '9', required=True)
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+
 
 class Journal(ndb.Model):
   
@@ -69,76 +164,95 @@ class Engine:
         # object log....
       # object log....
  
+# instance ove klase su journal
+# moze se zvati Master, Matrix, Process
+class Master():
   
-class Master:
-  
-  def __init__(self, name, code, workflow, entry_fields, line_fields, bot_groups, subscriptions):
+  def __init__(self, name, code, workflow, entry_fields, line_fields, slave_groups, subscriptions):
     self.name = name
     self.code = code
     self.workflow = workflow
     self.entry_fields = entry_fields
     self.line_fields = line_fields
-    self.bot_groups = bot_groups
+    self.slave_groups = slave_groups
     self.subscriptions = subscriptions
-    # entry_fields = {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
-    # uradi query na CompanyLogic
-    # pokupi sve picle-ove i onda ih zaloopa
-    # i u svakom item-u pokrene run() funkciju, prilikom cega prosledjuje parametre
+    # name = string name for description purposes
+    # code = short string (example max_size = 32) that servers as Jounral.key.id and is used for key building ndb.Key(...)
+    # workflow = instance of Workflow class that contains instances of Transition class and list of states
+    # only one workflow is allowed per Journal
+    # entry_fields = dictionary of instances of Field class that are allowed on entry
+    # example {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
+    # line_fields = dictionary of instances of Field class that are allowed on line
+    # example {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
+    # slave_groups = list of strings that defines the order of execution of Slave instances
+    # subscriptions = list of strings that name applicable events/actions to which Master is subscribed
     
   def run(company, event):
+    # mora postojati konzistentna struktura parametara koje primaju run funkcije
     master_key = ndb.Key('Journal', self.code)
-    bots = Bot.query(ancestor= master_key, Bot.active == True, Bot.subscriptions == self.subscriptions).order(Bot.sequence).fetch()
-    for group in self.bot_groups:
-      for bot in bots:
-        if (group == bot.group):
-          bot.run(self, company, event, context)
+    slaves = Bot.query(ancestor= master_key, Bot.active == True, Bot.subscriptions == self.subscriptions).order(Bot.sequence).fetch()
+    for group in self.slave_groups:
+      for slave in slaves:
+        if (group == slave.group):
+          slave.run(self, company, event, context)
     self.workflow.run(company, event, context) # mozda pre kraja proslediti parametre na workflow
     return context.entries # mozda tako nekako....
+
+# instance ove klase su bots
+# moze se zvati Slave, Element, Component, Task, Plugin...
+class Slave():
   
-class Entry(ndb.Expando):
+  def __init__(self):
+    # ovo treba da bude base klasa za sve botove
+    # guidelines:
+    # ova klasa treba da implementira sistem postovanja pravila koja izviru iz mastera
+    # pre svega: svojstva entry i line polja u odnosu na workflow (states)
   
-  # ancestor Group (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
-  # composite index: 
-  # ancestor:no - journal,company,state,date:desc;
-  # ancestor:no - journal,company,state,created:desc;
-  # ancestor:no - journal,company,state,updated:desc;
-  # ancestor:no - journal,company,state,party,date:desc; ?
-  # ancestor:no - journal,company,state,party,created:desc; ?
-  # ancestor:no - journal,company,state,party,updated:desc; ?
-  name = ndb.StringProperty('1', required=True)
-  journal = ndb.KeyProperty('2', kind=Journal, required=True)
-  company = ndb.KeyProperty('3', kind=Company, required=True)
-  state = ndb.IntegerProperty('4', required=True)
-  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
-  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
-  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
-  # Expando
-  # 
-  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
-  # expando indexi se programski ukljucuju ili gase po potrebi
-  
-class Line(ndb.Expando):
-  
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
-  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
-  # composite index: 
-  # ancestor:yes - sequence;
-  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
-  sequence = ndb.IntegerProperty('1', required=True)
-  categories = ndb.KeyProperty('2', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
-  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = DecimalProperty('4', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
-  # Expando
-  # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+  def run(self, journal, context...):
+    
+    # mora postojati konzistentna struktura parametara koje primaju run funkcije
+
+
+# ovi modeli ne moraju da budu u transaction.py, ali bi mozda imalo smisla da su sva polja definisana gde su definisani 
+# Entry i Line...
+
+# done!
+class UOM(ndb.Expando):
+    
+    # LocalStructuredProperty model
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
+    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
+    measurement = ndb.StringProperty('1', required=True, indexed=False) # ili mozda category ili tome slicno
+    name = ndb.StringProperty('2', required=True, indexed=False)
+    symbol = ndb.StringProperty('3', required=True, indexed=False)
+    rounding = DecimalProperty('4', required=True, indexed=False)
+    digits = ndb.IntegerProperty('5', required=True, indexed=False) 
+    _default_indexed = False
+    pass
+    # Expando
+
+# done!
+class Address(ndb.Expando):
+    
+    # LocalStructuredProperty model
+    name = ndb.StringProperty('1', required=True, indexed=False)
+    country = ndb.StringProperty('2', required=True, indexed=False)
+    country_code = ndb.StringProperty('3', required=True, indexed=False)
+    region = ndb.StringProperty('4', required=True, indexed=False)
+    region_code = ndb.StringProperty('5', required=True, indexed=False)
+    city = ndb.StringProperty('6', required=True, indexed=False)
+    postal_code = ndb.StringProperty('7', required=True, indexed=False)
+    street_address = ndb.StringProperty('8', required=True, indexed=False)
+    _default_indexed = False
+    pass
+    # Expando
+    # street_address2 = ndb.StringProperty('9') # ovo polje verovatno ne treba, s obzirom da je u street_address dozvoljeno 500 karaktera 
+    # email = ndb.StringProperty('10')
+    # telephone = ndb.StringProperty('11')
+
+
+
 ################################################################################
 # /domain/transaction.py - end
 ################################################################################
@@ -173,8 +287,7 @@ class Transition:
   def validate_condition(self, journal, entry):
     # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
     # entry.line-a sa vrednostima u condition-u
-    
-    
+
 class Location:
   
   def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
@@ -182,8 +295,7 @@ class Location:
     self.region = region
     self.postal_code_from = postal_code_from
     self.postal_code_to = postal_code_to
-    self.city = city
-
+    self.city = city    
 
 class CartInit:
   
@@ -365,14 +477,14 @@ class ProductToLine:
       else:
         if (custom_variants):
           new_line.description # += '\n' + variant_signature
-      new_line.uom = LineUOM(
+      new_line.uom = UOM(
                              category=uom_category.name, 
                              name=uom.name, 
                              symbol=uom.symbol, 
                              rounding=uom.rounding, 
                              digits=uom.digits
                              ) # currency uom!!
-      new_line.product_uom = LineUOM(
+      new_line.product_uom = UOM(
                                      category=product_uom_category.name, 
                                      name=product_uom.name, 
                                      symbol=product_uom.symbol, 
@@ -402,25 +514,6 @@ class ProductSubtotalCalculate:
         line.debit = 0.0 # decimal formating required
         line.credit = new_line.discount_subtotal # decimal formating required
       
-      
-      
-      
-# done!
-class OrderLine(ndb.Expando):
-    
-    
-    description = ndb.TextProperty('1', required=True)# soft limit 64kb
-
-    
-    
-    
-    _default_indexed = False
-    pass
-    # Expando
-    # taxes = ndb.LocalStructuredProperty(OrderLineTax, '7', repeated=True)# soft limit 500x
-    
-    # tax_references = ndb.KeyProperty('12', kind=StoreTax, repeated=True)# soft limit 500x
-    
     
     
 class Tax:
@@ -511,49 +604,3 @@ class Tax:
           if (self.product_categories.count(line.product_category)):
             allowed = True
     return allowed
-
-    
-class Entry(ndb.Expando):
-  
-  # ancestor Group (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
-  # composite index: 
-  # ancestor:no - journal,company,state,date:desc;
-  # ancestor:no - journal,company,state,created:desc;
-  # ancestor:no - journal,company,state,updated:desc;
-  # ancestor:no - journal,company,state,party,date:desc; ?
-  # ancestor:no - journal,company,state,party,created:desc; ?
-  # ancestor:no - journal,company,state,party,updated:desc; ?
-  name = ndb.StringProperty('1', required=True)
-  journal = ndb.KeyProperty('2', kind=Journal, required=True)
-  company = ndb.KeyProperty('3', kind=Company, required=True)
-  state = ndb.IntegerProperty('4', required=True)
-  date = ndb.DateTimeProperty('5', required=True)# updated on specific state or manually
-  created = ndb.DateTimeProperty('6', auto_now_add=True, required=True)
-  updated = ndb.DateTimeProperty('7', auto_now=True, required=True)
-  # Expando
-  # 
-  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
-  # expando indexi se programski ukljucuju ili gase po potrebi
-  
-class Line(ndb.Expando):
-  
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
-  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
-  # composite index: 
-  # ancestor:yes - sequence;
-  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
-  sequence = ndb.IntegerProperty('1', required=True)
-  categories = ndb.KeyProperty('2', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
-  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = DecimalProperty('4', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = # jedinica mere za debit/credit polja... verovatno cemo ovako implementirati
-  # Expando
-  # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
