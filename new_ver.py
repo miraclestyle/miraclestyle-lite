@@ -42,7 +42,25 @@ class Category(ndb.Expando):
   company = ndb.KeyProperty('5', kind=Company, required=True)
   complete_name = ndb.TextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
   # Expando
+  # description = ndb.TextProperty('7', required=True)# soft limit 16kb
+  # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
 
+# done!
+class CategoryBalance(ndb.Model):
+  # LocalStructuredProperty model
+  # ovaj model dozvoljava da se radi feedback trending per month per year
+  # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
+  # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
+  # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
+  # najbolje je raditi update jednom dnevno, ne treba vise od toga, tako da bi mozda cron ili task queue bilo resenje za agregaciju
+  from_date = ndb.DateTimeProperty('1', auto_now_add=True, required=True)
+  to_date = ndb.DateTimeProperty('2', auto_now_add=True, required=True)
+  debit = DecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = DecimalProperty('4', required=True, indexed=False)
+  balance = DecimalProperty('5', required=True, indexed=False)
+  uom = ndb.LocalStructuredProperty(UOM, '6', required=True)
+  
+  
 class Group(ndb.Expando):
   pass
   
@@ -84,7 +102,7 @@ class Line(ndb.Expando):
   # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
   # composite index: 
   # ancestor:yes - sequence;
-  # ancestor:no - categories ? upiti bi verovatno morali da obuhvataju i polja iz Entry-ja
+  # ancestor:no - journal, company, state, categories, uom, date
   journal = ndb.KeyProperty('1', kind=Journal, required=True)
   company = ndb.KeyProperty('2', kind=Company, required=True)
   state = ndb.IntegerProperty('3', required=True)
