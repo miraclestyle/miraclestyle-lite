@@ -318,8 +318,11 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             product_template = product_template_key.get()
            
             if current.has_permission('generate_product_instances', product_template):
-            
-                ndb.delete_multi(Instance.query(ancestor=product_template_key).fetch(keys_only=True))
+                
+                # cant go delete multi cuz we also need to delete images?
+                #ndb.delete_multi(Instance.query(ancestor=product_template_key).fetch(keys_only=True))
+                for p in Instance.query(ancestor=product_template_key).fetch():
+                    p.delete_product_instance()
                 
                 ndb.delete_multi(InventoryLog.query(ancestor=product_template_key).fetch(keys_only=True))
                 
@@ -362,6 +365,8 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     def delete(cls, values, **kwds):
  
         response = ndb.Response()
+        
+        delete_blobs = []
  
         @ndb.transactional(xg=True)
         def transaction():
@@ -374,9 +379,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                   
                   if not entity.domain_is_active:
                      return response.error('domain', 'not_active')
-                 
-                  print entity.key.urlsafe()
-                 
+             
                   if not entity.key.parent().get().is_usable:
                      return response.error('catalog', 'not_unpublished') 
                        
@@ -384,6 +387,9 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                      entity.new_action('delete', log_object=False)
                      entity.record_action()
                      entity.key.delete()
+                     for img in entity.images:
+                         delete_blobs.append(img.image)
+                     
                       
                      response.status(entity)
                   else:
@@ -393,6 +399,8 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
         try:
            transaction()
+           blobstore.delete(delete_blobs)
+               
         except Exception as e:
            response.transaction_error(e)
            
@@ -425,10 +433,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
             
             if entity is None:
                return response.not_found()
-           
-            print entity.key.namespace()
-           
-                      
+                 
             if 'contents' in values:
                 i = 0
                 for c in values.get('contents'):
@@ -541,6 +546,12 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'update' : 1,
        'create' : 2,
     }
+    
+    def delete_product_instance(self):
+        
+        self.key.delete()
+        blobstore.delete([img.image for img in self.images])
+            
  
     @classmethod
     def md5_variation_combination(cls, product_template_key, codes):
