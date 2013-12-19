@@ -22,18 +22,18 @@ from webclient.route import get_routes
 
 from google.appengine.ext import blobstore
  
-_WSGI_CONFIG = None
+__WSGI_CONFIG = None
  
 def wsgi_config(as_tuple=False):
     
     """ Config function. Prepares all variables and routes for webapp2 WSGI startup """
     
-    global _WSGI_CONFIG
-    
-    if _WSGI_CONFIG:
+    global __WSGI_CONFIG
+ 
+    if __WSGI_CONFIG:
        if not as_tuple:
-          return _WSGI_CONFIG
-       return tuple(_WSGI_CONFIG.items())
+          return __WSGI_CONFIG
+       return tuple(__WSGI_CONFIG.items())
   
     TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
       
@@ -65,7 +65,7 @@ def wsgi_config(as_tuple=False):
     }
      
     
-    _WSGI_CONFIG = dict(WSGI_CONFIG=WSGI_CONFIG,
+    __WSGI_CONFIG = dict(WSGI_CONFIG=WSGI_CONFIG,
                         ROUTES=ROUTES,
                         JINJA_GLOBALS=JINJA_GLOBALS,
                         JINJA_FILTERS=JINJA_FILTERS,
@@ -73,9 +73,9 @@ def wsgi_config(as_tuple=False):
                         TEMPLATE_LOADER=TEMPLATE_LOADER
                        )
     if not as_tuple:
-       return _WSGI_CONFIG
+       return __WSGI_CONFIG
     else:
-       return tuple(_WSGI_CONFIG.items())
+       return tuple(__WSGI_CONFIG.items())
    
 class RequestData():
     

@@ -32,6 +32,19 @@ from app import ndb
 # so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
 # https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
 
+__SYSTEM_JOURNALS = []
+
+def get_system_journals():
+    # gets registered system journals
+    global __SYSTEM_JOURNALS
+    return __SYSTEM_JOURNALS
+  
+def register_system_journals(*args):
+    # registers journals example: register_system_journals(Class1(), Class2(), Class3())
+    global __SYSTEM_JOURNALS
+    __SYSTEM_JOURNALS.extend(args)
+        
+
 class UOM(ndb.BaseModel):
  
     
@@ -43,7 +56,7 @@ class UOM(ndb.BaseModel):
     factor = ndb.SuperDecimalProperty('5', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
     rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
-     
+    
     EXPANDO_FIELDS = {
         'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
         'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
@@ -127,6 +140,10 @@ class Journal(ndb.BaseModel):
   code = ndb.SuperPickleProperty('5', required=True, compressed=False)
   # sequencing counter....
   
+  def run(self, *args, **kwargs):
+    for unpickled in self.code:
+        unpickled.run(*args, **kwargs)
+         
   
 class Entry(ndb.BaseExpando):
     
@@ -153,6 +170,7 @@ class Entry(ndb.BaseExpando):
   # 
   # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
   # expando indexi se programski ukljucuju ili gase po potrebi
+ 
 
   EXPANDO_FIELDS = {
      'party' : ndb.SuperKeyProperty('8'),
@@ -199,5 +217,119 @@ class Bot(ndb.BaseModel):
   active = ndb.SuperBooleanProperty('2', default=True)
   subscriptions = ndb.SuperStringProperty('3', repeated=True)
   code = ndb.SuperPickleProperty('4', required=True, compressed=False)
+  
 
+class Context:
+  
+  def __init__(self, name, operation, args):
+    
+      self.name = name #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
+      self.operation = operation
+      self.args = args
+      self.entries = []
+      self.callbacks = []
+      self.group = None
+      
+  def new_callback(self, callback, **kwargs):
+     self.callbacks.append((callback, kwargs)) # something like this?
+ 
+  def do_callbacks(self):
+      for c in self.callbacks:
+          callback, config = c
+          
+          if config.get('use_task_que'):
+             # import taskque
+             # tasque.add(...)
+             pass
+          else:
+            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
+            callback(self)
+          
+          # etc
+
+class Engine:
+  
+  @classmethod
+  def run(cls, context):
+      if not isinstance(context, Context):
+         raise ValueError('Expected instance of Context, got %r' % context)
+       
+      journals = get_system_journals()
+      
+      query_journals = Journal.query(
+                             Journal.active == True, 
+                             Journal.company == context.args.get('company'), 
+                             Journal.subscriptions == context.name).order(Journal.sequence).fetch()
+       
+      journals.extend(query_journals)
+      
+      for journal in journals:
+          journal.run(context)
+      
+      # `operation` param in Context class determines which callback of the `Engine` class will be called
+      call = getattr(cls, context.operation)
+      
+      result = call(context)
+      
+      """
+         after the callback based on operation name is executed, the following callbacks will be executed
+         to use callbacks, simply append to context
+         context.callbacks.append(Class.method, functionName, OtherClass.method) etc.
+         and they will be executed in such order.
+         @todo
+         maybe we could change the way the callbacks are added by implementing
+         context.new_callback() function, which would accept specific options on when and how the callback will be executed.
+         @see Context.new_callback() for idea
+      """
+      
+      context.do_callbacks()
+      
+      return result
+    
+  @classmethod
+  @ndb.transactional(xg=True)
+  def transaction(cls, context):
+    group = context.group
+    if not group:
+       group = Group()
+       group.put()
+    
+    group_key = group.key # - put main key
+    for entry in context.entries:
+        entry.set_key(parent=group_key) # parent key for entry
+        entry_key = entry.put()
+        
+        """
+         notice the `_` before `lines` that is because 
+         if you set it without underscore it will be considered as new property in expando
+         so all operations should use the following paradigm:
+         entry._lines = []
+         entry._lines.append(Line(...))
+         etc..
+        """
+        for line in entry._lines:
+            line.journal = entry.journal
+            line.company = entry.company
+            line.state = entry.state
+            line.date = entry.date
+            line.set_key(parent=entry_key) # parent key for line
+            line.put()
+            
+            
+            
+    return context
+            
+            
+class ExampleJournal():
+  
+  def run(self, *args, **kwargs):
+    pass
+  
+class ExampleJournal2():
+  
+  def run(self, *args, **kwargs):
+    pass
+  
+register_system_journals(ExampleJournal(), ExampleJournal2())
+            
   

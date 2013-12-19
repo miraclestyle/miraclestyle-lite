@@ -268,6 +268,10 @@ class _BaseModel(Model):
       self.register_tmp('original_values', {})
       
       super(_BaseModel, self).__init__(*args, **kwds)
+      
+  def set_key(self, **kwargs):
+      self._key = Key(self._get_kind(), **kwargs)
+      return self._key
   
   def __todict__(self):
       """

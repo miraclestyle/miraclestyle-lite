@@ -6,7 +6,7 @@ Created on Jul 15, 2013
 '''
 from webapp2 import Route
 
-_ROUTES = []
+__ROUTES = []
 
 class InvalidRouteError(Exception):
       pass
@@ -49,13 +49,15 @@ class AngularRoute(Route):
         self.angular_template = angular_template
         
 def get_routes():
-    global _ROUTES
-    return _ROUTES        
+  
+    global __ROUTES
+    
+    return __ROUTES        
 
 def register(*args):
-    
-    global _ROUTES
-    
+  
+    global __ROUTES
+ 
     prefix = None
   
     for arg in args:
@@ -80,5 +82,5 @@ def register(*args):
         if not isinstance(arg, AngularRoute):
            raise InvalidRouteError
     
-        _ROUTES.append(arg)
-    return _ROUTES
+        __ROUTES.append(arg)
+    return __ROUTES
