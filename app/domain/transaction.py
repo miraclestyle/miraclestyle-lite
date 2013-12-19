@@ -32,16 +32,10 @@ from app import ndb
 # so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
 # https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
 
-class Unit(ndb.BaseModel, ndb.Workflow):
+class UOM(ndb.BaseModel):
+ 
     
-    KIND_ID = 19
-    
-    # ancestor ProductUOMCategory
-    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
-    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
-    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
-    # mozda da ovi entiteti budu non-deletable i non-editable ??
-    # composite index: ancestor:no - active,name
+    # Local structured
     measurement = ndb.SuperStringProperty('1', required=True)
     name = ndb.SuperStringProperty('2', required=True)
     symbol = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
@@ -79,7 +73,7 @@ class CategoryBalance(ndb.BaseModel):
   debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
   credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
   balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-  uom = ndb.SuperLocalStructuredProperty(Unit, '6', required=True)
+  uom = ndb.SuperLocalStructuredProperty(UOM, '6', required=True)
 
 
 class Category(ndb.BaseExpando):
@@ -186,7 +180,7 @@ class Line(ndb.BaseExpando):
   categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
   debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
   credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = ndb.SuperLocalStructuredProperty(Unit, '9', required=True)
+  uom = ndb.SuperLocalStructuredProperty(UOM, '9', required=True)
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
