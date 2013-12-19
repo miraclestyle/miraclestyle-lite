@@ -141,8 +141,7 @@ class Journal(ndb.BaseModel):
   # sequencing counter....
   
   def run(self, *args, **kwargs):
-    for unpickled in self.code:
-        unpickled.run(*args, **kwargs)
+      return self.code.run(*args, **kwargs)
          
   
 class Entry(ndb.BaseExpando):
