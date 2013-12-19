@@ -608,19 +608,19 @@ class Unit(ndb.BaseModel, ndb.Workflow):
     active = ndb.SuperBooleanProperty('7', default=True)
     
     EXPANDO_FIELDS = {
-        'code' : ndb.SuperStringProperty('3', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
-        'numeric_code' : ndb.SuperStringProperty('4', indexed=False),
-        'grouping' : ndb.SuperStringProperty('8', required=True, indexed=False),
-        'decimal_separator' : ndb.SuperStringProperty('9', required=True, indexed=False),
-        'thousands_separator' : ndb.SuperStringProperty('10', indexed=False),
-        'positive_sign_position' : ndb.SuperIntegerProperty('11', required=True, indexed=False),
-        'negative_sign_position' : ndb.SuperIntegerProperty('12', required=True, indexed=False),
-        'positive_sign' : ndb.SuperStringProperty('13', indexed=False),
-        'negative_sign' : ndb.SuperStringProperty('14', indexed=False),
-        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('15', default=True, indexed=False),
-        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('16', default=True, indexed=False),
-        'positive_separate_by_space' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
-        'negative_separate_by_space' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
+        'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
+        'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
+        'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
+        'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
+        'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
+        'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
+        'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
+        'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
+        'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
+        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
+        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
+        'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
+        'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
     }
     
     OBJECT_DEFAULT_STATE = 'none'

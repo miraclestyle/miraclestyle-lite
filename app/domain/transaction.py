@@ -5,7 +5,6 @@ Created on Dec 17, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.core.misc import Unit
 
 ################################################################################
 # /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
@@ -32,6 +31,40 @@ from app.core.misc import Unit
 # However, no explicit time zone information is stored in the Datastore, 
 # so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
 # https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
+
+class Unit(ndb.BaseModel, ndb.Workflow):
+    
+    KIND_ID = 19
+    
+    # ancestor ProductUOMCategory
+    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
+    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
+    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
+    # mozda da ovi entiteti budu non-deletable i non-editable ??
+    # composite index: ancestor:no - active,name
+    measurement = ndb.SuperStringProperty('1', required=True)
+    name = ndb.SuperStringProperty('2', required=True)
+    symbol = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    rate = ndb.SuperDecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
+    factor = ndb.SuperDecimalProperty('5', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
+    rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
+    digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
+     
+    EXPANDO_FIELDS = {
+        'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
+        'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
+        'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
+        'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
+        'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
+        'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
+        'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
+        'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
+        'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
+        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
+        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
+        'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
+        'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
+    }
 
 # done!
 class CategoryBalance(ndb.BaseModel):
