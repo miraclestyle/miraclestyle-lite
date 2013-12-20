@@ -4,6 +4,8 @@ Created on Dec 17, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import collections
+
 from app import ndb
 
 ################################################################################
@@ -141,7 +143,9 @@ class Journal(ndb.BaseModel):
   # sequencing counter....
   
   def run(self, *args, **kwargs):
-      return self.code.run(*args, **kwargs)
+      journal = self.code
+      
+      return journal.run(*args, **kwargs)
          
   
 class Entry(ndb.BaseExpando):
@@ -220,12 +224,12 @@ class Bot(ndb.BaseModel):
 
 class Context:
   
-  def __init__(self, name, operation, args):
+  def __init__(self, action, operation, args):
     
-      self.name = name #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
+      self.action = action #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
       self.operation = operation
       self.args = args
-      self.entries = []
+      self.entries = collections.OrderedDict()
       self.callbacks = []
       self.group = None
       
@@ -250,40 +254,41 @@ class Engine:
   
   @classmethod
   def run(cls, context):
-      if not isinstance(context, Context):
-         raise ValueError('Expected instance of Context, got %r' % context)
-       
-      journals = get_system_journals()
-      
-      query_journals = Journal.query(
-                             Journal.active == True, 
-                             Journal.company == context.args.get('company'), 
-                             Journal.subscriptions == context.name).order(Journal.sequence).fetch()
-       
-      journals.extend(query_journals)
-      
-      for journal in journals:
-          journal.run(context)
-      
-      # `operation` param in Context class determines which callback of the `Engine` class will be called
-      call = getattr(cls, context.operation)
-      
-      result = call(context)
-      
-      """
-         after the callback based on operation name is executed, the following callbacks will be executed
-         to use callbacks, simply append to context
-         context.callbacks.append(Class.method, functionName, OtherClass.method) etc.
-         and they will be executed in such order.
-         @todo
-         maybe we could change the way the callbacks are added by implementing
-         context.new_callback() function, which would accept specific options on when and how the callback will be executed.
-         @see Context.new_callback() for idea
-      """
-      
-      context.do_callbacks()
-      
-      return result
+    
+      if isinstance(context, Context):
+        
+        journals = get_system_journals()
+        
+        query_journals = Journal.query(
+                               Journal.active == True, 
+                               Journal.company == context.args.get('company'), 
+                               Journal.subscriptions == context.action).order(Journal.sequence).fetch()
+         
+        journals.extend(query_journals)
+        
+        for journal in journals:
+            if isinstance(journal, Master):
+                journal.run(context)
+        
+        # `operation` param in Context class determines which callback of the `Engine` class will be called
+        call = getattr(cls, context.operation)
+        
+        result = call(context)
+        
+        """
+           after the callback based on operation name is executed, the following callbacks will be executed
+           to use callbacks, simply append to context
+           context.callbacks.append(Class.method, functionName, OtherClass.method) etc.
+           and they will be executed in such order.
+           @todo
+           maybe we could change the way the callbacks are added by implementing
+           context.new_callback() function, which would accept specific options on when and how the callback will be executed.
+           @see Context.new_callback() for idea
+        """
+        
+        context.do_callbacks()
+        
+        return result
     
   @classmethod
   @ndb.transactional(xg=True)
@@ -294,7 +299,7 @@ class Engine:
        group.put()
     
     group_key = group.key # - put main key
-    for entry in context.entries:
+    for journal_code, entry in context.entries.items():
         entry.set_key(parent=group_key) # parent key for entry
         entry_key = entry.put()
         
@@ -313,10 +318,11 @@ class Engine:
             line.date = entry.date
             line.set_key(parent=entry_key) # parent key for line
             line.put()
-            
-            
-            
+             
     return context
+  
+class Master:
+  pass
             
             
 class ExampleJournal():

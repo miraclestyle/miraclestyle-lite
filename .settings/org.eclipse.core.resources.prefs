@@ -4,6 +4,7 @@ encoding//app/core/buyer.py=utf-8
 encoding//app/core/log.py=utf-8
 encoding//app/core/misc.py=utf-8
 encoding//app/core/order.py=utf-8
+encoding//app/core/rule.py=utf-8
 encoding//app/core/tests.py=utf-8
 encoding//app/domain/acl.py=utf-8
 encoding//app/domain/business.py=utf-8
