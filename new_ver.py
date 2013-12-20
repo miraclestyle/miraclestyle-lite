@@ -21,9 +21,17 @@ class FieldPermission():
     
   def run(self, context):
     
-    if (self.kind == context.entity._get_kind()) and (self.field in context.entity._properties):
-      if (eval(condition)):
-        context.entity._field_permissions[self.field] = self
+    if (self.kind == context.entity._get_kind()) and (self.field in context.entity._properties) and (eval(condition)):
+      if (context.overide):
+        if (self.writable != None):
+          context.entity._field_permissions[self.field] = {'writable': self.writable}
+        if (self.visible != None):
+          context.entity._field_permissions[self.field] = {'visible': self.visible}
+      else:
+        if (context.entity._field_permissions[self.field]['writable'] == None) and (self.writable != None):
+          context.entity._field_permissions[self.field] = {'writable': self.writable}
+        if (context.entity._field_permissions[self.field]['visible'] == None) and (self.visible != None):
+          context.entity._field_permissions[self.field] = {'visible': self.visible}
         
 ################################################################################
 # /core/rule.py - end
