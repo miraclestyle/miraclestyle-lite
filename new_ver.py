@@ -2,11 +2,63 @@
 # /core/rule.py
 ################################################################################
 
+################################################################################
+# /domain/rule.py - ako ce se sve transakcije raditi iz perspektive
+# company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
+################################################################################
+
+# done!
+class Role(ndb.Model):
+    
+    # root (namespace Domain)
+    name = ndb.StringProperty('1', required=True)
+    active = ndb.BooleanProperty('2', default=True)
+    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
+    rule = ndb.PickleProperty('4', required=True, compressed=False)
+
+    
 class Engine:
   
   @staticmethod
   def run(cls, context):
+    
+    rules = []
+    
+    for role in context.user.roles:
+      if role.namespace() == namespace or role.kind() == Role._get_kind():
+        rules.append(role)
+        
+    rules.append(context.entity.rule)
+    
+    for rule in rules:
+      rule.run(context):
+    
+    final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
+ 
 
+class Rule():
+  
+  def __init__(self, permissions):
+    self.permissions = permissions
+ 
+
+class GlobalRule(Rule):
+  
+  def run(context):
+    context.overid = True
+    
+    for permission in self.permissions:
+      permission.run(context)
+
+
+class LocalRule(Rule):
+  
+  def run(context):
+    context.overid = False
+    
+    for permission in self.permissions:
+      permission.run(context)
+  
   
 class FieldPermission():
   
@@ -32,6 +84,14 @@ class FieldPermission():
           context.entity._field_permissions[self.field] = {'writable': self.writable}
         if (context.entity._field_permissions[self.field]['visible'] == None) and (self.visible != None):
           context.entity._field_permissions[self.field] = {'visible': self.visible}
+    
+
+    
+    
+      
+        
+    
+    
         
 ################################################################################
 # /core/rule.py - end
