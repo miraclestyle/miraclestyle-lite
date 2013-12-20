@@ -7,9 +7,9 @@ Created on Dec 20, 2013
 
 class Context:
   
-  def __init__(self, action, entity, args):
+  def __init__(self, action, entity):
     
-      self.action = action #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
+      self.action = action
       self.entity = entity
 
 class Engine:

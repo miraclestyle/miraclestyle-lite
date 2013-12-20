@@ -142,11 +142,6 @@ class Journal(ndb.BaseModel):
   code = ndb.SuperPickleProperty('5', required=True, compressed=False)
   # sequencing counter....
   
-  def run(self, *args, **kwargs):
-      journal = self.code
-      
-      return journal.run(*args, **kwargs)
-         
   
 class Entry(ndb.BaseExpando):
     
@@ -264,7 +259,7 @@ class Engine:
                                Journal.company == context.args.get('company'), 
                                Journal.subscriptions == context.action).order(Journal.sequence).fetch()
          
-        journals.extend(query_journals)
+        journals.extend([journal.code for journal in query_journals])
         
         for journal in journals:
             if isinstance(journal, Master):
