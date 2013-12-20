@@ -153,17 +153,13 @@ class Journal(ndb.BaseModel):
   
   @classmethod
   def get_journals_by_context(cls, context):
-      
-      journals = get_system_journals(context.action)
-      
+       
       query_journals = Journal.query(
                                Journal.active == True, 
                                Journal.company == context.args.get('company'), 
                                Journal.subscriptions == context.action).order(Journal.sequence).fetch()
          
-      journals.extend([journal.code for journal in query_journals])
-      
-      return journals
+      return [journal.code for journal in query_journals]
   
   
 class Entry(ndb.BaseExpando):
@@ -275,7 +271,9 @@ class Engine:
     
       if isinstance(context, Context):
         
-        journals = Journal.get_journals_by_context(context)
+        journals = get_system_journals(context.action)
+        
+        journals.extend(Journal.get_journals_by_context(context))
         
         for journal in journals:
             if isinstance(journal, Master):
