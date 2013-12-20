@@ -1,5 +1,34 @@
+################################################################################
+# /core/rule.py
+################################################################################
 
- 
+class Engine:
+  
+  @staticmethod
+  def run(cls, context):
+
+  
+class FieldPermission():
+  
+  
+  def __init__(self, kind, field, writable=False, visible=False, condition=None):
+    
+    self.kind = kind
+    self.field = field
+    self.writable = writable
+    self.visible = visible
+    self.condition = condition
+    
+  def run(self, context):
+    
+    if (self.kind == context.entity._get_kind()) and (self.field in context.entity._properties):
+      if (eval(condition)):
+        context.entity._field_permissions[self.field] = self
+        
+################################################################################
+# /core/rule.py - end
+################################################################################
+
 # instance ove klase su journal
 # moze se zvati Master, Matrix, Process
 class Master():
