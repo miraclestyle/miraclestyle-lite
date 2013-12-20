@@ -29,15 +29,20 @@ class Engine:
     
     cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
  
- 
-class Permission():
-  pass
-
 
 class Rule():
   
   def __init__(self, permissions):
+    for perm in permissions:
+        if not isinstance(perm, Permission):
+           raise ValueError('Expected instance of Permission, got %r' % perm)
+   
     self.permissions = permissions
+    
+  def run(self, context):
+ 
+    for permission in self.permissions:
+        permission.run(self, context)
  
 
 class GlobalRule(Rule):
@@ -45,22 +50,15 @@ class GlobalRule(Rule):
   def __init__(self, *args, **kwargs):
       self.override = True
       super(Rule, self).__init__(*args, **kwargs)
-  
-  def run(self, context):
- 
-    for permission in self.permissions:
-        if isinstance(permission, Permission):
-           permission.run(self, context)
 
 
 class LocalRule(Rule):
-  
-  def run(self, context):
- 
-    for permission in self.permissions:
-      if isinstance(permission, Permission):
-         permission.run(self, context)
-  
+  pass
+
+    
+class Permission():
+  pass
+
   
 class FieldPermission(Permission):
   

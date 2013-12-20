@@ -36,13 +36,22 @@ from app import ndb
 
 __SYSTEM_JOURNALS = []
 
-def get_system_journals():
+def get_system_journals(action=None):
     # gets registered system journals
     global __SYSTEM_JOURNALS
-    return __SYSTEM_JOURNALS
+    
+    returns = []
+    
+    if action:
+      for journal in __SYSTEM_JOURNALS:
+          if action in journal[0]:
+             returns.append(journal[1])
+    else:
+      returns = [journal[1] for journal in __SYSTEM_JOURNALS]
+              
+    return returns
   
 def register_system_journals(*args):
-    # registers journals example: register_system_journals(Class1(), Class2(), Class3())
     global __SYSTEM_JOURNALS
     __SYSTEM_JOURNALS.extend(args)
         
@@ -141,6 +150,20 @@ class Journal(ndb.BaseModel):
   subscriptions = ndb.SuperStringProperty('4', repeated=True)
   code = ndb.SuperPickleProperty('5', required=True, compressed=False)
   # sequencing counter....
+  
+  @classmethod
+  def get_journals_by_context(cls, context):
+      
+      journals = get_system_journals(context.action)
+      
+      query_journals = Journal.query(
+                               Journal.active == True, 
+                               Journal.company == context.args.get('company'), 
+                               Journal.subscriptions == context.action).order(Journal.sequence).fetch()
+         
+      journals.extend([journal.code for journal in query_journals])
+      
+      return journals
   
   
 class Entry(ndb.BaseExpando):
@@ -252,14 +275,7 @@ class Engine:
     
       if isinstance(context, Context):
         
-        journals = get_system_journals()
-        
-        query_journals = Journal.query(
-                               Journal.active == True, 
-                               Journal.company == context.args.get('company'), 
-                               Journal.subscriptions == context.action).order(Journal.sequence).fetch()
-         
-        journals.extend([journal.code for journal in query_journals])
+        journals = Journal.get_journals_by_context(context)
         
         for journal in journals:
             if isinstance(journal, Master):
@@ -330,6 +346,6 @@ class ExampleJournal2():
   def run(self, *args, **kwargs):
     pass
   
-register_system_journals(ExampleJournal(), ExampleJournal2())
+register_system_journals((('delete', 'update'), ExampleJournal()), (('other', 'action'), ExampleJournal2()))
             
   
