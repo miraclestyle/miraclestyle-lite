@@ -1,539 +1,372 @@
-################################################################################
-# /core/rule.py
-################################################################################
+# -*- coding: utf-8 -*-
+'''
+Created on Dec 17, 2013
+
+@author:  Edis Sehalic (edis.sehalic@gmail.com)
+'''
+import collections
+
+from app import ndb
 
 ################################################################################
-# /domain/rule.py - ako ce se sve transakcije raditi iz perspektive
+# /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
 # company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
 ################################################################################
 
-# done!
-class Role(ndb.Model):
-    
-    # root (namespace Domain)
-    name = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)
-    readonly = ndb.BooleanProperty('3', default=True, indexed=False)
-    rule = ndb.PickleProperty('4', required=True, compressed=False)
+# upiti sa strane usera, ako je na grupi postavljen namespace, ce se resavati odvojenim recordima
+# koji ce cuvati kljuceve na recorde a biti vezani ancestor pathom na usera.
 
+# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
+# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
+# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
+
+# prvo definisati minimalne pasivne modele: category
+# definisati im osnovne funkcije i indexe
+# potom definisati transakcione modele: group, entry, line
+# definisati im osnovne funkcije i indexe
+# nakon toga definisati aktivne kompozitne indexe
+# pregledati order modele i prepraviti ih da rade sa transakcionim modelima
+
+# App Engine clock times are always expressed in coordinated universal time (UTC). 
+# This becomes relevant if you use the current date or time (datetime.datetime.now()) 
+# as a value or convert between datetime objects and POSIX timestamps or time tuples. 
+# However, no explicit time zone information is stored in the Datastore, 
+# so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
+# https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
+
+__SYSTEM_JOURNALS = []
+
+def get_system_journals(action=None):
+    # gets registered system journals
+    global __SYSTEM_JOURNALS
     
+    returns = []
+    
+    if action:
+      for journal in __SYSTEM_JOURNALS:
+          if action in journal[0]:
+             returns.append(journal[1])
+    else:
+      returns = [journal[1] for journal in __SYSTEM_JOURNALS]
+              
+    return returns
+  
+def register_system_journals(*args):
+    global __SYSTEM_JOURNALS
+    __SYSTEM_JOURNALS.extend(args)
+        
+
+class UOM(ndb.BaseExpando):
+ 
+    
+    # Local structured
+    measurement = ndb.SuperStringProperty('1', required=True)
+    name = ndb.SuperStringProperty('2', required=True)
+    symbol = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
+    rate = ndb.SuperDecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
+    factor = ndb.SuperDecimalProperty('5', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
+    rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
+    digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
+    
+    EXPANDO_FIELDS = {
+        'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
+        'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
+        'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
+        'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
+        'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
+        'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
+        'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
+        'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
+        'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
+        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
+        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
+        'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
+        'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
+    }
+
+# done!
+class CategoryBalance(ndb.BaseModel):
+  # LocalStructuredProperty model
+  # ovaj model dozvoljava da se radi feedback trending per month per year
+  # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
+  # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
+  # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
+  # najbolje je raditi update jednom dnevno, ne treba vise od toga, tako da bi mozda cron ili task queue bilo resenje za agregaciju
+  from_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+  to_date = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True)
+  debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+  balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
+  uom = ndb.SuperLocalStructuredProperty(UOM, '6', required=True)
+
+
+class Category(ndb.BaseExpando):
+    
+  KIND_ID = 47
+
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
+  # composite index: 
+  # ancestor:no - active,name;
+  # ancestor:no - active,code;
+  # ancestor:no - active,company,name; ?
+  # ancestor:no - active,company,code; ?
+  parent_record = ndb.SuperKeyProperty('1', kind='47', required=True)
+  name = ndb.SuperStringProperty('2', required=True)
+  code = ndb.SuperStringProperty('3', required=True)
+  active = ndb.SuperBooleanProperty('4', default=True)
+  company = ndb.SuperKeyProperty('5', kind='app.domain.business.Company', required=True)
+  complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
+  # Expando
+  # description = ndb.TextProperty('7', required=True)# soft limit 16kb
+  # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
+  
+  EXPANDO_FIELDS = {
+     'description' : ndb.SuperTextProperty('7'),
+     'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
+  }
+ 
+  
+class Group(ndb.BaseExpando):
+  
+  KIND_ID = 48  
+    
+  pass
+  
+  # root (namespace Domain)
+  # verovatno cemo ostaviti da bude expando za svaki slucaj!
+  
+# BaseExpando ?
+class Journal(ndb.BaseModel):
+  
+  KIND_ID = 49
+  
+  # root (namespace Domain)
+  # key.id() = self.code
+  name = ndb.SuperStringProperty('4', required=True)
+  code = ndb.SuperStringProperty('4', repeated=True)
+  company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
+  sequence = ndb.SuperIntegerProperty('2', required=True)
+  active = ndb.SuperBooleanProperty('3', default=True)
+  subscriptions = ndb.SuperStringProperty('4', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
+  entry_fields = ndb.SuperPickleProperty('5', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('5', required=True, compressed=False)
+  plugin_groups = ndb.SuperStringProperty('4', repeated=True)
+  # sequencing counter....
+  
+  # verovatno bi ovo bila idealna konfiguracija umesto entry.EXPANDO_FIELDS
+  # entry_fields = {'party' : ndb.SuperKeyProperty('8'),}
+  # line_fields = {'product_instance_reference' : ndb.SuperKeyProperty('8'),}
+  
+  # na pre_hook-u, pre put() treba uraditi validaciju da li su entry_fields i line_fields values 
+  # instance ndb super propertija ako je moguce
+  
+  _global_role = rule.GlobalRole()
+  
+  def run():
+    rule_context = rule.Context(context.action, self)
+    rule.Engine.run(rule_context)
+    plugins = Plugin.query(ancestor=self.key, Plugin.active == True, Plugin.subscriptions == context.action).order(Plugin.sequence).fetch()
+    for group in self.plugin_groups:
+      for plugin in plugins:
+        if (group == plugin.group):
+          plugin.run(self, rule_context, context)
+  
+  @classmethod
+  def get_journals_by_context(cls, context):
+       
+      query_journals = Journal.query(
+                               Journal.active == True, 
+                               Journal.company == context.args.get('company'), 
+                               Journal.subscriptions == context.action).order(Journal.sequence).fetch()
+         
+      return [journal.code for journal in query_journals]
+  
+  
+class Entry(ndb.BaseExpando):
+    
+  KIND_ID = 50
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc;
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc; ?
+  # ancestor:no - journal,company,state,party,created:desc; ?
+  # ancestor:no - journal,company,state,party,updated:desc; ?
+  name = ndb.SuperStringProperty('1', required=True)
+  journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
+  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  state = ndb.SuperIntegerProperty('4', required=True)
+  date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True)
+  # Expando
+  # 
+  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
+  # expando indexi se programski ukljucuju ili gase po potrebi
+ 
+
+  EXPANDO_FIELDS = {
+     'party' : ndb.SuperKeyProperty('8'),
+  }
+  
+class Line(ndb.BaseExpando):
+  
+  KIND_ID = 51  
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - journal, company, state, categories, uom, date
+  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)
+  company = ndb.SuperKeyProperty('2', kind='app.domain.business.Company', required=True)
+  state = ndb.SuperIntegerProperty('3', required=True)
+  date = ndb.SuperDateTimeProperty('4', required=True)# updated on specific state or manually
+  sequence = ndb.SuperIntegerProperty('5', required=True)
+  categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = ndb.SuperLocalStructuredProperty(UOM, '9', required=True)
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+
+
+
+
+  
+class Plugin(ndb.BaseModel):
+  
+  KIND_ID = 52
+  
+  # ancestor Journal (namespace Domain)
+  # composite index: ancestor:yes - sequence
+  sequence = ndb.SuperIntegerProperty('1', required=True)
+  active = ndb.SuperBooleanProperty('2', default=True)
+  subscriptions = ndb.SuperStringProperty('3', repeated=True)
+  code = ndb.SuperPickleProperty('4', required=True, compressed=False)
+  
+
+class Context:
+  
+  def __init__(self, action, operation, args):
+    
+      self.action = action #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
+      self.operation = operation
+      self.args = args
+      self.entries = collections.OrderedDict()
+      self.callbacks = []
+      self.group = None
+      
+  def new_callback(self, callback, **kwargs):
+     self.callbacks.append((callback, kwargs)) # something like this?
+ 
+  def do_callbacks(self):
+      for c in self.callbacks:
+          callback, config = c
+          
+          if config.get('use_task_que'):
+             # import taskque
+             # tasque.add(...)
+             pass
+          else:
+            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
+            callback(self)
+          
+          # etc
+
 class Engine:
   
-  @staticmethod
+  @classmethod
   def run(cls, context):
     
-    rules = []
-    
-    for role in context.user.roles:
-      if role.namespace() == namespace or role.kind() == Role._get_kind():
-        rules.append(role)
+      if isinstance(context, Context):
         
-    rules.append(context.entity.rule)
-    
-    for rule in rules:
-      rule.run(context):
-    
-    final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
- 
-
-class Rule():
-  
-  def __init__(self, permissions):
-    self.permissions = permissions
- 
-
-class GlobalRule(Rule):
-  
-  def run(context):
-    context.overid = True
-    
-    for permission in self.permissions:
-      permission.run(context)
-
-
-class LocalRule(Rule):
-  
-  def run(context):
-    context.overid = False
-    
-    for permission in self.permissions:
-      permission.run(context)
-  
-  
-class FieldPermission():
-  
-  
-  def __init__(self, kind, field, writable=False, visible=False, condition=None):
-    
-    self.kind = kind
-    self.field = field
-    self.writable = writable
-    self.visible = visible
-    self.condition = condition
-    
-  def run(self, context):
-    
-    if (self.kind == context.entity._get_kind()) and (self.field in context.entity._properties) and (eval(condition)):
-      if (context.overide):
-        if (self.writable != None):
-          context.entity._field_permissions[self.field] = {'writable': self.writable}
-        if (self.visible != None):
-          context.entity._field_permissions[self.field] = {'visible': self.visible}
-      else:
-        if (context.entity._field_permissions[self.field]['writable'] == None) and (self.writable != None):
-          context.entity._field_permissions[self.field] = {'writable': self.writable}
-        if (context.entity._field_permissions[self.field]['visible'] == None) and (self.visible != None):
-          context.entity._field_permissions[self.field] = {'visible': self.visible}
-    
-
-    
-    
-      
+        journals = get_system_journals(context.action)
         
-    
-    
+        journals.extend(Journal.get_journals_by_context(context))
         
-################################################################################
-# /core/rule.py - end
-################################################################################
-
-# instance ove klase su journal
-# moze se zvati Master, Matrix, Process
-class Master():
-  
-  def __init__(self, name, code, rule, entry_fields, line_fields, slave_groups):
-    self.name = name
-    self.code = code
-    self.rule = rule
-    self.entry_fields = entry_fields
-    self.line_fields = line_fields
-    self.slave_groups = slave_groups
-    self.subscriptions = subscriptions
-    # name = string name for description purposes
-    # code = short string (example max_size = 32) that servers as Jounral.key.id and is used for key building ndb.Key(...)
-    # workflow = instance of Workflow class that contains instances of Transition class and list of states
-    # only one workflow is allowed per Journal
-    # entry_fields = dictionary of instances of Field class that are allowed on entry
-    # example {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
-    # line_fields = dictionary of instances of Field class that are allowed on line
-    # example {'field_name': Field(writable=Eval(entry.state == 'cart'), visible=True), 'another_field':}
-    # slave_groups = list of strings that defines the order of execution of Slave instances
-    # subscriptions = list of strings that name applicable events/actions to which Master is subscribed
+        for journal in journals:
+            if isinstance(journal, Master):
+                journal.run(context)
+        
+        # `operation` param in Context class determines which callback of the `Engine` class will be called
+        call = getattr(cls, context.operation)
+        
+        result = call(context)
+        
+        """
+           after the callback based on operation name is executed, the following callbacks will be executed
+           to use callbacks, simply append to context
+           context.callbacks.append(Class.method, functionName, OtherClass.method) etc.
+           and they will be executed in such order.
+           @todo
+           maybe we could change the way the callbacks are added by implementing
+           context.new_callback() function, which would accept specific options on when and how the callback will be executed.
+           @see Context.new_callback() for idea
+        """
+        
+        context.do_callbacks()
+        
+        return result
     
-  def run(company, event):
-    # mora postojati konzistentna struktura parametara koje primaju run funkcije
-    master_key = ndb.Key('Journal', self.code)
-    slaves = Bot.query(ancestor= master_key, Bot.active == True, Bot.subscriptions == self.subscriptions).order(Bot.sequence).fetch()
-    for group in self.slave_groups:
-      for slave in slaves:
-        if (group == slave.group):
-          slave.run(self, company, event, context)
-    self.workflow.run(company, event, context) # mozda pre kraja proslediti parametre na workflow
-    return context.entries # mozda tako nekako....
-
-# instance ove klase su bots
-# moze se zvati Slave, Element, Component, Task, Plugin...
-class Slave():
-  
-  def __init__(self):
-    # ovo treba da bude base klasa za sve botove
-    # guidelines:
-    # ova klasa treba da implementira sistem postovanja pravila koja izviru iz mastera
-    # pre svega: svojstva entry i line polja u odnosu na workflow (states)
-  
-  def run(self, journal, context...):
+  @classmethod
+  @ndb.transactional(xg=True)
+  def transaction(cls, context):
+    group = context.group
+    if not group:
+       group = Group()
+       group.put()
     
-    # mora postojati konzistentna struktura parametara koje primaju run funkcije
-
-
-# ovi modeli ne moraju da budu u transaction.py, ali bi mozda imalo smisla da su sva polja definisana gde su definisani 
-# Entry i Line...
-
-# done!
-class UOM(ndb.Expando):
-    
-    # LocalStructuredProperty model
-    # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
-    # http://hg.tryton.org/modules/product/file/tip/uom.xml#l63 - http://hg.tryton.org/modules/product/file/tip/uom.xml#l312
-    # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/product/product.py#L89
-    measurement = ndb.StringProperty('1', required=True, indexed=False) # ili mozda category ili tome slicno
-    name = ndb.StringProperty('2', required=True, indexed=False)
-    symbol = ndb.StringProperty('3', required=True, indexed=False)
-    rounding = DecimalProperty('4', required=True, indexed=False)
-    digits = ndb.IntegerProperty('5', required=True, indexed=False) 
-    _default_indexed = False
+    group_key = group.key # - put main key
+    for journal_code, entry in context.entries.items():
+        entry.set_key(parent=group_key) # parent key for entry
+        entry_key = entry.put()
+        
+        """
+         notice the `_` before `lines` that is because 
+         if you set it without underscore it will be considered as new property in expando
+         so all operations should use the following paradigm:
+         entry._lines = []
+         entry._lines.append(Line(...))
+         etc..
+        """
+        for line in entry._lines:
+            line.journal = entry.journal
+            line.company = entry.company
+            line.state = entry.state
+            line.date = entry.date
+            line.set_key(parent=entry_key) # parent key for line
+            line.put()
+             
+    return context
+  
+class Master:
+  pass
+            
+            
+class ExampleJournal():
+  
+  def run(self, *args, **kwargs):
     pass
-    # Expando
-
-# done!
-class Address(ndb.Expando):
-    
-    # LocalStructuredProperty model
-    name = ndb.StringProperty('1', required=True, indexed=False)
-    country = ndb.StringProperty('2', required=True, indexed=False)
-    country_code = ndb.StringProperty('3', required=True, indexed=False)
-    region = ndb.StringProperty('4', required=True, indexed=False)
-    region_code = ndb.StringProperty('5', required=True, indexed=False)
-    city = ndb.StringProperty('6', required=True, indexed=False)
-    postal_code = ndb.StringProperty('7', required=True, indexed=False)
-    street_address = ndb.StringProperty('8', required=True, indexed=False)
-    _default_indexed = False
+  
+class ExampleJournal2():
+  
+  def run(self, *args, **kwargs):
     pass
-    # Expando
-    # street_address2 = ndb.StringProperty('9') # ovo polje verovatno ne treba, s obzirom da je u street_address dozvoljeno 500 karaktera 
-    # email = ndb.StringProperty('10')
-    # telephone = ndb.StringProperty('11')
-
-
-
-################################################################################
-# /domain/transaction.py - end
-################################################################################
-
-class Field:
-    
-    def __init__(self, writable, visible):
-      self.writable = writable
-      self.visible = visible
-
-    
-class Transition:
   
-  def __init__(self, name, from_state, to_state, condition):
-    self.name = name # ??
-    self.from_state = from_state
-    self.to_state = to_state
-    self.condition = condition
-    
-  def run(self, journal, entry, state):
-    # prvo se radi matching state-ova
-    if (entry.state == self.from_state and state == self.to_state):
-      # onda se radi validacija uslova
-      if (validate_condition(self, journal, entry)):
-        entry.state = state
-        return entry
-      else:
-        return 'ABORT'
-    else:
-      # ovde se radi samo skip bez aborta 
-    
-  def validate_condition(self, journal, entry):
-    # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
-    # entry.line-a sa vrednostima u condition-u
-
-class Location:
+register_system_journals((('delete', 'update'), ExampleJournal()), (('other', 'action'), ExampleJournal2()))
+            
   
-  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
-    self.country = country
-    self.region = region
-    self.postal_code_from = postal_code_from
-    self.postal_code_to = postal_code_to
-    self.city = city    
-
-class CartInit:
-  
-  def run(user_key, catalog_key):
-    # ucitaj postojeci entry na kojem ce se raditi write
-    catalog = catalog_key.get()
-    company = catalog.company.get()
-    entry = Entry.query(Entry.journal == ndb.Key('Journal', 'order'), 
-                        Entry.company == company, Entry.state.IN(['cart', 'checkout', 'processing']),
-                        Entry.party == user_key
-                        ).get()
-    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
-    if not (entry):
-      entry = Entry()
-      entry.journal = ndb.Key('Journal', 'order')
-      entry.company = company
-      entry.state = 'cart'
-      entry.date = datetime.datetime.today()
-      entry.party = user_key
-    # proveravamo da li je entry u state-u 'cart'
-    if (entry.state != 'cart'):
-      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
-      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
-      return 'ABORT'
-    else:
-      return entry
-
-      
-class AddressRule:
-  
-  def __init__(self, exclusion, address_type, locations, allowed_states=None):
-    self.exclusion = exclusion
-    self.address_type = address_type
-    self.locations = locations
-    self.allowed_states = allowed_states
-  
-  def run(self, entry):
-    buyer_addresses = []
-    valid_addresses = []
-    default_address = None
-    p = entry._properties
-    if (self.address_type == 'billing'):
-      if (p['billing_address_reference']):
-        buyer_addresses.append(entry.billing_address_reference.get())
-      else:
-        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
-      for buyer_address in buyer_addresses:
-        if (validate_address(self, buyer_address)):
-          valid_addresses.append(buyer_address)
-          if (buyer_address.default_billing):
-            default_address = buyer_address
-      
-      if not (default_address) and (valid_addresses):
-        default_address = valid_addresses[0]
-      if (default_address):
-        if (p['billing_address_reference']):
-          entry.billing_address_reference = default_address.key
-        if (p['billing_address']):
-          address = default_address
-          address_country = default_address.country.get()
-          address_region = default_address.region.get()
-          entry.billing_address = OrderAddress(
-                                    name=address.name, 
-                                    country=address_country.name, 
-                                    country_code=address_country.code, 
-                                    region=address_region.name, 
-                                    region_code=address_region.code, 
-                                    city=address.city, 
-                                    postal_code=address.postal_code, 
-                                    street_address=address.street_address, 
-                                    street_address2=address.street_address2, 
-                                    email=address.email, 
-                                    telephone=address.telephone
-                                    )
-        return entry
-      else:
-        return 'ABORT'
-    elif (self.address_type == 'shipping'):
-      if (p['shipping_address_reference']):
-        buyer_addresses.append(entry.shipping_address_reference.get())
-      else:
-        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
-      for buyer_address in buyer_addresses:
-        if (validate_address(self, buyer_address)):
-          valid_addresses.append(buyer_address)
-          if (buyer_address.default_shipping):
-            default_address = buyer_address
-      if not (default_address) and (valid_addresses):
-        default_address = valid_addresses[0]
-      if (default_address):
-        if (p['shipping_address_reference']):
-          entry.shipping_address_reference = default_address.key
-        if (p['shipping_address']):
-          address = default_address
-          address_country = default_address.country.get()
-          address_region = default_address.region.get()
-          entry.shipping_address = OrderAddress(
-                                     name=address.name, 
-                                     country=address_country.name, 
-                                     country_code=address_country.code, 
-                                     region=address_region.name, 
-                                     region_code=address_region.code, 
-                                     city=address.city, 
-                                     postal_code=address.postal_code, 
-                                     street_address=address.street_address, 
-                                     street_address2=address.street_address2, 
-                                     email=address.email, 
-                                     telephone=address.telephone
-                                     )
-        return entry
-      else:
-        return 'ABORT'
-  
-  def validate_address(rule, address):
-    allowed = False
-    # Shipping everywhere except at the following locations
-    if not (rule.exclusion):
-      allowed = True
-      for loc in rule.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      for loc in rule.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-            allowed = True
-            break
-    return allowed
-
-
-  
-class ProductToLine:
-    
-  def run(self, journal, entry, catalog_pricetag_key, product_template_key, product_instance_key, variant_signature, custom_variants):
-    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
-    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
-    line_exists = False
-    for line in entry.lines:
-      if ('catalog_pricetag_reference' in line._properties
-          and catalog_pricetag_key == line.catalog_pricetag_reference
-          and 'product_instance_reference' in line._properties
-          and product_instance_key == line.product_instance_reference):
-        line.quantity = line.quantity + 1 # decmail formating required
-        line_exists = True
-        break
-    if not (line_exists):
-      product_template = product_template_key.get()
-      product_instance = product_instance_key.get()
-      product_category = product_template.product_category.get()
-      product_category_complete_name = product_category.complete_name
-      product_uom = product_template.product_uom.get()
-      product_uom_category = product_uom.key.parent().get()
-      
-      new_line = Line()
-      new_line.sequence = entry.lines[-1].sequence + 1
-      new_line.categories.append('Sales Account') # ovde ide ndb.Key('Category', 'key')
-      new_line.description = product_template.name
-      if ('product_instance_count' in product_template._properties and product_template.product_instance_count > 1000):
-        new_line.description # += '\n' + variant_signature
-      else:
-        if (custom_variants):
-          new_line.description # += '\n' + variant_signature
-      new_line.uom = UOM(
-                             category=uom_category.name, 
-                             name=uom.name, 
-                             symbol=uom.symbol, 
-                             rounding=uom.rounding, 
-                             digits=uom.digits
-                             ) # currency uom!!
-      new_line.product_uom = UOM(
-                                     category=product_uom_category.name, 
-                                     name=product_uom.name, 
-                                     symbol=product_uom.symbol, 
-                                     rounding=product_uom.rounding, 
-                                     digits=product_uom.digits
-                                     )
-      new_line.product_category_complete_name = product_category_complete_name
-      new_line.product_category_reference = product_template.product_category
-      new_line.catalog_pricetag_reference = catalog_pricetag_key
-      new_line.product_instance_reference = product_instance_key
-      if ('unit_price' in product_instance._properties):
-        new_line.unit_price = product_instance.unit_price
-      else:
-        new_line.unit_price = product_template.unit_price
-      new_line.quantity = 1 # decimal formating required
-      new_line.discount = 0.0 # decimal formating required
-      entry.lines.append(new_line)
-
-      
-class ProductSubtotalCalculate:
-  
-  def run(self, journal, entry):
-    for line in entry.lines:
-      if ('product_instance_reference' in line._properties):
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = 0.0 # decimal formating required
-        line.credit = new_line.discount_subtotal # decimal formating required
-      
-    
-    
-class Tax:
-  
-  def __init__(self, name, formula, loacation_exclusion, locations=None, product_categories=None, carrieres=None, address_type=False):
-    self.key = # neki auto generated string
-    self.name = name
-    self.formula = formula
-    self.loacation_exclusion = loacation_exclusion
-    self.locations = locations
-    self.product_categories = product_categories
-    self.carreires = carreires
-    # if address_type=True tax calcualtion is based on billing address, if False, it is based on shipping address
-    self.address_type = address_type
-  
-  def run (self, entry):
-    allowed = validate_tax(self, entry)
-    for line in entry.lines:
-      if (self.carriers):
-        if (self.carriers.count(line.product_instance_reference)):
-          if (self.key in line.tax_references):
-            if not (allowed):
-              line.tax_references.remove(self.key)
-          else:
-            if (allowed):
-              line.tax_references.append(self.key)  
-      if (self.product_categories):
-        if (self.product_categories.count(line.product_category)):
-          if (self.key in line.tax_references):
-            if not (allowed):
-              line.tax_references.remove(self.key)
-          else:
-            if (allowed):
-              line.tax_references.append(self.key)
-  
-  def validate_tax(self, entry):
-    valid_taxes = []
-    allowed = False
-    if (self.address_type):
-      address = entry.billing_address_reference
-    else:
-      address = entry.shipping_address_reference
-    if (self.locations):
-      # Tax everywhere except at the following locations
-      if not (self.loacation_exclusion):
-        allowed = True
-        for loc in self.locations:
-          if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-            if (address.country == loc.country):
-              allowed = False
-              break
-          elif not (loc.postal_code_from and loc.postal_code_to):
-            if (address.country == loc.country and address.region == loc.region):
-              allowed = False
-              break
-          else:
-            if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-              allowed = False
-              break
-      # Tax only at the following locations
-      else:
-        for loc in self.locations:
-          if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-            if (address.country == loc.country):
-              allowed = True
-              break
-          elif not (loc.postal_code_from and loc.postal_code_to):
-            if (address.country == loc.country and address.region == loc.region):
-              allowed = True
-              break
-          else:
-            if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-              allowed = True
-              break
-    else:
-      # u slucaju da taxa nema konfigurisane location exclusions-e onda se odnosi na sve lokacije/onda je to globalna taxa
-      allowed = True
-    if (allowed):
-      # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
-      if (self.carriers):
-        allowed = False
-        if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
-          allowed = True
-      # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
-      elif (self.product_categories):
-        allowed = False
-        for line in entry.lines:
-          if (self.product_categories.count(line.product_category)):
-            allowed = True
-    return allowed
