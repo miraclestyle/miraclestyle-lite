@@ -1176,7 +1176,7 @@ class Response(dict):
                new_dict[new_key] = v
  
         return new_dict
-        
+
   
 class EvalEnvironment(dict):
     

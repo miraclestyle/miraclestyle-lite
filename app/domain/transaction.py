@@ -7,6 +7,35 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
+from app.core import rule
+ 
+class Context:
+  
+  def __init__(self, **kwargs):
+    
+      for k,v in kwargs.items():
+          setattr(k, v)
+
+      self.callbacks = []
+      self.group = None
+      
+  def new_callback(self, callback, **kwargs):
+     self.callbacks.append((callback, kwargs)) # something like this?
+ 
+  def do_callbacks(self):
+      for c in self.callbacks:
+          callback, config = c
+          
+          if config.get('use_task_que'):
+             # import taskque
+             # tasque.add(...)
+             pass
+          else:
+            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
+            callback(self)
+          
+          # etc
+ 
 
 ################################################################################
 # /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
@@ -132,9 +161,7 @@ class Category(ndb.BaseExpando):
 class Group(ndb.BaseExpando):
   
   KIND_ID = 48  
-    
-  pass
-  
+ 
   # root (namespace Domain)
   # verovatno cemo ostaviti da bude expando za svaki slucaj!
   
@@ -144,12 +171,28 @@ class Journal(ndb.BaseModel):
   
   # root (namespace Domain)
   # key.id() = code.code
-  company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
-  sequence = ndb.SuperIntegerProperty('2', required=True)
-  active = ndb.SuperBooleanProperty('3', default=True)
-  subscriptions = ndb.SuperStringProperty('4', repeated=True)
-  code = ndb.SuperPickleProperty('5', required=True, compressed=False)
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  code = ndb.SuperStringProperty('2', repeated=True)
+  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  sequence = ndb.SuperIntegerProperty('4', required=True)
+  active = ndb.SuperBooleanProperty('5', default=True)
+  subscriptions = ndb.SuperStringProperty('6', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
+  
+  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
+  plugin_groups = ndb.SuperStringProperty('9', repeated=True)
+   
   # sequencing counter....
+  
+  def run(self, context):
+    # proverava da li je context instanca Context klase
+    rule.Engine.run(context)
+    plugins = Plugin.query(ancestor=self.key, Plugin.active == True, Plugin.subscriptions == context.action).order(Plugin.sequence).fetch()
+    for group in self.plugin_groups:
+      for plugin in plugins:
+        if group == plugin.group:
+            plugin.code.run(self, context)
   
   @classmethod
   def get_journals_by_context(cls, context):
@@ -219,12 +262,9 @@ class Line(ndb.BaseExpando):
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
-
-
-
-
-  
-class Bot(ndb.BaseModel):
+ 
+ 
+class Plugin(ndb.BaseModel):
   
   KIND_ID = 52
   
@@ -233,67 +273,27 @@ class Bot(ndb.BaseModel):
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
   subscriptions = ndb.SuperStringProperty('3', repeated=True)
-  code = ndb.SuperPickleProperty('4', required=True, compressed=False)
-  
+  code = ndb.SuperPickleProperty('4', required=True, compressed=False) # ovde ce se cuvati instanca plugin.py (Neke base klase)
 
-class Context:
-  
-  def __init__(self, action, operation, args):
-    
-      self.action = action #-- not sure if this should be mapped with something to get `context.id` ? or use raw name
-      self.operation = operation
-      self.args = args
-      self.entries = collections.OrderedDict()
-      self.callbacks = []
-      self.group = None
-      
-  def new_callback(self, callback, **kwargs):
-     self.callbacks.append((callback, kwargs)) # something like this?
- 
-  def do_callbacks(self):
-      for c in self.callbacks:
-          callback, config = c
-          
-          if config.get('use_task_que'):
-             # import taskque
-             # tasque.add(...)
-             pass
-          else:
-            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
-            callback(self)
-          
-          # etc
 
 class Engine:
   
   @classmethod
   def run(cls, context):
     
-      if isinstance(context, Context):
+      if isinstance(context, ndb.Context):
         
         journals = get_system_journals(context.action)
-        
         journals.extend(Journal.get_journals_by_context(context))
         
         for journal in journals:
-            if isinstance(journal, Master):
-                journal.run(context)
+            journal.run(context)
+                
         
         # `operation` param in Context class determines which callback of the `Engine` class will be called
         call = getattr(cls, context.operation)
         
         result = call(context)
-        
-        """
-           after the callback based on operation name is executed, the following callbacks will be executed
-           to use callbacks, simply append to context
-           context.callbacks.append(Class.method, functionName, OtherClass.method) etc.
-           and they will be executed in such order.
-           @todo
-           maybe we could change the way the callbacks are added by implementing
-           context.new_callback() function, which would accept specific options on when and how the callback will be executed.
-           @see Context.new_callback() for idea
-        """
         
         context.do_callbacks()
         
@@ -329,21 +329,5 @@ class Engine:
             line.put()
              
     return context
-  
-class Master:
-  pass
-            
-            
-class ExampleJournal():
-  
-  def run(self, *args, **kwargs):
-    pass
-  
-class ExampleJournal2():
-  
-  def run(self, *args, **kwargs):
-    pass
-  
-register_system_journals((('delete', 'update'), ExampleJournal()), (('other', 'action'), ExampleJournal2()))
             
   

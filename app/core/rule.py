@@ -4,13 +4,7 @@ Created on Dec 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-
-class Context:
-  
-  def __init__(self, action, entity):
-    
-      self.action = action
-      self.entity = entity
+from app import ndb
 
 class Engine:
   
