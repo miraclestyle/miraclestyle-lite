@@ -6,6 +6,31 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 
+class Role(ndb.BaseModel):
+    
+    # root (namespace Domain)
+    # ovaj model ili LocalRole se jedino mogu koristiti u runtime i cuvati u datastore, dok se GlobalRole moze samo programski iskoristiti
+    # ovo bi bilo tlacno za resurse ali je jedini preostao feature sa kojim 
+    # bi ovaj rule engine koncept prevazisao sve ostale security modele
+    # parent_record = ndb.SuperKeyProperty('1', kind='44', indexed=False) 
+    # complete_name = ndb.SuperTextProperty('3')
+    name = ndb.SuperStringProperty('1', required=True)
+    active = ndb.SuperBooleanProperty('2', default=True)
+    permissions = ndb.SuperPickleProperty('3', required=True, compressed=False) # [permission1, permission2,...]
+    
+    ### za ovo smo rekli da svakako treba da se radi validacija pri inputu 
+    # treba da postoji validator da proverava prilikom put()-a da li su u permissions listi instance Permission klase
+    # napr:
+    #def _pre_put_hook(self):
+    #for perm in self.permissions:
+        #if not isinstance(perm, Permission):
+           #raise ValueError('Expected instance of Permission, got %r' % perm)
+    
+    def run(self, context):
+        for permission in self.permissions:
+            permission.run(self, context)
+ 
+
 class Engine:
   
   @classmethod
@@ -18,40 +43,24 @@ class Engine:
     # datastore system
     
     entity = context.entity
-    if hasattr(entity, '_rule') and isinstance(entity._rule, Rule):
-       entity._rule.run(context)
+    if hasattr(entity, '_global_role') and isinstance(entity._global_role, Role):
+       entity._global_role.run(context)
     
     cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
  
 
-class Rule():
+class GlobalRole(Role):
   
-  def __init__(self, permissions):
-    for perm in permissions:
-        if not isinstance(perm, Permission):
-           raise ValueError('Expected instance of Permission, got %r' % perm)
-   
-    self.permissions = permissions
-    
-  def run(self, context):
- 
-    for permission in self.permissions:
-        permission.run(self, context)
- 
-
-class GlobalRule(Rule):
+  overide = ndb.BooleanProperty('2', default=True)
   
-  def __init__(self, *args, **kwargs):
-      self.override = True
-      super(Rule, self).__init__(*args, **kwargs)
 
-
-class LocalRule(Rule):
+class LocalRole(Role):
   pass
 
     
 class Permission():
   pass
+
 
   
 class FieldPermission(Permission):

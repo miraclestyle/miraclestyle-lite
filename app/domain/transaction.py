@@ -13,11 +13,13 @@ class Context:
   
   def __init__(self, **kwargs):
     
-      for k,v in kwargs.items():
-          setattr(k, v)
-
       self.callbacks = []
       self.group = None
+      self.entries = collections.OrderedDict()
+      
+      for k,v in kwargs.items():
+          setattr(k, v)
+ 
       
   def new_callback(self, callback, **kwargs):
      self.callbacks.append((callback, kwargs)) # something like this?
@@ -83,9 +85,28 @@ def get_system_journals(action=None):
 def register_system_journals(*args):
     global __SYSTEM_JOURNALS
     __SYSTEM_JOURNALS.extend(args)
-        
 
-class UOM(ndb.BaseModel):
+
+class Address(ndb.BaseExpando):
+    
+    # local structured
+    name = ndb.SuperStringProperty('1', required=True)
+    country = ndb.SuperKeyProperty('2', kind='app.core.misc.Country', required=True, indexed=False)
+    city = ndb.SuperStringProperty('3', required=True, indexed=False)
+    postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
+    street_address = ndb.SuperStringProperty('5', required=True, indexed=False)
+ 
+    _default_indexed = False
+ 
+    EXPANDO_FIELDS = {
+        'region' :  ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision'),
+        'street_address2' : ndb.SuperStringProperty('9'),
+        'email' : ndb.SuperStringProperty('10'),
+        'telephone' : ndb.SuperStringProperty('11'),
+    }
+            
+
+class UOM(ndb.BaseExpando):
  
     
     # Local structured
@@ -281,7 +302,7 @@ class Engine:
   @classmethod
   def run(cls, context):
     
-      if isinstance(context, ndb.Context):
+      if isinstance(context, Context):
         
         journals = get_system_journals(context.action)
         journals.extend(Journal.get_journals_by_context(context))
