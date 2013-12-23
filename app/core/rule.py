@@ -35,17 +35,41 @@ class Engine:
   
   @classmethod
   def final_check(cls, context):
-    pass
+      pass
   
   @classmethod
-  def run(cls, context):
+  def decide(cls, context):
+      pass
+  
+  @classmethod
+  def run(cls, context, strict=False):
     
     # datastore system
     
+    #example
+    
+    roles = Role.query() # gets some roles
+    for role in roles:
+        role.run(context)
+        
+    # copy 
+    local_permissions = context.entity._rule_action_permissions.copy()
+    
+    # empty
+    context.entity._rule_action_permissions = {}
+ 
     entity = context.entity
     if hasattr(entity, '_global_role') and isinstance(entity._global_role, Role):
        entity._global_role.run(context)
     
+    # copy   
+    global_permissions = context.entity._rule_action_permissions.copy()
+    
+    # empty
+    context.entity._rule_action_permissions = {}
+    
+       
+        
     cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
  
 
@@ -103,7 +127,7 @@ class FieldPermission(Permission):
        context.entity._rule_field_permissions = {} 
        
     if self.field not in context.entity._rule_field_permissions:
-       context.entity._rule_field_permissions[self.field] = {'field' : [], 'visible' : [], 'required' : []}
+       context.entity._rule_field_permissions[self.field] = {'writable' : [], 'visible' : [], 'required' : []}
           
     if (self.kind == context.entity.get_rule_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
       if (self.writable != None):
