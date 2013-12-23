@@ -1,36 +1,22 @@
-class ActionPermission(Permission):
+class Engine:
   
+  @classmethod
+  def final_check(cls, context):
+    pass
   
-  def __init__(self, kind, action, executable=None, condition=None):
+  @classmethod
+  def run(cls, context):
     
-    self.kind = kind
-    self.action = action
-    self.executable = executable
-    self.condition = condition
+    calc = {}
     
-  def run(self, role, context):
-    
-    if (self.kind == context.entity.get_rule_kind()) and (self.action in context.entity._rule_actions) and (eval(self.condition)) and (self.executable != None):
-      context.entity._rule_action_permissions[self.action]['executable'].append(self.executable)
-
-class FieldPermission(Permission):
-  
-  
-  def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
-    
-    self.kind = kind
-    self.field = field
-    self.writable = writable
-    self.visible = visible
-    self.required = required
-    self.condition = condition
-    
-  def run(self, context):
-    
-    if (self.kind == context.entity.get_rule_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
-      if (self.writable != None):
-        context.entity._rule_field_permissions[self.field]['writable'].append(self.writable)
-      if (self.visible != None):
-        context.entity._rule_field_permissions[self.field]['visible'].append(self.visible)
-      if (self.required != None):
-        context.entity._rule_field_permissions[self.field]['required'].append(self.required)
+    for role in roles:
+      role.run(context)
+    for action, properties in context.entity._rule_action_permissions.items():
+      for proerpty, value in properties.items():
+        if len(value):
+          if (strict) and all(value):
+            calc[action][proerpty] = [True]
+          elif any(value):
+            calc[action][proerpty] = [True]
+          else:
+            calc[action][proerpty] = [False]
