@@ -38,8 +38,24 @@ class Engine:
       pass
   
   @classmethod
-  def decide(cls, context):
-      pass
+  def decide(cls, permissions, strict):
+    calc = {}
+    for action, properties in permissions.items():
+          for prop, value in properties.items():
+            if len(value):
+              if (strict):
+                if all(value):
+                   calc[action][prop] = True
+                else:
+                   calc[action][prop] = False
+              elif any(value):
+                calc[action][prop] = True
+              else:
+                calc[action][prop] = False
+            else:
+              calc[action][prop] = None
+              
+    return calc
   
   @classmethod
   def run(cls, context, strict=False):
@@ -67,9 +83,46 @@ class Engine:
     
     # empty
     context.entity._rule_action_permissions = {}
+     
+    global_permissions_calc = cls.decide(global_permissions, strict)
     
+    # if any local perms, process them
+    if local_permissions:
+       local_permissions_calc = cls.decide(local_permissions, strict)
        
-        
+       # iterate over local permissions, and override them with the global permissions, if any
+       for action, properties in local_permissions_calc.items():
+          for prop, value in properties.items():
+              if action in global_permissions_calc:
+                 if prop in global_permissions_calc[action]:
+                    gc = global_permissions_calc[action][prop]
+                    if gc is not None and gc != value:
+                          local_permissions_calc[action][prop] = gc
+                  
+              if local_permissions_calc[action][prop] is None:
+                 local_permissions_calc[action][prop] = False
+                 
+       # make sure that global perms are always present
+       for action, properties in global_permissions_calc.items():
+          if action not in local_permissions_calc:
+            for prop, value in properties.items():
+              if prop not in local_permissions_calc[action]:
+                 local_permissions_calc[action][prop] = value
+            
+       finals = local_permissions_calc
+    
+    # otherwise just use global permissions    
+    else:
+       for action, properties in global_permissions_calc.items():
+          for prop, value in properties.items():
+            if value is None:
+               value = False
+            global_permissions_calc[action][prop] = value
+            
+       finals = global_permissions_calc
+       
+    # finals variable contains mapped final[action]['executable'] flag
+           
     cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
  
 
