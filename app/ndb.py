@@ -262,7 +262,7 @@ def compile_admin_permissions(*args):
 class _BaseModel(Model):
  
   __tmp = {} #-- this property is used to store all values that will live inside one entity instance.
-  
+ 
   def __init__(self, *args, **kwds):
       self.__tmp = {}
       self.register_tmp('original_values', {})
@@ -405,6 +405,9 @@ class _BaseModel(Model):
       for p in self._properties:
           pack[p] = self._properties[p]._get_value(self)
       self.set_tmp('original_values', pack)
+      
+  def get_rule_kind(self):
+      return self._get_kind()
  
   @classmethod
   def _get_kind(cls):

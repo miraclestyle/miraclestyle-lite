@@ -206,6 +206,9 @@ class Journal(ndb.BaseModel):
    
   # sequencing counter....
   
+  def get_rule_kind(self):
+      return 'j_%s' % self.journal.key.id()
+  
   def run(self, context):
     # proverava da li je context instanca Context klase
     rule.Engine.run(context)
@@ -257,6 +260,9 @@ class Entry(ndb.BaseExpando):
      'party' : ndb.SuperKeyProperty('8'),
   }
   
+  def get_rule_kind(self):
+      return 'e_%s' % self.journal.key.id()
+  
 class Line(ndb.BaseExpando):
   
   KIND_ID = 51  
@@ -283,7 +289,9 @@ class Line(ndb.BaseExpando):
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
- 
+
+  def get_rule_kind(self):
+      return 'l_%s' % self.journal.key.id()
  
 class Plugin(ndb.BaseModel):
   
