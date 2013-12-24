@@ -1,3 +1,44 @@
+# main.py
+
+import webapp2
+import rule
+from google.appengine.ext import ndb
+import json
+
+class Entry():
+  
+  def get_kind(self):
+    return 1
+  
+  def get_properties(self):
+    return {'state': ndb.StringProperty(required=True), 
+            'name': ndb.StringProperty(required=True),
+            }
+  
+  def get_actions(self):
+    return {'add_to_cart': 1, 'update_cart': 2, 'pay': 3}
+  
+  _global_role = rule.GlobalRole(name='Global Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', False),
+                                                                               rule.ActionPermission(1, 'update_cart', False),
+                                                                               rule.FieldPermission(1, 'state', False)])
+  
+
+class MainHandler(webapp2.RequestHandler):
+
+  def get(self):  # pylint:disable-msg=invalid-name
+    entry = Entry()
+    context = rule.Context(entity=entry)
+    rule.Engine.run(context)
+    self.response.write(str(context.entity._rule_action_permissions))
+    self.response.write(str(context.entity._rule_field_permissions))
+
+
+APP = webapp2.WSGIApplication([
+    ('/.*', MainHandler),
+], debug=True)
+
+
+# rule.py
 # -*- coding: utf-8 -*-
 '''
 Created on Dec 20, 2013
