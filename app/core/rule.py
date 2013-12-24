@@ -121,6 +121,8 @@ class Engine:
             
        finals = global_permissions_calc
        
+    context.entity._rule_action_permissions = finals
+       
     # finals variable contains mapped final[action]['executable'] flag
            
     cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False

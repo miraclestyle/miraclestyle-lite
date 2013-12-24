@@ -269,8 +269,14 @@ class _BaseModel(Model):
       
       super(_BaseModel, self).__init__(*args, **kwds)
       
-  def set_key(self, **kwargs):
-      self._key = Key(self._get_kind(), **kwargs)
+  @classmethod
+  def build_key(cls, *args, **kwargs):
+      new_args = [cls._get_kind()]
+      new_args.extend(args)
+      return Key(*new_args, **kwargs)
+      
+  def set_key(self, *args, **kwargs):
+      self._key = self.build_key(*args, **kwargs)
       return self._key
   
   def __todict__(self):

@@ -16,6 +16,7 @@ class Context:
       self.callbacks = []
       self.group = None
       self.entries = collections.OrderedDict()
+      self.user = ndb.get_current_user()
       
       for k,v in kwargs.items():
           setattr(k, v)
@@ -205,6 +206,12 @@ class Journal(ndb.BaseModel):
   plugin_groups = ndb.SuperStringProperty('9', repeated=True)
    
   # sequencing counter....
+  
+  def get_journal_key(self, *args, **kwargs):
+      if not self.key:
+         return self.set_key(*args, **kwargs)
+      else:
+         return self.key
   
   def get_rule_kind(self):
       return 'j_%s' % self.journal.key.id()
