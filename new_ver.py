@@ -1,5 +1,4 @@
 # main.py
-
 import webapp2
 import rule
 from google.appengine.ext import ndb
@@ -18,9 +17,15 @@ class Entry():
   def get_actions(self):
     return {'add_to_cart': 1, 'update_cart': 2, 'pay': 3}
   
+  _local_role = rule.Role(name='Local Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', True),
+                                                                       rule.ActionPermission(1, 'add_to_cart', False),
+                                                                       rule.ActionPermission(1, 'update_cart', False), 
+                                                                       rule.FieldPermission(1, 'state', True)
+                                                                       ])
   _global_role = rule.GlobalRole(name='Global Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', False),
-                                                                               rule.ActionPermission(1, 'update_cart', False),
-                                                                               rule.FieldPermission(1, 'state', False)])
+                                                                               rule.ActionPermission(1, 'update_cart', True),
+                                                                               rule.FieldPermission(1, 'state', False)
+                                                                               ])
   
 
 class MainHandler(webapp2.RequestHandler):
@@ -39,6 +44,7 @@ APP = webapp2.WSGIApplication([
 
 
 # rule.py
+
 # -*- coding: utf-8 -*-
 '''
 Created on Dec 20, 2013
@@ -198,14 +204,7 @@ class Engine:
     # 
     # roles = ndb.get_multi(context.user.roles)
     # for role in roles:
-    role = Role()
-    lp1 = ActionPermission(1, 'add_to_cart', True)
-    lp2 = ActionPermission(1, 'add_to_cart', False)
-    lp3 = ActionPermission(1, 'update_cart', True)
-    lp4 = FieldPermission(1, 'state', True)
-    role.name = 'Local Role'
-    role.active = True
-    role.permissions = [lp1, lp2, lp3, lp4]
+    role = context.entity._local_role
     role.run(context)
         
     # copy 
