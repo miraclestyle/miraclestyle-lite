@@ -6,8 +6,8 @@ Created on Dec 17, 2013
 '''
 import datetime
 
-from app.domain import transaction
-from app.core import rule
+from app.srv import transaction
+from app.srv import rule
 
 Entry = transaction.Entry
 Journal = transaction.Journal
