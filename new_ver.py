@@ -1,4 +1,5 @@
 # main.py
+
 import webapp2
 import rule
 from google.appengine.ext import ndb
@@ -18,13 +19,13 @@ class Entry():
     return {'add_to_cart': 1, 'update_cart': 2, 'pay': 3}
   
   _local_role = rule.Role(name='Local Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', True),
-                                                                       rule.ActionPermission(1, 'add_to_cart', False),
+                                                                       rule.ActionPermission(1, 'add_to_cart', True),
                                                                        rule.ActionPermission(1, 'update_cart', False), 
-                                                                       rule.FieldPermission(1, 'state', True)
+                                                                       rule.FieldPermission(1, 'state', True, None, None, 'True')
                                                                        ])
   _global_role = rule.GlobalRole(name='Global Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', False),
                                                                                rule.ActionPermission(1, 'update_cart', True),
-                                                                               rule.FieldPermission(1, 'state', False)
+                                                                               rule.FieldPermission(1, 'state', False, None, None, 'False')
                                                                                ])
   
 
