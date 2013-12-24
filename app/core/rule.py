@@ -58,6 +58,48 @@ class Engine:
     return calc
   
   @classmethod
+  def compile(cls, local_data, global_data, strict=False):
+    
+    global_data_calc = cls.decide(global_data, strict)
+    
+    # if any local data, process them
+    if local_data:
+       local_data_calc = cls.decide(local_data, strict)
+       
+       # iterate over local data, and override them with the global data, if any
+       for element, properties in local_data_calc.items():
+          for prop, value in properties.items():
+              if element in global_data_calc:
+                 if prop in global_data_calc[element]:
+                    gc = global_data_calc[element][prop]
+                    if gc is not None and gc != value:
+                          local_data_calc[element][prop] = gc
+                  
+              if local_data_calc[element][prop] is None:
+                 local_data_calc[element][prop] = False
+                 
+       # make sure that global data are always present
+       for element, properties in global_data_calc.items():
+          if element not in local_data_calc:
+            for prop, value in properties.items():
+              if prop not in local_data_calc[element]:
+                 local_data_calc[element][prop] = value
+            
+       finals = local_data_calc
+    
+    # otherwise just use global data    
+    else:
+       for element, properties in global_data_calc.items():
+          for prop, value in properties.items():
+            if value is None:
+               value = False
+            global_data_calc[element][prop] = value
+            
+       finals = global_data_calc
+       
+    return finals
+  
+  @classmethod
   def run(cls, context, strict=False):
     
     # datastore system
@@ -69,59 +111,23 @@ class Engine:
         role.run(context)
         
     # copy 
-    local_permissions = context.entity._rule_action_permissions.copy()
+    local_action_permissions = context.entity._rule_action_permissions.copy()
+    local_field_permissions = context.entity._rule_field_permissions.copy()
     
     # empty
     context.entity._rule_action_permissions = {}
+    context.entity._rule_field_permissions = {}
  
     entity = context.entity
     if hasattr(entity, '_global_role') and isinstance(entity._global_role, Role):
        entity._global_role.run(context)
     
     # copy   
-    global_permissions = context.entity._rule_action_permissions.copy()
-    
-    # empty
-    context.entity._rule_action_permissions = {}
-     
-    global_permissions_calc = cls.decide(global_permissions, strict)
-    
-    # if any local perms, process them
-    if local_permissions:
-       local_permissions_calc = cls.decide(local_permissions, strict)
-       
-       # iterate over local permissions, and override them with the global permissions, if any
-       for action, properties in local_permissions_calc.items():
-          for prop, value in properties.items():
-              if action in global_permissions_calc:
-                 if prop in global_permissions_calc[action]:
-                    gc = global_permissions_calc[action][prop]
-                    if gc is not None and gc != value:
-                          local_permissions_calc[action][prop] = gc
-                  
-              if local_permissions_calc[action][prop] is None:
-                 local_permissions_calc[action][prop] = False
-                 
-       # make sure that global perms are always present
-       for action, properties in global_permissions_calc.items():
-          if action not in local_permissions_calc:
-            for prop, value in properties.items():
-              if prop not in local_permissions_calc[action]:
-                 local_permissions_calc[action][prop] = value
-            
-       finals = local_permissions_calc
-    
-    # otherwise just use global permissions    
-    else:
-       for action, properties in global_permissions_calc.items():
-          for prop, value in properties.items():
-            if value is None:
-               value = False
-            global_permissions_calc[action][prop] = value
-            
-       finals = global_permissions_calc
-       
-    context.entity._rule_action_permissions = finals
+    global_action_permissions = context.entity._rule_action_permissions.copy()
+    global_field_permissions = context.entity._rule_field_permissions.copy()
+   
+    context.entity._rule_action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
+    context.entity._rule_field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
        
     # finals variable contains mapped final[action]['executable'] flag
            

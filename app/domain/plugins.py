@@ -79,4 +79,4 @@ class CartInit(Base):
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
-      return entry
+      context.entries[entry.journal.code] = entry

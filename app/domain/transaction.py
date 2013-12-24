@@ -233,7 +233,7 @@ class Journal(ndb.BaseModel):
                                Journal.company == context.args.get('company'), 
                                Journal.subscriptions == context.action).order(Journal.sequence).fetch()
          
-      return [journal.code for journal in query_journals]
+      return query_journals
   
   
 class Entry(ndb.BaseExpando):
