@@ -412,7 +412,7 @@ class _BaseModel(Model):
           pack[p] = self._properties[p]._get_value(self)
       self.set_tmp('original_values', pack)
       
-  def get_rule_kind(self):
+  def get_kind(self):
       return self._get_kind()
  
   @classmethod
@@ -427,6 +427,14 @@ class _BaseModel(Model):
           raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__)) 
        return str(cls.KIND_ID)
     return cls.__name__
+  
+  @classmethod
+  def get_actions(cls):
+      return {}
+    
+  @classmethod
+  def get_properties(cls):
+      return cls.get_all_properties()
 
   @classmethod
   def get_all_properties(cls):

@@ -213,7 +213,7 @@ class Journal(ndb.BaseModel):
       else:
          return self.key
   
-  def get_rule_kind(self):
+  def get_kind(self):
       return 'j_%s' % self.journal.key.id()
   
   def run(self, context):
@@ -267,7 +267,7 @@ class Entry(ndb.BaseExpando):
      'party' : ndb.SuperKeyProperty('8'),
   }
   
-  def get_rule_kind(self):
+  def get_kind(self):
       return 'e_%s' % self.journal.key.id()
   
 class Line(ndb.BaseExpando):
@@ -297,7 +297,7 @@ class Line(ndb.BaseExpando):
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
 
-  def get_rule_kind(self):
+  def get_kind(self):
       return 'l_%s' % self.journal.key.id()
  
 class Plugin(ndb.BaseModel):
@@ -313,7 +313,7 @@ class Plugin(ndb.BaseModel):
 
 
 class Engine:
-  
+ 
   @classmethod
   def run(cls, context):
     

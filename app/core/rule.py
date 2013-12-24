@@ -5,6 +5,7 @@ Created on Dec 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
+from app.domain import transaction
 
 class Role(ndb.BaseExpando):
     
@@ -34,9 +35,32 @@ class Role(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def final_check(cls, context):
-      pass
-  
+  def prepare(cls, context):
+    
+    context.entity._rule_field_permissions = {} 
+    context.entity._rule_fields = {}
+    context.entity._rule_actions = {}
+    
+    properties = context.entity.get_properties()
+    
+    if hasattr(context.entity, 'journal'):
+       journal = context.entity.journal.get()
+       if isinstance(context.entity, transaction.Entry):
+          properties.extend(journal.entry_fields)
+          
+       if isinstance(context.entity, transaction.Line):
+          properties.extend(journal.line_fields)
+          
+    for field in properties:
+       context.entity._rule_fields[field._name] = field # place also this value for the stuff below?
+       context.entity._rule_field_permissions[field._name] = {'writable' : [], 'visible' : [], 'required' : []}
+    
+    context.entity._rule_action_permissions = {} 
+       
+    for action_name, action_code in context.entity.get_actions().items():
+        context.entity._rule_actions[action_name] = action_code
+        context.entity._rule_action_permissions[action_name] = {'executable' : []}
+ 
   @classmethod
   def decide(cls, data, strict):
     calc = {}
@@ -104,9 +128,10 @@ class Engine:
     
     # datastore system
     
-    #example
+    # call prepare first, populates required dicts into the entity instance
+    cls.prepare(context)
     
-    roles = Role.query() # gets some roles
+    roles = Role.query().fetch() # gets some roles
     for role in roles:
         role.run(context)
         
@@ -119,7 +144,7 @@ class Engine:
     context.entity._rule_field_permissions = {}
  
     entity = context.entity
-    if hasattr(entity, '_global_role') and isinstance(entity._global_role, Role):
+    if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
        entity._global_role.run(context)
     
     # copy   
@@ -128,10 +153,6 @@ class Engine:
    
     context.entity._rule_action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
     context.entity._rule_field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
-       
-    # finals variable contains mapped final[action]['executable'] flag
-           
-    cls.final_check(context) # ova funkcija proverava sva polja koja imaju vrednosti None i pretvara ih u False
  
 
 class GlobalRole(Role):
@@ -158,15 +179,8 @@ class ActionPermission(Permission):
     self.condition = condition
     
   def run(self, role, context):
-    
-    if not hasattr(context.entity, '_rule_action_permissions'):
-       context.entity._rule_action_permissions = {} 
-    
-    if (self.kind == context.entity.get_rule_kind()) and (self.action in context.entity._rule_actions) and (eval(self.condition)) and (self.executable != None):
-       
-       if self.action not in context.entity._rule_action_permissions:
-          context.entity._rule_action_permissions[self.action] = {'executable' : []}
-          
+     
+    if (self.kind == context.entity.get_kind()) and (self.action in context.entity._rule_actions) and (eval(self.condition)) and (self.executable != None):
        context.entity._rule_action_permissions[self.action]['executable'].append(self.executable)
 
 
@@ -176,7 +190,7 @@ class FieldPermission(Permission):
   def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
     
     self.kind = kind
-    self.field = field
+    self.field = field # this must be a field name from ndb.Property(name='this name')
     self.writable = writable
     self.visible = visible
     self.required = required
@@ -184,13 +198,8 @@ class FieldPermission(Permission):
     
   def run(self, context):
     
-    if not hasattr(context.entity, '_rule_field_permissions'):
-       context.entity._rule_field_permissions = {} 
-       
-    if self.field not in context.entity._rule_field_permissions:
-       context.entity._rule_field_permissions[self.field] = {'writable' : [], 'visible' : [], 'required' : []}
-          
-    if (self.kind == context.entity.get_rule_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
+ 
+    if (self.kind == context.entity.get_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
       if (self.writable != None):
         context.entity._rule_field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
