@@ -122,7 +122,8 @@ class Engine:
     # call prepare first, populates required dicts into the entity instance
     cls.prepare(context)
     
-    roles = Role.query().fetch() # gets some roles
+    # 
+    roles = ndb.get_multi(context.user.roles)
     for role in roles:
         role.run(context)
         
@@ -131,8 +132,7 @@ class Engine:
     local_field_permissions = context.entity._rule_field_permissions.copy()
     
     # empty
-    context.entity._rule_action_permissions = {}
-    context.entity._rule_field_permissions = {}
+    cls.prepare(context)
  
     entity = context.entity
     if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
