@@ -29,3 +29,4 @@ def register_system_plugins(*args):
 class Base:
   'Base class for plugins'
   
+  category = ''
