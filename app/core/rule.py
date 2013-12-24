@@ -141,6 +141,9 @@ class Engine:
     # copy   
     global_action_permissions = context.entity._rule_action_permissions.copy()
     global_field_permissions = context.entity._rule_field_permissions.copy()
+    
+    # empty
+    cls.prepare(context)
    
     context.entity._rule_action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
     context.entity._rule_field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
