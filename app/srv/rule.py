@@ -57,6 +57,10 @@ class Engine:
     calc = {}
     for element, properties in data.items():
           for prop, value in properties.items():
+            
+            if element not in calc:
+               calc[element] = {}
+            
             if len(value):
               if (strict):
                 if all(value):
