@@ -266,9 +266,19 @@ class Entry(ndb.BaseExpando):
   EXPANDO_FIELDS = {
      'party' : ndb.SuperKeyProperty('8'),
   }
+ 
+  def get_actions(self):
+      return {}
   
   def get_kind(self):
       return 'e_%s' % self.journal.key.id()
+    
+  def get_properties(self):
+      properties = super(Entry, self).get_properties()
+      journal = self.journal.get()
+      properties.extend(journal.entry_fields)
+      return properties
+          
   
 class Line(ndb.BaseExpando):
   
@@ -296,9 +306,20 @@ class Line(ndb.BaseExpando):
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+  
+  def get_actions(self):
+      return {}
 
   def get_kind(self):
       return 'l_%s' % self.journal.key.id()
+  
+  def get_properties(self):
+      properties = super(Line, self).get_properties()
+      journal = self.journal.get()
+      properties.extend(journal.line_fields)
+      return properties
+          
+
  
 class Plugin(ndb.BaseModel):
   

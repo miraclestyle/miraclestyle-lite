@@ -5,7 +5,6 @@ Created on Dec 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.domain import transaction
 
 class Role(ndb.BaseExpando):
     
@@ -40,22 +39,14 @@ class Engine:
     context.entity._rule_field_permissions = {} 
     context.entity._rule_fields = {}
     context.entity._rule_actions = {}
+    context.entity._rule_action_permissions = {} 
     
     properties = context.entity.get_properties()
-    
-    if hasattr(context.entity, 'journal'):
-       journal = context.entity.journal.get()
-       if isinstance(context.entity, transaction.Entry):
-          properties.extend(journal.entry_fields)
-          
-       if isinstance(context.entity, transaction.Line):
-          properties.extend(journal.line_fields)
-          
+ 
     for field in properties:
        context.entity._rule_fields[field._name] = field # place also this value for the stuff below?
        context.entity._rule_field_permissions[field._name] = {'writable' : [], 'visible' : [], 'required' : []}
-    
-    context.entity._rule_action_permissions = {} 
+
        
     for action_name, action_code in context.entity.get_actions().items():
         context.entity._rule_actions[action_name] = action_code

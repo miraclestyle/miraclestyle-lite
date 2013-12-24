@@ -431,10 +431,9 @@ class _BaseModel(Model):
   @classmethod
   def get_actions(cls):
       return {}
-    
-  @classmethod
-  def get_properties(cls):
-      return cls.get_all_properties()
+ 
+  def get_properties(self):
+      return self.get_all_properties()
 
   @classmethod
   def get_all_properties(cls):
