@@ -38,22 +38,22 @@ class Engine:
       pass
   
   @classmethod
-  def decide(cls, permissions, strict):
+  def decide(cls, data, strict):
     calc = {}
-    for action, properties in permissions.items():
+    for element, properties in data.items():
           for prop, value in properties.items():
             if len(value):
               if (strict):
                 if all(value):
-                   calc[action][prop] = True
+                   calc[element][prop] = True
                 else:
-                   calc[action][prop] = False
+                   calc[element][prop] = False
               elif any(value):
-                calc[action][prop] = True
+                calc[element][prop] = True
               else:
-                calc[action][prop] = False
+                calc[element][prop] = False
             else:
-              calc[action][prop] = None
+              calc[element][prop] = None
               
     return calc
   
