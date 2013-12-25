@@ -38,17 +38,18 @@ class Engine:
     
     context.entity._rule_property_permissions = {} 
     context.entity._rule_properties = {}
-    context.entity._rule_actions = {}
     context.entity._rule_action_permissions = {} 
+    context.entity._rule_actions = {}
     
     properties = context.entity.get_properties()
  
     for prop in properties:
        context.entity._rule_properties[prop._name] = prop # place also this value for the stuff below?
        context.entity._rule_property_permissions[prop._name] = {'writable' : [], 'visible' : [], 'required' : []}
-
+    
+    actions = context.entity.get_actions()
        
-    for action_name, action_code in context.entity.get_actions().items():
+    for action_name, action_code in actions.items():
         context.entity._rule_actions[action_name] = action_code
         context.entity._rule_action_permissions[action_name] = {'executable' : []}
  
