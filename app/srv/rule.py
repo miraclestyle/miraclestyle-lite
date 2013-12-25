@@ -198,7 +198,7 @@ class FieldPermission(Permission):
   def run(self, context):
     
  
-    if (self.kind == context.entity.get_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
+    if (self.kind == context.entity.get_kind()) and (self.field in context.entity._rule_fields) and (eval(self.condition)):
       if (self.writable != None):
         context.entity._rule_field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
