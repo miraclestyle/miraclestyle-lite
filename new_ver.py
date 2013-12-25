@@ -1,283 +1,347 @@
-# main.py
 
-import webapp2
-import rule
-from google.appengine.ext import ndb
-import json
 
-class Entry():
+################################################################################
+# /domain/plugins.py
+################################################################################
+
+
+class Transition:
   
-  def get_kind(self):
-    return 1
-  
-  def get_properties(self):
-    return {'state': ndb.StringProperty(required=True), 
-            'name': ndb.StringProperty(required=True),
-            }
-  
-  def get_actions(self):
-    return {'add_to_cart': 1, 'update_cart': 2, 'pay': 3}
-  
-  _local_role = rule.Role(name='Local Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', True),
-                                                                       rule.ActionPermission(1, 'add_to_cart', True),
-                                                                       rule.ActionPermission(1, 'update_cart', False), 
-                                                                       rule.FieldPermission(1, 'state', True, None, None, 'True')
-                                                                       ])
-  _global_role = rule.GlobalRole(name='Global Role', active=True, permissions=[rule.ActionPermission(1, 'add_to_cart', False),
-                                                                               rule.ActionPermission(1, 'update_cart', True),
-                                                                               rule.FieldPermission(1, 'state', False, None, None, 'False')
-                                                                               ])
-  
-
-class MainHandler(webapp2.RequestHandler):
-
-  def get(self):  # pylint:disable-msg=invalid-name
-    entry = Entry()
-    context = rule.Context(entity=entry)
-    rule.Engine.run(context)
-    self.response.write(str(context.entity._rule_action_permissions))
-    self.response.write(str(context.entity._rule_field_permissions))
-
-
-APP = webapp2.WSGIApplication([
-    ('/.*', MainHandler),
-], debug=True)
-
-
-# rule.py
-
-# -*- coding: utf-8 -*-
-'''
-Created on Dec 20, 2013
-
-@author:  Edis Sehalic (edis.sehalic@gmail.com)
-'''
-from google.appengine.ext import ndb
-
-class Context:
-  
-  def __init__(self, **kwargs):
+  def __init__(self, name, from_state, to_state, condition):
+    self.name = name # ??
+    self.from_state = from_state
+    self.to_state = to_state
+    self.condition = condition
     
-      # self.callbacks = []
-      # self.group = None
-      # self.entries = collections.OrderedDict()
-      #self.user = ndb.get_current_user()
-      
-      for k,v in kwargs.items():
-          setattr(self, k, v)
- 
-      
-  def new_callback(self, callback, **kwargs):
-     self.callbacks.append((callback, kwargs)) # something like this?
- 
-  def do_callbacks(self):
-      for c in self.callbacks:
-          callback, config = c
-          
-          if config.get('use_task_que'):
-             # import taskque
-             # tasque.add(...)
-             pass
-          else:
-            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
-            callback(self)
-          
-          # etc
-
-class Role(ndb.Expando):
-    
-    # root (namespace Domain)
-    # ovaj model ili LocalRole se jedino mogu koristiti u runtime i cuvati u datastore, dok se GlobalRole moze samo programski iskoristiti
-    # ovo bi bilo tlacno za resurse ali je jedini preostao feature sa kojim 
-    # bi ovaj rule engine koncept prevazisao sve ostale security modele
-    # parent_record = ndb.SuperKeyProperty('1', kind='44', indexed=False) 
-    # complete_name = ndb.SuperTextProperty('3')
-    name = ndb.StringProperty('1', required=True)
-    active = ndb.BooleanProperty('2', default=True)
-    permissions = ndb.PickleProperty('3', required=True, compressed=False) # [permission1, permission2,...]
-    
-    ### za ovo smo rekli da svakako treba da se radi validacija pri inputu 
-    # treba da postoji validator da proverava prilikom put()-a da li su u permissions listi instance Permission klase
-    # napr:
-    #def _pre_put_hook(self):
-    #for perm in self.permissions:
-        #if not isinstance(perm, Permission):
-           #raise ValueError('Expected instance of Permission, got %r' % perm)
-    
-    def run(self, context):
-        for permission in self.permissions:
-            permission.run(self, context)
- 
-
-class Engine:
-  
-  @classmethod
-  def prepare(cls, context):
-    
-    context.entity._rule_field_permissions = {} 
-    context.entity._rule_properties = {}
-    context.entity._rule_actions = {}
-    context.entity._rule_action_permissions = {} 
-    
-    properties = context.entity.get_properties()
- 
-    for field_name, field in properties.items():
-      context.entity._rule_properties[field_name] = field # place also this value for the stuff below?
-      context.entity._rule_field_permissions[field_name] = {'writable' : [], 'visible' : [], 'required' : []}
-
-    actions = context.entity.get_actions()
-    
-    for action_name, action_code in actions.items():
-      context.entity._rule_actions[action_name] = action_code
-      context.entity._rule_action_permissions[action_name] = {'executable' : []}
- 
-  @classmethod
-  def decide(cls, data, strict):
-    calc = {}
-    for element, properties in data.items():
-      for prop, value in properties.items():
-        if element not in calc:
-          calc[element] ={}
-        if len(value):
-          if (strict):
-            if all(value):
-              calc[element][prop] = True
-            else:
-              calc[element][prop] = False
-          elif any(value):
-            calc[element][prop] = True
-          else:
-            calc[element][prop] = False
-        else:
-          calc[element][prop] = None
-    return calc
-  
-  @classmethod
-  def compile(cls, local_data, global_data, strict=False):
-    
-    global_data_calc = cls.decide(global_data, strict)
-    
-    # if any local data, process them
-    if local_data:
-       local_data_calc = cls.decide(local_data, strict)
-       
-       # iterate over local data, and override them with the global data, if any
-       for element, properties in local_data_calc.items():
-          for prop, value in properties.items():
-              if element in global_data_calc:
-                 if prop in global_data_calc[element]:
-                    gc = global_data_calc[element][prop]
-                    if gc is not None and gc != value:
-                          local_data_calc[element][prop] = gc
-                  
-              if local_data_calc[element][prop] is None:
-                 local_data_calc[element][prop] = False
-                 
-       # make sure that global data are always present
-       for element, properties in global_data_calc.items():
-          if element not in local_data_calc:
-            for prop, value in properties.items():
-              if prop not in local_data_calc[element]:
-                 local_data_calc[element][prop] = value
-            
-       finals = local_data_calc
-    
-    # otherwise just use global data    
+  def run(self, journal, entry, state):
+    # prvo se radi matching state-ova
+    if (entry.state == self.from_state and state == self.to_state):
+      # onda se radi validacija uslova
+      if (validate_condition(self, journal, entry)):
+        entry.state = state
+        return entry
+      else:
+        return 'ABORT'
     else:
-       for element, properties in global_data_calc.items():
-          for prop, value in properties.items():
-            if value is None:
-               value = False
-            global_data_calc[element][prop] = value
-            
-       finals = global_data_calc
-       
-    return finals
-  
-  @classmethod
-  def run(cls, context, strict=False):
+      # ovde se radi samo skip bez aborta 
     
-    # datastore system
-    
-    # call prepare first, populates required dicts into the entity instance
-    cls.prepare(context)
-    
-    # 
-    # roles = ndb.get_multi(context.user.roles)
-    # for role in roles:
-    role = context.entity._local_role
-    role.run(context)
-        
-    # copy 
-    local_action_permissions = context.entity._rule_action_permissions.copy()
-    local_field_permissions = context.entity._rule_field_permissions.copy()
-    
-    # empty
-    cls.prepare(context)
- 
-    entity = context.entity
-    if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
-       entity._global_role.run(context)
-    
-    # copy
-    global_action_permissions = context.entity._rule_action_permissions.copy()
-    global_field_permissions = context.entity._rule_field_permissions.copy()
-    
-    # empty
-    cls.prepare(context)
-   
-    context.entity._rule_action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
-    context.entity._rule_field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
- 
+  def validate_condition(self, journal, entry):
+    # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
+    # entry.line-a sa vrednostima u condition-u
 
-class GlobalRole(Role):
+class Location:
   
-  overide = ndb.BooleanProperty('2', default=True)
+  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
+    self.country = country
+    self.region = region
+    self.postal_code_from = postal_code_from
+    self.postal_code_to = postal_code_to
+    self.city = city    
+
+class CartInit:
   
+  def run(journal, context):
+    # ucitaj postojeci entry na kojem ce se raditi write
+    catalog = catalog_key.get()
+    company = catalog.company.get()
+    entry = Entry.query(Entry.journal == ndb.Key('Journal', 'order'), 
+                        Entry.company == company, Entry.state.IN(['cart', 'checkout', 'processing']),
+                        Entry.party == user_key
+                        ).get()
+    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
+    if not (entry):
+      entry = Entry()
+      entry.journal = ndb.Key('Journal', 'order')
+      entry.company = company
+      entry.state = 'cart'
+      entry.date = datetime.datetime.today()
+      entry.party = user_key
+    # proveravamo da li je entry u state-u 'cart'
+    if (entry.state != 'cart'):
+      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
+      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
+      return 'ABORT'
+    else:
+      return entry
 
-class LocalRole(Role):
-  pass
-
-    
-class Permission():
-  pass
-
-
-class ActionPermission(Permission):
+      
+class AddressRule:
   
+  def __init__(self, exclusion, address_type, locations, allowed_states=None):
+    self.exclusion = exclusion
+    self.address_type = address_type
+    self.locations = locations
+    self.allowed_states = allowed_states
   
-  def __init__(self, kind, action, executable=None, condition='True'):
-    
-    self.kind = kind
-    self.action = action
-    self.executable = executable
-    self.condition = condition
-    
-  def run(self, role, context):
-     
-    if (self.kind == context.entity.get_kind()) and (self.action in context.entity._rule_actions) and (eval(self.condition)) and (self.executable != None):
-       context.entity._rule_action_permissions[self.action]['executable'].append(self.executable)
+  def run(self, entry):
+    buyer_addresses = []
+    valid_addresses = []
+    default_address = None
+    p = entry._properties
+    if (self.address_type == 'billing'):
+      if (p['billing_address_reference']):
+        buyer_addresses.append(entry.billing_address_reference.get())
+      else:
+        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
+      for buyer_address in buyer_addresses:
+        if (validate_address(self, buyer_address)):
+          valid_addresses.append(buyer_address)
+          if (buyer_address.default_billing):
+            default_address = buyer_address
+      
+      if not (default_address) and (valid_addresses):
+        default_address = valid_addresses[0]
+      if (default_address):
+        if (p['billing_address_reference']):
+          entry.billing_address_reference = default_address.key
+        if (p['billing_address']):
+          address = default_address
+          address_country = default_address.country.get()
+          address_region = default_address.region.get()
+          entry.billing_address = OrderAddress(
+                                    name=address.name, 
+                                    country=address_country.name, 
+                                    country_code=address_country.code, 
+                                    region=address_region.name, 
+                                    region_code=address_region.code, 
+                                    city=address.city, 
+                                    postal_code=address.postal_code, 
+                                    street_address=address.street_address, 
+                                    street_address2=address.street_address2, 
+                                    email=address.email, 
+                                    telephone=address.telephone
+                                    )
+        return entry
+      else:
+        return 'ABORT'
+    elif (self.address_type == 'shipping'):
+      if (p['shipping_address_reference']):
+        buyer_addresses.append(entry.shipping_address_reference.get())
+      else:
+        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
+      for buyer_address in buyer_addresses:
+        if (validate_address(self, buyer_address)):
+          valid_addresses.append(buyer_address)
+          if (buyer_address.default_shipping):
+            default_address = buyer_address
+      if not (default_address) and (valid_addresses):
+        default_address = valid_addresses[0]
+      if (default_address):
+        if (p['shipping_address_reference']):
+          entry.shipping_address_reference = default_address.key
+        if (p['shipping_address']):
+          address = default_address
+          address_country = default_address.country.get()
+          address_region = default_address.region.get()
+          entry.shipping_address = OrderAddress(
+                                     name=address.name, 
+                                     country=address_country.name, 
+                                     country_code=address_country.code, 
+                                     region=address_region.name, 
+                                     region_code=address_region.code, 
+                                     city=address.city, 
+                                     postal_code=address.postal_code, 
+                                     street_address=address.street_address, 
+                                     street_address2=address.street_address2, 
+                                     email=address.email, 
+                                     telephone=address.telephone
+                                     )
+        return entry
+      else:
+        return 'ABORT'
+  
+  def validate_address(rule, address):
+    allowed = False
+    # Shipping everywhere except at the following locations
+    if not (rule.exclusion):
+      allowed = True
+      for loc in rule.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      for loc in rule.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+            allowed = True
+            break
+    return allowed
 
 
-class FieldPermission(Permission):
   
+class ProductToLine:
+    
+  def run(self, journal, entry, catalog_pricetag_key, product_template_key, product_instance_key, variant_signature, custom_variants):
+    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
+    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
+    line_exists = False
+    for line in entry.lines:
+      if ('catalog_pricetag_reference' in line._properties
+          and catalog_pricetag_key == line.catalog_pricetag_reference
+          and 'product_instance_reference' in line._properties
+          and product_instance_key == line.product_instance_reference):
+        line.quantity = line.quantity + 1 # decmail formating required
+        line_exists = True
+        break
+    if not (line_exists):
+      product_template = product_template_key.get()
+      product_instance = product_instance_key.get()
+      product_category = product_template.product_category.get()
+      product_category_complete_name = product_category.complete_name
+      product_uom = product_template.product_uom.get()
+      product_uom_category = product_uom.key.parent().get()
+      
+      new_line = Line()
+      new_line.sequence = entry.lines[-1].sequence + 1
+      new_line.categories.append('Sales Account') # ovde ide ndb.Key('Category', 'key')
+      new_line.description = product_template.name
+      if ('product_instance_count' in product_template._properties and product_template.product_instance_count > 1000):
+        new_line.description # += '\n' + variant_signature
+      else:
+        if (custom_variants):
+          new_line.description # += '\n' + variant_signature
+      new_line.uom = UOM(
+                             category=uom_category.name, 
+                             name=uom.name, 
+                             symbol=uom.symbol, 
+                             rounding=uom.rounding, 
+                             digits=uom.digits
+                             ) # currency uom!!
+      new_line.product_uom = UOM(
+                                     category=product_uom_category.name, 
+                                     name=product_uom.name, 
+                                     symbol=product_uom.symbol, 
+                                     rounding=product_uom.rounding, 
+                                     digits=product_uom.digits
+                                     )
+      new_line.product_category_complete_name = product_category_complete_name
+      new_line.product_category_reference = product_template.product_category
+      new_line.catalog_pricetag_reference = catalog_pricetag_key
+      new_line.product_instance_reference = product_instance_key
+      if ('unit_price' in product_instance._properties):
+        new_line.unit_price = product_instance.unit_price
+      else:
+        new_line.unit_price = product_template.unit_price
+      new_line.quantity = 1 # decimal formating required
+      new_line.discount = 0.0 # decimal formating required
+      entry.lines.append(new_line)
+
+      
+class ProductSubtotalCalculate:
   
-  def __init__(self, kind, field, writable=None, visible=None, required=None, condition='True'):
+  def run(self, journal, entry):
+    for line in entry.lines:
+      if ('product_instance_reference' in line._properties):
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.debit = 0.0 # decimal formating required
+        line.credit = new_line.discount_subtotal # decimal formating required
+      
     
-    self.kind = kind
-    self.field = field # this must be a field name from ndb.Property(name='this name')
-    self.writable = writable
-    self.visible = visible
-    self.required = required
-    self.condition = condition
     
-  def run(self, role, context):
-    
- 
-    if (self.kind == context.entity.get_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
-      if (self.writable != None):
-        context.entity._rule_field_permissions[self.field]['writable'].append(self.writable)
-      if (self.visible != None):
-        context.entity._rule_field_permissions[self.field]['visible'].append(self.visible)
-      if (self.required != None):
-        context.entity._rule_field_permissions[self.field]['required'].append(self.required)
+class Tax:
+  
+  def __init__(self, name, formula, loacation_exclusion, locations=None, product_categories=None, carrieres=None, address_type=False):
+    self.key = # neki auto generated string
+    self.name = name
+    self.formula = formula
+    self.loacation_exclusion = loacation_exclusion
+    self.locations = locations
+    self.product_categories = product_categories
+    self.carreires = carreires
+    # if address_type=True tax calcualtion is based on billing address, if False, it is based on shipping address
+    self.address_type = address_type
+  
+  def run (self, entry):
+    allowed = validate_tax(self, entry)
+    for line in entry.lines:
+      if (self.carriers):
+        if (self.carriers.count(line.product_instance_reference)):
+          if (self.key in line.tax_references):
+            if not (allowed):
+              line.tax_references.remove(self.key)
+          else:
+            if (allowed):
+              line.tax_references.append(self.key)  
+      if (self.product_categories):
+        if (self.product_categories.count(line.product_category)):
+          if (self.key in line.tax_references):
+            if not (allowed):
+              line.tax_references.remove(self.key)
+          else:
+            if (allowed):
+              line.tax_references.append(self.key)
+  
+  def validate_tax(self, entry):
+    valid_taxes = []
+    allowed = False
+    if (self.address_type):
+      address = entry.billing_address_reference
+    else:
+      address = entry.shipping_address_reference
+    if (self.locations):
+      # Tax everywhere except at the following locations
+      if not (self.loacation_exclusion):
+        allowed = True
+        for loc in self.locations:
+          if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+            if (address.country == loc.country):
+              allowed = False
+              break
+          elif not (loc.postal_code_from and loc.postal_code_to):
+            if (address.country == loc.country and address.region == loc.region):
+              allowed = False
+              break
+          else:
+            if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+              allowed = False
+              break
+      # Tax only at the following locations
+      else:
+        for loc in self.locations:
+          if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+            if (address.country == loc.country):
+              allowed = True
+              break
+          elif not (loc.postal_code_from and loc.postal_code_to):
+            if (address.country == loc.country and address.region == loc.region):
+              allowed = True
+              break
+          else:
+            if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+              allowed = True
+              break
+    else:
+      # u slucaju da taxa nema konfigurisane location exclusions-e onda se odnosi na sve lokacije/onda je to globalna taxa
+      allowed = True
+    if (allowed):
+      # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
+      if (self.carriers):
+        allowed = False
+        if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
+          allowed = True
+      # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
+      elif (self.product_categories):
+        allowed = False
+        for line in entry.lines:
+          if (self.product_categories.count(line.product_category)):
+            allowed = True
+    return allowed
