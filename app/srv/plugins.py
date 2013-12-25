@@ -55,7 +55,7 @@ class CartInit(Base):
     catalog = catalog_key.get()
     company = catalog.company.get()
     company_key = company.key
-    journal_key = journal.get_journal_key(journal.code, namespace=catalog.key.namespace())
+    journal_key = journal.get_key(journal.code, namespace=catalog.key.namespace())
  
     entry = Entry.query(Entry.journal == journal_key, 
                         Entry.company == company_key, Entry.state.IN(['cart', 'checkout', 'processing']),

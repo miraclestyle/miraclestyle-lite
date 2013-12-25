@@ -36,16 +36,16 @@ class Engine:
   @classmethod
   def prepare(cls, context):
     
-    context.entity._rule_property_permissions = {} 
-    context.entity._rule_properties = {}
+    context.entity._rule_field_permissions = {} 
+    context.entity._rule_fields = {}
     context.entity._rule_action_permissions = {} 
     context.entity._rule_actions = {}
     
-    properties = context.entity.get_properties()
+    fields = context.entity.get_fields()
  
-    for prop in properties:
-       context.entity._rule_properties[prop._name] = prop # place also this value for the stuff below?
-       context.entity._rule_property_permissions[prop._name] = {'writable' : [], 'visible' : [], 'required' : []}
+    for field in fields:
+       context.entity._rule_fields[field._name] = field # place also this value for the stuff below?
+       context.entity._rule_field_permissions[field._name] = {'writable' : [], 'visible' : [], 'required' : []}
     
     actions = context.entity.get_actions()
        
@@ -134,7 +134,7 @@ class Engine:
         
     # copy 
     local_action_permissions = context.entity._rule_action_permissions.copy()
-    local_property_permissions = context.entity._rule_property_permissions.copy()
+    local_field_permissions = context.entity._rule_field_permissions.copy()
     
     # empty
     cls.prepare(context)
@@ -145,13 +145,13 @@ class Engine:
     
     # copy   
     global_action_permissions = context.entity._rule_action_permissions.copy()
-    global_property_permissions = context.entity._rule_property_permissions.copy()
+    global_field_permissions = context.entity._rule_field_permissions.copy()
     
     # empty
     cls.prepare(context)
    
     context.entity._rule_action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
-    context.entity._rule_property_permissions = cls.compile(local_property_permissions, global_property_permissions, strict)
+    context.entity._rule_field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
  
 
 class GlobalRole(Role):
@@ -183,13 +183,13 @@ class ActionPermission(Permission):
        context.entity._rule_action_permissions[self.action]['executable'].append(self.executable)
 
 
-class PropertyPermission(Permission):
+class FieldPermission(Permission):
   
   
-  def __init__(self, kind, property, writable=None, visible=None, required=None, condition=None):
+  def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
     
     self.kind = kind
-    self.property = property # this must be a property name from ndb.Property(name='this name')
+    self.field = field # this must be a field name from ndb.Property(name='this name')
     self.writable = writable
     self.visible = visible
     self.required = required
@@ -198,12 +198,12 @@ class PropertyPermission(Permission):
   def run(self, context):
     
  
-    if (self.kind == context.entity.get_kind()) and (self.property in context.entity._rule_properties) and (eval(self.condition)):
+    if (self.kind == context.entity.get_kind()) and (self.field in context.entity._rule_properties) and (eval(self.condition)):
       if (self.writable != None):
-        context.entity._rule_property_permissions[self.property]['writable'].append(self.writable)
+        context.entity._rule_field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
-        context.entity._rule_property_permissions[self.property]['visible'].append(self.visible)
+        context.entity._rule_field_permissions[self.field]['visible'].append(self.visible)
       if (self.required != None):
-        context.entity._rule_property_permissions[self.property]['required'].append(self.required)
+        context.entity._rule_field_permissions[self.field]['required'].append(self.required)
  
           

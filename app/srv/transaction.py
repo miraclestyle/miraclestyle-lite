@@ -7,7 +7,7 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
-from app.core import rule
+from app.srv import rule
  
 class Context:
   
@@ -36,47 +36,18 @@ class Context:
           else:
             # self is passed to the callback, because `self` contains all entries, configurations, and arguments
             callback(self)
-          
-          # etc
- 
-
-################################################################################
-# /domain/transaction.py - ako ce se sve transakcije raditi iz perspektive
-# company, tj. iz perspektive domain-a onda ima smisla da se nadje u /domain/ folderu
-################################################################################
-
-# upiti sa strane usera, ako je na grupi postavljen namespace, ce se resavati odvojenim recordima
-# koji ce cuvati kljuceve na recorde a biti vezani ancestor pathom na usera.
-
-# ima uticaj na class-e: Order, BillingOrder, BillingLog, BillingCreditAdjustment
-# analytical account entry lines should be treated as expense/revenue lines, where debit is expense, credit is revenue, 
-# and no counter entry lines will exist, that is entry will be allowed to remain unbalanced!
-
-# prvo definisati minimalne pasivne modele: category
-# definisati im osnovne funkcije i indexe
-# potom definisati transakcione modele: group, entry, line
-# definisati im osnovne funkcije i indexe
-# nakon toga definisati aktivne kompozitne indexe
-# pregledati order modele i prepraviti ih da rade sa transakcionim modelima
-
-# App Engine clock times are always expressed in coordinated universal time (UTC). 
-# This becomes relevant if you use the current date or time (datetime.datetime.now()) 
-# as a value or convert between datetime objects and POSIX timestamps or time tuples. 
-# However, no explicit time zone information is stored in the Datastore, 
-# so if you are careful you can use these to represent local times in any timezone—if you use the current time or the conversions.
-# https://developers.google.com/appengine/docs/python/ndb/properties#Date_and_Time
-
+            
 __SYSTEM_JOURNALS = []
 
-def get_system_journals(action=None):
+def get_system_journals(context):
     # gets registered system journals
     global __SYSTEM_JOURNALS
     
     returns = []
     
-    if action:
+    if context.action:
       for journal in __SYSTEM_JOURNALS:
-          if action in journal[0]:
+          if context.action in journal[0]:
              returns.append(journal[1])
     else:
       returns = [journal[1] for journal in __SYSTEM_JOURNALS]
@@ -178,16 +149,9 @@ class Category(ndb.BaseExpando):
      'description' : ndb.SuperTextProperty('7'),
      'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
   }
- 
+
   
-class Group(ndb.BaseExpando):
-  
-  KIND_ID = 48  
- 
-  # root (namespace Domain)
-  # verovatno cemo ostaviti da bude expando za svaki slucaj!
-  
-class Journal(ndb.BaseModel):
+class Journal(ndb.BaseExpando):
   
   KIND_ID = 49
   
@@ -203,11 +167,11 @@ class Journal(ndb.BaseModel):
   
   entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
   line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
-  plugin_groups = ndb.SuperStringProperty('9', repeated=True)
+  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
    
   # sequencing counter....
   
-  def get_journal_key(self, *args, **kwargs):
+  def get_key(self, *args, **kwargs):
       if not self.key:
          return self.set_key(*args, **kwargs)
       else:
@@ -217,23 +181,28 @@ class Journal(ndb.BaseModel):
       return 'j_%s' % self.journal.key.id()
   
   def run(self, context):
-    # proverava da li je context instanca Context klase
     rule.Engine.run(context)
-    plugins = Plugin.query(ancestor=self.key, Plugin.active == True, Plugin.subscriptions == context.action).order(Plugin.sequence).fetch()
-    for group in self.plugin_groups:
+    plugins = Plugin.get_local_plugins(self, context)
+    for category in self.plugin_categories:
       for plugin in plugins:
-        if group == plugin.group:
+        if category == plugin.code.category:
             plugin.code.run(self, context)
   
   @classmethod
-  def get_journals_by_context(cls, context):
+  def get_local_journals(cls, context):
        
-      query_journals = Journal.query(
-                               Journal.active == True, 
-                               Journal.company == context.args.get('company'), 
-                               Journal.subscriptions == context.action).order(Journal.sequence).fetch()
+      journals = cls.query(cls.active == True, 
+                           cls.company == context.args.get('company'), 
+                           cls.subscriptions == context.action).order(cls.sequence).fetch()
          
-      return query_journals
+      return journals
+     
+class Group(ndb.BaseExpando):
+  
+  KIND_ID = 48  
+ 
+  # root (namespace Domain)
+  # verovatno cemo ostaviti da bude expando za svaki slucaj!
   
   
 class Entry(ndb.BaseExpando):
@@ -262,22 +231,17 @@ class Entry(ndb.BaseExpando):
   # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
   # expando indexi se programski ukljucuju ili gase po potrebi
  
-
-  EXPANDO_FIELDS = {
-     'party' : ndb.SuperKeyProperty('8'),
-  }
- 
   def get_actions(self):
       return {}
   
   def get_kind(self):
       return 'e_%s' % self.journal.key.id()
     
-  def get_properties(self):
-      properties = super(Entry, self).get_properties()
+  def get_fields(self):
+      fields = super(Entry, self).get_fields()
       journal = self.journal.get()
-      properties.extend(journal.entry_fields)
-      return properties
+      fields.extend(journal.entry_fields)
+      return fields
           
   
 class Line(ndb.BaseExpando):
@@ -313,15 +277,15 @@ class Line(ndb.BaseExpando):
   def get_kind(self):
       return 'l_%s' % self.journal.key.id()
   
-  def get_properties(self):
-      properties = super(Line, self).get_properties()
+  def get_fields(self):
+      fields = super(Line, self).get_fields()
       journal = self.journal.get()
-      properties.extend(journal.line_fields)
-      return properties
+      fields.extend(journal.line_fields)
+      return fields
           
 
  
-class Plugin(ndb.BaseModel):
+class Plugin(ndb.BaseExpando):
   
   KIND_ID = 52
   
@@ -332,6 +296,13 @@ class Plugin(ndb.BaseModel):
   subscriptions = ndb.SuperStringProperty('3', repeated=True)
   code = ndb.SuperPickleProperty('4', required=True, compressed=False) # ovde ce se cuvati instanca plugin.py (Neke base klase)
 
+  @classmethod
+  def get_local_plugins(cls, journal, context):
+      plugins = cls.query(ancestor=journal.key, 
+                          cls.active == True, 
+                          cls.subscriptions == context.action
+                         ).order(cls.sequence).fetch()
+      return plugins
 
 class Engine:
  
@@ -340,7 +311,7 @@ class Engine:
     
       if isinstance(context, Context):
         
-        journals = get_system_journals(context.action)
+        journals = get_system_journals(context)
         journals.extend(Journal.get_journals_by_context(context))
         
         for journal in journals:
@@ -350,12 +321,10 @@ class Engine:
         # `operation` param in Context class determines which callback of the `Engine` class will be called
         call = getattr(cls, context.operation)
         
-        result = call(context)
+        call(context)
         
         context.do_callbacks()
-        
-        return result
-    
+ 
   @classmethod
   @ndb.transactional(xg=True)
   def transaction(cls, context):
@@ -384,7 +353,6 @@ class Engine:
             line.date = entry.date
             line.set_key(parent=entry_key) # parent key for line
             line.put()
-             
-    return context
+ 
             
   
