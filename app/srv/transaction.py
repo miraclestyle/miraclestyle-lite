@@ -107,7 +107,7 @@ class UOM(ndb.BaseExpando):
     }
 
 # done!
-class CategoryBalance(ndb.BaseModel):
+class CategoryBalance(ndb.BaseExpando):
   # LocalStructuredProperty model
   # ovaj model dozvoljava da se radi feedback trending per month per year
   # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
