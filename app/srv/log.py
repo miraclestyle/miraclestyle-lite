@@ -44,13 +44,13 @@ class Engine:
       records = []
       
       for entity, kwargs in context.log_entities:
-        log_object = kwargs.pop('log_object', True)
+        log_entity = kwargs.pop('log_entity', True)
         record = Record(parent=entity.key, agent=context.user.key, action=context.action, **kwargs)
-        if log_object is True:
-           log_object = entity
+        if log_entity is True:
+           log_entity = entity
            
-        if log_object:
-           record.log_entity(log_object)
+        if log_entity:
+           record.log_entity(log_entity)
         records.append(record)
       
       if len(records):
