@@ -1,9 +1,65 @@
 
-
 ################################################################################
 # /domain/plugins.py
 ################################################################################
+company_address_country = company.country.get()
+company_address_region = company.region.get()
+company_address_reference = company
+company_address = transaction.Address(
+                                  name=company.name, 
+                                  country=company_address_country.name, 
+                                  country_code=company_address_country.code, 
+                                  region=company_address_region.name, 
+                                  region_code=company_address_region.code, 
+                                  city=company.city, 
+                                  postal_code=company.postal_code, 
+                                  street_address=company.street_address, 
+                                  street_address2=company.street_address2, 
+                                  email=company.email, 
+                                  telephone=company.telephone
+                                  )
 
+class PayPalPayment:
+  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
+  
+  def __init__(self, currency, receiver_email, business):
+    self.currency = currency # uom instanca currency vrednosti
+    self.receiver_email = receiver_email
+    """ receiver_email = Primary email address of the payment recipient (that is, the merchant). If 
+    the payment is sent to a non-primary email address on your PayPal 
+    account, the receiver_email is still your primary email.
+    NOTE: The value of this variable is normalized to lowercase characters.
+    Length: 127 characters"""
+    self.business = business
+    """ business = Email address or account ID of the payment recipient (that is, the
+    merchant). Equivalent to the values of receiver_email (if payment is
+    sent to primary account) and business set in the Website Payment HTML.
+    NOTE:
+    The value of this variable is normalized to lowercase characters.
+    Length: 127 characters"""
+  
+  def run(self, journal, context):
+    # u contextu add_to_cart akcije ova funkcija radi sledece:
+    entry.currency = transaction.UOM(
+                             measurement=self.currency.measurement, 
+                             name=self.currency.name, 
+                             symbol=self.currency.symbol, 
+                             rounding=self.currency.rounding, 
+                             digits=self.currency.digits,
+                             code=self.currency.code,
+                             numeric_code=self.currency.numeric_code,
+                             grouping=self.currency.grouping,
+                             decimal_separator=self.currency.decimal_separator,
+                             thousands_separator=self.currency.thousands_separator,
+                             positive_sign_position=self.currency.positive_sign_position,
+                             negative_sign_position=self.currency.negative_sign_position,
+                             positive_sign=self.currency.positive_sign,
+                             negative_sign=self.currency.negative_sign,
+                             positive_currency_symbol_precedes=self.currency.positive_currency_symbol_precedes
+                             negative_currency_symbol_precedes=self.currency.negative_currency_symbol_precedes
+                             positive_separate_by_space=self.currency.positive_separate_by_space
+                             negative_separate_by_space=self.currency.negative_separate_by_space
+                             )
 
 class Transition:
   
@@ -29,233 +85,6 @@ class Transition:
     # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
     # entry.line-a sa vrednostima u condition-u
 
-class Location:
-  
-  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
-    self.country = country
-    self.region = region
-    self.postal_code_from = postal_code_from
-    self.postal_code_to = postal_code_to
-    self.city = city    
-
-class CartInit:
-  
-  def run(journal, context):
-    # ucitaj postojeci entry na kojem ce se raditi write
-    catalog = catalog_key.get()
-    company = catalog.company.get()
-    entry = Entry.query(Entry.journal == ndb.Key('Journal', 'order'), 
-                        Entry.company == company, Entry.state.IN(['cart', 'checkout', 'processing']),
-                        Entry.party == user_key
-                        ).get()
-    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
-    if not (entry):
-      entry = Entry()
-      entry.journal = ndb.Key('Journal', 'order')
-      entry.company = company
-      entry.state = 'cart'
-      entry.date = datetime.datetime.today()
-      entry.party = user_key
-    # proveravamo da li je entry u state-u 'cart'
-    if (entry.state != 'cart'):
-      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
-      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
-      return 'ABORT'
-    else:
-      return entry
-
-      
-class AddressRule:
-  
-  def __init__(self, exclusion, address_type, locations, allowed_states=None):
-    self.exclusion = exclusion
-    self.address_type = address_type
-    self.locations = locations
-    self.allowed_states = allowed_states
-  
-  def run(self, entry):
-    buyer_addresses = []
-    valid_addresses = []
-    default_address = None
-    p = entry._properties
-    if (self.address_type == 'billing'):
-      if (p['billing_address_reference']):
-        buyer_addresses.append(entry.billing_address_reference.get())
-      else:
-        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
-      for buyer_address in buyer_addresses:
-        if (validate_address(self, buyer_address)):
-          valid_addresses.append(buyer_address)
-          if (buyer_address.default_billing):
-            default_address = buyer_address
-      
-      if not (default_address) and (valid_addresses):
-        default_address = valid_addresses[0]
-      if (default_address):
-        if (p['billing_address_reference']):
-          entry.billing_address_reference = default_address.key
-        if (p['billing_address']):
-          address = default_address
-          address_country = default_address.country.get()
-          address_region = default_address.region.get()
-          entry.billing_address = OrderAddress(
-                                    name=address.name, 
-                                    country=address_country.name, 
-                                    country_code=address_country.code, 
-                                    region=address_region.name, 
-                                    region_code=address_region.code, 
-                                    city=address.city, 
-                                    postal_code=address.postal_code, 
-                                    street_address=address.street_address, 
-                                    street_address2=address.street_address2, 
-                                    email=address.email, 
-                                    telephone=address.telephone
-                                    )
-        return entry
-      else:
-        return 'ABORT'
-    elif (self.address_type == 'shipping'):
-      if (p['shipping_address_reference']):
-        buyer_addresses.append(entry.shipping_address_reference.get())
-      else:
-        buyer_addresses = buyer.Address.query(ancestor=user_key).fetch()
-      for buyer_address in buyer_addresses:
-        if (validate_address(self, buyer_address)):
-          valid_addresses.append(buyer_address)
-          if (buyer_address.default_shipping):
-            default_address = buyer_address
-      if not (default_address) and (valid_addresses):
-        default_address = valid_addresses[0]
-      if (default_address):
-        if (p['shipping_address_reference']):
-          entry.shipping_address_reference = default_address.key
-        if (p['shipping_address']):
-          address = default_address
-          address_country = default_address.country.get()
-          address_region = default_address.region.get()
-          entry.shipping_address = OrderAddress(
-                                     name=address.name, 
-                                     country=address_country.name, 
-                                     country_code=address_country.code, 
-                                     region=address_region.name, 
-                                     region_code=address_region.code, 
-                                     city=address.city, 
-                                     postal_code=address.postal_code, 
-                                     street_address=address.street_address, 
-                                     street_address2=address.street_address2, 
-                                     email=address.email, 
-                                     telephone=address.telephone
-                                     )
-        return entry
-      else:
-        return 'ABORT'
-  
-  def validate_address(rule, address):
-    allowed = False
-    # Shipping everywhere except at the following locations
-    if not (rule.exclusion):
-      allowed = True
-      for loc in rule.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      for loc in rule.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
-            allowed = True
-            break
-    return allowed
-
-
-  
-class ProductToLine:
-    
-  def run(self, journal, entry, catalog_pricetag_key, product_template_key, product_instance_key, variant_signature, custom_variants):
-    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
-    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
-    line_exists = False
-    for line in entry.lines:
-      if ('catalog_pricetag_reference' in line._properties
-          and catalog_pricetag_key == line.catalog_pricetag_reference
-          and 'product_instance_reference' in line._properties
-          and product_instance_key == line.product_instance_reference):
-        line.quantity = line.quantity + 1 # decmail formating required
-        line_exists = True
-        break
-    if not (line_exists):
-      product_template = product_template_key.get()
-      product_instance = product_instance_key.get()
-      product_category = product_template.product_category.get()
-      product_category_complete_name = product_category.complete_name
-      product_uom = product_template.product_uom.get()
-      product_uom_category = product_uom.key.parent().get()
-      
-      new_line = Line()
-      new_line.sequence = entry.lines[-1].sequence + 1
-      new_line.categories.append('Sales Account') # ovde ide ndb.Key('Category', 'key')
-      new_line.description = product_template.name
-      if ('product_instance_count' in product_template._properties and product_template.product_instance_count > 1000):
-        new_line.description # += '\n' + variant_signature
-      else:
-        if (custom_variants):
-          new_line.description # += '\n' + variant_signature
-      new_line.uom = UOM(
-                             category=uom_category.name, 
-                             name=uom.name, 
-                             symbol=uom.symbol, 
-                             rounding=uom.rounding, 
-                             digits=uom.digits
-                             ) # currency uom!!
-      new_line.product_uom = UOM(
-                                     category=product_uom_category.name, 
-                                     name=product_uom.name, 
-                                     symbol=product_uom.symbol, 
-                                     rounding=product_uom.rounding, 
-                                     digits=product_uom.digits
-                                     )
-      new_line.product_category_complete_name = product_category_complete_name
-      new_line.product_category_reference = product_template.product_category
-      new_line.catalog_pricetag_reference = catalog_pricetag_key
-      new_line.product_instance_reference = product_instance_key
-      if ('unit_price' in product_instance._properties):
-        new_line.unit_price = product_instance.unit_price
-      else:
-        new_line.unit_price = product_template.unit_price
-      new_line.quantity = 1 # decimal formating required
-      new_line.discount = 0.0 # decimal formating required
-      entry.lines.append(new_line)
-
-      
-class ProductSubtotalCalculate:
-  
-  def run(self, journal, entry):
-    for line in entry.lines:
-      if ('product_instance_reference' in line._properties):
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = 0.0 # decimal formating required
-        line.credit = new_line.discount_subtotal # decimal formating required
-      
-    
     
 class Tax:
   
