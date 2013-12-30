@@ -185,8 +185,8 @@ class Journal(ndb.BaseExpando):
     plugins = Plugin.get_local_plugins(self, context)
     for category in self.plugin_categories:
       for plugin in plugins:
-        if category == plugin.code.category:
-            plugin.code.run(self, context)
+        if category == plugin.__class__.__name__:
+            plugin.run(self, context)
   
   @classmethod
   def get_local_journals(cls, context):
@@ -294,13 +294,14 @@ class Plugin(ndb.BasePolyExpando):
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
   subscriptions = ndb.SuperStringProperty('3', repeated=True)
-  code = ndb.SuperPickleProperty('4', required=True, compressed=False) # ovde ce se cuvati instanca plugin.py (Neke base klase)
+  company = ndb.SuperKeyProperty('4', kind='app.domain.business.Company', required=True)
 
   @classmethod
   def get_local_plugins(cls, journal, context):
       plugins = cls.query(ancestor=journal.key, 
                           cls.active == True, 
-                          cls.subscriptions == context.action
+                          cls.subscriptions == context.action,
+                          cls.company == context.args.get('company')
                          ).order(cls.sequence).fetch()
       return plugins
 
