@@ -1,65 +1,26 @@
-
 ################################################################################
 # /domain/plugins.py
 ################################################################################
-company_address_country = company.country.get()
-company_address_region = company.region.get()
-company_address_reference = company
-company_address = transaction.Address(
-                                  name=company.name, 
-                                  country=company_address_country.name, 
-                                  country_code=company_address_country.code, 
-                                  region=company_address_region.name, 
-                                  region_code=company_address_region.code, 
-                                  city=company.city, 
-                                  postal_code=company.postal_code, 
-                                  street_address=company.street_address, 
-                                  street_address2=company.street_address2, 
-                                  email=company.email, 
-                                  telephone=company.telephone
-                                  )
 
-class PayPalPayment:
-  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
-  
-  def __init__(self, currency, receiver_email, business):
-    self.currency = currency # uom instanca currency vrednosti
-    self.receiver_email = receiver_email
-    """ receiver_email = Primary email address of the payment recipient (that is, the merchant). If 
-    the payment is sent to a non-primary email address on your PayPal 
-    account, the receiver_email is still your primary email.
-    NOTE: The value of this variable is normalized to lowercase characters.
-    Length: 127 characters"""
-    self.business = business
-    """ business = Email address or account ID of the payment recipient (that is, the
-    merchant). Equivalent to the values of receiver_email (if payment is
-    sent to primary account) and business set in the Website Payment HTML.
-    NOTE:
-    The value of this variable is normalized to lowercase characters.
-    Length: 127 characters"""
+class OrderTotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
-    # u contextu add_to_cart akcije ova funkcija radi sledece:
-    entry.currency = transaction.UOM(
-                             measurement=self.currency.measurement, 
-                             name=self.currency.name, 
-                             symbol=self.currency.symbol, 
-                             rounding=self.currency.rounding, 
-                             digits=self.currency.digits,
-                             code=self.currency.code,
-                             numeric_code=self.currency.numeric_code,
-                             grouping=self.currency.grouping,
-                             decimal_separator=self.currency.decimal_separator,
-                             thousands_separator=self.currency.thousands_separator,
-                             positive_sign_position=self.currency.positive_sign_position,
-                             negative_sign_position=self.currency.negative_sign_position,
-                             positive_sign=self.currency.positive_sign,
-                             negative_sign=self.currency.negative_sign,
-                             positive_currency_symbol_precedes=self.currency.positive_currency_symbol_precedes
-                             negative_currency_symbol_precedes=self.currency.negative_currency_symbol_precedes
-                             positive_separate_by_space=self.currency.positive_separate_by_space
-                             negative_separate_by_space=self.currency.negative_separate_by_space
-                             )
+    
+    entry = context.entries[journal.code]
+    
+    untaxed_amount = util.decimal_format('0', entry.currency) # decimal formating required
+    tax_amount = util.decimal_format('0', entry.currency) # decimal formating required
+    total_amount = util.decimal_format('0', entry.currency) # decimal formating required
+    
+    for line in entry._lines:
+      if hasattr(line, 'product_instance_reference'):
+        untaxed_amount += line.subtotal
+        tax_amount += line.tax_subtotal
+        total_amount += line.subtotal + line.tax_subtotal
+    
+    entry.untaxed_amount = untaxed_amount
+    entry.tax_amount = tax_amount
+    entry.total_amount = total_amount
 
 class Transition:
   
