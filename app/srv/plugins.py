@@ -260,7 +260,7 @@ class ProductToLine(transaction.Plugin):
       new_line.product_category_reference = product_template.product_category
       new_line.catalog_pricetag_reference = catalog_pricetag_key
       new_line.product_instance_reference = product_instance_key
-      if ('unit_price' in product_instance._properties):
+      if hasattr(product_instance, 'unit_price'):
         new_line.unit_price = product_instance.unit_price
       else:
         new_line.unit_price = product_template.unit_price
