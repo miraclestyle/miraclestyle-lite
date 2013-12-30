@@ -222,9 +222,13 @@ class ProductToLine(transaction.Plugin):
       product_instance = product_instance_key.get()
       product_category = product_template.product_category.get()
       product_category_complete_name = product_category.complete_name
+      
       currency = entry.currency
+      currency_category = currency.key.parent().get()
+      
       product_uom = product_template.product_uom.get()
       product_uom_category = product_uom.key.parent().get()
+      
       
       new_line = transaction.Line()
       new_line.sequence = entry._lines[-1].sequence + 1
@@ -237,7 +241,7 @@ class ProductToLine(transaction.Plugin):
           new_line.description += '\n %s' % variant_signature
           
       new_line.uom = transaction.UOM(
-                             category=currency.name, 
+                             measurement=currency_category.name, 
                              name=currency.name, 
                              symbol=currency.symbol, 
                              rounding=currency.rounding, 
@@ -245,7 +249,7 @@ class ProductToLine(transaction.Plugin):
                              ) # currency uom!!
       
       new_line.product_uom = transaction.UOM(
-                                     category=product_uom_category.name, 
+                                     measurement=product_uom_category.name, 
                                      name=product_uom.name, 
                                      symbol=product_uom.symbol, 
                                      rounding=product_uom.rounding, 
