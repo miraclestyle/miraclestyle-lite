@@ -290,3 +290,21 @@ class ProductSubtotalCalculate(transaction.Plugin):
         line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
         line.debit = util.decimal_format('0', line.uom) # decimal formating required
         line.credit = line.discount_subtotal # decimal formating required
+        
+        
+class PayPalPayment(transaction.Plugin):
+  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
+  
+  currency = ndb.SuperLocalStructuredProperty(transaction.UOM, '5')
+  reciever_email = ndb.SuperStringProperty('6')
+  business = ndb.SuperStringProperty('7')
+  
+  def run(self, journal, context):
+    # u contextu add_to_cart akcije ova funkcija radi sledece:
+    
+    entry = context.entries[journal.code]
+    
+    kwds = dict([(prop._code_name, prop._get_value(self)) for prop_name, prop in self._properties])
+    
+    entry.currency = transaction.UOM(**kwds)
+
