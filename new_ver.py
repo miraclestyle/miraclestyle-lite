@@ -1,8 +1,23 @@
 
-
 ################################################################################
 # /domain/plugins.py
 ################################################################################
+company_address_country = company.country.get()
+company_address_region = company.region.get()
+company_address_reference = company
+company_address = transaction.Address(
+                                  name=company.name, 
+                                  country=company_address_country.name, 
+                                  country_code=company_address_country.code, 
+                                  region=company_address_region.name, 
+                                  region_code=company_address_region.code, 
+                                  city=company.city, 
+                                  postal_code=company.postal_code, 
+                                  street_address=company.street_address, 
+                                  street_address2=company.street_address2, 
+                                  email=company.email, 
+                                  telephone=company.telephone
+                                  )
 
 class PayPalPayment:
   # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
