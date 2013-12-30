@@ -1,8 +1,50 @@
 
+
 ################################################################################
 # /domain/plugins.py
 ################################################################################
 
+class PayPalPayment:
+  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
+  
+  def __init__(self, currency, receiver_email, business):
+    self.currency = currency # uom instanca currency vrednosti
+    self.receiver_email = receiver_email
+    """ receiver_email = Primary email address of the payment recipient (that is, the merchant). If 
+    the payment is sent to a non-primary email address on your PayPal 
+    account, the receiver_email is still your primary email.
+    NOTE: The value of this variable is normalized to lowercase characters.
+    Length: 127 characters"""
+    self.business = business
+    """ business = Email address or account ID of the payment recipient (that is, the
+    merchant). Equivalent to the values of receiver_email (if payment is
+    sent to primary account) and business set in the Website Payment HTML.
+    NOTE:
+    The value of this variable is normalized to lowercase characters.
+    Length: 127 characters"""
+  
+  def run(self, journal, context):
+    # u contextu add_to_cart akcije ova funkcija radi sledece:
+    entry.currency = transaction.UOM(
+                             measurement=self.currency.measurement, 
+                             name=self.currency.name, 
+                             symbol=self.currency.symbol, 
+                             rounding=self.currency.rounding, 
+                             digits=self.currency.digits,
+                             code=self.currency.code,
+                             numeric_code=self.currency.numeric_code,
+                             grouping=self.currency.grouping,
+                             decimal_separator=self.currency.decimal_separator,
+                             thousands_separator=self.currency.thousands_separator,
+                             positive_sign_position=self.currency.positive_sign_position,
+                             negative_sign_position=self.currency.negative_sign_position,
+                             positive_sign=self.currency.positive_sign,
+                             negative_sign=self.currency.negative_sign,
+                             positive_currency_symbol_precedes=self.currency.positive_currency_symbol_precedes
+                             negative_currency_symbol_precedes=self.currency.negative_currency_symbol_precedes
+                             positive_separate_by_space=self.currency.positive_separate_by_space
+                             negative_separate_by_space=self.currency.negative_separate_by_space
+                             )
 
 class Transition:
   
@@ -27,7 +69,8 @@ class Transition:
   def validate_condition(self, journal, entry):
     # ovde se self.condition mora extract u python formulu koja ce da uporedi neku vrednost iz entry-ja ili
     # entry.line-a sa vrednostima u condition-u
-      
+
+    
 class Tax:
   
   def __init__(self, name, formula, loacation_exclusion, locations=None, product_categories=None, carrieres=None, address_type=False):
