@@ -14,6 +14,8 @@ from google.appengine.ext import blobstore
 
 from google.appengine.ext.ndb import *
  
+from google.appengine.ext.ndb import polymodel 
+ 
 from app import pyson, util, memcache
  
 ctx = get_context()
@@ -257,18 +259,9 @@ def compile_public_permissions(*args):
 
 def compile_admin_permissions(*args):
     return compile_permissions('admin', *args)
+   
+class _BaseModel():
   
-  
-class _BaseModel(Model):
- 
-  __tmp = {} #-- this property is used to store all values that will live inside one entity instance.
- 
-  def __init__(self, *args, **kwds):
-      self.__tmp = {}
-      self.register_tmp('original_values', {})
-      
-      super(_BaseModel, self).__init__(*args, **kwds)
-      
   @classmethod
   def build_key(cls, *args, **kwargs):
       new_args = [cls._get_kind()]
@@ -297,27 +290,6 @@ class _BaseModel(Model):
          
       return dic
    
-   
-  def set_tmp(self, k, v):
-      if k not in self.__tmp:
-         raise Exception('%s key was not registered inside temp' % k)
-      else:
-        self.__tmp[k] = v
- 
-  def register_tmp(self, k, v=None):
-      """
-         Registers a variable by key
-      """
-      if k not in self.__tmp:
-         if v is None:
-             return None
-         else:
-             self.__tmp[k] = v
-        
-         
-      return self.__tmp[k]
- 
-  
   def loaded(self):
       return self.key != None and self.key.id()
   
@@ -334,7 +306,7 @@ class _BaseModel(Model):
       
       use_get = kwds.pop('use_get', True)
       get_only = kwds.pop('get_only', False)
-      expect = kwds.pop('only', cls.get_property_names() + ['id'])
+      expect = kwds.pop('only', [prop._code_name for prop in cls.get_fields()] + ['id'])
       skip = kwds.pop('skip', None)
       ctx_options = kwds.pop('ctx_options', {})
       populate = kwds.pop('populate', True)
@@ -404,13 +376,15 @@ class _BaseModel(Model):
          check = pyson.PYSONDecoder(environ).decode(encoded)
          if not check:
             # if the evaluation is not true, set the original values because new value is not allowed to be set
-            prop._set_value(self, self.register_tmp('original_values').get(prop._name))
+            if not hasattr(self, '_original_values'):
+               self._original_values = {}
+            prop._set_value(self, self._original_values.get(prop._name))
     
   def set_original_values(self):
       pack = dict()
       for p in self._properties:
           pack[p] = self._properties[p]._get_value(self)
-      self.set_tmp('original_values', pack)
+      self._original_values = pack
       
   def get_kind(self):
       return self._get_kind()
@@ -431,12 +405,9 @@ class _BaseModel(Model):
   @classmethod
   def get_actions(cls):
       return {}
- 
-  def get_fields(self):
-      return self.get_all_properties()
-
+  
   @classmethod
-  def get_all_properties(cls):
+  def get_fields(cls):
       out = []
       for prop_key,prop in cls._properties.items():
           out.append(prop)
@@ -447,14 +418,6 @@ class _BaseModel(Model):
              for prop_key,prop in expandos.items():
                  out.append(prop)
       return out
-  
-  @classmethod
-  def get_mapped_properties(cls):
-      return dict([(prop._code_name, prop) for prop in cls.get_all_properties()])
- 
-  @classmethod
-  def get_property_names(cls):
-      return [prop._code_name for prop in cls.get_all_properties()]
  
   @classmethod
   def create(cls, values, **kwargs):
@@ -469,31 +432,70 @@ class _BaseModel(Model):
            response = Response()
            return response.not_implemented()
         return cls.manage(False, values, **kwargs)
+
  
-class BaseModel(_BaseModel):
-    """
-      Base class for all `ndb.Model` entities
-    """
+class BaseModel(_BaseModel, Model):
+    """ Base class for all `ndb.Model` entities """
+      
     @classmethod
     def _from_pb(cls, *args, **kwargs):
         """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(_BaseModel, cls)._from_pb(*args, **kwargs)
+        entity = super(BaseModel, cls)._from_pb(*args, **kwargs)
         entity.set_original_values()
         return entity
+      
+      
+class BasePoly(_BaseModel, polymodel.PolyModel):
+  
+   @classmethod
+   def _from_pb(cls, *args, **kwargs):
+        """ Allows for model to get original values who get loaded from the protocol buffer  """
+        entity = super(BasePoly, cls)._from_pb(*args, **kwargs)
+        entity.set_original_values()
+        return entity
+      
+   @classmethod
+   def _get_hierarchy(cls):
+      """Internal helper to return the list of polymorphic base classes.
+  
+      This returns a list of class objects, e.g. [Animal, Feline, Cat].
+      """
+      bases = []
+      for base in cls.mro():  # pragma: no branch
+        if hasattr(base, '_get_hierarchy') and base.__name__ not in ('BasePoly', 'BasePolyExpando'):
+          bases.append(base)
+      del bases[-1]  # Delete PolyModel itself
+      bases.reverse()
+      print bases
+      return bases   
+ 
+   @classmethod
+   def _get_kind(cls):
+      if hasattr(cls, 'KIND_ID'):
+        if cls.KIND_ID < 0:
+          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__))
+        return str(cls.KIND_ID)
+      return cls.__name__
+  
+   @classmethod
+   def _class_name(cls):
+      if hasattr(cls, 'KIND_ID'):
+        if cls.KIND_ID < 0:
+          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__))
+        return str(cls.KIND_ID)
+      return cls.__name__
  
   
 class BaseExpando(_BaseModel, Expando):
-    """
-     Base class for all `ndb.Expando` entities
-    """
-  
+    """ Base class for all `ndb.Expando` entities """
+ 
     @classmethod
     def _from_pb(cls, *args, **kwargs):
         """ Allows for model to get original values who get loaded from the protocol buffer  """
         entity = super(BaseExpando, cls)._from_pb(*args, **kwargs)
         entity.set_original_values()
         return entity
-  
+ 
     @classmethod
     def has_expando_fields(cls):
         if hasattr(cls, 'EXPANDO_FIELDS'):
@@ -564,6 +566,15 @@ class BaseExpando(_BaseModel, Expando):
         if prop is None:
           prop = self._fake_property(p, next, indexed)
         return prop
+      
+class BasePolyExpando(BasePoly, BaseExpando):
+
+    @classmethod
+    def _from_pb(cls, *args, **kwargs):
+        """ Allows for model to get original values who get loaded from the protocol buffer  """
+        entity = super(BasePolyExpando, cls)._from_pb(*args, **kwargs)
+        entity.set_original_values()
+        return entity
 
 class _BaseProperty(object):
     
@@ -640,18 +651,7 @@ class SuperDecimalProperty(SuperStringProperty):
     
     def _from_base_type(self, value):
         return decimal.Decimal(value)  # Always return a decimal
-    
-    """
-
-    def _db_set_value(self, v, unused_p, value):
-        value = str(value)
-        return super(SuperDecimalProperty, self)._db_set_value(v, unused_p, value)
-    
-    def _db_get_value(self, v, unused_p):
-        return decimal.Decimal(v.stringvalue())
-        
-    """    
- 
+  
       
 class SuperReferenceProperty(SuperKeyProperty):
     
@@ -677,59 +677,7 @@ class SuperImageGCSProperty(SuperJsonProperty):
         return value.key
     
     def _from_base_type(self, value):
-        return value.get()
-    
-     
-class SuperRelationProperty(dict):
-    
-    """ 
-      !!This property is not yet tested and yet to be decided whether should be used anyway!
- 
-      This is a fake property that will `not` be stored in datastore,
-       it only represents on what one model can depend. Like so
-       
-       class UserChildEntity(ndb.BaseModel):
-             user = ndb.SuperRelationProperty(User)
-             name = ndb.StringProperty(required=True, writable=Eval('user.state') != 'active')
-             
-       foo = UserChildEntity(name='Edward', user=ndb.Key('User', 'foo').get())
-       foo.save()     
-       
-       The `Eval` will evaluate: self.user.state != 'active' and therefore the property
-       will validate itself to be read only
-       
-       This property only accepts model that needs validation, otherwise it will accept any value provided
-    """
-    
-    def __get__(self, entity):
-        """Descriptor protocol: get the value on the entity."""
-        return self.model
-        
-    def __set__(self, entity, value):
-        """Descriptor protocol: set the value on the entity."""
-        if self.model_type:
-           if not isinstance(value, self.model_type):
-              raise TypeError('Expected %s, got %s' % (repr(self.model_type), repr(value)))
-        self.model = value
-    
-    def __init__(self, model=None):
-        self.model_type = model
-    
-    def __getitem__(self, item):
-       return getattr(self.model, item)
-        
-    def __getattr__(self, item):
-       try:
-          return self.__getitem__(item)
-       except KeyError, exception:
-          raise AttributeError(*exception.args)
-        
-    def get(self, item, default=None):
-       try:
-          return self.__getitem__(item)
-       except Exception:
-          pass
-       return super(SuperRelationProperty, self).get(item, default)     
+        return value.get()     
  
 # Workflow error exceptions 
 class WorkflowTransitionError(Exception):
@@ -863,7 +811,8 @@ class Workflow():
            - set agent as current user if not provided
            - log `self` object if its not provided otherwise (log_object=False)
           """
-          self.register_tmp('record_actions', [])
+          if not hasattr(self, '_record_actions'):
+             self._record_actions = []
           
           if state is not None: # if state is unchanged, no checks for transition needed?
               self.check_transition(state, action)
@@ -893,15 +842,15 @@ class Workflow():
               
           if obj:
              objlog.log_object(obj)
-          
-          self.register_tmp('record_actions').append(objlog)
+  
+          self._record_actions.append(objlog)
  
           return objlog
       
       
       def record_action(self, skip_check=False):
           # records any actions that are stored by `new_action`
-          records = self.register_tmp('record_actions')
+          records = self._record_actions
           if records is None:
              return list()
          
@@ -911,7 +860,7 @@ class Workflow():
           
           if any_actions:
              recorded = put_multi(records)
-             self.set_tmp('record_actions', [])
+             self._record_actions = []
              return recorded
           else:
              return list()
@@ -1053,7 +1002,7 @@ class Response(dict):
         convert = kwargs.pop('convert', None)
         create = kwargs.pop('create', True)
         prefix = kwargs.pop('prefix', '')
-        fields = obj.get_mapped_properties()
+        fields = dict([(prop._code_name, prop) for prop in obj.get_fields()])
     
         if convert:
            for i in convert:
@@ -1074,9 +1023,7 @@ class Response(dict):
                                util.logger(e, 'exception')
                                self.invalid('%s%s' % (prefix, name))
                   continue  
- 
- 
-        
+  
         for k,v in fields.items():
             
             if skip and k in skip:
@@ -1349,7 +1296,6 @@ class BlobManager():
                 
                 del blob
                   
-            return out 
+            return out
         
         return operation(field_storages)
-        

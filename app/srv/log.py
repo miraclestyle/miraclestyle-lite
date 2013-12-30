@@ -39,7 +39,7 @@ class Engine:
   
   def run(self, context):
     
-    if hasattr(context, 'log_entities'):
+    if len(context.log_entities):
       
       records = []
       

@@ -17,6 +17,7 @@ class Context:
       self.group = None
       self.entries = collections.OrderedDict()
       self.user = ndb.get_current_user()
+      self.log_entities = []
       
       for k,v in kwargs.items():
           setattr(k, v)
@@ -181,7 +182,6 @@ class Journal(ndb.BaseExpando):
       return 'j_%s' % self.journal.key.id()
   
   def run(self, context):
-    rule.Engine.run(context)
     plugins = Plugin.get_local_plugins(self, context)
     for category in self.plugin_categories:
       for plugin in plugins:
@@ -285,7 +285,7 @@ class Line(ndb.BaseExpando):
           
 
  
-class Plugin(ndb.BaseExpando):
+class Plugin(ndb.BasePolyExpando):
   
   KIND_ID = 52
   

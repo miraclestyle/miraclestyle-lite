@@ -9,6 +9,8 @@ import datetime
 from app.srv import transaction
 from app.srv import rule
 
+from app.core import buyer
+
 Entry = transaction.Entry
 Journal = transaction.Journal
 Context = transaction.Context
@@ -42,6 +44,108 @@ class Base:
   'Base class for plugins'
   
   category = ''
+  
+  
+class Location:
+  
+  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
+    self.country = country
+    self.region = region
+    self.postal_code_from = postal_code_from
+    self.postal_code_to = postal_code_to
+    self.city = city
+    
+
+
+class AddressRule:
+  
+  def __init__(self, exclusion, address_type, locations, allowed_states=None):
+    self.exclusion = exclusion
+    self.address_type = address_type
+    self.locations = locations
+    self.allowed_states = allowed_states
+  
+  def run(self, entry):
+    buyer_addresses = []
+    valid_addresses = []
+    default_address = None
+    address_reference_key = '%s_address_reference' % self.address_type
+    address_key = '%s_address' % self.address_type
+    address = getattr(entry, address_key, None)
+    address_reference = getattr(entry, address_reference_key, None)
+ 
+    if address_reference is not None:
+      buyer_addresses.append(address_reference.get())
+    else:
+      buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
+      
+    for buyer_address in buyer_addresses:
+      if self.validate_address(buyer_address):
+         valid_addresses.append(buyer_address)
+         if getattr(buyer_address, 'default_%s' % self.address_type):
+             default_address = buyer_address
+    
+    if not default_address and valid_addresses:
+      default_address = valid_addresses[0]
+    if default_address:
+      if address_reference:
+        setattr(entry, address_reference_key, default_address.key)
+      if address:
+         address_country = default_address.country.get()
+         address_region = default_address.region.get()
+         entry.billing_address = transaction.Address(
+                                  name=address.name, 
+                                  country=address_country.name, 
+                                  country_code=address_country.code, 
+                                  region=address_region.name, 
+                                  region_code=address_region.code, 
+                                  city=address.city, 
+                                  postal_code=address.postal_code, 
+                                  street_address=address.street_address, 
+                                  street_address2=address.street_address2, 
+                                  email=address.email, 
+                                  telephone=address.telephone
+                                  )
+      return entry
+    else:
+      return 'ABORT'
+     
+  
+  def validate_address(self, address):
+    allowed = False
+    # Shipping everywhere except at the following locations
+    if not (self.exclusion):
+      allowed = True
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+            allowed = True
+            break
+    return allowed
+
   
   
 class CartInit(Base):
