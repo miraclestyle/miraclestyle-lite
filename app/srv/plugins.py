@@ -4,6 +4,7 @@ Created on Dec 17, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import decimal
 import datetime
 
 from app import ndb
@@ -62,7 +63,7 @@ class AddressRule(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entity
+    entry = context.entries[journal.code]
     
     buyer_addresses = []
     valid_addresses = []
@@ -190,3 +191,88 @@ class CartInit(transaction.Plugin):
       raise PluginValidationError('entry_not_in_cart_state')
     else:
       context.entries[journal.code] = entry
+      
+
+class ProductToLine(transaction.Plugin):
+    
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+   
+    catalog_pricetag_key = context.args.get('catalog_pricetag')
+    product_template_key = context.args.get('product_template')
+    product_instance_key = context.args.get('product_instance')
+    variant_signature = context.args.get('variant_signature')
+    custom_variants = context.args.get('custom_variants')
+    
+    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
+    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
+    line_exists = False
+    for line in entry._lines:
+      if (hasattr(line, 'catalog_pricetag_reference')
+          and catalog_pricetag_key == line.catalog_pricetag_reference
+          and hasattr(line, 'product_instance_reference')
+          and product_instance_key == line.product_instance_reference):
+        line.quantity = line.quantity + decimal.Decimal('1') # decmail formating required
+        line_exists = True
+        break
+      
+    if not (line_exists):
+      product_template = product_template_key.get()
+      product_instance = product_instance_key.get()
+      product_category = product_template.product_category.get()
+      product_category_complete_name = product_category.complete_name
+      product_uom = product_template.product_uom.get()
+      product_uom_category = product_uom.key.parent().get()
+      
+      new_line = transaction.Line()
+      new_line.sequence = entry.lines[-1].sequence + decimal.Decimal('1')
+      new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
+      new_line.description = product_template.name
+      if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
+        new_line.description += '\n %s' % variant_signature
+      else:
+        if (custom_variants):
+          new_line.description += '\n %s' % variant_signature
+          
+      new_line.uom = transaction.UOM(
+                             category=product_uom_category.name, 
+                             name=product_uom_category.name, 
+                             symbol=product_uom_category.symbol, 
+                             rounding=product_uom_category.rounding, 
+                             digits=product_uom_category.digits
+                             ) # currency uom!!
+      
+      new_line.product_uom = transaction.UOM(
+                                     category=product_uom_category.name, 
+                                     name=product_uom.name, 
+                                     symbol=product_uom.symbol, 
+                                     rounding=product_uom.rounding, 
+                                     digits=product_uom.digits
+                                     )
+      
+      new_line.product_category_complete_name = product_category_complete_name
+      new_line.product_category_reference = product_template.product_category
+      new_line.catalog_pricetag_reference = catalog_pricetag_key
+      new_line.product_instance_reference = product_instance_key
+      if ('unit_price' in product_instance._properties):
+        new_line.unit_price = product_instance.unit_price
+      else:
+        new_line.unit_price = product_template.unit_price
+      new_line.quantity = decimal.Decimal('1') # decimal formating required
+      new_line.discount = decimal.Decimal('0.0') # decimal formating required
+      entry._lines.append(new_line)
+
+      
+class ProductSubtotalCalculate(transaction.Plugin):
+  
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+    
+    for line in entry._lines:
+      if hasattr(line, 'product_instance_reference'):
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.debit = decimal.Decimal('0.0') # decimal formating required
+        line.credit = line.discount_subtotal # decimal formating required
