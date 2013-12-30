@@ -225,7 +225,7 @@ class Entry(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True)
   journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
   company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
-  state = ndb.SuperIntegerProperty('4', required=True)
+  state = ndb.SuperStringProperty('4', required=True)
   date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
   created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
   updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True)

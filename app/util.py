@@ -8,8 +8,18 @@ import sys
 import logging
 import string
 import random
+from decimal import Decimal
  
 from app import settings
+
+def decimal_format(value, formater=None):
+    if (formater):
+        if (isinstance(formater, str)):
+            return Decimal(format(Decimal(value), formater))
+        else:
+            return Decimal(format(Decimal(value), '.' + formater.digits + 'f'))
+    else:
+        return Decimal(value)
   
   
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):

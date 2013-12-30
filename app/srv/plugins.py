@@ -7,7 +7,7 @@ Created on Dec 17, 2013
 import decimal
 import datetime
 
-from app import ndb
+from app import ndb, util
 from app.srv import transaction
 from app.srv import rule
 
@@ -92,7 +92,7 @@ class AddressRule(transaction.Plugin):
       if address:
          address_country = default_address.country.get()
          address_region = default_address.region.get()
-         entry.billing_address = transaction.Address(
+         setattr(entry, address_key, transaction.Address(
                                   name=address.name, 
                                   country=address_country.name, 
                                   country_code=address_country.code, 
@@ -104,7 +104,8 @@ class AddressRule(transaction.Plugin):
                                   street_address2=address.street_address2, 
                                   email=address.email, 
                                   telephone=address.telephone
-                                  )
+                                  ))
+    
     else:
       raise PluginValidationError('no_address_found')
      
@@ -174,9 +175,26 @@ class CartInit(transaction.Plugin):
                         ).get()
     # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
     if not (entry):
+      
+      company_address_country = company.country.get()
+      company_address_region = company.region.get()
+      
       entry = Entry()
       entry.journal = journal_key
       entry.company = company_key
+      entry.company_address = transaction.Address(
+                                  name=company.name, 
+                                  country=company_address_country.name, 
+                                  country_code=company_address_country.code, 
+                                  region=company_address_region.name, 
+                                  region_code=company_address_region.code, 
+                                  city=company.city, 
+                                  postal_code=company.postal_code, 
+                                  street_address=company.street_address, 
+                                  street_address2=company.street_address2, 
+                                  email=company.email, 
+                                  telephone=company.telephone
+                                  )
       entry.state = 'cart'
       entry.date = datetime.datetime.today()
       entry.party = user_key
@@ -222,10 +240,7 @@ class ProductToLine(transaction.Plugin):
       product_instance = product_instance_key.get()
       product_category = product_template.product_category.get()
       product_category_complete_name = product_category.complete_name
-      
-      currency = entry.currency
-      currency_category = currency.key.parent().get()
-      
+ 
       product_uom = product_template.product_uom.get()
       product_uom_category = product_uom.key.parent().get()
       
@@ -240,13 +255,7 @@ class ProductToLine(transaction.Plugin):
         if (custom_variants):
           new_line.description += '\n %s' % variant_signature
           
-      new_line.uom = transaction.UOM(
-                             measurement=currency_category.name, 
-                             name=currency.name, 
-                             symbol=currency.symbol, 
-                             rounding=currency.rounding, 
-                             digits=currency.digits
-                             ) # currency uom!!
+      new_line.uom = entry.currency
       
       new_line.product_uom = transaction.UOM(
                                      measurement=product_uom_category.name, 
@@ -264,8 +273,8 @@ class ProductToLine(transaction.Plugin):
         new_line.unit_price = product_instance.unit_price
       else:
         new_line.unit_price = product_template.unit_price
-      new_line.quantity = decimal.Decimal('1') # decimal formating required
-      new_line.discount = decimal.Decimal('0.0') # decimal formating required
+      new_line.quantity = util.decimal_format('1', new_line.product_uom) # decimal formating required
+      new_line.discount = util.decimal_format('0', transaction.UOM(digits=4)) # decimal formating required
       entry._lines.append(new_line)
 
       
@@ -279,5 +288,5 @@ class ProductSubtotalCalculate(transaction.Plugin):
       if hasattr(line, 'product_instance_reference'):
         line.subtotal = line.unit_price * line.quantity # decimal formating required
         line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = decimal.Decimal('0.0') # decimal formating required
+        line.debit = util.decimal_format('0', line.uom) # decimal formating required
         line.credit = line.discount_subtotal # decimal formating required
