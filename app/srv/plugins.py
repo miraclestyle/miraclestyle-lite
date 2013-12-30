@@ -204,7 +204,7 @@ class ProductToLine(transaction.Plugin):
     product_instance_key = context.args.get('product_instance')
     variant_signature = context.args.get('variant_signature')
     custom_variants = context.args.get('custom_variants')
-    
+ 
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
     line_exists = False
@@ -222,11 +222,12 @@ class ProductToLine(transaction.Plugin):
       product_instance = product_instance_key.get()
       product_category = product_template.product_category.get()
       product_category_complete_name = product_category.complete_name
+      currency = entry.currency
       product_uom = product_template.product_uom.get()
       product_uom_category = product_uom.key.parent().get()
       
       new_line = transaction.Line()
-      new_line.sequence = entry.lines[-1].sequence + decimal.Decimal('1')
+      new_line.sequence = entry._lines[-1].sequence + 1
       new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
       new_line.description = product_template.name
       if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
@@ -236,11 +237,11 @@ class ProductToLine(transaction.Plugin):
           new_line.description += '\n %s' % variant_signature
           
       new_line.uom = transaction.UOM(
-                             category=product_uom_category.name, 
-                             name=product_uom_category.name, 
-                             symbol=product_uom_category.symbol, 
-                             rounding=product_uom_category.rounding, 
-                             digits=product_uom_category.digits
+                             category=currency.name, 
+                             name=currency.name, 
+                             symbol=currency.symbol, 
+                             rounding=currency.rounding, 
+                             digits=currency.digits
                              ) # currency uom!!
       
       new_line.product_uom = transaction.UOM(
