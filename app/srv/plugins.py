@@ -6,6 +6,7 @@ Created on Dec 17, 2013
 '''
 import datetime
 
+from app import ndb
 from app.srv import transaction
 from app.srv import rule
 
@@ -38,12 +39,6 @@ def get_system_plugins(action=None, journal_code=None):
 def register_system_plugins(*args):
     global __SYSTEM_PLUGINS
     __SYSTEM_PLUGINS.extend(args)
-    
-
-class Base:
-  'Base class for plugins'
-  
-  category = ''
   
   
 class Location:
@@ -57,13 +52,13 @@ class Location:
     
 
 
-class AddressRule:
+class AddressRule(transaction.Plugin):
   
-  def __init__(self, exclusion, address_type, locations, allowed_states=None):
-    self.exclusion = exclusion
-    self.address_type = address_type
-    self.locations = locations
-    self.allowed_states = allowed_states
+  KIND_ID = 54
+  
+  exclusion = ndb.SuperBooleanProperty('5', default=False)
+  address_type = ndb.SuperStringProperty('6')
+  locations = ndb.PickleProperty('7')
   
   def run(self, entry):
     buyer_addresses = []
@@ -106,13 +101,12 @@ class AddressRule:
                                   email=address.email, 
                                   telephone=address.telephone
                                   )
-      return entry
     else:
-      return 'ABORT'
+      raise PluginValidationError('no_address_found')
      
   
   def validate_address(self, address):
-    allowed = False
+    
     # Shipping everywhere except at the following locations
     if not (self.exclusion):
       allowed = True
@@ -125,12 +119,17 @@ class AddressRule:
           if (address.country == loc.country and address.region == loc.region):
             allowed = False
             break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = False
+            break
         else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
             allowed = False
             break
     # Shipping only at the following locations
     else:
+      allowed = False
       for loc in self.locations:
         if not (loc.region and loc.postal_code_from and loc.postal_code_to):
           if (address.country == loc.country):
@@ -140,17 +139,21 @@ class AddressRule:
           if (address.country == loc.country and address.region == loc.region):
             allowed = True
             break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = True
+            break
         else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code_from >= loc.postal_code_from and address.postal_code_to <= loc.postal_code_to)):
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
             allowed = True
             break
     return allowed
 
   
   
-class CartInit(Base):
+class CartInit(transaction.Plugin):
   
-  category = 'sys_cart_init'
+  KIND_ID = 55
   
   def run(self, journal, context):
     # ucitaj postojeci entry na kojem ce se raditi write
@@ -183,4 +186,4 @@ class CartInit(Base):
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
-      context.entries[entry.journal.code] = entry
+      context.entries[journal.code] = entry

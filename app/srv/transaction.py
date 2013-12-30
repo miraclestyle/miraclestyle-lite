@@ -18,6 +18,7 @@ class Context:
       self.entries = collections.OrderedDict()
       self.user = ndb.get_current_user()
       self.log_entities = []
+      self.response = kwargs.pop('response', ndb.Response())
       
       for k,v in kwargs.items():
           setattr(k, v)
@@ -187,6 +188,8 @@ class Journal(ndb.BaseExpando):
       for plugin in plugins:
         if category == plugin.__class__.__name__:
             plugin.run(self, context)
+             
+    context.entity = None
   
   @classmethod
   def get_local_journals(cls, context):
