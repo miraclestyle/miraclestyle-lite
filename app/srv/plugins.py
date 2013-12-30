@@ -60,7 +60,10 @@ class AddressRule(transaction.Plugin):
   address_type = ndb.SuperStringProperty('6')
   locations = ndb.PickleProperty('7')
   
-  def run(self, entry):
+  def run(self, journal, context):
+    
+    entry = context.entity
+    
     buyer_addresses = []
     valid_addresses = []
     default_address = None
