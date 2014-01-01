@@ -12,6 +12,8 @@ from app.domain.marketing import Catalog
 from app.domain.acl import NamespaceDomain
 from app.core.misc import Image
 
+from app.srv import uom
+
 from google.appengine.ext import blobstore
 
 # done!
@@ -255,7 +257,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     product_category = ndb.SuperKeyProperty('1', kind='app.core.misc.ProductCategory', required=True, indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     description = ndb.SuperTextProperty('3', required=True)# soft limit 64kb
-    product_uom = ndb.SuperKeyProperty('4', kind='app.core.misc.Unit', required=True, indexed=False)
+    product_uom = ndb.SuperKeyProperty('4', kind=uom.Unit, required=True, indexed=False)
     unit_price = ndb.SuperDecimalProperty('5', required=True)
     availability = ndb.SuperIntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     

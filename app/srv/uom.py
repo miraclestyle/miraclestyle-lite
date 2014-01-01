@@ -5,6 +5,8 @@ Created on Jan 1, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import collections
+from decimal import Decimal
+
 from app import ndb
 
 __SYSTEM_UNITS = collections.OrderedDict()
@@ -13,17 +15,23 @@ def get_system_units(unit_key):
 
     global __SYSTEM_UNITS
     
-    return __SYSTEM_UNITS.get(unit_key.flat())
+    return __SYSTEM_UNITS.get(unit_key.urlsafe())
   
 def register_system_units(*args):
   
     global __SYSTEM_UNITS
     
-    for arg in args:
-       __SYSTEM_UNITS[arg.key.flat()] = arg
+    for unit in args:
+       __SYSTEM_UNITS[unit.key.urlsafe()] = unit
  
 def format_value(value, uom):
-    pass
+    if (uom):
+        if (isinstance(uom, str)):
+            return Decimal(format(Decimal(value), uom))
+        else:
+            return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
+    else:
+        return Decimal(value)
   
 def convert_value(value, from_uom, to_uom):
     pass

@@ -6,6 +6,7 @@ Created on Oct 20, 2013
 '''
 from app import ndb, settings
 from app.domain.acl import NamespaceDomain, Domain
+from app.srv import uom
 
 from google.appengine.api import images
 from google.appengine.ext import blobstore
@@ -55,7 +56,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'email' : ndb.SuperStringProperty('14'),
        'telephone' : ndb.SuperStringProperty('15'),
        
-       'currency' : ndb.SuperKeyProperty('16', kind='app.core.misc.Unit', required=False),
+       'currency' : ndb.SuperKeyProperty('16', kind=uom.Unit, required=False),
        'paypal_email' : ndb.SuperStringProperty('17'),
        
        'tracking_id' : ndb.SuperStringProperty('18'),

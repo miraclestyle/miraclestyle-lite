@@ -7,10 +7,9 @@ Created on Dec 17, 2013
 import decimal
 import datetime
 
-from app import ndb, util
-from app.srv import transaction
-from app.srv import rule
-
+from app import ndb
+from app.srv import transaction, rule, uom
+  
 from app.core import buyer
 
 Entry = transaction.Entry
@@ -257,7 +256,7 @@ class ProductToLine(transaction.Plugin):
           
       new_line.uom = entry.currency
       
-      new_line.product_uom = transaction.UOM(
+      new_line.product_uom = uom.UOM(
                                      measurement=product_uom_category.name, 
                                      name=product_uom.name, 
                                      symbol=product_uom.symbol, 
@@ -273,8 +272,8 @@ class ProductToLine(transaction.Plugin):
         new_line.unit_price = product_instance.unit_price
       else:
         new_line.unit_price = product_template.unit_price
-      new_line.quantity = util.decimal_format('1', new_line.product_uom) # decimal formating required
-      new_line.discount = util.decimal_format('0', transaction.UOM(digits=4)) # decimal formating required
+      new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
+      new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
       entry._lines.append(new_line)
 
       
@@ -288,7 +287,7 @@ class ProductSubtotalCalculate(transaction.Plugin):
       if hasattr(line, 'product_instance_reference'):
         line.subtotal = line.unit_price * line.quantity # decimal formating required
         line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = util.decimal_format('0', line.uom) # decimal formating required
+        line.debit = uom.format_value('0', line.uom) # decimal formating required
         line.credit = line.discount_subtotal # decimal formating required
         
         
