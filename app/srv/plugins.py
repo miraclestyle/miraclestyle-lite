@@ -240,10 +240,8 @@ class ProductToLine(transaction.Plugin):
       product_category = product_template.product_category.get()
       product_category_complete_name = product_category.complete_name
  
-      product_uom = product_template.product_uom.get()
-      product_uom_category = product_uom.key.parent().get()
-      
-      
+      product_uom_category = uom.get_system_measurements(product_template.product_uom.key.parent())
+       
       new_line = transaction.Line()
       new_line.sequence = entry._lines[-1].sequence + 1
       new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
@@ -256,13 +254,7 @@ class ProductToLine(transaction.Plugin):
           
       new_line.uom = entry.currency
       
-      new_line.product_uom = uom.UOM(
-                                     measurement=product_uom_category.name, 
-                                     name=product_uom.name, 
-                                     symbol=product_uom.symbol, 
-                                     rounding=product_uom.rounding, 
-                                     digits=product_uom.digits
-                                     )
+      new_line.product_uom = uom.get_uom(product_uom_category)
       
       new_line.product_category_complete_name = product_category_complete_name
       new_line.product_category_reference = product_template.product_category

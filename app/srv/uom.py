@@ -10,6 +10,33 @@ from decimal import Decimal
 from app import ndb
 
 __SYSTEM_UNITS = collections.OrderedDict()
+__SYSTEM_MEASUREMENTS = collections.OrderedDict()
+
+def get_uom(unit_key):
+  
+  measurement = get_system_measurements(unit_key.parent())
+  
+  data = {'measurement' : measurement.name}
+  
+  unit = get_system_units(unit_key)
+  
+  for unit_property_name, unit_property in unit._properties.items():
+      data[unit_property._code_name] = unit_property._get_value(unit)
+  
+  return UOM(**data)
+    
+def get_system_measurements(measurement_key):
+
+    global __SYSTEM_MEASUREMENTS
+    
+    return __SYSTEM_MEASUREMENTS.get(measurement_key.urlsafe())
+  
+def register_system_measurements(*args):
+  
+    global __SYSTEM_MEASUREMENTS
+    
+    for measurement in args:
+       __SYSTEM_MEASUREMENTS[measurement.key.urlsafe()] = measurement
 
 def get_system_units(unit_key):
 
@@ -37,7 +64,7 @@ def convert_value(value, from_uom, to_uom):
     pass
  
 # done!
-class Unit(ndb.BaseModel, ndb.Workflow):
+class Unit(ndb.BaseExpando):
     
     KIND_ID = 19
     
@@ -70,101 +97,11 @@ class Unit(ndb.BaseModel, ndb.Workflow):
         'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
         'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
     }
-    
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
-    @classmethod
-    def list(cls, values, **kwds):
-        response = ndb.Response()
-        response['items'] = cls.query().fetch()
-        return response
-
-    
-    @classmethod
-    def delete(cls, values):
  
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
-               
-               entity = cls.prepare(False, values, get_only=True)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response
-
-    @classmethod
-    def manage(cls, create, values, **kwds):
-        
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('measurement', kind=Measurement, required=create)])
-            
-            if response.has_error():
-               return response
-             
-            entity = cls.prepare(create, values, parent=values.get('measurement'))
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response
-    
 
     
 # done!
-class Measurement(ndb.BaseModel, ndb.Workflow):
+class Measurement(ndb.BaseModel):
     
     KIND_ID = 18
     
@@ -174,88 +111,6 @@ class Measurement(ndb.BaseModel, ndb.Workflow):
     # mozda da ovi entiteti budu non-deletable i non-editable ??
     name = ndb.SuperStringProperty('1', required=True)
  
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-
-    @classmethod
-    def delete(cls, values):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
-               
-               entity = cls.prepare(False, values, get_only=True)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response
-
-    @classmethod
-    def manage(cls, create, values, **kwds):
-        
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls, only=('name',))
-            
-            if response.has_error():
-               return response
-             
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response
       
 
 class UOM(ndb.BaseExpando):
