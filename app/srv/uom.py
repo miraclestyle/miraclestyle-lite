@@ -58,7 +58,7 @@ def format_value(value, uom):
   
 def convert_value(value, value_uom, to_uom):
 
-    return (value / value.uom.rate) * to_uom.rate
+    return (value / value_uom.rate) * to_uom.rate
  
 # done!
 class Unit(ndb.BaseExpando):
