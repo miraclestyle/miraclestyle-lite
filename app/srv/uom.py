@@ -52,13 +52,9 @@ def register_system_units(*args):
        __SYSTEM_UNITS[unit.key.urlsafe()] = unit
  
 def format_value(value, uom):
-    if (uom):
-        if (isinstance(uom, str)):
-            return Decimal(format(Decimal(value), uom))
-        else:
-            return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
-    else:
-        return Decimal(value)
+    if not isinstance(uom, UOM):
+       raise Exception('Expected instance of UOM got %r' % uom)
+    return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
   
 def convert_value(value, from_uom, to_uom):
     pass

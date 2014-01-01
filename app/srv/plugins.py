@@ -240,8 +240,6 @@ class ProductToLine(transaction.Plugin):
       product_category = product_template.product_category.get()
       product_category_complete_name = product_category.complete_name
  
-      product_uom_category = uom.get_system_measurements(product_template.product_uom.key.parent())
-       
       new_line = transaction.Line()
       new_line.sequence = entry._lines[-1].sequence + 1
       new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
@@ -253,8 +251,7 @@ class ProductToLine(transaction.Plugin):
           new_line.description += '\n %s' % variant_signature
           
       new_line.uom = entry.currency
-      
-      new_line.product_uom = uom.get_uom(product_uom_category)
+      new_line.product_uom = uom.get_uom(product_template.product_uom)
       
       new_line.product_category_complete_name = product_category_complete_name
       new_line.product_category_reference = product_template.product_category
@@ -286,7 +283,7 @@ class ProductSubtotalCalculate(transaction.Plugin):
 class PayPalPayment(transaction.Plugin):
   # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
   
-  currency = ndb.SuperLocalStructuredProperty(uom.UOM, '5')
+  currency = ndb.SuperKeyProperty('5', kind=uom.Unit)
   reciever_email = ndb.SuperStringProperty('6')
   business = ndb.SuperStringProperty('7')
   
@@ -295,7 +292,5 @@ class PayPalPayment(transaction.Plugin):
     
     entry = context.entries[journal.code]
     
-    kwds = dict([(prop._code_name, prop._get_value(self)) for prop_name, prop in self.currency._properties])
-    
-    entry.currency = uom.UOM(**kwds)
+    entry.currency = uom.get_uom(self.currency)
 
