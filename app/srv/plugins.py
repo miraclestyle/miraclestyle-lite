@@ -294,7 +294,7 @@ class ProductSubtotalCalculate(transaction.Plugin):
 class PayPalPayment(transaction.Plugin):
   # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
   
-  currency = ndb.SuperLocalStructuredProperty(transaction.UOM, '5')
+  currency = ndb.SuperLocalStructuredProperty(uom.UOM, '5')
   reciever_email = ndb.SuperStringProperty('6')
   business = ndb.SuperStringProperty('7')
   
@@ -305,5 +305,5 @@ class PayPalPayment(transaction.Plugin):
     
     kwds = dict([(prop._code_name, prop._get_value(self)) for prop_name, prop in self.currency._properties])
     
-    entry.currency = transaction.UOM(**kwds)
+    entry.currency = uom.UOM(**kwds)
 
