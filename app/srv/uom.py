@@ -56,8 +56,9 @@ def format_value(value, uom):
        raise Exception('Expected instance of UOM got %r' % uom)
     return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
   
-def convert_value(value, from_uom, to_uom):
-    pass
+def convert_value(value, value_uom, to_uom):
+
+    return (value / value.uom.rate) * to_uom.rate
  
 # done!
 class Unit(ndb.BaseExpando):
