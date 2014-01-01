@@ -304,7 +304,7 @@ class PayPalPayment(transaction.Plugin):
     
     entry = context.entries[journal.code]
     
-    kwds = dict([(prop._code_name, prop._get_value(self)) for prop_name, prop in self._properties])
+    kwds = dict([(prop._code_name, prop._get_value(self)) for prop_name, prop in self.currency._properties])
     
     entry.currency = transaction.UOM(**kwds)
 

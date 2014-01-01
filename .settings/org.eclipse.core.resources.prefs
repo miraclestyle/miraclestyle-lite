@@ -17,6 +17,7 @@ encoding//app/srv/log.py=utf-8
 encoding//app/srv/plugins.py=utf-8
 encoding//app/srv/rule.py=utf-8
 encoding//app/srv/transaction.py=utf-8
+encoding//app/srv/uom.py=utf-8
 encoding//app/util.py=utf-8
 encoding//dateutil/parser.py=iso-8859-1
 encoding//webclient/controllers/admin.py=utf-8

@@ -7,7 +7,7 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
-from app.srv import rule
+from app.srv import rule, uom
  
 class Context:
   
@@ -78,35 +78,6 @@ class Address(ndb.BaseExpando):
         'email' : ndb.SuperStringProperty('10'),
         'telephone' : ndb.SuperStringProperty('11'),
     }
-            
-
-class UOM(ndb.BaseExpando):
- 
-    
-    # Local structured
-    measurement = ndb.SuperStringProperty('1', required=True)
-    name = ndb.SuperStringProperty('2', required=True)
-    symbol = ndb.SuperStringProperty('3', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
-    rate = ndb.SuperDecimalProperty('4', required=True, indexed=False)# The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12)
-    factor = ndb.SuperDecimalProperty('5', required=True, indexed=False)# The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12)
-    rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
-    digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
-    
-    EXPANDO_FIELDS = {
-        'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
-        'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
-        'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
-        'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
-        'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
-        'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
-        'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
-        'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
-        'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
-        'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
-        'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
-        'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
-        'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
-    }
 
 # done!
 class CategoryBalance(ndb.BaseExpando):
@@ -121,7 +92,7 @@ class CategoryBalance(ndb.BaseExpando):
   debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
   credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
   balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-  uom = ndb.SuperLocalStructuredProperty(UOM, '6', required=True)
+  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '6', required=True)
 
 
 class Category(ndb.BaseExpando):
@@ -269,7 +240,7 @@ class Line(ndb.BaseExpando):
   categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
   debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
   credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = ndb.SuperLocalStructuredProperty(UOM, '9', required=True)
+  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
