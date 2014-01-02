@@ -293,4 +293,26 @@ class PayPalPayment(transaction.Plugin):
     entry = context.entries[journal.code]
     
     entry.currency = uom.get_uom(self.currency)
+    
+    
+class OrderTotalCalculate(transaction.Plugin):
+  
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+    
+    untaxed_amount = uom.format_value('0', entry.currency) # decimal formating required
+    tax_amount = uom.format_value('0', entry.currency) # decimal formating required
+    total_amount = uom.format_value('0', entry.currency) # decimal formating required
+    
+    for line in entry._lines:
+      if hasattr(line, 'product_instance_reference'):
+        untaxed_amount += line.subtotal
+        tax_amount += line.tax_subtotal
+        total_amount += line.subtotal + line.tax_subtotal
+    
+    entry.untaxed_amount = untaxed_amount
+    entry.tax_amount = tax_amount
+    entry.total_amount = total_amount
+
 
