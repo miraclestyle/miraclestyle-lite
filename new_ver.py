@@ -1,7 +1,7 @@
 def convert_value(value, value_uom, conversion_uom):
   
   if (value_uom.measurement == conversion_uom.measurement):
-    return (value / value_uom.rate) * to_uom.rate
+    return (value / value_uom.rate) * conversion_uom.rate
   else:
     raise UOMError('incompatible_units')
 
