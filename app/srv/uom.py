@@ -71,34 +71,32 @@ def convert_value(value, value_uom, conversion_uom):
     raise Exception('incompatible_units')
 
 def round_value(value, uom, rounding=ROUND_HALF_EVEN):
+
+  if not isinstance(value, Decimal):
+     raise Exception('not_decimal')
   
   if not isinstance(uom, (UOM, Unit)):
      raise Exception('not_uom_or_unit')
   
-  if not isinstance(value, Decimal):
-     raise Exception('not_decimal')
-
   if not hasattr(uom, 'rounding') or not isinstance(uom.digits, Decimal):
      raise Exception('no_rounding_in_uom')
   
-  value = (value / uom.rounding).quantize(Decimal('1.'), rounding=ROUND_HALF_EVEN) * uom.rounding
-  return value
+  return (value / uom.rounding).quantize(Decimal('1.'), rounding=rounding) * uom.rounding
 
 def format_value(value, uom, rounding=ROUND_HALF_EVEN):
+
+  if not isinstance(value, Decimal):
+     raise Exception('not_decimal')
   
   if not isinstance(uom, (UOM, Unit)):
      raise Exception('not_uom_or_unit')
-   
-  if not isinstance(value, Decimal):
-     raise Exception('not_decimal')
   
   if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
      raise Exception('no_digits_in_uom')
    
   places = Decimal(10) ** -uom.digits
      
-  value = (value).quantize(places, rounding=rounding)
-  return value
+  return (value).quantize(places, rounding=rounding)
  
 # done!
 class Unit(ndb.BaseExpando):
