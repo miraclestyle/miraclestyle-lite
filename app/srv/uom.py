@@ -5,7 +5,7 @@ Created on Jan 1, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import collections
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 
 from app import ndb
 
@@ -51,13 +51,54 @@ def register_system_units(*args):
     for unit in args:
        __SYSTEM_UNITS[unit.key.urlsafe()] = unit
  
-def format_value(value, uom):
-    if not isinstance(uom, UOM):
-       raise Exception('Expected instance of UOM got %r' % uom)
-    return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
+def convert_value(value, value_uom, conversion_uom):
   
-def convert_value(value, from_uom, to_uom):
-    pass
+  if not isinstance(value, Decimal):
+     raise Exception('not_decimal')
+   
+  if not isinstance(value_uom, (UOM, Unit)) or not isinstance(conversion_uom, (UOM, Unit)):
+     raise Exception('not_uom_or_unit')
+   
+  if not hasattr(value_uom, 'rate') or not isinstance(value_uom.rate, Decimal):
+     raise Exception('no_rate_in_value_uom')
+  
+  if not hasattr(conversion_uom, 'rate') or not isinstance(conversion_uom.rate, Decimal):
+     raise Exception('no_rate_in_conversion_uom')  
+
+  if (value_uom.measurement == conversion_uom.measurement):
+    return (value / value_uom.rate) * conversion_uom.rate
+  else:
+    raise Exception('incompatible_units')
+
+def round_value(value, uom, rounding=ROUND_HALF_EVEN):
+  
+  if not isinstance(uom, (UOM, Unit)):
+     raise Exception('not_uom_or_unit')
+  
+  if not isinstance(value, Decimal):
+     raise Exception('not_decimal')
+
+  if not hasattr(uom, 'rounding') or not isinstance(uom.digits, Decimal):
+     raise Exception('no_rounding_in_uom')
+  
+  value = (value / uom.rounding).quantize(Decimal('1.'), rounding=ROUND_HALF_EVEN) * uom.rounding
+  return value
+
+def format_value(value, uom, rounding=ROUND_HALF_EVEN):
+  
+  if not isinstance(uom, (UOM, Unit)):
+     raise Exception('not_uom_or_unit')
+   
+  if not isinstance(value, Decimal):
+     raise Exception('not_decimal')
+  
+  if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
+     raise Exception('no_digits_in_uom')
+   
+  places = Decimal(10) ** -uom.digits
+     
+  value = (value).quantize(places, rounding=rounding)
+  return value
  
 # done!
 class Unit(ndb.BaseExpando):
