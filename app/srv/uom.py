@@ -52,7 +52,7 @@ def register_system_units(*args):
        __SYSTEM_UNITS[unit.key.urlsafe()] = unit
  
 def convert_value(value, value_uom, conversion_uom):
-  
+ 
   if not isinstance(value, Decimal):
      raise Exception('not_decimal')
    

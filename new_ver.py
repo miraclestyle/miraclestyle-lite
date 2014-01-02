@@ -1,3 +1,19 @@
+def convert_value(value, value_uom, conversion_uom):
+  
+  if (value_uom.measurement == conversion_uom.measurement):
+    return (value / value_uom.rate) * conversion_uom.rate
+  else:
+    raise UOMError('incompatible_units')
+
+def round_value(self, value, uom, rounding=ROUND_HALF_EVEN):
+  value = (value / uom.rounding).quantize(Decimal('1.'), rounding=ROUND_HALF_EVEN) * uom.rounding
+  return value
+
+def format_value(value, uom):
+  places = Decimal(10) ** -uom.digits
+  value = (value).quantize(places, rounding=rounding_method)
+  return value
+
 ################################################################################
 # /domain/plugins.py
 ################################################################################
