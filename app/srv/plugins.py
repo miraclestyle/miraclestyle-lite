@@ -58,7 +58,7 @@ class AddressRule(transaction.Plugin):
   
   exclusion = ndb.SuperBooleanProperty('5', default=False)
   address_type = ndb.SuperStringProperty('6')
-  locations = ndb.PickleProperty('7')
+  locations = ndb.SuperPickleProperty('7')
   
   def run(self, journal, context):
     
@@ -316,3 +316,98 @@ class OrderTotalCalculate(transaction.Plugin):
     entry.total_amount = total_amount
 
 
+class Tax(ndb.BasePoly):
+  
+  name = ndb.SuperStringProperty('5')
+  formula = ndb.SuperStringProperty('6')
+  exclusion = ndb.SuperBooleanProperty('7', default=False)
+  address_type = ndb.SuperStringProperty('8')
+  locations = ndb.SuperPickleProperty('9')
+  carriers = ndb.SuperKeyProperty('10', repeated=True)
+  product_categories = ndb.SuperKeyProperty('11', kind='app.core.misc.ProductCategory', repeated=True)
+  
+  
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+    
+    allowed = self.validate_tax(entry)
+    
+    for line in entry.lines:
+      if (self.carriers):
+        if (self.carriers.count(line.product_instance_reference)):
+          if (self.key in line.tax_references):
+            if not (allowed):
+              line.tax_references.remove(self.key)
+          else:
+            if (allowed):
+              line.tax_references.append(self.key)  
+      if (self.product_categories):
+        if (self.product_categories.count(line.product_category)):
+          if (self.key in line.tax_references):
+            if not (allowed):
+              line.tax_references.remove(self.key)
+          else:
+            if (allowed):
+              line.tax_references.append(self.key)
+  
+  def validate_tax(self, entry):
+ 
+    allowed = False
+    
+    address = getattr(entry, '%s_address_reference' % self.address_type) 
+    
+    if not (self.exclusion):
+      allowed = True
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      allowed = False
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = True
+            break
+
+
+    if (allowed):
+      # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
+      if (self.carriers):
+        allowed = False
+        if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
+          allowed = True
+      # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
+      elif (self.product_categories):
+        allowed = False
+        for line in entry.lines:
+          if (self.product_categories.count(line.product_category)):
+            allowed = True
+    return allowed
