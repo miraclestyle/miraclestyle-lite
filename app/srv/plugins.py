@@ -230,7 +230,7 @@ class ProductToLine(transaction.Plugin):
           and catalog_pricetag_key == line.catalog_pricetag_reference
           and hasattr(line, 'product_instance_reference')
           and product_instance_key == line.product_instance_reference):
-        line.quantity = line.quantity + decimal.Decimal('1') # decmail formating required
+        line.quantity = line.quantity + uom.format_value('1', line.product_uom) # decmail formating required
         line_exists = True
         break
       
