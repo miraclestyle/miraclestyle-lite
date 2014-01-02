@@ -56,9 +56,15 @@ def format_value(value, uom):
        raise Exception('Expected instance of UOM got %r' % uom)
     return Decimal(format(Decimal(value), '.' + uom.digits + 'f'))
   
-def convert_value(value, value_uom, to_uom):
+class UOMError(Exception):
+  pass
 
+def convert_value(value, value_uom, to_uom):
+  
+  if (value_uom.measurement == to_uom.measurement):
     return (value / value_uom.rate) * to_uom.rate
+  else:
+    raise UOMError('incompatible_units')
  
 # done!
 class Unit(ndb.BaseExpando):
