@@ -353,10 +353,9 @@ class Tax(ndb.BasePoly):
   
   def validate_tax(self, entry):
  
-    allowed = False
-    
-    address = getattr(entry, '%s_address_reference' % self.address_type) 
-    
+    address_key = '%s_address' % self.address_type
+    address = getattr(entry, address_key) 
+  
     if not (self.exclusion):
       allowed = True
       for loc in self.locations:
