@@ -1,3 +1,10 @@
+def convert_value(value, value_uom, conversion_uom):
+  
+  if (value_uom.measurement == conversion_uom.measurement):
+    return (value / value_uom.rate) * to_uom.rate
+  else:
+    raise UOMError('incompatible_units')
+
 def round_value(self, value, uom, rounding=ROUND_HALF_EVEN):
   value = (value / uom.rounding).quantize(Decimal('1.'), rounding=ROUND_HALF_EVEN) * uom.rounding
   return value
