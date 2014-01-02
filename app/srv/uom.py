@@ -54,7 +54,7 @@ def register_system_units(*args):
 def convert_value(value, value_uom, conversion_uom):
  
   if not isinstance(value, Decimal):
-     raise Exception('not_decimal')
+     value = Decimal(value)
    
   if not isinstance(value_uom, (UOM, Unit)) or not isinstance(conversion_uom, (UOM, Unit)):
      raise Exception('not_uom_or_unit')
@@ -76,7 +76,7 @@ def round_value(value, uom, rounding=ROUND_HALF_EVEN):
      raise Exception('not_uom_or_unit')
   
   if not isinstance(value, Decimal):
-     raise Exception('not_decimal')
+     value = Decimal(value)
 
   if not hasattr(uom, 'rounding') or not isinstance(uom.digits, Decimal):
      raise Exception('no_rounding_in_uom')
@@ -90,7 +90,7 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
      raise Exception('not_uom_or_unit')
    
   if not isinstance(value, Decimal):
-     raise Exception('not_decimal')
+     value = Decimal(value)
   
   if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
      raise Exception('no_digits_in_uom')
