@@ -1,3 +1,9 @@
+def format_value(value, uom, rounding_method):
+  value = (value / uom.rounding).quantize(Decimal('1.'), rounding=ROUND_HALF_EVEN) * uom.rounding
+  places = Decimal(10) ** -uom.digits
+  value = (value).quantize(places, rounding=rounding_method)
+  return result
+
 ################################################################################
 # /domain/plugins.py
 ################################################################################
