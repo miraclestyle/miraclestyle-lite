@@ -419,17 +419,38 @@ class TaxSubtotalCalculate(transaction.Plugin):
   def run(self, journal, context):
     
     entry = context.entries[journal.code]
+    tax_line = False
+    tax_total = uom.format_value('0', entry.currency)
     
     for line in entry._lines:
+      
+      # 'key' key needs to be something else
+      if transaction.Category.build_key('key') in line.categories:
+         tax_line = line
+      
       tax_subtotal = uom.format_value('0', line.uom)
       for tax_key, tax in line.taxes.items():
           if (tax.formula[0] == 'percent'):
               tax_amount = uom.format_value(tax.formula[1], line.uom) * uom.format_value('0.01', line.uom) # moze i "/ DecTools.form('100')"
-              tax_subtotal += line.subtotal * tax_amount
+              tax_subtotal += line.credit * tax_amount
           elif tax.formula[0] == 'amount':
               tax_amount = uom.format_value(tax.formula[1], line.uom)
               tax_subtotal += tax_amount
       line.tax_subtotal = tax_subtotal
+      tax_total += tax_subtotal
+    
+    if tax_line:
+       tax_line.debit = uom.format_value('0', line.uom)
+       tax_line.credit = tax_total
+    else:
+       tax_line = transaction.Line()
+       tax_line.categories.append(transaction.Category.build_key('key'))
+       tax_line.description = 'Sales Tax'
+       tax_line.line_uom = entry.currency
+       tax_line.debit = uom.format_value('0', entry.currency)
+       tax_line.credit = tax_total
+       tax_line.sequence = entry._lines[-1].sequence + 1
+       entry._lines.append(tax_line)
       
     
         
