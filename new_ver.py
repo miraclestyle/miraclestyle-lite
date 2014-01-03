@@ -1,3 +1,36 @@
+class Carrier(transaction.Plugin):
+  
+  name = ndb.SuperStringProperty('5')
+  lines = ndb.SuperPickleProperty('6')
+  
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+    
+    for carrier_line in self.lines:
+      self.validate_line(carrier_line, entry)
+      
+  def validate_line(self, carrier_line, entry):
+    
+    
+class CarrierLine:
+  
+  def __init__(self, name, exclusion=False, active=True, locations=None, rules=None):
+    self.name = name
+    self.exclusion = exclusion
+    self.active = active
+    self.locations = locations
+    self.rules = rules
+  
+class CarrierLineRule:
+  
+  def __init__(self, condition, price):
+    self.condition = condition
+    self.price = price
+
+
+
+
 class Transition:
   
   def __init__(self, name, from_state, to_state, condition):
