@@ -322,7 +322,7 @@ class LineTax():
      self.name = name
      self.formula = formula
 
-class Tax(ndb.BasePoly):
+class Tax(transaction.Plugin):
   
   name = ndb.SuperStringProperty('5')
   formula = ndb.SuperPickleProperty('6')
