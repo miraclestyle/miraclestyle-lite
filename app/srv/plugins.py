@@ -6,6 +6,7 @@ Created on Dec 17, 2013
 '''
 import decimal
 import datetime
+import re
 
 from app import ndb
 from app.srv import transaction, rule, uom
@@ -315,11 +316,16 @@ class OrderTotalCalculate(transaction.Plugin):
     entry.tax_amount = tax_amount
     entry.total_amount = total_amount
 
+class LineTax():
+  
+  def __init__(self, name, formula):
+     self.name = name
+     self.formula = formula
 
 class Tax(ndb.BasePoly):
   
   name = ndb.SuperStringProperty('5')
-  formula = ndb.SuperStringProperty('6')
+  formula = ndb.SuperPickleProperty('6')
   exclusion = ndb.SuperBooleanProperty('7', default=False)
   address_type = ndb.SuperStringProperty('8')
   locations = ndb.SuperPickleProperty('9')
@@ -333,23 +339,20 @@ class Tax(ndb.BasePoly):
     
     allowed = self.validate_tax(entry)
     
-    for line in entry.lines:
+    for line in entry._lines:
       if (self.carriers):
-        if (self.carriers.count(line.product_instance_reference)):
-          if (self.key in line.tax_references):
+        if (self.carriers.count(line.carrier_reference)):
             if not (allowed):
-              line.tax_references.remove(self.key)
-          else:
-            if (allowed):
-              line.tax_references.append(self.key)  
-      if (self.product_categories):
+              del line.taxes[self.key.urlsafe()]
+            elif allowed:
+              line.taxes[self.key.urlsafe()] = LineTax(self.name, self.formula)
+              
+      elif (self.product_categories):
         if (self.product_categories.count(line.product_category)):
-          if (self.key in line.tax_references):
-            if not (allowed):
-              line.tax_references.remove(self.key)
-          else:
-            if (allowed):
-              line.tax_references.append(self.key)
+          if not (allowed):
+              del line.taxes[self.key.urlsafe()]
+          elif allowed:
+              line.taxes[self.key.urlsafe()] = LineTax(self.name, self.formula)
   
   def validate_tax(self, entry):
  
@@ -410,3 +413,23 @@ class Tax(ndb.BasePoly):
           if (self.product_categories.count(line.product_category)):
             allowed = True
     return allowed
+  
+class TaxSubtotalCalculate(transaction.Plugin):
+  
+  def run(self, journal, context):
+    
+    entry = context.entries[journal.code]
+    
+    for line in entry._lines:
+      tax_subtotal = uom.format_value('0', line.uom)
+      for tax_key, tax in line.taxes.items():
+          if (tax.formula[0] == 'percent'):
+              tax_amount = uom.format_value(tax.formula[1], line.uom) * uom.format_value('0.01', line.uom) # moze i "/ DecTools.form('100')"
+              tax_subtotal += line.subtotal * tax_amount
+          elif tax.formula[0] == 'amount':
+              tax_amount = uom.format_value(tax.formula[1], line.uom)
+              tax_subtotal += tax_amount
+      line.tax_subtotal = tax_subtotal
+      
+    
+        
