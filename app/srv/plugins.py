@@ -434,11 +434,11 @@ class TaxSubtotalCalculate(transaction.Plugin):
           if (tax.formula[0] == 'percent'):
               tax_amount = uom.format_value(tax.formula[1], line.uom) * uom.format_value('0.01', line.uom) # moze i "/ DecTools.form('100')"
               tax_subtotal += line.credit * tax_amount
-              tax_total += tax_subtotal
-          elif tax.formula[0] == 'amount' and tax_key not in applied_amount_tax:
+              tax_total += line.credit * tax_amount
+          elif (tax.formula[0] == 'amount'):
               tax_amount = uom.format_value(tax.formula[1], line.uom)
+              tax_subtotal += tax_amount
               tax_total += tax_amount
-              applied_amount_tax.append(tax_key)
               
       line.tax_subtotal = tax_subtotal
        
@@ -451,7 +451,7 @@ class TaxSubtotalCalculate(transaction.Plugin):
        tax_line.description = 'Sales Tax'
        tax_line.line_uom = entry.currency
        tax_line.debit = uom.format_value('0', entry.currency)
-       tax_line.credit = tax_total
+       tax_line.credit = tax_total 
        tax_line.sequence = entry._lines[-1].sequence + 1
        entry._lines.append(tax_line)
       
