@@ -321,13 +321,17 @@ class Engine:
          entry._lines.append(Line(...))
          etc..
         """
+        lines = []
+        
         for line in entry._lines:
             line.journal = entry.journal
             line.company = entry.company
             line.state = entry.state
             line.date = entry.date
             line.set_key(parent=entry_key) # parent key for line
-            line.put()
+            lines.append(line)
+        
+        ndb.put_multi(lines)
  
             
   
