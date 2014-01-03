@@ -421,7 +421,7 @@ class TaxSubtotalCalculate(transaction.Plugin):
     entry = context.entries[journal.code]
     tax_line = False
     tax_total = uom.format_value('0', entry.currency)
-    applied_amount_tax = [] 
+    applied_amount_taxes = [] 
     
     for line in entry._lines:
       
@@ -435,10 +435,10 @@ class TaxSubtotalCalculate(transaction.Plugin):
               tax_amount = uom.format_value(tax.formula[1], line.uom) * uom.format_value('0.01', line.uom) # moze i "/ DecTools.form('100')"
               tax_subtotal += line.credit * tax_amount
               tax_total += tax_subtotal
-          elif tax.formula[0] == 'amount' and tax_key not in applied_amount_tax:
+          elif tax.formula[0] == 'amount' and tax_key not in applied_amount_taxes:
               tax_amount = uom.format_value(tax.formula[1], line.uom)
               tax_total += tax_amount
-              applied_amount_tax.append(tax_key)
+              applied_amount_taxes.append(tax_key)
               
       line.tax_subtotal = tax_subtotal
        
