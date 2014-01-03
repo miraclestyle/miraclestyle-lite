@@ -421,7 +421,6 @@ class TaxSubtotalCalculate(transaction.Plugin):
     entry = context.entries[journal.code]
     tax_line = False
     tax_total = uom.format_value('0', entry.currency)
-    applied_amount_tax = [] 
     
     for line in entry._lines:
       
