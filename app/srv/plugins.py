@@ -510,7 +510,8 @@ class Carrier(transaction.Plugin):
     valid_lines = []
     
     for carrier_line in self.lines:
-      valid_lines.append(self.validate_line(carrier_line, entry))
+      if self.validate_line(carrier_line, entry):
+         valid_lines.append(carrier_line)
       
     self.calculate_lines(valid_lines, entry)
     
