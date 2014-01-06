@@ -6,6 +6,12 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 
+class Context():
+  
+  def __init__(self, entities):
+    
+    self.entities = entities
+
 class Role(ndb.BaseExpando):
     
     # root (namespace Domain)

@@ -6,6 +6,11 @@ Created on Dec 25, 2013
 '''
 from app import ndb
 
+class Context():
+  
+  def __init__(self):
+    self.entities = []
+ 
 # ova klasa snima sve logove, napr: PayPal, IP adrese....
 class Record(ndb.BaseExpando):
     
