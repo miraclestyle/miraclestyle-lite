@@ -1,43 +1,79 @@
 """
-context: proposed organized structure
-context.action.name
-context.action.args
+context.event.name
+context.event.args
+context.event.response
+
 context.transaction.group
-context.transaction.entries
+context.transaction.nodes
 context.transaction.callbacks
-context.log.entities
-context.rule.entity
-context.user
-context.response
+
+context.log.nodes
+
+context.rule.nodes
+
+
+context.auth.user
+context.authentication.user
+context.event.response
 """
 
-
-
-class UpdateProductLine(transaction.Plugin):
+class Context:
   
-  fields = ndb.SuperPickleProperty('5')
-  
-  
-  def run(self, journal, context):
+  def __init__(self, **kwargs):
     
-    entry = context.entries[journal.code]
-    context.entity = entry
-    rule.Engine.run(context)
-    
-    if not context.entity._rule_action_permissions[context.action]['executable']:
-      raise PluginValidationError('action_forbidden')
-    
-    i = 0
-    for line in entry._lines:
-      if (hasattr(line, 'catalog_pricetag_reference')
-          and hasattr(line, 'product_instance_reference'):
-        if context.entity._rule_field_permissions['quantity']['writable']:
-          if context.args.get('quantity')[i] <= 0:
-            entry._lines.pop(i)
-          else:
-            line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
-        if context.entity._rule_field_permissions['discount']['writable']:
-          line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
-      i += 1
+    self.event = None
+    self.auth = None
+    self.rule = None
+    self.log = None
+    self.transaction = None
       
+    for k,v in kwargs.items():
+      setattr(k, v)
+      
+class Action(ndb.BaseExpando):
+  
+  KIND_ID = 49
+  
+  # root (namespace Domain)
+  # key.id() = code.code
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  code = ndb.SuperStringProperty('2', repeated=True)
+  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  sequence = ndb.SuperIntegerProperty('4', required=True)
+  active = ndb.SuperBooleanProperty('5', default=True)
+  subscriptions = ndb.SuperStringProperty('6', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
+  
+  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
+  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
+  
+  
+  def run(self, args):
+    context = Context()
+    context.event.name = self.key.urlsafe()
+    for arg in self.args:
+      context.event.args[arg] = args.get(arg)
+      
+      
+    return transaction.Engine.run(context)
+      
+   
+  
+class Engine:
+  
+  def run(cls, action_key, args):
+    
+    action = get_system_action(action_key)
+    if not action:
+      action = Action.get_action(action_key)
+    
+    if action:
+      context = action.run(args)
+      
+    if context:
+      context.event.response
+    
+  
+  
       
