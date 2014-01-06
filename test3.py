@@ -4,24 +4,21 @@ Created on Dec 30, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-class Foobar():
-  _properties = None
+from StringIO import StringIO
+import tokenize
+import keyword
+import token
+
+def runit(s):
+    result = []
+    g = tokenize.generate_tokens(StringIO(s).readline)   # tokenize the string
+    for toknum, tokval, _1, _2, _3  in g:
+        if toknum == tokenize.NAME and not keyword.iskeyword(tokval):
+           result.append("Eval('%s')" % tokval)
+        elif tokenize.OP == toknum:
+           result.append(tokval)
+    return " ".join(result)
   
-  def change(self, what):
-      self._properties = what
-      
-      
+t = 1
 
-
-a = Foobar()
-a.change({'a' : 1})
-b = Foobar()
-b.change({'b' : 2})
-
-d = {'1' : a, '2' : b}
-
-for k,v in d.items():
-    print v._properties
-    v._properties['changed'] = 1
-    
-print a._properties, b._properties
+t
