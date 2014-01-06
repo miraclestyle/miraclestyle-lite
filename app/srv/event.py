@@ -11,7 +11,6 @@ from app.srv import log, rule, transaction, auth
 __SYSTEM_ACTIONS = {}
 
 def get_system_action(action_key):
-    # gets registered system journals
     global __SYSTEM_ACTIONS
     
     action_key = ndb.Key(Action, action_key)
@@ -50,24 +49,29 @@ class Argument():
  
 class Action(ndb.BaseExpando):
   
-  KIND_ID = 49
+  KIND_ID = 56
   
   # root (namespace Domain)
   # key.id() = code.code
   
   name = ndb.SuperStringProperty('1', required=True)
-  args = ndb.SuperPickleProperty('2', repeated=True) # dict
+  arguments = ndb.SuperPickleProperty('2') # dict
   active = ndb.SuperBooleanProperty('3', default=True)
   
   @classmethod
   def get_local_action(cls, action_key):
-      return ndb.Key(urlsafe=action_key).get()
+      action = ndb.Key(urlsafe=action_key).get()
+      if action.active:
+         return action
+      else:
+         return None
  
   def run(self, args):
     context = Context()
     context.event = self
-    for key in self.args:
-      self.args[key].value = args.get(key)
+    self.args = {}
+    for key in self.arguments:
+      self.args[key] = args.get(key)
  
     return transaction.Engine.run(context)
  
@@ -79,7 +83,7 @@ class Engine:
     
     action = get_system_action(action_key)
     if not action:
-      action = Action.get_action(action_key)
+      action = Action.get_local_action(action_key)
     
     if action:
       action.run(args)
