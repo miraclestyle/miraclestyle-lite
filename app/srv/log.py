@@ -44,13 +44,13 @@ class Engine:
   
   def run(self, context):
     
-    if len(context.log_entities):
+    if len(context.log.entities):
       
       records = []
       
-      for entity, kwargs in context.log_entities:
+      for entity, kwargs in context.log.log_entities:
         log_entity = kwargs.pop('log_entity', True)
-        record = Record(parent=entity.key, agent=context.user.key, action=context.action, **kwargs)
+        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.event.name, **kwargs)
         if log_entity is True:
            log_entity = entity
            
@@ -60,4 +60,4 @@ class Engine:
       
       if len(records):
         recorded = ndb.put_multi(records)
-        context.log_entities = []
+        context.log.entities = []

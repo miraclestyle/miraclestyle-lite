@@ -16,6 +16,7 @@ class Context:
       self.group = None
       self.entities = collections.OrderedDict()
       self.callbacks = []
+      self.operation = None
  
       
   def new_callback(self, callback, **kwargs):
@@ -41,9 +42,9 @@ def get_system_journals(context):
     
     returns = []
     
-    if context.action:
+    if context.event:
       for journal in __SYSTEM_JOURNALS:
-          if context.action in journal[0]:
+          if context.event.name in journal[0]:
              returns.append(journal[1])
     else:
       returns = [journal[1] for journal in __SYSTEM_JOURNALS]
@@ -154,14 +155,14 @@ class Journal(ndb.BaseExpando):
         if category == plugin.__class__.__name__:
             plugin.run(self, context)
              
-    context.entity = None
+    context.rule.entities = {}
   
   @classmethod
   def get_local_journals(cls, context):
        
       journals = cls.query(cls.active == True, 
-                           cls.company == context.args.get('company'), 
-                           cls.subscriptions == context.action).order(cls.sequence).fetch()
+                           cls.company == context.event.args.get('company'), 
+                           cls.subscriptions == context.event.name).order(cls.sequence).fetch()
          
       return journals
      
@@ -268,8 +269,8 @@ class Plugin(ndb.BasePolyExpando):
   def get_local_plugins(cls, journal, context):
       plugins = cls.query(ancestor=journal.key, 
                           cls.active == True, 
-                          cls.subscriptions == context.action,
-                          cls.company == context.args.get('company')
+                          cls.subscriptions == context.event.name,
+                          cls.company == context.event.args.get('company')
                          ).order(cls.sequence).fetch()
       return plugins
 
@@ -288,22 +289,22 @@ class Engine:
                 
         
         # `operation` param in Context class determines which callback of the `Engine` class will be called
-        call = getattr(cls, context.operation)
+        call = getattr(cls, context.transaction.operation)
         
         call(context)
         
-        context.do_callbacks()
+        context.run_callbacks()
  
   @classmethod
   @ndb.transactional(xg=True)
   def transaction(cls, context):
-    group = context.group
+    group = context.transaction.group
     if not group:
        group = Group()
        group.put()
     
     group_key = group.key # - put main key
-    for journal_code, entry in context.entries.items():
+    for journal_code, entry in context.transaction.entities.items():
         entry.set_key(parent=group_key) # parent key for entry
         entry_key = entry.put()
         

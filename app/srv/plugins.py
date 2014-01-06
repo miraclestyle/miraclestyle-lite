@@ -61,7 +61,7 @@ class AddressRule(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     
     buyer_addresses = []
     valid_addresses = []
@@ -160,8 +160,8 @@ class CartInit(transaction.Plugin):
   
   def run(self, journal, context):
     # ucitaj postojeci entry na kojem ce se raditi write
-    catalog_key = context.args.get('catalog')
-    user_key = context.user.key
+    catalog_key = context.event.args.get('catalog')
+    user_key = context.auth.user.key
     catalog = catalog_key.get()
     company = catalog.company.get()
     company_key = company.key
@@ -198,28 +198,28 @@ class CartInit(transaction.Plugin):
       entry.party = user_key
     # proveravamo da li je entry u state-u 'cart'
     
-    context.entity = entry
+    context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.entity._rule_action_permissions[context.action]['executable']:
+    if not context.rule.entity._action_permissions[context.event.name]['executable']:
       # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
-      context.entries[journal.code] = entry
+      context.transaction.entities[journal.code] = entry
       
 
 class ProductToLine(transaction.Plugin):
     
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
    
-    catalog_pricetag_key = context.args.get('catalog_pricetag')
-    product_template_key = context.args.get('product_template')
-    product_instance_key = context.args.get('product_instance')
-    variant_signature = context.args.get('variant_signature')
-    custom_variants = context.args.get('custom_variants')
+    catalog_pricetag_key = context.event.args.get('catalog_pricetag')
+    product_template_key = context.event.get('product_template')
+    product_instance_key = context.event.get('product_instance')
+    variant_signature = context.event.get('variant_signature')
+    custom_variants = context.event.get('custom_variants')
  
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
@@ -269,7 +269,7 @@ class ProductSubtotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     
     for line in entry._lines:
       if hasattr(line, 'product_instance_reference'):
@@ -289,7 +289,7 @@ class PayPalPayment(transaction.Plugin):
   def run(self, journal, context):
     # u contextu add_to_cart akcije ova funkcija radi sledece:
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     
     entry.currency = uom.get_uom(self.currency)
     
@@ -298,7 +298,7 @@ class OrderTotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     
     untaxed_amount = uom.format_value('0', entry.currency) # decimal formating required
     tax_amount = uom.format_value('0', entry.currency) # decimal formating required
@@ -333,7 +333,7 @@ class Tax(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     
     allowed = self.validate_tax(entry)
     
@@ -416,7 +416,7 @@ class TaxSubtotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     tax_line = False
     tax_total = uom.format_value('0', entry.currency)
     
@@ -469,16 +469,16 @@ class EntryFieldAutoUpdate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
-    context.entity = entry
+    entry = context.transaction.entities[journal.code]
+    context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.entity._rule_action_permissions[context.action]['executable']:
+    if not context.rule.entity._action_permissions[context.event.name]['executable']:
       raise PluginValidationError('action_forbidden')
     
     for field in self.fields:
       if field.name not in ['name', 'company', 'journal', 'created', 'updated']:
-        if context.entity._rule_field_permissions[field.name]['writable']:
+        if context.rule.entity._field_permissions[field.name]['writable']:
           setattr(entry, field.name, field.value)
         else:
           raise PluginValidationError('field_not_writable')
@@ -506,7 +506,7 @@ class Carrier(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
+    entry = context.transaction.entities[journal.code]
     valid_lines = []
     
     for carrier_line in self.lines:
@@ -597,22 +597,22 @@ class UpdateProductLine(transaction.Plugin):
    
   def run(self, journal, context):
     
-    entry = context.entries[journal.code]
-    context.entity = entry
+    entry = context.transaction.entities[journal.code]
+    context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.entity._rule_action_permissions[context.action]['executable']:
+    if not context.rule.entity._action_permissions[context.event.name]['executable']:
       raise PluginValidationError('action_forbidden')
     
     i = 0
     for line in entry._lines:
       if hasattr(line, 'catalog_pricetag_reference') and hasattr(line, 'product_instance_reference'):
-        if context.entity._rule_field_permissions['quantity']['writable']:
-          if context.args.get('quantity')[i] <= 0:
+        if context.rule.entity._field_permissions['quantity']['writable']:
+          if context.event.args.get('quantity')[i] <= 0:
             entry._lines.pop(i)
           else:
-            line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
-        if context.entity._rule_field_permissions['discount']['writable']:
-          line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
+            line.quantity = uom.format_value(context.event.args.get('quantity')[i], line.product_uom)
+        if context.rule.entity._field_permissions['discount']['writable']:
+          line.discount = uom.format_value(context.event.args.get('discount')[i], uom.UOM(digits=4))
       i += 1
       
