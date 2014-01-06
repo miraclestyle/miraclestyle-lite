@@ -13,7 +13,7 @@ context.response
 
 
 
-class LineFieldUpdate(transaction.Plugin):
+class UpdateProductLine(transaction.Plugin):
   
   fields = ndb.SuperPickleProperty('5')
   
@@ -27,10 +27,17 @@ class LineFieldUpdate(transaction.Plugin):
     if not context.entity._rule_action_permissions[context.action]['executable']:
       raise PluginValidationError('action_forbidden')
     
-    for field_name, field_value in context.args.items():
-      for line in entry._lines:
-        if field_name not in ['journal', 'company', 'state', 'date', 'sequence', 'categories', 'debit', 'credit', 'uom']:
-          if context.entity._rule_field_permissions[field_name]['writable']:
-            setattr(line, field_name, field_value)
+    i = 0
+    for line in entry._lines:
+      if (hasattr(line, 'catalog_pricetag_reference')
+          and hasattr(line, 'product_instance_reference'):
+        if context.entity._rule_field_permissions['quantity']['writable']:
+          if context.args.get('quantity')[i] <= 0:
+            entry._lines.pop(i)
           else:
-            raise PluginValidationError('field_not_writable')
+            line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
+        if context.entity._rule_field_permissions['discount']['writable']:
+          line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
+      i += 1
+      
+      
