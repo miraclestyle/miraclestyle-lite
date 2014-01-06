@@ -10,18 +10,13 @@ from app.srv import log, rule, transaction, auth
  
 class Context():
   
-  def __init__(self, **kwargs):
-    
-    def gets(k):
-        return kwargs.pop(k, {})
-    
-    self.event = gets('action')
-    self.transaction = transaction.Context(**gets('transaction'))
-    self.rule = rule.Context(**gets('rule'))
-        
+  def __init__(self):
+ 
+    self.event = None
+    self.transaction = transaction.Context()
+    self.rule = rule.Context()
+  
     self.log = log.Context()
     self.auth = auth.Context()
-    self.response = kwargs.pop('response', ndb.Response())
+    self.response = None
  
-    for k,v in kwargs.items():
-        setattr(k, v)

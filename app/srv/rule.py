@@ -8,9 +8,8 @@ from app import ndb
 
 class Context():
   
-  def __init__(self, entities):
-    
-    self.entities = entities
+  def __init__(self):
+    self.entities = None
 
 class Role(ndb.BaseExpando):
     

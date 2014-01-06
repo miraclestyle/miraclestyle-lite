@@ -7,27 +7,21 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
-from app.srv import rule, uom
+from app.srv import uom
  
 class Context:
   
   def __init__(self, **kwargs):
-    
-      self.callbacks = []
+ 
       self.group = None
-      self.entries = collections.OrderedDict()
-      self.user = ndb.get_current_user()
-      self.log_entities = []
-      self.response = kwargs.pop('response', ndb.Response())
-      
-      for k,v in kwargs.items():
-          setattr(k, v)
+      self.entities = collections.OrderedDict()
+      self.callbacks = []
  
       
   def new_callback(self, callback, **kwargs):
      self.callbacks.append((callback, kwargs)) # something like this?
  
-  def do_callbacks(self):
+  def run_callbacks(self):
       for c in self.callbacks:
           callback, config = c
           
