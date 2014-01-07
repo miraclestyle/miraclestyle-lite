@@ -9,7 +9,6 @@ from app import ndb
 class Context():
   
   def __init__(self):
-    self.entities = {}
     self.entity = None
     
 
