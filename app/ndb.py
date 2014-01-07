@@ -408,16 +408,16 @@ class _BaseModel():
   
   @classmethod
   def get_fields(cls):
-      out = []
+      fields = {}
       for prop_key,prop in cls._properties.items():
-          out.append(prop)
+          fields[prop._code_name] = prop
           
       if hasattr(cls, 'has_expando_fields'):
          expandos = cls.has_expando_fields()
          if expandos: 
-             for prop_key,prop in expandos.items():
-                 out.append(prop)
-      return out
+             for expando_prop_key,expando_prop in expandos.items():
+                 fields[expando_prop._code_name] = expando_prop
+      return fields
  
   @classmethod
   def create(cls, values, **kwargs):

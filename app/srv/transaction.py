@@ -226,7 +226,7 @@ class Entry(ndb.BaseExpando):
   def get_fields(self):
       fields = super(Entry, self).get_fields()
       journal = self.journal.get()
-      fields.extend(journal.entry_fields)
+      fields.update(journal.entry_fields)
       return fields
                     
   
@@ -266,7 +266,7 @@ class Line(ndb.BaseExpando):
   def get_fields(self):
       fields = super(Line, self).get_fields()
       journal = self.journal.get()
-      fields.extend(journal.line_fields)
+      fields.update(journal.line_fields)
       return fields
    
 class Engine:
