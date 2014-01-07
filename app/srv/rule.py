@@ -52,14 +52,14 @@ class Engine:
     fields = context.rule.entity.get_fields()
  
     for field in fields:
-       context.rule.entity._fields[field._name] = field # place also this value for the stuff below?
-       context.rule.entity._field_permissions[field._name] = {'writable' : [], 'visible' : [], 'required' : []}
+       context.rule.entity._fields[field._code_name] = field # place also this value for the stuff below?
+       context.rule.entity._field_permissions[field._code_name] = {'writable' : [], 'visible' : [], 'required' : []}
     
     actions = context.rule.entity.get_actions()
        
-    for action_name, action_code in actions.items():
-        context.rule.entity._actions[action_name] = action_code
-        context.rule.entity._action_permissions[action_name] = {'executable' : []}
+    for action in actions:
+       context.rule.entity._actions[action.key.id()] = action
+       context.rule.entity._action_permissions[action.key.id()] = {'executable' : []}
  
   @classmethod
   def decide(cls, data, strict):
@@ -187,7 +187,7 @@ class ActionPermission(Permission):
     
   def run(self, role, context):
      
-    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (eval(self.condition)) and (self.executable != None):
+    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity._actions) and (eval(self.condition)) and (self.executable != None):
        context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
 
 
@@ -206,7 +206,7 @@ class FieldPermission(Permission):
   def run(self, context):
     
  
-    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (eval(self.condition)):
+    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity._fields) and (eval(self.condition)):
       if (self.writable != None):
         context.rule.entity._field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
