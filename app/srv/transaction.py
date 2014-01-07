@@ -9,6 +9,7 @@ import collections
 from app import ndb
 from app.srv import uom
  
+ 
 class Context:
   
   def __init__(self, **kwargs):
@@ -33,6 +34,27 @@ class Context:
           else:
             # self is passed to the callback, because `self` contains all entries, configurations, and arguments
             callback(self)
+            
+            
+__SYSTEM_PLUGINS = []
+
+def get_system_plugins(action_key=None, journal_key=None):
+    # gets registered system journals
+    global __SYSTEM_PLUGINS
+    
+    plugins = []
+ 
+    for plugin in __SYSTEM_PLUGINS:
+        if action_key in plugin.subscriptions and journal_key == plugin.key.parent():
+           plugins.append(plugin)
+           
+    return plugins
+  
+def register_system_plugins(*args):
+    global __SYSTEM_PLUGINS
+    
+    __SYSTEM_PLUGINS.extend(args)
+    
             
 __SYSTEM_JOURNALS = []
 
@@ -218,7 +240,14 @@ class Entry(ndb.BaseExpando):
   # expando indexi se programski ukljucuju ili gase po potrebi
  
   def get_actions(self):
-      return {}
+      journal = self.journal.get()
+      get_actions = ndb.get_multi([action_key for action_key in journal.subscriptions])
+      actions = {}
+      for action in get_actions:
+         actions[action.key.id()] = action
+         
+      return action
+          
   
   def get_kind(self):
       return 'e_%s' % self.journal.key.id()

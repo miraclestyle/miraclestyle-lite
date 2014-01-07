@@ -8,37 +8,10 @@ import datetime
  
 from app import ndb
 from app.srv import transaction, rule, uom
-  
 from app.core import buyer
-
-Entry = transaction.Entry
-Journal = transaction.Journal
-Context = transaction.Context
-
+ 
 class PluginValidationError(Exception):
   pass
-
-__SYSTEM_PLUGINS = []
-
-def get_system_plugins(action=None, journal_code=None):
-    # gets registered system journals
-    global __SYSTEM_PLUGINS
-    
-    returns = []
-    
-    if action:
-      for plugin in __SYSTEM_PLUGINS:
-          if action in plugin[1] and journal_code == plugin[0]:
-             returns.append(plugin[2])
-    else:
-      returns = [plugin[2] for plugin in __SYSTEM_PLUGINS]
-              
-    return returns
-  
-def register_system_plugins(*args):
-    global __SYSTEM_PLUGINS
-    __SYSTEM_PLUGINS.extend(args)
-  
   
 class Location:
   
@@ -166,7 +139,10 @@ class CartInit(transaction.Plugin):
     company = catalog.company.get()
     company_key = company.key
     journal_key = journal.get_key(journal.code, namespace=catalog.key.namespace())
- 
+    
+    
+    Entry = transaction.Entry
+  
     entry = Entry.query(Entry.journal == journal_key, 
                         Entry.company == company_key, Entry.state.IN(['cart', 'checkout', 'processing']),
                         Entry.party == user_key
