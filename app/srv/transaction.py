@@ -116,94 +116,7 @@ class Category(ndb.BaseExpando):
      'description' : ndb.SuperTextProperty('7'),
      'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
   }
-
-
-class Group(ndb.BaseExpando):
   
-  KIND_ID = 48  
- 
-  # root (namespace Domain)
-  # verovatno cemo ostaviti da bude expando za svaki slucaj!
-  
-  
-class Entry(ndb.BaseExpando):
-    
-  KIND_ID = 50
-  
-  # ancestor Group (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
-  # composite index: 
-  # ancestor:no - journal,company,state,date:desc;
-  # ancestor:no - journal,company,state,created:desc;
-  # ancestor:no - journal,company,state,updated:desc;
-  # ancestor:no - journal,company,state,party,date:desc; ?
-  # ancestor:no - journal,company,state,party,created:desc; ?
-  # ancestor:no - journal,company,state,party,updated:desc; ?
-  name = ndb.SuperStringProperty('1', required=True)
-  journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
-  state = ndb.SuperStringProperty('4', required=True)
-  date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
-  created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
-  updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True)
-  # Expando
-  # 
-  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
-  # expando indexi se programski ukljucuju ili gase po potrebi
- 
-  def get_actions(self):
-      return {}
-  
-  def get_kind(self):
-      return 'e_%s' % self.journal.key.id()
-    
-  def get_fields(self):
-      fields = super(Entry, self).get_fields()
-      journal = self.journal.get()
-      fields.extend(journal.entry_fields)
-      return fields
-          
-  
-class Line(ndb.BaseExpando):
-  
-  KIND_ID = 51  
-  
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
-  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
-  # composite index: 
-  # ancestor:yes - sequence;
-  # ancestor:no - journal, company, state, categories, uom, date
-  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('2', kind='app.domain.business.Company', required=True)
-  state = ndb.SuperIntegerProperty('3', required=True)
-  date = ndb.SuperDateTimeProperty('4', required=True)# updated on specific state or manually
-  sequence = ndb.SuperIntegerProperty('5', required=True)
-  categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
-  debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
-  # Expando
-  # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
-  
-  def get_actions(self):
-      return {}
-
-  def get_kind(self):
-      return 'l_%s' % self.journal.key.id()
-  
-  def get_fields(self):
-      fields = super(Line, self).get_fields()
-      journal = self.journal.get()
-      fields.extend(journal.line_fields)
-      return fields
-          
 class Journal(ndb.BaseExpando):
   
   KIND_ID = 49
@@ -250,7 +163,6 @@ class Journal(ndb.BaseExpando):
          
       return journals
 
-
 class Plugin(ndb.BasePolyExpando):
   
   KIND_ID = 52
@@ -271,6 +183,92 @@ class Plugin(ndb.BasePolyExpando):
                          ).order(cls.sequence).fetch()
       return plugins
 
+class Group(ndb.BaseExpando):
+  
+  KIND_ID = 48  
+ 
+  # root (namespace Domain)
+  # verovatno cemo ostaviti da bude expando za svaki slucaj!
+  
+  
+class Entry(ndb.BaseExpando):
+    
+  KIND_ID = 50
+  
+  # ancestor Group (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
+  # composite index: 
+  # ancestor:no - journal,company,state,date:desc;
+  # ancestor:no - journal,company,state,created:desc;
+  # ancestor:no - journal,company,state,updated:desc;
+  # ancestor:no - journal,company,state,party,date:desc; ?
+  # ancestor:no - journal,company,state,party,created:desc; ?
+  # ancestor:no - journal,company,state,party,updated:desc; ?
+  name = ndb.SuperStringProperty('1', required=True)
+  journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
+  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  state = ndb.SuperStringProperty('4', required=True)
+  date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
+  created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
+  updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True)
+  # Expando
+  # 
+  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
+  # expando indexi se programski ukljucuju ili gase po potrebi
+ 
+  def get_actions(self):
+      return {}
+  
+  def get_kind(self):
+      return 'e_%s' % self.journal.key.id()
+    
+  def get_fields(self):
+      fields = super(Entry, self).get_fields()
+      journal = self.journal.get()
+      fields.extend(journal.entry_fields)
+      return fields
+                    
+  
+class Line(ndb.BaseExpando):
+  
+  KIND_ID = 51  
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # composite index: 
+  # ancestor:yes - sequence;
+  # ancestor:no - journal, company, state, categories, uom, date
+  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)
+  company = ndb.SuperKeyProperty('2', kind='app.domain.business.Company', required=True)
+  state = ndb.SuperIntegerProperty('3', required=True)
+  date = ndb.SuperDateTimeProperty('4', required=True)# updated on specific state or manually
+  sequence = ndb.SuperIntegerProperty('5', required=True)
+  categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
+  debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+  
+  def get_actions(self):
+      return {}
+
+  def get_kind(self):
+      return 'l_%s' % self.journal.key.id()
+  
+  def get_fields(self):
+      fields = super(Line, self).get_fields()
+      journal = self.journal.get()
+      fields.extend(journal.line_fields)
+      return fields
+   
 class Engine:
  
   @classmethod
