@@ -19,8 +19,8 @@ class Record(ndb.BaseExpando):
     # high numbers for field aliases here to not conflict with logged object
     
     logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
-    agent = ndb.SuperKeyProperty('98', kind='app.core.acl.User', required=True)
-    action = ndb.SuperIntegerProperty('97', required=True)
+    agent = ndb.SuperKeyProperty('98', kind='app.srv.auth.User', required=True)
+    action = ndb.SuperKeyProperty('97', kind='app.srv.event.Action', required=True)
   
     _default_indexed = False
  
@@ -48,9 +48,9 @@ class Engine:
       
       records = []
       
-      for entity, kwargs in context.log.log_entities:
+      for entity, kwargs in context.log.entities:
         log_entity = kwargs.pop('log_entity', True)
-        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.event.name, **kwargs)
+        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.event.key, **kwargs)
         if log_entity is True:
            log_entity = entity
            

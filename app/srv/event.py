@@ -55,8 +55,9 @@ class Action(ndb.BaseExpando):
   # key.id() = code.code
   
   name = ndb.SuperStringProperty('1', required=True)
-  arguments = ndb.SuperPickleProperty('2') # dict
-  active = ndb.SuperBooleanProperty('3', default=True)
+  code = ndb.SuperStringProperty('2', required=True)
+  arguments = ndb.SuperPickleProperty('3') # dict
+  active = ndb.SuperBooleanProperty('4', default=True)
   
   @classmethod
   def get_local_action(cls, action_key):

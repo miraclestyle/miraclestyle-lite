@@ -44,7 +44,7 @@ def get_system_journals(context):
     
     if context.event:
       for journal in __SYSTEM_JOURNALS:
-          if context.event.name in journal[0]:
+          if context.key.urlsafe() in journal[0]:
              returns.append(journal[1])
     else:
       returns = [journal[1] for journal in __SYSTEM_JOURNALS]
@@ -162,7 +162,7 @@ class Journal(ndb.BaseExpando):
        
       journals = cls.query(cls.active == True, 
                            cls.company == context.event.args.get('company'), 
-                           cls.subscriptions == context.event.name).order(cls.sequence).fetch()
+                           cls.subscriptions == context.key.urlsafe()).order(cls.sequence).fetch()
          
       return journals
      
@@ -269,7 +269,7 @@ class Plugin(ndb.BasePolyExpando):
   def get_local_plugins(cls, journal, context):
       plugins = cls.query(ancestor=journal.key, 
                           cls.active == True, 
-                          cls.subscriptions == context.event.name,
+                          cls.subscriptions == context.key.urlsafe(),
                           cls.company == context.event.args.get('company')
                          ).order(cls.sequence).fetch()
       return plugins

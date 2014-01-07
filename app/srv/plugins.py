@@ -201,7 +201,7 @@ class CartInit(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.name]['executable']:
+    if not context.rule.entity._action_permissions[context.event.key.urlsafe()]['executable']:
       # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
@@ -473,7 +473,7 @@ class EntryFieldAutoUpdate(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.name]['executable']:
+    if not context.rule.entity._action_permissions[context.key.urlsafe()]['executable']:
       raise PluginValidationError('action_forbidden')
     
     for field in self.fields:
@@ -601,7 +601,7 @@ class UpdateProductLine(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.name]['executable']:
+    if not context.rule.entity._action_permissions[context.key.urlsafe()]['executable']:
       raise PluginValidationError('action_forbidden')
     
     i = 0
