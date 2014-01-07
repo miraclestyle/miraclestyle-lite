@@ -8,6 +8,7 @@ encoding//app/domain/acl.py=utf-8
 encoding//app/domain/business.py=utf-8
 encoding//app/domain/marketing.py=utf-8
 encoding//app/domain/product.py=utf-8
+encoding//app/lib/safe_eval.py=utf-8
 encoding//app/memcache.py=utf-8
 encoding//app/ndb.py=utf-8
 encoding//app/oauth2.py=utf-8
