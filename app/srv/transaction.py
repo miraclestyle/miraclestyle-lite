@@ -40,16 +40,15 @@ def get_system_journals(context):
     # gets registered system journals
     global __SYSTEM_JOURNALS
     
-    returns = []
+    journals = []
     
     if context.event:
       for journal in __SYSTEM_JOURNALS:
-          if context.key.urlsafe() in journal[0]:
-             returns.append(journal[1])
-    else:
-      returns = [journal[1] for journal in __SYSTEM_JOURNALS]
-              
-    return returns
+          if context.event.key in journal.subscriptions:
+             journals.append(journal)
+ 
+    return journals
+  
   
 def register_system_journals(*args):
     global __SYSTEM_JOURNALS
@@ -130,7 +129,7 @@ class Journal(ndb.BaseExpando):
   company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
   sequence = ndb.SuperIntegerProperty('4', required=True)
   active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperStringProperty('6', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
+  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.event.Action', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
   
   entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
   line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
@@ -154,14 +153,14 @@ class Journal(ndb.BaseExpando):
         if category == plugin.__class__.__name__:
             plugin.run(self, context)
              
-    context.rule.entities = {}
+    context.rule.entity = None
   
   @classmethod
   def get_local_journals(cls, context):
        
       journals = cls.query(cls.active == True, 
                            cls.company == context.event.args.get('company'), 
-                           cls.subscriptions == context.key.urlsafe()).order(cls.sequence).fetch()
+                           cls.subscriptions == context.event.key).order(cls.sequence).fetch()
          
       return journals
      
