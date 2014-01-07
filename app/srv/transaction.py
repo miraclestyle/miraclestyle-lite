@@ -127,7 +127,6 @@ class Journal(ndb.BaseExpando):
   # key.id() = code.code
   
   name = ndb.SuperStringProperty('1', required=True)
-  code = ndb.SuperStringProperty('2', repeated=True)
   company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
   sequence = ndb.SuperIntegerProperty('4', required=True)
   active = ndb.SuperBooleanProperty('5', default=True)

@@ -187,7 +187,7 @@ class ActionPermission(Permission):
     
   def run(self, role, context):
      
-    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity._actions) and (eval(self.condition)) and (self.executable != None):
+    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (eval(self.condition)) and (self.executable != None):
        context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
 
 
@@ -206,7 +206,7 @@ class FieldPermission(Permission):
   def run(self, context):
     
  
-    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity._fields) and (eval(self.condition)):
+    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (eval(self.condition)):
       if (self.writable != None):
         context.rule.entity._field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
