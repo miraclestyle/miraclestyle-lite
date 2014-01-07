@@ -22,8 +22,6 @@ class Location:
     self.postal_code_to = postal_code_to
     self.city = city
     
-
-
 class AddressRule(transaction.Plugin):
   
   KIND_ID = 54
@@ -34,7 +32,7 @@ class AddressRule(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     
     buyer_addresses = []
     valid_addresses = []
@@ -138,9 +136,8 @@ class CartInit(transaction.Plugin):
     catalog = catalog_key.get()
     company = catalog.company.get()
     company_key = company.key
-    journal_key = journal.get_key(journal.code, namespace=catalog.key.namespace())
-    
-    
+    journal_key = journal.get_key(journal.key.id(), namespace=catalog.key.namespace())
+     
     Entry = transaction.Entry
   
     entry = Entry.query(Entry.journal == journal_key, 
@@ -177,19 +174,19 @@ class CartInit(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.key.urlsafe()]['executable']:
+    if not context.rule.entity._action_permissions[context.event.key.id()]['executable']:
       # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
-      context.transaction.entities[journal.code] = entry
+      context.transaction.entities[journal.key.id()] = entry
       
 
 class ProductToLine(transaction.Plugin):
     
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
    
     catalog_pricetag_key = context.event.args.get('catalog_pricetag')
     product_template_key = context.event.get('product_template')
@@ -245,7 +242,7 @@ class ProductSubtotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     
     for line in entry._lines:
       if hasattr(line, 'product_instance_reference'):
@@ -265,7 +262,7 @@ class PayPalPayment(transaction.Plugin):
   def run(self, journal, context):
     # u contextu add_to_cart akcije ova funkcija radi sledece:
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     
     entry.currency = uom.get_uom(self.currency)
     
@@ -274,7 +271,7 @@ class OrderTotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     
     untaxed_amount = uom.format_value('0', entry.currency) # decimal formating required
     tax_amount = uom.format_value('0', entry.currency) # decimal formating required
@@ -309,7 +306,7 @@ class Tax(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     
     allowed = self.validate_tax(entry)
     
@@ -392,7 +389,7 @@ class TaxSubtotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     tax_line = False
     tax_total = uom.format_value('0', entry.currency)
     
@@ -445,7 +442,7 @@ class EntryFieldAutoUpdate(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     context.rule.entity = entry
     rule.Engine.run(context)
     
@@ -482,7 +479,7 @@ class Carrier(transaction.Plugin):
   
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     valid_lines = []
     
     for carrier_line in self.lines:
@@ -573,7 +570,7 @@ class UpdateProductLine(transaction.Plugin):
    
   def run(self, journal, context):
     
-    entry = context.transaction.entities[journal.code]
+    entry = context.transaction.entities[journal.key.id()]
     context.rule.entity = entry
     rule.Engine.run(context)
     

@@ -38,14 +38,14 @@ class Context:
             
 __SYSTEM_PLUGINS = []
 
-def get_system_plugins(action_key=None, journal_key=None):
+def get_system_plugins(journal, context):
     # gets registered system journals
     global __SYSTEM_PLUGINS
     
     plugins = []
  
     for plugin in __SYSTEM_PLUGINS:
-        if action_key in plugin.subscriptions and journal_key == plugin.key.parent():
+        if journal.key == plugin.key.parent() and context.event.key in plugin.subscriptions:
            plugins.append(plugin)
            
     return plugins
