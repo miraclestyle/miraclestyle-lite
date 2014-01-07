@@ -117,53 +117,7 @@ class Category(ndb.BaseExpando):
      'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
   }
 
-  
-class Journal(ndb.BaseExpando):
-  
-  KIND_ID = 49
-  
-  # root (namespace Domain)
-  # key.id() = code.code
-  
-  name = ndb.SuperStringProperty('1', required=True)
-  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
-  sequence = ndb.SuperIntegerProperty('4', required=True)
-  active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.event.Action', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
-  
-  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
-  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
-  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
-   
-  # sequencing counter....
-  
-  def get_key(self, *args, **kwargs):
-      if not self.key:
-         return self.set_key(*args, **kwargs)
-      else:
-         return self.key
-  
-  def get_kind(self):
-      return 'j_%s' % self.journal.key.id()
-  
-  def run(self, context):
-    plugins = Plugin.get_local_plugins(self, context)
-    for category in self.plugin_categories:
-      for plugin in plugins:
-        if category == plugin.__class__.__name__:
-            plugin.run(self, context)
-             
-    context.rule.entity = None
-  
-  @classmethod
-  def get_local_journals(cls, context):
-       
-      journals = cls.query(cls.active == True, 
-                           cls.company == context.event.args.get('company'), 
-                           cls.subscriptions == context.event.key).order(cls.sequence).fetch()
-         
-      return journals
-     
+
 class Group(ndb.BaseExpando):
   
   KIND_ID = 48  
@@ -250,8 +204,53 @@ class Line(ndb.BaseExpando):
       fields.extend(journal.line_fields)
       return fields
           
+class Journal(ndb.BaseExpando):
+  
+  KIND_ID = 49
+  
+  # root (namespace Domain)
+  # key.id() = code.code
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  sequence = ndb.SuperIntegerProperty('4', required=True)
+  active = ndb.SuperBooleanProperty('5', default=True)
+  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.event.Action', repeated=True)
+  
+  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
+  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
+   
+  # sequencing counter....
+  
+  def get_key(self, *args, **kwargs):
+      if not self.key:
+         return self.set_key(*args, **kwargs)
+      else:
+         return self.key
+  
+  def get_kind(self):
+      return 'j_%s' % self.journal.key.id()
+  
+  def run(self, context):
+    plugins = Plugin.get_local_plugins(self, context)
+    for category in self.plugin_categories:
+      for plugin in plugins:
+        if category == plugin.__class__.__name__:
+            plugin.run(self, context)
+             
+    context.rule.entity = None
+  
+  @classmethod
+  def get_local_journals(cls, context):
+       
+      journals = cls.query(cls.active == True, 
+                           cls.company == context.event.args.get('company'), 
+                           cls.subscriptions == context.event.key).order(cls.sequence).fetch()
+         
+      return journals
 
- 
+
 class Plugin(ndb.BasePolyExpando):
   
   KIND_ID = 52
@@ -260,14 +259,14 @@ class Plugin(ndb.BasePolyExpando):
   # composite index: ancestor:yes - sequence
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
-  subscriptions = ndb.SuperStringProperty('3', repeated=True)
+  subscriptions = ndb.SuperKeyProperty('3', kind='app.srv.event.Action', repeated=True)
   company = ndb.SuperKeyProperty('4', kind='app.domain.business.Company', required=True)
 
   @classmethod
   def get_local_plugins(cls, journal, context):
       plugins = cls.query(ancestor=journal.key, 
                           cls.active == True, 
-                          cls.subscriptions == context.key.urlsafe(),
+                          cls.subscriptions == context.event.key,
                           cls.company == context.event.args.get('company')
                          ).order(cls.sequence).fetch()
       return plugins
@@ -276,22 +275,19 @@ class Engine:
  
   @classmethod
   def run(cls, context):
-    
-      if isinstance(context, Context):
+    journals = get_system_journals(context)
+    journals.extend(Journal.get_local_journals(context))
         
-        journals = get_system_journals(context)
-        journals.extend(Journal.get_journals_by_context(context))
-        
-        for journal in journals:
-            journal.run(context)
+    for journal in journals:
+      journal.run(context)
                 
         
-        # `operation` param in Context class determines which callback of the `Engine` class will be called
-        call = getattr(cls, context.transaction.operation)
+    # `operation` param in transaction.Context class determines which callback of the `Engine` class will be called
+    call = getattr(cls, context.transaction.operation)
         
-        call(context)
+    call(context)
         
-        context.run_callbacks()
+    context.run_callbacks()
  
   @classmethod
   @ndb.transactional(xg=True)
@@ -299,10 +295,10 @@ class Engine:
     group = context.transaction.group
     if not group:
        group = Group()
-       group.put()
+       group.put() # ovo automatski snima group key sa namespace parametrom domain-u u kojem se izvrsava engine
     
     group_key = group.key # - put main key
-    for journal_code, entry in context.transaction.entities.items():
+    for key, entry in context.transaction.entities.items():
         entry.set_key(parent=group_key) # parent key for entry
         entry_key = entry.put()
         
