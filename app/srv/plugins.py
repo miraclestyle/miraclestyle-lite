@@ -189,10 +189,10 @@ class ProductToLine(transaction.Plugin):
     entry = context.transaction.entities[journal.key.id()]
    
     catalog_pricetag_key = context.event.args.get('catalog_pricetag')
-    product_template_key = context.event.get('product_template')
-    product_instance_key = context.event.get('product_instance')
-    variant_signature = context.event.get('variant_signature')
-    custom_variants = context.event.get('custom_variants')
+    product_template_key = context.event.args.get('product_template')
+    product_instance_key = context.event.args.get('product_instance')
+    variant_signature = context.event.args.get('variant_signature')
+    custom_variants = context.event.args.get('custom_variants')
  
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
@@ -446,7 +446,7 @@ class EntryFieldAutoUpdate(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.key.urlsafe()]['executable']:
+    if not context.rule.entity._action_permissions[context.event.key.id()]['executable']:
       raise PluginValidationError('action_forbidden')
     
     for field in self.fields:
@@ -574,7 +574,7 @@ class UpdateProductLine(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.key.urlsafe()]['executable']:
+    if not context.rule.entity._action_permissions[context.key.id()]['executable']:
       raise PluginValidationError('action_forbidden')
     
     i = 0

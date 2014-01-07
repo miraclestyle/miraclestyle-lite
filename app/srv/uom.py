@@ -14,18 +14,18 @@ __SYSTEM_MEASUREMENTS = collections.OrderedDict()
 
 def get_uom(unit_key):
   
-  measurement = get_system_measurements(unit_key.parent())
+  measurement = get_system_measurement(unit_key.parent())
   
   data = {'measurement' : measurement.name}
   
-  unit = get_system_units(unit_key)
+  unit = get_system_unit(unit_key)
   
   for unit_property_name, unit_property in unit._properties.items():
       data[unit_property._code_name] = unit_property._get_value(unit)
   
   return UOM(**data)
     
-def get_system_measurements(measurement_key):
+def get_system_measurement(measurement_key):
 
     global __SYSTEM_MEASUREMENTS
     
@@ -38,7 +38,7 @@ def register_system_measurements(*args):
     for measurement in args:
        __SYSTEM_MEASUREMENTS[measurement.key.urlsafe()] = measurement
 
-def get_system_units(unit_key):
+def get_system_unit(unit_key):
 
     global __SYSTEM_UNITS
     
