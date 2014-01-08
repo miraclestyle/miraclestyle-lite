@@ -9,6 +9,7 @@ import datetime
 from app import ndb
 from app.srv import transaction, rule, uom
 from app.core import buyer
+from app.lib.safe_eval import safe_eval
  
 class PluginValidationError(Exception):
   pass
@@ -225,14 +226,22 @@ class ProductToLine(transaction.Plugin):
       new_line.uom = entry.currency
       new_line.product_uom = uom.get_uom(product_template.product_uom)
       
+      if hasattr(product_template, 'weight'):
+         new_line._weight = product_template.weight
+      
+      if hasattr(product_template, 'volume'):   
+         new_line._volume = product_template.volume
+      
       new_line.product_category_complete_name = product_category_complete_name
       new_line.product_category_reference = product_template.product_category
       new_line.catalog_pricetag_reference = catalog_pricetag_key
       new_line.product_instance_reference = product_instance_key
+      
       if hasattr(product_instance, 'unit_price'):
         new_line.unit_price = product_instance.unit_price
       else:
         new_line.unit_price = product_template.unit_price
+        
       new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
       new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
       entry._lines.append(new_line)
@@ -541,17 +550,29 @@ class Carrier(transaction.Plugin):
 
 
     if (allowed):
+      
+      allowed = False
       weight = uom.format_value('0')
       volume = uom.format_value('0')
       price = entry.amount_total
-      for line in entry._lines:
-        weight += uom.convert_value(line._product_weight, line._product_weight_uom, x)
-        volume += uom.convert_value(line.product_volume, line._product_volume_uom, x)
       
+      base_weight = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
+      base_volume = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+       
+      for line in entry._lines:
+        weight_value = line._weight[0]
+        weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+        
+        volume_value = line._volume[0]
+        volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+        
+        weight += uom.convert_value(weight_value, weight_uom, base_weight)
+        volume += uom.convert_value(volume_value, volume_uom, base_volume)
+ 
       for rule in carrier_line.rules:
-        total_weight = uom.convert_value(weight, x, rule.weight_uom)
-        total_volume = uom.convert_value(volume, x, rule.volume_uom)
-        total_price = uom.convert_value(price, entry.currency, rule.currecy_uom)
+          if safe_eval(rule.condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
+             allowed = True
+             break
         
       # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
       if (self.carriers):
@@ -564,6 +585,7 @@ class Carrier(transaction.Plugin):
         for line in entry.lines:
           if (self.product_categories.count(line.product_category)):
             allowed = True
+            
     return allowed
   
 class UpdateProductLine(transaction.Plugin):

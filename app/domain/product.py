@@ -276,8 +276,8 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
       'variants' : ndb.SuperKeyProperty('7', kind='app.domain.product.Variant', repeated=True),# soft limit 100x
       'contents' : ndb.SuperKeyProperty('8', kind=Content, repeated=True),# soft limit 100x
       'images' : ndb.SuperLocalStructuredProperty(Image, '9', repeated=True),# soft limit 100x
-      'weight' : ndb.SuperStringProperty('10'),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-      'volume' : ndb.SuperStringProperty('11'),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
+      'weight' : ndb.SuperPickleProperty('10'),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
+      'volume' : ndb.SuperPickleProperty('11'),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
       'low_stock_quantity' : ndb.SuperDecimalProperty('12', default='0.00'),# notify store manager when qty drops below X quantity
       'product_instance_count' : ndb.SuperIntegerProperty('13') # cuvanje ovog podatka moze biti od koristi zbog prakticnog limita broja instanci na sistemu
  
