@@ -5,6 +5,7 @@ Created on Dec 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
+from app.lib.safe_eval import safe_eval
 
 class Context():
   
@@ -127,35 +128,37 @@ class Engine:
     
     # datastore system
     
-    # call prepare first, populates required dicts into the entity instance
-    cls.prepare(context)
-    
-    # 
-    roles = ndb.get_multi(context.auth.user.roles)
-    for role in roles:
-        role.run(context)
-        
-    # copy 
-    local_action_permissions = context.rule.entity._action_permissions.copy()
-    local_field_permissions = context.rule.entity._field_permissions.copy()
-    
-    # empty
-    cls.prepare(context)
+    if context.rule.entity:
  
-    entity = context.rule.entity
-    if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
-       entity._global_role.run(context)
-    
-    # copy   
-    global_action_permissions = context.rule.entity._action_permissions.copy()
-    global_field_permissions = context.rule.entity._field_permissions.copy()
-    
-    # empty
-    cls.prepare(context)
+      # call prepare first, populates required dicts into the entity instance
+      cls.prepare(context)
+      
+      # 
+      roles = ndb.get_multi(context.auth.user.roles)
+      for role in roles:
+          role.run(context)
+          
+      # copy 
+      local_action_permissions = context.rule.entity._action_permissions.copy()
+      local_field_permissions = context.rule.entity._field_permissions.copy()
+      
+      # empty
+      cls.prepare(context)
    
-    context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
-    context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
- 
+      entity = context.rule.entity
+      if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
+         entity._global_role.run(context)
+      
+      # copy   
+      global_action_permissions = context.rule.entity._action_permissions.copy()
+      global_field_permissions = context.rule.entity._field_permissions.copy()
+      
+      # empty
+      cls.prepare(context)
+     
+      context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
+      context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
+   
 
 class GlobalRole(Role):
   
@@ -182,7 +185,7 @@ class ActionPermission(Permission):
     
   def run(self, role, context):
      
-    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (eval(self.condition)) and (self.executable != None):
+    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context})) and (self.executable != None):
        context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
 
 
@@ -199,9 +202,8 @@ class FieldPermission(Permission):
     self.condition = condition
     
   def run(self, context):
-    
  
-    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (eval(self.condition)):
+    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (safe_eval(self.condition, {'context' : context})):
       if (self.writable != None):
         context.rule.entity._field_permissions[self.field]['writable'].append(self.writable)
       if (self.visible != None):
