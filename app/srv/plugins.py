@@ -5,6 +5,7 @@ Created on Dec 17, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import datetime
+import re
  
 from app import ndb
 from app.srv import transaction, rule, uom
@@ -561,32 +562,30 @@ class Carrier(transaction.Plugin):
       volume = uom.format_value('0', volume_uom)
        
       for line in entry._lines:
-        line_weight_value = line._weight[0]
+        
+        line_weight = line._weight[0]
         line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
         
-        line_volume_value = line._volume[0]
+        line_volume = line._volume[0]
         line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
         
-        weight += uom.convert_value(line_weight_value, line_weight_uom, weight_uom)
-        volume += uom.convert_value(line_volume_value, line_volume_uom, volume_uom)
+        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
+        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
  
       for rule in carrier_line.rules:
-          if safe_eval(rule.condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
+          condition = rule.condition
+ 
+          def format_condition(match):
+              matches = match.groups()
+              return uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
+            
+          # this regex needs more work
+          condition = re.sub('\((.*)\,(.*)\)', format_condition, condition)
+   
+          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
              allowed = True
              break
-        
-      # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
-      if (self.carriers):
-        allowed = False
-        if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
-          allowed = True
-      # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
-      elif (self.product_categories):
-        allowed = False
-        for line in entry.lines:
-          if (self.product_categories.count(line.product_category)):
-            allowed = True
-            
+  
     return allowed
   
 class UpdateProductLine(transaction.Plugin):

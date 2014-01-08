@@ -5,6 +5,8 @@ Created on Jan 1, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import collections
+import re
+
 from decimal import Decimal, ROUND_HALF_EVEN
 
 from app import ndb
