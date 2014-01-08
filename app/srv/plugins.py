@@ -552,22 +552,23 @@ class Carrier(transaction.Plugin):
     if (allowed):
       
       allowed = False
-      weight = uom.format_value('0')
-      volume = uom.format_value('0')
       price = entry.amount_total
       
-      base_weight = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
-      base_volume = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
+      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+      
+      weight = uom.format_value('0', weight_uom)
+      volume = uom.format_value('0', volume_uom)
        
       for line in entry._lines:
-        weight_value = line._weight[0]
-        weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+        line_weight_value = line._weight[0]
+        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
         
-        volume_value = line._volume[0]
-        volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+        line_volume_value = line._volume[0]
+        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
         
-        weight += uom.convert_value(weight_value, weight_uom, base_weight)
-        volume += uom.convert_value(volume_value, volume_uom, base_volume)
+        weight += uom.convert_value(line_weight_value, line_weight_uom, weight_uom)
+        volume += uom.convert_value(line_volume_value, line_volume_uom, volume_uom)
  
       for rule in carrier_line.rules:
           if safe_eval(rule.condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
