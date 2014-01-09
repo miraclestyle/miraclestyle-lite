@@ -75,8 +75,9 @@ class AddressRule(transaction.Plugin):
          default_address = entry_address_reference.get()
       
       if default_address:
-        setattr(entry, address_reference_key, default_address.key)
-        setattr(entry, address_key, location.get_location(default_address))
+        if rule.writable(context, (address_reference_key, address_key)):
+          setattr(entry, address_reference_key, default_address.key)
+          setattr(entry, address_key, location.get_location(default_address))
         context.response[default_address_key] = default_address
       else:
         raise PluginValidationError('no_address_found')
