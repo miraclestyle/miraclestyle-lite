@@ -17,7 +17,6 @@ class Context:
       self.group = None
       self.entities = collections.OrderedDict()
       self.callbacks = []
-      self.operation = None
  
       
   def new_callback(self, callback, **kwargs):
@@ -296,7 +295,7 @@ class Engine:
                 
         
     # `operation` param in transaction.Context class determines which callback of the `Engine` class will be called
-    call = getattr(cls, context.transaction.operation)
+    call = getattr(cls, context.event.operation)
         
     call(context)
         

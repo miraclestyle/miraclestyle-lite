@@ -106,7 +106,7 @@ class CartInit(transaction.Plugin):
                         ).get()
     # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
 
-    if not (entry):
+    if not entry and context.event.operation == 'transaction':
  
       entry = Entry()
       entry.journal = journal_key

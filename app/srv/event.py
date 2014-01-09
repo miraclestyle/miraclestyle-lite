@@ -57,6 +57,7 @@ class Action(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True)
   arguments = ndb.SuperPickleProperty('2') # dict
   active = ndb.SuperBooleanProperty('3', default=True)
+  operation = ndb.SuperStringProperty('4')
   
   @classmethod
   def get_local_action(cls, action_key):
@@ -72,7 +73,6 @@ class Action(ndb.BaseExpando):
     self.args = {}
     for key in self.arguments:
       self.args[key] = args.get(key)
- 
     return transaction.Engine.run(context)
  
   
