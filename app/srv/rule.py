@@ -7,6 +7,29 @@ Created on Dec 20, 2013
 from app import ndb
 from app.lib.safe_eval import safe_eval
 
+def _check_field(context, name, key):
+    # this is like this because we can use it like writable(context, ('field1', 'field2'))
+    if not isinstance(key, (tuple, list)):
+       key = (key, )
+    checks = []
+    for k in key:
+        checks.append(context.entity._field_permissions[name][k])
+    return all(checks)
+
+def writable(context, name):
+  return _check_field(context, name, 'writable')
+
+def visible(context, name):
+  return _check_field(context, name, 'visible')
+
+def required(context, name):
+  return _check_field(context, name, 'required')
+
+def executable(context):
+  return context.entity._action_permissions[context.event.key.id()]['executable']
+  
+
+
 class Context():
   
   def __init__(self):

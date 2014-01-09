@@ -5,6 +5,7 @@ Created on Dec 17, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import datetime
+import collections
 import re
  
 from app import ndb
@@ -36,88 +37,51 @@ class AddressRule(transaction.Plugin):
     
     entry = context.transaction.entities[journal.key.id()]
     
-    buyer_addresses = []
-    valid_addresses = []
-    default_address = None
-    address_reference_key = '%s_address_reference' % self.address_type
-    addresses_key = '%s_addresses' % self.address_type
-    default_address_key = 'default_%s_address' % self.address_type
+    journal.set_entry_global_role(entry)
     
-    address_key = '%s_address' % self.address_type
-    entry_address = getattr(entry, address_key, None)
-    entry_address_reference = getattr(entry, address_reference_key, None)
+    context.rule.entity = entry
     
-    input_address_reference = context.event.args.get(address_reference_key)
+    rule.Engine.run(context)
     
-    if input_address_reference:
-       buyer_addresses.append(input_address_reference.get())
-    elif entry_address_reference:
-       buyer_addresses.append(entry_address_reference.get())
-    else:
-       buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
+    if rule.executable(context):
+     
+      valid_addresses = collections.OrderedDict()
+      default_address = None
+      address_reference_key = '%s_address_reference' % self.address_type
+      address_key = '%s_address' % self.address_type
+      addresses_key = '%s_addresses' % self.address_type
+      default_address_key = 'default_%s' % self.address_type
       
-    for buyer_address in buyer_addresses:
-      if self.validate_address(buyer_address):
-         valid_addresses.append(buyer_address)
-         if getattr(buyer_address, 'default_%s' % self.address_type):
-             default_address = buyer_address
-    
-    if not default_address and valid_addresses:
-      default_address = valid_addresses[0]
-    
-    context.response[addresses_key] = valid_addresses
-    context.response[default_address_key] = default_address
-     
-    if default_address:
-       setattr(entry, address_reference_key, default_address.key)
-       setattr(entry, address_key, location.get_location(default_address))
+      input_address_reference = context.event.args.get(address_reference_key)
+      entry_address_reference = getattr(entry, address_reference_key, None)
+      entry_address = getattr(entry, address_key, None)
+      
+      buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
+      
+      for buyer_address in buyer_addresses:
+        if self.validate_address(buyer_address):
+           valid_addresses[buyer_address.key.urlsafe()] = buyer_address
+           if getattr(buyer_address, default_address_key):
+               default_address = buyer_address
+      
+      context.response[addresses_key] = valid_addresses
+      
+      if not default_address and valid_addresses:
+        default_address = valid_addresses.values()[0]
+      
+      if input_address_reference and input_address_reference.urlsafe() in valid_addresses:
+         default_address = input_address_reference.get()
+      elif entry_address_reference and entry_address_reference.urlsafe() in valid_addresses:
+         default_address = entry_address_reference.get()
+      
+      if default_address:
+        setattr(entry, address_reference_key, default_address.key)
+        setattr(entry, address_key, location.get_location(default_address))
+        context.response[default_address_key] = default_address
+      else:
+        context.response.error('address', 'no_address_found')
     else:
-      raise PluginValidationError('no_address_found')
-     
-  
-  def validate_address(self, address):
-    
-    # Shipping everywhere except at the following locations
-    if not (self.exclusion):
-      allowed = True
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-    return allowed
+      context.response.not_authorized()
 
   
   
