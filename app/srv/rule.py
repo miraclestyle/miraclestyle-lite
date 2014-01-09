@@ -8,13 +8,16 @@ from app import ndb
 from app.lib.safe_eval import safe_eval
 
 def _check_field(context, name, key):
-    # this is like this because we can use it like writable(context, ('field1', 'field2'))
-    if not isinstance(key, (tuple, list)):
-       key = (key, )
-    checks = []
-    for k in key:
-        checks.append(context.entity._field_permissions[name][k])
-    return all(checks)
+    if context.entity:
+      # this is like this because we can use it like writable(context, ('field1', 'field2'))
+      if not isinstance(key, (tuple, list)):
+         key = (key, )
+      checks = []
+      for k in key:
+          checks.append(context.entity._field_permissions[name][k])
+      return all(checks)
+    else:
+      return False
 
 def writable(context, name):
   return _check_field(context, name, 'writable')
@@ -26,7 +29,10 @@ def required(context, name):
   return _check_field(context, name, 'required')
 
 def executable(context):
-  return context.entity._action_permissions[context.event.key.id()]['executable']
+  if context.entity:
+     return context.entity._action_permissions[context.event.key.id()]['executable']
+  else:
+     return False
   
 
 
