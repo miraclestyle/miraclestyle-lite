@@ -51,8 +51,7 @@ class Company(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
        'region' : ndb.SuperKeyProperty('9', kind='app.core.misc.CountrySubdivision', required=False),
        'city' : ndb.SuperStringProperty('10', required=False),
        'postal_code' : ndb.SuperStringProperty('11', required=False),
-       'street_address' : ndb.SuperStringProperty('12', required=False),
-       'street_address2' : ndb.SuperStringProperty('12', required=False),
+       'street' : ndb.SuperStringProperty('12', required=False),
        'email' : ndb.SuperStringProperty('14'),
        'telephone' : ndb.SuperStringProperty('15'),
        

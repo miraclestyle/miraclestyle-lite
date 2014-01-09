@@ -79,9 +79,9 @@ class AddressRule(transaction.Plugin):
         setattr(entry, address_key, location.get_location(default_address))
         context.response[default_address_key] = default_address
       else:
-        context.response.error('address', 'no_address_found')
+        raise PluginValidationError('no_address_found')
     else:
-      context.response.not_authorized()
+      raise PluginValidationError('not_authorized')
 
   
   
@@ -105,36 +105,23 @@ class CartInit(transaction.Plugin):
                         Entry.party == user_key
                         ).get()
     # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
+
     if not (entry):
-      
-      company_address_country = company.country.get()
-      company_address_region = company.region.get()
-      
+ 
       entry = Entry()
       entry.journal = journal_key
       entry.company = company_key
-      entry.company_address = transaction.Address(
-                                  name=company.name, 
-                                  country=company_address_country.name, 
-                                  country_code=company_address_country.code, 
-                                  region=company_address_region.name, 
-                                  region_code=company_address_region.code, 
-                                  city=company.city, 
-                                  postal_code=company.postal_code, 
-                                  street_address=company.street_address, 
-                                  street_address2=company.street_address2, 
-                                  email=company.email, 
-                                  telephone=company.telephone
-                                  )
+      entry.company_address = location.get_location(company)
       entry.state = 'cart'
       entry.date = datetime.datetime.today()
       entry.party = user_key
     # proveravamo da li je entry u state-u 'cart'
-    
+    journal.set_entry_global_role(entry)
+ 
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.key.id()]['executable']:
+    if not rule.executable(context):
       # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
