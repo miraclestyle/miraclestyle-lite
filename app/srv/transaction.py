@@ -76,25 +76,6 @@ def register_system_journals(*args):
     global __SYSTEM_JOURNALS
     __SYSTEM_JOURNALS.extend(args)
 
-
-class Address(ndb.BaseExpando):
-    
-    # local structured
-    name = ndb.SuperStringProperty('1', required=True)
-    country = ndb.SuperKeyProperty('2', kind='app.core.misc.Country', required=True, indexed=False)
-    city = ndb.SuperStringProperty('3', required=True, indexed=False)
-    postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
-    street_address = ndb.SuperStringProperty('5', required=True, indexed=False)
- 
-    _default_indexed = False
- 
-    EXPANDO_FIELDS = {
-        'region' :  ndb.SuperKeyProperty('8', kind='app.core.misc.CountrySubdivision'),
-        'street_address2' : ndb.SuperStringProperty('9'),
-        'email' : ndb.SuperStringProperty('10'),
-        'telephone' : ndb.SuperStringProperty('11'),
-    }
-
 # done!
 class CategoryBalance(ndb.BaseExpando):
   # LocalStructuredProperty model
