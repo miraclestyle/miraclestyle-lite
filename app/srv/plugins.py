@@ -8,7 +8,7 @@ import datetime
 import re
  
 from app import ndb
-from app.srv import transaction, rule, uom
+from app.srv import transaction, rule, uom, location
 from app.core import buyer
 from app.lib.safe_eval import safe_eval
  
@@ -40,14 +40,21 @@ class AddressRule(transaction.Plugin):
     valid_addresses = []
     default_address = None
     address_reference_key = '%s_address_reference' % self.address_type
+    addresses_key = '%s_addresses' % self.address_type
+    default_address_key = 'default_%s_address' % self.address_type
+    
     address_key = '%s_address' % self.address_type
-    address = getattr(entry, address_key, None)
-    address_reference = getattr(entry, address_reference_key, None)
- 
-    if address_reference is not None:
-      buyer_addresses.append(address_reference.get())
+    entry_address = getattr(entry, address_key, None)
+    entry_address_reference = getattr(entry, address_reference_key, None)
+    
+    input_address_reference = context.event.args.get(address_reference_key)
+    
+    if input_address_reference:
+       buyer_addresses.append(input_address_reference.get())
+    elif entry_address_reference:
+       buyer_addresses.append(entry_address_reference.get())
     else:
-      buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
+       buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
       
     for buyer_address in buyer_addresses:
       if self.validate_address(buyer_address):
@@ -57,26 +64,13 @@ class AddressRule(transaction.Plugin):
     
     if not default_address and valid_addresses:
       default_address = valid_addresses[0]
-    if default_address:
-      if address_reference:
-        setattr(entry, address_reference_key, default_address.key)
-      if address:
-         address_country = default_address.country.get()
-         address_region = default_address.region.get()
-         setattr(entry, address_key, transaction.Address(
-                                  name=address.name, 
-                                  country=address_country.name, 
-                                  country_code=address_country.code, 
-                                  region=address_region.name, 
-                                  region_code=address_region.code, 
-                                  city=address.city, 
-                                  postal_code=address.postal_code, 
-                                  street_address=address.street_address, 
-                                  street_address2=address.street_address2, 
-                                  email=address.email, 
-                                  telephone=address.telephone
-                                  ))
     
+    context.response[addresses_key] = valid_addresses
+    context.response[default_address_key] = default_address
+     
+    if default_address:
+       setattr(entry, address_reference_key, default_address.key)
+       setattr(entry, address_key, location.get_location(default_address))
     else:
       raise PluginValidationError('no_address_found')
      

@@ -75,51 +75,8 @@ def get_system_journals(context):
 def register_system_journals(*args):
     global __SYSTEM_JOURNALS
     __SYSTEM_JOURNALS.extend(args)
-
-# done!
-class CategoryBalance(ndb.BaseExpando):
-  # LocalStructuredProperty model
-  # ovaj model dozvoljava da se radi feedback trending per month per year
-  # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
-  # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
-  # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
-  # najbolje je raditi update jednom dnevno, ne treba vise od toga, tako da bi mozda cron ili task queue bilo resenje za agregaciju
-  from_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
-  to_date = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True)
-  debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
-  balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '6', required=True)
-
-
-class Category(ndb.BaseExpando):
     
-  KIND_ID = 47
-
-  # root (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
-  # composite index: 
-  # ancestor:no - active,name;
-  # ancestor:no - active,code;
-  # ancestor:no - active,company,name; ?
-  # ancestor:no - active,company,code; ?
-  parent_record = ndb.SuperKeyProperty('1', kind='47', required=True)
-  name = ndb.SuperStringProperty('2', required=True)
-  code = ndb.SuperStringProperty('3', required=True)
-  active = ndb.SuperBooleanProperty('4', default=True)
-  company = ndb.SuperKeyProperty('5', kind='app.domain.business.Company', required=True)
-  complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
-  # Expando
-  # description = ndb.TextProperty('7', required=True)# soft limit 16kb
-  # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
-  
-  EXPANDO_FIELDS = {
-     'description' : ndb.SuperTextProperty('7'),
-     'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
-  }
-  
+    
 class Journal(ndb.BaseExpando):
   
   KIND_ID = 49
@@ -185,6 +142,50 @@ class Plugin(ndb.BasePolyExpando):
                           cls.company == context.event.args.get('company')
                          ).order(cls.sequence).fetch()
       return plugins
+
+# done!
+class CategoryBalance(ndb.BaseExpando):
+  # LocalStructuredProperty model
+  # ovaj model dozvoljava da se radi feedback trending per month per year
+  # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
+  # ovde treba voditi racuna u scenarijima kao sto je napr. promena feedback-a iz negative u positive state,
+  # tako da se za taj record uradi negative_feedback_count - 1 i positive_feedback_count + 1
+  # najbolje je raditi update jednom dnevno, ne treba vise od toga, tako da bi mozda cron ili task queue bilo resenje za agregaciju
+  from_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True)
+  to_date = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True)
+  debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+  balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
+  uom = ndb.SuperLocalStructuredProperty(uom.UOM, '6', required=True)
+
+
+class Category(ndb.BaseExpando):
+    
+  KIND_ID = 47
+
+  # root (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
+  # composite index: 
+  # ancestor:no - active,name;
+  # ancestor:no - active,code;
+  # ancestor:no - active,company,name; ?
+  # ancestor:no - active,company,code; ?
+  parent_record = ndb.SuperKeyProperty('1', kind='47', required=True)
+  name = ndb.SuperStringProperty('2', required=True)
+  code = ndb.SuperStringProperty('3', required=True)
+  active = ndb.SuperBooleanProperty('4', default=True)
+  company = ndb.SuperKeyProperty('5', kind='app.domain.business.Company', required=True)
+  complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
+  # Expando
+  # description = ndb.TextProperty('7', required=True)# soft limit 16kb
+  # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
+  
+  EXPANDO_FIELDS = {
+     'description' : ndb.SuperTextProperty('7'),
+     'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
+  }
 
 class Group(ndb.BaseExpando):
   

@@ -6,6 +6,26 @@ Created on Jan 9, 2014
 '''
 from app import ndb
 
+def get_location(location):
+  
+   if isinstance(location, ndb.Key):
+      location = location.get()
+      
+   location_country = location.country.get()
+   location_region = location.region.get()
+      
+   return Location(name=location.name, 
+                  country=location_country.name, 
+                  country_code=location_country.code, 
+                  region=location_region.name, 
+                  region_code=location_region.code, 
+                  city=location.city, 
+                  postal_code=location.postal_code, 
+                  street_address=location.street_address, 
+                  street_address2=location.street_address2, 
+                  email=location.email, 
+                  telephone=location.telephone)
+
 # done!
 class Country(ndb.BaseModel):
     
@@ -134,7 +154,7 @@ class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
     active = ndb.SuperBooleanProperty('6', default=True)
  
  
-class Address(ndb.BaseExpando):
+class Location(ndb.BaseExpando):
     
     # local structured
     name = ndb.SuperStringProperty('1', required=True)
