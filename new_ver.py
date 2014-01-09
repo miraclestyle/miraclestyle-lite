@@ -1,79 +1,52 @@
-"""
-context.event.name
-context.event.args
-context.event.response
 
-context.transaction.group
-context.transaction.nodes
-context.transaction.callbacks
-
-context.log.nodes
-
-context.rule.nodes
-
-
-context.auth.user
-context.authentication.user
-context.event.response
-"""
-
-class Context:
+class AddressRule(transaction.Plugin):
   
-  def __init__(self, **kwargs):
+  KIND_ID = 54
+  
+  exclusion = ndb.SuperBooleanProperty('5', default=False)
+  address_type = ndb.SuperStringProperty('6')
+  locations = ndb.SuperPickleProperty('7')
+  
+  def run(self, journal, context):
     
-    self.event = None
-    self.auth = None
-    self.rule = None
-    self.log = None
-    self.transaction = None
-      
-    for k,v in kwargs.items():
-      setattr(k, v)
-      
-class Action(ndb.BaseExpando):
-  
-  KIND_ID = 49
-  
-  # root (namespace Domain)
-  # key.id() = code.code
-  
-  name = ndb.SuperStringProperty('1', required=True)
-  code = ndb.SuperStringProperty('2', repeated=True)
-  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
-  sequence = ndb.SuperIntegerProperty('4', required=True)
-  active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperStringProperty('6', repeated=True) # verovatno ce ovo biti KeyProperty, repeated, i imace reference na akcije
-  
-  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
-  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
-  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
-  
-  
-  def run(self, args):
-    context = Context()
-    context.event.name = self.key.urlsafe()
-    for arg in self.args:
-      context.event.args[arg] = args.get(arg)
-      
-      
-    return transaction.Engine.run(context)
-      
-   
-  
-class Engine:
-  
-  def run(cls, action_key, args):
+    entry = context.transaction.entities[journal.key.id()]
     
-    action = get_system_action(action_key)
-    if not action:
-      action = Action.get_action(action_key)
+    buyer_addresses = []
+    valid_addresses = {}
+    default_address = None
+    address_reference_key = '%s_address_reference' % self.address_type
+    address_key = '%s_address' % self.address_type
+    addresses_key = '%s_addresses' % self.address_type
+    default_address_key = 'default_%s' % self.address_type
     
-    if action:
-      context = action.run(args)
-      
-    if context:
-      context.event.response
+    input_address_reference = context.event.args.get(address_reference_key)
+    entry_address_reference = getattr(entry, address_reference_key, None)
+    entry_address = getattr(entry, address_key, None)
     
+    buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
+    
+    for buyer_address in buyer_addresses:
+      if self.validate_address(buyer_address):
+         valid_addresses[buyer_address.key.urlsafe()] = buyer_address
+         if getattr(buyer_address, default_address_key):
+             default_address = buyer_address
+    
+    context.response[addresses_key] = valid_addresses
+    
+    if not default_address and valid_addresses:
+      default_address = valid_addresses[0]
+    
+    if input_address_reference and input_address_reference in valid_addresses:
+       default_address = input_address_reference.get()
+    elif entry_address_reference and entry_address_reference in valid_addresses:
+       default_address = entry_address_reference.get()
+    
+    if default_address:
+      setattr(entry, address_reference_key, default_address.key)
+      setattr(entry, address_key, location.get_location(default_address))
+      context.response[default_address_key] = default_address
+    else:
+      raise PluginValidationError('no_address_found')
+     
   
   
-      
