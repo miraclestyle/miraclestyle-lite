@@ -496,7 +496,16 @@ class Carrier(transaction.Plugin):
       if self.validate_line(carrier_line, entry):
          valid_lines.append(carrier_line)
       
-    self.calculate_lines(valid_lines, entry)
+    carrier_price = self.calculate_lines(valid_lines, entry)
+    
+    if 'carriers' not in context.response:
+        context.response['carriers'] = []
+    
+    context.response['carriers'].append({
+                                     'name' : self.name,
+                                     'price': carrier_price,
+                                     'id' : self.key.urlsafe(),
+                                  })
     
     
   def calculate_lines(self, valid_lines, entry):
