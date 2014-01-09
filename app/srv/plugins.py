@@ -500,8 +500,57 @@ class Carrier(transaction.Plugin):
     
     
   def calculate_lines(self, valid_lines, entry):
-      pass
-      
+    
+      price = entry.amount_total
+     
+      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
+      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+     
+      weight = uom.format_value('0', weight_uom)
+      volume = uom.format_value('0', volume_uom)
+     
+     
+      for line in entry._lines:
+        
+        line_weight = line._weight[0]
+        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+       
+        line_volume = line._volume[0]
+        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+       
+        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
+        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
+       
+      carrier_prices = []
+               
+      for carrier_line in valid_lines:
+        line_prices = []
+        for rule in carrier_line.rules:
+          condition = rule.condition
+          
+          # this regex needs more work
+          condition = self.format_condition(condition)
+         
+          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
+            price = safe_eval(price, {'weight' : weight, 'volume' : volume, 'price' : price})
+            line_prices.append(price)
+          
+        carrier_prices.append(min(line_prices))
+        
+      # lowest price possible from all lines
+      lowest_price = min(carrier_prices)
+          
+  def format_condition(self, condition):
+    
+    def run_format(match):
+         matches = match.groups()
+         return "Decimal('%s')" % uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))            
+          # this regex needs more work
+    condition = re.sub('\((.*)\,(.*)\)', run_format, condition)
+    
+    return condition
+          
+          
     
   def validate_line(self, carrier_line, entry):
  
@@ -575,12 +624,7 @@ class Carrier(transaction.Plugin):
       for rule in carrier_line.rules:
           condition = rule.condition
  
-          def format_condition(match):
-              matches = match.groups()
-              return uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
-            
-          # this regex needs more work
-          condition = re.sub('\((.*)\,(.*)\)', format_condition, condition)
+          condition = self.format_condition(condition)
    
           if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
              allowed = True

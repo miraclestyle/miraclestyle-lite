@@ -1,4 +1,5 @@
 import dis
+from decimal import Decimal
 
 def memoize(maxsize):
     """
@@ -111,4 +112,5 @@ def safe_eval(source, data=None):
         'bool': bool,
         'dict': dict,
         'round': round,
+        'Decimal' : Decimal,
         }}, data)
