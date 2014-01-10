@@ -639,3 +639,66 @@ class BlobManager():
             return out
         
         return operation(field_storages)
+      
+def prepare_create(cls, dataset, **kwds):
+      return cls.prepare(True, dataset, **kwds)
+  
+def prepare_update(cls, dataset, **kwds):
+      return cls.prepare(False, dataset, **kwds)
+ 
+def prepare(cls, create, dataset, **kwds):
+      
+      use_get = kwds.pop('use_get', True)
+      get_only = kwds.pop('get_only', False)
+      expect = kwds.pop('only', [prop._code_name for prop in cls.get_fields()] + ['id'])
+      skip = kwds.pop('skip', None)
+      ctx_options = kwds.pop('ctx_options', {})
+      populate = kwds.pop('populate', True)
+      
+      if get_only:
+         expect = False
+         populate = False
+      
+      datasets = dict()
+      
+      _id = dataset.pop('key', None)
+      
+      if not create:
+         if not _id:
+            return None
+         try:
+             load = Key(urlsafe=_id)
+         except:
+             return None
+         
+      if expect is not False:   
+          for i in expect:
+              
+              if skip is not None and isinstance(skip, (tuple, list)):
+                 if i in skip:
+                     continue
+            
+              if i in dataset:
+                 datasets[i] = dataset.get(i)
+              else:
+                 gets = getattr(cls, 'default_%s' % i, None)
+                 if gets is not None:
+                    datasets[i] = gets()
+      else:
+          datasets = dataset.copy()
+      
+      if create:
+         datasets.update(kwds)
+     
+      if create:
+         return cls(**datasets)
+      else:
+         if use_get:
+            entity = load.get(**ctx_options)
+            if populate:
+               entity.populate(**datasets)
+            return entity
+         else:
+            datasets['key'] = load 
+            return cls(**datasets)
+  

@@ -95,86 +95,7 @@ class _BaseModel():
    
   def loaded(self):
       return self.key != None and self.key.id()
-  
-  @classmethod
-  def prepare_create(cls, dataset, **kwds):
-      return cls.prepare(True, dataset, **kwds)
-  
-  @classmethod
-  def prepare_update(cls, dataset, **kwds):
-      return cls.prepare(False, dataset, **kwds)
- 
-  @classmethod
-  def prepare(cls, create, dataset, **kwds):
-      
-      use_get = kwds.pop('use_get', True)
-      get_only = kwds.pop('get_only', False)
-      expect = kwds.pop('only', [prop._code_name for prop in cls.get_fields()] + ['id'])
-      skip = kwds.pop('skip', None)
-      ctx_options = kwds.pop('ctx_options', {})
-      populate = kwds.pop('populate', True)
-      
-      if get_only:
-         expect = False
-         populate = False
-      
-      datasets = dict()
-      
-      _id = dataset.pop('key', None)
-      
-      if not create:
-         if not _id:
-            return None
-         try:
-             load = Key(urlsafe=_id)
-         except:
-             return None
-         
-      if expect is not False:   
-          for i in expect:
-              
-              if skip is not None and isinstance(skip, (tuple, list)):
-                 if i in skip:
-                     continue
-            
-              if i in dataset:
-                 datasets[i] = dataset.get(i)
-              else:
-                 gets = getattr(cls, 'default_%s' % i, None)
-                 if gets is not None:
-                    datasets[i] = gets()
-      else:
-          datasets = dataset.copy()
-      
-      if create:
-         datasets.update(kwds)
-     
-      if create:
-         return cls(**datasets)
-      else:
-         if use_get:
-            entity = load.get(**ctx_options)
-            if populate:
-               entity.populate(**datasets)
-            return entity
-         else:
-            datasets['key'] = load 
-            return cls(**datasets)
-  
-  def _pre_put_hook(self):
-      for p in self._properties:
-          prop = self._properties.get(p)
-          if prop._get_value(self) is None:
-             cb = 'default_%s' % p
-             if hasattr(self, cb):
-                prop._set_value(self, getattr(self, cb)())
-    
-  def set_original_values(self):
-      pack = dict()
-      for p in self._properties:
-          pack[p] = self._properties[p]._get_value(self)
-      self._original_values = pack
-      
+
   def get_kind(self):
       return self._get_kind()
  
@@ -193,7 +114,7 @@ class _BaseModel():
   
   @classmethod
   def get_actions(cls):
-      return {}
+      return getattr(cls, '_actions', {})
   
   @classmethod
   def get_fields(cls):
@@ -201,8 +122,8 @@ class _BaseModel():
       for prop_key,prop in cls._properties.items():
           fields[prop._code_name] = prop
           
-      if hasattr(cls, 'has_expando_fields'):
-         expandos = cls.has_expando_fields()
+      if hasattr(cls, 'get_expando_fields'):
+         expandos = cls.get_expando_fields()
          if expandos: 
              for expando_prop_key,expando_prop in expandos.items():
                  fields[expando_prop._code_name] = expando_prop
@@ -210,39 +131,19 @@ class _BaseModel():
  
   @classmethod
   def create(cls, values, **kwargs):
-        if not hasattr(cls, 'manage'):
-           response = event.Response()
-           return response.not_implemented()
         return cls.manage(True, values, **kwargs)
     
   @classmethod
   def update(cls, values, **kwargs):
-        if not hasattr(cls, 'manage'):
-           response = event.Response()
-           return response.not_implemented()
         return cls.manage(False, values, **kwargs)
 
  
 class BaseModel(_BaseModel, Model):
     """ Base class for all `ndb.Model` entities """
-      
-    @classmethod
-    def _from_pb(cls, *args, **kwargs):
-        """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(BaseModel, cls)._from_pb(*args, **kwargs)
-        entity.set_original_values()
-        return entity
-      
+
       
 class BasePoly(_BaseModel, polymodel.PolyModel):
-  
-   @classmethod
-   def _from_pb(cls, *args, **kwargs):
-        """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(BasePoly, cls)._from_pb(*args, **kwargs)
-        entity.set_original_values()
-        return entity
-      
+
    @classmethod
    def _get_hierarchy(cls):
       """Internal helper to return the list of polymorphic base classes.
@@ -255,7 +156,6 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
           bases.append(base)
       del bases[-1]  # Delete PolyModel itself
       bases.reverse()
-      print bases
       return bases   
  
    @classmethod
@@ -279,26 +179,19 @@ class BaseExpando(_BaseModel, Expando):
     """ Base class for all `ndb.Expando` entities """
  
     @classmethod
-    def _from_pb(cls, *args, **kwargs):
-        """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(BaseExpando, cls)._from_pb(*args, **kwargs)
-        entity.set_original_values()
-        return entity
- 
-    @classmethod
-    def has_expando_fields(cls):
-        if hasattr(cls, 'EXPANDO_FIELDS'):
-           for i,v in cls.EXPANDO_FIELDS.items():
+    def get_expando_fields(cls):
+        if hasattr(cls, '_expando_fields'):
+           for i,v in cls._expando_fields.items():
                if not v._code_name:
                   v._code_name = i 
-                  cls.EXPANDO_FIELDS[i] = v
+                  cls._expando_fields[i] = v
                    
-           return cls.EXPANDO_FIELDS
+           return cls._expando_fields
         else:
            return False
         
     def __getattr__(self, name):
-       ex = self.has_expando_fields()
+       ex = self.get_expando_fields()
        if ex:
           vf = ex.get(name) 
           if vf:
@@ -306,7 +199,7 @@ class BaseExpando(_BaseModel, Expando):
        return super(BaseExpando, self).__getattr__(name)
       
     def __setattr__(self, name, value):
-        ex = self.has_expando_fields()
+        ex = self.get_expando_fields()
         if ex:
            vf = ex.get(name) 
            if vf:
@@ -316,7 +209,7 @@ class BaseExpando(_BaseModel, Expando):
         return super(BaseExpando, self).__setattr__(name, value)
       
     def __delattr__(self, name):
-       ex = self.has_expando_fields()
+       ex = self.get_expando_fields()
        if ex:
           vf = ex.get(name) 
           if vf:
@@ -344,7 +237,7 @@ class BaseExpando(_BaseModel, Expando):
     
         prop = self._properties.get(next)
         if prop is None:
-           expando = self.has_expando_fields()
+           expando = self.get_expando_fields()
            if expando:
               for k,v in expando.items():
                   if v._name == next:
@@ -357,13 +250,7 @@ class BaseExpando(_BaseModel, Expando):
         return prop
       
 class BasePolyExpando(BasePoly, BaseExpando):
-
-    @classmethod
-    def _from_pb(cls, *args, **kwargs):
-        """ Allows for model to get original values who get loaded from the protocol buffer  """
-        entity = super(BasePolyExpando, cls)._from_pb(*args, **kwargs)
-        entity.set_original_values()
-        return entity
+      pass
 
 class _BaseProperty(object):
  
@@ -430,37 +317,10 @@ class SuperDecimalProperty(SuperStringProperty):
     
     def _validate(self, value):
       if not isinstance(value, (decimal.Decimal)):
-        raise TypeError('expected an decimal, got %s' % repr(value)) # explicitly allow only decimal
+        raise TypeError('expected a decimal, got %s' % repr(value)) # explicitly allow only decimal
     
     def _to_base_type(self, value):
         return str(value) # Doesn't matter which type, always return in string format
     
     def _from_base_type(self, value):
         return decimal.Decimal(value)  # Always return a decimal
-  
-      
-class SuperReferenceProperty(SuperKeyProperty):
-    
-    """Replicated property from `db` module"""
-      
-    def _validate(self, value):
-        if not isinstance(value, Model):
-           raise TypeError('expected an ndb.Model, got %s' % repr(value))
-    
-    def _to_base_type(self, value):
-        return value.key
-    
-    def _from_base_type(self, value):
-        return value.get()
-    
-class SuperImageGCSProperty(SuperJsonProperty):
- 
-    def _validate(self, value):
-        if not hasattr(value, 'read'):
-           raise TypeError('expected an file-like object, got %s' % repr(value))
- 
-    def _to_base_type(self, value):
-        return value.key
-    
-    def _from_base_type(self, value):
-        return value.get()
