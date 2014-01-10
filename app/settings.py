@@ -65,19 +65,3 @@ FACEBOOK_OAUTH2 = {
 }
 
 FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'
-
-# maybe we will use this to map what methods can be called by the public endpoints,
-# to prevent calling restricted/protected methods
-ENDPOINTS = {
-    'app.core.acl' : {
-         'User' : ('login', 'logout'),
-    },
-    'app.core.buyer' : {},
-    'app.core.log' : {},
-    'app.core.misc' : {},
-    'app.core.order' : {},
-    'app.domain.acl' : {},
-    'app.domain.marketing' : {},
-    'app.domain.product' : {},
-    'app.domain.sale' : {},
-}
