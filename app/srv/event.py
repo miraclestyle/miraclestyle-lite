@@ -59,7 +59,7 @@ class Argument():
  
 class Action(ndb.BaseExpando):
   
-  KIND_ID = 56
+  _kind = 56
   
   # root (namespace Domain)
   # key.id() = code.code
@@ -76,13 +76,13 @@ class Action(ndb.BaseExpando):
          return action
       else:
          return None
- 
-  def run(self, args):
+       
+  def process(self, args):
     
     context = Context()
     context.event = self
     context.response = Response()
-    
+ 
     self.args = {}
     for key in self.arguments:
       
@@ -108,11 +108,16 @@ class Action(ndb.BaseExpando):
                
       self.args[key] = value
       
-      ##### should this block above be separated into something like build_context() like mentioned before?
-      
     if not context.response.has_error():
        # if response has no errors, only then run the transaciton engine?
-       return transaction.Engine.run(context)
+       return context
+    else:
+       return None
+ 
+  def run(self, args):
+     context = self.process(args)
+     if context:
+        return transaction.Engine.run(context)
  
   
 class Engine:
@@ -342,7 +347,7 @@ def prepare(cls, create, dataset, **kwds):
          if not _id:
             return None
          try:
-             load = Key(urlsafe=_id)
+             load = ndb.Key(urlsafe=_id)
          except:
              return None
          

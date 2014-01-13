@@ -125,10 +125,10 @@ class _BaseModel():
     This defaults to cls.__name__; users may overrid this to give a
     class a different on-disk name than its class name.
     """
-    if hasattr(cls, 'KIND_ID'):
-       if cls.KIND_ID < 0:
-          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__)) 
-       return str(cls.KIND_ID)
+    if hasattr(cls, '_kind'):
+       if cls._kind < 0:
+          raise TypeError('Invalid _kind %s, for %s' % (cls._kind, cls.__name__)) 
+       return str(cls._kind)
     return cls.__name__
   
   @classmethod
@@ -179,18 +179,18 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
  
    @classmethod
    def _get_kind(cls):
-      if hasattr(cls, 'KIND_ID'):
-        if cls.KIND_ID < 0:
-          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__))
-        return str(cls.KIND_ID)
+      if hasattr(cls, '_kind'):
+        if cls._kind < 0:
+          raise TypeError('Invalid _kind %s, for %s' % (cls._kind, cls.__name__))
+        return str(cls._kind)
       return cls.__name__
   
    @classmethod
    def _class_name(cls):
-      if hasattr(cls, 'KIND_ID'):
-        if cls.KIND_ID < 0:
-          raise TypeError('Invalid KIND_ID %s, for %s' % (cls.KIND_ID, cls.__name__))
-        return str(cls.KIND_ID)
+      if hasattr(cls, '_kind'):
+        if cls._kind < 0:
+          raise TypeError('Invalid _kind %s, for %s' % (cls._kind, cls.__name__))
+        return str(cls._kind)
       return cls.__name__
  
   
