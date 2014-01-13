@@ -15,6 +15,10 @@ from google.appengine.ext.db import datastore_errors
 from app import ndb, memcache, util
 from app.srv import log, rule, transaction, auth
  
+class DescriptiveError(Exception):
+      # executes an exception in a way that it will have its own meaning instead of just "invalid"
+      pass
+ 
 __SYSTEM_ACTIONS = {}
 
 def get_system_action(action_key):
@@ -74,16 +78,41 @@ class Action(ndb.BaseExpando):
          return None
  
   def run(self, args):
+    
     context = Context()
     context.event = self
+    context.response = Response()
+    
     self.args = {}
     for key in self.arguments:
+      
       value = args.get(key)
       argument = self.arguments.get(key)
+      
+      if argument.prop._required: # i dont know how we should call the property within the argument? argument.prop is ok as well
+         if key not in args:
+            context.response.required(key)
+            continue # if there is nothing provided, do not attempt to format the value
+          
+      if key not in args and not argument.prop._required: # if prop is not required, and has `default` value, use that
+         if argument.prop._default is not None:
+            value = argument.prop._default
+          
       if argument.prop and hasattr(argument.prop, 'format'):
-         value = argument.prop.format(value)
+         try:
+            value = argument.prop.format(value)
+         except DescriptiveError as e:
+            context.response.error(key, e)   
+         except Exception as e:
+            context.response.invalid(key)
+               
       self.args[key] = value
-    return transaction.Engine.run(context)
+      
+      ##### should this block above be separated into something like build_context() like mentioned before?
+      
+    if not context.response.has_error():
+       # if response has no errors, only then run the transaciton engine?
+       return transaction.Engine.run(context)
  
   
 class Engine:
@@ -285,55 +314,7 @@ class BlobManager():
  
            memcache.temp_memory_set(k, [])
  
-    @classmethod
-    def field_storage_get_image_sizes(cls, field_storages):
-         
-        @ndb.non_transactional
-        def operation(field_storages):
-            
-            sizes = dict()
-            single = False
-            
-            if not isinstance(field_storages, (list, tuple)):
-               field_storages = [field_storages]
-               single = True
-               
-            out = []
-               
-            for field_storage in field_storages:
-                
-                fileinfo = blobstore.parse_file_info(field_storage)
-                blobinfo = blobstore.parse_blob_info(field_storage)
-                
-                sizes = {}
-      
-                f = cloudstorage.open(fileinfo.gs_object_name[3:])
-                blob = f.read()
-        
-                image = images.Image(image_data=blob)
-                sizes = {}
-           
-                sizes['width'] = image.width
-                sizes['height'] = image.height
-                 
-                sizes['size'] = fileinfo.size
-                sizes['content_type'] = fileinfo.content_type
-                sizes['image'] = blobinfo.key()
-         
-                if not single:
-                   out.append(sizes)
-                else:
-                   out = sizes
-                 
-                # free buffer memory   
-                f.close()
-                
-                del blob
-                  
-            return out
-        
-        return operation(field_storages)
-      
+
 def prepare_create(cls, dataset, **kwds):
       return cls.prepare(True, dataset, **kwds)
   

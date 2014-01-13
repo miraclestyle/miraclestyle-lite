@@ -15,6 +15,7 @@ from google.appengine.api import images
 import cloudstorage
  
 from app import util
+from app.srv import event
 
 ctx = get_context()
 
@@ -25,9 +26,6 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
-class DescriptiveError(Exception):
-      # executes an exception in a way that it will have its own meaning instead of just "invalid"
-      pass
 
 def _property_value(prop, value):
   
@@ -354,13 +352,13 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
            
         for k in returns:
             if self._kind and k.kind() != self._kind:
-               raise DescriptiveError('invalid_kind')
+               raise event.DescriptiveError('invalid_kind')
         
         items = get_multi(returns, use_cache=True)
         
         for i,item in enumerate(items):
             if item is None:
-               raise DescriptiveError('not_found_%s' % returns[i].urlsafe())
+               raise event.DescriptiveError('not_found_%s' % returns[i].urlsafe())
   
         if single:
            return returns[0]
@@ -463,12 +461,12 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
            info = blobstore.parse_file_info(blob)
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
-              raise DescriptiveError('invalid_file_type')
+              raise event.DescriptiveError('invalid_file_type')
            else:
               try:
                   self.get_image_sizes(blob)
               except Exception as e:
-                  raise DescriptiveError('invalid_image: %s' % e)
+                  raise event.DescriptiveError('invalid_image: %s' % e)
            
        return value
 
