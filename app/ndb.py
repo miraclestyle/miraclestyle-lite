@@ -5,13 +5,17 @@ Created on Jul 9, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import decimal
+import cgi
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
+from google.appengine.ext import blobstore
+from google.appengine.api import images
+
+import cloudstorage
  
 from app import util
-from app.srv import event
- 
+
 ctx = get_context()
 
 # memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
@@ -20,6 +24,23 @@ ctx.set_memcache_policy(False)
 
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
+
+class DescriptiveError(Exception):
+      # executes an exception in a way that it will have its own meaning instead of just "invalid"
+      pass
+
+def _property_value(prop, value):
+  
+    if prop._repeated:
+       if not isinstance(value, (list, tuple)):
+          value = [value]
+       out = []   
+       for v in value:
+           out.append(v)
+       return out
+    else:
+       return value
+
 
 def make_complete_name(entity, property_name, parent=None, separator=None):
     
@@ -266,6 +287,7 @@ class _BaseProperty(object):
            kwds['kind'] = factory(custom_kind)
             
         super(_BaseProperty, self).__init__(*args, **kwds)
+        
 
 class BaseProperty(_BaseProperty, Property):
    """
@@ -282,31 +304,173 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
     pass
 
 class SuperTextProperty(_BaseProperty, TextProperty):
-    pass
+    
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           return [unicode(v) for v in value]
+        else:
+           return unicode(value)
  
 class SuperStringProperty(_BaseProperty, StringProperty):
-    pass
+  
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           return [unicode(v) for v in value]
+        else:
+           return unicode(value)
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
-    pass
+  
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           return [float(v) for v in value]
+        else:
+           return float(value)
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
-    pass
-
+  
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           return [long(v) for v in value]
+        else:
+           return long(value)
+ 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
     pass
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
-    pass
+  
+    def format(self, value):
+        if self._repeated:
+           returns = [Key(urlsafe=v) for v in value]
+           single = False
+        else:
+           returns = [Key(urlsafe=value)]
+           single = True
+           
+        for k in returns:
+            if self._kind and k.kind() != self._kind:
+               raise DescriptiveError('invalid_kind')
+        
+        items = get_multi(returns, use_cache=True)
+        
+        for i,item in enumerate(items):
+            if item is None:
+               raise DescriptiveError('not_found_%s' % returns[i].urlsafe())
+  
+        if single:
+           return returns[0]
+        else:
+           return returns
+ 
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
-    pass
+  
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           return [bool(long(v)) for v in value]
+        else:
+           return bool(long(value))
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
-    pass
+  
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           new = []
+           for blob in value:
+               if not isinstance(blob, cgi.FieldStorage) or 'blob-key' not in blob.type_options:
+                  raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save,\
+                   got %r instead.' % blob)
+               else:
+                  v = blobstore.parse_blob_info(blob)
+               new.append(v.key())
+           return new
+        else:
+           if not isinstance(value, cgi.FieldStorage) or 'blob-key' not in value.type_options:
+              raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
+              got %r instead.' % value)
+           else:
+               value = blobstore.parse_blob_info(value)
+           return value.key()
 
 class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
-    pass
+  
+    @classmethod
+    def get_image_sizes(cls, field_storages):
+         
+        @non_transactional
+        def operation(field_storages):
+            
+            sizes = dict()
+            single = False
+            
+            if not isinstance(field_storages, (list, tuple)):
+               field_storages = [field_storages]
+               single = True
+               
+            out = []
+               
+            for field_storage in field_storages:
+                
+                fileinfo = blobstore.parse_file_info(field_storage)
+                blobinfo = blobstore.parse_blob_info(field_storage)
+                
+                sizes = {}
+      
+                f = cloudstorage.open(fileinfo.gs_object_name[3:])
+                blob = f.read()
+        
+                image = images.Image(image_data=blob)
+                sizes = {}
+           
+                sizes['width'] = image.width
+                sizes['height'] = image.height
+                 
+                sizes['size'] = fileinfo.size
+                sizes['content_type'] = fileinfo.content_type
+                sizes['image'] = blobinfo.key()
+         
+                if not single:
+                   out.append(sizes)
+                else:
+                   out = sizes
+     
+                f.close()
+                
+                del blob
+                  
+            return out
+        
+        return operation(field_storages)  
+  
+    def format(self, value):
+      
+       value = _property_value(self, value)
+       
+       if not self._repeated:
+          blobs = [value]
+          value = blobstore.parse_blob_info(value).key()
+       else:
+          value = [blobstore.parse_blob_info(val).key() for val in value]
+          
+       for blob in blobs:
+           info = blobstore.parse_file_info(blob)
+           meta_required = ('image/jpeg', 'image/jpg', 'image/png')
+           if info.content_type not in meta_required:
+              raise DescriptiveError('invalid_file_type')
+           else:
+              try:
+                  self.get_image_sizes(blob)
+              except Exception as e:
+                  raise DescriptiveError('invalid_image: %s' % e)
+           
+       return value
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
     pass
@@ -314,6 +478,18 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
 class SuperDecimalProperty(SuperStringProperty):
     
     """Decimal property that accepts only `decimal.Decimal`"""
+    
+    def format(self, value):
+        value = _property_value(self, value)
+        if self._repeated:
+           value = [decimal.Decimal(v) for v in value]
+        else:
+           value = decimal.Decimal(value)
+           
+        if value is None:
+           raise ValueError('Invalid number provided')
+           
+        return value
     
     def _validate(self, value):
       if not isinstance(value, (decimal.Decimal)):
