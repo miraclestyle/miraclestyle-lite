@@ -126,16 +126,7 @@ class Context():
      self.response['errors'][f].append(m)
      return self
  
-    
-class Argument():
   
-  def __init__(self, name, prop, mapper):
-      self.name = name
-      self.prop = prop
-      self.mapper = mapper
- 
- 
- 
 class Action(ndb.BaseExpando):
   
   _kind = 56

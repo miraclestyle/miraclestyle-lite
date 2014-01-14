@@ -22,9 +22,7 @@ class Session(ndb.BaseModel):
  
      
 class Identity(ndb.BaseModel):
-    
-    _kind = 2
-    
+ 
     # StructuredProperty model
     identity = ndb.SuperStringProperty('1', required=True)# spojen je i provider name sa id-jem
     email = ndb.SuperStringProperty('2', required=True)
@@ -49,13 +47,14 @@ class User(ndb.BaseExpando):
       'roles' : ndb.SuperKeyProperty('5', kind='13', repeated=True, indexed=False)
     }
     
+    _global_role = None
+    
     _actions = {
-       'login' : event.Action(name='login',
+       'login' : event.Action(id='login',
                               arguments={
                                  'login_method' : ndb.SuperStringProperty(required=True),
                                  'code' : ndb.SuperStringProperty(),
-                                 'error' : ndb.SuperStringProperty(),
-                                 'redirect_uri' : ndb.SuperStringProperty(),
+                                 'error' : ndb.SuperStringProperty()
                               }
                              )
     }
@@ -83,42 +82,10 @@ class User(ndb.BaseExpando):
         if not session:
            return None
         return hashlib.md5(session.session_id).hexdigest()
-  
-    @property
-    def entity_is_authenticated(self):
-        """ Checks if the loaded model is an authenticated entity user. """
-        return self.key.id() == settings.USER_AUTHENTICATED_KEYNAME
-    
-    @property
-    def entity_is_anonymous(self):
-        """ Checks if the loaded model is an anonymous user. """
-        return self.key.id() == settings.USER_ANONYMOUS_KEYNAME
-    
+      
     @property
     def is_guest(self):
-        return self.entity_is_anonymous
- 
-    @classmethod
-    def auth_or_anon(cls, what):
-        key_name = getattr(settings, 'USER_%s_KEYNAME' % what.upper())
-        if key_name:
-           # always query these models from memory if any
-           result = cls.get_by_id(key_name)
-           if result is None:
-              result = cls(id=key_name, state=cls.default_state())
-              result.put()
-           return result
-        return None
-    
-    @classmethod
-    def authenticated_user(cls):
-        """ Returns authenticated user entity. """
-        return cls.auth_or_anon('AUTHENTICATED')
-    
-    @classmethod
-    def anonymous_user(cls):
-        """ Returns anonymous user entity """
-        return cls.auth_or_anon('ANONYMOUS')
+        return self.key == None
     
     @classmethod
     def set_current_user(cls, user, session=None):
@@ -127,7 +94,7 @@ class User(ndb.BaseExpando):
         
     @classmethod
     def current_user(cls):
-        return memcache.temp_memory_get('_current_user', cls.anonymous_user())
+        return memcache.temp_memory_get('_current_user', cls())
     
     def generate_authorization_code(self, session):
         return '%s|%s' % (self.key.urlsafe(), session.session_id)
