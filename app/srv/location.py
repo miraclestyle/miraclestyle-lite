@@ -44,7 +44,7 @@ class Country(ndb.BaseModel):
     
  
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
-class CountrySubdivision(ndb.BaseModel, ndb.Workflow):
+class CountrySubdivision(ndb.BaseModel):
     
     TYPES = {
         'unknown' : 1,

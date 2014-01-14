@@ -24,7 +24,7 @@ class Record(ndb.BaseExpando):
   
     _default_indexed = False
  
-    EXPANDO_FIELDS = {
+    _expando_fields = {
        'message' : ndb.SuperTextProperty('96'),
        'note' : ndb.SuperTextProperty('95'),
     }

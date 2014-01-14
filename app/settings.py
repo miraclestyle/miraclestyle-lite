@@ -49,7 +49,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : False,
+   'redirect_uri' : 'http://localhost:9982/login/google',
 
 }
 
@@ -61,7 +61,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : False,
+   'redirect_uri' : 'http://localhost:9982/login/facebook',
 }
 
 FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'

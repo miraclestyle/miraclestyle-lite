@@ -29,8 +29,8 @@ def required(context, name):
   return _check_field(context, name, 'required')
 
 def executable(context):
-  if context.entity:
-     return context.entity._action_permissions[context.event.key.id()]['executable']
+  if context.rule.entity:
+     return context.rule.entity._action_permissions[context.event.key.id()]['executable']
   else:
      return False
   
@@ -167,7 +167,7 @@ class Engine:
       if not skip_user_roles:
         role_keys = []
         for role in context.auth.user.roles:
-          if role.namespace() == namespace_manager.get_namespace(): # treba negde uraditi from google.appengine.api import namespace_manager
+          if role.namespace() == context.rule.entity.key.namespace(): # treba negde uraditi from google.appengine.api import namespace_manager
             role_keys.append(role)
           
         roles = ndb.get_multi(role_keys)

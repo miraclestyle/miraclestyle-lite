@@ -30,8 +30,7 @@ class Identity(ndb.BaseModel):
     email = ndb.SuperStringProperty('2', required=True)
     associated = ndb.SuperBooleanProperty('3', default=True)
     primary = ndb.SuperBooleanProperty('4', default=True)
-          
-          
+ 
 class User(ndb.BaseExpando):
     
     _kind = 0
@@ -40,7 +39,7 @@ class User(ndb.BaseExpando):
     
     identities = ndb.SuperStructuredProperty(Identity, '1', repeated=True)# soft limit 100x
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
-    state = ndb.SuperIntegerProperty('3', required=True)
+    state = ndb.SuperStringProperty('3', required=True)
     sessions = ndb.SuperLocalStructuredProperty(Session, '4', repeated=True)
  
     _default_indexed = False
@@ -62,7 +61,7 @@ class User(ndb.BaseExpando):
                 
        'logout' : event.Action(id='logout',
                               arguments={
-                                 'code' : ndb.SuperStringProperty(required=True),
+                                'code' : ndb.SuperStringProperty(required=True),
                               }
                              )
     }
@@ -162,16 +161,16 @@ class User(ndb.BaseExpando):
         return False
     
     @classmethod  
-    def logout(cls, **kwds):
+    def logout(cls, args):
          
         action = cls._actions.get('logout')
-        context = action.process(kwds)
+        context = action.process(args)
         
         if not context.has_error():
           
           current_user = cls.current_user()
           context.rule.entity = current_user
-          rule.Engine.run(context)
+          rule.Engine.run(context, skip_user_roles=True)
           
           if not rule.executable(context):
              return context.not_authorized()
@@ -182,7 +181,7 @@ class User(ndb.BaseExpando):
               if current_user.is_guest:
                  return context.error('login', 'already_logged_out')
              
-              if not current_user.logout_code == context.event.args.get('code'):
+              if not current_user.logout_code == context.event._args.get('code'):
                  return context.error('login', 'invalid_code')
            
               if current_user.sessions:
@@ -203,26 +202,26 @@ class User(ndb.BaseExpando):
           except Exception as e:
               context.transaction_error(e)
               
-        return context.response
+        return context
      
     @classmethod
-    def login(cls, **kwds):
-      
+    def login(cls, args):
+   
         action = cls._actions.get('login')
-        context = action.process(kwds)
- 
+        context = action.process(args)
+    
         if not context.has_error():
  
-           login_method = context.event.args.get('login_method')
-           error = context.event.args.get('error')
-           code = context.event.args.get('code')
+           login_method = context.event._args.get('login_method')
+           error = context.event._args.get('error')
+           code = context.event._args.get('code')
            current_user = cls.current_user()
            
            if not current_user.is_guest:
              
              context.rule.entity = current_user
              context.auth.user = current_user
-             rule.Engine.run(context)
+             rule.Engine.run(context, skip_user_roles=True)
              
              if not rule.executable(context):
                 return context.not_authorized()
@@ -235,6 +234,8 @@ class User(ndb.BaseExpando):
               cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
               client = oauth2.Client(**cfg)
               
+              context.response['authorization_url'] = client.get_authorization_code_uri()
+        
               if error:
                  return context.error('oauth2_error', 'rejected_account_access')
                
@@ -263,7 +264,7 @@ class User(ndb.BaseExpando):
                      if user:    
                        context.rule.entity = user
                        context.auth.user = user
-                       rule.Engine.run(context)
+                       rule.Engine.run(context, skip_user_roles=True)
                        
                        if not rule.executable(context):
                           return context.not_authorized()
@@ -281,11 +282,9 @@ class User(ndb.BaseExpando):
                            session = user.new_session()
                            
                            user.put()
-                           
-                           context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
-                           log.Engine.run(context)
-                           
+                             
                         else:
+                          
                           if email not in user.emails:
                              user.emails.append(email)
                           
@@ -294,15 +293,20 @@ class User(ndb.BaseExpando):
                           
                           session = user.new_session()   
                           user.put()
-                          
-                          context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
-                          log.Engine.run(context)
-                          
-                          
+                            
                         cls.set_current_user(user, session)
+                        context.auth.user = user
                         
-                        context.response.update({'user' : user, 'session' : session})
-                     
-                     transaction(user) 
+                        context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+                        log.Engine.run(context)
+                         
+                        context.response.update({'user' : user,
+                                                 'authorization_code' : user.generate_authorization_code(session),
+                                                 'session' : session
+                                                 })
+                     try:
+                        transaction(user) 
+                     except Exception as e:
+                        context.transaction_error(e)
                
-        return context.response
+        return context

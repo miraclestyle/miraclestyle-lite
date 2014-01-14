@@ -15,8 +15,7 @@ from google.appengine.api import images
 import cloudstorage
  
 from app import util
-from app.srv import event
-
+ 
 ctx = get_context()
 
 # memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
@@ -282,7 +281,8 @@ class _BaseProperty(object):
         custom_kind = kwds.get('kind')
   
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
-           kwds['kind'] = factory(custom_kind)
+           # kwds['kind'] = factory(custom_kind)
+           kwds['kind'] = None
             
         super(_BaseProperty, self).__init__(*args, **kwds)
         
@@ -343,6 +343,9 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 class SuperKeyProperty(_BaseProperty, KeyProperty):
   
     def format(self, value):
+      
+        from app.srv import event
+        
         if self._repeated:
            returns = [Key(urlsafe=v) for v in value]
            single = False
@@ -448,6 +451,8 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
         return operation(field_storages)  
   
     def format(self, value):
+      
+       from app.srv import event
       
        value = _property_value(self, value)
        

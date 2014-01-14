@@ -10,7 +10,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, memcache
-from app.srv import log, rule, transaction, auth
+from app.srv import log, rule, transaction
  
 class DescriptiveError(Exception):
       # executes an exception in a way that it will have its own meaning instead of just "invalid"
@@ -35,6 +35,8 @@ def register_system_action(*args):
 class Context():
   
   def __init__(self):
+    
+    from app.srv import auth
  
     self.event = None
     self.transaction = transaction.Context()
@@ -138,6 +140,7 @@ class Action(ndb.BaseExpando):
   arguments = ndb.SuperPickleProperty('2') # dict
   active = ndb.SuperBooleanProperty('3', default=True)
   operation = ndb.SuperStringProperty('4')
+ 
   
   @classmethod
   def get_local_action(cls, action_key):
@@ -148,11 +151,12 @@ class Action(ndb.BaseExpando):
          return None
        
   def process(self, args):
-    
+  
     context = Context()
     context.event = self
  
-    self.args = {}
+    self._args = {}
+ 
     for key, argument in self.arguments.items():
       
       value = args.get(key)
@@ -167,6 +171,8 @@ class Action(ndb.BaseExpando):
             value = argument._default
           
       if argument and hasattr(argument, 'format'):
+         if value is None:
+            continue # if value is not set at all, always consider it none?
          try:
             value = argument.format(value)
          except DescriptiveError as e:
@@ -174,8 +180,8 @@ class Action(ndb.BaseExpando):
          except Exception as e:
             context.invalid(key)
                
-      self.args[key] = value
-      
+      self._args[key] = value
+   
     return context
  
   

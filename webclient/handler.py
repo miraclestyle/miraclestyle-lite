@@ -14,7 +14,8 @@ from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
 from app.memcache import _local
-from app import settings, core, util, ndb
+from app.srv import auth
+from app import settings, util
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
@@ -308,7 +309,8 @@ class Handler(webapp2.RequestHandler):
         
         for param in self.request.params.items():
             # register all blobs that got uploaded
-            ndb.BlobManager.field_storage_unused_blob(param)
+            # ndb.BlobManager.field_storage_unused_blob(param)
+            pass
         
   
     def send_json(self, data):
@@ -365,7 +367,7 @@ class Handler(webapp2.RequestHandler):
     def dispatch(self):
         
         if self.LOAD_CURRENT_USER:
-           core.acl.User.login_from_authorization_code(self.request.cookies.get('auth'))
+           auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
  
         try:
             self.before()

@@ -4,40 +4,34 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import core
+from app.srv import auth
 from webclient.route import register
 from webclient.handler import Angular
 
 class Login(Angular):
   
-    def respond(self, provider=None):
- 
-        if provider is not None:
-           command = {'login_method' : provider,
-                      'redirect_uri' : self.uri_for('login_provider', provider=provider, _full=True),
-                      'ip' : self.request.remote_addr,
-                      'code' : self.request.get('code'),
-                      'error' : self.request.get('error')
-           }
-             
-           response = core.acl.User.login(**command)
+    def respond(self, provider):
+      
+           data = self.reqdata.get_combined_params()
+           data['login_method'] = provider
            
-           if 'authorization_code' in response:
-               self.response.set_cookie('auth', response.get('authorization_code'), httponly=True)
+           context = auth.User.login(data)
+         
+           if 'authorization_code' in context.response:
+               self.response.set_cookie('auth', context.response.get('authorization_code'), httponly=True)
            
-           return response
+           return context.response
             
  
 class Logout(Angular):
     
     def respond(self):
-        
-        usr = core.acl.User.current_user()
-        response = usr.logout(code=self.request.get('code'))
+ 
+        context = auth.User.logout(self.reqdata.get_combined_params())
         
         self.response.delete_cookie('auth')
         
-        return response
+        return context.response
             
     
 register((r'/login', Login, 'login'),
