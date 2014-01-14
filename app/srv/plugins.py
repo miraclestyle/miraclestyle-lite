@@ -9,6 +9,7 @@ import collections
 import re
  
 from app import ndb
+from app.core import buyer
 from app.srv import transaction, rule, uom, location
 from app.lib.safe_eval import safe_eval
  
@@ -54,9 +55,7 @@ class AddressRule(transaction.Plugin):
       input_address_reference = context.event.args.get(address_reference_key)
       entry_address_reference = getattr(entry, address_reference_key, None)
       entry_address = getattr(entry, address_key, None)
-      
-      from app.core import buyer # circular import
-      
+       
       buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
       
       for buyer_address in buyer_addresses:

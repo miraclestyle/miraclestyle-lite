@@ -10,6 +10,7 @@ import os
 from app import ndb, settings, memcache, util
 from app.srv import event, rule
 from app.lib import oauth2
+from app.srv import log
   
 class Context():
   
@@ -162,9 +163,7 @@ class User(ndb.BaseExpando):
     
     @classmethod  
     def logout(cls, args):
-        
-        from app.srv import log # circular imports
-         
+          
         action = cls._actions.get('logout')
         context = action.process(args)
         
@@ -208,9 +207,7 @@ class User(ndb.BaseExpando):
      
     @classmethod
     def login(cls, args):
-      
-        from app.srv import log # circular imports
-   
+        
         action = cls._actions.get('login')
         context = action.process(args)
     

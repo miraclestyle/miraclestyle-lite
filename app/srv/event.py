@@ -175,7 +175,7 @@ class Action(ndb.BaseExpando):
             continue # if value is not set at all, always consider it none?
          try:
             value = argument.format(value)
-         except DescriptiveError as e:
+         except (DescriptiveError, ndb.DescriptiveError) as e:
             context.error(key, e)   
          except Exception as e:
             context.invalid(key)

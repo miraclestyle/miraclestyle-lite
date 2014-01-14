@@ -1,2 +1,2 @@
 # import all subpackages
-import auth, event, location, log, plugins, rule, transaction, uom
+import log, auth, event, location, plugins, rule, transaction, uom
