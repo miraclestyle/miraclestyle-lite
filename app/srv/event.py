@@ -153,23 +153,22 @@ class Action(ndb.BaseExpando):
     context.event = self
  
     self.args = {}
-    for key in self.arguments:
+    for key, argument in self.arguments.items():
       
       value = args.get(key)
-      argument = self.arguments.get(key)
-      
-      if argument.prop._required: # i dont know how we should call the property within the argument? argument.prop is ok as well
+     
+      if argument._required:
          if key not in args:
             context.required(key)
-            continue # if there is nothing provided, do not attempt to format the value
+            continue 
           
-      if key not in args and not argument.prop._required: # if prop is not required, and has `default` value, use that
-         if argument.prop._default is not None:
-            value = argument.prop._default
+      if key not in args and not argument._required: 
+         if argument._default is not None:
+            value = argument._default
           
-      if argument.prop and hasattr(argument.prop, 'format'):
+      if argument and hasattr(argument, 'format'):
          try:
-            value = argument.prop.format(value)
+            value = argument.format(value)
          except DescriptiveError as e:
             context.error(key, e)   
          except Exception as e:
@@ -177,11 +176,7 @@ class Action(ndb.BaseExpando):
                
       self.args[key] = value
       
-    if not context.has_error():
-       # if response has no errors, only then run the transaciton engine?
-       return context
-    else:
-       return None
+    return context
  
   
 class Engine:

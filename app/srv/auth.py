@@ -5,9 +5,11 @@ Created on Jan 6, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import hashlib
+import os
 
 from app import ndb, settings, memcache, util
 from app.srv import event, rule, log
+from app.lib import oauth2
 
 class Context():
   
@@ -56,6 +58,12 @@ class User(ndb.BaseExpando):
                                  'code' : ndb.SuperStringProperty(),
                                  'error' : ndb.SuperStringProperty()
                               }
+                             ),
+                
+       'logout' : event.Action(id='logout',
+                              arguments={
+                                 'code' : ndb.SuperStringProperty(required=True),
+                              }
                              )
     }
  
@@ -94,7 +102,11 @@ class User(ndb.BaseExpando):
         
     @classmethod
     def current_user(cls):
-        return memcache.temp_memory_get('_current_user', cls())
+        current_user = memcache.temp_memory_get('_current_user')
+        if not current_user:
+           current_user = cls()
+           
+        return current_user
     
     def generate_authorization_code(self, session):
         return '%s|%s' % (self.key.urlsafe(), session.session_id)
@@ -148,55 +160,149 @@ class User(ndb.BaseExpando):
             if i.identity == identity_id:
                return True
         return False
-      
-    def logout(self, **kwds):
+    
+    @classmethod  
+    def logout(cls, **kwds):
          
-        action = self._actions.get('logout')
+        action = cls._actions.get('logout')
         context = action.process(kwds)
         
-        @ndb.transactional(xg=True)
-        def transaction():
+        if not context.has_error():
+          
+          current_user = cls.current_user()
+          context.rule.entity = current_user
+          rule.Engine.run(context)
+          
+          if not rule.executable(context):
+             return context.not_authorized()
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+               
+              if current_user.is_guest:
+                 return context.error('login', 'already_logged_out')
              
-            if self.is_guest:
-               return context.error('login', 'already_logged_in')
+              if not current_user.logout_code == context.event.args.get('code'):
+                 return context.error('login', 'invalid_code')
            
-            if not self.logout_code == kwds.get('code'):
-               return context.error('login', 'invalid_code')
-         
-            if self.sessions:
-               self.sessions = []
- 
-            context.log.entities.append((self,))
-            
-            log.Engine.run(context)
-            
-            self.put()
-            
-            self.set_current_user(self.anonymous_user())
-            
-            context.status('logged_out')
-        
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
-            
+              if current_user.sessions:
+                 current_user.sessions = []
+   
+              context.log.entities.append((current_user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+              
+              log.Engine.run(context)
+              
+              current_user.put()
+              
+              current_user.set_current_user(None, None)
+              
+              context.status('logged_out')
+          
+          try:
+              transaction()
+          except Exception as e:
+              context.transaction_error(e)
+              
         return context.response
-    
-    
+     
     @classmethod
     def login(cls, **kwds):
       
         action = cls._actions.get('login')
         context = action.process(kwds)
-        
-        if context:
-           
+ 
+        if not context.has_error():
+ 
            login_method = context.event.args.get('login_method')
+           error = context.event.args.get('error')
+           code = context.event.args.get('code')
+           current_user = cls.current_user()
+           
+           if not current_user.is_guest:
+             
+             context.rule.entity = current_user
+             context.auth.user = current_user
+             rule.Engine.run(context)
+             
+             if not rule.executable(context):
+                return context.not_authorized()
            
            if login_method not in settings.LOGIN_METHODS:
               context.error('login_method', 'not_allowed')
            else:
               context.response['providers'] = settings.LOGIN_METHODS
-          
-           return context.response
+              
+              cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
+              client = oauth2.Client(**cfg)
+              
+              if error:
+                 return context.error('oauth2_error', 'rejected_account_access')
+               
+              if code:
+                
+                 client.get_token(code)
+                 
+                 if not client.access_token:
+                    return context.error('oauth2_error', 'failed_access_token')
+                  
+                 context.response['access_token'] = client.access_token
+                 
+                 userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
+                 info = client.resource_request(url=userinfo)
+                 
+                 if info and 'email' in info:
+                   
+                     identity = settings.LOGIN_METHODS.get(login_method)
+                     identity_id = '%s-%s' % (info['id'], identity)
+                     email = info['email']
+                     
+                     user = cls.query(cls.identities.identity == identity_id).get()
+                     if not user:
+                        user = cls.query(cls.emails == email).get()
+                     
+                     if user:    
+                       context.rule.entity = user
+                       context.auth.user = user
+                       rule.Engine.run(context)
+                       
+                       if not rule.executable(context):
+                          return context.not_authorized()
+                        
+                     
+                     @ndb.transactional(xg=True)
+                     def transaction(user):
+                       
+                        if not user or user.is_guest:
+                          
+                           user = cls()
+                           user.emails.append(email)
+                           user.identities.append(Identity(identity=identity_id, email=email, primary=True))
+                           user.state = 'active'
+                           session = user.new_session()
+                           
+                           user.put()
+                           
+                           context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+                           log.Engine.run(context)
+                           
+                        else:
+                          if email not in user.emails:
+                             user.emails.append(email)
+                          
+                          if not user.has_identity(identity_id):
+                             user.append(Identity(identity=identity_id, email=email, primary=False))
+                          
+                          session = user.new_session()   
+                          user.put()
+                          
+                          context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+                          log.Engine.run(context)
+                          
+                          
+                        cls.set_current_user(user, session)
+                        
+                        context.response.update({'user' : user, 'session' : session})
+                     
+                     transaction(user) 
+               
+        return context.response
