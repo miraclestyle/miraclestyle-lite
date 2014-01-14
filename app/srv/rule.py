@@ -161,6 +161,8 @@ class Engine:
  
       # call prepare first, populates required dicts into the entity instance
       cls.prepare(context)
+      local_action_permissions = None
+      local_field_permissions = None
       
       if not skip_user_roles:
         role_keys = []
