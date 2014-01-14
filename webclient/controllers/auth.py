@@ -4,9 +4,10 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app.srv import auth
 from webclient.route import register
 from webclient.handler import Angular
+
+from app.srv import auth
 
 class Login(Angular):
   
@@ -14,7 +15,7 @@ class Login(Angular):
       
            data = self.reqdata.get_combined_params()
            data['login_method'] = provider
-           
+ 
            context = auth.User.login(data)
          
            if 'authorization_code' in context.response:

@@ -6,6 +6,7 @@ Created on Jul 9, 2013
 '''
 import decimal
 import cgi
+import importlib
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
@@ -13,7 +14,7 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images
 
 import cloudstorage
- 
+
 from app import util
  
 ctx = get_context()
@@ -78,8 +79,12 @@ def factory(module_model_path):
     custom_kinds = module_model_path.split('.')
     far = custom_kinds[-1] 
     del custom_kinds[-1] 
-         
-    return getattr(util.import_module(".".join(custom_kinds)), far)
+    try:
+       module = importlib.import_module(".".join(custom_kinds)) # replace util.import_module with importlib.import_module
+    except Exception as e:
+       util.logger('Failed to import %s. Error: %s' % (module_model_path, e), 'exception')
+       return None
+    return getattr(module, far)
    
 class _BaseModel():
   
@@ -281,8 +286,8 @@ class _BaseProperty(object):
         custom_kind = kwds.get('kind')
   
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
-           # kwds['kind'] = factory(custom_kind)
-           kwds['kind'] = None
+           kwds['kind'] = factory(custom_kind)
+           
             
         super(_BaseProperty, self).__init__(*args, **kwds)
         

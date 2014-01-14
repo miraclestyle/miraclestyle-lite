@@ -8,25 +8,13 @@ from webclient.route import register
 from webclient.handler import Angular, Handler
  
 from app import ndb
+from app.srv import auth
 
-class Submitter(Handler):
+class Welcome(Angular):
     
     def respond(self):
-        self.render('submitter.html')
-
-class FormSubmit(Handler):
-    
-    def respond(self):
-        """
-        import cloudstorage
         
-        f = cloudstorage.open('/gcs/test.txt', mode='w')
-        
-        f.write('foobar')
-        
-        f.close()
-        """
-        self.render('submit.html')
+        return {'user' : auth.User.current_user()}
  
 class Endpoint(Angular):
     
@@ -45,4 +33,4 @@ class Endpoint(Angular):
         return getattr(model, method)(data)
          
  
-register(('/endpoint', Endpoint), ('/submit', FormSubmit), ('/submitter', Submitter))
+register(('/endpoint', Endpoint), ('/', Welcome))

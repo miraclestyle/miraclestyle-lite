@@ -10,8 +10,8 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, memcache
-from app.srv import log, rule, transaction
- 
+
+
 class DescriptiveError(Exception):
       # executes an exception in a way that it will have its own meaning instead of just "invalid"
       pass
@@ -36,8 +36,8 @@ class Context():
   
   def __init__(self):
     
-    from app.srv import auth
- 
+    from app.srv import auth, log, rule, transaction # circular imports @auth
+  
     self.event = None
     self.transaction = transaction.Context()
     self.rule = rule.Context()
@@ -196,6 +196,9 @@ class Engine:
     
     if action:
        context = action.process(args)
+       
+       from app.srv import transaction
+       
        transaction.Engine.run(context)
  
  

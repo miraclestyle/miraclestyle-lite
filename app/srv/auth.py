@@ -8,9 +8,9 @@ import hashlib
 import os
 
 from app import ndb, settings, memcache, util
-from app.srv import event, rule, log
+from app.srv import event, rule
 from app.lib import oauth2
-
+  
 class Context():
   
   def __init__(self):
@@ -162,6 +162,8 @@ class User(ndb.BaseExpando):
     
     @classmethod  
     def logout(cls, args):
+        
+        from app.srv import log # circular imports
          
         action = cls._actions.get('logout')
         context = action.process(args)
@@ -170,7 +172,7 @@ class User(ndb.BaseExpando):
           
           current_user = cls.current_user()
           context.rule.entity = current_user
-          rule.Engine.run(context, skip_user_roles=True)
+          rule.Engine.run(context, True)
           
           if not rule.executable(context):
              return context.not_authorized()
@@ -206,6 +208,8 @@ class User(ndb.BaseExpando):
      
     @classmethod
     def login(cls, args):
+      
+        from app.srv import log # circular imports
    
         action = cls._actions.get('login')
         context = action.process(args)
@@ -221,7 +225,7 @@ class User(ndb.BaseExpando):
              
              context.rule.entity = current_user
              context.auth.user = current_user
-             rule.Engine.run(context, skip_user_roles=True)
+             rule.Engine.run(context, True)
              
              if not rule.executable(context):
                 return context.not_authorized()
@@ -264,7 +268,7 @@ class User(ndb.BaseExpando):
                      if user:    
                        context.rule.entity = user
                        context.auth.user = user
-                       rule.Engine.run(context, skip_user_roles=True)
+                       rule.Engine.run(context, True)
                        
                        if not rule.executable(context):
                           return context.not_authorized()

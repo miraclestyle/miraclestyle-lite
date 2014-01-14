@@ -9,12 +9,12 @@ import cgi
 import json
 import webapp2
 import collections
+import importlib
   
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
 from app.memcache import _local
-from app.srv import auth
 from app import settings, util
  
 from webclient import webclient_settings
@@ -39,7 +39,7 @@ def wsgi_config(as_tuple=False):
     TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
       
     for a in webclient_settings.ACTIVE_CONTROLLERS:
-        util.import_module('webclient.controllers.%s' % a)
+        importlib.import_module('webclient.controllers.%s' % a)
           
     JINJA_FILTERS = Jinja.filters
     JINJA_GLOBALS = Jinja.globals         
@@ -367,6 +367,9 @@ class Handler(webapp2.RequestHandler):
     def dispatch(self):
         
         if self.LOAD_CURRENT_USER:
+          
+           from app.srv import auth
+           
            auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
  
         try:
