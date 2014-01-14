@@ -153,7 +153,7 @@ class Engine:
     return finals
   
   @classmethod
-  def run(cls, context, strict=False):
+  def run(cls, context, skip_user_roles=False, strict=False):
     
     # datastore system
     
@@ -162,17 +162,22 @@ class Engine:
       # call prepare first, populates required dicts into the entity instance
       cls.prepare(context)
       
-      # 
-      roles = ndb.get_multi(context.auth.user.roles)
-      for role in roles:
+      if not skip_user_roles:
+        role_keys = []
+        for role in context.auth.user.roles:
+          if role.namespace() == namespace_manager.get_namespace(): # treba negde uraditi from google.appengine.api import namespace_manager
+            role_keys.append(role)
+          
+        roles = ndb.get_multi(role_keys)
+        for role in roles:
           role.run(context)
           
-      # copy 
-      local_action_permissions = context.rule.entity._action_permissions.copy()
-      local_field_permissions = context.rule.entity._field_permissions.copy()
+        # copy 
+        local_action_permissions = context.rule.entity._action_permissions.copy()
+        local_field_permissions = context.rule.entity._field_permissions.copy()
       
-      # empty
-      cls.prepare(context)
+        # empty
+        cls.prepare(context)
    
       entity = context.rule.entity
       if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
