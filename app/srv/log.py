@@ -42,13 +42,18 @@ class Record(ndb.BaseExpando):
       
 class Engine:
   
-  def run(self, context):
+  @classmethod
+  def run(cls, context):
     
     if len(context.log.entities):
       
       records = []
       
       for entity, kwargs in context.log.entities:
+        
+        if not kwargs:
+           kwargs = {}
+           
         log_entity = kwargs.pop('log_entity', True)
         record = Record(parent=entity.key, agent=context.auth.user.key, action=context.event.key, **kwargs)
         if log_entity is True:

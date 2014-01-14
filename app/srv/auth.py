@@ -7,7 +7,7 @@ Created on Jan 6, 2014
 import hashlib
 
 from app import ndb, settings, memcache, util
-from app.srv import event, rule
+from app.srv import event, rule, log
 
 class Context():
   
@@ -61,6 +61,7 @@ class User(ndb.BaseExpando):
     }
  
     def __todict__(self):
+      
         d = super(User, self).__todict__()
         
         d['logout_code'] = self.logout_code
@@ -173,7 +174,7 @@ class User(ndb.BaseExpando):
         if user:
            session = user.session_by_id(session_id)
            if session:
-              User.set_current_user(user, session)
+              cls.set_current_user(user, session)
                
     def has_identity(self, identity_id):
         for i in self.identities:
@@ -190,27 +191,28 @@ class User(ndb.BaseExpando):
         def transaction():
              
             if self.is_guest:
-               return context.response.error('login', 'already_logged_in')
+               return context.error('login', 'already_logged_in')
            
             if not self.logout_code == kwds.get('code'):
-               return context.response.error('login', 'invalid_code')
+               return context.error('login', 'invalid_code')
          
             if self.sessions:
                self.sessions = []
-                
-            self.new_action('logout') # this needs to go to transaction engine
-            self.record_action() # this needs to go to transaction engine
+ 
+            context.log.entities.append((self,))
+            
+            log.Engine.run(context)
             
             self.put()
             
-            User.set_current_user(User.anonymous_user())
+            self.set_current_user(self.anonymous_user())
             
-            context.response.status('logged_out')
+            context.status('logged_out')
         
         try:
             transaction()
         except Exception as e:
-            context.response.transaction_error(e)
+            context.transaction_error(e)
             
         return context.response
     
@@ -225,17 +227,9 @@ class User(ndb.BaseExpando):
            
            login_method = context.event.args.get('login_method')
            
-           context.response['providers'] = settings.LOGIN_METHODS
+           if login_method not in settings.LOGIN_METHODS:
+              context.error('login_method', 'not_allowed')
+           else:
+              context.response['providers'] = settings.LOGIN_METHODS
           
            return context.response
- 
- 
-class Role(ndb.BaseModel):
-    
-    _kind = 13
-    # root
-    # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
-    # composite index: ancestor:yes - name
-    name = ndb.SuperStringProperty('1', required=True)
-    permissions = ndb.SuperStringProperty('2', repeated=True, indexed=False)# soft limit 1000x - action-Model - create-Store
-    readonly = ndb.SuperBooleanProperty('3', default=True, indexed=False)

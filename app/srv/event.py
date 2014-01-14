@@ -5,14 +5,11 @@ Created on Jan 6, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import cgi
-import cloudstorage
-import decimal
-
-from google.appengine.api import images
+ 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-from app import ndb, memcache, util
+from app import ndb, memcache
 from app.srv import log, rule, transaction, auth
  
 class DescriptiveError(Exception):
@@ -45,8 +42,90 @@ class Context():
   
     self.log = log.Context()
     self.auth = auth.Context()
-    self.response = None
+    self.response = {}
     
+  def transaction_error(self, e):
+     """
+     This function needs to be used in fashion:
+     
+     @ndb.transacitonal
+     def transaction():
+         user.put()
+         ...
+         
+     try:
+        transaction()
+     except Exception as e:
+        response.transaction_error(e)
+        
+     It will automatically set if the transaction failed because of google network.
+     
+     """
+     if isinstance(e, datastore_errors.Timeout):
+        return self.transaction_timeout()
+     if isinstance(e, datastore_errors.TransactionFailedError):
+        return self.transaction_failed()
+     
+     raise
+ 
+  def not_implemented(self):
+     return self.error('system', 'not_implemented')
+
+  def transaction_timeout(self):
+     # sets error in the response that the transaction that was taking place has timed out
+     return self.error('transaction_error', 'timeout')
+ 
+  def transaction_failed(self):
+     # sets error in the response that the transaction that was taking place has failed
+     return self.error('transaction_error', 'failed')
+ 
+  def required(self, k):
+     # sets error that the field is required with name `k`
+     return self.error(k, 'required')
+     
+  def invalid(self, k):
+     # sets error that the field is not in proper format with name `k`
+     return self.error(k, 'invalid_input')
+ 
+  def status(self, m):
+     # generic `status` of the response. 
+     self.response['status'] = m
+     return self
+ 
+  def not_found(self):
+     # shorthand for informing the response that the entity, object, thing or other cannot be found with the provided params
+     self.error('status', 'not_found')
+     return self
+ 
+  def not_authorized(self):
+     # shorthand for informing the response that the user is not authorize to perform the operation
+     return self.error('user', 'not_authorized')
+     
+  def not_logged_in(self):
+     # shorthand for informing the response that the user needs to login in order to perform the operation
+     return self.error('user', 'not_logged_in')
+ 
+  def has_error(self, k=None):
+     
+     if 'errors' not in self.response:
+        return False
+     
+     if k is None:
+        return len(self.response['errors'].keys())
+     else:
+        return len(self.response['errors'][k])
+ 
+  def error(self, f, m):
+     
+     if 'errors' not in self.response:
+        self.response['errors'] = {}
+        
+     if f not in self.response['errors']:
+         self.response['errors'][f] = list()
+         
+     self.response['errors'][f].append(m)
+     return self
+ 
     
 class Argument():
   
@@ -81,7 +160,6 @@ class Action(ndb.BaseExpando):
     
     context = Context()
     context.event = self
-    context.response = Response()
  
     self.args = {}
     for key in self.arguments:
@@ -91,7 +169,7 @@ class Action(ndb.BaseExpando):
       
       if argument.prop._required: # i dont know how we should call the property within the argument? argument.prop is ok as well
          if key not in args:
-            context.response.required(key)
+            context.required(key)
             continue # if there is nothing provided, do not attempt to format the value
           
       if key not in args and not argument.prop._required: # if prop is not required, and has `default` value, use that
@@ -102,22 +180,17 @@ class Action(ndb.BaseExpando):
          try:
             value = argument.prop.format(value)
          except DescriptiveError as e:
-            context.response.error(key, e)   
+            context.error(key, e)   
          except Exception as e:
-            context.response.invalid(key)
+            context.invalid(key)
                
       self.args[key] = value
       
-    if not context.response.has_error():
+    if not context.has_error():
        # if response has no errors, only then run the transaciton engine?
        return context
     else:
        return None
- 
-  def run(self, args):
-     context = self.process(args)
-     if context:
-        return transaction.Engine.run(context)
  
   
 class Engine:
@@ -130,126 +203,10 @@ class Engine:
       action = Action.get_local_action(action_key)
     
     if action:
-      action.run(args)
-      
-      
-class Response(dict):
-    
-    """ 
-      This response class is the main interface trough which the CLIENT will communicate between the model methods.
-      Each method that is capable of performing operations that will need some kind of answer need to return instance of 
-      this class. Such example
-      
-      class Example(ndb.BaseModel):
-      
-            name ... 
-            
-            def perform_operation(cls, **kwds):
-                response = ndb.Response()
-                
-                if not kwds.get('name'):
-                   response.required('name')
-                   
-                if not response.has_error():
-                   ... put() operations etc
-                
-                return response   
-                 
-      Each of those class methods must return `response` and the response will be interpreted by the client:
-      e.g. JSON.
-                
-    """
-    def transaction_error(self, e):
-        """
-        This function needs to be used in fashion:
-        
-        @ndb.transacitonal
-        def transaction():
-            user.put()
-            ...
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        It will automatically set if the transaction failed because of google network.
-        
-        """
-        if isinstance(e, datastore_errors.Timeout):
-           return self.transaction_timeout()
-        if isinstance(e, datastore_errors.TransactionFailedError):
-           return self.transaction_failed()
-        
-        raise
-    
-    def not_implemented(self):
-        return self.error('system', 'not_implemented')
+       context = action.process(args)
+       transaction.Engine.run(context)
  
-    def transaction_timeout(self):
-        # sets error in the response that the transaction that was taking place has timed out
-        return self.error('transaction_error', 'timeout')
-    
-    def transaction_failed(self):
-        # sets error in the response that the transaction that was taking place has failed
-        return self.error('transaction_error', 'failed')
-    
-    def required(self, k):
-        # sets error that the field is required with name `k`
-        return self.error(k, 'required')
-        
-    def invalid(self, k):
-        # sets error that the field is not in proper format with name `k`
-        return self.error(k, 'invalid_input')
-    
-    def status(self, m):
-        # generic `status` of the response. 
-        self['status'] = m
-        return self
-    
-    def not_found(self):
-        # shorthand for informing the response that the entity, object, thing or other cannot be found with the provided params
-        self.error('status', 'not_found')
-        return self
-    
-    def not_authorized(self):
-        # shorthand for informing the response that the user is not authorize to perform the operation
-        return self.error('user', 'not_authorized')
-        
-    def not_logged_in(self):
-        # shorthand for informing the response that the user needs to login in order to perform the operation
-        return self.error('user', 'not_logged_in')
-    
-    def __setattr__(self, *args, **kwargs):
-        return dict.__setitem__(self, *args, **kwargs)
-    
-    def __getattr__(self, *args, **kwargs):
-        return dict.__getitem__(self, *args, **kwargs)
  
-    def has_error(self, k=None):
-        
-        if self['errors'] is None:
-              return False
-        
-        if k is None:
-           return len(self['errors'].keys())
-        else:
-           return len(self['errors'][k])
-    
-    def error(self, f, m):
-        
-        if self['errors'] == None:
-           self['errors'] = {}
-           
-        if f not in self['errors']:
-            self['errors'][f] = list()
-            
-        self['errors'][f].append(m)
-        return self
-    
-    def __init__(self):
-        self['errors'] = None
-  
 class BlobManager():
     
     """
