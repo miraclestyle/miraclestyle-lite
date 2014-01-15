@@ -250,12 +250,12 @@ class User(ndb.BaseExpando):
                primary_email = context.event._args.get('primary_email')
                disassociate = context.event._args.get('disassociate')
  
-               for i,identity in enumerate(current_user.identities):
+               for identity in enumerate(current_user.identities):
                    identity.primary = False
                    if identity.email == primary_email:
                       identity.primary = True
                       
-                   if i == disassociate:
+                   if identity.identity == disassociate:
                       identity.associate = False
                       
                current_user.put()
