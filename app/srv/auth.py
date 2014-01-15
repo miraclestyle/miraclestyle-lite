@@ -49,7 +49,9 @@ class User(ndb.BaseExpando):
       'roles' : ndb.SuperKeyProperty('5', kind='13', repeated=True, indexed=False)
     }
     
-    _global_role = None
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('0', 'login', True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
+                                               ])
     
     _actions = {
        'login' : event.Action(id='login',
@@ -218,14 +220,12 @@ class User(ndb.BaseExpando):
            code = context.event._args.get('code')
            current_user = cls.current_user()
            
-           if not current_user.is_guest:
+           context.rule.entity = current_user
+           context.auth.user = current_user
+           rule.Engine.run(context, True)
              
-             context.rule.entity = current_user
-             context.auth.user = current_user
-             rule.Engine.run(context, True)
-             
-             if not rule.executable(context):
-                return context.not_authorized()
+           if not rule.executable(context):
+              return context.not_authorized()
            
            if login_method not in settings.LOGIN_METHODS:
               context.error('login_method', 'not_allowed')
