@@ -68,7 +68,7 @@ class User(ndb.BaseExpando):
        'update' : event.Action(id='update',
                               arguments={
                                  'primary_email' : ndb.SuperStringProperty(),
-                                 'disassociate' : ndb.SuperIntegerProperty(),
+                                 'disassociate' : ndb.SuperStringProperty(),
                               }
                              ),
                 
