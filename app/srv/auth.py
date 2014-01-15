@@ -52,7 +52,8 @@ class User(ndb.BaseExpando):
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('0', 'login', True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
                                                 rule.ActionPermission('0', 'logout', True, "not context.rule.entity.is_guest"),
-                                                rule.ActionPermission('0', 'update', True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key")
+                                                rule.ActionPermission('0', 'update', True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key"),
+                                                rule.ActionPermission('0', 'sudo', True, "context.rule.auth.root_admin"),
                                                ])
     
     _actions = {
@@ -71,6 +72,14 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
+       'sudo' : event.Action(id='sudo',
+                              arguments={
+                                 'user'  : ndb.SuperKeyProperty(kind='0', required=True),
+                                 'message' : ndb.SuperKeyProperty(required=True),
+                                 'note' : ndb.SuperKeyProperty(required=True)
+                              }
+                             ),
+                
        'logout' : event.Action(id='logout',
                               arguments={
                                 'code' : ndb.SuperStringProperty(required=True),
@@ -86,6 +95,10 @@ class User(ndb.BaseExpando):
         d['is_guest'] = self.is_guest
         
         return d 
+    
+    @property
+    def root_admin(self):
+       return self.primary_email in settings.ROOT_ADMINS
     
     @property
     def primary_email(self):
@@ -171,6 +184,50 @@ class User(ndb.BaseExpando):
             if i.identity == identity_id:
                return i
         return False
+      
+    @classmethod
+    def sudo(cls, args):
+      
+        action = cls._actions.get('sudo')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               user_to_update_key = context.event._args.get('user')
+               message = context.event._args.get('message')
+               note = context.event._args.get('note')
+           
+               user_to_update = user_to_update_key.get()
+               context.rule.entity = user_to_update
+               rule.Engine.run(context, True)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               new_state = 'active'
+               
+               if user_to_update.state == 'active':
+                  new_state = 'suspended'
+                  user_to_update.sessions = [] # delete sessions
+ 
+               user_to_update.state = new_state
+               user_to_update.put()
+               
+               context.log.entities.append((user_to_update, {'message' : message, 'note' : note}))
+               log.Engine.run(context)
+               
+               context.response['updated'] = True
+               context.response['updated_user'] = user_to_update
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
       
     @classmethod
     def update(cls, args):
