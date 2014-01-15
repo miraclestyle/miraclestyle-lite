@@ -251,14 +251,16 @@ class LocalRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('0', 'manage', False, "context.rule.entity.domain.state != 'active'"),
-                                            ActionPermission('0', 'delete', False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', 'manage', False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', 'delete', False, "context.rule.entity.domain.state != 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
        'manage' : event.Action(id='manage',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain', required=True),
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain'),
+                                 'role' : ndb.SuperKeyProperty(kind='56'),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
                                  'active' : ndb.SuperBooleanProperty(),
@@ -298,7 +300,7 @@ class LocalRole(Role):
                 if not executable(context):
                    return context.not_authorized()
                  
-                domain_users = entity.domain.get_users() 
+                domain_users = entity.domain.get_users(entity_key) 
                 user_keys = []
                 
                 for domain_user in domain_users:
@@ -332,56 +334,64 @@ class LocalRole(Role):
         return context
     
     @classmethod
-    def manage(cls, create, args):
+    def manage(cls, args):
         
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=create)])
+        action = cls._actions.get('manage')
+        context = action.process(args)
+        
+        if not context.has_error():
           
-            if response.has_error():
-               return response
-         
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-     
-               if not entity.domain_is_active:
-                  return response.error('domain', 'not_active') 
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
                 
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
- 
-               entity = cls.prepare(create, namespace=values.get('domain').urlsafe())
-     
-               if not entity.domain_is_active:
-                  return response.error('domain', 'not_active') 
+                if create:
+                   domain_key = context.args.get('domain')
+                   domain = domain_key.get()
+                   entity = cls(namespace=domain.key.namespace())
+                else:
+                   entity_key = context.args.get('role')
+                   entity = entity_key.get()
+              
+                context.rule.entity = entity
+                Engine.run(context)
                 
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
+                if not executable(context):
+                   return context.not_authorized()
+                 
+                entity.name = context.args.get('name')
+                entity.active = context.args.get('active')
+                
+                permissions = context.args.get('permissions')
+                set_permissions = []
+                for permission in permissions:
+                  
+                    if 'action' not in permission:
+                       set_permissions.append(FieldPermission(permission.get('kind'),
+                                                               permission.get('field'),
+                                                               permission.get('writable'),
+                                                               permission.get('visible'), 
+                                                               permission.get('required'),
+                                                               permission.get('condition')))
+                       
+                    else:
+                      set_permissions.append(ActionPermission(permission.get('kind'),
+                                                              permission.get('action'),
+                                                              permission.get('executable'),
+                                                              permission.get('condition')))
+                entity.permissions = set_permissions      
+                entity.put()
+                
+                context.log.entities.append((entity,))
+                log.Engine.run(context)
+                   
+                context.status(entity)
                
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
             
-        return response
+        return context
           

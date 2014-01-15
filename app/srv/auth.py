@@ -46,7 +46,7 @@ class User(ndb.BaseExpando):
     _default_indexed = False
   
     _expando_fields = {  
-      'roles' : ndb.SuperKeyProperty('5', repeated=True, indexed=False)
+      'roles' : ndb.SuperKeyProperty('5', kind='app.srv.rule.LocalRole', repeated=True, indexed=False)
     }
     
     _global_role = rule.GlobalRole(permissions=[
