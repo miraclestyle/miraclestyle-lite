@@ -67,7 +67,6 @@ class User(ndb.BaseExpando):
        'update' : event.Action(id='update',
                               arguments={
                                  'primary_email' : ndb.SuperStringProperty(),
-                                 'new_email' : ndb.SuperStringProperty(),
                                  'disassociate' : ndb.SuperIntegerProperty(),
                               }
                              ),
@@ -180,38 +179,43 @@ class User(ndb.BaseExpando):
         context = action.process(args)
         
         if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
            
-           current_user = cls.current_user()
-           context.rule.entity = current_user
-           rule.Engine.run(context, True)
-           
-           if not rule.executable(context):
-              return context.not_authorized()
-            
-           new_email = context.event._args.get('new_email')
-           primary_email = context.event._args.get('primary_email')
-           disassociate = context.event._args.get('disassociate')
-           
-           if new_email not in current_user.emails:
-              current_user.emails.append(new_email)
-           
-           for i,identity in enumerate(current_user.identities):
-               identity.primary = False
-               if identity.email == primary_email:
-                  identity.primary = True
-                  
-               if i == disassociate:
-                  identity.associate = False
-                  
-           current_user.put()
-           
-           context.response['updated'] = True
-           context.response['user'] = current_user
+               current_user = cls.current_user()
+               context.rule.entity = current_user
+               rule.Engine.run(context, True)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+    
+               primary_email = context.event._args.get('primary_email')
+               disassociate = context.event._args.get('disassociate')
+ 
+               for i,identity in enumerate(current_user.identities):
+                   identity.primary = False
+                   if identity.email == primary_email:
+                      identity.primary = True
+                      
+                   if i == disassociate:
+                      identity.associate = False
+                      
+               current_user.put()
+               
+               context.log.entities.append((current_user, ))
+               log.Engine.run(context)
+               
+               context.response['updated'] = True
+               context.response['user'] = current_user
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
            
         return context
-               
-            
-           
+  
     
     @classmethod  
     def logout(cls, args):
