@@ -105,14 +105,19 @@ def safe_eval(source, data=None):
         raise ValueError('__subclasses__ not allowed')
 
     comp = _compile_source(source)
-    return eval(comp, {'__builtins__': {
-        'True': True,
-        'False': False,
-        'str': str,
-        'globals': locals,
-        'locals': locals,
-        'bool': bool,
-        'dict': dict,
-        'round': round,
-        'Decimal' : Decimal,
-        }}, data)
+    
+    try:
+      return eval(comp, {'__builtins__': {
+          'True': True,
+          'False': False,
+          'str': str,
+          'globals': locals,
+          'locals': locals,
+          'bool': bool,
+          'dict': dict,
+          'round': round,
+          'Decimal' : Decimal,
+          }}, data)
+      
+    except Exception as e:
+        raise Exception('Failed to process code "%s" error: %s' % ((source, data), e))

@@ -46,6 +46,16 @@ class Domain(ndb.BaseExpando, ndb.Workflow):
     state = ndb.SuperIntegerProperty('5', required=True)
     
     _default_indexed = False
+    
+    ### do not delete from here to
+    
+    def get_users(self, role=None, keys_only=None):
+        query = User.query(namespace=self.key.urlsafe())
+        if role:
+           query.filter(User.roles == role)
+        return query.fetch(keys_only=keys_only)
+    
+    ### here
   
     OBJECT_DEFAULT_STATE = 'active'
     

@@ -153,15 +153,7 @@ class _BaseModel():
              for expando_prop_key,expando_prop in expandos.items():
                  fields[expando_prop._code_name] = expando_prop
       return fields
- 
-  @classmethod
-  def create(cls, values, **kwargs):
-        return cls.manage(True, values, **kwargs)
     
-  @classmethod
-  def update(cls, values, **kwargs):
-        return cls.manage(False, values, **kwargs)
-
  
 class BaseModel(_BaseModel, Model):
     """ Base class for all `ndb.Model` entities """

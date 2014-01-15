@@ -45,6 +45,7 @@ class Context():
     self.log = log.Context()
     self.auth = auth.Context()
     self.response = {}
+    self.args = {}
     
   def transaction_error(self, e):
      """
@@ -154,8 +155,7 @@ class Action(ndb.BaseExpando):
   
     context = Context()
     context.event = self
- 
-    self._args = {}
+    context.args = {}
  
     for key, argument in self.arguments.items():
       
@@ -180,7 +180,7 @@ class Action(ndb.BaseExpando):
          except Exception as e:
             context.invalid(key)
                
-      self._args[key] = value
+      context.args[key] = value
    
     return context
  

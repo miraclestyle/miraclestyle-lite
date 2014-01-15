@@ -6,6 +6,7 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 from app.lib.safe_eval import safe_eval
+from app.srv import event, log
 
 def _check_field(context, name, key):
     if context.entity:
@@ -40,6 +41,49 @@ class Context():
   
   def __init__(self):
     self.entity = None
+    
+    
+class Permission():
+  pass
+
+
+class ActionPermission(Permission):
+  
+  
+  def __init__(self, kind, action, executable=None, condition=None):
+    
+    self.kind = kind
+    self.action = action
+    self.executable = executable
+    self.condition = condition
+    
+  def run(self, role, context):
+     
+    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context})) and (self.executable != None):
+       context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
+
+
+class FieldPermission(Permission):
+  
+  
+  def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
+    
+    self.kind = kind
+    self.field = field # this must be a field name from ndb.Property(name='this name')
+    self.writable = writable
+    self.visible = visible
+    self.required = required
+    self.condition = condition
+    
+  def run(self, context):
+ 
+    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (safe_eval(self.condition, {'context' : context})):
+      if (self.writable != None):
+        context.rule.entity._field_permissions[self.field]['writable'].append(self.writable)
+      if (self.visible != None):
+        context.rule.entity._field_permissions[self.field]['visible'].append(self.visible)
+      if (self.required != None):
+        context.rule.entity._field_permissions[self.field]['required'].append(self.required)
     
 
 class Role(ndb.BaseExpando):
@@ -172,7 +216,8 @@ class Engine:
           
         roles = ndb.get_multi(role_keys)
         for role in roles:
-          role.run(context)
+          if role.active:
+             role.run(context)
           
         # copy 
         local_action_permissions = context.rule.entity._action_permissions.copy()
@@ -202,48 +247,141 @@ class GlobalRole(Role):
   
 
 class LocalRole(Role):
-  pass
-
-    
-class Permission():
-  pass
-
-
-class ActionPermission(Permission):
   
+    _kind = 56
   
-  def __init__(self, kind, action, executable=None, condition=None):
+    _global_role = GlobalRole(permissions=[
+                                            ActionPermission('0', 'manage', False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('0', 'delete', False, "context.rule.entity.domain.state != 'active'"),
+                                          ])
+    # unique action naming, possible usage is '_kind_id-manage'
+    _actions = {
+       'manage' : event.Action(id='manage',
+                              arguments={
+                                 'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain', required=True),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'permissions' : ndb.SuperJsonProperty(required=True),
+                                 'active' : ndb.SuperBooleanProperty(),
+                              }
+                             ),
+                
+       'delete' : event.Action(id='delete',
+                              arguments={
+                                 'role' : ndb.SuperKeyProperty(kind='56'),
+                              }
+                             ),
+    }
     
-    self.kind = kind
-    self.action = action
-    self.executable = executable
-    self.condition = condition
+    @property
+    def domain(self):
+       return ndb.Key(urlsafe=self.key.namespace()).get()
+  
+    @classmethod
+    def delete(cls, args):
+        
+        action = cls._actions.get('delete')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+                         
+             entity_key = context.args.get('role')
+             entity = entity_key.get()
+            
+             if entity and entity.loaded():
+               
+                context.rule.entity = entity
+                Engine.run(context, True)
+               
+                if not executable(context):
+                   return context.not_authorized()
+                 
+                domain_users = entity.domain.get_users() 
+                user_keys = []
+                
+                for domain_user in domain_users:
+                    
+                    domain_user.roles.remove(entity_key)
+                    domain_user.put()
+                    context.log.entities.append((domain_user,))
+                    user_keys.append(domain_user.user)
+                    
+                users = ndb.get_multi(user_keys)
+                
+                for user in users:
+                   user.roles.remove(entity_key)
+                   user.put()
+                   context.log.entities.append((user,))
+                
+                context.log.entities.append((entity, ))
+                entity.key.delete()
+                log.Engine.run(context)
+                 
+                context.status(entity)
+                context.response['deleted'] = True
+             else:
+                context.not_found()      
+              
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
+           
+        return context
     
-  def run(self, role, context):
+    @classmethod
+    def manage(cls, create, args):
+        
+        response = ndb.Response()
+
+        @ndb.transactional(xg=True)
+        def transaction():
+             
+            current = ndb.get_current_user()
      
-    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context})) and (self.executable != None):
-       context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
-
-
-class FieldPermission(Permission):
-  
-  
-  def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
-    
-    self.kind = kind
-    self.field = field # this must be a field name from ndb.Property(name='this name')
-    self.writable = writable
-    self.visible = visible
-    self.required = required
-    self.condition = condition
-    
-  def run(self, context):
+            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('domain', kind=Domain, required=create)])
+          
+            if response.has_error():
+               return response
+         
+            entity = cls.prepare(create, values)
+            
+            if entity is None:
+               return response.not_found()
+             
+            if not create:
+     
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+                
+               if current.has_permission('update', entity):
+                   entity.put()
+                   entity.new_action('update')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+            else:
  
-    if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (safe_eval(self.condition, {'context' : context})):
-      if (self.writable != None):
-        context.rule.entity._field_permissions[self.field]['writable'].append(self.writable)
-      if (self.visible != None):
-        context.rule.entity._field_permissions[self.field]['visible'].append(self.visible)
-      if (self.required != None):
-        context.rule.entity._field_permissions[self.field]['required'].append(self.required)
+               entity = cls.prepare(create, namespace=values.get('domain').urlsafe())
+     
+               if not entity.domain_is_active:
+                  return response.error('domain', 'not_active') 
+                
+               if current.has_permission('create', entity): 
+                   entity.put()
+                   entity.new_action('create')
+                   entity.record_action()
+               else:
+                   return response.not_authorized()
+               
+            response.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            response.transaction_error(e)
+            
+        return response
           

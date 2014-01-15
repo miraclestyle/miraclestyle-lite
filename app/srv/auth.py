@@ -46,14 +46,14 @@ class User(ndb.BaseExpando):
     _default_indexed = False
   
     _expando_fields = {  
-      'roles' : ndb.SuperKeyProperty('5', kind='13', repeated=True, indexed=False)
+      'roles' : ndb.SuperKeyProperty('5', repeated=True, indexed=False)
     }
     
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('0', 'login', True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
                                                 rule.ActionPermission('0', 'logout', True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', 'update', True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key"),
-                                                rule.ActionPermission('0', 'sudo', True, "context.rule.auth.root_admin"),
+                                                rule.ActionPermission('0', 'sudo', True, "context.auth.user.root_admin"),
                                                ])
     
     _actions = {
@@ -183,10 +183,13 @@ class User(ndb.BaseExpando):
         for i in self.identities:
             if i.identity == identity_id:
                return i
-        return False
+        return False  
       
     @classmethod
     def sudo(cls, args):
+      
+        # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci i izuzimanje svih negativnih i neutralnih feedbackova
+        # koje je user ostavio dok je bio aktivan.
       
         action = cls._actions.get('sudo')
         context = action.process(args)
@@ -196,9 +199,9 @@ class User(ndb.BaseExpando):
            @ndb.transactional(xg=True)
            def transaction():
              
-               user_to_update_key = context.event._args.get('user')
-               message = context.event._args.get('message')
-               note = context.event._args.get('note')
+               user_to_update_key = context.args.get('user')
+               message = context.args.get('message')
+               note = context.args.get('note')
            
                user_to_update = user_to_update_key.get()
                context.rule.entity = user_to_update
@@ -247,16 +250,18 @@ class User(ndb.BaseExpando):
                if not rule.executable(context):
                   return context.not_authorized()
     
-               primary_email = context.event._args.get('primary_email')
-               disassociate = context.event._args.get('disassociate')
+               primary_email = context.args.get('primary_email')
+               disassociate = context.args.get('disassociate')
  
                for identity in enumerate(current_user.identities):
-                   identity.primary = False
-                   if identity.email == primary_email:
-                      identity.primary = True
-                      
-                   if identity.identity == disassociate:
-                      identity.associate = False
+                   if primary_email:
+                       identity.primary = False
+                       if identity.email == primary_email:
+                          identity.primary = True
+                    
+                   if disassociate:  
+                       if identity.identity == disassociate:
+                          identity.associate = False
                       
                current_user.put()
                
@@ -295,7 +300,7 @@ class User(ndb.BaseExpando):
               if current_user.is_guest:
                  return context.error('login', 'already_logged_out')
              
-              if not current_user.logout_code == context.event._args.get('code'):
+              if not current_user.logout_code == context.args.get('code'):
                  return context.error('login', 'invalid_code')
            
               if current_user.sessions:
@@ -326,9 +331,9 @@ class User(ndb.BaseExpando):
     
         if not context.has_error():
         
-           login_method = context.event._args.get('login_method')
-           error = context.event._args.get('error')
-           code = context.event._args.get('code')
+           login_method = context.args.get('login_method')
+           error = context.args.get('error')
+           code = context.args.get('code')
            current_user = cls.current_user()
            
            context.rule.entity = current_user
