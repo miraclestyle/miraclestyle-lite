@@ -51,6 +51,8 @@ class User(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('0', 'login', True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
+                                                rule.ActionPermission('0', 'logout', True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', 'update', True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key")
                                                ])
     
     _actions = {
@@ -59,6 +61,14 @@ class User(ndb.BaseExpando):
                                  'login_method' : ndb.SuperStringProperty(required=True),
                                  'code' : ndb.SuperStringProperty(),
                                  'error' : ndb.SuperStringProperty()
+                              }
+                             ),
+                
+       'update' : event.Action(id='update',
+                              arguments={
+                                 'primary_email' : ndb.SuperStringProperty(),
+                                 'new_email' : ndb.SuperStringProperty(),
+                                 'disassociate' : ndb.SuperIntegerProperty(),
                               }
                              ),
                 
@@ -160,8 +170,48 @@ class User(ndb.BaseExpando):
     def has_identity(self, identity_id):
         for i in self.identities:
             if i.identity == identity_id:
-               return True
+               return i
         return False
+      
+    @classmethod
+    def update(cls, args):
+      
+        action = cls._actions.get('update')
+        context = action.process(args)
+        
+        if not context.has_error():
+           
+           current_user = cls.current_user()
+           context.rule.entity = current_user
+           rule.Engine.run(context, True)
+           
+           if not rule.executable(context):
+              return context.not_authorized()
+            
+           new_email = context.event._args.get('new_email')
+           primary_email = context.event._args.get('primary_email')
+           disassociate = context.event._args.get('disassociate')
+           
+           if new_email not in current_user.emails:
+              current_user.emails.append(new_email)
+           
+           for i,identity in enumerate(current_user.identities):
+               identity.primary = False
+               if identity.email == primary_email:
+                  identity.primary = True
+                  
+               if i == disassociate:
+                  identity.associate = False
+                  
+           current_user.put()
+           
+           context.response['updated'] = True
+           context.response['user'] = current_user
+           
+        return context
+               
+            
+           
     
     @classmethod  
     def logout(cls, args):
@@ -174,7 +224,7 @@ class User(ndb.BaseExpando):
           current_user = cls.current_user()
           context.rule.entity = current_user
           rule.Engine.run(context, True)
-          
+         
           if not rule.executable(context):
              return context.not_authorized()
           
@@ -214,7 +264,7 @@ class User(ndb.BaseExpando):
         context = action.process(args)
     
         if not context.has_error():
- 
+        
            login_method = context.event._args.get('login_method')
            error = context.event._args.get('error')
            code = context.event._args.get('code')
@@ -223,7 +273,7 @@ class User(ndb.BaseExpando):
            context.rule.entity = current_user
            context.auth.user = current_user
            rule.Engine.run(context, True)
-             
+ 
            if not rule.executable(context):
               return context.not_authorized()
            
@@ -262,7 +312,8 @@ class User(ndb.BaseExpando):
                      if not user:
                         user = cls.query(cls.emails == email).get()
                      
-                     if user:    
+                     if user:   
+                        
                        context.rule.entity = user
                        context.auth.user = user
                        rule.Engine.run(context, True)
@@ -288,9 +339,15 @@ class User(ndb.BaseExpando):
                           
                           if email not in user.emails:
                              user.emails.append(email)
+                             
+                          used_identity = user.has_identity(identity_id)
                           
-                          if not user.has_identity(identity_id):
+                          if not used_identity:
                              user.append(Identity(identity=identity_id, email=email, primary=False))
+                          else:
+                             used_identity.associated = True
+                             if used_identity.email != email:
+                                used_identity.email = email
                           
                           session = user.new_session()   
                           user.put()
