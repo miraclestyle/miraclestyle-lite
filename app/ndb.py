@@ -139,7 +139,11 @@ class _BaseModel():
   
   @classmethod
   def get_actions(cls):
-      return getattr(cls, '_actions', {})
+      actions = getattr(cls, '_actions', {})
+      new_actions = {}
+      for key,action in actions:
+          new_actions[action.key.urlsafe()] = action
+      return new_actions
   
   @classmethod
   def get_fields(cls):

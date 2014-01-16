@@ -226,10 +226,10 @@ class Entry(ndb.BaseExpando):
  
   def get_actions(self):
       journal = self.journal.get()
-      get_actions = ndb.get_multi([action_key for action_key in journal.subscriptions])
+      get_actions = ndb.get_multi(journal.subscriptions)
       actions = {}
       for action in get_actions:
-         actions[action.key.id()] = action
+         actions[action.key.urlsafe()] = action
          
       return action
           

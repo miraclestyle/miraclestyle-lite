@@ -31,7 +31,7 @@ def required(context, name):
 
 def executable(context):
   if context.rule.entity:
-     return context.rule.entity._action_permissions[context.event.key.id()]['executable']
+     return context.rule.entity._action_permissions[context.event.key.urlsafe()]['executable']
   else:
      return False
   
@@ -251,12 +251,12 @@ class LocalRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', 'manage', False, "context.rule.entity.domain.state != 'active'"),
-                                            ActionPermission('56', 'delete', False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', event.Action.build_key('0-4').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', event.Action.build_key('0-5').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'manage' : event.Action(id='manage',
+       'manage' : event.Action(id='0-4',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain'),
@@ -267,7 +267,7 @@ class LocalRole(Role):
                               }
                              ),
                 
-       'delete' : event.Action(id='delete',
+       'delete' : event.Action(id='0-5',
                               arguments={
                                  'role' : ndb.SuperKeyProperty(kind='56'),
                               }
