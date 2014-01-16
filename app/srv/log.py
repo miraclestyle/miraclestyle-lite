@@ -14,7 +14,7 @@ class Context():
 # ova klasa snima sve logove, napr: PayPal, IP adrese....
 class Record(ndb.BaseExpando):
     
-    KIND_ID = 5
+    _kind = 5
     
     # high numbers for field aliases here to not conflict with logged object
     
@@ -49,7 +49,13 @@ class Engine:
       
       records = []
       
-      for entity, kwargs in context.log.entities:
+      for config in context.log.entities:
+        
+        entity = config[0]
+        try:
+          kwargs = config[1]
+        except:
+          kwargs = None
         
         if not kwargs:
            kwargs = {}

@@ -29,7 +29,7 @@ def get_location(location):
 # done!
 class Country(ndb.BaseModel):
     
-    KIND_ID = 15
+    _kind = 15
     
     # root
     # http://hg.tryton.org/modules/country/file/tip/country.py#l8
@@ -41,6 +41,61 @@ class Country(ndb.BaseModel):
     code = ndb.SuperStringProperty('1', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     name = ndb.SuperStringProperty('2', required=True)
     active = ndb.SuperBooleanProperty('3', default=True)
+    
+    @classmethod
+    def import_countries_and_subdivisions(cls, args):
+        
+        url = 'https://raw.github.com/tryton/country/develop/country.xml'
+        
+        from xml.etree import ElementTree
+        from google.appengine.api import urlfetch
+         
+        text = urlfetch.fetch(url) 
+         
+        tree = ElementTree.fromstring(text.content)
+        root = tree.findall('data')
+        
+        to_put = []
+         
+        for child in root[1]:
+            dat = dict()
+            dat['id'] = child.attrib['id']
+            for child2 in child:
+                name = child2.attrib.get('name')
+                if name is None:
+                   continue
+               
+                if child2.text:
+                   dat[name] = child2.text
+        
+            to_put.append(cls(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
+         
+        for child in root[2]:
+        
+            dat = dict()
+            dat['id'] = child.attrib['id']
+            for child2 in child:
+                k = child2.attrib.get('name')
+                if k is None:
+                   continue
+                if child2.text:
+                    dat[k] = child2.text
+                if 'ref' in child2.attrib:
+                    dat[k] = child2.attrib['ref']
+            
+            kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 'unknown'), code=dat['code'], active=True)
+            
+            if 'country' in dat:
+                kw['parent'] = ndb.Key(Country, dat['country'])
+                
+            if 'parent' in dat:
+                kw['parent_record'] = ndb.Key(CountrySubdivision, dat['parent'])
+             
+            to_put.append(CountrySubdivision(**kw))
+            
+        ndb.put_multi(to_put)
+         
+        return {'response' : {'items' : [put.key.id() for put in to_put]}}
     
  
 # done! - tryton ima CountrySubdivision za skoro sve zemlje!
@@ -136,7 +191,7 @@ class CountrySubdivision(ndb.BaseModel):
     }
     
         
-    KIND_ID = 16
+    _kind = 16
     
     # ancestor Country
     # http://hg.tryton.org/modules/country/file/tip/country.py#l52

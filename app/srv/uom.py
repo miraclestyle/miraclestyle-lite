@@ -103,7 +103,7 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
 # done!
 class Unit(ndb.BaseExpando):
     
-    KIND_ID = 19
+    _kind = 19
     
     # ancestor ProductUOMCategory
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l28
@@ -140,7 +140,7 @@ class Unit(ndb.BaseExpando):
 # done!
 class Measurement(ndb.BaseModel):
     
-    KIND_ID = 18
+    _kind = 18
     
     # root
     # http://hg.tryton.org/modules/product/file/tip/uom.py#l16

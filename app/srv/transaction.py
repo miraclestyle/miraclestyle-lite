@@ -78,7 +78,7 @@ def register_system_journals(*args):
     
 class Journal(ndb.BaseExpando):
   
-  KIND_ID = 49
+  _kind = 49
   
   # root (namespace Domain)
   # key.id() = code.code
@@ -128,7 +128,7 @@ class Journal(ndb.BaseExpando):
 
 class Plugin(ndb.BasePolyExpando):
   
-  KIND_ID = 52
+  _kind = 52
   
   # ancestor Journal (namespace Domain)
   # composite index: ancestor:yes - sequence
@@ -164,7 +164,7 @@ class CategoryBalance(ndb.BaseExpando):
 
 class Category(ndb.BaseExpando):
     
-  KIND_ID = 47
+  _kind = 47
 
   # root (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
@@ -192,7 +192,7 @@ class Category(ndb.BaseExpando):
 
 class Group(ndb.BaseExpando):
   
-  KIND_ID = 48  
+  _kind = 48  
  
   # root (namespace Domain)
   # verovatno cemo ostaviti da bude expando za svaki slucaj!
@@ -200,7 +200,7 @@ class Group(ndb.BaseExpando):
   
 class Entry(ndb.BaseExpando):
     
-  KIND_ID = 50
+  _kind = 50
   
   # ancestor Group (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
@@ -246,7 +246,7 @@ class Entry(ndb.BaseExpando):
   
 class Line(ndb.BaseExpando):
   
-  KIND_ID = 51  
+  _kind = 51  
   
   # ancestor Entry (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432

@@ -26,7 +26,7 @@ class Location:
     
 class AddressRule(transaction.Plugin):
   
-  KIND_ID = 54
+  _kind = 54
   
   exclusion = ndb.SuperBooleanProperty('5', default=False)
   address_type = ndb.SuperStringProperty('6')
@@ -89,7 +89,7 @@ class AddressRule(transaction.Plugin):
   
 class CartInit(transaction.Plugin):
   
-  KIND_ID = 55
+  _kind = 55
   
   def run(self, journal, context):
     # ucitaj postojeci entry na kojem ce se raditi write
