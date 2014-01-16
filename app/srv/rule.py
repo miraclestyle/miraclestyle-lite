@@ -53,7 +53,7 @@ class ActionPermission(Permission):
   def __init__(self, kind, action, executable=None, condition=None):
     
     self.kind = kind # entity kind identifier (entity._kind)
-    self.action = action # action id (action.key.id())
+    self.action = action # action id (action.key.id()), or action key (action.key) ?
     self.executable = executable
     self.condition = condition
     
