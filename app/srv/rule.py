@@ -251,12 +251,12 @@ class LocalRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', event.Action.build_key('0-4').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
-                                            ActionPermission('56', event.Action.build_key('0-5').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-0').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-1').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'manage' : event.Action(id='0-4',
+       'manage' : event.Action(id='56-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain'),
@@ -267,7 +267,7 @@ class LocalRole(Role):
                               }
                              ),
                 
-       'delete' : event.Action(id='0-5',
+       'delete' : event.Action(id='56-1',
                               arguments={
                                  'role' : ndb.SuperKeyProperty(kind='56'),
                               }
