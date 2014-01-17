@@ -6,7 +6,7 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 from app.lib.safe_eval import safe_eval
-from app.srv import event, log
+from app.srv import io, log
 
 def _check_field(context, name, key):
     if context.entity:
@@ -31,7 +31,7 @@ def required(context, name):
 
 def executable(context):
   if context.rule.entity:
-     return context.rule.entity._action_permissions[context.event.key.urlsafe()]['executable']
+     return context.rule.entity._action_permissions[context.action.key.urlsafe()]['executable']
   else:
      return False
   
@@ -251,25 +251,25 @@ class LocalRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', event.Action.build_key('56-0').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
-                                            ActionPermission('56', event.Action.build_key('56-1').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'manage' : event.Action(id='56-0',
+       'manage' : io.Action(id='56-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain'),
-                                 'role' : ndb.SuperKeyProperty(kind='56'),
+                                 'id' : ndb.SuperKeyProperty(kind='56'),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
                                  'active' : ndb.SuperBooleanProperty(),
                               }
                              ),
                 
-       'delete' : event.Action(id='56-1',
+       'delete' : io.Action(id='56-1',
                               arguments={
-                                 'role' : ndb.SuperKeyProperty(kind='56'),
+                                 'id' : ndb.SuperKeyProperty(kind='56'),
                               }
                              ),
     }
@@ -289,7 +289,7 @@ class LocalRole(Role):
           @ndb.transactional(xg=True)
           def transaction():
                          
-             entity_key = context.args.get('role')
+             entity_key = context.args.get('id')
              entity = entity_key.get()
             
              if entity and entity.loaded():
@@ -351,7 +351,7 @@ class LocalRole(Role):
                    domain = domain_key.get()
                    entity = cls(namespace=domain.key.namespace())
                 else:
-                   entity_key = context.args.get('role')
+                   entity_key = context.args.get('id')
                    entity = entity_key.get()
               
                 context.rule.entity = entity

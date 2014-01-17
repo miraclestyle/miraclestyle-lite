@@ -201,7 +201,7 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
 
  
 
-# @todo
+# @todo
 class Message(ndb.BaseModel, ndb.Workflow):
     
     KIND_ID = 21
@@ -248,7 +248,7 @@ class Message(ndb.BaseModel, ndb.Workflow):
         },
     }
     
-# @todo
+# @todo
 class BillingCreditAdjustment(ndb.BaseModel):
     
     KIND_ID = 22

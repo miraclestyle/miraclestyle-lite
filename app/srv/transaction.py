@@ -44,7 +44,7 @@ def get_system_plugins(journal, context):
     plugins = []
  
     for plugin in __SYSTEM_PLUGINS:
-        if journal.key == plugin.key.parent() and context.event.key in plugin.subscriptions:
+        if journal.key == plugin.key.parent() and context.action.key in plugin.subscriptions:
            plugins.append(plugin)
            
     return plugins
@@ -63,9 +63,9 @@ def get_system_journals(context):
     
     journals = []
     
-    if context.event:
+    if context.action:
       for journal in __SYSTEM_JOURNALS:
-          if context.event.key in journal.subscriptions:
+          if context.action.key in journal.subscriptions:
              journals.append(journal)
  
     return journals
@@ -87,7 +87,7 @@ class Journal(ndb.BaseExpando):
   company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
   sequence = ndb.SuperIntegerProperty('4', required=True)
   active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.event.Action', repeated=True)
+  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.io.Action', repeated=True)
   
   entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
   line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
@@ -121,8 +121,8 @@ class Journal(ndb.BaseExpando):
   def get_local_journals(cls, context):
        
       journals = cls.query(cls.active == True, 
-                           cls.company == context.event._args.get('company'), 
-                           cls.subscriptions == context.event.key).order(cls.sequence).fetch()
+                           cls.company == context.args.get('company'), 
+                           cls.subscriptions == context.action.key).order(cls.sequence).fetch()
          
       return journals
 
@@ -134,15 +134,15 @@ class Plugin(ndb.BasePolyExpando):
   # composite index: ancestor:yes - sequence
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
-  subscriptions = ndb.SuperKeyProperty('3', kind='app.srv.event.Action', repeated=True)
+  subscriptions = ndb.SuperKeyProperty('3', kind='app.srv.io.Action', repeated=True)
   company = ndb.SuperKeyProperty('4', kind='app.domain.business.Company', required=True)
 
   @classmethod
   def get_local_plugins(cls, journal, context):
       plugins = cls.query( 
                           cls.active == True, 
-                          cls.subscriptions == context.event.key,
-                          cls.company == context.event._args.get('company'),
+                          cls.subscriptions == context.action.key,
+                          cls.company == context.args.get('company'),
                           ancestor=journal.key).order(cls.sequence).fetch()
       return plugins
 
@@ -294,8 +294,8 @@ class Engine:
       journal.run(context)
                 
         
-    # `operation` param in transaction.Context class determines which callback of the `Engine` class will be called
-    call = getattr(cls, context.event.operation)
+    # `operation` param in transaction.Context class determines which callback of the `Engine` class will be called
+    call = getattr(cls, context.action.operation)
         
     call(context)
         
@@ -315,7 +315,7 @@ class Engine:
         entry_key = entry.put()
         
         """
-         notice the `_` before `lines` that is because 
+         notice the `_` before `lines` that is because 
          if you set it without underscore it will be considered as new property in expando
          so all operations should use the following paradigm:
          entry._lines = []

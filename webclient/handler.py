@@ -314,7 +314,7 @@ class Handler(webapp2.RequestHandler):
         
   
     def send_json(self, data):
-        """ sends `data` to json format, accepts anything json compatible """
+        """ sends `data` to json format, accepts anything json compatible """
         ent = 'application/json;charset=utf-8'
         if self.response.headers.get('Content-Type') != ent:
            self.response.headers['Content-Type'] = ent

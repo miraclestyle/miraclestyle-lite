@@ -133,8 +133,6 @@ class Foo:
     
 a = Foo()
     
-print 'safe_eval: ', safe_eval("a.what_ba == 1", globals())
+print 'safe_eval: ', safe_eval("a.it == 9", globals())
 
 print getattr(a, 'it', None)
-
-print da

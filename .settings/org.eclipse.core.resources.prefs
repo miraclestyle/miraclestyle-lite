@@ -12,6 +12,7 @@ encoding//app/ndb.py=utf-8
 encoding//app/settings.py=utf-8
 encoding//app/srv/auth.py=utf-8
 encoding//app/srv/event.py=utf-8
+encoding//app/srv/io.py=utf-8
 encoding//app/srv/location.py=utf-8
 encoding//app/srv/log.py=utf-8
 encoding//app/srv/plugins.py=utf-8

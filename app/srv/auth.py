@@ -8,7 +8,7 @@ import hashlib
 import os
 
 from app import ndb, settings, memcache, util
-from app.srv import event, rule
+from app.srv import io, rule
 from app.lib import oauth2
 from app.srv import log
   
@@ -50,14 +50,14 @@ class User(ndb.BaseExpando):
     }
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
-                                                rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
-                                                rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key"),
-                                                rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-3').urlsafe(), True, "context.auth.user.root_admin"),
                                                ])
     
     _actions = {
-       'login' : event.Action(id='0-0',
+       'login' : io.Action(id='0-0',
                               arguments={
                                  'login_method' : ndb.SuperStringProperty(required=True),
                                  'code' : ndb.SuperStringProperty(),
@@ -65,22 +65,22 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
-       'update' : event.Action(id='0-1',
+       'update' : io.Action(id='0-1',
                               arguments={
                                  'primary_email' : ndb.SuperStringProperty(),
                                  'disassociate' : ndb.SuperStringProperty(),
                               }
                              ),
                 
-       'sudo' : event.Action(id='0-2',
+       'sudo' : io.Action(id='0-2',
                               arguments={
-                                 'user'  : ndb.SuperKeyProperty(kind='0', required=True),
+                                 'id'  : ndb.SuperKeyProperty(kind='0', required=True),
                                  'message' : ndb.SuperKeyProperty(required=True),
                                  'note' : ndb.SuperKeyProperty(required=True)
                               }
                              ),
                 
-       'logout' : event.Action(id='0-3',
+       'logout' : io.Action(id='0-3',
                               arguments={
                                 'code' : ndb.SuperStringProperty(required=True),
                               }
@@ -199,7 +199,7 @@ class User(ndb.BaseExpando):
            @ndb.transactional(xg=True)
            def transaction():
              
-               user_to_update_key = context.args.get('user')
+               user_to_update_key = context.args.get('id')
                message = context.args.get('message')
                note = context.args.get('note')
            

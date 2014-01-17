@@ -22,7 +22,7 @@ def get(k, d=None, callback=None, **kwargs):
         
         """
         `k` = identifier for cache
-        `d` = what not to expect
+        `d = what not to expect
         `callback` = expensive callable to execute and set its value into the memory, otherwise it will return `d`
         """
         force = kwargs.pop('force', None)

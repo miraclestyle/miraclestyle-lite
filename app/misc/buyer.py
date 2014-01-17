@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.srv import rule, event, log
+from app.srv import rule, io, log
 
 # buyer is not fully done, collections are at 50%
  
@@ -18,53 +18,51 @@ class Address(ndb.BaseExpando):
     country = ndb.SuperKeyProperty('2', kind='app.srv.location.Country', required=True, indexed=False)
     city = ndb.SuperStringProperty('3', required=True, indexed=False)
     postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
-    street_address = ndb.SuperStringProperty('5', required=True, indexed=False)
+    street = ndb.SuperStringProperty('5', required=True, indexed=False)
     default_shipping = ndb.SuperBooleanProperty('6', default=True, indexed=False)
     default_billing = ndb.SuperBooleanProperty('7', default=True, indexed=False)
   
     _default_indexed = False
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('9', event.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', event.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', io.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', io.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
     _expando_fields = {
         'region' :  ndb.SuperKeyProperty('8', kind='app.srv.location.CountrySubdivision'),
-        'street_address2' : ndb.SuperStringProperty('9'),
         'email' : ndb.SuperStringProperty('10'),
         'telephone' : ndb.SuperStringProperty('11'),
     }
 
     _actions = {
-       'manage' : event.Action(id='9-0',
+       'manage' : io.Action(id='9-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'country' : ndb.SuperKeyProperty(kind='app.srv.location.Country', required=True),
                                  'city' : ndb.SuperStringProperty(required=True),
                                  'postal_code' : ndb.SuperStringProperty(required=True),
-                                 'street_address' : ndb.SuperStringProperty(required=True),
+                                 'street' : ndb.SuperStringProperty(required=True),
                                  'default_shipping' : ndb.SuperBooleanProperty(default=True),
                                  'default_billing' : ndb.SuperBooleanProperty(default=True),
                                  
-                                 'address' : ndb.SuperKeyProperty(kind='9'),
+                                 'id' : ndb.SuperKeyProperty(kind='9'),
                                  
                                   # expando
                                  'region' :  ndb.SuperKeyProperty(kind='app.srv.location.CountrySubdivision'),
-                                 'street_address2' : ndb.SuperStringProperty(),
                                  'email' : ndb.SuperStringProperty(),
                                  'telephone' : ndb.SuperStringProperty(),
                               }
                              ),
                 
-       'delete' : event.Action(id='9-1',
+       'delete' : io.Action(id='9-1',
                               arguments={
                                  'address' : ndb.SuperKeyProperty(kind='9', required=True),
                               }
                              ),
                 
-       'list' : event.Action(id='9-3',
+       'list' : io.Action(id='9-2',
                               arguments={}
                              ),
     }  
@@ -98,7 +96,8 @@ class Address(ndb.BaseExpando):
           @ndb.transactional(xg=True)
           def transaction():
                           
-               entity = context.args.get('address')
+               entity_key = context.args.get('id')
+               entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context, True)
                if not rule.executable(context):
@@ -136,13 +135,13 @@ class Address(ndb.BaseExpando):
                 if create:
                    entity = cls(parent=context.auth.user.key)
                 else:
-                   entity_key = context.args.get('address')
+                   entity_key = context.args.get('id')
                    if not entity_key:
                       return context.not_found()
                    entity = entity_key.get()
                    
-                if 'address' in set_args:
-                   del set_args['address']
+                if 'id' in set_args:
+                   del set_args['id']
               
                 context.rule.entity = entity
                 rule.Engine.run(context)
@@ -190,93 +189,133 @@ class Collection(ndb.BaseModel):
     notify = ndb.SuperBooleanProperty('2', required=True, default=False)
     primary_email = ndb.SuperStringProperty('3', required=True, indexed=False)
  
-    @classmethod
-    def list(cls, values):
-        response = ndb.Response()
-        
-        response['items'] = cls.query(ancestor=ndb.get_current_user().key).fetch()
-        
-        return response
+
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('10', io.Action.build_key('10-0').urlsafe(),
+                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('10', io.Action.build_key('10-1').urlsafe(),
+                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                               ])
  
-    @classmethod
-    def manage(cls, create, values, **kwds):
-   
-        response = ndb.Response()
-        
-        @ndb.transactional(xg=True)
-        def transaction():
-            
-            current = ndb.get_current_user()
-            
-            if current.is_guest:
-               return response.not_logged_in()
-            
-            response.process_input(values, cls, skip=('primary_email',))
-             
-            if not response.has_error():
- 
-                entity = cls.prepare(create, values, parent=current.key)
+
+    _actions = {
+       'manage' : io.Action(id='10-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'notify' : ndb.SuperBooleanProperty(default=False),
+                                 'id' : ndb.SuperKeyProperty(kind='10'),
+                              }
+                             ),
                 
-                # we internally set primary_email, not from user input    
-                entity.primary_email = current.primary_email
+       'delete' : io.Action(id='10-1',
+                              arguments={
+                                  'id' : ndb.SuperKeyProperty(kind='10', required=True),
+                              }
+                             ),
                 
-                if entity is None:
-                    return response.not_found()
-        
-                if not create:
+       'list' : io.Action(id='10-2',
+                              arguments={}
+                             ),
+    }  
     
-                   if entity.key.parent() == current.key:
-                       entity.put()
-                       entity.new_action('update')
-                       entity.record_action()
-                       
-                       response.status(entity)
-                   else:
-                       return response.not_authorized()
-                   
-                else:
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-                   
-                   response.status(entity)
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response
-    
+    @property
+    def owner(self):
+        return self.key.parent().get()
+      
     @classmethod
-    def delete(cls, values, **kwds):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
+    def list(cls, args):
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           user = context.auth.user
+              
+           context.response['collections'] = cls.query(ancestor=user.key).fetch()
+              
+           return context
+         
+    @classmethod
+    def delete(cls, args):
+        
+        action = cls._actions.get('delete')
+        context = action.process(args)
+
+        if not context.has_error():
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+                          
+               entity_key = context.args.get('id')
+               entity = entity_key.get()
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.key.delete()
+               context.log.entities.append((entity,))
+               log.Engine.run(context)
                
-               entity = cls.prepare(False, values, get_only=True)
+               context.response['deleted'] = True
+               context.status(entity)
                
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
         try:
            transaction()
         except Exception as e:
-           response.transaction_error(e)
+           context.transaction_error(e)
            
-        return response  
+        return context
+      
+    @classmethod
+    def manage(cls, args):
+        
+        action = cls._actions.get('manage')
+        context = action.process(args)
+  
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+                set_args = context.args.copy()
+                del set_args['create']
+               
+                if create:
+                   entity = cls(parent=context.auth.user.key)
+                else:
+                   entity_key = context.args.get('id')
+                   if not entity_key:
+                      return context.not_found()
+                   entity = entity_key.get()
+                   
+                if 'id' in set_args:
+                   del set_args['id']
+              
+                context.rule.entity = entity
+                rule.Engine.run(context)
+                
+                if not rule.executable(context):
+                   return context.not_authorized()
+                
+                entity.primary_email = context.auth.user.primary_email
+                entity.populate(**set_args)
+                entity.put()
+                 
+                context.log.entities.append((entity, ))
+                log.Engine.run(context)
+                   
+                context.status(entity)
+               
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
+            
+        return context
  
 
 # done!
@@ -286,101 +325,148 @@ class CollectionCompany(ndb.BaseModel):
     # ancestor User
     company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
     collections = ndb.SuperKeyProperty('2', kind='app.core.buyer.Collection', repeated=True)# soft limit 500x
-   
-    OBJECT_DEFAULT_STATE = 'none'
+
+ 
+
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('11', io.Action.build_key('11-0').urlsafe(),
+                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('11', io.Action.build_key('11-1').urlsafe(),
+                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                               ])
+ 
+
+    _actions = {
+       'manage' : io.Action(id='11-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'id' : ndb.SuperKeyProperty(kind='11'),
+                                 'company' : ndb.SuperKeyProperty(kind='app.domain.business.Company', required=True),
+                                 'collections' : ndb.SuperKeyProperty(kind='app.misc.buyer.Collection', repeated=True),
+                              }
+                             ),
+                
+       'delete' : io.Action(id='11-1',
+                              arguments={
+                                 'id' : ndb.SuperKeyProperty(kind='11', required=True),
+                              }
+                             ),
+                
+       'list' : io.Action(id='11-2',
+                              arguments={}
+                             ),
+    }  
     
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
+    @property
+    def owner(self):
+        return self.key.parent().get()
+      
     @classmethod
-    def delete(cls, values, **kwds):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
+    def list(cls, args):
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           user = context.auth.user
+              
+           context.response['collection_companies'] = cls.query(ancestor=user.key).fetch()
+              
+           return context
+         
+    @classmethod
+    def delete(cls, args):
+        
+        action = cls._actions.get('delete')
+        context = action.process(args)
+
+        if not context.has_error():
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+                          
+               entity_key = context.args.get('id')
+               entity = entity_key.get()
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.key.delete()
+               context.log.entities.append((entity,))
+               log.Engine.run(context)
                
-               entity = cls.prepare(False, values, get_only=True)
+               context.response['deleted'] = True
+               context.status(entity)
                
-               if entity and entity.loaded():
-                  if entity.key.parent() == current.key:
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
         try:
            transaction()
         except Exception as e:
-           response.transaction_error(e)
+           context.transaction_error(e)
            
-        return response  
-    
+        return context
+      
     @classmethod
-    def manage(cls, create, values, **kwds):
+    def manage(cls, args):
         
-        response = ndb.Response()
-        
-        @ndb.transactional
-        def transaction():
-            
-            current = ndb.get_current_user()
-            
-            if current.is_guest:
-               return response.not_logged_in()
-           
-            response.process_input(values, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-            
-            collection_keys = values.get('collections')
-            company_key = values.get('company')
+        action = cls._actions.get('manage')
+        context = action.process(args)
   
-            if entity is None:
-               return response.not_found()
-           
-            entity.collections = []
-                  
-            for c in collection_keys:
-                if c.parent() == current.key:
-                     entity.collections.append(c)
-            
-            if not create:
-               if entity.key.parent() == current.key:
-                  entity.put()
-                  entity.new_action('update')
-                  entity.record_action()
-               else:
-                  return response.not_authorized()
-            else:
-                entity = cls(parent=current.key, collections=collection_keys, company=company_key)
-                entity.put()
-                entity.new_action('create')
-                entity.record_action()
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+                set_args = context.args.copy()
+                del set_args['create']
+               
+                if create:
+                   entity = cls(parent=context.auth.user.key)
+                else:
+                   entity_key = context.args.get('id')
+                   if not entity_key:
+                      return context.not_found()
+                   entity = entity_key.get()
+                   
+                if 'id' in set_args:
+                   del set_args['id']
+              
+                context.rule.entity = entity
+                rule.Engine.run(context)
                 
-            # @todo izaziva se update AggregateBuyerCollectionCatalog preko task queue 
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
+                if not rule.executable(context):
+                   return context.not_authorized()
+                
+                company_key = context.args.get('company')
+                company = company_key.get()
+                
+                if company.state != 'active': 
+                   # how to solve this? possible solution might be ndb.SuperKeyProperty(kind=Company, expr="value.state == 'active'", required=True) - this would be placed in arguments={}
+                   return context.error('company', 'not_active')
+                
+                collection_keys = context.args.get('collections')
+                collections_now = []
+                for collection_key in collection_keys:
+                    if context.auth.user.key == collection_key.parent():
+                       collections_now.append(collection_key)
+                
+                entity.company = company_key
+                entity.collections = collections_now
+                entity.put()
+                 
+                context.log.entities.append((entity, ))
+                log.Engine.run(context)
+                   
+                context.status(entity)
+               
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
             
-        return response
+        return context
   
     
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue

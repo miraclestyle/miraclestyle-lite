@@ -19,7 +19,7 @@ from app import util
  
 ctx = get_context()
 
-# memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
+# memory policy for google app engine ndb calls is set to false, instead we decide per `get` wether to use memcache or not
 ctx.set_memcache_policy(False)
 #ctx.set_cache_policy(False)
 
@@ -31,14 +31,21 @@ class DescriptiveError(Exception):
 
 def _property_value(prop, value):
   
+    def validate_max_size(value, size):
+        if size:
+          if len(value) > size:
+             raise DescriptiveError('max_size_exceeded')
+  
     if prop._repeated:
        if not isinstance(value, (list, tuple)):
           value = [value]
        out = []   
        for v in value:
+           validate_max_size(v, prop._max_size)
            out.append(v)
        return out
     else:
+       validate_max_size(value, prop._max_size)
        return value
 
 
@@ -75,7 +82,7 @@ def factory(module_model_path):
      Retrieves model by its module path. e.g.
      model = factory('app.core.misc.Country')
      
-     `model` will be a Country class.
+     `model` will be a Country class.
      
     """
     custom_kinds = module_model_path.split('.')
@@ -275,7 +282,7 @@ class BasePolyExpando(BasePoly, BaseExpando):
 
 class _BaseProperty(object):
  
-    _max_size = False
+    _max_size = None
  
     def __init__(self, *args, **kwds):
       
@@ -395,7 +402,7 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
            return new
         else:
            if not isinstance(value, cgi.FieldStorage) or 'blob-key' not in value.type_options:
-              raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
+              raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
               got %r instead.' % value)
            else:
                value = blobstore.parse_blob_info(value)

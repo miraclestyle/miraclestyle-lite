@@ -20,7 +20,7 @@ class Record(ndb.BaseExpando):
     
     logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
     agent = ndb.SuperKeyProperty('98', kind='app.srv.auth.User', required=True)
-    action = ndb.SuperKeyProperty('97', kind='app.srv.event.Action', required=True)
+    action = ndb.SuperKeyProperty('97', kind='app.srv.io.Action', required=True)
   
     _default_indexed = False
  
@@ -61,7 +61,7 @@ class Engine:
            kwargs = {}
            
         log_entity = kwargs.pop('log_entity', True)
-        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.event.key, **kwargs)
+        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
         if log_entity is True:
            log_entity = entity
            
