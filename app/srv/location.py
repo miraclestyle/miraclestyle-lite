@@ -21,8 +21,7 @@ def get_location(location):
                   region_code=location_region.code, 
                   city=location.city, 
                   postal_code=location.postal_code, 
-                  street_address=location.street_address, 
-                  street_address2=location.street_address2, 
+                  street=location.street,  
                   email=location.email, 
                   telephone=location.telephone)
 
@@ -213,15 +212,17 @@ class Location(ndb.BaseExpando):
     
     # local structured
     name = ndb.SuperStringProperty('1', required=True)
-    country = ndb.SuperKeyProperty('2', kind=Country, required=True, indexed=False)
-    city = ndb.SuperStringProperty('3', required=True, indexed=False)
-    postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
-    street = ndb.SuperStringProperty('5', required=True, indexed=False)
+    country = ndb.SuperStringProperty('2', required=True, indexed=False)
+    country_code = ndb.SuperStringProperty('3', required=True, indexed=False)
+    city = ndb.SuperStringProperty('4', required=True, indexed=False)
+    postal_code = ndb.SuperStringProperty('5', required=True, indexed=False)
+    street = ndb.SuperStringProperty('6', required=True, indexed=False)
  
     _default_indexed = False
  
     EXPANDO_FIELDS = {
-        'region' :  ndb.SuperKeyProperty('8', kind=CountrySubdivision),
-        'email' : ndb.SuperStringProperty('10'),
-        'telephone' : ndb.SuperStringProperty('11'),
+        'region' :  ndb.SuperStringProperty('7'),
+        'region_code' :  ndb.SuperStringProperty('8'),
+        'email' : ndb.SuperStringProperty('9'),
+        'telephone' : ndb.SuperStringProperty('10'),
     }
