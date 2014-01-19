@@ -267,7 +267,7 @@ class LocalRole(Role):
                                  'id' : ndb.SuperKeyProperty(kind='56'),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
-                                 'active' : ndb.SuperBooleanProperty(),
+                                 'active' : ndb.SuperBooleanProperty(default=True),
                               }
                              ),
                 
@@ -298,7 +298,7 @@ class LocalRole(Role):
            user_roles = UserRole.query(UserRole.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
         
            for user_role in user_roles:
-               user_role.remove(entity.key)
+               user_role.roles.remove(entity.key)
 
            @ndb.transactional(xg=True)
            def transaction():
@@ -340,7 +340,7 @@ class LocalRole(Role):
                 if create:
                    domain_key = context.args.get('domain')
                    domain = domain_key.get()
-                   entity = cls(namespace=domain.key.namespace())
+                   entity = cls(namespace=domain.key.urlsafe())
                 else:
                    entity_key = context.args.get('id')
                    entity = entity_key.get()
@@ -463,7 +463,7 @@ class UserRole(ndb.BaseModel):
              if not executable(context):
                 return context.not_authorized()
               
-             already_invited = UserRole.build_key(str(user.key.id()), namespace=context.auth.domain.key.namespace()).get()
+             already_invited = UserRole.build_key(str(user.key.id()), namespace=context.auth.domain.key.urlsafe()).get()
              
              if already_invited:
                 return context.error('user', 'already_invited')
