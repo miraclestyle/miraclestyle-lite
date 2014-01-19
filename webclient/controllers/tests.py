@@ -10,10 +10,14 @@ from webclient.handler import Angular, Handler
 from app import ndb
 from app.srv import auth
 
+class Submitter(Angular):
+  
+    def respond(self):
+        return self.render('submitter.html')
+
 class Welcome(Angular):
     
     def respond(self):
-        
         return {'user' : auth.User.current_user()}
  
 class Endpoint(Angular):
@@ -33,4 +37,4 @@ class Endpoint(Angular):
         return getattr(model, method)(data).response
          
  
-register(('/endpoint', Endpoint), ('/', Welcome))
+register(('/endpoint', Endpoint), ('/', Welcome), ('/submitter', Submitter))

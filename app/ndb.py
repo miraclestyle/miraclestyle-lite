@@ -354,8 +354,10 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 class SuperKeyProperty(_BaseProperty, KeyProperty):
   
     def format(self, value):
-       
+ 
         if self._repeated:
+           if not isinstance(value, (tuple, list)):
+              value = [value]
            returns = [Key(urlsafe=v) for v in value]
            single = False
         else:

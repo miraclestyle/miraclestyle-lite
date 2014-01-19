@@ -58,7 +58,8 @@ class ActionPermission(Permission):
     self.condition = condition
     
   def __todict__(self):
-     return {'kind' : self.kind, 'action' : self.action, 'executable' : self.executable, 'condition' : self.condition}
+     return {'kind' : self.kind, 'action' : self.action,
+             'executable' : self.executable, 'condition' : self.condition}
     
   def run(self, role, context):
      
@@ -77,6 +78,11 @@ class FieldPermission(Permission):
     self.visible = visible
     self.required = required
     self.condition = condition
+    
+  def __todict__(self):
+     return {'kind' : self.kind, 'field' : self.field, 'writable' : self.writable,
+             'visible' : self.visible, 'required' : self.required, 'condition' : self.condition}
+    
     
   def run(self, context):
  
@@ -396,7 +402,7 @@ class UserRole(ndb.BaseModel):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', io.Action.build_key('8-0').urlsafe(), True, "context.auth.domain.is_active"),
                                             ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited'"),
                                             ActionPermission('8', io.Action.build_key('8-3').urlsafe(), True, "context.auth.domain.is_active"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -449,8 +455,9 @@ class UserRole(ndb.BaseModel):
    
              get_roles = ndb.get_multi(role_keys)
              user = user_key.get()
+             user_role = cls(id=str(user.key.id()), namespace=context.auth.domain.key.urlsafe())
   
-             context.rule.entity = context.auth.domain
+             context.rule.entity = user_role
              Engine.run(context)
                
              if not executable(context):
@@ -465,10 +472,10 @@ class UserRole(ndb.BaseModel):
                 roles = []
                 for role in get_roles:
                     # avoid rogue roles
-                    if role.key.namespace() == context.auth.domain.urlsafe():
+                    if role.key.namespace() == context.auth.domain.key.urlsafe():
                        roles.append(role.key)
                        
-                user_role = cls(name=name, id=str(user.key.id()), state='invited', roles=roles)
+                user_role.populate(name=name, state='invited', roles=roles)
                 user_role.put()
                 
                 context.log.entities.append((user_role,))
@@ -585,12 +592,13 @@ class UserRole(ndb.BaseModel):
              roles = []
              for role in get_roles:
                 # avoid rogue roles
-                if role.key.namespace() == context.auth.domain.urlsafe():
+                if role.key.namespace() == context.auth.domain.key.urlsafe():
                    roles.append(role.key) 
              
              entity.name = context.args.get('name')
              entity.roles = roles
              entity.put()
+             
              context.log.entities.append((entity,))
              log.Engine.run(context)
               

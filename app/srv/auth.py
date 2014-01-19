@@ -559,6 +559,7 @@ class Domain(ndb.BaseExpando):
                    
                    if not rule.executable(context):
                       return context.not_authorized()
+                    
                 elif context.auth.user.is_guest:
                       return context.not_authorized()
                     
