@@ -209,12 +209,9 @@ class Engine:
       local_field_permissions = {}
       
       if not skip_user_roles:
-        role_keys = []
-        for role in context.auth.user.roles:
-          if role.namespace() == context.rule.entity.key.namespace(): # treba negde uraditi from google.appengine.api import namespace_manager
-            role_keys.append(role)
-          
-        roles = ndb.get_multi(role_keys)
+        user_role_key = UserRole.build_key(str(context.auth.user.key.id()), namespace=context.rule.entity.key.namespace())
+        user_role = user_role_key.get()
+        roles = ndb.get_multi(user_role.roles)
         for role in roles:
           if role.active:
              role.run(context)
@@ -242,9 +239,7 @@ class Engine:
    
 
 class GlobalRole(Role):
-  
-  overide = ndb.BooleanProperty('2', default=True)
-  
+      pass
 
 class LocalRole(Role):
   
@@ -394,4 +389,78 @@ class LocalRole(Role):
                 context.transaction_error(e)
             
         return context
+ 
+class UserRole(ndb.BaseModel):
+    
+    _kind = 8
+    
+    # root (namespace Domain) - id = str(user_key.id())
+    # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
+    # composite index: ancestor:no - name
+    name = ndb.SuperStringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
+    roles = ndb.SuperKeyProperty('3', kind=LocalRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
+    state = ndb.SuperStringProperty('4', required=True)# invited/accepted
+    
+    _default_indexed = False
+    
+    _global_role = GlobalRole(permissions=[
+                                            ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                            ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "context.rule.entity.domain.state != 'active'"),
+                                          ])
+    # unique action naming, possible usage is '_kind_id-manage'
+    _actions = {
+       'invite' : io.Action(id='8-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='app.srv.auth.Domain'),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'roles' : ndb.SuperKeyProperty(kind='56', required=True, repeated=True),
+                              }
+                             ),
+                
+       'remove' : io.Action(id='8-1',
+                              arguments={
+                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                              }
+                             ),
+                
+       'accept' : io.Action(id='8-2',
+                              arguments={
+                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                              }
+                             ),
+                
+       'update' : io.Action(id='8-3',
+                              arguments={
+                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'roles' : ndb.SuperKeyProperty(kind='56', required=True, repeated=True),
+                              }
+                             ),
+    }
+    
+    @property
+    def domain(self): # maybe replaced by context.auth.domain
+       return ndb.Key(urlsafe=self.key.namespace()).get()
+  
+    # Poziva novog usera u domenu, al čime da ga poziva? po mailu?
+    @classmethod
+    def invite(cls, args):
+        pass
           
+    # Uklanja postojeceg usera iz domene
+    @classmethod
+    def remove(cls, args):
+        pass
+ 
+    # Prihvata poziv novog usera u domenu
+    @classmethod
+    def accept(cls, args):
+        pass
+    
+    # Azurira postojeceg usera u domeni
+    @classmethod
+    def update(cls, args):
+        pass

@@ -4,6 +4,7 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+######## THIS STAYS FOR DOC PURPOSES ONLY FOR TODAY #####
 from app import ndb
 
 # acl domain is 90% done.
