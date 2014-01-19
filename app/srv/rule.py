@@ -218,7 +218,7 @@ class Engine:
       local_field_permissions = {}
       
       if not skip_user_roles:
-        user_role_key = UserRole.build_key(str(context.auth.user.key.id()), namespace=context.auth.domain.key.urlsafe())
+        user_role_key = UserRole.build_key(context.auth.user.str_id, namespace=context.auth.domain.key.urlsafe())
         user_role = user_role_key.get()
         roles = ndb.get_multi(user_role.roles)
         for role in roles:
@@ -402,10 +402,10 @@ class UserRole(ndb.BaseModel):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.auth.domain.is_active"),
                                             ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' or context.rule.entity.state == 'accepted' and context.auth.user.key.id() == context.rule.entity.key.id()"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' or context.rule.entity.state == 'accepted' and context.auth.user.str_id == context.rule.entity.str_id"),
                                             ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "context.auth.user.key.id() != context.rule.entity.key.id()"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' and context.auth.user.key.id() == context.rule.entity.key.id()"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "context.auth.user.str_id != context.rule.entity.str_id"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' and context.auth.user.str_id == context.rule.entity.str_id"),
                                             ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.auth.domain.is_active"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -458,7 +458,7 @@ class UserRole(ndb.BaseModel):
    
              get_roles = ndb.get_multi(role_keys)
              user = user_key.get()
-             user_role = cls(id=str(user.key.id()), namespace=context.auth.domain.key.urlsafe())
+             user_role = cls(id=user.str_id, namespace=context.auth.domain.key.urlsafe())
   
              context.rule.entity = user_role
              Engine.run(context)
@@ -466,7 +466,7 @@ class UserRole(ndb.BaseModel):
              if not executable(context):
                 return context.not_authorized()
               
-             already_invited = UserRole.build_key(str(user.key.id()), namespace=context.auth.domain.key.urlsafe()).get()
+             already_invited = UserRole.build_key(user.str_id, namespace=context.auth.domain.key.urlsafe()).get()
              
              if already_invited:
                 return context.error('user', 'already_invited')
@@ -515,7 +515,7 @@ class UserRole(ndb.BaseModel):
              Engine.run(context)
              
              # if user can remove, or if the user can remove HIMSELF from the user role  
-             if not executable(context) or entity.key.id() != str(context.auth.user.key.id()):
+             if not executable(context):
                 return context.not_authorized()
              
              entity.key.delete()
@@ -550,8 +550,7 @@ class UserRole(ndb.BaseModel):
              context.rule.entity = entity
              Engine.run(context)
              
-             # if user can remove, or if the user can remove HIMSELF from the user role  
-             if not executable(context) or entity.key.id() != str(context.auth.user.key.id()):
+             if not executable(context):
                 return context.not_authorized()
              
              entity.state = 'accepted'

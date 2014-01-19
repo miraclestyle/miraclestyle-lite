@@ -602,7 +602,7 @@ class Domain(ndb.BaseExpando):
                   
                   # build UserRole for creator
                   
-                  user_role = rule.UserRole(namespace=namespace, id=str(context.auth.user.key.id()),
+                  user_role = rule.UserRole(namespace=namespace, id=context.auth.user.str_id,
                                             name=context.auth.user.primary_email, state='accepted',
                                             roles=[role.key])
                   
