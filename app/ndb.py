@@ -127,9 +127,10 @@ class _BaseModel():
    
   def loaded(self):
       return self.key != None and self.key.id()
-
-  def get_kind(self):
-      return self._get_kind()
+  
+  @classmethod 
+  def get_kind(cls):
+      return cls._get_kind()
  
   @classmethod
   def _get_kind(cls):

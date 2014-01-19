@@ -158,7 +158,20 @@ class Action(ndb.BaseExpando):
             context.invalid(key)
                
       context.args[key] = value
-   
+    
+    # important convention: if domain is provided externaly, always name it `domain`
+    # if `id` is provided, and it's key is a part of domain, it will be retrieved and set
+    # building of context.auth.domain sequence:
+      
+    if 'domain' in context.args:
+       context.auth.domain = context.args.get('domain').get()
+    elif 'id' in context.args:
+       id_key = context.args.get('id')
+       if id_key.namespace():
+          context.auth.domain = ndb.Key(urlsafe=id_key.namespace()).get()
+          
+    # end context.auth.domain sequence
+    
     return context
  
  

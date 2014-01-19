@@ -16,6 +16,7 @@ class Context():
   
   def __init__(self):
     self.user = User.current_user()
+    self.domain = None
  
   
 class Session(ndb.BaseModel):
@@ -50,10 +51,10 @@ class User(ndb.BaseExpando):
     }
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.is_active"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
-                                                rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.rule.entity.state == 'active' and context.auth.user.key == context.rule.entity.key"),
-                                                rule.ActionPermission('0', io.Action.build_key('0-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                ])
     
     _actions = {
@@ -102,10 +103,11 @@ class User(ndb.BaseExpando):
     
     @property
     def primary_email(self):
+        if not self.identities:
+           return None
         for i in self.identities:
             if i.primary == True:
-               return i.email
-           
+               return i.email   
         return i.email
     
     @property
@@ -118,6 +120,10 @@ class User(ndb.BaseExpando):
     @property
     def is_guest(self):
         return self.key == None
+      
+    @property
+    def is_active(self):
+        return self.state == 'active'
     
     @classmethod
     def set_current_user(cls, user, session=None):
@@ -212,7 +218,7 @@ class User(ndb.BaseExpando):
                 
                new_state = 'active'
                
-               if user_to_update.state == 'active':
+               if user_to_update.is_active:
                   new_state = 'suspended'
                   user_to_update.sessions = [] # delete sessions
  
@@ -455,12 +461,12 @@ class Domain(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "context.rule.entity.state != 'active' and not context.auth.user.is_guest"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "context.rule.entity.state != 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state != 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), False, "context.rule.entity.state != 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "context.rule.entity.state != 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), False, "and not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "context.rule.entity.is_active or not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), True, "context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), True, "not context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), True, "context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -468,33 +474,39 @@ class Domain(ndb.BaseExpando):
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'id' : ndb.SuperKeyProperty(kind='6'),
-                                 'primary_contact' : ndb.SuperKeyProperty(kind='0', required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
+                                 #'primary_contact' : ndb.SuperKeyProperty(kind='0', required=True),
                               }
                              ),
                 
        'suspend' : io.Action(id='6-1',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'message' : ndb.SuperTextProperty(required=True),
+                                 'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
                 
        'activate' : io.Action(id='6-2',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'message' : ndb.SuperTextProperty(required=True),
+                                 'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
                 
        'sudo' : io.Action(id='6-3',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'state' : ndb.SuperStringProperty(required=True),
+                                 'message' : ndb.SuperTextProperty(required=True),
+                                 'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
                 
        'log_message' : io.Action(id='6-4',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True),
                               }
@@ -505,34 +517,266 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
     }
+    
+    @property
+    def is_active(self):
+        return self.state == 'active'
+      
+    def __todict__(self):
+      
+      d = super(Domain, self).__todict__()
+      
+      d['users'] = rule.UserRole.query(namespace=self.key.urlsafe()).fetch()
+      d['roles'] = rule.LocalRole.query(namespace=self.key.urlsafe()).fetch()
+      d['logs'] = log.Record.query(ancestor=self.key).fetch()
+      
+      return d
  
-    def get_users(self, role=None, keys_only=None):
-        query = User.query(namespace=self.key.urlsafe())
-        if role:
-           query.filter(User.roles == role)
-        return query.fetch(keys_only=keys_only)
-     
     @classmethod
     def manage(cls, args):
-        pass
+        
+        action = cls._actions.get('manage')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+                
+                if create:
+                   entity = cls(state='active', primary_contact=context.auth.user.key)
+                else:
+                   entity_key = context.args.get('domain')
+                   entity = entity_key.get()
+             
+                context.rule.entity = entity
+                 
+                if not create:
+                   
+                   rule.Engine.run(context)
+                   
+                   if not rule.executable(context):
+                      return context.not_authorized()
+                elif context.auth.user.is_guest:
+                      return context.not_authorized()
+                    
+                primary_contact = context.auth.user.key
+                
+                if not primary_contact:
+                   primary_contact = context.args.get('primary_contact')
+                 
+                entity.name = context.args.get('name')
+                entity.primary_contact = primary_contact
+                entity.put()
+                
+                namespace = entity.key.urlsafe()
+                
+                if create:
+                  
+                  # build a role
+                  
+                  #from app.domain import business, marketing, product
+                  
+                  permissions = []
+                  
+                  # from all objects specified here, the ActionPermission will be built. So the role we are creating
+                  # will have all action permissions - taken `_actions` per model
+                  """business.Company, business.CompanyContent, business.CompanyFeedback,
+                                    marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+                                    product.Content, product.Instance, product.Template._actions, product.Variant"""
+                  objects = [cls, rule.LocalRole, rule.UserRole]
+                  
+                  for obj in objects:
+                      for friendly_action_key, action_instance in obj._actions.items():
+                          permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
+                                                                   action=action_instance.key.id(),
+                                                                   executable=True,
+                                                                   condition='True'))
+                  
+                  role = rule.LocalRole(namespace=namespace, name='Administrators', permissions=permissions)
+                  role.put()
+                  
+                  
+                  # build UserRole for creator
+                  
+                  user_role = rule.UserRole(namespace=namespace, id=str(context.auth.user.key.id()),
+                                            name=context.auth.user.primary_email, state='accepted',
+                                            roles=[role.key])
+                  
+                  user_role.put()
+                  
+                context.log.entities.append((entity,))
+                log.Engine.run(context)
+                   
+                context.status(entity)
+               
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
+            
+        return context
       
     @classmethod
     def suspend(cls, args):
-        pass
+      
+        action = cls._actions.get('suspend')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('domain')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+               
+               entity.state = 'suspended'
+               entity.put()
+               
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+               context.response['suspended'] = True
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
  
     @classmethod
     def activate(cls, args):
-        pass
+      
+        action = cls._actions.get('activate')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('domain')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+               
+               entity.state = 'active'
+               entity.put()
+               
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+               context.response['activated'] = True
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
     
     # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
     def sudo(cls, args):
-        pass
+      
+        action = cls._actions.get('sudo')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('domain')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               if context.args.get('state') not in ('active', 'suspended'):
+                  return context.error('state', 'invalid_state')
+               
+               entity.state = context.args.get('state')
+               entity.put()
+               
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+               context.response['activated'] = True
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
     
     @classmethod
     def log_message(cls, args):
-        pass
+      
+        action = cls._actions.get('log_message')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('domain')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.put() # ref project-documentation.py #L-244
+  
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+               context.response['logged_message'] = True
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
       
     @classmethod
     def list(cls, args):
-        pass
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           user = context.auth.user
+              
+           context.response['domains'] = cls.query().fetch()
+              
+           return context
+        
