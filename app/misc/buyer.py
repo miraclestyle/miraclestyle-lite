@@ -47,7 +47,7 @@ class Address(ndb.BaseExpando):
                                  'default_shipping' : ndb.SuperBooleanProperty(default=True),
                                  'default_billing' : ndb.SuperBooleanProperty(default=True),
                                  
-                                 'id' : ndb.SuperKeyProperty(kind='9'),
+                                 'key' : ndb.SuperKeyProperty(kind='9'),
                                  
                                   # expando
                                  'region' :  ndb.SuperKeyProperty(kind='app.srv.location.CountrySubdivision'),
@@ -96,7 +96,7 @@ class Address(ndb.BaseExpando):
           @ndb.transactional(xg=True)
           def transaction():
                           
-               entity_key = context.args.get('id')
+               entity_key = context.args.get('key')
                entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context, True)
@@ -135,13 +135,13 @@ class Address(ndb.BaseExpando):
                 if create:
                    entity = cls(parent=context.auth.user.key)
                 else:
-                   entity_key = context.args.get('id')
+                   entity_key = context.args.get('key')
                    if not entity_key:
                       return context.not_found()
                    entity = entity_key.get()
                    
-                if 'id' in set_args:
-                   del set_args['id']
+                if 'key' in set_args:
+                   del set_args['key']
               
                 context.rule.entity = entity
                 rule.Engine.run(context)
@@ -204,13 +204,13 @@ class Collection(ndb.BaseModel):
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'notify' : ndb.SuperBooleanProperty(default=False),
-                                 'id' : ndb.SuperKeyProperty(kind='10'),
+                                 'key' : ndb.SuperKeyProperty(kind='10'),
                               }
                              ),
                 
        'delete' : io.Action(id='10-1',
                               arguments={
-                                  'id' : ndb.SuperKeyProperty(kind='10', required=True),
+                                  'key' : ndb.SuperKeyProperty(kind='10', required=True),
                               }
                              ),
                 
@@ -248,7 +248,7 @@ class Collection(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
                           
-               entity_key = context.args.get('id')
+               entity_key = context.args.get('key')
                entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context, True)
@@ -287,13 +287,13 @@ class Collection(ndb.BaseModel):
                 if create:
                    entity = cls(parent=context.auth.user.key)
                 else:
-                   entity_key = context.args.get('id')
+                   entity_key = context.args.get('key')
                    if not entity_key:
                       return context.not_found()
                    entity = entity_key.get()
                    
-                if 'id' in set_args:
-                   del set_args['id']
+                if 'key' in set_args:
+                   del set_args['key']
               
                 context.rule.entity = entity
                 rule.Engine.run(context)
@@ -340,7 +340,7 @@ class CollectionCompany(ndb.BaseModel):
        'manage' : io.Action(id='11-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
-                                 'id' : ndb.SuperKeyProperty(kind='11'),
+                                 'key' : ndb.SuperKeyProperty(kind='11'),
                                  'company' : ndb.SuperKeyProperty(kind='app.domain.business.Company', required=True),
                                  'collections' : ndb.SuperKeyProperty(kind='app.misc.buyer.Collection', repeated=True),
                               }
@@ -348,7 +348,7 @@ class CollectionCompany(ndb.BaseModel):
                 
        'delete' : io.Action(id='11-1',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='11', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='11', required=True),
                               }
                              ),
                 
@@ -386,7 +386,7 @@ class CollectionCompany(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
                           
-               entity_key = context.args.get('id')
+               entity_key = context.args.get('key')
                entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context, True)
@@ -425,13 +425,13 @@ class CollectionCompany(ndb.BaseModel):
                 if create:
                    entity = cls(parent=context.auth.user.key)
                 else:
-                   entity_key = context.args.get('id')
+                   entity_key = context.args.get('key')
                    if not entity_key:
                       return context.not_found()
                    entity = entity_key.get()
                    
-                if 'id' in set_args:
-                   del set_args['id']
+                if 'key' in set_args:
+                   del set_args['key']
               
                 context.rule.entity = entity
                 rule.Engine.run(context)

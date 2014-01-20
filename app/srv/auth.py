@@ -75,7 +75,7 @@ class User(ndb.BaseExpando):
                 
        'sudo' : io.Action(id='0-2',
                               arguments={
-                                 'id'  : ndb.SuperKeyProperty(kind='0', required=True),
+                                 'key'  : ndb.SuperKeyProperty(kind='0', required=True),
                                  'message' : ndb.SuperKeyProperty(required=True),
                                  'note' : ndb.SuperKeyProperty(required=True)
                               }
@@ -205,7 +205,7 @@ class User(ndb.BaseExpando):
            @ndb.transactional(xg=True)
            def transaction():
              
-               user_to_update_key = context.args.get('id')
+               user_to_update_key = context.args.get('key')
                message = context.args.get('message')
                note = context.args.get('note')
            
@@ -228,8 +228,7 @@ class User(ndb.BaseExpando):
                context.log.entities.append((user_to_update, {'message' : message, 'note' : note}))
                log.Engine.run(context)
                
-               context.response['updated'] = True
-               context.response['updated_user'] = user_to_update
+               context.status(user_to_update)
                
            try:
               transaction()
@@ -526,8 +525,8 @@ class Domain(ndb.BaseExpando):
       
       d = super(Domain, self).__todict__()
       
-      d['users'] = rule.UserRole.query(namespace=self.key.urlsafe()).fetch()
-      d['roles'] = rule.LocalRole.query(namespace=self.key.urlsafe()).fetch()
+      d['users'] = rule.DomainUser.query(namespace=self.key.urlsafe()).fetch()
+      d['roles'] = rule.DomainRole.query(namespace=self.key.urlsafe()).fetch()
       d['logs'] = log.Record.query(ancestor=self.key).fetch()
       
       return d
@@ -587,7 +586,7 @@ class Domain(ndb.BaseExpando):
                   """business.Company, business.CompanyContent, business.CompanyFeedback,
                                     marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                                     product.Content, product.Instance, product.Template._actions, product.Variant"""
-                  objects = [cls, rule.LocalRole, rule.UserRole]
+                  objects = [cls, rule.DomainRole, rule.DomainUser]
                   
                   for obj in objects:
                       for friendly_action_key, action_instance in obj._actions.items():
@@ -596,17 +595,17 @@ class Domain(ndb.BaseExpando):
                                                                    executable=True,
                                                                    condition='True'))
                   
-                  role = rule.LocalRole(namespace=namespace, name='Administrators', permissions=permissions)
+                  role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
                   role.put()
                   
                   
                   # build UserRole for creator
                   
-                  user_role = rule.UserRole(namespace=namespace, id=context.auth.user.str_id,
+                  domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.str_id,
                                             name=context.auth.user.primary_email, state='accepted',
                                             roles=[role.key])
                   
-                  user_role.put()
+                  domain_user.put()
                   
                 context.log.entities.append((entity,))
                 log.Engine.run(context)

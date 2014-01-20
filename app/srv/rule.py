@@ -218,12 +218,13 @@ class Engine:
       local_field_permissions = {}
       
       if not skip_user_roles:
-        user_role_key = UserRole.build_key(context.auth.user.str_id, namespace=context.auth.domain.key.urlsafe())
-        user_role = user_role_key.get()
-        roles = ndb.get_multi(user_role.roles)
-        for role in roles:
-          if role.active:
-             role.run(context)
+        domain_user_key = DomainUser.build_key(context.auth.user.str_id, namespace=context.auth.domain.key.urlsafe())
+        domain_user = domain_user_key.get()
+        if domain_user.state == 'accepted':
+            roles = ndb.get_multi(domain_user.roles)
+            for role in roles:
+              if role.active:
+                 role.run(context)
           
         # copy 
         local_action_permissions = context.rule.entity._action_permissions.copy()
@@ -250,7 +251,7 @@ class Engine:
 class GlobalRole(Role):
       pass
 
-class LocalRole(Role):
+class DomainRole(Role):
   
     _kind = 56
   
@@ -263,8 +264,8 @@ class LocalRole(Role):
        'manage' : io.Action(id='56-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
-                                 'domain' : ndb.SuperKeyProperty(kind='app.domain.acl.Domain'),
-                                 'id' : ndb.SuperKeyProperty(kind='56'),
+                                 'domain' : ndb.SuperKeyProperty(kind='app.srv.auth.Domain'),
+                                 'key' : ndb.SuperKeyProperty(kind='56'),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
                                  'active' : ndb.SuperBooleanProperty(default=True),
@@ -273,7 +274,7 @@ class LocalRole(Role):
                 
        'delete' : io.Action(id='56-1',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='56'),
+                                 'key' : ndb.SuperKeyProperty(kind='56'),
                               }
                              ),
     }
@@ -286,7 +287,7 @@ class LocalRole(Role):
         
         if not context.has_error():
                          
-           entity_key = context.args.get('id')
+           entity_key = context.args.get('key')
            entity = entity_key.get()
            
            context.rule.entity = entity
@@ -295,17 +296,18 @@ class LocalRole(Role):
            if not executable(context):
               return context.not_authorized()
                
-           user_roles = UserRole.query(UserRole.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
+           domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
         
-           for user_role in user_roles:
-               user_role.roles.remove(entity.key)
+           for domain_user in domain_users:
+               domain_user.roles.remove(entity.key)
+               # context.log.entities.append((user_role, ))
 
            @ndb.transactional(xg=True)
            def transaction():
  
              if entity and entity.loaded():
                
-                ndb.put_multi(user_roles) # write changes to UserRoles
+                ndb.put_multi(domain_user) # write changes to DomainUser
                 
                 # log & delete
                 context.log.entities.append((entity, ))
@@ -313,7 +315,6 @@ class LocalRole(Role):
                 log.Engine.run(context)
                  
                 context.status(entity)
-                context.response['deleted'] = True
              else:
                 context.not_found()      
               
@@ -342,7 +343,7 @@ class LocalRole(Role):
                    domain = domain_key.get()
                    entity = cls(namespace=domain.key.urlsafe())
                 else:
-                   entity_key = context.args.get('id')
+                   entity_key = context.args.get('key')
                    entity = entity_key.get()
               
                 context.rule.entity = entity
@@ -386,7 +387,7 @@ class LocalRole(Role):
             
         return context
  
-class UserRole(ndb.BaseModel):
+class DomainUser(ndb.BaseModel):
     
     _kind = 8
     
@@ -394,7 +395,7 @@ class UserRole(ndb.BaseModel):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:no - name
     name = ndb.SuperStringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
-    roles = ndb.SuperKeyProperty('3', kind=LocalRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
+    roles = ndb.SuperKeyProperty('3', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
     state = ndb.SuperStringProperty('4', required=True)# invited/accepted
     
     _default_indexed = False
@@ -402,40 +403,40 @@ class UserRole(ndb.BaseModel):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.auth.domain.is_active"),
                                             ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' or context.rule.entity.state == 'accepted' and context.auth.user.str_id == context.rule.entity.str_id"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "(context.auth.domain.is_active and context.rule.entity.state == 'invited') or (context.rule.entity.state == 'accepted' and context.auth.user.str_id == context.rule.entity.str_id)"),
                                             ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.auth.domain.is_active"),
                                             ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "context.auth.user.str_id != context.rule.entity.str_id"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' and context.auth.user.str_id == context.rule.entity.str_id"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "(context.auth.domain.is_active and context.rule.entity.state == 'invited') and (context.auth.user.str_id == context.rule.entity.str_id)"),
                                             ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.auth.domain.is_active"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
        'invite' : io.Action(id='8-0',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6'),
+                                 'domain' : ndb.SuperKeyProperty(kind='app.srv.auth.Domain'),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'user' : ndb.SuperKeyProperty(kind='0'),
-                                 'roles' : ndb.SuperKeyProperty(kind='56', repeated=True),
+                                 'user' : ndb.SuperKeyProperty(kind='app.srv.auth.User'),
+                                 'roles' : ndb.SuperKeyProperty(kind=DomainRole, repeated=True),
                               }
                              ),
                 
        'remove' : io.Action(id='8-1',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='8', required=True),
                               }
                              ),
                 
        'accept' : io.Action(id='8-2',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='8', required=True),
                               }
                              ),
                 
        'update' : io.Action(id='8-3',
                               arguments={
-                                 'id' : ndb.SuperKeyProperty(kind='8', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='8', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'roles' : ndb.SuperKeyProperty(kind='56', repeated=True),
+                                 'roles' : ndb.SuperKeyProperty(kind=DomainRole, repeated=True),
                               }
                              ),
     }
@@ -458,15 +459,15 @@ class UserRole(ndb.BaseModel):
    
              get_roles = ndb.get_multi(role_keys)
              user = user_key.get()
-             user_role = cls(id=user.str_id, namespace=context.auth.domain.key.urlsafe())
+             domain_user = cls(id=user.str_id, namespace=context.auth.domain.key.urlsafe())
   
-             context.rule.entity = user_role
+             context.rule.entity = domain_user
              Engine.run(context)
                
              if not executable(context):
                 return context.not_authorized()
               
-             already_invited = UserRole.build_key(user.str_id, namespace=context.auth.domain.key.urlsafe()).get()
+             already_invited = cls.build_key(user.str_id, namespace=context.auth.domain.key.urlsafe()).get()
              
              if already_invited:
                 return context.error('user', 'already_invited')
@@ -478,14 +479,13 @@ class UserRole(ndb.BaseModel):
                     if role.key.namespace() == context.auth.domain.key.urlsafe():
                        roles.append(role.key)
                        
-                user_role.populate(name=name, state='invited', roles=roles)
-                user_role.put()
+                domain_user.populate(name=name, state='invited', roles=roles)
+                domain_user.put()
                 
-                context.log.entities.append((user_role,))
+                context.log.entities.append((domain_user,))
                 log.Engine.run(context)
                 
-                context.status(user_role)
-                context.response['invited'] = True
+                context.status(domain_user)
              else:
                 return context.error('user', 'user_not_active')      
               
@@ -508,7 +508,7 @@ class UserRole(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
              
-             entity_key = context.args.get('id')            
+             entity_key = context.args.get('key')            
              entity = entity_key.get()
              
              context.rule.entity = entity
@@ -521,8 +521,7 @@ class UserRole(ndb.BaseModel):
              entity.key.delete()
              context.log.entities.append((entity,))
              log.Engine.run(context)
-             
-             context.response['removed'] = True
+ 
              context.status(entity)
              
           try:
@@ -544,7 +543,7 @@ class UserRole(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
              
-             entity_key = context.args.get('id')            
+             entity_key = context.args.get('key')            
              entity = entity_key.get()
              
              context.rule.entity = entity
@@ -559,7 +558,6 @@ class UserRole(ndb.BaseModel):
              log.Engine.run(context)
               
              context.status(entity)
-             context.response['accepted'] = True
              
           try:
              transaction()
@@ -580,13 +578,13 @@ class UserRole(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
              
-             entity_key = context.args.get('id')            
+             entity_key = context.args.get('key')            
              entity = entity_key.get()
              
              context.rule.entity = entity
              Engine.run(context)
              
-             # if user can remove, or if the user can remove HIMSELF from the user role  
+       
              if not executable(context):
                 return context.not_authorized()
              
@@ -605,7 +603,6 @@ class UserRole(ndb.BaseModel):
              log.Engine.run(context)
               
              context.status(entity)
-             context.response['updated'] = True
              
           try:
              transaction()
