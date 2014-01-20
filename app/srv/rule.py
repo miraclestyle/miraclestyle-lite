@@ -291,7 +291,7 @@ class DomainRole(Role):
            entity = entity_key.get()
            
            context.rule.entity = entity
-           Engine.run(context, True)
+           Engine.run(context)
              
            if not executable(context):
               return context.not_authorized()

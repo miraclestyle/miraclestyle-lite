@@ -258,7 +258,7 @@ class User(ndb.BaseExpando):
                primary_email = context.args.get('primary_email')
                disassociate = context.args.get('disassociate')
  
-               for identity in enumerate(current_user.identities):
+               for identity in current_user.identities:
                    if primary_email:
                        identity.primary = False
                        if identity.email == primary_email:
@@ -273,8 +273,7 @@ class User(ndb.BaseExpando):
                context.log.entities.append((current_user, ))
                log.Engine.run(context)
                
-               context.response['updated'] = True
-               context.response['user'] = current_user
+               context.status(current_user)
                
            try:
               transaction()
@@ -301,12 +300,9 @@ class User(ndb.BaseExpando):
           
           @ndb.transactional(xg=True)
           def transaction():
-               
-              if current_user.is_guest:
-                 return context.error('login', 'already_logged_out')
-             
+  
               if not current_user.logout_code == context.args.get('code'):
-                 return context.error('login', 'invalid_code')
+                 return context.not_authorized()
            
               if current_user.sessions:
                  current_user.sessions = []
@@ -455,16 +451,19 @@ class Domain(ndb.BaseExpando):
     updated = ndb.SuperDateTimeProperty('3', auto_now=True)
     created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
     state = ndb.SuperStringProperty('5', required=True)
+   
     
     _default_indexed = False
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "context.rule.entity.is_active or not context.auth.user.is_guest"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), True, "context.rule.entity.is_active"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), True, "not context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.rule.entity.is_active"),
+                                            #rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "context.args['create'] and not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'su_suspended'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), True, "context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.is_active"),
                                             rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -562,10 +561,10 @@ class Domain(ndb.BaseExpando):
                 elif context.auth.user.is_guest:
                       return context.not_authorized()
                     
-                primary_contact = context.auth.user.key
+                primary_contact = context.args.get('primary_contact')
                 
                 if not primary_contact:
-                   primary_contact = context.args.get('primary_contact')
+                   primary_contact = context.auth.user.key
                  
                 entity.name = context.args.get('name')
                 entity.primary_contact = primary_contact
@@ -591,21 +590,22 @@ class Domain(ndb.BaseExpando):
                   for obj in objects:
                       for friendly_action_key, action_instance in obj._actions.items():
                           permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                                   action=action_instance.key.id(),
+                                                                   action=action_instance.key.urlsafe(),
                                                                    executable=True,
                                                                    condition='True'))
                   
                   role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
                   role.put()
                   
+                  # context.log.entities.append((role, ))
                   
-                  # build UserRole for creator
-                  
+                   
                   domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.str_id,
                                             name=context.auth.user.primary_email, state='accepted',
                                             roles=[role.key])
                   
                   domain_user.put()
+                  # context.log.entities.append((domain_user, ))
                   
                 context.log.entities.append((entity,))
                 log.Engine.run(context)
@@ -646,8 +646,7 @@ class Domain(ndb.BaseExpando):
                log.Engine.run(context)
                 
                context.status(entity)
-               context.response['suspended'] = True
-               
+ 
            try:
               transaction()
            except Exception as e:
@@ -682,7 +681,6 @@ class Domain(ndb.BaseExpando):
                log.Engine.run(context)
                 
                context.status(entity)
-               context.response['activated'] = True
                
            try:
               transaction()
@@ -712,7 +710,7 @@ class Domain(ndb.BaseExpando):
                if not rule.executable(context):
                   return context.not_authorized()
                 
-               if context.args.get('state') not in ('active', 'suspended'):
+               if context.args.get('state') not in ('active', 'su_suspended'):
                   return context.error('state', 'invalid_state')
                
                entity.state = context.args.get('state')
@@ -722,8 +720,7 @@ class Domain(ndb.BaseExpando):
                log.Engine.run(context)
                 
                context.status(entity)
-               context.response['activated'] = True
-               
+     
            try:
               transaction()
            except Exception as e:
@@ -757,7 +754,6 @@ class Domain(ndb.BaseExpando):
                log.Engine.run(context)
                 
                context.status(entity)
-               context.response['logged_message'] = True
                
            try:
               transaction()
