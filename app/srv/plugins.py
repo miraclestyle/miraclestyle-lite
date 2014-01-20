@@ -55,7 +55,7 @@ class AddressRule(transaction.Plugin):
       entry_address_reference = getattr(entry, address_reference_key, None)
       entry_address = getattr(entry, address_key, None)
       
-      from app.core import buyer
+      from app.opt import buyer
        
       buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
       
