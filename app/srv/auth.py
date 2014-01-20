@@ -574,9 +574,9 @@ class Domain(ndb.BaseExpando):
                 
                 if create:
                   
-                  # build a role
+                  # build a role - possible usage of app.etc
                   
-                  #from app.domain import business, marketing, product
+                  # from app.domain import business, marketing, product
                   
                   permissions = []
                   
