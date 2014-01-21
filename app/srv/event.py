@@ -39,6 +39,11 @@ class Engine:
     
     if action:
        context = action.process(args)
-        
-       transaction.Engine.run(context)
-  
+      
+       @ndb.transactional(xg=True)
+       def transaction():
+           transaction.Engine.run(context)
+       try:
+          transaction()
+       except Exception as e:
+          context.transaction_error(e)

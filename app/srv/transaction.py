@@ -302,8 +302,7 @@ class Engine:
     context.run_callbacks()
  
   @classmethod
-  @ndb.transactional(xg=True)
-  def transaction(cls, context):
+  def write(cls, context):
     group = context.transaction.group
     if not group:
        group = Group()

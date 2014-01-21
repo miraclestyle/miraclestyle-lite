@@ -59,7 +59,7 @@ class Template(ndb.BaseModel):
                            cls.company == context.args.get('company'), 
                            cls.subscriptions == context.action.key).fetch()
          
-      return templates
+    return templates
     
        
   def run(self, context):
@@ -74,12 +74,8 @@ class Engine:
     templates.extend(Template.get_local_templates(context))
     for template in templates:
       template.run(context)
-    
-    @classmethod
-    @ndb.transactional(xg=True)
-    def transaction(cls, context):
-    
-      for message in context.notify.messages:
-        if (message.outlet == "email"):
-          mail.send_mail(sender=message.sender, to=message.reciever, subject=message.subject, body=message.body)
+ 
+    for message in context.notify.messages:
+      if (message.outlet == "email"):
+         mail.send_mail(sender=message.sender, to=message.reciever, subject=message.subject, body=message.body)
     

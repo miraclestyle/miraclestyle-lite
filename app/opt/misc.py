@@ -5,12 +5,13 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
+from app.srv import io, rule, log
 
 # done 80%
 
-class Content(ndb.BaseModel, ndb.Workflow):
+class Content(ndb.BaseModel):
     
-    KIND_ID = 14
+    _kind = 14
     # root
     # composite index: ancestor:no - category,active,sequence
     updated = ndb.SuperDateTimeProperty('1', auto_now=True)
@@ -19,70 +20,78 @@ class Content(ndb.BaseModel, ndb.Workflow):
     body = ndb.SuperTextProperty('4', required=True)
     sequence = ndb.SuperIntegerProperty('5', required=True)
     active = ndb.SuperBooleanProperty('6', default=False)
+    
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('14', io.Action.build_key('14-0').urlsafe(), True, "context.auth.user.root_admin"),
+                                               ])
+  
+
+    _actions = {
+       'manage' : io.Action(id='14-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'title' : ndb.SuperStringProperty(required=True),
+                                 'category' : ndb.SuperIntegerProperty(required=True),
+                                 'body' : ndb.SuperTextProperty(required=True),
+                                 'sequence' : ndb.SuperIntegerProperty(required=True),
+                                 'active' : ndb.SuperBooleanProperty(default=False),
+                                   
+                                 'key' : ndb.SuperKeyProperty(kind='14'),
+          
+                              }
+                             ),
  
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
-    @property
-    def is_usable(self):
-        return self.active
-    
-    # def delete inherits from BaseModel see `ndb.BaseModel.delete()`
+    }  
     
     @classmethod
-    def manage(cls, create, values, **kwds):
+    def manage(cls, args):
         
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
+        action = cls._actions.get('manage')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+                set_args = context.args.copy()
+                
+                if create:
+                   entity = cls()
+                else:
+                   entity_key = context.args.get('key')
+                   entity = entity_key.get()
+                   del set_args['key']
+                   
+                del set_args['create']
+              
+                context.rule.entity = entity
+                rule.Engine.run(context)
+                
+                if not rule.executable(context):
+                   return context.not_authorized()
+                 
+                entity.populate(**set_args)
+                entity.put()
+                  
+                context.log.entities.append((entity,))
+                log.Engine.run(context)
+                   
+                context.status(entity)
                
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
             
-        return response  
+        return context
  
 
 # done!
-class ProductCategory(ndb.BaseModel, ndb.Workflow):
+class ProductCategory(ndb.BaseModel):
     
-    KIND_ID = 17
+    _kind = 17
     
     # root
     # http://hg.tryton.org/modules/product/file/tip/category.py#l8
@@ -94,152 +103,128 @@ class ProductCategory(ndb.BaseModel, ndb.Workflow):
     parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     complete_name = ndb.SuperTextProperty('3')# da je ovo indexable bilo bi idealno za projection query
-    status = ndb.SuperIntegerProperty('4', required=True)
+    state = ndb.SuperStringProperty('4', required=True) # @todo status => state ? better ? for convention ? or just active = boolean 
+
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('17', io.Action.build_key('17-0').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('17', io.Action.build_key('17-1').urlsafe(), True, "context.auth.user.root_admin"),
+                                               ])
   
-    OBJECT_DEFAULT_STATE = 'none'
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'delete' : 3,
-    }
-    
-    @property
-    def is_usable(self):
-        return self.status
+
+    _actions = {
+       'manage' : io.Action(id='17-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'state' : ndb.SuperStringProperty(required=True),
+                                 'parent_record' : ndb.SuperKeyProperty(kind='17'),
+                                
+                                 'key' : ndb.SuperKeyProperty(kind='17'),
+          
+                              }
+                             ),
+       'delete' : io.Action(id='17-1',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='17'),
+                              }
+                             ),
+ 
+ 
+    }  
     
     @classmethod
-    def delete(cls, values):
- 
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
+    def manage(cls, args):
+        
+        action = cls._actions.get('manage')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+                set_args = context.args.copy()
+                
+                if create:
+                   entity = cls()
+                else:
+                   entity_key = context.args.get('key')
+                   entity = entity_key.get()
+                   del set_args['key']
+                   
+                del set_args['create']
+              
+                context.rule.entity = entity
+                rule.Engine.run(context)
+                
+                if not rule.executable(context):
+                   return context.not_authorized()
+                
+                entity.complete_name = ndb.make_complete_name(entity, 'name', 'parent_record')
+                entity.populate(**set_args)
+                entity.put()
+                  
+                context.log.entities.append((entity,))
+                log.Engine.run(context)
+                   
+                context.status(entity)
                
-               entity = cls.prepare(False, values, get_only=True)
-               
-               if entity and entity.loaded():
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
             
+        return context
+  
+    @classmethod
+    def delete(cls, args):
+        
+        action = cls._actions.get('delete')
+        context = action.process(args)
+
+        if not context.has_error():
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+                          
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.key.delete()
+               context.log.entities.append((entity,))
+               log.Engine.run(context)
+        
+               context.status(entity)
+               
         try:
            transaction()
         except Exception as e:
-           response.transaction_error(e)
+           context.transaction_error(e)
            
-        return response
-
-    @classmethod
-    def manage(cls, create, values, **kwds):
-        
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls)
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if not create:
-               if current.has_permission('update', entity):
-                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
-                   # add task que to update all children
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
-               if current.has_permission('create', entity): 
-                   entity.complete_name = ndb.make_complete_name(entity, 'name', parent='parent_record')
-                   # add task que to update all children
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response   
+        return context   
 
  
 
 # @todo
-class Message(ndb.BaseModel, ndb.Workflow):
+class Message(ndb.BaseModel):
     
-    KIND_ID = 21
+    _kind = 21
     
     # root
     outlet = ndb.SuperIntegerProperty('1', required=True, indexed=False)
     group = ndb.SuperIntegerProperty('2', required=True, indexed=False)
     state = ndb.SuperIntegerProperty('3', required=True)
- 
-    OBJECT_DEFAULT_STATE = 'composing'
-    
-    OBJECT_STATES = {
-        # tuple represents (state_code, transition_name)
-        # second value represents which transition will be called for changing the state
-        # Ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
-        # sto ce biti slucaj sa verovatno mnogim modelima.
-        # broj 0 je rezervisan za none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'composing' : (1, ),
-        'processing' : (2, ),
-        'completed' : (3, ),
-        'canceled' : (4, ),
-    }
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'update' : 2,
-       'send' : 3,
-       'complete' : 4,
-       'cancel' : 5,
-    }
-    
-    OBJECT_TRANSITIONS = {
-        'send' : {
-            'from' : ('composing',),
-            'to' : ('processing',),
-         },
-        'complete' : {
-           'from' : ('processing',),
-           'to'   : ('completed',),
-        },
-        'cancel' : {
-           'from' : ('composing',),
-           'to'   : ('canceled',),
-        },
-    }
+  
 
 # done! - sudo kontrolisan model
-class SupportRequest(ndb.BaseModel, ndb.Workflow):
+class SupportRequest(ndb.BaseModel):
     
-    KIND_ID = 24
+    _kind = 24
     
     # ancestor User
     # ako uopste bude vidljivo useru onda mozemo razmatrati indexing
@@ -251,51 +236,6 @@ class SupportRequest(ndb.BaseModel, ndb.Workflow):
     state = ndb.SuperIntegerProperty('2', required=True)
     updated = ndb.SuperDateTimeProperty('3', auto_now=True)
     created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
- 
-    
-    OBJECT_DEFAULT_STATE = 'new'
-    
-    OBJECT_STATES = {
-        # tuple represents (state_code, transition_name)
-        # second value represents which transition will be called for changing the state
-        # ne znam da li je predvidjeno ovde da moze biti vise tranzicija/akcija koje vode do istog state-a,
-        # sto ce biti slucaj sa verovatno mnogim modelima.
-        # broj 0 je rezervisan za state none (Stateless Models) i ne koristi se za definiciju validnih state-ova
-        'new' : (1, ),
-        'su_opened' : (2, ),
-        'su_awaiting_closure' : (3, ),
-        'closed' : (4, ),
-    }
-    
-    OBJECT_ACTIONS = {
-       'create' : 1,
-       'log_message' : 2,
-       'sudo' : 3,
-       'close' : 4,
-    }
-    
-    OBJECT_TRANSITIONS = {
-        'su_open' : {
-            'from' : ('new',),
-            'to' : ('su_opened',),
-         },
-        'su_propose_close' : {
-           'from' : ('su_opened', ),
-           'to'   : ('su_awaiting_closure',),
-        },
-        'close' : {
-           'from' : ('su_opened', 'su_awaiting_closure',),
-           'to'   : ('closed',),
-        },
-    }
-    
-    @classmethod
-    def list(cls, **kwds):
-        response = ndb.Response()
-        
-        response['items'] = cls.query().order(-cls.created).fetch()
-        
-        return response
   
     @classmethod
     def manage(cls, create, values, **kwds):

@@ -258,8 +258,7 @@ class Collection(ndb.BaseModel):
                entity.key.delete()
                context.log.entities.append((entity,))
                log.Engine.run(context)
-               
-               context.response['deleted'] = True
+ 
                context.status(entity)
                
         try:
