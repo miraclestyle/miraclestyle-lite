@@ -45,30 +45,36 @@ class Engine:
   @classmethod
   def run(cls, context, transaction=False):
     
-    if len(context.log.entities):
+    def log(context):
+      if len(context.log.entities):
       
-      records = []
+        records = []
       
-      for config in context.log.entities:
+        for config in context.log.entities:
         
-        entity = config[0]
-        try:
-          kwargs = config[1]
-        except:
-          kwargs = None
+          entity = config[0]
+          try:
+            kwargs = config[1]
+          except:
+            kwargs = None
         
-        if not kwargs:
-           kwargs = {}
+          if not kwargs:
+             kwargs = {}
            
-        log_entity = kwargs.pop('log_entity', True)
-        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
-        if log_entity is True:
-           log_entity = entity
+          log_entity = kwargs.pop('log_entity', True)
+          record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
+          if log_entity is True:
+             log_entity = entity
            
-        if log_entity:
-           record.log_entity(log_entity)
-        records.append(record)
+          if log_entity:
+             record.log_entity(log_entity)
+          records.append(record)
       
-      if len(records):
-        recorded = ndb.put_multi(records)
-        context.log.entities = []
+        if len(records):
+          recorded = ndb.put_multi(records)
+          context.log.entities = []
+          
+    if (transaction):
+      ndb.transaction(lambda: log(context))
+    else:
+      log(context)
