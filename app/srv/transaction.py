@@ -310,7 +310,7 @@ class Engine:
     def transaction():
         group = context.transaction.group
         if not group:
-           group = Group()
+           group = Group() # Group(namespace=context.auth.domain.key.urlsafe()) ? 
            group.put() # ovo automatski snima group key sa namespace parametrom domain-u u kojem se izvrsava engine
         
         group_key = group.key # - put main key
