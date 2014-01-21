@@ -304,7 +304,6 @@ class Engine:
     context.run_callbacks()
  
   @classmethod
-  # this will have to be executed in transaction, since the event engine transaction will not work due to non ancestor queries...
   def write(cls, context):
     
     @ndb.transactional(xg=True)
