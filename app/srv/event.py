@@ -4,9 +4,12 @@ Created on Jan 6, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import importlib
+from google.appengine.api import taskqueue
+
 from app import ndb
 
-from app.srv import transaction, io
+from app.srv import io
 
 class DescriptiveError(Exception):
       # executes an exception in a way that it will have its own meaning instead of just "invalid"
@@ -38,12 +41,10 @@ class Engine:
       action = io.Action.get_local_action(action_key)
     
     if action:
-       context = action.process(args)
-      
-       @ndb.transactional(xg=True)
-       def transaction():
-           transaction.Engine.run(context)
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       if action.realtime:
+          context = action.process(args)
+          
+          service = importlib.import_module('app.srv.%s' % context.action.service)
+          service.Engine.run(context)
+       else:
+          taskqueue.add(url='/engine-run', params=args);

@@ -114,7 +114,7 @@ class Action(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True)
   arguments = ndb.SuperPickleProperty('2') # dict
   active = ndb.SuperBooleanProperty('3', default=True)
-  engine = ndb.SuperStringProperty('4') # transaction, notify, log....
+  service = ndb.SuperStringProperty('4') # transaction, notify, log....
   operation = ndb.SuperStringProperty('5') # read/write
   realtime = ndb.SuperBooleanProperty('6', default=True) # if False, execute in task queue
  

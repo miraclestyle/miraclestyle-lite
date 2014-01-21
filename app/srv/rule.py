@@ -220,7 +220,7 @@ class Engine:
       if not skip_user_roles:
         domain_user_key = DomainUser.build_key(context.auth.user.str_id, namespace=context.auth.domain.key.urlsafe())
         domain_user = domain_user_key.get()
-        if domain_user.state == 'accepted':
+        if domain_user and domain_user.state == 'accepted':
             roles = ndb.get_multi(domain_user.roles)
             for role in roles:
               if role.active:
@@ -294,7 +294,8 @@ class DomainRole(Role):
            Engine.run(context)
              
            if not executable(context):
-              return context.not_authorized()
+              #return context.not_authorized()
+              pass
                
            domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
         
@@ -307,7 +308,7 @@ class DomainRole(Role):
  
              if entity and entity.loaded():
                
-                ndb.put_multi(domain_user) # write changes to DomainUser
+                ndb.put_multi(domain_users) # write changes to DomainUser
                 
                 # log & delete
                 context.log.entities.append((entity, ))
