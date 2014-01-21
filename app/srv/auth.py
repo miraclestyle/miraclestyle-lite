@@ -769,9 +769,7 @@ class Domain(ndb.BaseExpando):
         context = action.process(args)
         
         if not context.has_error():
-          
-           user = context.auth.user
-              
+    
            context.response['domains'] = cls.query().fetch()
               
            return context

@@ -8,7 +8,17 @@ import cgi
  
 from google.appengine.ext import blobstore
 
-from app import memcache
+from app import ndb, memcache
+
+class Image(ndb.BaseModel):
+    
+    # base class/structured class
+    image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)# blob ce se implementirati na GCS
+    content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
+    size = ndb.SuperFloatProperty('3', required=True, indexed=False)
+    width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
+    height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
+    sequence = ndb.SuperIntegerProperty('6', required=True)
 
 class BlobManager():
     

@@ -258,7 +258,7 @@ class Tax(transaction.Plugin):
   address_type = ndb.SuperStringProperty('8')
   locations = ndb.SuperPickleProperty('9')
   carriers = ndb.SuperKeyProperty('10', repeated=True)
-  product_categories = ndb.SuperKeyProperty('11', kind='app.core.misc.ProductCategory', repeated=True)
+  product_categories = ndb.SuperKeyProperty('11', kind='17', repeated=True)
   
   
   def run(self, journal, context):

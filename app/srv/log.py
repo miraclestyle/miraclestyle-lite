@@ -19,8 +19,8 @@ class Record(ndb.BaseExpando):
     # high numbers for field aliases here to not conflict with logged object
     
     logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
-    agent = ndb.SuperKeyProperty('98', kind='app.srv.auth.User', required=True)
-    action = ndb.SuperKeyProperty('97', kind='app.srv.io.Action', required=True)
+    agent = ndb.SuperKeyProperty('98', kind='0', required=True)
+    action = ndb.SuperKeyProperty('97', kind='56', required=True)
   
     _default_indexed = False
  

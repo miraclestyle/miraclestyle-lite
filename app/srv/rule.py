@@ -264,7 +264,7 @@ class DomainRole(Role):
        'manage' : io.Action(id='56-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
-                                 'domain' : ndb.SuperKeyProperty(kind='app.srv.auth.Domain'),
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
                                  'key' : ndb.SuperKeyProperty(kind='56'),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
@@ -413,9 +413,9 @@ class DomainUser(ndb.BaseModel):
     _actions = {
        'invite' : io.Action(id='8-0',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='app.srv.auth.Domain'),
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'user' : ndb.SuperKeyProperty(kind='app.srv.auth.User'),
+                                 'user' : ndb.SuperKeyProperty(kind='0'),
                                  'roles' : ndb.SuperKeyProperty(kind=DomainRole, repeated=True),
                               }
                              ),

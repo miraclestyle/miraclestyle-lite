@@ -84,10 +84,10 @@ class Journal(ndb.BaseExpando):
   # key.id() = code.code
   
   name = ndb.SuperStringProperty('1', required=True)
-  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  company = ndb.SuperKeyProperty('3', kind='44', required=True)
   sequence = ndb.SuperIntegerProperty('4', required=True)
   active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperKeyProperty('6', kind='app.srv.io.Action', repeated=True)
+  subscriptions = ndb.SuperKeyProperty('6', kind='56', repeated=True)
   
   entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
   line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
@@ -134,8 +134,8 @@ class Plugin(ndb.BasePolyExpando):
   # composite index: ancestor:yes - sequence
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
-  subscriptions = ndb.SuperKeyProperty('3', kind='app.srv.io.Action', repeated=True)
-  company = ndb.SuperKeyProperty('4', kind='app.domain.business.Company', required=True)
+  subscriptions = ndb.SuperKeyProperty('3', kind='56', repeated=True)
+  company = ndb.SuperKeyProperty('4', kind='44', required=True)
 
   @classmethod
   def get_local_plugins(cls, journal, context):
@@ -179,7 +179,7 @@ class Category(ndb.BaseExpando):
   name = ndb.SuperStringProperty('2', required=True)
   code = ndb.SuperStringProperty('3', required=True)
   active = ndb.SuperBooleanProperty('4', default=True)
-  company = ndb.SuperKeyProperty('5', kind='app.domain.business.Company', required=True)
+  company = ndb.SuperKeyProperty('5', kind='44', required=True)
   complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
   # Expando
   # description = ndb.TextProperty('7', required=True)# soft limit 16kb
@@ -214,7 +214,7 @@ class Entry(ndb.BaseExpando):
   # ancestor:no - journal,company,state,party,updated:desc; ?
   name = ndb.SuperStringProperty('1', required=True)
   journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('3', kind='app.domain.business.Company', required=True)
+  company = ndb.SuperKeyProperty('3', kind='44', required=True)
   state = ndb.SuperStringProperty('4', required=True)
   date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
   created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
@@ -259,7 +259,7 @@ class Line(ndb.BaseExpando):
   # ancestor:yes - sequence;
   # ancestor:no - journal, company, state, categories, uom, date
   journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('2', kind='app.domain.business.Company', required=True)
+  company = ndb.SuperKeyProperty('2', kind='44', required=True)
   state = ndb.SuperIntegerProperty('3', required=True)
   date = ndb.SuperDateTimeProperty('4', required=True)# updated on specific state or manually
   sequence = ndb.SuperIntegerProperty('5', required=True)
