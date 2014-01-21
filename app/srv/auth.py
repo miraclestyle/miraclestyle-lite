@@ -307,11 +307,11 @@ class User(ndb.BaseExpando):
               if current_user.sessions:
                  current_user.sessions = []
    
+              current_user.put()
+              
               context.log.entities.append((current_user, {'ip_address' : os.environ['REMOTE_ADDR']}))
               
               log.Engine.run(context)
-              
-              current_user.put()
               
               current_user.set_current_user(None, None)
               
