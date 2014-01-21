@@ -304,35 +304,43 @@ class Engine:
   @classmethod
   # this will have to be executed in transaction, since the event engine transaction will not work due to non ancestor queries...
   def write(cls, context):
-    group = context.transaction.group
-    if not group:
-       group = Group()
-       group.put() # ovo automatski snima group key sa namespace parametrom domain-u u kojem se izvrsava engine
     
-    group_key = group.key # - put main key
-    for key, entry in context.transaction.entities.items():
-        entry.set_key(parent=group_key) # parent key for entry
-        entry_key = entry.put()
+    @ndb.transactional(xg=True)
+    def transaction():
+        group = context.transaction.group
+        if not group:
+           group = Group()
+           group.put() # ovo automatski snima group key sa namespace parametrom domain-u u kojem se izvrsava engine
         
-        """
-         notice the `_` before `lines` that is because 
-         if you set it without underscore it will be considered as new property in expando
-         so all operations should use the following paradigm:
-         entry._lines = []
-         entry._lines.append(Line(...))
-         etc..
-        """
-        lines = []
-        
-        for line in entry._lines:
-            line.journal = entry.journal
-            line.company = entry.company
-            line.state = entry.state
-            line.date = entry.date
-            line.set_key(parent=entry_key) # parent key for line
-            lines.append(line)
-        
-        ndb.put_multi(lines)
- 
+        group_key = group.key # - put main key
+        for key, entry in context.transaction.entities.items():
+            entry.set_key(parent=group_key) # parent key for entry
+            entry_key = entry.put()
+            
+            """
+             notice the `_` before `lines` that is because 
+             if you set it without underscore it will be considered as new property in expando
+             so all operations should use the following paradigm:
+             entry._lines = []
+             entry._lines.append(Line(...))
+             etc..
+            """
+            lines = []
+            
+            for line in entry._lines:
+                line.journal = entry.journal
+                line.company = entry.company
+                line.state = entry.state
+                line.date = entry.date
+                line.set_key(parent=entry_key) # parent key for line
+                lines.append(line)
+            
+            ndb.put_multi(lines)
+            
+    try:
+         transaction()
+    except Exception as e:
+         context.transaction_error(e)
+     
             
   

@@ -67,7 +67,7 @@ class Content(ndb.BaseModel):
                 del set_args['create']
               
                 context.rule.entity = entity
-                rule.Engine.run(context)
+                rule.Engine.run(context, True)
                 
                 if not rule.executable(context):
                    return context.not_authorized()
@@ -156,13 +156,13 @@ class ProductCategory(ndb.BaseModel):
                 del set_args['create']
               
                 context.rule.entity = entity
-                rule.Engine.run(context)
+                rule.Engine.run(context, True)
                 
                 if not rule.executable(context):
                    return context.not_authorized()
-                
-                entity.complete_name = ndb.make_complete_name(entity, 'name', 'parent_record')
+                 
                 entity.populate(**set_args)
+                entity.complete_name = ndb.make_complete_name(entity, 'name', 'parent_record')
                 entity.put()
                   
                 context.log.entities.append((entity,))
@@ -192,6 +192,7 @@ class ProductCategory(ndb.BaseModel):
                entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context, True)
+               
                if not rule.executable(context):
                   return context.not_authorized()
                 
@@ -233,174 +234,208 @@ class SupportRequest(ndb.BaseModel):
     # ancestor:yes - updated:desc; ancestor:yes - created:desc;
     # ancestor:yes - state,updated:desc; ancestor:yes - state,created:desc
     reference = ndb.SuperStringProperty('1', required=True, indexed=False)
-    state = ndb.SuperIntegerProperty('2', required=True)
+    state = ndb.SuperStringProperty('2', required=True)
     updated = ndb.SuperDateTimeProperty('3', auto_now=True)
     created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
-  
-    @classmethod
-    def manage(cls, create, values, **kwds):
-        
-        response = ndb.Response()
+    
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('24', io.Action.build_key('24-0').urlsafe(), True, "not context.auth.user.is_guest"),
+                                                rule.ActionPermission('24', io.Action.build_key('24-1').urlsafe(), True, "context.auth.user.root_admin and context.rule.entity.state in ['new', 'su_opened']"),
+                                                rule.ActionPermission('24', io.Action.build_key('24-2').urlsafe(), True, "(context.rule.entity.owner.key == context.auth.user.key) and (context.rule.entity.state in ['su_opened', 'su_awaiting_closure'])"),
+                                                rule.ActionPermission('24', io.Action.build_key('24-3').urlsafe(), True, "(context.rule.entity.state in ['new', 'su_opened', 'su_awaiting_closure']) and (context.auth.user.root_admin or context.rule.entity.owner.key == context.auth.user.key)"),
 
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            response.process_input(values, cls, only=('reference',))
-            
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(create, values, parent=current.key)
-            
-            if entity is None:
-               return response.not_found()
-      
-            if not entity or not entity.loaded():
-               if not current.is_guest:
-                   entity.set_state(cls.OBJECT_DEFAULT_STATE)
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-            
-        return response 
+                                               ])
   
-    @classmethod
-    def sudo(cls, values, **kwds):
-        
-        response = ndb.Response()
-        
-        @ndb.transactional(xg=True) 
-        def transaction(): 
-            
-            convert = [
-                ndb.SuperStringProperty('message', required=True),
-                ndb.SuperStringProperty('note', required=True)
-            ]
-            
-            response.process_input(values, cls, only=False, convert=convert)
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(False, values, get_only=True)
-            if entity and entity.loaded():
-               # check if user can do this
+
+    _actions = {
+       'create' : io.Action(id='24-0',
+                              arguments={
+                                 'reference' : ndb.SuperStringProperty(required=True),
+                                 'message' : ndb.TextProperty(required=True),
+                              }
+                             ),
  
-               action = values.get('action')
-               
-               if not action.startswith('su_'):
-                  return response.not_authorized()
-               
-               current = ndb.get_current_user()
-               if current.has_permission(action, entity):
-                      state = values.get('state')
-                      action = entity.new_action(action, state=state, message=values.get('message'), note=values.get('note'))
-                      entity.put()
-                      entity.record_action()
-                      response.status([entity, action])
-               else:
-                   return response.not_authorized()
-            else:
-                response.not_found()
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)   
-               
-        return response
-    
-    @classmethod
-    def log_message(cls, values, **kwds):
-        
-        response = ndb.Response()
-         
-        @ndb.transactional(xg=True)  
-        def transaction(): 
-            
-            convert = [
-                ndb.SuperStringProperty('message', required=True),
-                ndb.SuperStringProperty('note', required=True)
-            ]
-            
-            response.process_input(values, cls, only=False, convert=convert)
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(False, values, get_only=True)
-            if entity and entity.loaded():
-               # check if user can do this
-               current = ndb.get_current_user()
-              
-               if entity.get_state not in ('new', 'su_opened'):
-                  return response.not_authorized()
-              
-               if current.has_permission('log_message', entity):
-                      action = entity.new_action('log_message', message=values.get('message'), note=values.get('note'))
-                      entity.record_action()
-                      response.status([entity, action])
-               else:
-                   return response.not_authorized()
-            else:
-                response.not_found()
                 
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
-               
-        return response
+       'sudo' : io.Action(id='24-1',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='24'),
+                                 'note' : ndb.TextProperty(required=True),
+                                 'message' : ndb.TextProperty(required=True),
+                                 'state' : ndb.SuperStringProperty(required=True)
+                              }
+                             ),
+                
+       'close' : io.Action(id='24-2',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='24'),
+                                 'note' : ndb.TextProperty(required=False), # note should not be required i think
+                                 'message' : ndb.TextProperty(required=True),
+                              }
+                             ),
+                
+       'log_message' : io.Action(id='24-3',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='24'),
+                                 'note' : ndb.TextProperty(required=False), # note should not be required for log message
+                                 'message' : ndb.TextProperty(required=True),
+                              }
+                             ), 
+ 
+    }  
+    
+    @property
+    def owner(self):
+      return self.key.parent().get()
+    
+    def __todict__(self):
+      
+      d = super(SupportRequest, self).__todict__()
+      
+      from app.srv import log
+      
+      d['messages'] = log.Record.query(ancestor=self.key).fetch()
+      
+      return d
     
     @classmethod
-    def close(cls, values, **kwds):
+    def create(cls, args):
         
-        response = ndb.Response()
-         
-        @ndb.transactional(xg=True)
-        def transaction(): 
-            
-            convert = [
-                ndb.SuperStringProperty('message', required=True),
-                ndb.SuperStringProperty('note', required=True)
-            ]
-            
-            response.process_input(values, cls, only=False, convert=convert)
-            if response.has_error():
-               return response
-            
-            entity = cls.prepare(False, values, get_only=True)
-            if entity and entity.loaded():
-               # check if user can do this
-               current = ndb.get_current_user()
-               """
-               su_opened
-               su_awaiting_closure
-               """
-               if entity.get_state not in ('su_opened', 'su_awaiting_closure'):
-                  return response.not_authorized()
+        action = cls._actions.get('create')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                entity = cls(parent=context.auth.user.key, state='new')
+              
+                context.rule.entity = entity
+                rule.Engine.run(context, True)
+                
+                if not rule.executable(context):
+                   return context.not_authorized()
+ 
+                entity.reference = context.args.get('reference')
+                entity.put()
+                  
+                context.log.entities.append((entity,))
+                log.Engine.run(context)
+                   
+                context.status(entity)
                
-               if current.has_permission('close', entity) or current.key == entity.key.parent():
-                      action = entity.new_action('close', state='closed', message=values.get('message'), note=values.get('note'))
-                      entity.put()
-                      entity.record_action()
-                      response.status([entity, action])
-               else:
-                   return response.not_authorized()
-            else:
-                response.not_found()
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)   
-                       
-        return response
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
+            
+        return context
+    
+    @classmethod
+    def close(cls, args):
+      
+        action = cls._actions.get('close')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+               
+               entity.state = 'closed'
+               entity.put()
+               
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+ 
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
+ 
+ 
+    @classmethod
+    def sudo(cls, args):
+      
+        action = cls._actions.get('sudo')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               if context.args.get('state') not in ('su_opened', 'su_awaiting_closure'):
+                  return context.error('state', 'invalid_state')
+               
+               entity.state = context.args.get('state')
+               entity.put()
+               
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+     
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
+    
+    @classmethod
+    def log_message(cls, args):
+      
+        action = cls._actions.get('log_message')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           @ndb.transactional(xg=True)
+           def transaction():
+             
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+          
+               context.rule.entity = entity
+               rule.Engine.run(context, True)
+               
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.put() # ref project-documentation.py #L-244
+  
+               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+               log.Engine.run(context)
+                
+               context.status(entity)
+               
+           try:
+              transaction()
+           except Exception as e:
+              context.transaction_error(e)
+           
+        return context
    

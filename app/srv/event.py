@@ -47,4 +47,5 @@ class Engine:
           service = importlib.import_module('app.srv.%s' % context.action.service)
           service.Engine.run(context)
        else:
+          args['action'] = action_key.urlsafe()
           taskqueue.add(url='/engine-run', params=args);
