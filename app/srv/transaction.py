@@ -294,7 +294,7 @@ class Engine:
       journal.run(context)
                 
         
-    # `operation` param in transaction.Context class determines which callback of the `Engine` class will be called
+    # `operation` param in context.action determines which callback of the `transaction.Engine` class will be called
     call = getattr(cls, context.action.operation)
         
     call(context)
@@ -302,6 +302,7 @@ class Engine:
     context.run_callbacks()
  
   @classmethod
+  # this will have to be executed in transaction, since the event engine transaction will not work due to non ancestor queries...
   def write(cls, context):
     group = context.transaction.group
     if not group:
