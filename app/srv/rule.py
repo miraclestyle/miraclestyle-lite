@@ -340,9 +340,7 @@ class DomainRole(Role):
                 create = context.args.get('create')
                 
                 if create:
-                   domain_key = context.args.get('domain')
-                   domain = domain_key.get()
-                   entity = cls(namespace=domain.key.urlsafe())
+                   entity = cls(namespace=context.auth.domain.key.urlsafe())
                 else:
                    entity_key = context.args.get('key')
                    entity = entity_key.get()
