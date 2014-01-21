@@ -5,6 +5,7 @@ Created on Jan 21, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
+from google.appengine.api import mail
 
 __SYSTEM_TEMPLATES = []
 
