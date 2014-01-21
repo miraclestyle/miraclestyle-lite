@@ -43,7 +43,7 @@ class Record(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def run(cls, context):
+  def run(cls, context, transaction=False):
     
     if len(context.log.entities):
       
