@@ -19,20 +19,22 @@ class Context:
       self.callbacks = []
  
       
-  def new_callback(self, callback, **kwargs):
-     self.callbacks.append((callback, kwargs)) # something like this?
+  def new_callback(self, action_key, args):
+     self.callbacks.append((action_key, args)) # something like this?
  
   def run_callbacks(self):
-      for c in self.callbacks:
-          callback, config = c
+      for callback in self.callbacks:
+          action_key, args = callback
+          event.Engine.run(action_key, args)
+          # we rely on event engine for executing actions
           
-          if config.get('use_task_que'):
+          #if config.get('use_task_que'):
              # import taskque
              # tasque.add(...)
-             pass
-          else:
+             #pass
+          #else:
             # self is passed to the callback, because `self` contains all entries, configurations, and arguments
-            callback(self)
+            #callback(self)
             
             
 __SYSTEM_PLUGINS = []
