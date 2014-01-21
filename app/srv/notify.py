@@ -6,28 +6,31 @@ Created on Jan 21, 2014
 '''
 from app import ndb
 
-__SYSTEM_TEMPLATES = {}
+__SYSTEM_TEMPLATES = []
 
-def get_system_template(template):
-    global __SYSTEM_TEMPLATES
- 
-    return __SYSTEM_TEMPLATES.get(template.key.urlasfe())
- 
-  
-def register_system_template(*args):
+def get_system_templates(context):
+    # gets registered system templates
     global __SYSTEM_TEMPLATES
     
-    for template in args:
-        __SYSTEM_TEMPLATES[template.key.urlsafe()] = template
+    templates = []
+    
+    if context.action:
+      for template in __SYSTEM_TEMPLATES:
+          if context.action.key in template.subscriptions:
+             templates.append(template)
+ 
+    return templates
+  
+  
+def register_system_templates(*args):
+    global __SYSTEM_TEMPLATES
+    __SYSTEM_TEMPLATES.extend(args)
         
 class Context():
   
   def __init__(self):
     
-    self.message = None
-    self.templates = []
-    self.args = {}
-    self.entity = None
+    self.messages = []
     
 class Message():
   
@@ -46,17 +49,20 @@ class Template(ndb.BaseModel):
   message = ndb.SuperPickleProperty('2') # class Message
   active = ndb.SuperBooleanProperty('3', default=True)
   outlet = ndb.SuperStringProperty('4')
+  company = ndb.SuperKeyProperty('5', kind='44', required=True) # ?
+  subscriptions = ndb.SuperKeyProperty('6', kind='56', repeated=True)
  
   
   @classmethod
-  def get_local_templates(cls, template):
-      action = ndb.Key(urlsafe=action_key).get()
-      if action.active:
-         return action
-      else:
-         return None
+  def get_local_templates(cls, context):
+    templates = cls.query(cls.active == True, 
+                           cls.company == context.args.get('company'), 
+                           cls.subscriptions == context.action.key).fetch()
+         
+      return templates
+    
        
-  def process(self, args):
+  def run(self, context):
       pass
  
 class Engine:
@@ -64,12 +70,16 @@ class Engine:
   @classmethod
   def run(cls, context):
    
-    template = get_system_template(context.notify.template)
-    if not template:
-      template = Template.get_local_template(context.notify.template)
-   
-    if template:
-       template.process(context)
-       if (context.notify.message.outlet == "email"):
-          mail.send_mail(sender=context.notify.message.sender, to=context.notify.message.reciever, subject=context.notify.message.subject, body=context.notify.message.body)
+    templates = get_system_templates(context)
+    templates.extend(Template.get_local_templates(context))
+    for template in templates:
+      template.run(context)
+    
+    @classmethod
+    @ndb.transactional(xg=True)
+    def transaction(cls, context):
+    
+      for message in context.notify.messages:
+        if (message.outlet == "email"):
+          mail.send_mail(sender=message.sender, to=message.reciever, subject=message.subject, body=message.body)
     
