@@ -294,8 +294,7 @@ class DomainRole(Role):
            Engine.run(context)
              
            if not executable(context):
-              #return context.not_authorized()
-              pass
+              return context.not_authorized()
                
            domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
         

@@ -7,7 +7,7 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
-from app.srv import uom
+from app.srv import uom, event
  
  
 class Context:
@@ -26,16 +26,6 @@ class Context:
       for callback in self.callbacks:
           action_key, args = callback
           event.Engine.run(action_key, args)
-          # we rely on event engine for executing actions
-          
-          #if config.get('use_task_que'):
-             # import taskque
-             # tasque.add(...)
-             #pass
-          #else:
-            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
-            #callback(self)
-            
             
 __SYSTEM_PLUGINS = []
 

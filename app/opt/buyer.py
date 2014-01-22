@@ -15,7 +15,7 @@ class Address(ndb.BaseExpando):
     # ancestor User
     # composite index: ancestor:yes - name
     name = ndb.SuperStringProperty('1', required=True)
-    country = ndb.SuperKeyProperty('2', kind='app.srv.location.Country', required=True, indexed=False)
+    country = ndb.SuperKeyProperty('2', kind='15', required=True, indexed=False)
     city = ndb.SuperStringProperty('3', required=True, indexed=False)
     postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
     street = ndb.SuperStringProperty('5', required=True, indexed=False)
@@ -30,7 +30,7 @@ class Address(ndb.BaseExpando):
                                                ])
  
     _expando_fields = {
-        'region' :  ndb.SuperKeyProperty('8', kind='app.srv.location.CountrySubdivision'),
+        'region' :  ndb.SuperKeyProperty('8', kind='16'),
         'email' : ndb.SuperStringProperty('10'),
         'telephone' : ndb.SuperStringProperty('11'),
     }
@@ -40,7 +40,7 @@ class Address(ndb.BaseExpando):
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'country' : ndb.SuperKeyProperty(kind='app.srv.location.Country', required=True),
+                                 'country' : ndb.SuperKeyProperty(kind='15', required=True),
                                  'city' : ndb.SuperStringProperty(required=True),
                                  'postal_code' : ndb.SuperStringProperty(required=True),
                                  'street' : ndb.SuperStringProperty(required=True),
@@ -50,7 +50,7 @@ class Address(ndb.BaseExpando):
                                  'key' : ndb.SuperKeyProperty(kind='9'),
                                  
                                   # expando
-                                 'region' :  ndb.SuperKeyProperty(kind='app.srv.location.CountrySubdivision'),
+                                 'region' :  ndb.SuperKeyProperty(kind='16'),
                                  'email' : ndb.SuperStringProperty(),
                                  'telephone' : ndb.SuperStringProperty(),
                               }
@@ -322,8 +322,8 @@ class CollectionCompany(ndb.BaseModel):
     
     _kind = 11
     # ancestor User
-    company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
-    collections = ndb.SuperKeyProperty('2', kind='app.core.buyer.Collection', repeated=True)# soft limit 500x
+    company = ndb.SuperKeyProperty('1', kind='44', required=True)
+    collections = ndb.SuperKeyProperty('2', kind='10', repeated=True)# soft limit 500x
 
  
 
@@ -340,8 +340,8 @@ class CollectionCompany(ndb.BaseModel):
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'key' : ndb.SuperKeyProperty(kind='11'),
-                                 'company' : ndb.SuperKeyProperty(kind='app.domain.business.Company', required=True),
-                                 'collections' : ndb.SuperKeyProperty(kind='app.misc.buyer.Collection', repeated=True),
+                                 'company' : ndb.SuperKeyProperty(kind='44', required=True),
+                                 'collections' : ndb.SuperKeyProperty(kind='10', repeated=True),
                               }
                              ),
                 
@@ -395,8 +395,7 @@ class CollectionCompany(ndb.BaseModel):
                entity.key.delete()
                context.log.entities.append((entity,))
                log.Engine.run(context)
-               
-               context.response['deleted'] = True
+       
                context.status(entity)
                
         try:
@@ -479,8 +478,8 @@ class AggregateCollectionCatalog(ndb.BaseModel):
     # mogao bi da se uvede index na collections radi filtera: AggregateBuyerCollectionCatalog.collections = 'collection', 
     # ovaj model bi se trebao ukinuti u korist MapReduce resenja, koje bi bilo superiornije od ovog
     # composite index: ancestor:yes - catalog_published_date:desc
-    company = ndb.SuperKeyProperty('1', kind='app.domain.business.Company', required=True)
-    collections = ndb.SuperKeyProperty('2', kind='app.core.buyer.Collection', repeated=True, indexed=False)# soft limit 500x
-    catalog = ndb.SuperKeyProperty('3', kind='app.domain.marketing.Catalog', required=True, indexed=False)
+    company = ndb.SuperKeyProperty('1', kind='44', required=True)
+    collections = ndb.SuperKeyProperty('2', kind='10', repeated=True, indexed=False)# soft limit 500x
+    catalog = ndb.SuperKeyProperty('3', kind='35', required=True, indexed=False)
     catalog_cover = ndb.SuperBlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
     catalog_published_date = ndb.SuperDateTimeProperty('5', required=True)
