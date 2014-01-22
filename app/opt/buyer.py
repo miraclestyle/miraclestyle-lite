@@ -152,17 +152,22 @@ class Address(ndb.BaseExpando):
                 entity.populate(**set_args)
                 entity.put()
                 
-                     
-                all_addresses = cls.query(ancestor=context.auth.user.key).fetch()
-                
-                for address in all_addresses:
+                if (entity.default_shipping or entity.default_billing):
+                  all_addresses = cls.query(ancestor=context.auth.user.key).fetch()
+                  
+                  for address in all_addresses:
+                    log = False
                     if address.key != entity.key:
-                      if set_args.get('default_shipping'):
+                      if entity.default_shipping:
                          address.default_shipping = False
-                      if set_args.get('default_billing'):
+                         log = True
+                      if entity.default_billing:
                          address.default_billing = False
+                         log = True
+                      #if (log):
+                        #context.log.entities.append((address, ))
                          
-                ndb.put_multi(all_addresses) # no need to log default_billing and default_shipping, doesnt make sense
+                  ndb.put_multi(all_addresses) # no need to log default_billing and default_shipping, doesnt make sense
                 
                 context.log.entities.append((entity, ))
                 log.Engine.run(context)
