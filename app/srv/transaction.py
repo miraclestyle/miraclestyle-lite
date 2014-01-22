@@ -16,18 +16,6 @@ class Context:
  
       self.group = None
       self.entities = collections.OrderedDict()
-      self.callbacks = []
- 
-      
-  def new_callback(self, action_key, args):
-     self.callbacks.append((action_key, args)) # something like this?
- 
-  def run_callbacks(self):
-      for callback in self.callbacks:
-          action_key, args = callback
-          event.Engine.run(action_key, args)
-            
-__SYSTEM_PLUGINS = []
 
 def get_system_plugins(journal, context):
     # gets registered system journals
@@ -290,8 +278,6 @@ class Engine:
     call = getattr(cls, context.action.operation)
         
     call(context)
-        
-    context.run_callbacks()
  
   @classmethod
   def write(cls, context):
