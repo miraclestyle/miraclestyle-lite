@@ -16,25 +16,6 @@ class Context:
  
       self.group = None
       self.entities = collections.OrderedDict()
-      self.callbacks = []
- 
-      
-  def new_callback(self, action_key, args):
-     self.callbacks.append((action_key, args)) # something like this?
- 
-  def run_callbacks(self):
-      for callback in self.callbacks:
-          action_key, args = callback
-          event.Engine.run(action_key, args)
-          # we rely on event engine for executing actions
-          
-          #if config.get('use_task_que'):
-             # import taskque
-             # tasque.add(...)
-             #pass
-          #else:
-            # self is passed to the callback, because `self` contains all entries, configurations, and arguments
-            #callback(self)
             
             
 __SYSTEM_PLUGINS = []
@@ -300,8 +281,6 @@ class Engine:
     call = getattr(cls, context.action.operation)
         
     call(context)
-        
-    context.run_callbacks()
  
   @classmethod
   def write(cls, context):
