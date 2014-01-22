@@ -21,6 +21,10 @@ class Context():
     self.auth = auth.Context()
     self.response = {}
     self.args = {}
+    self.callbacks = []
+    
+  def new_callback(self, action_key, args):
+    self.callbacks.append((action_key, args))
     
   def transaction_error(self, e):
      """
