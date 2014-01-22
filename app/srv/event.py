@@ -32,20 +32,37 @@ def register_system_action(*args):
         __SYSTEM_ACTIONS[action.key.urlsafe()] = action
  
 class Engine:
-  
+
   @classmethod
-  def run(cls, action_key, args):
-    
+  def get_action(cls, action_key):
     action = get_system_action(action_key)
     if not action:
       action = io.Action.get_local_action(action_key)
-    
+    return action
+      
+  @classmethod
+  def run_action(cls, action, args):
     if action:
-       if action.realtime:
-          context = action.process(args)
+      if action.realtime:
+        context = action.process(args)
+        
+        service = importlib.import_module('app.srv.%s' % context.action.service)
+        service.Engine.run(context)
+        return context
+      else:
+        args['action'] = action_key.urlsafe()
+        taskqueue.add(url='/engine-run', params=args);
+    
+  @classmethod
+  def run(cls, action_key, args):
+    
+    action = get_action(action_key)
+    context = run_action(action)
+    
+    if context and len(context.callbacks):
+      for callback in context.callbacks:
+          action_key, args = callback
+          action = get_action(action_key)
+          run_action(action)
+
           
-          service = importlib.import_module('app.srv.%s' % context.action.service)
-          service.Engine.run(context)
-       else:
-          args['action'] = action_key.urlsafe()
-          taskqueue.add(url='/engine-run', params=args);
