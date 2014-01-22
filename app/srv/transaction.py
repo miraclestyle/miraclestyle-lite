@@ -7,7 +7,7 @@ Created on Dec 17, 2013
 import collections
 
 from app import ndb
-from app.srv import uom, event
+from app.srv import uom
  
  
 class Context:
@@ -16,6 +16,9 @@ class Context:
  
       self.group = None
       self.entities = collections.OrderedDict()
+
+
+__SYSTEM_PLUGINS = []
 
 def get_system_plugins(journal, context):
     # gets registered system journals
