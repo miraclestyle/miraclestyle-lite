@@ -19,7 +19,7 @@ from google.appengine.ext import blobstore
 # done!
 class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 43
+    _kind = 43
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # composite index: ancestor:yes - title
@@ -128,7 +128,7 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
 # done!
 class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 42
+    _kind = 42
     
     # ancestor DomainCatalog (future - root) (namespace Domain)
     # http://v6apps.openerp.com/addon/1809
@@ -250,7 +250,7 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
 
 class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 38
+    _kind = 38
     
     # ancestor DomainCatalog (future - root / namespace Domain)
     # composite index: ancestor:yes - name
@@ -516,7 +516,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
 # done!
 class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 39
+    _kind = 39
     
     # ancestor DomainProductTemplate
     #variant_signature se gradi na osnovu ProductVariant entiteta vezanih za ProductTemplate-a (od aktuelne ProductInstance) preko ProductTemplateVariant 
@@ -651,7 +651,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
 # done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
 class InventoryLog(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 40
+    _kind = 40
     
     # ancestor DomainProductInstance (namespace Domain)
     # key za DomainProductInventoryLog ce se graditi na sledeci nacin:
@@ -666,7 +666,7 @@ class InventoryLog(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
 # done!
 class InventoryAdjustment(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
     
-    KIND_ID = 41
+    _kind = 41
     
     # ancestor DomainProductInstance (namespace Domain)
     # not logged ?

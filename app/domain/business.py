@@ -75,7 +75,7 @@ class Company(ndb.BaseExpando):
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'parent_record' : ndb.SuperKeyProperty(kind='44', required=False),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'logo' : ndb.SuperImageKeyProperty(required=True),
+                                 'logo' : ndb.SuperImageKeyProperty(),
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
                                  
                                  # expando
@@ -89,11 +89,15 @@ class Company(ndb.BaseExpando):
                                  'currency' : ndb.SuperKeyProperty(kind='19'),
                                  'paypal_email' : ndb.SuperStringProperty(),
                                  'tracking_id' : ndb.SuperStringProperty(),
-                                 'feedbacks' : ndb.SuperLocalStructuredProperty(CompanyFeedback),
+                                 'feedbacks' : ndb.SuperLocalStructuredProperty(CompanyFeedback, required=False),
                                  'location_exclusion' : ndb.SuperBooleanProperty(),
                                  
                                  # update
-                                 'key'  : ndb.SuperKeyProperty(kind='44', required=True),
+                                 'key'  : ndb.SuperKeyProperty(kind='44'),
+                                 
+                                 # upload url
+                                 
+                                 'upload_url' : ndb.SuperStringProperty(),
                                  
                                  
                               }
@@ -153,23 +157,30 @@ class Company(ndb.BaseExpando):
            def transaction():
                create = context.args.get('create')
                
-               if context.args.get('upload_url'):
-                  context.response['upload_url'] = blobstore.create_upload_url(context.args.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+               upload_url = context.args.get('upload_url')
+               if upload_url:
+                  context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
                   return context
                
-               set_args = context.args.copy()
+               set_args = {}
                
                if create:
+                  if 'domain' not in context.args:
+                      return context.required('domain')
+                  
                   entity = cls(state='open', namespace=context.auth.domain.key.urlsafe())
                   if 'logo' not in context.args:
                       return context.required('logo')
                else:
                   entity_key = context.args.get('key')
                   entity = entity_key.get()
-                  del set_args['key']
                   
-               del set_args['create']
-                
+               for field_name in cls.get_fields():
+                   if field_name in context.args:
+                      set_args[field_name] = context.args.get(field_name)
+                   
+               # only populate items that are available from expando and other
+    
                context.rule.entity = entity
                rule.Engine.run(context)
                
@@ -177,6 +188,9 @@ class Company(ndb.BaseExpando):
                   return context.not_authorized()
                   
                entity.populate(**set_args)
+               
+               ndb.make_complete_name(entity, 'name', 'parent_record')
+               
                entity.put()
                
                context.status(entity)
@@ -301,15 +315,14 @@ class Company(ndb.BaseExpando):
     
     @classmethod
     def list(cls, args):
+      
         action = cls._actions.get('list')
         context = action.process(args)
         
         if not context.has_error():
            
-           @ndb.transactional(xg=True)
-           def transaction():
-               context.response['companies'] = cls.query(namespace=context.auth.domain.key.urlsafe())
-              
+           context.response['companies'] = cls.query(namespace=context.auth.domain.key.urlsafe()).fetch()
+  
         return context
  
  
@@ -324,112 +337,129 @@ class CompanyContent(ndb.BaseModel):
     title = ndb.SuperStringProperty('1', required=True)
     body = ndb.SuperTextProperty('2', required=True)
     sequence = ndb.SuperIntegerProperty('3', required=True)
-    
-    
+
+
+    _global_role = rule.GlobalRole(permissions=[
+                                                rule.ActionPermission('46', io.Action.build_key('46-0').urlsafe(),
+                                                                     False, "not context.rule.entity.key_parent_entity.is_open"),
+                                                rule.ActionPermission('46', io.Action.build_key('46-1').urlsafe(),
+                                                                     False, "not context.rule.entity.key_parent_entity.is_open"),
+                                               ])
+ 
+
+    _actions = {
+       'manage' : io.Action(id='46-0',
+                              arguments={
+                                 'create' : ndb.SuperBooleanProperty(required=True),
+                                 'title' : ndb.SuperStringProperty(required=True),
+                                 'body' : ndb.SuperTextProperty(required=True),
+                                 'company' : ndb.SuperKeyProperty(kind='44'),
+                                 'sequence' : ndb.SuperIntegerProperty(required=True),
+                                 
+                                 'key' : ndb.SuperKeyProperty(kind='46')
+                              }
+                             ),
+                
+       'delete' : io.Action(id='46-1',
+                              arguments={
+                                   'key' : ndb.SuperKeyProperty(kind='46', required=True)
+                              }
+                             ),
+                
+       'list' : io.Action(id='46-2',
+                              arguments={
+                                  'company' : ndb.SuperKeyProperty(kind='44'),
+                              }
+                             ),
+    }  
+ 
+    @classmethod
+    def list(cls, args):
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+           company_key = context.args.get('company')
+           company = company_key.get()
+           if not company.is_open:
+              return context.error('company', 'not_open')
+           context.response['company_contents'] = cls.query(ancestor=company_key).fetch()
+              
+        return context
+         
     @classmethod
     def delete(cls, args):
+        
+        action = cls._actions.get('delete')
+        context = action.process(args)
+
+        if not context.has_error():
+          
+          @ndb.transactional(xg=True)
+          def transaction():
+                          
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+               context.rule.entity = entity
+               rule.Engine.run(context)
+               if not rule.executable(context):
+                  return context.not_authorized()
+                
+               entity.key.delete()
+               context.log.entities.append((entity,))
+               log.Engine.run(context)
  
-        response = ndb.Response()
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                       
-               current = ndb.get_current_user()
+               context.status(entity)
                
-               entity = cls.prepare(False, values, get_only=True)
-               
-               if entity and entity.loaded():
-                  
-                  if not entity.domain_is_active:
-                     return response.error('domain', 'not_active')
-                 
-                  if entity.get_state != 'open':
-                     return response.error('company', 'not_open') 
-                       
-                  if current.has_permission('delete', entity):
-                     entity.new_action('delete', log_object=False)
-                     entity.record_action()
-                     entity.key.delete()
-                      
-                     response.status(entity)
-                  else:
-                     return response.not_authorized()
-               else:
-                  response.not_found()      
-            
-        try:
-           transaction()
-        except Exception as e:
-           response.transaction_error(e)
-           
-        return response
-    
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
+             
+        return context
+      
     @classmethod
     def manage(cls, args):
         
-        response = ndb.Response()
-
-        @ndb.transactional(xg=True)
-        def transaction():
-             
-            current = ndb.get_current_user()
-     
-            # domain param is not mandatory, however needs to be provided when we want to create new company
-            response.process_input(values, cls, convert=[ndb.SuperKeyProperty('company', kind=Company, required=create)])
+        action = cls._actions.get('manage')
+        context = action.process(args)
+  
+        if not context.has_error():
           
-            if response.has_error():
-               return response
- 
+            @ndb.transactional(xg=True)
+            def transaction():
+              
+                create = context.args.get('create')
+   
+                if create:
+                   entity = cls(parent=context.args.get('company'))
+                else:
+                   entity_key = context.args.get('key')
+                   entity = entity_key.get()
                    
-            entity = cls.prepare(create, values)
-            
-            if entity is None:
-               return response.not_found()
-             
-            if entity and entity.loaded():
+                context.auth.domain = entity.key_namespace_entity
+       
+                context.rule.entity = entity
+                rule.Engine.run(context)
                 
-               company = entity.key.parent().get()
-               
-               if company.get_state != 'open':
-                  return response.error('company', 'not_open')
-              
-               if not entity.domain_is_active:
-                  return response.error('domain', 'not_active') 
+                if not rule.executable(context):
+                   return context.not_authorized()
+                
+                entity.title = context.args.get('title')
+                entity.body = context.args.get('body')
+                entity.sequence = context.args.get('sequence')
+                entity.put()
+                 
+                context.log.entities.append((entity, ))
+                log.Engine.run(context)
                    
-               if current.has_permission('update', entity):
-                   entity.put()
-                   entity.new_action('update')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-            else:
- 
-               company = values.get('company')  
-               if not company:
-                  return response.required('company')
+                context.status(entity)
                
-               entity = cls.prepare(create, values, parent=company)
-              
-               if not entity.domain_is_active:
-                  return response.error('domain', 'not_active')  
-              
-               company = entity.key.parent().get()
-              
-               if company.get_state != 'open':
-                  return response.error('company', 'not_open')
-                
-               if current.has_permission('create', entity): 
-                   entity.put()
-                   entity.new_action('create')
-                   entity.record_action()
-               else:
-                   return response.not_authorized()
-               
-            response.status(entity)
-           
-        try:
-            transaction()
-        except Exception as e:
-            response.transaction_error(e)
+            try:
+                transaction()
+            except Exception as e:
+                context.transaction_error(e)
             
-        return response  
+        return context
+ 

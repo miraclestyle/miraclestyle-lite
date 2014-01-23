@@ -582,10 +582,11 @@ class Domain(ndb.BaseExpando):
                   
                   # from all objects specified here, the ActionPermission will be built. So the role we are creating
                   # will have all action permissions - taken `_actions` per model
+                  from app.domain import business
                   """business.Company, business.CompanyContent, business.CompanyFeedback,
                                     marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                                     product.Content, product.Instance, product.Template._actions, product.Variant"""
-                  objects = [cls, rule.DomainRole, rule.DomainUser]
+                  objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent]
                   
                   for obj in objects:
                       for friendly_action_key, action_instance in obj._actions.items():
@@ -772,5 +773,5 @@ class Domain(ndb.BaseExpando):
     
            context.response['domains'] = cls.query().fetch()
               
-           return context
+        return context
         

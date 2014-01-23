@@ -202,10 +202,10 @@ class ProductCategory(ndb.BaseModel):
         
                context.status(entity)
                
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
            
         return context   
 

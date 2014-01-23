@@ -91,7 +91,7 @@ def factory(module_model_path):
     try:
        module = importlib.import_module(".".join(custom_kinds)) # replace util.import_module with importlib.import_module
     except Exception as e:
-       #util.logger('Failed to import %s. Error: %s' % (module_model_path, e), 'exception')
+       util.logger('Failed to import %s. Error: %s' % (module_model_path, e), 'exception')
        return None
     return getattr(module, far)
    
@@ -506,10 +506,12 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
            if info.content_type not in meta_required:
               raise DescriptiveError('invalid_file_type')
            else:
+              """
               try:
                   self.get_image_sizes(blob)
               except Exception as e:
                   raise DescriptiveError('invalid_image: %s' % e)
+              """
            
        return value
 

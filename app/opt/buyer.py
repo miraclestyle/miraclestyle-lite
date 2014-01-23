@@ -80,7 +80,7 @@ class Address(ndb.BaseExpando):
               
            context.response['addresses'] = cls.query(ancestor=user.key).fetch()
               
-           return context
+        return context
      
     @classmethod
     def delete(cls, args):
@@ -107,11 +107,11 @@ class Address(ndb.BaseExpando):
                context.response['deleted'] = True
                context.status(entity)
                
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
-           
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
+             
         return context
       
     @classmethod
@@ -133,8 +133,6 @@ class Address(ndb.BaseExpando):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
-                   if not entity_key:
-                      return context.not_found()
                    entity = entity_key.get()
                    
                 if 'key' in set_args:
@@ -233,7 +231,7 @@ class Collection(ndb.BaseModel):
               
            context.response['collections'] = cls.query(ancestor=user.key).fetch()
               
-           return context
+        return context
          
     @classmethod
     def delete(cls, args):
@@ -259,10 +257,10 @@ class Collection(ndb.BaseModel):
  
                context.status(entity)
                
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
            
         return context
       
@@ -285,8 +283,6 @@ class Collection(ndb.BaseModel):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
-                   if not entity_key:
-                      return context.not_found()
                    entity = entity_key.get()
                    
                 if 'key' in set_args:
@@ -366,7 +362,7 @@ class CollectionCompany(ndb.BaseModel):
               
            context.response['collection_companies'] = cls.query(ancestor=user.key).fetch()
               
-           return context
+        return context
          
     @classmethod
     def delete(cls, args):
@@ -392,10 +388,10 @@ class CollectionCompany(ndb.BaseModel):
        
                context.status(entity)
                
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
            
         return context
       
@@ -418,8 +414,6 @@ class CollectionCompany(ndb.BaseModel):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
-                   if not entity_key:
-                      return context.not_found()
                    entity = entity_key.get()
                    
                 if 'key' in set_args:
