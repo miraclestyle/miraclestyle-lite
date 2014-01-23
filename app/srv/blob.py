@@ -20,7 +20,7 @@ class Image(ndb.BaseModel):
     height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
     sequence = ndb.SuperIntegerProperty('6', required=True)
 
-class BlobManager():
+class Manager():
     
     """
     This class handles deletations of blobs trough the application. This approach needs to be like this,
@@ -31,7 +31,7 @@ class BlobManager():
     _UNUSED_BLOB_KEY = '_unused_blob_key'
   
     @classmethod
-    def blob_keys_from_field_storage(cls, field_storages):
+    def parse_blob_keys(cls, field_storages):
         
         if not isinstance(field_storages, (list, tuple)):
             field_storages = [field_storages]
@@ -52,29 +52,43 @@ class BlobManager():
         return out
   
     @classmethod
-    def unused_blobs(cls):
+    def get_unused_blobs(cls):
         return memcache.temp_memory_get(cls._UNUSED_BLOB_KEY, [])
+      
+    @classmethod
+    def used_blobs(cls, blob_keys):
+      
+        unused_blobs = cls.get_unused_blobs()
+        
+        if not isinstance(blob_keys, (list, tuple)):
+           blob_keys = [blob_keys]
+        
+        for blob_key in blob_keys:
+          if blob_key in unused_blobs:
+             unused_blobs.remove(blob_key)
+           
+        return unused_blobs
     
     @classmethod
-    def field_storage_used_blob(cls, field_storages):
+    def field_storage_used_blobs(cls, field_storages):
         
-        gets = cls.unused_blobs()
+        unused_blobs = cls.get_unused_blobs()
         
-        removes = cls.blob_keys_from_field_storage(field_storages)
+        removes = cls.parse_blob_keys(field_storages)
         
         for remove in removes:
-            gets.remove(remove)
+            unused_blobs.remove(remove)
             
-        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, gets)
+        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, unused_blobs)
  
     @classmethod
-    def field_storage_unused_blob(cls, field_storages):
+    def field_storage_unused_blobs(cls, field_storages):
   
-        gets = cls.unused_blobs()
+        unused_blobs = cls.get_unused_blobs()
         
-        gets.extend(cls.blob_keys_from_field_storage(field_storages))
+        unused_blobs.extend(cls.parse_blob_keys(field_storages))
         
-        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, gets)
+        memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, unused_blobs)
   
     
     @classmethod
@@ -82,9 +96,9 @@ class BlobManager():
         
         k = cls._UNUSED_BLOB_KEY
      
-        deletes = cls.unused_blobs()
+        unused_blobs = cls.get_unused_blobs()
  
-        if len(deletes):
-           blobstore.delete(deletes)
- 
+        if len(unused_blobs):
+           blobstore.delete(unused_blobs)
            memcache.temp_memory_set(k, [])
+           

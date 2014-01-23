@@ -25,8 +25,8 @@ class Address(ndb.BaseExpando):
     _default_indexed = False
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('9', io.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', io.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', io.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', io.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
     _expando_fields = {
@@ -66,10 +66,7 @@ class Address(ndb.BaseExpando):
                               arguments={}
                              ),
     }  
-    
-    @property
-    def owner(self):
-        return self.key.parent().get()
+ 
       
     @classmethod
     def list(cls, args):
@@ -197,9 +194,9 @@ class Collection(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('10', io.Action.build_key('10-0').urlsafe(),
-                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                 rule.ActionPermission('10', io.Action.build_key('10-1').urlsafe(),
-                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
 
@@ -223,11 +220,7 @@ class Collection(ndb.BaseModel):
                               arguments={}
                              ),
     }  
-    
-    @property
-    def owner(self):
-        return self.key.parent().get()
-      
+ 
     @classmethod
     def list(cls, args):
       
@@ -334,9 +327,9 @@ class CollectionCompany(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('11', io.Action.build_key('11-0').urlsafe(),
-                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                 rule.ActionPermission('11', io.Action.build_key('11-1').urlsafe(),
-                                                                     True, "context.rule.entity.owner.key == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
 
@@ -360,11 +353,7 @@ class CollectionCompany(ndb.BaseModel):
                               arguments={}
                              ),
     }  
-    
-    @property
-    def owner(self):
-        return self.key.parent().get()
-      
+ 
     @classmethod
     def list(cls, args):
       
@@ -445,9 +434,9 @@ class CollectionCompany(ndb.BaseModel):
                 company_key = context.args.get('company')
                 company = company_key.get()
                 
-                if company.state != 'active': 
+                if company.state != 'open': 
                    # how to solve this? possible solution might be ndb.SuperKeyProperty(kind=Company, expr="value.state == 'active'", required=True) - this would be placed in arguments={}
-                   return context.error('company', 'not_active')
+                   return context.error('company', 'not_open')
                 
                 collection_keys = context.args.get('collections')
                 collections_now = []

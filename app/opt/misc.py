@@ -241,8 +241,8 @@ class SupportRequest(ndb.BaseModel):
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('24', io.Action.build_key('24-0').urlsafe(), True, "not context.auth.user.is_guest"),
                                                 rule.ActionPermission('24', io.Action.build_key('24-1').urlsafe(), True, "context.auth.user.root_admin and context.rule.entity.state in ['new', 'su_opened']"),
-                                                rule.ActionPermission('24', io.Action.build_key('24-2').urlsafe(), True, "(context.rule.entity.owner.key == context.auth.user.key) and (context.rule.entity.state in ['su_opened', 'su_awaiting_closure'])"),
-                                                rule.ActionPermission('24', io.Action.build_key('24-3').urlsafe(), True, "(context.rule.entity.state in ['new', 'su_opened', 'su_awaiting_closure']) and (context.auth.user.root_admin or context.rule.entity.owner.key == context.auth.user.key)"),
+                                                rule.ActionPermission('24', io.Action.build_key('24-2').urlsafe(), True, "(context.rule.entity.key_parent == context.auth.user.key) and (context.rule.entity.state in ['su_opened', 'su_awaiting_closure'])"),
+                                                rule.ActionPermission('24', io.Action.build_key('24-3').urlsafe(), True, "(context.rule.entity.state in ['new', 'su_opened', 'su_awaiting_closure']) and (context.auth.user.root_admin or context.rule.entity.key_parent == context.auth.user.key)"),
 
                                                ])
   
@@ -282,17 +282,11 @@ class SupportRequest(ndb.BaseModel):
                              ), 
  
     }  
-    
-    @property
-    def owner(self):
-      return self.key.parent().get()
-    
+ 
     def __todict__(self):
       
       d = super(SupportRequest, self).__todict__()
-      
-      from app.srv import log
-      
+ 
       d['messages'] = log.Record.query(ancestor=self.key).fetch()
       
       return d

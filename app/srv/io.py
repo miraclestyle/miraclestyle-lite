@@ -167,12 +167,12 @@ class Action(ndb.BaseExpando):
     # building of context.auth.domain sequence:
     
     if not context.has_error():  
-      if 'domain' in context.args:
-         context.auth.domain = context.args.get('domain').get()
-      elif 'key' in context.args:
+      if 'key' in context.args:
          key = context.args.get('key')
          if key.namespace():
             context.auth.domain = ndb.Key(urlsafe=key.namespace()).get()
+      elif 'domain' in context.args:
+         context.auth.domain = context.args.get('domain').get()
           
     # end context.auth.domain sequence
     

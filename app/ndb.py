@@ -167,8 +167,34 @@ class _BaseModel():
       return fields
   
   @property
-  def str_id(self):
-      return str(self.key.id())
+  def key_id(self):
+      return self.key.id()
+    
+  @property
+  def key_id_str(self):
+      return str(self.key_id)
+    
+  @property
+  def key_namespace(self):
+      return self.key.namespace()
+    
+  @property
+  def key_parent(self):
+      return self.key.parent()
+    
+  @property
+  def key_namespace_entity(self):
+      if self.key.namespace():
+         return Key(urlsafe=self.key.namespace()).get()
+      else:
+         return None
+       
+  @property
+  def key_parent_entity(self):
+      if self.key.parent():
+         return self.key.parent().get()
+      else:
+         return None
  
 class BaseModel(_BaseModel, Model):
     """ Base class for all `ndb.Model` entities """

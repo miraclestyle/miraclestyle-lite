@@ -600,7 +600,7 @@ class Domain(ndb.BaseExpando):
                   # context.log.entities.append((role, ))
                   
                    
-                  domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.str_id,
+                  domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.key_id_str,
                                             name=context.auth.user.primary_email, state='accepted',
                                             roles=[role.key])
                   

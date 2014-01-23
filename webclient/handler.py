@@ -8,14 +8,14 @@ import os
 import cgi
 import json
 import webapp2
-import collections
 import importlib
   
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
-from app.memcache import _local
 from app import settings, util
+from app.srv import blob
+from app.memcache import _local
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, Jinja
@@ -242,63 +242,11 @@ class Handler(webapp2.RequestHandler):
     LOAD_CURRENT_USER = True
  
     def __init__(self, *args, **kwargs):
+      
         super(Handler, self).__init__(*args, **kwargs)
+        
         self.data = {}
         self.template = {'base' : 'index.html'}
-        self.__uploads = None
-        self.__file_infos = None
-        
-        
-    def get_uploads(self, field_name=None):
-        """Get uploads sent to this handler.
-    
-        Args:
-          field_name: Only select uploads that were sent as a specific field.
-    
-        Returns:
-          A list of BlobInfo records corresponding to each upload.
-          Empty list if there are no blob-info records for field_name.
-        """
-        if self.__uploads is None:
-          self.__uploads = collections.defaultdict(list)
-          for key, value in self.request.params.items():
-            if isinstance(value, cgi.FieldStorage):
-              if 'blob-key' in value.type_options:
-                self.__uploads[key].append(blobstore.parse_blob_info(value))
-    
-        if field_name:
-          return list(self.__uploads.get(field_name, []))
-        else:
-          results = []
-          for uploads in self.__uploads.itervalues():
-            results.extend(uploads)
-          return results
-
-    def get_file_infos(self, field_name=None):
-        """Get the file infos associated to the uploads sent to this handler.
-    
-        Args:
-          field_name: Only select uploads that were sent as a specific field.
-            Specify None to select all the uploads.
-    
-        Returns:
-          A list of FileInfo records corresponding to each upload.
-          Empty list if there are no FileInfo records for field_name.
-        """
-        if self.__file_infos is None:
-          self.__file_infos = collections.defaultdict(list)
-          for key, value in self.request.params.items():
-            if isinstance(value, cgi.FieldStorage):
-              if 'blob-key' in value.type_options:
-                self.__file_infos[key].append(blobstore.parse_file_info(value))
-    
-        if field_name:
-          return list(self.__file_infos.get(field_name, []))
-        else:
-          results = []
-          for uploads in self.__file_infos.itervalues():
-            results.extend(uploads)
-          return results    
  
         
     def initialize(self, request, response):
@@ -307,10 +255,10 @@ class Handler(webapp2.RequestHandler):
         # its just bunch of shorthands that are useful for parsing input
         self.reqdata = RequestData(self.request)
         
-        for param in self.request.params.items():
-            # register all blobs that got uploaded
-            # ndb.BlobManager.field_storage_unused_blob(param)
-            pass
+        for key, value in self.request.params.items():
+            if isinstance(value, cgi.FieldStorage):
+              if 'blob-key' in value.type_options:
+                  blob.Manager.field_storage_unused_blobs(value)
         
   
     def send_json(self, data):
@@ -378,11 +326,10 @@ class Handler(webapp2.RequestHandler):
             webapp2.RequestHandler.dispatch(self)
             
             self.after()
-            
         finally:
             
             # delete all blobs that did not got used in the application execution
-            # ndb.BlobManager.delete_unused_blobs()
+            blob.Manager.delete_unused_blobs()
             
             # support the core's locals, and release them upon request complete
             _local.__release_local__()
