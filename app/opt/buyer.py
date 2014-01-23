@@ -141,7 +141,7 @@ class Address(ndb.BaseExpando):
                    del set_args['key']
               
                 context.rule.entity = entity
-                rule.Engine.run(context)
+                rule.Engine.run(context, True)
                 
                 if not rule.executable(context):
                    return context.not_authorized()
@@ -293,7 +293,7 @@ class Collection(ndb.BaseModel):
                    del set_args['key']
               
                 context.rule.entity = entity
-                rule.Engine.run(context)
+                rule.Engine.run(context, True)
                 
                 if not rule.executable(context):
                    return context.not_authorized()
@@ -426,7 +426,7 @@ class CollectionCompany(ndb.BaseModel):
                    del set_args['key']
               
                 context.rule.entity = entity
-                rule.Engine.run(context)
+                rule.Engine.run(context, True)
                 
                 if not rule.executable(context):
                    return context.not_authorized()
