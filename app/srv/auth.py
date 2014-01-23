@@ -519,6 +519,14 @@ class Domain(ndb.BaseExpando):
     @property
     def is_active(self):
         return self.state == 'active'
+    
+    @property
+    def key_namespace(self):
+      return self.key.urlsafe()
+    
+    @property
+    def key_namespace_entity(self):
+      return self
       
     def __todict__(self):
       
