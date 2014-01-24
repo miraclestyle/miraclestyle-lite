@@ -401,10 +401,9 @@ class DomainUser(ndb.BaseModel):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.auth.domain.is_active"),
                                             ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "(context.auth.domain.is_active and context.rule.entity.state == 'invited') or (context.rule.entity.state == 'accepted' and context.auth.user.key_id_str == context.rule.entity.key_id_str)"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "context.auth.user.key_id_str != context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "(context.auth.domain.is_active and context.rule.entity.state == 'invited') and (context.auth.user.key_id_str == context.rule.entity.key_id_str)"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.auth.domain.is_active or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.auth.domain.is_active"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
