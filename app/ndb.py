@@ -183,14 +183,14 @@ class _BaseModel():
       return self.key.parent()
     
   @property
-  def key_namespace_entity(self):
+  def namespace_entity(self):
       if self.key.namespace():
          return Key(urlsafe=self.key.namespace()).get()
       else:
          return None
        
   @property
-  def key_parent_entity(self):
+  def parent_entity(self):
       if self.key.parent():
          return self.key.parent().get()
       else:

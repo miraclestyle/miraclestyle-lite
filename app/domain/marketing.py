@@ -26,8 +26,8 @@ class CatalogImage(blob.Image):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not context.rule.entity.key_parent_entity.is_unpublished"),
-                                            rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not context.rule.entity.key_parent_entity.is_unpublished"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not context.rule.entity.parent_entity.state == 'unpublished'"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not context.rule.entity.parent_entity.state == 'unpublished'"),
                                              ])
  
     _actions = {
@@ -130,7 +130,7 @@ class CatalogImage(blob.Image):
                     for i,catalog_image in enumerate(catalog_images):
                         
                         context.rule.entity = catalog_image
-                        rule.Engine.run(context) # set context.auth.domain
+                        rule.Engine.run(context)
                         
                         if not rule.executable(context):
                           return context.not_authorized()
@@ -157,7 +157,7 @@ class CatalogImage(blob.Image):
         if not context.has_error():
            catalog_key = context.args.get('catalog')
            catalog = catalog_key.get()
-           if not catalog.is_unpublished:
+           if not catalog.state == 'unpublished':
               return context.error('catalog', 'not_unpublished')
            context.response['catalog_images'] = cls.query(ancestor=catalog_key).fetch()
               
@@ -181,7 +181,7 @@ class CatalogImage(blob.Image):
                
                for entity in entities:
                    context.rule.entity = entity
-                   rule.Engine.run(context) # set context.auth.domain
+                   rule.Engine.run(context)
                    if not rule.executable(context):
                       return context.not_authorized()
                     
@@ -232,13 +232,13 @@ class Catalog(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                        rule.ActionPermission('35', io.Action.build_key('35-0').urlsafe(), False, "not context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-1').urlsafe(), False, "not context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not context.rule.entity.is_unpublished"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not context.rule.entity.is_unpublished"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-0').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-1').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
                                      ])
     
     _actions = {
@@ -297,12 +297,9 @@ class Catalog(ndb.BaseExpando):
                               arguments={
                                   'domain' : ndb.SuperKeyProperty(kind='6', required=True)
                               }
-                             ),    
+                          ),    
     }  
-  
-    @property
-    def is_unpublished(self):
-        return self.state == 'unpublished'
+ 
   
     @classmethod
     def manage(cls, args):
@@ -324,10 +321,12 @@ class Catalog(ndb.BaseExpando):
                set_args = {}
                
                if create:
-                  if 'domain' not in context.args:
+                  domain_key = context.args.get('domain')
+                  domain = domain_key.get()
+                  if  not domain_key:
                       return context.required('domain')
                   
-                  entity = cls(state='unpublished', namespace=context.auth.domain.key.urlsafe())
+                  entity = cls(state='unpublished', namespace=domain.key_namespace)
                else:
                   entity_key = context.args.get('key')
                   entity = entity_key.get()
@@ -512,8 +511,11 @@ class Catalog(ndb.BaseExpando):
         context = action.process(args)
         
         if not context.has_error():
+          
+           domain_key = context.args.get('domain')
+           domain = domain_key.get()
            
-           context.response['catalogs'] = cls.query(namespace=context.auth.domain.key.urlsafe()).fetch()
+           context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
   
         return context
 

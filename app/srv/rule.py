@@ -218,7 +218,7 @@ class Engine:
       local_field_permissions = {}
       
       if not skip_user_roles:
-        domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.auth.domain.key.urlsafe())
+        domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.rule.entity.key_namespace)
         domain_user = domain_user_key.get()
         if domain_user and domain_user.state == 'accepted':
             roles = ndb.get_multi(domain_user.roles)
@@ -256,8 +256,8 @@ class DomainRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "not context.auth.domain.is_active"),
+                                            ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -296,12 +296,11 @@ class DomainRole(Role):
            if not executable(context):
               return context.not_authorized()
                
-           domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=context.auth.domain.key.urlsafe()).fetch()
+           domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=entity.key_namespace).fetch()
         
            for domain_user in domain_users:
                domain_user.roles.remove(entity.key)
-               # context.log.entities.append((user_role, ))
-
+          
            @ndb.transactional(xg=True)
            def transaction():
  
@@ -339,7 +338,11 @@ class DomainRole(Role):
                 create = context.args.get('create')
                 
                 if create:
-                   entity = cls(namespace=context.auth.domain.key.urlsafe())
+                   domain_key = context.args.get('domain')
+                   if not domain_key:
+                      return context.required('domain')
+                   domain = domain_key.get()
+                   entity = cls(namespace=domain.key_namespace)
                 else:
                    entity_key = context.args.get('key')
                    entity = entity_key.get()
@@ -399,12 +402,12 @@ class DomainUser(ndb.BaseModel):
     _default_indexed = False
     
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.auth.domain.is_active"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.auth.domain.is_active and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.auth.domain.is_active or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.auth.domain.is_active and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.auth.domain.is_active"),
+                                            ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
+                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -456,7 +459,11 @@ class DomainUser(ndb.BaseModel):
    
              get_roles = ndb.get_multi(role_keys)
              user = user_key.get()
-             domain_user = cls(id=user.key_id_str, namespace=context.auth.domain.key.urlsafe())
+             
+             domain_key = context.args.get('domain')
+             domain = domain_key.get()
+             
+             domain_user = cls(id=user.key_id_str, namespace=domain.key_namespace)
   
              context.rule.entity = domain_user
              Engine.run(context)
@@ -464,16 +471,19 @@ class DomainUser(ndb.BaseModel):
              if not executable(context):
                 return context.not_authorized()
               
-             already_invited = cls.build_key(user.key_id_str, namespace=context.auth.domain.key.urlsafe()).get()
+             already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
              
              if already_invited:
                 return context.error('user', 'already_invited')
+              
+             domain_key = context.args.get('domain')
+             domain = domain_key.get()
              
-             if user.is_active:
+             if user.state == 'active':
                 roles = []
                 for role in get_roles:
                     # avoid rogue roles
-                    if role.key.namespace() == context.auth.domain.key.urlsafe():
+                    if role.key.namespace() == domain.key_namespace:
                        roles.append(role.key)
                        
                 domain_user.populate(name=name, state='invited', roles=roles)
@@ -584,12 +594,15 @@ class DomainUser(ndb.BaseModel):
        
              if not executable(context):
                 return context.not_authorized()
+              
+             domain_key = context.args.get('domain')
+             domain = domain_key.get()
              
              get_roles = ndb.get_multi(context.args.get('roles')) 
              roles = []
              for role in get_roles:
                 # avoid rogue roles
-                if role.key.namespace() == context.auth.domain.key.urlsafe():
+                if role.key.namespace() == domain.key_namespace:
                    roles.append(role.key) 
              
              entity.name = context.args.get('name')

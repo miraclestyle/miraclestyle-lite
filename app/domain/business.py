@@ -53,19 +53,18 @@ class Company(ndb.BaseExpando):
        'street' : ndb.SuperStringProperty('12', required=False),
        'email' : ndb.SuperStringProperty('14'),
        'telephone' : ndb.SuperStringProperty('15'),
-       'currency' : ndb.SuperKeyProperty('16', kind=uom.Unit, required=False),
-       'paypal_email' : ndb.SuperStringProperty('17'),
-       'tracking_id' : ndb.SuperStringProperty('18'),
+       'currency' : ndb.SuperKeyProperty('16', kind=uom.Unit, required=False), # not solved
+       'tracking_id' : ndb.SuperStringProperty('18'), # not solved
        'feedbacks' : ndb.SuperLocalStructuredProperty(CompanyFeedback, '19', repeated=False),
-       'location_exclusion' : ndb.SuperBooleanProperty('20', default=False) 
+ 
     }
  
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('44', io.Action.build_key('44-0').urlsafe(), False, "not context.rule.entity.is_open"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-1').urlsafe(), False, "not context.rule.entity.is_open"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.is_open"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-3').urlsafe(), False, "not context.rule.entity.is_open"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-0').urlsafe(), False, "not context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-1').urlsafe(), False, "not context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-3').urlsafe(), False, "not context.rule.entity.state == 'open'"),
                                             ])
  
     _actions = {
@@ -118,14 +117,7 @@ class Company(ndb.BaseExpando):
                                  'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
-                
-       'log_message' : io.Action(id='44-3',
-                              arguments={
-                                 'key'  : ndb.SuperKeyProperty(kind='44', required=True),
-                                 'message' : ndb.SuperTextProperty(required=True),
-                                 'note' : ndb.SuperTextProperty(required=True),
-                              }
-                             ),
+   
                 
        'list' : io.Action(id='44-4',
                               arguments={
@@ -133,11 +125,7 @@ class Company(ndb.BaseExpando):
                               }
                              ),
     }
-    
-    @property
-    def is_open(self):
-        return self.state == 'open'
-    
+  
     def to_dict(self, *args, **kwargs):
       
         dic = super(Company, self).to_dict(*args, **kwargs)
@@ -165,10 +153,13 @@ class Company(ndb.BaseExpando):
                set_args = {}
                
                if create:
-                  if 'domain' not in context.args:
+                  domain_key = context.args.get('domain')
+                  if not domain_key:
                       return context.required('domain')
+                    
+                  domain = domain_key.get()
                   
-                  entity = cls(state='open', namespace=context.auth.domain.key.urlsafe())
+                  entity = cls(state='open', namespace=domain.key_namespace)
                   if 'logo' not in context.args:
                       return context.required('logo')
                else:
@@ -278,41 +269,7 @@ class Company(ndb.BaseExpando):
               context.transaction_error(e)
            
         return context
-    
-    @classmethod
-    def log_message(cls, args):
-     
-        action = cls._actions.get('log_message')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('key')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-                
-               entity.put() # ref project-documentation.py #L-244
-  
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
-           
-        return context
-    
+   
     @classmethod
     def list(cls, args):
       
@@ -320,8 +277,11 @@ class Company(ndb.BaseExpando):
         context = action.process(args)
         
         if not context.has_error():
+          
+           domain_key = context.args.get('domain')
+           domain = domain_key.get()
            
-           context.response['companies'] = cls.query(namespace=context.auth.domain.key.urlsafe()).fetch()
+           context.response['companies'] = cls.query(namespace=domain.key_namespace).fetch()
   
         return context
  
@@ -341,9 +301,9 @@ class CompanyContent(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('46', io.Action.build_key('46-0').urlsafe(),
-                                                                     False, "not context.rule.entity.key_parent_entity.is_open"),
+                                                                     False, "not context.rule.entity.parent_entity.state == 'open'"),
                                                 rule.ActionPermission('46', io.Action.build_key('46-1').urlsafe(),
-                                                                     False, "not context.rule.entity.key_parent_entity.is_open"),
+                                                                     False, "not context.rule.entity.parent_entity.state == 'open'"),
                                                ])
  
 
@@ -382,7 +342,7 @@ class CompanyContent(ndb.BaseModel):
         if not context.has_error():
            company_key = context.args.get('company')
            company = company_key.get()
-           if not company.is_open:
+           if not company.state == 'open':
               return context.error('company', 'not_open')
            context.response['company_contents'] = cls.query(ancestor=company_key).fetch()
               
@@ -437,9 +397,7 @@ class CompanyContent(ndb.BaseModel):
                 else:
                    entity_key = context.args.get('key')
                    entity = entity_key.get()
-                   
-                context.auth.domain = entity.key_namespace_entity
-       
+ 
                 context.rule.entity = entity
                 rule.Engine.run(context)
                 

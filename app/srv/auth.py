@@ -16,7 +16,6 @@ class Context():
   
   def __init__(self):
     self.user = User.current_user()
-    self.domain = None
  
   
 class Session(ndb.BaseModel):
@@ -51,7 +50,7 @@ class User(ndb.BaseExpando):
     }
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.is_active"),
+                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
                                                 # rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
@@ -121,11 +120,7 @@ class User(ndb.BaseExpando):
     @property
     def is_guest(self):
         return self.key == None
-      
-    @property
-    def is_active(self):
-        return self.state == 'active'
-    
+  
     @classmethod
     def set_current_user(cls, user, session=None):
         memcache.temp_memory_set('_current_user', user)
@@ -219,7 +214,7 @@ class User(ndb.BaseExpando):
                 
                new_state = 'active'
                
-               if user_to_update.is_active:
+               if user_to_update.state == 'active':
                   new_state = 'suspended'
                   user_to_update.sessions = [] # delete sessions
  
@@ -458,13 +453,13 @@ class Domain(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             #rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "context.args['create'] and not context.auth.user.is_guest"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.is_active"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.is_active or context.rule.entity.state == 'su_suspended'"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
                                             rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.is_active"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -516,25 +511,21 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
     }
-    
-    @property
-    def is_active(self):
-        return self.state == 'active'
-    
+ 
     @property
     def key_namespace(self):
       return self.key.urlsafe()
     
     @property
-    def key_namespace_entity(self):
+    def namespace_entity(self):
       return self
       
     def __todict__(self):
       
       d = super(Domain, self).__todict__()
       
-      d['users'] = rule.DomainUser.query(namespace=self.key.urlsafe()).fetch()
-      d['roles'] = rule.DomainRole.query(namespace=self.key.urlsafe()).fetch()
+      d['users'] = rule.DomainUser.query(namespace=self.key_namespace).fetch()
+      d['roles'] = rule.DomainRole.query(namespace=self.key_namespace).fetch()
       d['logs'] = log.Record.query(ancestor=self.key).fetch()
       
       return d

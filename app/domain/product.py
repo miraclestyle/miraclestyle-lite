@@ -47,7 +47,7 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                
                if entity and entity.loaded():
                   
-                  if not entity.domain_is_active:
+                  if not entity.domain_state == 'active':
                      return response.error('domain', 'not_active')
                  
                   if not entity.key.parent().get().is_usable:
@@ -94,7 +94,7 @@ class Content(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             if not create:
                  
-               if not entity.domain_is_active:
+               if not entity.domain_state == 'active':
                   return response.error('domain', 'not_active') 
               
                if not entity.key.parent().get().is_usable:
@@ -172,7 +172,7 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
                
                if entity and entity.loaded():
                   
-                  if not entity.domain_is_active:
+                  if not entity.domain_state == 'active':
                      return response.error('domain', 'not_active')
                  
                   if not entity.key.parent().get().is_usable:
@@ -219,7 +219,7 @@ class Variant(ndb.BaseModel, ndb.Workflow, NamespaceDomain):
              
             if entity and entity.loaded():
                  
-               if not entity.domain_is_active:
+               if not entity.domain_state == 'active':
                   return response.error('domain', 'not_active') 
               
                if not entity.key.parent().get().is_usable:
@@ -379,7 +379,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
                
                if entity and entity.loaded():
                   
-                  if not entity.domain_is_active:
+                  if not entity.domain_state == 'active':
                      return response.error('domain', 'not_active')
              
                   if not entity.key.parent().get().is_usable:
@@ -474,7 +474,7 @@ class Template(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
     
             if not create:
                  
-               if not entity.domain_is_active:
+               if not entity.domain_state == 'active':
                   return response.error('domain', 'not_active') 
               
                if not entity.key.parent().get().is_usable:
@@ -608,7 +608,7 @@ class Instance(ndb.BaseExpando, ndb.Workflow, NamespaceDomain):
              
             if entity and entity.loaded():
                  
-               if not entity.domain_is_active:
+               if not entity.domain_state == 'active':
                   return response.error('domain', 'not_active') 
                
                if current.has_permission('update', entity):
