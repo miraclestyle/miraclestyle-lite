@@ -9,7 +9,7 @@ from app.lib.safe_eval import safe_eval
 from app.srv import io, log
 
 def _check_field(context, name, key):
-    if context.entity:
+    if context.rule.entity:
       # this is like this because we can use it like writable(context, ('field1', 'field2'))
       if not isinstance(key, (tuple, list)):
          key = (key, )
