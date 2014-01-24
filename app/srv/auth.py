@@ -54,6 +54,7 @@ class User(ndb.BaseExpando):
                                                 rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.is_active"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
+                                                # rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
                                                 rule.ActionPermission('0', io.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                ])
     
@@ -463,6 +464,7 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.is_active"),
                                             rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'su_suspended'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
                                             rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.is_active"),
                                             rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                           ])
