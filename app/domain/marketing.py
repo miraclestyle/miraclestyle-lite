@@ -26,8 +26,8 @@ class CatalogImage(blob.Image):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not context.rule.entity.parent_entity.state == 'unpublished'"),
-                                            rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not context.rule.entity.parent_entity.state == 'unpublished'"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ])
  
     _actions = {
@@ -232,13 +232,13 @@ class Catalog(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                        rule.ActionPermission('35', io.Action.build_key('35-0').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-1').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.namespace_entity.state != 'active' and context.rule.entity.state == 'unpublished'"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                      ])
     
     _actions = {

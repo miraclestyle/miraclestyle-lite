@@ -61,10 +61,10 @@ class Company(ndb.BaseExpando):
  
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('44', io.Action.build_key('44-0').urlsafe(), False, "not context.rule.entity.state == 'open'"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-1').urlsafe(), False, "not context.rule.entity.state == 'open'"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.state == 'open'"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-3').urlsafe(), False, "not context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.namespace_entity.state == 'active' context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', io.Action.build_key('44-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' context.rule.entity.state == 'open')"),
                                             ])
  
     _actions = {
@@ -301,9 +301,9 @@ class CompanyContent(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('46', io.Action.build_key('46-0').urlsafe(),
-                                                                     False, "not context.rule.entity.parent_entity.state == 'open'"),
+                                                                     False, "not (context.rule.entity.namespace_entity.state == 'active' context.rule.entity.parent_entity.state == 'open')"),
                                                 rule.ActionPermission('46', io.Action.build_key('46-1').urlsafe(),
-                                                                     False, "not context.rule.entity.parent_entity.state == 'open'"),
+                                                                     False, "not (context.rule.entity.namespace_entity.state == 'active' context.rule.entity.parent_entity.state == 'open')"),
                                                ])
  
 
