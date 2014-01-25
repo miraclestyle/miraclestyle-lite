@@ -344,7 +344,7 @@ class CompanyContent(ndb.BaseModel):
            company = company_key.get()
            if not company.state == 'open':
               return context.error('company', 'not_open')
-           context.response['company_contents'] = cls.query(ancestor=company_key).fetch()
+           context.response['contents'] = cls.query(ancestor=company_key).fetch()
               
         return context
          

@@ -4,7 +4,6 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import datetime
 import cloudstorage
 
 from app import ndb, settings
@@ -28,6 +27,7 @@ class CatalogImage(blob.Image):
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
                                             rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ])
  
     _actions = {
@@ -89,26 +89,31 @@ class CatalogImage(blob.Image):
            get_images = blobstore.BlobInfo.get(image_keys)
            prepared_images = []
            
-           for image in get_images:
-               i += 1
-              
-               f = cloudstorage.open(image.gs_object_name[3:])
-               
-               blob = f.read()
-      
-               image_loaded = images.Image(image_data=blob)
-           
-               f.close()
+           for index,image in enumerate(get_images):
+             
+               try:
+                 
+                 i += 1
                 
-               prepared_images.append({
-                                 'parent' : catalog_key,
-                                 'image' : image.key(),
-                                 'content_type' : image.content_type,
-                                 'size' : image.size,
-                                 'width' : image_loaded.width,
-                                 'height' : image_loaded.height,
-                                 'sequence' : i, 
-                                })
+                 f = cloudstorage.open(image.gs_object_name[3:])
+                 
+                 blob = f.read()
+        
+                 image_loaded = images.Image(image_data=blob)
+             
+                 f.close()
+                  
+                 prepared_images.append({
+                                   'parent' : catalog_key,
+                                   'image' : image.key(),
+                                   'content_type' : image.content_type,
+                                   'size' : image.size,
+                                   'width' : image_loaded.width,
+                                   'height' : image_loaded.height,
+                                   'sequence' : i, 
+                                  })
+               except Exception as e:
+                  context.invalid('images_%s' % index)
            
            @ndb.transactional(xg=True)
            def transaction():
@@ -116,13 +121,18 @@ class CatalogImage(blob.Image):
                if prepared_images:
                    new_catalog_images = []
                    for image in prepared_images:
-                       i += 1
                        new_catalog_images.append(cls(**image))
                    saveds = ndb.put_multi(new_catalog_images)
                    for saved in saveds:
                        if saved:
-                          blob.Manager.used_blobs(saved.image)
                           context.log.entities.append((saved,))
+                          
+                   log.Engine.run(context)
+                   
+                   # after log runs, mark all blobs as used, because log can also throw error
+                   for saved in saveds:
+                       if saved:
+                          blob.Manager.used_blobs(saved.image)
                elif keys:
                     # can only do sequences
                     sequences = context.args.get('sequences')
@@ -140,7 +150,7 @@ class CatalogImage(blob.Image):
                     
                     ndb.put_multi(catalog_images)
                     
-               log.Engine.run(context)
+                    log.Engine.run(context)
            try:
               transaction()
            except Exception as e:
@@ -157,9 +167,14 @@ class CatalogImage(blob.Image):
         if not context.has_error():
            catalog_key = context.args.get('catalog')
            catalog = catalog_key.get()
-           if not catalog.state == 'unpublished':
-              return context.error('catalog', 'not_unpublished')
-           context.response['catalog_images'] = cls.query(ancestor=catalog_key).fetch()
+           
+           context.rule.entity = catalog
+           rule.Engine.run(context)
+           
+           if not rule.executable(context):
+              return context.not_authorized()
+ 
+           context.response['images'] = cls.query(ancestor=catalog_key).fetch()
               
         return context
   
@@ -221,9 +236,7 @@ class Catalog(ndb.BaseExpando):
     # Search improvements
     # product count per product category
     # rank coefficient based on store feedback
-    
-    
-    
+     
     _expando_fields = {
        'cover' :  ndb.SuperKeyProperty('8', kind=CatalogImage, required=True),# blob ce se implementirati na GCS
        'cost' : ndb.SuperDecimalProperty('9', required=True)
@@ -511,14 +524,18 @@ class Catalog(ndb.BaseExpando):
         context = action.process(args)
         
         if not context.has_error():
-          
            domain_key = context.args.get('domain')
            domain = domain_key.get()
            
+           context.rule.entity = domain
+           rule.Engine.run(context)
+           
+           if not rule.executable(context):
+              return context.not_authorized()
+ 
            context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
-  
+              
         return context
-
 # done!
 class CatalogPricetag(ndb.BaseModel):
     
@@ -533,8 +550,16 @@ class CatalogPricetag(ndb.BaseModel):
     source_position_left = ndb.SuperFloatProperty('6', required=True, indexed=False)
     value = ndb.SuperStringProperty('7', required=True, indexed=False)# $ 19.99 - ovo se handla unutar transakcije kada se radi update na unit_price od ProductTemplate ili ProductInstance
 
+    _global_role = rule.GlobalRole(permissions=[
+                                            # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
+                                            rule.ActionPermission('34', io.Action.build_key('34-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('34', io.Action.build_key('34-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('34', io.Action.build_key('34-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+ 
+                                             ])
+
     _actions = {
-       'manage' : io.Action(id='36-0',
+       'manage' : io.Action(id='34-0',
                               arguments={
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  
@@ -545,26 +570,27 @@ class CatalogPricetag(ndb.BaseModel):
                                  'source_position_top' : ndb.SuperFloatProperty(required=True, indexed=False),
                                  'source_position_left' : ndb.SuperFloatProperty(required=True, indexed=False),
  
-                                 'company' : ndb.SuperKeyProperty(kind='44'),
-                                 'key' : ndb.SuperKeyProperty(kind='36')
+                                 'catalog' : ndb.SuperKeyProperty(kind='35'),
+                                 'key' : ndb.SuperKeyProperty(kind='34')
                               }
                              ),
                 
-       'delete' : io.Action(id='36-1',
+       'delete' : io.Action(id='34-1',
                               arguments={
-                                   'key' : ndb.SuperKeyProperty(kind='36', required=True)
+                                   'key' : ndb.SuperKeyProperty(kind='34', required=True)
                               }
                              ),
                 
-       'list' : io.Action(id='36-2',
+       'list' : io.Action(id='34-2',
                               arguments={
-                                  'company' : ndb.SuperKeyProperty(kind='44'),
+                                  'catalog' : ndb.SuperKeyProperty(kind='35'),
                               }
                              ),
     } 
     
     @classmethod
     def manage(cls, args):
+        # @todo value prop formatting
         
         action = cls._actions.get('manage')
         context = action.process(args)
@@ -577,7 +603,7 @@ class CatalogPricetag(ndb.BaseModel):
                 create = context.args.get('create')
    
                 if create:
-                   entity = cls(parent=context.args.get('company'))
+                   entity = cls(parent=context.args.get('catalog_key'))
                 else:
                    entity_key = context.args.get('key')
                    entity = entity_key.get()
@@ -637,6 +663,26 @@ class CatalogPricetag(ndb.BaseModel):
           except Exception as e:
              context.transaction_error(e)
              
+        return context
+    
+    @classmethod
+    def list(cls, args):
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+           catalog_key = context.args.get('catalog')
+           catalog = catalog_key.get()
+           
+           context.rule.entity = catalog
+           rule.Engine.run(context)
+           
+           if not rule.executable(context):
+              return context.not_authorized()
+ 
+           context.response['price_tags'] = cls.query(ancestor=catalog_key).fetch()
+              
         return context
 
     
