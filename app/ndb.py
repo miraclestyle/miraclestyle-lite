@@ -340,6 +340,12 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     
 class SuperPickleProperty(_BaseProperty, PickleProperty):
     pass
+  
+class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
+    pass
+  
+class SuperJsonProperty(_BaseProperty, JsonProperty):
+    pass
 
 class SuperTextProperty(_BaseProperty, TextProperty):
     
@@ -376,9 +382,7 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
            return [long(v) for v in value]
         else:
            return long(value)
- 
-class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
-    pass
+
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
   
@@ -440,56 +444,17 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
                value = blobstore.parse_blob_info(value)
            return value.key()
 
+class SuperRawProperty(SuperStringProperty):
+  
+    def format(self, value):
+ 
+       value = _property_value(self, value)
+ 
+       return value
+   
 class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
   
-    @classmethod
-    def get_image_sizes(cls, field_storages):
-         
-        @non_transactional
-        def operation(field_storages):
-            
-            sizes = dict()
-            single = False
-            
-            if not isinstance(field_storages, (list, tuple)):
-               field_storages = [field_storages]
-               single = True
-               
-            out = []
-               
-            for field_storage in field_storages:
-                
-                fileinfo = blobstore.parse_file_info(field_storage)
-                blobinfo = blobstore.parse_blob_info(field_storage)
-                
-                sizes = {}
-      
-                f = cloudstorage.open(fileinfo.gs_object_name[3:])
-                blob = f.read()
-        
-                image = images.Image(image_data=blob)
-                sizes = {}
-           
-                sizes['width'] = image.width
-                sizes['height'] = image.height
-                 
-                sizes['size'] = fileinfo.size
-                sizes['content_type'] = fileinfo.content_type
-                sizes['image'] = blobinfo.key()
-         
-                if not single:
-                   out.append(sizes)
-                else:
-                   out = sizes
-     
-                f.close()
-                
-                del blob
-                  
-            return out
-        
-        return operation(field_storages)  
-  
+ 
     def format(self, value):
  
        value = _property_value(self, value)
@@ -498,6 +463,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
           blobs = [value]
           value = blobstore.parse_blob_info(value).key()
        else:
+          blobs = value
           value = [blobstore.parse_blob_info(val).key() for val in value]
           
        for blob in blobs:
@@ -505,18 +471,9 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
               raise DescriptiveError('invalid_file_type')
-           else:
-              """
-              try:
-                  self.get_image_sizes(blob)
-              except Exception as e:
-                  raise DescriptiveError('invalid_image: %s' % e)
-              """
-           
+        
        return value
-
-class SuperJsonProperty(_BaseProperty, JsonProperty):
-    pass
+  
   
 class SuperDecimalProperty(SuperStringProperty):
     

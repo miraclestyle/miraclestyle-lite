@@ -258,6 +258,7 @@ class DomainRole(Role):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', io.Action.build_key('56-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -275,6 +276,12 @@ class DomainRole(Role):
        'delete' : io.Action(id='56-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='56'),
+                              }
+                             ),
+                
+       'list' : io.Action(id='56-2',
+                              arguments={
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
                               }
                              ),
     }
@@ -345,6 +352,9 @@ class DomainRole(Role):
                    entity = cls(namespace=domain.key_namespace)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
               
                 context.rule.entity = entity
@@ -386,6 +396,28 @@ class DomainRole(Role):
             except Exception as e:
                 context.transaction_error(e)
             
+        return context
+
+    @classmethod
+    def list(cls, args):
+      
+        action = cls._actions.get('list')
+        context = action.process(args)
+        
+        if not context.has_error():
+          
+           domain_key = context.args.get('domain')
+           domain = domain_key.get()
+           
+           context.rule.entity = domain
+           
+           Engine.run(context)
+           
+           if not executable(context):
+              return context.not_authorized()
+           
+           context.response['roles'] = cls.query(namespace=domain.key_namespace).fetch()
+  
         return context
  
 class DomainUser(ndb.BaseModel):

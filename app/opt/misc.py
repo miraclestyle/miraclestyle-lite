@@ -61,6 +61,9 @@ class Content(ndb.BaseModel):
                    entity = cls()
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
                    del set_args['key']
                    
@@ -150,6 +153,9 @@ class ProductCategory(ndb.BaseModel):
                    entity = cls()
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
                    del set_args['key']
                    

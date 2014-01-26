@@ -547,6 +547,9 @@ class Domain(ndb.BaseExpando):
                    entity = cls(state='active', primary_contact=context.auth.user.key)
                 else:
                    entity_key = context.args.get('domain')
+                   if not entity_key:
+                      return context.required('domain')
+                    
                    entity = entity_key.get()
              
                 context.rule.entity = entity
@@ -582,18 +585,19 @@ class Domain(ndb.BaseExpando):
                   
                   # from all objects specified here, the ActionPermission will be built. So the role we are creating
                   # will have all action permissions - taken `_actions` per model
-                  from app.domain import business
-                  """business.Company, business.CompanyContent, business.CompanyFeedback,
-                                    marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-                                    product.Content, product.Instance, product.Template._actions, product.Variant"""
-                  objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent]
+                  from app.domain import business, marketing, product
+            
+                  objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent,
+                             marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+                                    product.Content, product.Instance, product.Template, product.Variant]
                   
                   for obj in objects:
-                      for friendly_action_key, action_instance in obj._actions.items():
-                          permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                                   action=action_instance.key.urlsafe(),
-                                                                   executable=True,
-                                                                   condition='True'))
+                      if hasattr(obj, '_actions'):
+                        for friendly_action_key, action_instance in obj._actions.items():
+                            permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
+                                                                     action=action_instance.key.urlsafe(),
+                                                                     executable=True,
+                                                                     condition='True'))
                   
                   role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
                   role.put()

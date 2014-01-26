@@ -53,7 +53,7 @@ class CatalogImage(blob.Image):
                 
        'delete' : io.Action(id='36-1',
                               arguments={
-                                  'keys' : ndb.SuperKeyProperty(kind='36', required=True, repeated=True)
+                                  'keys' : ndb.SuperKeyProperty(kind='36', required=True)
                               }
                              ),
                 
@@ -85,17 +85,20 @@ class CatalogImage(blob.Image):
            catalog_key = context.args.get('catalog')
            
            i = cls.query(ancestor=catalog_key).count() # get last sequence
-           
-           get_images = blobstore.BlobInfo.get(image_keys)
+   
            prepared_images = []
            
-           for index,image in enumerate(get_images):
+           for index,image in enumerate(image_keys):
              
                try:
                  
                  i += 1
+                 
+                 filename = '%s/%s' % (settings.CATALOG_IMAGE_BUCKET, str(image)[16:])
+                 
+                 print filename
                 
-                 f = cloudstorage.open(image.gs_object_name[3:])
+                 f = cloudstorage.open(filename=filename)
                  
                  blob = f.read()
         
@@ -113,6 +116,7 @@ class CatalogImage(blob.Image):
                                    'sequence' : i, 
                                   })
                except Exception as e:
+                  print e
                   context.invalid('images_%s' % index)
            
            @ndb.transactional(xg=True)
@@ -250,8 +254,8 @@ class Catalog(ndb.BaseExpando):
                                         rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.namespace_entity.state != 'active' and context.rule.entity.state == 'unpublished'"),
                                         rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"), # maybe different rules for duplicate?
+                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active')"),
                                      ])
     
     _actions = {
@@ -260,8 +264,8 @@ class Catalog(ndb.BaseExpando):
                                          
                                  'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'domain' : ndb.SuperKeyProperty(kind='6'),
-                               
+                                 'company' : ndb.SuperKeyProperty(kind='44'),
+                     
                                  # update
                                  'key'  : ndb.SuperKeyProperty(kind='35'),
                                  
@@ -334,18 +338,20 @@ class Catalog(ndb.BaseExpando):
                set_args = {}
                
                if create:
-                  domain_key = context.args.get('domain')
-                  domain = domain_key.get()
-                  if  not domain_key:
-                      return context.required('domain')
+                  company_key = context.args.get('company')
+                  if not company_key:
+                     return context.required('company')
                   
-                  entity = cls(state='unpublished', namespace=domain.key_namespace)
+                  company = company_key.get() 
+                   
+                  entity = cls(state='unpublished', namespace=company.key_namespace)
                else:
                   entity_key = context.args.get('key')
+                  if not entity_key:
+                     return context.required('key')
+                   
                   entity = entity_key.get()
-            
-               # only populate items that are available from expando and other
-    
+ 
                context.rule.entity = entity
                rule.Engine.run(context)
                
@@ -354,6 +360,7 @@ class Catalog(ndb.BaseExpando):
                
                           
                entity.name = context.args.get('name')   
+               entity.company = context.args.get('company')
                entity.put()
                
                context.status(entity)
@@ -370,21 +377,24 @@ class Catalog(ndb.BaseExpando):
        
     @classmethod
     def lock(cls, args):
-      
+       
+        # @todo
+        # discontinue consequences
+       
         action = cls._actions.get('lock')
         context = action.process(args)
         
         if not context.has_error():
-          
-                       
-           entity_key = context.args.get('key')
-           entity = entity_key.get()
-          
-           cover = CatalogImage.query(ancestor=entity.key_parent).order(-CatalogImage.sequence).get(keys_only=True)
-  
+
            @ndb.transactional(xg=True)
            def transaction():
- 
+             
+           
+               entity_key = context.args.get('key')
+               entity = entity_key.get()
+              
+               cover = CatalogImage.query(ancestor=entity.key_parent).order(-CatalogImage.sequence).get(keys_only=True)
+       
                context.rule.entity = entity
                rule.Engine.run(context)
                
@@ -411,6 +421,9 @@ class Catalog(ndb.BaseExpando):
       
     @classmethod
     def discontinue(cls, args):
+      
+        # @todo
+        # discontinue consequences
       
         action = cls._actions.get('discontinue')
         context = action.process(args)
@@ -446,7 +459,12 @@ class Catalog(ndb.BaseExpando):
       
     @classmethod
     def publish(cls, args):
-      
+        
+        # @todo
+        # publish date 
+        # checking if user has enough credts
+        # and some reactions to other things when the catalog gets published
+        
         action = cls._actions.get('published')
         context = action.process(args)
         
@@ -515,6 +533,7 @@ class Catalog(ndb.BaseExpando):
       
     @classmethod
     def duplicate(cls, args):
+        # how we are going to duplicate the catalog? copy-paste the blobs?
         pass
     
     @classmethod
@@ -603,9 +622,16 @@ class CatalogPricetag(ndb.BaseModel):
                 create = context.args.get('create')
    
                 if create:
-                   entity = cls(parent=context.args.get('catalog_key'))
+                   catalog_key = context.args.get('catalog_key')
+                   if not catalog_key:
+                      return context.required('catalog')
+                    
+                   entity = cls(parent=catalog_key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
        
                 context.rule.entity = entity

@@ -133,6 +133,8 @@ class Address(ndb.BaseExpando):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
                    entity = entity_key.get()
                    
                 if 'key' in set_args:
@@ -283,6 +285,9 @@ class Collection(ndb.BaseModel):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
                    
                 if 'key' in set_args:
@@ -414,6 +419,9 @@ class CollectionCompany(ndb.BaseModel):
                    entity = cls(parent=context.auth.user.key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
                    
                 if 'key' in set_args:

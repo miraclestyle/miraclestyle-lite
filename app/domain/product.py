@@ -72,9 +72,16 @@ class Content(ndb.BaseModel):
                 create = context.args.get('create')
    
                 if create:
-                   entity = cls(parent=context.args.get('catalog'))
+                   catalog_key = context.args.get('catalog')
+                   if not catalog_key:
+                      return context.required('catalog')
+                    
+                   entity = cls(parent=catalog_key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
        
                 context.rule.entity = entity
@@ -215,9 +222,16 @@ class Variant(ndb.BaseModel):
                 create = context.args.get('create')
    
                 if create:
-                   entity = cls(parent=context.args.get('catalog'))
+                   catalog_key = context.args.get('catalog')
+                   if not catalog_key:
+                      return context.required('catalog')
+                   
+                   entity = cls(parent=catalog_key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
        
                 context.rule.entity = entity
@@ -405,9 +419,15 @@ class Template(ndb.BaseExpando):
             create = context.args.get('create')
 
             if create:
+               if not catalog_key:
+                  return context.required('catalog')
+                
                entity = cls(parent=catalog_key)
             else:
                entity_key = context.args.get('key')
+               if not entity_key:
+                  return context.required('key')
+                
                entity = entity_key.get()
                    
             prepared_images = []
@@ -728,9 +748,16 @@ class Instance(ndb.BaseExpando):
             create = context.args.get('create')
 
             if create:
+               if not catalog_key:
+                  return context.required('catalog')
+                
                entity = cls(parent=catalog_key)
             else:
                entity_key = context.args.get('key')
+               
+               if not entity_key:
+                  return context.required('key')
+               
                entity = entity_key.get()
                    
             prepared_images = []

@@ -164,6 +164,9 @@ class Company(ndb.BaseExpando):
                       return context.required('logo')
                else:
                   entity_key = context.args.get('key')
+                  if not entity_key:
+                     return context.required('key')
+                   
                   entity = entity_key.get()
                   
                for field_name in cls.get_fields():
@@ -393,9 +396,16 @@ class CompanyContent(ndb.BaseModel):
                 create = context.args.get('create')
    
                 if create:
-                   entity = cls(parent=context.args.get('company'))
+                   company_key = context.args.get('company')
+                   if not company_key:
+                      return context.required('company')
+                    
+                   entity = cls(parent=company_key)
                 else:
                    entity_key = context.args.get('key')
+                   if not entity_key:
+                      return context.required('key')
+                    
                    entity = entity_key.get()
  
                 context.rule.entity = entity
