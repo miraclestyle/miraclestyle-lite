@@ -40,22 +40,23 @@ class Engine:
       
       if action:
          cls.realtime_run(action, args)
-        
-  
+         
   @classmethod
   def realtime_run(cls, action, args):
       
       context = action.process(args)
       
-      if 'action_model' in args and 'action_key' in args:
-          action_model = ndb.factory('app.%s' % args.get('action_model'))
-          execute = getattr(action_model, args.get('aciton_key'))
-          if execute and callable(execute):
-             return execute(context)
-           
-      else:
-        service = importlib.import_module('app.srv.%s' % context.action.service)
-        return service.Engine.run(context)
+      if not context.has_error():
+        
+        if 'action_model' in args and 'action_key' in args:
+            action_model = ndb.factory('app.%s' % args.get('action_model'))
+            execute = getattr(action_model, args.get('aciton_key'))
+            if execute and callable(execute):
+               return execute(context)
+             
+        else:
+          service = importlib.import_module('app.srv.%s' % context.action.service)
+          return service.Engine.run(context)
         
       return context
 
