@@ -88,9 +88,10 @@ class Engine:
       if action.realtime:
         context = cls.realtime_run(action, args)
         if context and len(context.callbacks):
-          action_key, args = callback
-          args['action_key'] = action_key
-          taskqueue.add(url='/engine_run', params=args)
+          for callback in context.callbacks:
+            action_key, args = callback
+            args['action_key'] = action_key
+            taskqueue.add(url='/engine_run', params=args)
       else:
         taskqueue.add(url='/engine_run', params=args)
         return None
