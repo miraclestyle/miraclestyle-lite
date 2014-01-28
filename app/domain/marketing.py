@@ -113,7 +113,10 @@ class CatalogImage(blob.Image):
            prepared_images = []
            
            for image in images:
-               prepared_images.append(cls(**image.to_dict()))
+               i += 1
+               data = image.to_dict()
+               data['sequence'] = i
+               prepared_images.append(cls(**data))
            
            @ndb.transactional(xg=True)
            def transaction():

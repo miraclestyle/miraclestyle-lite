@@ -32,9 +32,33 @@ def register_system_action(*args):
         __SYSTEM_ACTIONS[action.key.urlsafe()] = action
  
 class Engine:
+  
+  @classmethod
+  def realtime_run(cls, action, args):
+      
+      context = action.process(args)
+      
+      if 'action_model' in args and 'action_key' in args:
+          action_model = ndb.factory('app.%s' % args.get('action_model'))
+          execute = getattr(action_model, args.get('aciton_key'))
+          if execute and callable(execute):
+             return execute(context)
+        
+      return context
 
   @classmethod
-  def get_action(cls, action_key):
+  def get_action(cls, args):
+    
+    action_model = args.get('action_model')
+    action_key = args.get('action_key')
+    
+    if action_model:
+       action_model = ndb.factory('app.%s' % action_model)
+       if hasattr(action_model, '_actions'):
+          actions = getattr(action_model, '_actions')
+          if action_key in actions:
+             return actions[action_key]
+    
     action = get_system_action(action_key)
     if not action:
       action = io.Action.get_local_action(action_key)
@@ -44,25 +68,21 @@ class Engine:
   def run_action(cls, action, args):
     if action:
       if action.realtime:
-        context = action.process(args)
-        
-        service = importlib.import_module('app.srv.%s' % context.action.service)
-        service.Engine.run(context)
-        return context
+         return cls.realtime_run(action, args)
       else:
-        args['action'] = action_key.urlsafe()
-        taskqueue.add(url='/engine-run', params=args);
+        taskqueue.add(url='/engine_run', params=args)
+        return None
     
   @classmethod
-  def run(cls, action_key, args):
+  def run(cls, args):
     
-    action = get_action(action_key)
-    context = run_action(action)
+    action = cls.get_action(args)
+    context = cls.run_action(action)
     
     if context and len(context.callbacks):
       for callback in context.callbacks:
           action_key, args = callback
-          action = get_action(action_key)
-          run_action(action)
+          action = cls.get_action(action_key)
+          cls.run_action(action)
 
           
