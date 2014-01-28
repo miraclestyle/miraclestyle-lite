@@ -18,7 +18,6 @@ class Image(ndb.BaseModel):
     size = ndb.SuperFloatProperty('4', required=True, indexed=False)
     width = ndb.SuperIntegerProperty('5', required=True, indexed=False)
     height = ndb.SuperIntegerProperty('6', required=True, indexed=False)
-    sequence = ndb.SuperIntegerProperty('7', required=True)
 
 class Manager():
     

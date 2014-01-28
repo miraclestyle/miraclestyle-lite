@@ -188,247 +188,227 @@ class User(ndb.BaseExpando):
         return False  
       
     @classmethod
-    def sudo(cls, args):
+    def sudo(cls, context):
       
         # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci i izuzimanje svih negativnih i neutralnih feedbackova
         # koje je user ostavio dok je bio aktivan.
-      
-        action = cls._actions.get('sudo')
-        context = action.process(args)
-        
-        if not context.has_error():
+  
+        @ndb.transactional(xg=True)
+        def transaction():
           
-           @ndb.transactional(xg=True)
-           def transaction():
+            user_to_update_key = context.args.get('key')
+            message = context.args.get('message')
+            note = context.args.get('note')
+        
+            user_to_update = user_to_update_key.get()
+            context.rule.entity = user_to_update
+            rule.Engine.run(context, True)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
              
-               user_to_update_key = context.args.get('key')
-               message = context.args.get('message')
-               note = context.args.get('note')
-           
-               user_to_update = user_to_update_key.get()
-               context.rule.entity = user_to_update
-               rule.Engine.run(context, True)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-                
-               new_state = 'active'
-               
-               if user_to_update.state == 'active':
-                  new_state = 'suspended'
-                  user_to_update.sessions = [] # delete sessions
- 
-               user_to_update.state = new_state
-               user_to_update.put()
-               
-               context.log.entities.append((user_to_update, {'message' : message, 'note' : note}))
-               log.Engine.run(context)
-               
-               context.status(user_to_update)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+            new_state = 'active'
+            
+            if user_to_update.state == 'active':
+               new_state = 'suspended'
+               user_to_update.sessions = [] # delete sessions
+
+            user_to_update.state = new_state
+            user_to_update.put()
+            
+            context.log.entities.append((user_to_update, {'message' : message, 'note' : note}))
+            log.Engine.run(context)
+            
+            context.status(user_to_update)
+            
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
            
         return context
       
     @classmethod
-    def update(cls, args):
-      
-        action = cls._actions.get('update')
-        context = action.process(args)
+    def update(cls, context):
+  
+        @ndb.transactional(xg=True)
+        def transaction():
         
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-           
-               current_user = cls.current_user()
-               context.rule.entity = current_user
-               rule.Engine.run(context, True)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-    
-               primary_email = context.args.get('primary_email')
-               disassociate = context.args.get('disassociate')
+            current_user = cls.current_user()
+            context.rule.entity = current_user
+            rule.Engine.run(context, True)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
  
-               for identity in current_user.identities:
-                   if primary_email:
-                       identity.primary = False
-                       if identity.email == primary_email:
-                          identity.primary = True
-                    
-                   if disassociate:  
-                       if identity.identity == disassociate:
-                          identity.associate = False
-                      
-               current_user.put()
-               
-               context.log.entities.append((current_user, ))
-               log.Engine.run(context)
-               
-               context.status(current_user)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+            primary_email = context.args.get('primary_email')
+            disassociate = context.args.get('disassociate')
+
+            for identity in current_user.identities:
+                if primary_email:
+                    identity.primary = False
+                    if identity.email == primary_email:
+                       identity.primary = True
+                 
+                if disassociate:  
+                    if identity.identity == disassociate:
+                       identity.associate = False
+                   
+            current_user.put()
+            
+            context.log.entities.append((current_user, ))
+            log.Engine.run(context)
+            
+            context.status(current_user)
+            
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
            
         return context
   
     
     @classmethod  
-    def logout(cls, args):
-          
-        action = cls._actions.get('logout')
-        context = action.process(args)
+    def logout(cls, context):
+ 
+        current_user = cls.current_user()
+        context.rule.entity = current_user
+        rule.Engine.run(context, True)
+       
+        if not rule.executable(context):
+           return context.not_authorized()
         
-        if not context.has_error():
-          
-          current_user = cls.current_user()
-          context.rule.entity = current_user
-          rule.Engine.run(context, True)
+        @ndb.transactional(xg=True)
+        def transaction():
+
+            if not current_user.logout_code == context.args.get('code'):
+               return context.not_authorized()
          
-          if not rule.executable(context):
-             return context.not_authorized()
-          
-          @ndb.transactional(xg=True)
-          def transaction():
-  
-              if not current_user.logout_code == context.args.get('code'):
-                 return context.not_authorized()
-           
-              if current_user.sessions:
-                 current_user.sessions = []
-   
-              current_user.put()
-              
-              context.log.entities.append((current_user, {'ip_address' : os.environ['REMOTE_ADDR']}))
-              
-              log.Engine.run(context)
-              
-              current_user.set_current_user(None, None)
-              
-              context.status('logged_out')
-          
-          try:
-              transaction()
-          except Exception as e:
-              context.transaction_error(e)
+            if current_user.sessions:
+               current_user.sessions = []
+ 
+            current_user.put()
+            
+            context.log.entities.append((current_user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+            
+            log.Engine.run(context)
+            
+            current_user.set_current_user(None, None)
+            
+            context.status('logged_out')
+        
+        try:
+            transaction()
+        except Exception as e:
+            context.transaction_error(e)
               
         return context
      
     @classmethod
-    def login(cls, args):
-        
-        action = cls._actions.get('login')
-        context = action.process(args)
-    
-        if not context.has_error():
-        
-           login_method = context.args.get('login_method')
-           error = context.args.get('error')
-           code = context.args.get('code')
-           current_user = cls.current_user()
-           
-           context.rule.entity = current_user
-           context.auth.user = current_user
-           rule.Engine.run(context, True)
+    def login(cls, context):
  
-           if not rule.executable(context):
-              return context.not_authorized()
-           
-           if login_method not in settings.LOGIN_METHODS:
-              context.error('login_method', 'not_allowed')
-           else:
-              context.response['providers'] = settings.LOGIN_METHODS
-              
-              cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
-              client = oauth2.Client(**cfg)
-              
-              context.response['authorization_url'] = client.get_authorization_code_uri()
+        login_method = context.args.get('login_method')
+        error = context.args.get('error')
+        code = context.args.get('code')
+        current_user = cls.current_user()
         
-              if error:
-                 return context.error('oauth2_error', 'rejected_account_access')
+        context.rule.entity = current_user
+        context.auth.user = current_user
+        rule.Engine.run(context, True)
+
+        if not rule.executable(context):
+           return context.not_authorized()
+        
+        if login_method not in settings.LOGIN_METHODS:
+           context.error('login_method', 'not_allowed')
+        else:
+           context.response['providers'] = settings.LOGIN_METHODS
+           
+           cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
+           client = oauth2.Client(**cfg)
+           
+           context.response['authorization_url'] = client.get_authorization_code_uri()
+     
+           if error:
+              return context.error('oauth2_error', 'rejected_account_access')
+            
+           if code:
+             
+              client.get_token(code)
+              
+              if not client.access_token:
+                 return context.error('oauth2_error', 'failed_access_token')
                
-              if code:
+              context.response['access_token'] = client.access_token
+              
+              userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
+              info = client.resource_request(url=userinfo)
+              
+              if info and 'email' in info:
                 
-                 client.get_token(code)
-                 
-                 if not client.access_token:
-                    return context.error('oauth2_error', 'failed_access_token')
+                  identity = settings.LOGIN_METHODS.get(login_method)
+                  identity_id = '%s-%s' % (info['id'], identity)
+                  email = info['email']
                   
-                 context.response['access_token'] = client.access_token
-                 
-                 userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
-                 info = client.resource_request(url=userinfo)
-                 
-                 if info and 'email' in info:
-                   
-                     identity = settings.LOGIN_METHODS.get(login_method)
-                     identity_id = '%s-%s' % (info['id'], identity)
-                     email = info['email']
+                  user = cls.query(cls.identities.identity == identity_id).get()
+                  if not user:
+                     user = cls.query(cls.emails == email).get()
+                  
+                  if user:   
                      
-                     user = cls.query(cls.identities.identity == identity_id).get()
-                     if not user:
-                        user = cls.query(cls.emails == email).get()
+                    context.rule.entity = user
+                    context.auth.user = user
+                    rule.Engine.run(context, True)
+                    
+                    if not rule.executable(context):
+                       return context.not_authorized()
                      
-                     if user:   
-                        
-                       context.rule.entity = user
-                       context.auth.user = user
-                       rule.Engine.run(context, True)
+                  
+                  @ndb.transactional(xg=True)
+                  def transaction(user):
+                    
+                     if not user or user.is_guest:
                        
-                       if not rule.executable(context):
-                          return context.not_authorized()
+                        user = cls()
+                        user.emails.append(email)
+                        user.identities.append(Identity(identity=identity_id, email=email, primary=True))
+                        user.state = 'active'
+                        session = user.new_session()
                         
-                     
-                     @ndb.transactional(xg=True)
-                     def transaction(user):
+                        user.put()
+                          
+                     else:
                        
-                        if not user or user.is_guest:
+                       if email not in user.emails:
+                          user.emails.append(email)
                           
-                           user = cls()
-                           user.emails.append(email)
-                           user.identities.append(Identity(identity=identity_id, email=email, primary=True))
-                           user.state = 'active'
-                           session = user.new_session()
-                           
-                           user.put()
-                             
-                        else:
-                          
-                          if email not in user.emails:
-                             user.emails.append(email)
-                             
-                          used_identity = user.has_identity(identity_id)
-                          
-                          if not used_identity:
-                             user.append(Identity(identity=identity_id, email=email, primary=False))
-                          else:
-                             used_identity.associated = True
-                             if used_identity.email != email:
-                                used_identity.email = email
-                          
-                          session = user.new_session()   
-                          user.put()
-                            
-                        cls.set_current_user(user, session)
-                        context.auth.user = user
-                        
-                        context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
-                        log.Engine.run(context)
+                       used_identity = user.has_identity(identity_id)
+                       
+                       if not used_identity:
+                          user.append(Identity(identity=identity_id, email=email, primary=False))
+                       else:
+                          used_identity.associated = True
+                          if used_identity.email != email:
+                             used_identity.email = email
+                       
+                       session = user.new_session()   
+                       user.put()
                          
-                        context.response.update({'user' : user,
-                                                 'authorization_code' : user.generate_authorization_code(session),
-                                                 'session' : session
-                                                 })
-                     try:
-                        transaction(user) 
-                     except Exception as e:
-                        context.transaction_error(e)
+                     cls.set_current_user(user, session)
+                     context.auth.user = user
+                     
+                     context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
+                     log.Engine.run(context)
+                      
+                     context.response.update({'user' : user,
+                                              'authorization_code' : user.generate_authorization_code(session),
+                                              'session' : session
+                                              })
+                  try:
+                     transaction(user) 
+                  except Exception as e:
+                     context.transaction_error(e)
                
         return context
       
@@ -453,8 +433,8 @@ class Domain(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            #rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "context.args['create'] and not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
@@ -464,18 +444,23 @@ class Domain(ndb.BaseExpando):
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'manage' : io.Action(id='6-0',
+       'create' : io.Action(id='6-0',
                               arguments={
-                                 'create' : ndb.SuperBooleanProperty(required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'domain' : ndb.SuperKeyProperty(kind='6'),
-                                 #'primary_contact' : ndb.SuperKeyProperty(kind='0', required=True),
+                               
+                              }
+                             ),
+                
+       'update' : io.Action(id='6-6',
+                              arguments={
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
                 
        'suspend' : io.Action(id='6-1',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True)
                               }
@@ -483,7 +468,7 @@ class Domain(ndb.BaseExpando):
                 
        'activate' : io.Action(id='6-2',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True)
                               }
@@ -491,7 +476,7 @@ class Domain(ndb.BaseExpando):
                 
        'sudo' : io.Action(id='6-3',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'state' : ndb.SuperStringProperty(required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True)
@@ -500,7 +485,7 @@ class Domain(ndb.BaseExpando):
                 
        'log_message' : io.Action(id='6-4',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True),
                               }
@@ -529,253 +514,242 @@ class Domain(ndb.BaseExpando):
       d['logs'] = log.Record.query(ancestor=self.key).fetch()
       
       return d
- 
+    
     @classmethod
-    def manage(cls, args):
-        
-        action = cls._actions.get('manage')
-        context = action.process(args)
-        
-        if not context.has_error():
+    def create(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
           
-            @ndb.transactional(xg=True)
-            def transaction():
+            entity = cls(state='active', primary_contact=context.auth.user.key)
+           
+            context.rule.entity = entity
+            
+            if not rule.executable(context):
+               return context.not_authorized()
+       
+            primary_contact = context.args.get('primary_contact')
+            
+            if not primary_contact:
+               primary_contact = context.auth.user.key
+             
+            entity.name = context.args.get('name')
+            entity.primary_contact = primary_contact
+            entity.put()
+            
+            namespace = entity.key.urlsafe()
+       
+            # build a role - possible usage of app.etc
+            
+            # from app.domain import business, marketing, product
+            
+            permissions = []
+            
+            # from all objects specified here, the ActionPermission will be built. So the role we are creating
+            # will have all action permissions - taken `_actions` per model
+            from app.domain import business, marketing, product
+      
+            objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent,
+                       marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+                              product.Content, product.Instance, product.Template, product.Variant]
+            
+            for obj in objects:
+                if hasattr(obj, '_actions'):
+                  for friendly_action_key, action_instance in obj._actions.items():
+                      permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
+                                                               action=action_instance.key.urlsafe(),
+                                                               executable=True,
+                                                               condition='True'))
+            
+            role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
+            role.put()
+            
+            # context.log.entities.append((role, ))
+            
+             
+            domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.key_id_str,
+                                      name=context.auth.user.primary_email, state='accepted',
+                                      roles=[role.key])
+            
+            domain_user.put()
+            # context.log.entities.append((domain_user, ))
               
-                create = context.args.get('create')
-                
-                if create:
-                   entity = cls(state='active', primary_contact=context.auth.user.key)
-                else:
-                   entity_key = context.args.get('domain')
-                   if not entity_key:
-                      return context.required('domain')
-                    
-                   entity = entity_key.get()
-             
-                context.rule.entity = entity
-                 
-                if not create:
-                   
-                   rule.Engine.run(context)
-                   
-                   if not rule.executable(context):
-                      return context.not_authorized()
-                    
-                elif context.auth.user.is_guest:
-                      return context.not_authorized()
-                    
-                primary_contact = context.args.get('primary_contact')
-                
-                if not primary_contact:
-                   primary_contact = context.auth.user.key
-                 
-                entity.name = context.args.get('name')
-                entity.primary_contact = primary_contact
-                entity.put()
-                
-                namespace = entity.key.urlsafe()
-                
-                if create:
-                  
-                  # build a role - possible usage of app.etc
-                  
-                  # from app.domain import business, marketing, product
-                  
-                  permissions = []
-                  
-                  # from all objects specified here, the ActionPermission will be built. So the role we are creating
-                  # will have all action permissions - taken `_actions` per model
-                  from app.domain import business, marketing, product
-            
-                  objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent,
-                             marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-                                    product.Content, product.Instance, product.Template, product.Variant]
-                  
-                  for obj in objects:
-                      if hasattr(obj, '_actions'):
-                        for friendly_action_key, action_instance in obj._actions.items():
-                            permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                                     action=action_instance.key.urlsafe(),
-                                                                     executable=True,
-                                                                     condition='True'))
-                  
-                  role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
-                  role.put()
-                  
-                  # context.log.entities.append((role, ))
-                  
-                   
-                  domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.key_id_str,
-                                            name=context.auth.user.primary_email, state='accepted',
-                                            roles=[role.key])
-                  
-                  domain_user.put()
-                  # context.log.entities.append((domain_user, ))
-                  
-                context.log.entities.append((entity,))
-                log.Engine.run(context)
-                   
-                context.status(entity)
+            context.log.entities.append((entity,))
+            log.Engine.run(context)
                
-            try:
-                transaction()
-            except Exception as e:
-                context.transaction_error(e)
+            context.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            context.transaction_error(e)
+            
+        return context
+ 
+    @classmethod
+    def update(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+    
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+         
+            context.rule.entity = entity
+             
+            rule.Engine.run(context)
+               
+            if not rule.executable(context):
+               return context.not_authorized()
+                
+            primary_contact = context.args.get('primary_contact')
+            
+            if not primary_contact:
+               primary_contact = context.auth.user.key
+             
+            entity.name = context.args.get('name')
+            entity.primary_contact = primary_contact
+            entity.put()
+            
+            context.log.entities.append((entity,))
+            log.Engine.run(context)
+               
+            context.status(entity)
+           
+        try:
+            transaction()
+        except Exception as e:
+            context.transaction_error(e)
             
         return context
       
     @classmethod
-    def suspend(cls, args):
-      
-        action = cls._actions.get('suspend')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('domain')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-               entity.state = 'suspended'
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
+    def suspend(cls, context):
  
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+        @ndb.transactional(xg=True)
+        def transaction():
+          
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+       
+            context.rule.entity = entity
+            rule.Engine.run(context)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
+            
+            entity.state = 'suspended'
+            entity.put()
+            
+            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            log.Engine.run(context)
+             
+            context.status(entity)
+
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
            
         return context
  
     @classmethod
-    def activate(cls, args):
+    def activate(cls, context):
+ 
+       @ndb.transactional(xg=True)
+       def transaction():
+         
+           entity_key = context.args.get('key')
+           entity = entity_key.get()
       
-        action = cls._actions.get('activate')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('domain')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-               entity.state = 'active'
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+           context.rule.entity = entity
+           rule.Engine.run(context)
            
-        return context
+           if not rule.executable(context):
+              return context.not_authorized()
+           
+           entity.state = 'active'
+           entity.put()
+           
+           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           log.Engine.run(context)
+            
+           context.status(entity)
+           
+       try:
+          transaction()
+       except Exception as e:
+          context.transaction_error(e)
+           
+       return context
     
     # Ova akcija suspenduje ili aktivira domenu. Ovde cemo dalje opisati posledice suspenzije
     @classmethod
-    def sudo(cls, args):
+    def sudo(cls, context):
+ 
+       @ndb.transactional(xg=True)
+       def transaction():
+         
+           entity_key = context.args.get('key')
+           entity = entity_key.get()
       
-        action = cls._actions.get('sudo')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('domain')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-                
-               if context.args.get('state') not in ('active', 'su_suspended'):
-                  return context.error('state', 'invalid_state')
-               
-               entity.state = context.args.get('state')
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
-     
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+           context.rule.entity = entity
+           rule.Engine.run(context)
            
-        return context
+           if not rule.executable(context):
+              return context.not_authorized()
+            
+           if context.args.get('state') not in ('active', 'su_suspended'):
+              return context.error('state', 'invalid_state')
+           
+           entity.state = context.args.get('state')
+           entity.put()
+           
+           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           log.Engine.run(context)
+            
+           context.status(entity)
+ 
+       try:
+          transaction()
+       except Exception as e:
+          context.transaction_error(e)
+           
+       return context
     
     @classmethod
-    def log_message(cls, args):
+    def log_message(cls, context):
+ 
+       @ndb.transactional(xg=True)
+       def transaction():
+         
+           entity_key = context.args.get('key')
+           entity = entity_key.get()
       
-        action = cls._actions.get('log_message')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('domain')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-                
-               entity.put() # ref project-documentation.py #L-244
-  
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+           context.rule.entity = entity
+           rule.Engine.run(context)
            
-        return context
+           if not rule.executable(context):
+              return context.not_authorized()
+            
+           entity.put() # ref project-documentation.py #L-244
+
+           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           log.Engine.run(context)
+            
+           context.status(entity)
+           
+       try:
+          transaction()
+       except Exception as e:
+          context.transaction_error(e)
+           
+       return context
       
     @classmethod
-    def list(cls, args):
-      
-        action = cls._actions.get('list')
-        context = action.process(args)
-        
-        if not context.has_error():
-    
-           context.response['domains'] = cls.query().fetch()
+    def list(cls, context):
+ 
+        context.response['domains'] = cls.query().fetch()
               
         return context
         

@@ -257,16 +257,24 @@ class DomainRole(Role):
   
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', io.Action.build_key('56-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('56', io.Action.build_key('56-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'manage' : io.Action(id='56-0',
+       'create' : io.Action(id='56-0',
                               arguments={
-                                 'create' : ndb.SuperBooleanProperty(required=True),
-                                 'domain' : ndb.SuperKeyProperty(kind='6'),
-                                 'key' : ndb.SuperKeyProperty(kind='56'),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'permissions' : ndb.SuperJsonProperty(required=True),
+                                 'active' : ndb.SuperBooleanProperty(default=True),
+                              }
+                             ),
+                
+       'update' : io.Action(id='56-3',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='56', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
                                  'active' : ndb.SuperBooleanProperty(default=True),
@@ -275,150 +283,150 @@ class DomainRole(Role):
                 
        'delete' : io.Action(id='56-1',
                               arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='56'),
+                                 'key' : ndb.SuperKeyProperty(kind='56', required=True),
                               }
                              ),
                 
        'list' : io.Action(id='56-2',
                               arguments={
-                                 'domain' : ndb.SuperKeyProperty(kind='6'),
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
     }
  
     @classmethod
-    def delete(cls, args):
-        
-        action = cls._actions.get('delete')
-        context = action.process(args)
-        
-        if not context.has_error():
-                         
-           entity_key = context.args.get('key')
-           entity = entity_key.get()
-           
-           context.rule.entity = entity
-           Engine.run(context)
+    def delete(cls, context):
              
-           if not executable(context):
-              return context.not_authorized()
-               
-           domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=entity.key_namespace).fetch()
+        entity_key = context.args.get('key')
+        entity = entity_key.get()
         
-           for domain_user in domain_users:
-               domain_user.roles.remove(entity.key)
+        context.rule.entity = entity
+        Engine.run(context)
           
-           @ndb.transactional(xg=True)
-           def transaction():
- 
-             if entity and entity.loaded():
-               
-                ndb.put_multi(domain_users) # write changes to DomainUser
-                
-                # log & delete
-                context.log.entities.append((entity, ))
-                entity.key.delete()
-                log.Engine.run(context)
-                 
-                context.status(entity)
-             else:
-                context.not_found()      
+        if not executable(context):
+           return context.not_authorized()
+            
+        domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=entity.key_namespace).fetch()
+     
+        for domain_user in domain_users:
+            domain_user.roles.remove(entity.key)
+       
+        @ndb.transactional(xg=True)
+        def transaction():
+
+          if entity and entity.loaded():
+            
+             ndb.put_multi(domain_users) # write changes to DomainUser
+             
+             # log & delete
+             context.log.entities.append((entity, ))
+             entity.key.delete()
+             log.Engine.run(context)
               
-           try:
-             transaction()
-           except Exception as e:
-             context.transaction_error(e)
+             context.status(entity)
+          else:
+             context.not_found()      
            
+        try:
+          transaction()
+        except Exception as e:
+          context.transaction_error(e)
+           
+        return context
+      
+    @classmethod
+    def complete_save(cls, entity, context):
+      
+        context.rule.entity = entity
+        Engine.run(context)
+        
+        if not executable(context):
+           return context.not_authorized()
+         
+        entity.name = context.args.get('name')
+        entity.active = context.args.get('active')
+            
+      
+        permissions = context.args.get('permissions')
+        set_permissions = []
+        for permission in permissions:
+          
+            if 'action' not in permission:
+               set_permissions.append(FieldPermission(permission.get('kind'),
+                                                       permission.get('field'),
+                                                       permission.get('writable'),
+                                                       permission.get('visible'), 
+                                                       permission.get('required'),
+                                                       permission.get('condition')))
+               
+            else:
+              set_permissions.append(ActionPermission(permission.get('kind'),
+                                                      permission.get('action'),
+                                                      permission.get('executable'),
+                                                      permission.get('condition')))
+        entity.permissions = set_permissions  
+        
+        entity.put()
+        
+        context.log.entities.append((entity,))
+        log.Engine.run(context)
+           
+        context.status(entity)
+      
+    @classmethod
+    def create(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+          
+            domain_key = context.args.get('domain')
+      
+            domain = domain_key.get()
+            entity = cls(namespace=domain.key_namespace)
+           
+            cls.complete_save(entity, context)  
+               
+        try:
+            transaction()
+        except Exception as e:
+            context.transaction_error(e)
+            
         return context
     
     @classmethod
-    def manage(cls, args):
+    def update(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
         
-        action = cls._actions.get('manage')
-        context = action.process(args)
-        
-        if not context.has_error():
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
           
-            @ndb.transactional(xg=True)
-            def transaction():
-              
-                create = context.args.get('create')
-                
-                if create:
-                   domain_key = context.args.get('domain')
-                   if not domain_key:
-                      return context.required('domain')
-                   domain = domain_key.get()
-                   entity = cls(namespace=domain.key_namespace)
-                else:
-                   entity_key = context.args.get('key')
-                   if not entity_key:
-                      return context.required('key')
-                    
-                   entity = entity_key.get()
-              
-                context.rule.entity = entity
-                Engine.run(context)
-                
-                if not executable(context):
-                   return context.not_authorized()
-                 
-                entity.name = context.args.get('name')
-                entity.active = context.args.get('active')
-                
-                permissions = context.args.get('permissions')
-                set_permissions = []
-                for permission in permissions:
-                  
-                    if 'action' not in permission:
-                       set_permissions.append(FieldPermission(permission.get('kind'),
-                                                               permission.get('field'),
-                                                               permission.get('writable'),
-                                                               permission.get('visible'), 
-                                                               permission.get('required'),
-                                                               permission.get('condition')))
-                       
-                    else:
-                      set_permissions.append(ActionPermission(permission.get('kind'),
-                                                              permission.get('action'),
-                                                              permission.get('executable'),
-                                                              permission.get('condition')))
-                entity.permissions = set_permissions      
-                entity.put()
-                
-                context.log.entities.append((entity,))
-                log.Engine.run(context)
-                   
-                context.status(entity)
-               
-            try:
-                transaction()
-            except Exception as e:
-                context.transaction_error(e)
+            cls.complete_save(entity, context)
+           
+        try:
+            transaction()
+        except Exception as e:
+            context.transaction_error(e)
             
         return context
 
     @classmethod
-    def list(cls, args):
-      
-        action = cls._actions.get('list')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           domain_key = context.args.get('domain')
-           domain = domain_key.get()
-           
-           context.rule.entity = domain
-           
-           Engine.run(context)
-           
-           if not executable(context):
-              return context.not_authorized()
-           
-           context.response['roles'] = cls.query(namespace=domain.key_namespace).fetch()
+    def list(cls, context):
   
-        return context
+       domain_key = context.args.get('domain')
+       domain = domain_key.get()
+       
+       context.rule.entity = domain
+       
+       Engine.run(context)
+       
+       if not executable(context):
+          return context.not_authorized()
+       
+       context.response['roles'] = cls.query(namespace=domain.key_namespace).fetch()
+  
+       return context
  
 class DomainUser(ndb.BaseModel):
     
@@ -475,145 +483,125 @@ class DomainUser(ndb.BaseModel):
  
     # Poziva novog usera u domenu
     @classmethod
-    def invite(cls, args):
-        
-        action = cls._actions.get('invite')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-          @ndb.transactional(xg=True)
-          def transaction():
-             
-             name = context.args.get('name')            
-             user_key = context.args.get('user')
-             role_keys = context.args.get('roles')
-   
-             get_roles = ndb.get_multi(role_keys)
-             user = user_key.get()
-             
-             domain_key = context.args.get('domain')
-             domain = domain_key.get()
-             
-             domain_user = cls(id=user.key_id_str, namespace=domain.key_namespace)
-  
-             context.rule.entity = domain_user
-             Engine.run(context)
-               
-             if not executable(context):
-                return context.not_authorized()
-              
-             already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
-             
-             if already_invited:
-                return context.error('user', 'already_invited')
-              
-             domain_key = context.args.get('domain')
-             domain = domain_key.get()
-             
-             if user.state == 'active':
-                roles = []
-                for role in get_roles:
-                    # avoid rogue roles
-                    if role.key.namespace() == domain.key_namespace:
-                       roles.append(role.key)
-                       
-                domain_user.populate(name=name, state='invited', roles=roles)
-                domain_user.put()
-                
-                context.log.entities.append((domain_user,))
-                log.Engine.run(context)
-                
-                context.status(domain_user)
-             else:
-                return context.error('user', 'user_not_active')      
-              
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
+    def invite(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
            
+           name = context.args.get('name')            
+           user_key = context.args.get('user')
+           role_keys = context.args.get('roles')
+ 
+           get_roles = ndb.get_multi(role_keys)
+           user = user_key.get()
+           
+           domain_key = context.args.get('domain')
+           domain = domain_key.get()
+           
+           domain_user = cls(id=user.key_id_str, namespace=domain.key_namespace)
+
+           context.rule.entity = domain_user
+           Engine.run(context)
+             
+           if not executable(context):
+              return context.not_authorized()
+            
+           already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
+           
+           if already_invited:
+              return context.error('user', 'already_invited')
+            
+           domain_key = context.args.get('domain')
+           domain = domain_key.get()
+           
+           if user.state == 'active':
+              roles = []
+              for role in get_roles:
+                  # avoid rogue roles
+                  if role.key.namespace() == domain.key_namespace:
+                     roles.append(role.key)
+                     
+              domain_user.populate(name=name, state='invited', roles=roles)
+              domain_user.put()
+              
+              context.log.entities.append((domain_user,))
+              log.Engine.run(context)
+              
+              context.status(domain_user)
+           else:
+              return context.error('user', 'user_not_active')      
+            
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+         
         return context
       
     # Uklanja postojeceg usera iz domene
     @classmethod
-    def remove(cls, args):
-        
-        action = cls._actions.get('remove')
-        context = action.process(args)
-        
-        if not context.has_error():
+    def remove(cls, context):
+  
+       @ndb.transactional(xg=True)
+       def transaction():
           
-          @ndb.transactional(xg=True)
-          def transaction():
-             
-             entity_key = context.args.get('key')            
-             entity = entity_key.get()
-             
-             context.rule.entity = entity
-             Engine.run(context)
-             
-             # if user can remove, or if the user can remove HIMSELF from the user role  
-             if not executable(context):
-                return context.not_authorized()
-             
-             entity.key.delete()
-             context.log.entities.append((entity,))
-             log.Engine.run(context)
- 
-             context.status(entity)
-             
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
-           
-        return context
+          entity_key = context.args.get('key')            
+          entity = entity_key.get()
+          
+          context.rule.entity = entity
+          Engine.run(context)
+          
+          # if user can remove, or if the user can remove HIMSELF from the user role  
+          if not executable(context):
+             return context.not_authorized()
+          
+          entity.key.delete()
+          context.log.entities.append((entity,))
+          log.Engine.run(context)
+
+          context.status(entity)
+          
+       try:
+          transaction()
+       except Exception as e:
+          context.transaction_error(e)
+        
+       return context
  
     # Prihvata poziv novog usera u domenu
     @classmethod
-    def accept(cls, args):
-      
-        action = cls._actions.get('accept')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-          @ndb.transactional(xg=True)
-          def transaction():
-             
-             entity_key = context.args.get('key')            
-             entity = entity_key.get()
-             
-             context.rule.entity = entity
-             Engine.run(context)
-             
-             if not executable(context):
-                return context.not_authorized()
-             
-             entity.state = 'accepted'
-             entity.put()
-             context.log.entities.append((entity,))
-             log.Engine.run(context)
-              
-             context.status(entity)
-             
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
+    def accept(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
            
+           entity_key = context.args.get('key')            
+           entity = entity_key.get()
+           
+           context.rule.entity = entity
+           Engine.run(context)
+           
+           if not executable(context):
+              return context.not_authorized()
+           
+           entity.state = 'accepted'
+           entity.put()
+           context.log.entities.append((entity,))
+           log.Engine.run(context)
+            
+           context.status(entity)
+           
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+         
         return context
     
     # Azurira postojeceg usera u domeni
     @classmethod
-    def update(cls, args):
-      
-        action = cls._actions.get('update')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
+    def update(cls, context):
+       
           @ndb.transactional(xg=True)
           def transaction():
              
@@ -651,4 +639,4 @@ class DomainUser(ndb.BaseModel):
           except Exception as e:
              context.transaction_error(e)
            
-        return context
+          return context

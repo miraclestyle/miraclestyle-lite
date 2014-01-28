@@ -4,19 +4,18 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import cloudstorage
-
 from app import ndb, settings
 from app.srv import blob, io, rule, log
 
 from google.appengine.ext import blobstore
-from google.appengine.api import images
  
 
 # done!
 class CatalogImage(blob.Image):
     
     _kind = 36
+    
+    sequence = ndb.SuperIntegerProperty('7', required=True)
     
     # this model is working on multiple images at once because they are always like grid....
     
@@ -26,31 +25,30 @@ class CatalogImage(blob.Image):
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
                                             rule.ActionPermission('36', io.Action.build_key('36-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('36', io.Action.build_key('36-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             rule.ActionPermission('36', io.Action.build_key('36-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             rule.ActionPermission('36', io.Action.build_key('36-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ])
  
     _actions = {
-       'multiple_manage' : io.Action(id='36-0',
+       'multiple_upload' : io.Action(id='36-0',
                               arguments={
-                                         
-                                 'create' : ndb.SuperBooleanProperty(required=True),
-                                 'images' : ndb.SuperImageKeyProperty(repeated=True),
+          
+                                 'images' : ndb.SuperLocalStructuredImageProperty(blob.Image, repeated=True),
                                  'catalog' : ndb.SuperKeyProperty(kind='35'),
-                               
-                                 # update
-                                 'keys'  : ndb.SuperKeyProperty(kind='36', repeated=True),
-                                 'sequences' : ndb.SuperIntegerProperty(repeated=True),
-                                 
-                                 # upload url
-                                 
                                  'upload_url' : ndb.SuperStringProperty(),
                                  
                                  
                               }
                              ),
- 
                 
+       'multiple_update' : io.Action(id='36-3',
+                              arguments={
+                                 'keys'  : ndb.SuperKeyProperty(kind='36', repeated=True),
+                                 'sequences' : ndb.SuperIntegerProperty(repeated=True),
+                              }
+                             ),
+  
        'delete' : io.Action(id='36-1',
                               arguments={
                                   'keys' : ndb.SuperKeyProperty(kind='36', required=True)
@@ -65,68 +63,63 @@ class CatalogImage(blob.Image):
                 
     }
      
+     
+    @classmethod
+    def multiple_update(cls, context):
+      
+          @ndb.transactional(xg=True)
+          def transaction():
+              
+              keys = context.args.get('keys')
+              sequences = context.args.get('sequences')
+              catalog_images = ndb.get_multi(keys)
+              
+              for i,catalog_image in enumerate(catalog_images):
+                  
+                  context.rule.entity = catalog_image
+                  rule.Engine.run(context)
+                  
+                  if not rule.executable(context):
+                     return context.not_authorized()
+                  
+                  catalog_image.sequence = sequences[i]
+                  context.log.entities.append((catalog_image,))
+              
+              ndb.put_multi(catalog_images)
+              
+              log.Engine.run(context)
+
+          try:
+             transaction()
+          except Exception as e:
+             context.transaction_error(e)
+                    
+          return context
+
       
     @classmethod
-    def multiple_manage(cls, args):
-
-        action = cls._actions.get('multiple_manage')
-        context = action.process(args)
-        
-        if not context.has_error():
-           
+    def multiple_upload(cls, context):
+ 
            upload_url = context.args.get('upload_url')
            
            if upload_url:
               context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
               return context
             
-           image_keys = context.args.get('images')
-           keys = context.args.get('keys')
+           images = context.args.get('images')
            catalog_key = context.args.get('catalog')
            
            i = cls.query(ancestor=catalog_key).count() # get last sequence
-   
            prepared_images = []
            
-           for index,image in enumerate(image_keys):
-             
-               try:
-                 
-                 i += 1
-                 
-                 filename = '%s/%s' % (settings.CATALOG_IMAGE_BUCKET, str(image)[16:])
-                 
-                 print filename
-                
-                 f = cloudstorage.open(filename=filename)
-                 
-                 blob = f.read()
-        
-                 image_loaded = images.Image(image_data=blob)
-             
-                 f.close()
-                  
-                 prepared_images.append({
-                                   'parent' : catalog_key,
-                                   'image' : image.key(),
-                                   'content_type' : image.content_type,
-                                   'size' : image.size,
-                                   'width' : image_loaded.width,
-                                   'height' : image_loaded.height,
-                                   'sequence' : i, 
-                                  })
-               except Exception as e:
-                  print e
-                  context.invalid('images_%s' % index)
+           for image in images:
+               prepared_images.append(cls(**image.to_dict()))
            
            @ndb.transactional(xg=True)
            def transaction():
                 
                if prepared_images:
-                   new_catalog_images = []
-                   for image in prepared_images:
-                       new_catalog_images.append(cls(**image))
-                   saveds = ndb.put_multi(new_catalog_images)
+                   saveds = ndb.put_multi(prepared_images)
                    for saved in saveds:
                        if saved:
                           context.log.entities.append((saved,))
@@ -137,85 +130,59 @@ class CatalogImage(blob.Image):
                    for saved in saveds:
                        if saved:
                           blob.Manager.used_blobs(saved.image)
-               elif keys:
-                    # can only do sequences
-                    sequences = context.args.get('sequences')
-                    catalog_images = ndb.get_multi(keys)
-                    for i,catalog_image in enumerate(catalog_images):
-                        
-                        context.rule.entity = catalog_image
-                        rule.Engine.run(context)
-                        
-                        if not rule.executable(context):
-                          return context.not_authorized()
-                        
-                        catalog_image.sequence = sequences[i]
-                        context.log.entities.append((catalog_image,))
-                    
-                    ndb.put_multi(catalog_images)
-                    
-                    log.Engine.run(context)
+ 
            try:
               transaction()
            except Exception as e:
               context.transaction_error(e)
                      
-        return context
-      
+           return context
+       
     @classmethod
-    def list(cls, args):
-      
-        action = cls._actions.get('list')
-        context = action.process(args)
-        
-        if not context.has_error():
-           catalog_key = context.args.get('catalog')
-           catalog = catalog_key.get()
-           
-           context.rule.entity = catalog
-           rule.Engine.run(context)
-           
-           if not rule.executable(context):
-              return context.not_authorized()
+    def list(cls, context):
  
-           context.response['images'] = cls.query(ancestor=catalog_key).fetch()
-              
+        catalog_key = context.args.get('catalog')
+        catalog = catalog_key.get()
+        
+        context.rule.entity = catalog
+        rule.Engine.run(context)
+        
+        if not rule.executable(context):
+           return context.not_authorized()
+
+        context.response['images'] = cls.query(ancestor=catalog_key).fetch()
+           
         return context
   
     @classmethod
-    def delete(cls, args):
-        
-        action = cls._actions.get('delete')
-        context = action.process(args)
-
-        if not context.has_error():
-          
-          @ndb.transactional(xg=True)
-          def transaction():
-                          
-               entity_keys = context.args.get('keys')
-               
-               entities = ndb.get_multi(entity_keys)
-               context.response['deleted'] = []
-               
-               for entity in entities:
-                   context.rule.entity = entity
-                   rule.Engine.run(context)
-                   if not rule.executable(context):
-                      return context.not_authorized()
-                    
-                   entity.key.delete()
-                   context.log.entities.append((entity,)) # cannot log on so many entity groups
-                    
-                   context.response['deleted'].append(entity)
-                   
-               log.Engine.run(context) # cannot log on multiple entity groups
-               
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
+    def delete(cls, context):
+  
+        @ndb.transactional(xg=True)
+        def transaction():
+                        
+             entity_keys = context.args.get('keys')
              
+             entities = ndb.get_multi(entity_keys)
+             context.response['deleted'] = []
+             
+             for entity in entities:
+                 context.rule.entity = entity
+                 rule.Engine.run(context)
+                 if not rule.executable(context):
+                    return context.not_authorized()
+                  
+                 entity.key.delete()
+                 context.log.entities.append((entity,)) # cannot log on so many entity groups
+                  
+                 context.response['deleted'].append(entity)
+                 
+             log.Engine.run(context) # cannot log on multiple entity groups
+             
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+           
         return context
       
 
@@ -251,6 +218,7 @@ class Catalog(ndb.BaseExpando):
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
                                         rule.ActionPermission('35', io.Action.build_key('35-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-7').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-2').urlsafe(), False, "context.rule.entity.namespace_entity.state != 'active' and context.rule.entity.state == 'unpublished'"),
                                         rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
@@ -259,18 +227,25 @@ class Catalog(ndb.BaseExpando):
                                      ])
     
     _actions = {
-       'manage' : io.Action(id='35-0',
+       'create' : io.Action(id='35-0',
                               arguments={
-                                         
-                                 'create' : ndb.SuperBooleanProperty(required=True),
+                         
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'company' : ndb.SuperKeyProperty(kind='44'),
-                     
-                                 # update
-                                 'key'  : ndb.SuperKeyProperty(kind='35'),
+                                 'company' : ndb.SuperKeyProperty(kind='44', required=True),
+                        
+                              }
+                             ),
+                
+       'update' : io.Action(id='35-7',
+                              arguments={
+ 
+                                 'name' : ndb.SuperStringProperty(required=True),
+                                 'company' : ndb.SuperKeyProperty(kind='44', required=True),
+                                 'key'  : ndb.SuperKeyProperty(kind='35', required=True),
                                  
                               }
                              ),
+                
                 
        'lock' : io.Action(id='35-1',
                               arguments={
@@ -316,244 +291,231 @@ class Catalog(ndb.BaseExpando):
                               }
                           ),    
     }  
+    
+    @classmethod
+    def complete_save(cls, entity, company, context):
+      
+        if company.state != 'open':
+           return context.error('company', 'not_open')
+         
+        if company.key_namespace != entity.key_namespace:
+           return context.not_authorized()
+           
+
+        context.rule.entity = entity
+        rule.Engine.run(context)
+        
+        if not rule.executable(context):
+           return context.not_authorized()
+        
+                   
+        entity.name = context.args.get('name')   
+        entity.company = context.args.get('company')
+        entity.put()
+        
+        context.status(entity)
+        
+        context.log.entities.append((entity, ))
+        log.Engine.run(context)
  
+
+    @classmethod
+    def create(cls, context):
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+  
+            company_key = context.args.get('company')
+            company = company_key.get() 
+ 
+            entity = cls(state='unpublished', namespace=company.key_namespace)
+            
+            cls.complete_save(entity, company, context)
+       
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+        
+        return context
+       
   
     @classmethod
-    def manage(cls, args):
-      
-        action = cls._actions.get('manage')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-               create = context.args.get('create')
-               
-               upload_url = context.args.get('upload_url')
-               if upload_url:
-                  context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
-                  return context
-               
-               set_args = {}
-               
-               if create:
-                  company_key = context.args.get('company')
-                  if not company_key:
-                     return context.required('company')
-                  
-                  company = company_key.get() 
-                   
-                  entity = cls(state='unpublished', namespace=company.key_namespace)
-               else:
-                  entity_key = context.args.get('key')
-                  if not entity_key:
-                     return context.required('key')
-                   
-                  entity = entity_key.get()
+    def update(cls, context):
  
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-                          
-               entity.name = context.args.get('name')   
-               entity.company = context.args.get('company')
-               entity.put()
-               
-               context.status(entity)
-               
-               context.log.entities.append((entity, ))
-               log.Engine.run(context)
+        @ndb.transactional(xg=True)
+        def transaction():
           
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
-           
+            company_key = context.args.get('company')
+            company = company_key.get() 
+ 
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+             
+            cls.complete_save(entity, company, context)
+       
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+        
         return context
        
     @classmethod
-    def lock(cls, args):
+    def lock(cls, context):
        
         # @todo
         # discontinue consequences
-       
-        action = cls._actions.get('lock')
-        context = action.process(args)
+ 
+        @ndb.transactional(xg=True)
+        def transaction():
+          
         
-        if not context.has_error():
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+           
+            cover = CatalogImage.query(ancestor=entity.key_parent).order(-CatalogImage.sequence).get(keys_only=True)
+    
+            context.rule.entity = entity
+            rule.Engine.run(context)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
+            
+            if cover:
+               entity.cover = cover
+               
+            entity.state = 'locked'
+            entity.put()
+            
+            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            log.Engine.run(context)
+             
+            context.status(entity)
 
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-           
-               entity_key = context.args.get('key')
-               entity = entity_key.get()
-              
-               cover = CatalogImage.query(ancestor=entity.key_parent).order(-CatalogImage.sequence).get(keys_only=True)
-       
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-               if cover:
-                  entity.cover = cover
-                  
-               entity.state = 'locked'
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
- 
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
-           
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+        
         return context
       
     @classmethod
-    def discontinue(cls, args):
+    def discontinue(cls, context):
       
         # @todo
         # discontinue consequences
-      
-        action = cls._actions.get('discontinue')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('key')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-               entity.state = 'discontinued'
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
  
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
-           
+        @ndb.transactional(xg=True)
+        def transaction():
+          
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+       
+            context.rule.entity = entity
+            rule.Engine.run(context)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
+            
+            entity.state = 'discontinued'
+            entity.put()
+            
+            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            log.Engine.run(context)
+             
+            context.status(entity)
+
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
+        
         return context
       
     @classmethod
-    def publish(cls, args):
+    def publish(cls, context):
         
         # @todo
         # publish date 
         # checking if user has enough credts
         # and some reactions to other things when the catalog gets published
-        
-        action = cls._actions.get('published')
-        context = action.process(args)
-        
-        if not context.has_error():
-          
-           @ndb.transactional(xg=True)
-           def transaction():
-             
-               entity_key = context.args.get('key')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-               
-               entity.state = 'published'
-               entity.put()
-               
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
  
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
-           
-        return context
-      
-    @classmethod
-    def log_message(cls, args):
-      
-        action = cls._actions.get('log_message')
-        context = action.process(args)
-        
-        if not context.has_error():
+        @ndb.transactional(xg=True)
+        def transaction():
           
-           @ndb.transactional(xg=True)
-           def transaction():
+            entity_key = context.args.get('key')
+            entity = entity_key.get()
+       
+            context.rule.entity = entity
+            rule.Engine.run(context)
+            
+            if not rule.executable(context):
+               return context.not_authorized()
+            
+            entity.state = 'published'
+            entity.put()
+            
+            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            log.Engine.run(context)
              
-               entity_key = context.args.get('key')
-               entity = entity_key.get()
-          
-               context.rule.entity = entity
-               rule.Engine.run(context)
-               
-               if not rule.executable(context):
-                  return context.not_authorized()
-                
-               entity.put() # ref project-documentation.py #L-244
-  
-               context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
-               log.Engine.run(context)
-                
-               context.status(entity)
-               
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+            context.status(entity)
+
+        try:
+           transaction()
+        except Exception as e:
+           context.transaction_error(e)
            
         return context
       
     @classmethod
-    def duplicate(cls, args):
+    def log_message(cls, context):
+  
+         @ndb.transactional(xg=True)
+         def transaction():
+           
+             entity_key = context.args.get('key')
+             entity = entity_key.get()
+        
+             context.rule.entity = entity
+             rule.Engine.run(context)
+             
+             if not rule.executable(context):
+                return context.not_authorized()
+              
+             entity.put() # ref project-documentation.py #L-244
+  
+             context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+             log.Engine.run(context)
+              
+             context.status(entity)
+             
+         try:
+            transaction()
+         except Exception as e:
+            context.transaction_error(e)
+         
+         return context
+      
+    @classmethod
+    def duplicate(cls, context):
         # how we are going to duplicate the catalog? copy-paste the blobs?
         pass
     
     @classmethod
-    def list(cls, args):
-      
-        action = cls._actions.get('list')
-        context = action.process(args)
-        
-        if not context.has_error():
-           domain_key = context.args.get('domain')
-           domain = domain_key.get()
-           
-           context.rule.entity = domain
-           rule.Engine.run(context)
-           
-           if not rule.executable(context):
-              return context.not_authorized()
+    def list(cls, context):
  
-           context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
-              
+        domain_key = context.args.get('domain')
+        domain = domain_key.get()
+        
+        context.rule.entity = domain
+        rule.Engine.run(context)
+        
+        if not rule.executable(context):
+           return context.not_authorized()
+
+        context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
+           
         return context
 # done!
 class CatalogPricetag(ndb.BaseModel):
@@ -572,25 +534,37 @@ class CatalogPricetag(ndb.BaseModel):
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
                                             rule.ActionPermission('34', io.Action.build_key('34-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('34', io.Action.build_key('34-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             rule.ActionPermission('34', io.Action.build_key('34-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             rule.ActionPermission('34', io.Action.build_key('34-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
  
                                              ])
 
     _actions = {
-       'manage' : io.Action(id='34-0',
+       'create' : io.Action(id='34-0',
                               arguments={
-                                 'create' : ndb.SuperBooleanProperty(required=True),
-                                 
-                                 'product_template' : ndb.SuperKeyProperty(kind='38', required=True, indexed=False),
-                                 'container_image' : ndb.SuperKeyProperty(kind=CatalogImage, required=True, indexed=False),# blob ce se implementirati na GCS
-                                 'source_width' : ndb.SuperFloatProperty(required=True, indexed=False),
-                                 'source_width' : ndb.SuperFloatProperty(required=True, indexed=False),
-                                 'source_position_top' : ndb.SuperFloatProperty(required=True, indexed=False),
-                                 'source_position_left' : ndb.SuperFloatProperty(required=True, indexed=False),
+                        
+                                 'product_template' : ndb.SuperKeyProperty(kind='38', required=True),
+                                 'container_image' : ndb.SuperKeyProperty(kind=CatalogImage, required=True),# blob ce se implementirati na GCS
+                                 'source_width' : ndb.SuperFloatProperty(required=True),
+                                 'source_width' : ndb.SuperFloatProperty(required=True),
+                                 'source_position_top' : ndb.SuperFloatProperty(required=True),
+                                 'source_position_left' : ndb.SuperFloatProperty(required=True),
  
-                                 'catalog' : ndb.SuperKeyProperty(kind='35'),
-                                 'key' : ndb.SuperKeyProperty(kind='34')
+                                 'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
+               
+                              }
+                             ),
+                
+       'update' : io.Action(id='34-3',
+                              arguments={
+                                 'product_template' : ndb.SuperKeyProperty(kind='38', required=True),
+                                 'container_image' : ndb.SuperKeyProperty(kind=CatalogImage, required=True),# blob ce se implementirati na GCS
+                                 'source_width' : ndb.SuperFloatProperty(required=True),
+                                 'source_width' : ndb.SuperFloatProperty(required=True),
+                                 'source_position_top' : ndb.SuperFloatProperty(required=True),
+                                 'source_position_left' : ndb.SuperFloatProperty(required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='34', required=True)
                               }
                              ),
                 
@@ -608,66 +582,69 @@ class CatalogPricetag(ndb.BaseModel):
     } 
     
     @classmethod
-    def manage(cls, args):
-        # @todo value prop formatting
-        
-        action = cls._actions.get('manage')
-        context = action.process(args)
-  
-        if not context.has_error():
-          
-            @ndb.transactional(xg=True)
-            def transaction():
-              
-                create = context.args.get('create')
-   
-                if create:
-                   catalog_key = context.args.get('catalog_key')
-                   if not catalog_key:
-                      return context.required('catalog')
-                    
-                   entity = cls(parent=catalog_key)
-                else:
-                   entity_key = context.args.get('key')
-                   if not entity_key:
-                      return context.required('key')
-                    
-                   entity = entity_key.get()
-       
-                context.rule.entity = entity
-                rule.Engine.run(context)
-                
-                if not rule.executable(context):
-                   return context.not_authorized()
-                 
-                set_args = {}
-                for field_name in cls.get_fields():
-                   if field_name in context.args:
-                      set_args[field_name] = context.args.get(field_name)
-                
-                entity.populate(**set_args)      
-                entity.put()
-                 
-                context.log.entities.append((entity, ))
-                log.Engine.run(context)
-                   
-                context.status(entity)
-               
-            try:
-                transaction()
-            except Exception as e:
-                context.transaction_error(e)
+    def complete_save(cls, entity, context):
+      
+           context.rule.entity = entity
+           rule.Engine.run(context)
+           
+           if not rule.executable(context):
+              return context.not_authorized()
             
-        return context
+           set_args = {}
+           for field_name in cls.get_fields():
+              if field_name in context.args:
+                 set_args[field_name] = context.args.get(field_name)
+           
+           entity.populate(**set_args)      
+           entity.put()
+            
+           context.log.entities.append((entity, ))
+           log.Engine.run(context)
+              
+           context.status(entity)      
+
+    
+    @classmethod
+    def create(cls, context):
+       # @todo value prop formatting
+ 
+       @ndb.transactional(xg=True)
+       def transaction():
+ 
+           catalog_key = context.args.get('catalog_key')
+           entity = cls(parent=catalog_key)
+ 
+           cls.complete_save(entity, context)
+          
+       try:
+           transaction()
+       except Exception as e:
+           context.transaction_error(e)
+       
+       return context
+    
+    @classmethod
+    def update(cls, context):
+       # @todo value prop formatting
+ 
+       @ndb.transactional(xg=True)
+       def transaction():
+  
+           entity_key = context.args.get('key')
+           entity = entity_key.get()
+  
+           cls.complete_save(entity, context)
+           
+       try:
+           transaction()
+       except Exception as e:
+           context.transaction_error(e)
+       
+       return context
       
     @classmethod
-    def delete(cls, args):
-        
-        action = cls._actions.get('delete')
-        context = action.process(args)
-
-        if not context.has_error():
-          
+    def delete(cls, context):
+ 
           @ndb.transactional(xg=True)
           def transaction():
                           
@@ -689,26 +666,22 @@ class CatalogPricetag(ndb.BaseModel):
           except Exception as e:
              context.transaction_error(e)
              
-        return context
+          return context
     
     @classmethod
-    def list(cls, args):
-      
-        action = cls._actions.get('list')
-        context = action.process(args)
-        
-        if not context.has_error():
-           catalog_key = context.args.get('catalog')
-           catalog = catalog_key.get()
-           
-           context.rule.entity = catalog
-           rule.Engine.run(context)
-           
-           if not rule.executable(context):
-              return context.not_authorized()
+    def list(cls, context):
  
-           context.response['price_tags'] = cls.query(ancestor=catalog_key).fetch()
-              
+        catalog_key = context.args.get('catalog')
+        catalog = catalog_key.get()
+        
+        context.rule.entity = catalog
+        rule.Engine.run(context)
+        
+        if not rule.executable(context):
+           return context.not_authorized()
+
+        context.response['price_tags'] = cls.query(ancestor=catalog_key).fetch()
+             
         return context
 
     

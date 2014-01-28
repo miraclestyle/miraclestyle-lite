@@ -429,19 +429,13 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
         if self._repeated:
            new = []
            for blob in value:
-               if not isinstance(blob, cgi.FieldStorage) or 'blob-key' not in blob.type_options:
-                  raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save,\
-                   got %r instead.' % blob)
-               else:
-                  v = blobstore.parse_blob_info(blob)
+               # this alone will raise error if the upload is malformed
+               v = blobstore.parse_blob_info(blob)
                new.append(v.key())
            return new
         else:
-           if not isinstance(value, cgi.FieldStorage) or 'blob-key' not in value.type_options:
-              raise ValueError('value provided is not cgi.FieldStorage instance, or its type is not blob-key, or the blob failed to save, \
-              got %r instead.' % value)
-           else:
-               value = blobstore.parse_blob_info(value)
+           # this alone wil lraise error if the upload is malformed
+           value = blobstore.parse_blob_info(value)
            return value.key()
 
 class SuperRawProperty(SuperStringProperty):
@@ -453,8 +447,7 @@ class SuperRawProperty(SuperStringProperty):
        return value
    
 class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
-  
- 
+   
     def format(self, value):
  
        value = _property_value(self, value)
@@ -467,12 +460,93 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
           value = [blobstore.parse_blob_info(val).key() for val in value]
           
        for blob in blobs:
+         
            info = blobstore.parse_file_info(blob)
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
               raise DescriptiveError('invalid_file_type')
+            
+           # this code below is used to validate if the blob that's uploaded to gcs is an image
+           cloudstorage_file = cloudstorage.open(filename=info.gs_object_name)
+                 
+           image_data = cloudstorage_file.read() # we must read the file in order to analyize width/height of an image
+           
+           # will throw error if the file is not an image, or it's just corrupted
+           load_image = images.Image(image_data=image_data)
+           
+           # closes the pipeline  
+           cloudstorage_file.close()
+           
+           del load_image, cloudstorage_file # free memory
         
        return value
+     
+     
+class SuperLocalStructuredImageProperty(_BaseProperty, SuperLocalStructuredProperty):
+    
+    @classmethod
+    def _format_value(cls, prop, value):
+      
+       # this function is used for structured and also for local because its formatting logic is identical
+
+       value = _property_value(prop, value)
+       
+       if not prop._repeated:
+          blobs = [value]
+       else:
+          blobs = value
+          
+       models = []   
+          
+       for blob in blobs:
+           
+           # these will throw errors if the `blob` is not cgi.FileStorage
+           info = blobstore.parse_file_info(blob)
+           blob_info = blobstore.parse_blob_info(blob)
+           
+           meta_required = ('image/jpeg', 'image/jpg', 'image/png')
+           if info.content_type not in meta_required:
+              raise DescriptiveError('invalid_image_type')
+ 
+           cloudstorage_file = cloudstorage.open(filename=info.gs_object_name)
+           
+           # this will throw an error if the file does not exist in cloudstorage      
+           image_data = cloudstorage_file.read() # we must read the file in order to analyize width/height of an image
+           
+           # will throw error if the file is not an image, or its corrupted
+           load_image = images.Image(image_data=image_data)
+           
+           # closes the pipeline  
+           cloudstorage_file.close()
+           
+           # _modelclass (SuperLocalStructuredImageProperty(ModelClass)) must have
+           # `width`, `height`, `size`, and `image` properties see @app.srv.blob.Image as an example
+           models.append(prop._modelclass(**{
+                                            'width' : load_image.width,
+                                            'height' : load_image.height,
+                                            'size' : info.size,
+                                            'content_type' : info.content_type,
+                                            'image' : blob_info.key(),
+                                          }))
+          
+           del image_data, load_image # free memory?
+       
+       if not prop._repeated:
+          if len(models):
+             return models[0]
+          else:
+             return None
+       else:
+          return models
+    
+    def format(self, value):
+        return self._format_value(self, value)
+      
+      
+class SuperStructuredImageProperty(_BaseProperty, StructuredProperty):
+  
+      def format(self, value):
+          return SuperLocalStructuredImageProperty._format_value(self, value)
   
   
 class SuperDecimalProperty(SuperStringProperty):
