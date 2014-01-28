@@ -225,7 +225,7 @@ class Engine:
             for role in roles:
               if role.active:
                  role.run(context)
-          
+ 
         # copy 
         local_action_permissions = context.rule.entity._action_permissions.copy()
         local_field_permissions = context.rule.entity._field_permissions.copy()

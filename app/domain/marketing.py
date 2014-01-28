@@ -35,7 +35,7 @@ class CatalogImage(blob.Image):
                               arguments={
           
                                  'images' : ndb.SuperLocalStructuredImageProperty(blob.Image, repeated=True),
-                                 'catalog' : ndb.SuperKeyProperty(kind='35'),
+                                 'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
                                  'upload_url' : ndb.SuperStringProperty(),
                                  
                                  
@@ -88,6 +88,8 @@ class CatalogImage(blob.Image):
               ndb.put_multi(catalog_images)
               
               log.Engine.run(context)
+              
+              context.response['images'] = catalog_images
 
           try:
              transaction()
@@ -101,14 +103,16 @@ class CatalogImage(blob.Image):
     def multiple_upload(cls, context):
  
            upload_url = context.args.get('upload_url')
+           images = context.args.get('images')
+           catalog_key = context.args.get('catalog')
            
            if upload_url:
               context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
               return context
+           else:
+              if not images:
+                 return context.required('images')
             
-           images = context.args.get('images')
-           catalog_key = context.args.get('catalog')
-           
            i = cls.query(ancestor=catalog_key).count() # get last sequence
            prepared_images = []
            
@@ -122,17 +126,20 @@ class CatalogImage(blob.Image):
            def transaction():
                 
                if prepared_images:
-                   saveds = ndb.put_multi(prepared_images)
-                   for saved in saveds:
+                   ndb.put_multi(prepared_images)
+             
+                   for saved in prepared_images:
                        if saved:
                           context.log.entities.append((saved,))
                           
                    log.Engine.run(context)
                    
                    # after log runs, mark all blobs as used, because log can also throw error
-                   for saved in saveds:
+                   for saved in prepared_images:
                        if saved:
                           blob.Manager.used_blobs(saved.image)
+                          
+                   context.response['images'] = prepared_images
  
            try:
               transaction()
@@ -226,7 +233,7 @@ class Catalog(ndb.BaseExpando):
                                         rule.ActionPermission('35', io.Action.build_key('35-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                         rule.ActionPermission('35', io.Action.build_key('35-5').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"), # maybe different rules for duplicate?
-                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active')"),
+                                        rule.ActionPermission('35', io.Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
                                      ])
     
     _actions = {
@@ -510,7 +517,7 @@ class Catalog(ndb.BaseExpando):
  
         domain_key = context.args.get('domain')
         domain = domain_key.get()
-        
+      
         context.rule.entity = domain
         rule.Engine.run(context)
         
