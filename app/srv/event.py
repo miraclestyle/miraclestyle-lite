@@ -79,28 +79,22 @@ class Engine:
     if not action:
       action = io.Action.get_local_action(action_key)
     return action
-      
-  @classmethod
-  def run_action(cls, action, args):
-    if action:
-      if action.realtime:
-         return cls.realtime_run(action, args)
-      else:
-        taskqueue.add(url='/engine_run', params=args)
-        return None
     
   @classmethod
   def run(cls, args):
     
     action = cls.get_action(args)
-    context = cls.run_action(action, args)
-    
-    if context and len(context.callbacks):
-      for callback in context.callbacks:
+    if action:
+      if action.realtime:
+        context = cls.realtime_run(action, args)
+        if context and len(context.callbacks):
           action_key, args = callback
           args['action_key'] = action_key
           taskqueue.add(url='/engine_run', params=args)
-          
+      else:
+        taskqueue.add(url='/engine_run', params=args)
+        return None
+        
     return context
 
           
