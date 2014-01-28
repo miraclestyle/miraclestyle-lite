@@ -34,6 +34,15 @@ def register_system_action(*args):
 class Engine:
   
   @classmethod
+  def taskqueue_run(cls, args):
+      
+      action = cls.get_action(args)
+      
+      if action:
+         cls.realtime_run(action, args)
+        
+  
+  @classmethod
   def realtime_run(cls, action, args):
       
       context = action.process(args)
@@ -43,6 +52,10 @@ class Engine:
           execute = getattr(action_model, args.get('aciton_key'))
           if execute and callable(execute):
              return execute(context)
+           
+      else:
+        service = importlib.import_module('app.srv.%s' % context.action.service)
+        return service.Engine.run(context)
         
       return context
 
@@ -58,7 +71,9 @@ class Engine:
           actions = getattr(action_model, '_actions')
           if action_key in actions:
              return actions[action_key]
-    
+      
+       return None
+      
     action = get_system_action(action_key)
     if not action:
       action = io.Action.get_local_action(action_key)
@@ -82,7 +97,7 @@ class Engine:
     if context and len(context.callbacks):
       for callback in context.callbacks:
           action_key, args = callback
-          action = cls.get_action(action_key)
-          cls.run_action(action)
+          args['action_key'] = action_key
+          taskqueue.add(url='/engine_run', params=args)
 
           
