@@ -49,14 +49,14 @@ class Engine:
       if not context.has_error():
         
         if 'action_model' in args and 'action_key' in args:
-            action_model = ndb.factory('app.%s' % args.get('action_model'))
-            execute = getattr(action_model, args.get('aciton_key'))
-            if execute and callable(execute):
-               return execute(context)
+           action_model = ndb.factory('app.%s' % args.get('action_model'))
+           execute = getattr(action_model, args.get('action_key'))
+           if execute and callable(execute):
+              return execute(context)
              
         else:
-          service = importlib.import_module('app.srv.%s' % context.action.service)
-          return service.Engine.run(context)
+           service = importlib.import_module('app.srv.%s' % context.action.service)
+           return service.Engine.run(context)
         
       return context
 
@@ -93,12 +93,14 @@ class Engine:
   def run(cls, args):
     
     action = cls.get_action(args)
-    context = cls.run_action(action)
+    context = cls.run_action(action, args)
     
     if context and len(context.callbacks):
       for callback in context.callbacks:
           action_key, args = callback
           args['action_key'] = action_key
           taskqueue.add(url='/engine_run', params=args)
+          
+    return context
 
           

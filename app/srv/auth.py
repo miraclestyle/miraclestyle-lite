@@ -433,7 +433,7 @@ class Domain(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), False, "not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
                                             rule.ActionPermission('6', io.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
@@ -524,6 +524,9 @@ class Domain(ndb.BaseExpando):
             entity = cls(state='active', primary_contact=context.auth.user.key)
            
             context.rule.entity = entity
+            
+            # no need for role check because the domain is not created
+            rule.Engine.run(context, True)
             
             if not rule.executable(context):
                return context.not_authorized()

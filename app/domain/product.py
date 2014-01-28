@@ -478,7 +478,7 @@ class Template(ndb.BaseExpando):
                          
          for saved in entity.images:
              if saved:
-                blob.Manager.used_blobs(saved)
+                blob.Manager.used_blobs(saved.image)
                  
          context.status(entity)
 
@@ -775,7 +775,7 @@ class Instance(ndb.BaseExpando):
                            
            for saved in entity.images:
                if saved:
-                  blob.Manager.used_blobs(saved)
+                  blob.Manager.used_blobs(saved.image)
                    
            context.status(entity)
           

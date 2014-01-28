@@ -7,7 +7,7 @@ Created on Oct 14, 2013
 from webclient.route import register
 from webclient.handler import Angular
 
-from app.srv import auth
+from app.srv import event
 
 class Login(Angular):
   
@@ -15,8 +15,12 @@ class Login(Angular):
       
            data = self.reqdata.get_combined_params()
            data['login_method'] = provider
+           data.update({
+                        'action_model' : 'srv.auth.User',
+                        'action_key' : 'login',   
+                       })
  
-           context = auth.User.login(data)
+           context = event.Engine.run(data)  
          
            if 'authorization_code' in context.response:
                self.response.set_cookie('auth', context.response.get('authorization_code'), httponly=True)
@@ -27,14 +31,20 @@ class Login(Angular):
 class Logout(Angular):
     
     def respond(self):
+      
+        data = self.reqdata.get_combined_params()
+        
+        data.update({
+                     'action_model' : 'srv.auth.User',
+                     'action_key' : 'logout',   
+                   })
  
-        context = auth.User.logout(self.reqdata.get_combined_params())
+        context = event.Engine.run(data)
         
         self.response.delete_cookie('auth')
         
         return context.response
             
     
-register((r'/login', Login, 'login'),
-         (r'/login/<provider>', Login, 'login_provider'),
+register((r'/login/<provider>', Login, 'login_provider'),
          (r'/logout', Logout, 'logout'))

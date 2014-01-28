@@ -74,7 +74,7 @@ class Company(ndb.BaseExpando):
  
                                  'parent_record' : ndb.SuperKeyProperty(kind='44', required=False),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'logo' : ndb.SuperLocalStructuredImageProperty(),
+                                 'logo' : ndb.SuperLocalStructuredImageProperty(blob.Image),
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                  
                                  # expando
@@ -103,7 +103,7 @@ class Company(ndb.BaseExpando):
  
                                  'parent_record' : ndb.SuperKeyProperty(kind='44', required=False),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'logo' : ndb.SuperLocalStructuredImageProperty(),
+                                 'logo' : ndb.SuperLocalStructuredImageProperty(blob.Image),
         
                                  # expando
                                  'country' : ndb.SuperKeyProperty(kind='15'),
@@ -156,9 +156,9 @@ class Company(ndb.BaseExpando):
   
     def __todict__(self, *args, **kwargs):
       
-        dic = super(Company, self).to_dict(*args, **kwargs)
+        dic = super(Company, self).__todict__(*args, **kwargs)
         
-        dic['logo'] = images.get_serving_url(self.logo, 240)
+        dic['logo'] = images.get_serving_url(self.logo.image, 240)
         
         return dic
       
@@ -196,7 +196,7 @@ class Company(ndb.BaseExpando):
             
          # mark the logo as used, if it was just uploaded
          if 'logo' in context.args:
-             blob.Manager.used_blobs(entity.logo)
+             blob.Manager.used_blobs(entity.logo.image)
       
     @classmethod
     def create(cls, context):

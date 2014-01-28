@@ -467,7 +467,8 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
               raise DescriptiveError('invalid_file_type')
             
            # this code below is used to validate if the blob that's uploaded to gcs is an image
-           cloudstorage_file = cloudstorage.open(filename=info.gs_object_name)
+           gs_object_name = info.gs_object_name
+           cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
                  
            image_data = cloudstorage_file.read() # we must read the file in order to analyize width/height of an image
            
@@ -482,7 +483,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
        return value
      
      
-class SuperLocalStructuredImageProperty(_BaseProperty, SuperLocalStructuredProperty):
+class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
     
     @classmethod
     def _format_value(cls, prop, value):
@@ -507,8 +508,10 @@ class SuperLocalStructuredImageProperty(_BaseProperty, SuperLocalStructuredPrope
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
               raise DescriptiveError('invalid_image_type')
+            
+           gs_object_name = info.gs_object_name
  
-           cloudstorage_file = cloudstorage.open(filename=info.gs_object_name)
+           cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
            
            # this will throw an error if the file does not exist in cloudstorage      
            image_data = cloudstorage_file.read() # we must read the file in order to analyize width/height of an image
