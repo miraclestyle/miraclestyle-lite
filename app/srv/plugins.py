@@ -35,56 +35,52 @@ class AddressRule(transaction.Plugin):
   def run(self, journal, context):
     
     entry = context.transaction.entities[journal.key.id()]
+ 
+    valid_addresses = collections.OrderedDict()
+    default_address = None
+    address_reference_key = '%s_address_reference' % self.address_type
+    address_key = '%s_address' % self.address_type
+    addresses_key = '%s_addresses' % self.address_type
+    default_address_key = 'default_%s' % self.address_type
     
-    journal.set_entry_global_role(entry)
+    input_address_reference = context.args.get(address_reference_key)
+    entry_address_reference = getattr(entry, address_reference_key, None)
+    entry_address = getattr(entry, address_key, None)
     
-    context.rule.entity = entry
+    from app.opt import buyer
+      
+    buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
     
-    rule.Engine.run(context)
+    if not len(buyer_addresses):
+       raise PluginValidationError('no_address')
     
-    if rule.executable(context):
-     
-      valid_addresses = collections.OrderedDict()
-      default_address = None
-      address_reference_key = '%s_address_reference' % self.address_type
-      address_key = '%s_address' % self.address_type
-      addresses_key = '%s_addresses' % self.address_type
-      default_address_key = 'default_%s' % self.address_type
-      
-      input_address_reference = context.args.get(address_reference_key)
-      entry_address_reference = getattr(entry, address_reference_key, None)
-      entry_address = getattr(entry, address_key, None)
-      
-      from app.opt import buyer
-        
-      buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
-      
-      for buyer_address in buyer_addresses:
-        if self.validate_address(buyer_address):
-           valid_addresses[buyer_address.key.urlsafe()] = buyer_address
-           if getattr(buyer_address, default_address_key):
-               default_address = buyer_address
-      
-      context.response[addresses_key] = valid_addresses
-      
-      if not default_address and valid_addresses:
-        default_address = valid_addresses.values()[0]
-      
-      if input_address_reference and input_address_reference.urlsafe() in valid_addresses:
-         default_address = input_address_reference.get()
-      elif entry_address_reference and entry_address_reference.urlsafe() in valid_addresses:
-         default_address = entry_address_reference.get()
-      
-      if default_address:
-        if rule.writable(context, (address_reference_key, address_key)):
-          setattr(entry, address_reference_key, default_address.key)
-          setattr(entry, address_key, location.get_location(default_address))
-        context.response[default_address_key] = default_address
-      else:
-        raise PluginValidationError('no_address_found')
+    for buyer_address in buyer_addresses:
+      if self.validate_address(buyer_address):
+         valid_addresses[buyer_address.key.urlsafe()] = buyer_address
+         if getattr(buyer_address, default_address_key):
+             default_address = buyer_address
+             
+    if not len(valid_addresses):
+       raise PluginValidationError('no_valid_address')
+    
+    context.response[addresses_key] = valid_addresses
+    
+    if not default_address and valid_addresses:
+      default_address = valid_addresses.values()[0]
+    
+    if input_address_reference and input_address_reference.urlsafe() in valid_addresses:
+       default_address = input_address_reference.get()
+    elif entry_address_reference and entry_address_reference.urlsafe() in valid_addresses:
+       default_address = entry_address_reference.get()
+    
+    if default_address:
+      if rule.writable(context, ('e_%s' % address_reference_key, 'e_%s' % address_key)):
+        setattr(entry, address_reference_key, default_address.key)
+        setattr(entry, address_key, location.get_location(default_address))
+      context.response[default_address_key] = default_address
     else:
-      raise PluginValidationError('not_authorized')
-    
+      raise PluginValidationError('no_address_found')
+ 
   def validate_address(self, address):
     
     # Shipping everywhere except at the following locations
@@ -152,15 +148,18 @@ class CartInit(transaction.Plugin):
                         ).get()
     # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
 
-    if not entry and context.action.operation == 'transaction':
+    if not entry:
+       if context.action.operation == 'write':
+          entry = Entry()
+          entry.journal = journal_key
+          entry.company = company_key
+          entry.company_address = location.get_location(company)
+          entry.state = 'cart'
+          entry.date = datetime.datetime.today()
+          entry.party = user_key
+       else:
+          raise PluginValidationError('not_found')
  
-      entry = Entry()
-      entry.journal = journal_key
-      entry.company = company_key
-      entry.company_address = location.get_location(company)
-      entry.state = 'cart'
-      entry.date = datetime.datetime.today()
-      entry.party = user_key
     # proveravamo da li je entry u state-u 'cart'
     journal.set_entry_global_role(entry)
  
@@ -172,6 +171,7 @@ class CartInit(transaction.Plugin):
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
+      entry._lines = []
       context.transaction.entities[journal.key.id()] = entry
       
 
@@ -190,14 +190,16 @@ class ProductToLine(transaction.Plugin):
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
     line_exists = False
-    for line in entry._lines:
-      if (hasattr(line, 'catalog_pricetag_reference')
-          and catalog_pricetag_key == line.catalog_pricetag_reference
-          and hasattr(line, 'product_instance_reference')
-          and product_instance_key == line.product_instance_reference):
-        line.quantity = line.quantity + uom.format_value('1', line.product_uom) # decmail formating required
-        line_exists = True
-        break
+    
+    if rule.writable(context, 'l_quantity'):
+      for line in entry._lines:
+        if (hasattr(line, 'catalog_pricetag_reference')
+            and catalog_pricetag_key == line.catalog_pricetag_reference
+            and hasattr(line, 'product_instance_reference')
+            and product_instance_key == line.product_instance_reference):
+          line.quantity = line.quantity + uom.format_value('1', line.product_uom) # decmail formating required
+          line_exists = True
+          break
       
     if not (line_exists):
       product_template = product_template_key.get()
@@ -206,17 +208,26 @@ class ProductToLine(transaction.Plugin):
       product_category_complete_name = product_category.complete_name
  
       new_line = transaction.Line()
-      new_line.sequence = entry._lines[-1].sequence + 1
-      new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
-      new_line.description = product_template.name
-      if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
-        new_line.description += '\n %s' % variant_signature
-      else:
-        if (custom_variants):
+      if rule.writable(context, 'l_sequence'):
+         new_line.sequence = entry._lines[-1].sequence + 1
+         
+      if rule.writable(context, 'l_categories'):
+         new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
+      
+      if rule.writable(context, 'description'):
+        
+        new_line.description = product_template.name
+        if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
           new_line.description += '\n %s' % variant_signature
-          
-      new_line.uom = entry.currency
-      new_line.product_uom = uom.get_uom(product_template.product_uom)
+        else:
+          if (custom_variants):
+            new_line.description += '\n %s' % variant_signature
+      
+      if rule.writable(context, 'l_uom'):    
+         new_line.uom = entry.currency
+         
+      if rule.writable(context, 'l_product_uom'):
+         new_line.product_uom = uom.get_uom(product_template.product_uom)
       
       if hasattr(product_template, 'weight'):
          new_line._weight = product_template.weight
@@ -224,18 +235,29 @@ class ProductToLine(transaction.Plugin):
       if hasattr(product_template, 'volume'):   
          new_line._volume = product_template.volume
       
-      new_line.product_category_complete_name = product_category_complete_name
-      new_line.product_category_reference = product_template.product_category
-      new_line.catalog_pricetag_reference = catalog_pricetag_key
-      new_line.product_instance_reference = product_instance_key
+      if rule.writable(context, 'l_product_category_complete_name'):
+         new_line.product_category_complete_name = product_category_complete_name
+         
+      if rule.writable(context, 'l_product_category_reference'):
+         new_line.product_category_reference = product_template.product_category
+         
+      if rule.writable(context, 'l_catalog_pricetag_reference'):
+         new_line.catalog_pricetag_reference = catalog_pricetag_key
       
-      if hasattr(product_instance, 'unit_price'):
-        new_line.unit_price = product_instance.unit_price
-      else:
-        new_line.unit_price = product_template.unit_price
-        
-      new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
-      new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
+      if rule.writable(context, 'l_product_instance_reference'):
+         new_line.product_instance_reference = product_instance_key
+      
+      if rule.writable(context, 'l_unit_price'):
+          if hasattr(product_instance, 'unit_price'):
+            new_line.unit_price = product_instance.unit_price
+          else:
+            new_line.unit_price = product_template.unit_price
+      
+      if rule.writable(context, 'l_quantity'):  
+         new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
+      
+      if rule.writable(context, 'l_discount'):
+         new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
       entry._lines.append(new_line)
 
       

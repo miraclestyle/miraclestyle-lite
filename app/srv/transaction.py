@@ -64,7 +64,7 @@ class Journal(ndb.BaseExpando):
   _kind = 49
   
   # root (namespace Domain)
-  # key.id() = code.code
+  # key.id() = prefix_<user supplied value>
   
   name = ndb.SuperStringProperty('1', required=True)
   company = ndb.SuperKeyProperty('3', kind='44', required=True)
@@ -214,16 +214,29 @@ class Entry(ndb.BaseExpando):
       for action in get_actions:
          actions[action.key.urlsafe()] = action
          
-      return action
+      return actions
           
   
   def get_kind(self):
       return 'e_%s' % self.journal.key.id()
     
   def get_fields(self):
+    
       fields = super(Entry, self).get_fields()
       journal = self.journal.get()
-      fields.update(journal.entry_fields)
+      
+      line_fields = {}
+      entry_fields = {}
+      
+      for entry_field_key, entry_field in journal.entry_fields.items():
+          entry_fields['e_%s' % entry_field_key] = entry_field
+          
+      for line_field_key, line_field in journal.line_fields.items():
+          line_fields['l_%s' % line_field_key] = line_field
+      
+      fields.update(entry_fields)
+      fields.update(line_fields)
+      
       return fields
                     
   
@@ -241,10 +254,10 @@ class Line(ndb.BaseExpando):
   # composite index: 
   # ancestor:yes - sequence;
   # ancestor:no - journal, company, state, categories, uom, date
-  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('2', kind='44', required=True)
-  state = ndb.SuperIntegerProperty('3', required=True)
-  date = ndb.SuperDateTimeProperty('4', required=True)# updated on specific state or manually
+  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True) # delete
+  company = ndb.SuperKeyProperty('2', kind='44', required=True) # delete
+  state = ndb.SuperIntegerProperty('3', required=True) # delete
+  date = ndb.SuperDateTimeProperty('4', required=True)# delete
   sequence = ndb.SuperIntegerProperty('5', required=True)
   categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
   debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
@@ -255,15 +268,27 @@ class Line(ndb.BaseExpando):
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
   
   def get_actions(self):
-      return {}
+      journal = self.journal.get() # key.parent()
+      get_actions = ndb.get_multi(journal.subscriptions)
+      actions = {}
+      for action in get_actions:
+         actions[action.key.urlsafe()] = action
+         
+      return actions
 
   def get_kind(self):
-      return 'l_%s' % self.journal.key.id()
+      return 'l_%s' % self.journal.key.id() # key.parent()
   
   def get_fields(self):
+    
       fields = super(Line, self).get_fields()
-      journal = self.journal.get()
-      fields.update(journal.line_fields)
+      journal = self.journal.get() # this will be retrieved from key.parent() cuz we will delete `journal`
+      line_fields = {}
+      
+      for line_field_key, line_field in journal.line_fields.items():
+          line_fields['l_%s' % line_field_key] = line_field
+      
+      fields.update(line_fields)
       return fields
    
 class Engine:
