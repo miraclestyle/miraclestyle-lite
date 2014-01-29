@@ -56,7 +56,7 @@ class AddressRule(transaction.Plugin):
       entry_address = getattr(entry, address_key, None)
       
       from app.opt import buyer
-       
+        
       buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
       
       for buyer_address in buyer_addresses:
@@ -84,6 +84,50 @@ class AddressRule(transaction.Plugin):
         raise PluginValidationError('no_address_found')
     else:
       raise PluginValidationError('not_authorized')
+    
+  def validate_address(self, address):
+    
+    # Shipping everywhere except at the following locations
+    if not (self.exclusion):
+      allowed = True
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      allowed = False
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = True
+            break
+    return allowed
 
   
   

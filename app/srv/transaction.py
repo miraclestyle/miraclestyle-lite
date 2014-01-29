@@ -79,8 +79,8 @@ class Journal(ndb.BaseExpando):
   # sequencing counter....
   
   def set_entry_global_role(self, entry):
-    if hasattr(self, 'global_role') and entry:
-       entry._global_role = entry
+    if hasattr(self, '_entry_global_role') and entry:
+       entry._global_role = self._entry_global_role
   
   def get_key(self, *args, **kwargs):
       if not self.key:
