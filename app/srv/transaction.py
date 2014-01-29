@@ -224,10 +224,21 @@ class Entry(ndb.BaseExpando):
     
       fields = super(Entry, self).get_fields()
       journal = self.journal.get()
-      
+ 
       line_fields = {}
       entry_fields = {}
-      
+      super_line_fields = {}
+ 
+      for prop_key,prop in Line._properties.items():
+          super_line_fields[prop._code_name] = prop
+          
+      if hasattr(Line, 'get_expando_fields'):
+         expandos = Line.get_expando_fields()
+         if expandos: 
+             for expando_prop_key,expando_prop in expandos.items():
+                 super_line_fields[expando_prop._code_name] = expando_prop
+       
+       
       for entry_field_key, entry_field in journal.entry_fields.items():
           entry_fields['e_%s' % entry_field_key] = entry_field
           
@@ -236,6 +247,7 @@ class Entry(ndb.BaseExpando):
       
       fields.update(entry_fields)
       fields.update(line_fields)
+      fields.update(super_line_fields)
       
       return fields
                     

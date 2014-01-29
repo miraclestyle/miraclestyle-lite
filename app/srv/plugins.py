@@ -269,8 +269,13 @@ class ProductSubtotalCalculate(transaction.Plugin):
     
     for line in entry._lines:
       if hasattr(line, 'product_instance_reference'):
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        
+        if rule.writable(context, 'l_subtotal'):
+           line.subtotal = line.unit_price * line.quantity # decimal formating required
+        
+        if rule.writable(context, 'l_discount_subtotal'):
+           line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+       
         line.debit = uom.format_value('0', line.uom) # decimal formating required
         line.credit = line.discount_subtotal # decimal formating required
         
