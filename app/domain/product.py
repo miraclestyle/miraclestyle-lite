@@ -11,7 +11,6 @@ from app import ndb, settings
 from app.srv import io, uom, blob, rule, log
 
 from google.appengine.ext import blobstore
-from google.appengine.api import images
 
 # done!
 class Content(ndb.BaseModel):

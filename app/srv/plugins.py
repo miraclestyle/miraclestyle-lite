@@ -51,7 +51,7 @@ class AddressRule(transaction.Plugin):
       addresses_key = '%s_addresses' % self.address_type
       default_address_key = 'default_%s' % self.address_type
       
-      input_address_reference = context.event.args.get(address_reference_key)
+      input_address_reference = context.args.get(address_reference_key)
       entry_address_reference = getattr(entry, address_reference_key, None)
       entry_address = getattr(entry, address_key, None)
       
@@ -93,7 +93,7 @@ class CartInit(transaction.Plugin):
   
   def run(self, journal, context):
     # ucitaj postojeci entry na kojem ce se raditi write
-    catalog_key = context.event.args.get('catalog')
+    catalog_key = context.args.get('catalog')
     user_key = context.auth.user.key
     catalog = catalog_key.get()
     company = catalog.company.get()
@@ -108,7 +108,7 @@ class CartInit(transaction.Plugin):
                         ).get()
     # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
 
-    if not entry and context.event.operation == 'transaction':
+    if not entry and context.action.operation == 'transaction':
  
       entry = Entry()
       entry.journal = journal_key
@@ -137,11 +137,11 @@ class ProductToLine(transaction.Plugin):
     
     entry = context.transaction.entities[journal.key.id()]
    
-    catalog_pricetag_key = context.event.args.get('catalog_pricetag')
-    product_template_key = context.event.args.get('product_template')
-    product_instance_key = context.event.args.get('product_instance')
-    variant_signature = context.event.args.get('variant_signature')
-    custom_variants = context.event.args.get('custom_variants')
+    catalog_pricetag_key = context.args.get('catalog_pricetag')
+    product_template_key = context.args.get('product_template')
+    product_instance_key = context.args.get('product_instance')
+    variant_signature = context.args.get('variant_signature')
+    custom_variants = context.args.get('custom_variants')
  
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
@@ -403,15 +403,15 @@ class EntryFieldAutoUpdate(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.event.key.id()]['executable']:
+    if not rule.executable(context):
       raise PluginValidationError('action_forbidden')
     
     for field in self.fields:
       if field.name not in ['name', 'company', 'journal', 'created', 'updated']:
-        if context.rule.entity._field_permissions[field.name]['writable']:
-          setattr(entry, field.name, field.value)
+        if rule.writable(context, field.name):
+           setattr(entry, field.name, field.value)
         else:
-          raise PluginValidationError('field_not_writable')
+           raise PluginValidationError('field_not_writable')
 
 class CarrierLine:
   
@@ -595,18 +595,18 @@ class UpdateProductLine(transaction.Plugin):
     context.rule.entity = entry
     rule.Engine.run(context)
     
-    if not context.rule.entity._action_permissions[context.key.id()]['executable']:
+    if not rule.executable(context):
       raise PluginValidationError('action_forbidden')
     
     i = 0
     for line in entry._lines:
       if hasattr(line, 'catalog_pricetag_reference') and hasattr(line, 'product_instance_reference'):
-        if context.rule.entity._field_permissions['quantity']['writable']:
-          if context.event.args.get('quantity')[i] <= 0:
+        if rule.writable(context, 'quantity'):
+          if context.args.get('quantity')[i] <= 0:
             entry._lines.pop(i)
           else:
-            line.quantity = uom.format_value(context.event.args.get('quantity')[i], line.product_uom)
-        if context.rule.entity._field_permissions['discount']['writable']:
-          line.discount = uom.format_value(context.event.args.get('discount')[i], uom.UOM(digits=4))
+            line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
+        if rule.writable(context, 'discount'):
+          line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
       i += 1
       

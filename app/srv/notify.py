@@ -64,9 +64,15 @@ class Template(ndb.BaseModel):
     
        
   def run(self, context):
+      # Template.process builds context callbacks
       pass
  
 class Engine:
+  
+  
+  @classmethod
+  def notify(cls):
+      pass
  
   @classmethod
   def run(cls, context):

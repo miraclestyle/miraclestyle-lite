@@ -168,7 +168,7 @@ class Category(ndb.BaseExpando):
   # description = ndb.TextProperty('7', required=True)# soft limit 16kb
   # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
   
-  EXPANDO_FIELDS = {
+  _expando_fields = {
      'description' : ndb.SuperTextProperty('7'),
      'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
   }

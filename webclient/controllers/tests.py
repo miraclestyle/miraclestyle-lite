@@ -55,7 +55,10 @@ class Endpoint(Angular):
 class Engine(Angular):
 
     def respond(self):      
-        return event.Engine.taskqueue_run(self.reqdata.get_combined_params()) 
+        context = event.Engine.taskqueue_run(self.reqdata.get_combined_params()) 
+        
+        if context:
+           return context.response
          
  
 register(('/endpoint', Endpoint), 
