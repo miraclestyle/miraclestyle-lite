@@ -208,13 +208,13 @@ class ProductToLine(transaction.Plugin):
       product_category_complete_name = product_category.complete_name
  
       new_line = transaction.Line()
-      if rule.writable(context, 'l_sequence'):
+      if rule.writable(context, 'sequence'):
          new_line.sequence = entry._lines[-1].sequence + 1
          
-      if rule.writable(context, 'l_categories'):
+      if rule.writable(context, 'categories'):
          new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
       
-      if rule.writable(context, 'description'):
+      if rule.writable(context, 'l_description'):
         
         new_line.description = product_template.name
         if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
@@ -223,7 +223,7 @@ class ProductToLine(transaction.Plugin):
           if (custom_variants):
             new_line.description += '\n %s' % variant_signature
       
-      if rule.writable(context, 'l_uom'):    
+      if rule.writable(context, 'uom'):    
          new_line.uom = entry.currency
          
       if rule.writable(context, 'l_product_uom'):
@@ -270,11 +270,8 @@ class ProductSubtotalCalculate(transaction.Plugin):
     for line in entry._lines:
       if hasattr(line, 'product_instance_reference'):
         
-        if rule.writable(context, 'l_subtotal'):
-           line.subtotal = line.unit_price * line.quantity # decimal formating required
-        
-        if rule.writable(context, 'l_discount_subtotal'):
-           line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
        
         line.debit = uom.format_value('0', line.uom) # decimal formating required
         line.credit = line.discount_subtotal # decimal formating required
