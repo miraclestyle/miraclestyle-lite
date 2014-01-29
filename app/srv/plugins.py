@@ -74,9 +74,10 @@ class AddressRule(transaction.Plugin):
        default_address = entry_address_reference.get()
     
     if default_address:
-      if rule.writable(context, ('e_%s' % address_reference_key, 'e_%s' % address_key)):
-        setattr(entry, address_reference_key, default_address.key)
-        setattr(entry, address_key, location.get_location(default_address))
+ 
+      setattr(entry, address_reference_key, default_address.key)
+      setattr(entry, address_key, location.get_location(default_address))
+      
       context.response[default_address_key] = default_address
     else:
       raise PluginValidationError('no_address_found')
@@ -157,6 +158,10 @@ class CartInit(transaction.Plugin):
           entry.state = 'cart'
           entry.date = datetime.datetime.today()
           entry.party = user_key
+          # accounts recieveable
+          entry._lines = [transaction.Line(sequence=0, uom=entry.currency, 
+                                           credit=uom.format_value('0', entry.currency), debit=uom.format_value('0', entry.currency),
+                                           categories=[transaction.Category.build_key('key')])]
        else:
           raise PluginValidationError('not_found')
  
@@ -171,7 +176,8 @@ class CartInit(transaction.Plugin):
       # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
       raise PluginValidationError('entry_not_in_cart_state')
     else:
-      entry._lines = []
+      if entry.key:
+         entry._lines = transaction.Line.query(ancestor=entry.key).fetch(-transaction.Line.sequence)
       context.transaction.entities[journal.key.id()] = entry
       
 
@@ -191,8 +197,7 @@ class ProductToLine(transaction.Plugin):
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
     line_exists = False
     
-    if rule.writable(context, 'l_quantity'):
-      for line in entry._lines:
+    for line in entry._lines:
         if (hasattr(line, 'catalog_pricetag_reference')
             and catalog_pricetag_key == line.catalog_pricetag_reference
             and hasattr(line, 'product_instance_reference')
@@ -208,26 +213,21 @@ class ProductToLine(transaction.Plugin):
       product_category_complete_name = product_category.complete_name
  
       new_line = transaction.Line()
-      if rule.writable(context, 'sequence'):
-         new_line.sequence = entry._lines[-1].sequence + 1
+ 
+      new_line.sequence = entry._lines[-1].sequence + 1
          
-      if rule.writable(context, 'categories'):
-         new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
+      new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
+ 
+      new_line.description = product_template.name
       
-      if rule.writable(context, 'l_description'):
-        
-        new_line.description = product_template.name
-        if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
+      if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
+        new_line.description += '\n %s' % variant_signature
+      else:
+        if (custom_variants):
           new_line.description += '\n %s' % variant_signature
-        else:
-          if (custom_variants):
-            new_line.description += '\n %s' % variant_signature
       
-      if rule.writable(context, 'uom'):    
-         new_line.uom = entry.currency
-         
-      if rule.writable(context, 'l_product_uom'):
-         new_line.product_uom = uom.get_uom(product_template.product_uom)
+      new_line.uom = entry.currency
+      new_line.product_uom = uom.get_uom(product_template.product_uom)
       
       if hasattr(product_template, 'weight'):
          new_line._weight = product_template.weight
@@ -235,29 +235,18 @@ class ProductToLine(transaction.Plugin):
       if hasattr(product_template, 'volume'):   
          new_line._volume = product_template.volume
       
-      if rule.writable(context, 'l_product_category_complete_name'):
-         new_line.product_category_complete_name = product_category_complete_name
-         
-      if rule.writable(context, 'l_product_category_reference'):
-         new_line.product_category_reference = product_template.product_category
-         
-      if rule.writable(context, 'l_catalog_pricetag_reference'):
-         new_line.catalog_pricetag_reference = catalog_pricetag_key
+      new_line.product_category_complete_name = product_category_complete_name
+      new_line.product_category_reference = product_template.product_category
+      new_line.catalog_pricetag_reference = catalog_pricetag_key
+      new_line.product_instance_reference = product_instance_key
+ 
+      if hasattr(product_instance, 'unit_price'):
+        new_line.unit_price = product_instance.unit_price
+      else:
+        new_line.unit_price = product_template.unit_price
       
-      if rule.writable(context, 'l_product_instance_reference'):
-         new_line.product_instance_reference = product_instance_key
-      
-      if rule.writable(context, 'l_unit_price'):
-          if hasattr(product_instance, 'unit_price'):
-            new_line.unit_price = product_instance.unit_price
-          else:
-            new_line.unit_price = product_template.unit_price
-      
-      if rule.writable(context, 'l_quantity'):  
-         new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
-      
-      if rule.writable(context, 'l_discount'):
-         new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
+      new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
+      new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
       entry._lines.append(new_line)
 
       
@@ -402,12 +391,15 @@ class Tax(transaction.Plugin):
         allowed = False
         if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
           allowed = True
+          break
       # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
       elif (self.product_categories):
         allowed = False
-        for line in entry.lines:
+        for line in entry._lines:
           if (self.product_categories.count(line.product_category)):
             allowed = True
+            break
+          
     return allowed
   
 class TaxSubtotalCalculate(transaction.Plugin):
@@ -468,19 +460,12 @@ class EntryFieldAutoUpdate(transaction.Plugin):
   def run(self, journal, context):
     
     entry = context.transaction.entities[journal.key.id()]
-    context.rule.entity = entry
-    rule.Engine.run(context)
-    
-    if not rule.executable(context):
-      raise PluginValidationError('action_forbidden')
-    
+ 
     for field in self.fields:
       if field.name not in ['name', 'company', 'journal', 'created', 'updated']:
-        if rule.writable(context, field.name):
-           setattr(entry, field.name, field.value)
-        else:
-           raise PluginValidationError('field_not_writable')
-
+         # control required
+         setattr(entry, field.name, field.value)
+ 
 class CarrierLine:
   
   def __init__(self, name, exclusion=False, active=True, locations=None, rules=None):
@@ -660,21 +645,14 @@ class UpdateProductLine(transaction.Plugin):
   def run(self, journal, context):
     
     entry = context.transaction.entities[journal.key.id()]
-    context.rule.entity = entry
-    rule.Engine.run(context)
-    
-    if not rule.executable(context):
-      raise PluginValidationError('action_forbidden')
-    
+  
     i = 0
     for line in entry._lines:
       if hasattr(line, 'catalog_pricetag_reference') and hasattr(line, 'product_instance_reference'):
-        if rule.writable(context, 'quantity'):
-          if context.args.get('quantity')[i] <= 0:
+        if context.args.get('quantity')[i] <= 0:
             entry._lines.pop(i)
-          else:
+        else:
             line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
-        if rule.writable(context, 'discount'):
-          line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
+        line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
       i += 1
       
