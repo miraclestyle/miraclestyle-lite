@@ -119,7 +119,7 @@ class Unit(ndb.BaseExpando):
     digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
     active = ndb.SuperBooleanProperty('7', default=True)
     
-    EXPANDO_FIELDS = {
+    _expando_fields = {
         'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
         'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
         'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
@@ -162,7 +162,7 @@ class UOM(ndb.BaseExpando):
     rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)# Rounding Precision - digits=(12, 12)
     digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
     
-    EXPANDO_FIELDS = {
+    _expando_fields = {
         'code' : ndb.SuperStringProperty('8', required=True, indexed=False),# ukljuciti index ako bude trebao za projection query
         'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
         'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),

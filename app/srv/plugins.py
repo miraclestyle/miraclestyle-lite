@@ -125,9 +125,8 @@ class AddressRule(transaction.Plugin):
             allowed = True
             break
     return allowed
-
-  
-  
+ 
+ 
 class CartInit(transaction.Plugin):
   
   _kind = 55
@@ -159,9 +158,7 @@ class CartInit(transaction.Plugin):
           entry.date = datetime.datetime.today()
           entry.party = user_key
           # accounts recieveable
-          entry._lines = [transaction.Line(sequence=0, uom=entry.currency, 
-                                           credit=uom.format_value('0', entry.currency), debit=uom.format_value('0', entry.currency),
-                                           categories=[transaction.Category.build_key('key')])]
+          entry._lines = []
        else:
           raise PluginValidationError('not_found')
  
@@ -181,6 +178,18 @@ class CartInit(transaction.Plugin):
             context.transaction.group = entry.parent_entity
          entry._lines = transaction.Line.query(ancestor=entry.key).fetch(-transaction.Line.sequence)
       context.transaction.entities[journal.key.id()] = entry
+      
+
+class AccountsReceivable(transaction.Plugin):
+  
+   def run(self, journal, context):
+     
+       entry = context.transaction.entities[journal.key.id()]
+       
+       if not entry._lines:
+          entry._lines.append(transaction.Line(sequence=0, uom=entry.currency, 
+                                           credit=uom.format_value('0', entry.currency), debit=uom.format_value('0', entry.currency),
+                                           categories=[transaction.Category.build_key('key')]))
       
 
 class ProductToLine(transaction.Plugin):
@@ -281,6 +290,8 @@ class PayPalPayment(transaction.Plugin):
     entry = context.transaction.entities[journal.key.id()]
     
     entry.currency = uom.get_uom(self.currency)
+    entry.paypal_reciever_email = self.reciever_email
+    entry.paypal_business = self.business
     
     
 class OrderTotalCalculate(transaction.Plugin):
@@ -660,7 +671,10 @@ class UpdateProductLine(transaction.Plugin):
       
 class PayPalInit(transaction.Plugin):
   
+  # user plugin, saved in datastore
+  
   def run(self, journal, context):
+    
     ipns = log.Record.query(log.Record.ipn_txn_id == context.args['txn_id']).fetch()
     if len(ipns):
       for ipn in ipns:
@@ -684,7 +698,6 @@ class PayPalInit(transaction.Plugin):
       if not context.args['custom']:
         raise PluginValidationError('invalid_ipn')
       else:
-        
         try:
           entry_key = ndb.Key(urlsafe=context.args['custom']) 
           entry = entry_key.get()
@@ -702,3 +715,67 @@ class PayPalInit(transaction.Plugin):
        context.transaction.group = entry.parent_entity
        
     context.transaction.entities[journal.key.id()] = entry
+    
+    if not self.validate_entry(entry, context):
+       raise PluginValidationError('fraud_check')
+    
+  def validate_entry(self, entry, context):
+      
+      mismatches = []
+      ipn = context.args
+      shipping_address = entry.shipping_address.get()
+      shipping_address_country, shipping_address_region = ndb.get_multi([shipping_address.country, shipping_address.region])
+    
+      if (entry.paypal_email != ipn['receiver_email']) or (entry.paypal_email != ipn['business']):
+          mismatches.append('receiver_email_or_business')
+      if (entry.currency.code != ipn['mc_currency']):
+          mismatches.append('mc_currency')
+      if (entry.total_amount != uom.format_value(ipn['mc_gross'], entry.currency)):
+          mismatches.append('mc_gross')
+      if (entry.tax_amount != uom.format_value(ipn['tax'], entry.currency)):
+          mismatches.append('tax')
+          
+      if (entry.reference != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
+          mismatches.append('invoice')
+      
+      if (shipping_address_country.name != ipn['address_country']):
+          mismatches.append('address_country')    
+      if (shipping_address_country.code != ipn['address_country_code']):
+          mismatches.append('address_country_code')
+      if (shipping_address.city != ipn['address_city']):
+          mismatches.append('address_city')
+      if (shipping_address.name != ipn['address_name']):
+          mismatches.append('address_name')
+      
+      state = shipping_address_region.name # po defaultu sve ostale drzave koriste name? ili i one isto kod?
+      if shipping_address_country.code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
+         state = shipping_address_region.code
+         
+      if (state != ipn['address_state']):
+          mismatches.append('address_state')
+      if (shipping_address.address != ipn['address_street']): 
+          # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
+          # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
+          # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 
+          # od kupca bilo "Edi St", a vrednost Street Address (Optional) "Apartment 7".
+          mismatches.append('address_street')
+      if (shipping_address.postal_code != ipn['address_zip']):
+          mismatches.append('address_zip')
+          
+      for line in entry._lines:
+          if (line.code != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
+              mismatches.append('item_number%s' % str(line.sequence))
+          if (line.description != ipn['item_name%s' % str(line.sequence)]):
+              mismatches.append('item_name%s' % str(line.sequence))
+          if (line.quantity != uom.format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom)):
+              mismatches.append('quantity%s' % str(line.sequence))
+          if ((line.subtotal + line.tax_subtotal) != uom.format_value(ipn['mc_gross%s' % str(line.sequence)], entry.currency)):
+              mismatches.append('mc_gross%s' % str(line.sequence))
+      # Ukoliko je doslo do fail-ova u poredjenjima
+      # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+      if not mismatches:
+         return True
+      else:
+         return False
+    
+    
