@@ -246,10 +246,11 @@ class ProductToLine(transaction.Plugin):
       if hasattr(product_template, 'volume'):   
          new_line._volume = product_template.volume
       
+      new_line.code = product_instance.code
       new_line.product_category_complete_name = product_category_complete_name
       new_line.product_category_reference = product_template.product_category
       new_line.catalog_pricetag_reference = catalog_pricetag_key
-      new_line.product_instance_reference = product_instance_key
+      new_line.product_instance_reference = product_instance_key # this cannot happen if the product_instance is over 1000 count
  
       if hasattr(product_instance, 'unit_price'):
         new_line.unit_price = product_instance.unit_price
@@ -780,7 +781,7 @@ class PayPalInit(transaction.Plugin):
          
       if (state != ipn['address_state']):
           mismatches.append('address_state')
-      if (shipping_address.address != ipn['address_street']): 
+      if (shipping_address.street != ipn['address_street']): 
           # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
           # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
           # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 

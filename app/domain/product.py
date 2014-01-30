@@ -614,17 +614,28 @@ class Template(ndb.BaseExpando):
             create_variations = itertools.product(*packer)
              
             context.response['instances'] = list()
-             
-            i = 1
-            for c in create_variations:
-                 code = '%s_%s' % (product_template_key.urlsafe(), i)
-                 compiled = Instance.md5_variation_combination(product_template_key, c)
-                 inst = Instance(parent=product_template_key, id=compiled, code=code)
-                 inst.put()
-                 context.log.entities.append((inst, ))
-                 i += 1
-                 
-                 context.response['instances'].append(inst)
+            
+            if len(create_variations) >= 1000:
+               product_template.product_instance_count = 1000
+               product_template.put()
+               code = '%s_%s' % (product_template_key.urlsafe(), 1)
+               inst = Instance(parent=product_template_key, id=code, code=code)
+               inst.put()
+            
+            else:   
+              i = 1
+              for c in create_variations:
+                   code = '%s_%s' % (product_template_key.urlsafe(), i)
+                   compiled = Instance.md5_variation_combination(c)
+                   inst = Instance(parent=product_template_key, id=compiled, code=code)
+                   inst.put()
+                   context.log.entities.append((inst, ))
+                   i += 1
+                   
+                   context.response['instances'].append(inst)
+                   
+              product_template.product_instance_count = i
+              product_template.put()
                  
             log.Engine.run(context)
               
@@ -709,9 +720,8 @@ class Instance(ndb.BaseExpando):
             
  
     @classmethod
-    def md5_variation_combination(cls, product_template_key, codes):
+    def md5_variation_combination(cls, codes):
         codes = list(codes)
-        codes.insert(0, product_template_key.urlsafe())
         return hashlib.md5(u'-'.join(codes)).hexdigest()
     
     @classmethod
