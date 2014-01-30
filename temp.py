@@ -22,27 +22,18 @@ class PayPalQuery(transaction.Plugin):
     context.transaction.entities[journal.key.id()] = entry
     
 
-class PayPalPayment(transaction.Plugin):
-  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
+class PayPalValidate(transaction.Plugin):
   
-  currency = ndb.SuperKeyProperty('5', kind=uom.Unit)
-  reciever_email = ndb.SuperStringProperty('6')
-  business = ndb.SuperStringProperty('7')
-  validators = ndb.SuperPickleProperty('8') # [('validate_value', 'receiver_email', 'store@gmail.com'), ('validate_order', 'business', 'paypal_email')]
+  validators = ndb.SuperPickleProperty('5') # [('validate_value', 'receiver_email', 'store@gmail.com'), ('validate_order', 'business', 'paypal_email')]
   
   def run(self, journal, context):
-    # u contextu add_to_cart akcije ova funkcija radi sledece:
     
     entry = context.transaction.entities[journal.key.id()]
     
-    entry.currency = uom.get_uom(self.currency)
-    
-  def create(ipn):
-    
-    if not ipn.verified:
-      return None
+    if not (self.validate(entry, context.args)):
+      raise PluginValidationError('fraud_ipn')
   
-  def validate(ipn, entry):
+  def validate(entry, ipn):
     mismatches = []
     for validator in self.validators:
       if (validator[0] == 'validate_value'):
