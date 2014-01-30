@@ -9,7 +9,7 @@ import collections
 import re
  
 from app import ndb
-from app.srv import transaction, rule, uom, location
+from app.srv import transaction, rule, uom, location, log
 from app.lib.safe_eval import safe_eval
  
 class PluginValidationError(Exception):
@@ -177,6 +177,8 @@ class CartInit(transaction.Plugin):
       raise PluginValidationError('entry_not_in_cart_state')
     else:
       if entry.key:
+         if not context.transaction.group:
+            context.transaction.group = entry.parent_entity
          entry._lines = transaction.Line.query(ancestor=entry.key).fetch(-transaction.Line.sequence)
       context.transaction.entities[journal.key.id()] = entry
       
@@ -656,3 +658,35 @@ class UpdateProductLine(transaction.Plugin):
         line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
       i += 1
       
+class PayPalQuery(transaction.Plugin):
+  
+  def run(self, journal, context):
+    ipns = log.Record.query(log.Record.txn_id == context.args['txn_id']).fetch()
+    if len(ipns):
+      for ipn in ipns:
+        if (ipn.payment_status == context.args['payment_status']):
+          raise PluginValidationError('duplicate_entry')
+      entry = ipns[0].parent_entity
+      if not context.args['custom']:
+        raise PluginValidationError('invalid_ipn')
+      else:
+        if not (entry.key.urlsafe() == context.args['custom']):
+           raise PluginValidationError('invalid_ipn')
+    else:    
+      if not context.args['custom']:
+        raise PluginValidationError('invalid_ipn')
+      else:
+        
+        try:
+          entry_key = ndb.Key(urlsafe=context.args['custom']) 
+          entry = entry_key.get()
+        except Exception as e:
+          raise PluginValidationError('invalid_ipn')
+        
+    if not entry:
+      raise PluginValidationError('invalid_ipn')
+    
+    if not context.transaction.group:
+       context.transaction.group = entry.parent_entity
+       
+    context.transaction.entities[journal.key.id()] = entry
