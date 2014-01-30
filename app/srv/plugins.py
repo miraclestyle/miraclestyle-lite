@@ -658,21 +658,29 @@ class UpdateProductLine(transaction.Plugin):
         line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
       i += 1
       
-class PayPalQuery(transaction.Plugin):
+class PayPalInit(transaction.Plugin):
   
   def run(self, journal, context):
-    ipns = log.Record.query(log.Record.txn_id == context.args['txn_id']).fetch()
+    ipns = log.Record.query(log.Record.ipn_txn_id == context.args['txn_id']).fetch()
     if len(ipns):
       for ipn in ipns:
         if (ipn.payment_status == context.args['payment_status']):
           raise PluginValidationError('duplicate_entry')
       entry = ipns[0].parent_entity
-      if not context.args['custom']:
-        raise PluginValidationError('invalid_ipn')
+      if context.args['custom']:
+         if (entry.key.urlsafe() == context.args['custom']):
+           
+            kwds = {'log_entity' : False}
+            kwds.update(dict([('ipn_%s' % key, value) for key,value in context.args.items()])) # prefix
+            context.log.entities.append((entry, kwds))
+            
+         else:
+            raise PluginValidationError('invalid_ipn')
       else:
-        if not (entry.key.urlsafe() == context.args['custom']):
-           raise PluginValidationError('invalid_ipn')
+        raise PluginValidationError('invalid_ipn')
+      
     else:    
+      
       if not context.args['custom']:
         raise PluginValidationError('invalid_ipn')
       else:
@@ -685,6 +693,10 @@ class PayPalQuery(transaction.Plugin):
         
     if not entry:
       raise PluginValidationError('invalid_ipn')
+    
+    kwds = {'log_entity' : False}
+    kwds.update(dict([('ipn_%s' % key, value) for key,value in context.args.items()])) # prefix
+    context.log.entities.append((entry, kwds))
     
     if not context.transaction.group:
        context.transaction.group = entry.parent_entity
