@@ -1,12 +1,18 @@
-
 class PayPalQuery(transaction.Plugin):
   
   def run(self, journal, context):
     ipns = log.Record.query(log.Record.txn_id == custom.event.args['ipn']['txn_id']).fetch()
-    if ipns:
+    if len(ipns):
       for ipn in ipns:
         if (ipn.payment_status == custom.event.args['ipn']['payment_status']):
           raise PluginValidationError('duplicate_entry')
+      entry = ipns[0].parent_entity
+      if not context.args['custom']:
+        raise PluginValidationError('invalid_ipn')
+      else:
+        check_key = context.args['custom']
+        if not (entry.key.urlsafe() == context.args['custom']):
+        raise PluginValidationError('invalid_ipn')
     if not context.event.args['ipn']['custom']:
       raise PluginValidationError('invalid_ipn')
     
