@@ -615,8 +615,8 @@ class Template(ndb.BaseExpando):
              
             context.response['instances'] = list()
             
-            if len(create_variations) >= 1000:
-               product_template.product_instance_count = 1000
+            if len(create_variations) > 1000:
+               product_template.product_instance_count = len(create_variations)
                product_template.put()
                code = '%s_%s' % (product_template_key.urlsafe(), 1)
                inst = Instance(parent=product_template_key, id=code, code=code)
