@@ -749,11 +749,12 @@ class PayPalInit(transaction.Plugin):
       
       mismatches = []
       ipn = context.args
-      shipping_address = entry.shipping_address.get()
-      shipping_address_country, shipping_address_region = ndb.get_multi([shipping_address.country, shipping_address.region])
-    
-      if (entry.paypal_email != ipn['receiver_email']) or (entry.paypal_email != ipn['business']):
-          mismatches.append('receiver_email_or_business')
+      shipping_address = entry.shipping_address
+ 
+      if (entry.paypal_receiver_email != ipn['receiver_email']):
+          mismatches.append('receiver_email')
+      if (entry.paypal_business != ipn['business']):
+          mismatches.append('business_email')
       if (entry.currency.code != ipn['mc_currency']):
           mismatches.append('mc_currency')
       if (entry.total_amount != uom.format_value(ipn['mc_gross'], entry.currency)):
@@ -761,21 +762,21 @@ class PayPalInit(transaction.Plugin):
       if (entry.tax_amount != uom.format_value(ipn['tax'], entry.currency)):
           mismatches.append('tax')
           
-      if (entry.reference != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
+      if (entry.name != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
           mismatches.append('invoice')
       
-      if (shipping_address_country.name != ipn['address_country']):
+      if (shipping_address.country != ipn['address_country']):
           mismatches.append('address_country')    
-      if (shipping_address_country.code != ipn['address_country_code']):
+      if (shipping_address.country_code != ipn['address_country_code']):
           mismatches.append('address_country_code')
       if (shipping_address.city != ipn['address_city']):
           mismatches.append('address_city')
       if (shipping_address.name != ipn['address_name']):
           mismatches.append('address_name')
       
-      state = shipping_address_region.name # po defaultu sve ostale drzave koriste name? ili i one isto kod?
-      if shipping_address_country.code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
-         state = shipping_address_region.code
+      state = shipping_address.region # po defaultu sve ostale drzave koriste name? ili i one isto kod?
+      if shipping_address.country_code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
+         state = shipping_address.region_code
          
       if (state != ipn['address_state']):
           mismatches.append('address_state')
