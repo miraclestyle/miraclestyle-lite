@@ -718,6 +718,32 @@ class PayPalInit(transaction.Plugin):
     
     if not self.validate_entry(entry, context):
        raise PluginValidationError('fraud_check')
+     
+    if (entry.paypal_payment_status == context.args['payment_status']):
+        return None
+      
+    update_paypal_payment_status = False  
+      
+    if (entry.paypal_payment_status == 'Pending'):
+        if (context.args['payment_status'] == 'Completed' or context.args == 'Denied'):
+            update_paypal_payment_status = True
+    elif (entry.paypal_payment_status == 'Completed'):
+        if (context.args['payment_status'] == 'Refunded' or context.args['payment_status'] == 'Reversed'):
+            update_paypal_payment_status = True
+            
+    if (update_paypal_payment_status):
+        # ovo se verovatno treba jos doterati..
+        if (entry.state == 'processing' and context.args['payment_status'] == 'Completed'):
+            entry.state = 'completed'
+            entry.paypal_payment_status = context.args['payment_status']
+            context.log.entities.append((entry,))
+        elif (entry.state == 'processing' and context.args['payment_status'] == 'Denied'): # ovo cemo jos da razmotrimo
+            entry.state = 'canceled'
+            entry.paypal_payment_status = context.args['payment_status']
+            context.log.entities.append((entry,))
+        elif (entry.state == 'completed'):
+            entry.paypal_payment_status = context.args['payment_status']
+            context.log.entities.append((entry,))
     
   def validate_entry(self, entry, context):
       
