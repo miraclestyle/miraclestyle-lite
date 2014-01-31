@@ -512,6 +512,7 @@ class DomainUser(ndb.BaseModel):
            already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
            
            if already_invited:
+             # raise custom exception!!!
               return context.error('user', 'already_invited')
             
            domain_key = context.args.get('domain')
@@ -532,6 +533,7 @@ class DomainUser(ndb.BaseModel):
               
               context.status(domain_user)
            else:
+             # raise custom exception!!!
               return context.error('user', 'user_not_active')      
             
         transaction()
