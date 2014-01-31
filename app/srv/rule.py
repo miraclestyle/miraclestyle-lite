@@ -8,6 +8,12 @@ from app import ndb
 from app.lib.safe_eval import safe_eval
 from app.srv import io, log
 
+class ActionDenied(Exception):
+    
+    def __init__(self, context):
+       self.message = {'action' : context.action.key.urlsafe()}
+       
+
 def _check_field(context, name, key):
     if context.rule.entity:
       # this is like this because we can use it like writable(context, ('field1', 'field2'))

@@ -26,7 +26,7 @@ ctx.set_memcache_policy(False)
 # We always put double underscore for our private functions in order to avoid ndb library from clashing with our code
 # see https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
-class DescriptiveError(Exception):
+class FormatError(Exception):
   pass
 
 def _property_value(prop, value):
@@ -34,7 +34,7 @@ def _property_value(prop, value):
     def validate_max_size(value, size):
         if size:
           if len(value) > size:
-             raise DescriptiveError('max_size_exceeded')
+             raise FormatError('max_size_exceeded')
   
     if prop._repeated:
        if not isinstance(value, (list, tuple)):
@@ -399,13 +399,13 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
            
         for k in returns:
             if self._kind and k.kind() != self._kind:
-               raise DescriptiveError('invalid_kind')
+               raise FormatError('invalid_kind')
         
         items = get_multi(returns, use_cache=True)
         
         for i,item in enumerate(items):
             if item is None:
-               raise DescriptiveError('not_found_%s' % returns[i].urlsafe())
+               raise FormatError('not_found_%s' % returns[i].urlsafe())
   
         if single:
            return returns[0]
@@ -464,7 +464,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
            info = blobstore.parse_file_info(blob)
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
-              raise DescriptiveError('invalid_file_type')
+              raise FormatError('invalid_file_type')
             
            # this code below is used to validate if the blob that's uploaded to gcs is an image
            gs_object_name = info.gs_object_name
@@ -507,7 +507,7 @@ class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
            
            meta_required = ('image/jpeg', 'image/jpg', 'image/png')
            if info.content_type not in meta_required:
-              raise DescriptiveError('invalid_image_type')
+              raise FormatError('invalid_image_type')
             
            gs_object_name = info.gs_object_name
  
@@ -564,13 +564,13 @@ class SuperDecimalProperty(SuperStringProperty):
            value = decimal.Decimal(value)
            
         if value is None:
-           raise ValueError('Invalid number provided')
+           raise FormatError('invalid_number')
            
         return value
     
     def _validate(self, value):
       if not isinstance(value, (decimal.Decimal)):
-        raise TypeError('expected a decimal, got %s' % repr(value)) # explicitly allow only decimal
+        raise FormatError('expected_decimal') # explicitly allow only decimal
     
     def _to_base_type(self, value):
         return str(value) # Doesn't matter which type, always return in string format

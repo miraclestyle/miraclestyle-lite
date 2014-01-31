@@ -676,7 +676,7 @@ class PayPalInit(transaction.Plugin):
   
   def run(self, journal, context):
     
-    ipns = log.Record.query(log.Record.ipn_txn_id == context.args['txn_id']).fetch()
+    ipns = log.Record.query(ndb.GenericProperty('ipn_txn_id') == context.args['txn_id']).fetch()
     if len(ipns):
       for ipn in ipns:
         if (ipn.payment_status == context.args['payment_status']):

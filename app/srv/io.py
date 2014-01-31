@@ -1,12 +1,28 @@
+# -*- coding: utf-8 -*-
+'''
+Created on Dec 17, 2013
+
+@author:  Edis Sehalic (edis.sehalic@gmail.com)
+'''
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb
+ 
+class RequiredError(Exception):
+      
+     def __init__(self, required):
+       self.message = {'required' : required}
+    
+class InvalidError(Exception):
 
-
-class DescriptiveError(Exception):
-      # executes an exception in a way that it will have its own meaning instead of just "invalid"
-      pass
-
+     def __init__(self, invalid):
+       self.message = {'invalid' : invalid}
+    
+class ArgumentError(Exception):
+  
+     def __init__(self, argument_error):
+       self.message = {'argument_error' : argument_error}  
+    
 class Context():
   
   def __init__(self):
@@ -136,6 +152,10 @@ class Action(ndb.BaseExpando):
     context = Context()
     context.action = self
     context.args = {}
+    
+    required = []
+    invalid = []
+    argument_error = []
  
     for key, argument in self.arguments.items():
       
@@ -143,7 +163,7 @@ class Action(ndb.BaseExpando):
      
       if argument._required:
          if key not in args:
-            context.required(key)
+            required.append(key)
             continue 
           
       if key not in args and not argument._required: 
@@ -155,11 +175,20 @@ class Action(ndb.BaseExpando):
             continue # if value is not set at all, always consider it none?
          try:
             value = argument.format(value)
-         except (DescriptiveError, ndb.DescriptiveError) as e:
-            context.error(key, e)   
+         except ndb.FormatError as e:
+            argument_error.append(key)
          except Exception as e:
-            context.invalid(key)
+            invalid.append(e)
                
       context.args[key] = value
+      
+    if len(required):
+       raise RequiredError(required)
+     
+    if len(invalid):
+       raise InvalidError(invalid)
+     
+    if len(argument_error):
+       raise ArgumentError(argument_error)
   
     return context

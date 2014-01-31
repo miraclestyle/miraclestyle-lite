@@ -5,10 +5,11 @@ Created on Jan 6, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import importlib
+
 from google.appengine.api import taskqueue
+from google.appengine.ext.db import datastore_errors
 
 from app import ndb
-
 from app.srv import io
 
 class DescriptiveError(Exception):
@@ -44,20 +45,27 @@ class Engine:
   @classmethod
   def realtime_run(cls, action, args):
       
-      context = action.process(args)
-      
-      if not context.has_error():
+      try:
         
-        if 'action_model' in args and 'action_key' in args:
-           action_model = ndb.factory('app.%s' % args.get('action_model'))
-           execute = getattr(action_model, args.get('action_key'))
-           if execute and callable(execute):
-              return execute(context)
-             
-        else:
-           service = importlib.import_module('app.srv.%s' % context.action.service)
-           return service.Engine.run(context)
+        context = action.process(args)
         
+        if not context.has_error():
+          
+          if 'action_model' in args and 'action_key' in args:
+             action_model = ndb.factory('app.%s' % args.get('action_model'))
+             execute = getattr(action_model, args.get('action_key'))
+             if execute and callable(execute):
+                return execute(context)
+               
+          else:
+             service = importlib.import_module('app.srv.%s' % context.action.service)
+             return service.Engine.run(context)
+      except Exception as e:
+          if isinstance(e.message, dict):
+             pass
+          
+          raise
+          
       return context
 
   @classmethod
