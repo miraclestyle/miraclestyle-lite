@@ -4,9 +4,13 @@ Created on Dec 17, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import importlib
+
+from google.appengine.api import taskqueue
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb
+from app.srv import event
  
 class RequiredError(Exception):
       
@@ -122,42 +126,18 @@ class Context():
          
      self.response['errors'][f].append(m)
      return self
+
  
-  
-class Action(ndb.BaseExpando):
-  
-  _kind = 56
-  
-  # root (namespace Domain)
-  # key.id() = code.code
-  
-  name = ndb.SuperStringProperty('1', required=True)
-  arguments = ndb.SuperPickleProperty('2') # dict
-  active = ndb.SuperBooleanProperty('3', default=True)
-  service = ndb.SuperStringProperty('4') # transaction, notify, log....
-  operation = ndb.SuperStringProperty('5') # read/write
-  realtime = ndb.SuperBooleanProperty('6', default=True) # if False, execute in task queue
- 
+class Engine:
   
   @classmethod
-  def get_local_action(cls, action_key):
-      action = ndb.Key(urlsafe=action_key).get()
-      if action.active:
-         return action
-      else:
-         return None
-       
-  def process(self, args):
-  
-    context = Context()
-    context.action = self
-    context.args = {}
-    
+  def process(cls, context, args):
+   
     required = []
     invalid = []
     argument_error = []
  
-    for key, argument in self.arguments.items():
+    for key, argument in context.action.arguments.items():
       
       value = args.get(key)
      
@@ -175,12 +155,12 @@ class Action(ndb.BaseExpando):
             continue # if value is not set at all, always consider it none?
          try:
             value = argument.format(value)
+            context.args[key] = value
          except ndb.FormatError as e:
             argument_error.append(key)
          except Exception as e:
             invalid.append(e)
-               
-      context.args[key] = value
+              
       
     if len(required):
        raise RequiredError(required)
@@ -191,4 +171,79 @@ class Action(ndb.BaseExpando):
     if len(argument_error):
        raise ArgumentError(argument_error)
   
+  @classmethod
+  def taskqueue_run(cls, args):
+      
+      action = cls.get_action(args)
+      
+      if action:
+         cls.realtime_run(action, args)
+         
+  @classmethod
+  def realtime_run(cls, action, args):
+      
+      context = Context()
+      context.action = action
+      context.args = {}
+       
+      try:
+        
+        cls.process(context, args)
+        
+        if not context.has_error():
+          
+          if 'action_model' in args and 'action_key' in args:
+             action_model = ndb.factory('app.%s' % args.get('action_model'))
+             execute = getattr(action_model, args.get('action_key'))
+             if execute and callable(execute):
+                return execute(context)
+               
+          else:
+             service = importlib.import_module('app.srv.%s' % context.action.service)
+             return service.Engine.run(context)
+      except Exception as e:
+          if isinstance(e.message, dict):
+             pass
+             # handle our exceptions
+          
+          raise # raise all other unhandled exceptions
+          
+      return context
+
+  @classmethod
+  def get_action(cls, args):
+    
+    action_model = args.get('action_model')
+    action_key = args.get('action_key')
+    
+    if action_model:
+       action_model = ndb.factory('app.%s' % action_model)
+       if hasattr(action_model, '_actions'):
+          actions = getattr(action_model, '_actions')
+          if action_key in actions:
+             return actions[action_key]
+      
+       return None
+      
+    action = event.get_system_action(action_key)
+    if not action:
+      action = event.Action.get_local_action(action_key)
+    return action
+    
+  @classmethod
+  def run(cls, args):
+    
+    action = cls.get_action(args)
+    if action:
+      if action.realtime:
+        context = cls.realtime_run(action, args)
+        if context and len(context.callbacks):
+          for callback in context.callbacks:
+            action_key, args = callback
+            args['action_key'] = action_key
+            taskqueue.add(url='/engine_run', params=args)
+      else:
+        taskqueue.add(url='/engine_run', params=args)
+        return None
+        
     return context
