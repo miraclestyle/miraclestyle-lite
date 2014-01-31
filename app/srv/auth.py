@@ -312,6 +312,7 @@ class User(ndb.BaseExpando):
            raise rule.ActionDenied(context)
         
         if login_method not in settings.LOGIN_METHODS:
+          # raise custom exception!!!
            context.error('login_method', 'not_allowed')
         else:
            context.response['providers'] = settings.LOGIN_METHODS
@@ -322,6 +323,7 @@ class User(ndb.BaseExpando):
            context.response['authorization_url'] = client.get_authorization_code_uri()
      
            if error:
+             # raise custom exception!!!
               return context.error('oauth2_error', 'rejected_account_access')
             
            if code:
@@ -329,6 +331,7 @@ class User(ndb.BaseExpando):
               client.get_token(code)
               
               if not client.access_token:
+                # raise custom exception!!!
                  return context.error('oauth2_error', 'failed_access_token')
                
               context.response['access_token'] = client.access_token
@@ -679,6 +682,7 @@ class Domain(ndb.BaseExpando):
               raise rule.ActionDenied(context)
             
            if context.args.get('state') not in ('active', 'su_suspended'):
+             # raise custom exception!!!
               return context.error('state', 'invalid_state')
            
            entity.state = context.args.get('state')
