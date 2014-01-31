@@ -398,6 +398,7 @@ class SupportRequest(ndb.BaseModel):
               raise rule.ActionDenied(context)
             
            if context.args.get('state') not in ('su_opened', 'su_awaiting_closure'):
+             # raise custom exception!!!
               return context.error('state', 'invalid_state')
            
            entity.state = context.args.get('state')
