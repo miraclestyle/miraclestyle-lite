@@ -420,6 +420,7 @@ class CollectionCompany(ndb.BaseModel):
         
         if company.state != 'open': 
            # how to solve this? possible solution might be ndb.SuperKeyProperty(kind=Company, expr="value.state == 'active'", required=True) - this would be placed in arguments={}
+           # raise custom exception!!!
            return context.error('company', 'not_open')
  
         collection_keys = context.args.get('collections')
