@@ -7,7 +7,7 @@ Created on Oct 14, 2013
 from webclient.route import register
 from webclient.handler import Angular
 
-from app.srv import event
+from app.srv import io
 
 class Login(Angular):
   
@@ -20,7 +20,7 @@ class Login(Angular):
                         'action_key' : 'login',   
                        })
  
-           context = event.Engine.run(data)  
+           context = io.Engine.run(data)  
          
            if 'authorization_code' in context.response:
                self.response.set_cookie('auth', context.response.get('authorization_code'), httponly=True)
@@ -39,7 +39,7 @@ class Logout(Angular):
                      'action_key' : 'logout',   
                    })
  
-        context = event.Engine.run(data)
+        context = io.Engine.run(data)
         
         self.response.delete_cookie('auth')
         

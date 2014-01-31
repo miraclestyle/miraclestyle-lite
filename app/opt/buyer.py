@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.srv import rule, io, log
+from app.srv import rule, event, log
  
 class Address(ndb.BaseExpando):
     
@@ -23,9 +23,9 @@ class Address(ndb.BaseExpando):
     _default_indexed = False
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('9', io.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', io.Action.build_key('9-3').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', io.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-3').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
     _expando_fields = {
@@ -35,7 +35,7 @@ class Address(ndb.BaseExpando):
     }
 
     _actions = {
-       'update' : io.Action(id='9-0',
+       'update' : event.Action(id='9-0',
                               arguments={
               
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -55,7 +55,7 @@ class Address(ndb.BaseExpando):
                               }
                              ),
                 
-       'create' : io.Action(id='9-3',
+       'create' : event.Action(id='9-3',
                               arguments={
               
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -73,13 +73,13 @@ class Address(ndb.BaseExpando):
                               }
                              ),
                 
-       'delete' : io.Action(id='9-1',
+       'delete' : event.Action(id='9-1',
                               arguments={
                                  'address' : ndb.SuperKeyProperty(kind='9', required=True),
                               }
                              ),
                 
-       'list' : io.Action(id='9-2',
+       'list' : event.Action(id='9-2',
                               arguments={}
                              ),
     }  
@@ -211,17 +211,17 @@ class Collection(ndb.BaseModel):
  
 
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('10', io.Action.build_key('10-0').urlsafe(),
+                                                rule.ActionPermission('10', event.Action.build_key('10-0').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('10', io.Action.build_key('10-3').urlsafe(),
+                                                rule.ActionPermission('10', event.Action.build_key('10-3').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('10', io.Action.build_key('10-1').urlsafe(),
+                                                rule.ActionPermission('10', event.Action.build_key('10-1').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
 
     _actions = {
-       'update' : io.Action(id='10-0',
+       'update' : event.Action(id='10-0',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'notify' : ndb.SuperBooleanProperty(default=False),
@@ -229,20 +229,20 @@ class Collection(ndb.BaseModel):
                               }
                              ),
                 
-       'create' : io.Action(id='10-3',
+       'create' : event.Action(id='10-3',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'notify' : ndb.SuperBooleanProperty(default=False),
                               }
                              ),
                 
-       'delete' : io.Action(id='10-1',
+       'delete' : event.Action(id='10-1',
                               arguments={
                                   'key' : ndb.SuperKeyProperty(kind='10', required=True),
                               }
                              ),
                 
-       'list' : io.Action(id='10-2',
+       'list' : event.Action(id='10-2',
                               arguments={}
                              ),
     }  
@@ -355,17 +355,17 @@ class CollectionCompany(ndb.BaseModel):
  
 
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('11', io.Action.build_key('11-0').urlsafe(),
+                                                rule.ActionPermission('11', event.Action.build_key('11-0').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('11', io.Action.build_key('11-3').urlsafe(),
+                                                rule.ActionPermission('11', event.Action.build_key('11-3').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),                                                
-                                                rule.ActionPermission('11', io.Action.build_key('11-1').urlsafe(),
+                                                rule.ActionPermission('11', event.Action.build_key('11-1').urlsafe(),
                                                                      True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
                                                ])
  
 
     _actions = {
-       'update' : io.Action(id='11-0',
+       'update' : event.Action(id='11-0',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='11', required=True),
                                  'company' : ndb.SuperKeyProperty(kind='44', required=True),
@@ -373,20 +373,20 @@ class CollectionCompany(ndb.BaseModel):
                               }
                              ),
 
-       'create' : io.Action(id='11-3',
+       'create' : event.Action(id='11-3',
                               arguments={
                                  'company' : ndb.SuperKeyProperty(kind='44', required=True),
                                  'collections' : ndb.SuperKeyProperty(kind='10', repeated=True),
                               }
                              ),
                 
-       'delete' : io.Action(id='11-1',
+       'delete' : event.Action(id='11-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='11', required=True),
                               }
                              ),
                 
-       'list' : io.Action(id='11-2',
+       'list' : event.Action(id='11-2',
                               arguments={}
                              ),
     }  

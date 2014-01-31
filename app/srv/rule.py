@@ -6,7 +6,7 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 from app.lib.safe_eval import safe_eval
-from app.srv import io, log
+from app.srv import event, log
 
 class ActionDenied(Exception):
     
@@ -262,14 +262,14 @@ class DomainRole(Role):
     _kind = 56
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', io.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', io.Action.build_key('56-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', io.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', io.Action.build_key('56-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('56', event.Action.build_key('56-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'create' : io.Action(id='56-0',
+       'create' : event.Action(id='56-0',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -278,7 +278,7 @@ class DomainRole(Role):
                               }
                              ),
                 
-       'update' : io.Action(id='56-3',
+       'update' : event.Action(id='56-3',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='56', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -287,13 +287,13 @@ class DomainRole(Role):
                               }
                              ),
                 
-       'delete' : io.Action(id='56-1',
+       'delete' : event.Action(id='56-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='56', required=True),
                               }
                              ),
                 
-       'list' : io.Action(id='56-2',
+       'list' : event.Action(id='56-2',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
@@ -448,16 +448,16 @@ class DomainUser(ndb.BaseModel):
     _default_indexed = False
     
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('8', io.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('8', io.Action.build_key('8-1').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
-                                            ActionPermission('8', io.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
+                                            ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'invite' : io.Action(id='8-0',
+       'invite' : event.Action(id='8-0',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -466,19 +466,19 @@ class DomainUser(ndb.BaseModel):
                               }
                              ),
                 
-       'remove' : io.Action(id='8-1',
+       'remove' : event.Action(id='8-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='8', required=True),
                               }
                              ),
                 
-       'accept' : io.Action(id='8-2',
+       'accept' : event.Action(id='8-2',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='8', required=True),
                               }
                              ),
                 
-       'update' : io.Action(id='8-3',
+       'update' : event.Action(id='8-3',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='8', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),

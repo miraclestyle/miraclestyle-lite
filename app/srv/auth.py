@@ -8,7 +8,7 @@ import hashlib
 import os
 
 from app import ndb, settings, memcache, util
-from app.srv import io, rule
+from app.srv import event, rule
 from app.lib import oauth2
 from app.srv import log
   
@@ -50,15 +50,15 @@ class User(ndb.BaseExpando):
     }
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('0', io.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
-                                                rule.ActionPermission('0', io.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
-                                                rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
-                                                # rule.ActionPermission('0', io.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
-                                                rule.ActionPermission('0', io.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
+                                                # rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                ])
     
     _actions = {
-       'login' : io.Action(id='0-0',
+       'login' : event.Action(id='0-0',
                               arguments={
                                  'login_method' : ndb.SuperStringProperty(required=True),
                                  'code' : ndb.SuperStringProperty(),
@@ -66,14 +66,14 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
-       'update' : io.Action(id='0-1',
+       'update' : event.Action(id='0-1',
                               arguments={
                                  'primary_email' : ndb.SuperStringProperty(),
                                  'disassociate' : ndb.SuperStringProperty(),
                               }
                              ),
                 
-       'sudo' : io.Action(id='0-2',
+       'sudo' : event.Action(id='0-2',
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='0', required=True),
                                  'message' : ndb.SuperKeyProperty(required=True),
@@ -81,7 +81,7 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
-       'logout' : io.Action(id='0-3',
+       'logout' : event.Action(id='0-3',
                               arguments={
                                 'code' : ndb.SuperStringProperty(required=True),
                               }
@@ -433,32 +433,32 @@ class Domain(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', io.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', io.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'create' : io.Action(id='6-0',
+       'create' : event.Action(id='6-0',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                
                               }
                              ),
                 
-       'update' : io.Action(id='6-6',
+       'update' : event.Action(id='6-6',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
                 
-       'suspend' : io.Action(id='6-1',
+       'suspend' : event.Action(id='6-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
@@ -466,7 +466,7 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
                 
-       'activate' : io.Action(id='6-2',
+       'activate' : event.Action(id='6-2',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
@@ -474,7 +474,7 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
                 
-       'sudo' : io.Action(id='6-3',
+       'sudo' : event.Action(id='6-3',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'state' : ndb.SuperStringProperty(required=True),
@@ -483,7 +483,7 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
                 
-       'log_message' : io.Action(id='6-4',
+       'log_message' : event.Action(id='6-4',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
@@ -491,7 +491,7 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
                 
-       'list' : io.Action(id='6-5',
+       'list' : event.Action(id='6-5',
                               arguments={
                               }
                              ),

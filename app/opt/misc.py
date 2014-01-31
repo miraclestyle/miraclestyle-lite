@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.srv import io, rule, log
+from app.srv import event, rule, log
 
 # done 80%
 
@@ -22,13 +22,13 @@ class Content(ndb.BaseModel):
     active = ndb.SuperBooleanProperty('6', default=False)
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('14', io.Action.build_key('14-0').urlsafe(), True, "context.auth.user.root_admin"),
-                                                rule.ActionPermission('14', io.Action.build_key('14-1').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('14', event.Action.build_key('14-0').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('14', event.Action.build_key('14-1').urlsafe(), True, "context.auth.user.root_admin"),
                                                ])
   
 
     _actions = {
-       'create' : io.Action(id='14-0',
+       'create' : event.Action(id='14-0',
                               arguments={
         
                                  'title' : ndb.SuperStringProperty(required=True),
@@ -41,7 +41,7 @@ class Content(ndb.BaseModel):
                               }
                              ),
                 
-       'update' : io.Action(id='14-1',
+       'update' : event.Action(id='14-1',
                               arguments={
                   
                                  'title' : ndb.SuperStringProperty(required=True),
@@ -136,14 +136,14 @@ class ProductCategory(ndb.BaseModel):
     state = ndb.SuperStringProperty('4', required=True) # @todo status => state ? better ? for convention ? or just active = boolean 
 
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('17', io.Action.build_key('17-0').urlsafe(), True, "context.auth.user.root_admin"),
-                                                rule.ActionPermission('17', io.Action.build_key('17-2').urlsafe(), True, "context.auth.user.root_admin"),
-                                                rule.ActionPermission('17', io.Action.build_key('17-1').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('17', event.Action.build_key('17-0').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('17', event.Action.build_key('17-2').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('17', event.Action.build_key('17-1').urlsafe(), True, "context.auth.user.root_admin"),
                                                ])
   
 
     _actions = {
-       'create' : io.Action(id='17-0',
+       'create' : event.Action(id='17-0',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'state' : ndb.SuperStringProperty(required=True),
@@ -152,7 +152,7 @@ class ProductCategory(ndb.BaseModel):
                               }
                              ),
 
-       'update' : io.Action(id='17-2',
+       'update' : event.Action(id='17-2',
                               arguments={
  
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -164,7 +164,7 @@ class ProductCategory(ndb.BaseModel):
                               }
                              ),
                 
-       'delete' : io.Action(id='17-1',
+       'delete' : event.Action(id='17-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='17'),
                               }
@@ -291,16 +291,16 @@ class SupportRequest(ndb.BaseModel):
     created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('24', io.Action.build_key('24-0').urlsafe(), True, "not context.auth.user.is_guest"),
-                                                rule.ActionPermission('24', io.Action.build_key('24-1').urlsafe(), True, "context.auth.user.root_admin and context.rule.entity.state in ['new', 'su_opened']"),
-                                                rule.ActionPermission('24', io.Action.build_key('24-2').urlsafe(), True, "(context.rule.entity.key_parent == context.auth.user.key) and (context.rule.entity.state in ['su_opened', 'su_awaiting_closure'])"),
-                                                rule.ActionPermission('24', io.Action.build_key('24-3').urlsafe(), True, "(context.rule.entity.state in ['new', 'su_opened', 'su_awaiting_closure']) and (context.auth.user.root_admin or context.rule.entity.key_parent == context.auth.user.key)"),
+                                                rule.ActionPermission('24', event.Action.build_key('24-0').urlsafe(), True, "not context.auth.user.is_guest"),
+                                                rule.ActionPermission('24', event.Action.build_key('24-1').urlsafe(), True, "context.auth.user.root_admin and context.rule.entity.state in ['new', 'su_opened']"),
+                                                rule.ActionPermission('24', event.Action.build_key('24-2').urlsafe(), True, "(context.rule.entity.key_parent == context.auth.user.key) and (context.rule.entity.state in ['su_opened', 'su_awaiting_closure'])"),
+                                                rule.ActionPermission('24', event.Action.build_key('24-3').urlsafe(), True, "(context.rule.entity.state in ['new', 'su_opened', 'su_awaiting_closure']) and (context.auth.user.root_admin or context.rule.entity.key_parent == context.auth.user.key)"),
 
                                                ])
   
 
     _actions = {
-       'create' : io.Action(id='24-0',
+       'create' : event.Action(id='24-0',
                               arguments={
                                  'reference' : ndb.SuperStringProperty(required=True),
                                  'message' : ndb.TextProperty(required=True),
@@ -308,7 +308,7 @@ class SupportRequest(ndb.BaseModel):
                              ),
  
                 
-       'sudo' : io.Action(id='24-1',
+       'sudo' : event.Action(id='24-1',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='24', required=True),
                                  'note' : ndb.TextProperty(required=True),
@@ -317,7 +317,7 @@ class SupportRequest(ndb.BaseModel):
                               }
                              ),
                 
-       'close' : io.Action(id='24-2',
+       'close' : event.Action(id='24-2',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='24', required=True),
                                  'note' : ndb.TextProperty(required=False), # note should not be required i think
@@ -325,7 +325,7 @@ class SupportRequest(ndb.BaseModel):
                               }
                              ),
                 
-       'log_message' : io.Action(id='24-3',
+       'log_message' : event.Action(id='24-3',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='24', required=True),
                                  'note' : ndb.TextProperty(required=False), # note should not be required for log message

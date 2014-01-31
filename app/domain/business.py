@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb, settings
-from app.srv import uom, io, rule, log, blob
+from app.srv import uom, event, rule, log, blob
 
 from google.appengine.api import images
 from google.appengine.ext import blobstore
@@ -61,15 +61,15 @@ class Company(ndb.BaseExpando):
  
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('44', io.Action.build_key('44-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open'"),
-                                            rule.ActionPermission('44', io.Action.build_key('44-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', event.Action.build_key('44-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', event.Action.build_key('44-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', event.Action.build_key('44-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
+                                            rule.ActionPermission('44', event.Action.build_key('44-2').urlsafe(), False, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open'"),
+                                            rule.ActionPermission('44', event.Action.build_key('44-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'open')"),
                                             ])
  
     _actions = {
-       'create' : io.Action(id='44-0',
+       'create' : event.Action(id='44-0',
                               arguments={
  
                                  'parent_record' : ndb.SuperKeyProperty(kind='44', required=False),
@@ -98,7 +98,7 @@ class Company(ndb.BaseExpando):
                               }
                              ),
                 
-       'update' : io.Action(id='44-4',
+       'update' : event.Action(id='44-4',
                               arguments={
  
                                  'parent_record' : ndb.SuperKeyProperty(kind='44', required=False),
@@ -130,7 +130,7 @@ class Company(ndb.BaseExpando):
                               }
                              ),
                 
-       'close' : io.Action(id='44-1',
+       'close' : event.Action(id='44-1',
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='44', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
@@ -138,7 +138,7 @@ class Company(ndb.BaseExpando):
                               }
                              ),
                 
-       'open' : io.Action(id='44-2',
+       'open' : event.Action(id='44-2',
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='44', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
@@ -147,7 +147,7 @@ class Company(ndb.BaseExpando):
                              ),
    
                 
-       'list' : io.Action(id='44-4',
+       'list' : event.Action(id='44-4',
                               arguments={
                                   'domain' : ndb.SuperKeyProperty(kind='6', required=True)
                               }
@@ -324,17 +324,17 @@ class CompanyContent(ndb.BaseModel):
 
 
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('46', io.Action.build_key('46-0').urlsafe(),
+                                                rule.ActionPermission('46', event.Action.build_key('46-0').urlsafe(),
                                                                      False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'open')"),
-                                                rule.ActionPermission('46', io.Action.build_key('46-3').urlsafe(),
+                                                rule.ActionPermission('46', event.Action.build_key('46-3').urlsafe(),
                                                                      False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'open')"),                                        
-                                                rule.ActionPermission('46', io.Action.build_key('46-1').urlsafe(),
+                                                rule.ActionPermission('46', event.Action.build_key('46-1').urlsafe(),
                                                                      False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'open')"),
                                                ])
  
 
     _actions = {
-       'create' : io.Action(id='46-0',
+       'create' : event.Action(id='46-0',
                               arguments={
                                  'title' : ndb.SuperStringProperty(required=True),
                                  'body' : ndb.SuperTextProperty(required=True),
@@ -343,7 +343,7 @@ class CompanyContent(ndb.BaseModel):
                               }
                              ),
                 
-       'update' : io.Action(id='46-3',
+       'update' : event.Action(id='46-3',
                               arguments={
                                  
                                  'title' : ndb.SuperStringProperty(required=True),
@@ -354,13 +354,13 @@ class CompanyContent(ndb.BaseModel):
                               }
                              ),
                 
-       'delete' : io.Action(id='46-1',
+       'delete' : event.Action(id='46-1',
                               arguments={
                                    'key' : ndb.SuperKeyProperty(kind='46', required=True)
                               }
                              ),
                 
-       'list' : io.Action(id='46-2',
+       'list' : event.Action(id='46-2',
                               arguments={
                                   'company' : ndb.SuperKeyProperty(kind='44', required=True),
                               }

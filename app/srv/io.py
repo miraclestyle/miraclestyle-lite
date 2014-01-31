@@ -45,76 +45,6 @@ class Context():
  
   def new_callback(self, action_key, args):
     self.callbacks.append((action_key, args))
-    
-  def transaction_error(self, e):
-     """
-     This function needs to be used in fashion:
-     
-     @ndb.transacitonal
-     def transaction():
-         user.put()
-         ...
-         
-     try:
-        transaction()
-     except Exception as e:
-        response.transaction_error(e)
-        
-     It will automatically set if the transaction failed because of google network.
-     
-     """
-     if isinstance(e, datastore_errors.Timeout):
-        return self.transaction_timeout()
-     if isinstance(e, datastore_errors.TransactionFailedError):
-        return self.transaction_failed()
-     
-     raise
- 
-  def not_implemented(self):
-     return self.error('system', 'not_implemented')
-
-  def transaction_timeout(self):
-     # sets error in the response that the transaction that was taking place has timed out
-     return self.error('transaction_error', 'timeout')
- 
-  def transaction_failed(self):
-     # sets error in the response that the transaction that was taking place has failed
-     return self.error('transaction_error', 'failed')
- 
-  def required(self, k):
-     # sets error that the field is required with name `k`
-     return self.error(k, 'required')
-     
-  def invalid(self, k):
-     # sets error that the field is not in proper format with name `k`
-     return self.error(k, 'invalid_input')
- 
-  def status(self, m):
-     self.response['status'] = m
-     return self
- 
-  def not_found(self):
-     # shorthand for informing the response that the entity, object, thing or other cannot be found with the provided params
-     self.error('status', 'not_found')
-     return self
- 
-  def not_authorized(self):
-     # shorthand for informing the response that the user is not authorize to perform the operation
-     return self.error('user', 'not_authorized')
-     
-  def not_logged_in(self):
-     # shorthand for informing the response that the user needs to login in order to perform the operation
-     return self.error('user', 'not_logged_in')
- 
-  def has_error(self, k=None):
-     
-     if 'errors' not in self.response:
-        return False
-     
-     if k is None:
-        return len(self.response['errors'].keys())
-     else:
-        return len(self.response['errors'][k])
  
   def error(self, f, m):
      
@@ -190,23 +120,37 @@ class Engine:
         
         cls.process(context, args)
         
-        if not context.has_error():
-          
-          if 'action_model' in args and 'action_key' in args:
+        if 'action_model' in args and 'action_key' in args:
              action_model = ndb.factory('app.%s' % args.get('action_model'))
              execute = getattr(action_model, args.get('action_key'))
              if execute and callable(execute):
                 return execute(context)
                
-          else:
+        else:
              service = importlib.import_module('app.srv.%s' % context.action.service)
              return service.Engine.run(context)
+           
       except Exception as e:
-          if isinstance(e.message, dict):
-             pass
-             # handle our exceptions
+        
+          throw = True
           
-          raise # raise all other unhandled exceptions
+          if isinstance(e.message, dict):
+             # handle our exceptions
+             for key, value in e.message.items():
+                 context.error(key, value)
+                 
+             throw = False
+ 
+          if isinstance(e, datastore_errors.Timeout):
+             context.error('transaction', 'timeout')
+             throw = False
+           
+          if isinstance(e, datastore_errors.TransactionFailedError):
+             context.error('transaction', 'failed')
+             throw = False
+          
+          if throw:
+             raise # raise all other unhandled exceptions
           
       return context
 

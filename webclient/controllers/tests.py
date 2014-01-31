@@ -8,7 +8,7 @@ from webclient.route import register
 from webclient.handler import Angular
  
 from app import ndb
-from app.srv import event
+from app.srv import io
 
 class Reset(Angular):
   
@@ -47,7 +47,7 @@ class Welcome(Angular):
 class Endpoint(Angular):
     
     def respond(self):
-        context = event.Engine.run(self.reqdata.get_combined_params())
+        context = io.Engine.run(self.reqdata.get_combined_params())
         
         if context:
            return context.response
@@ -55,7 +55,7 @@ class Endpoint(Angular):
 class Engine(Angular):
 
     def respond(self):      
-        context = event.Engine.taskqueue_run(self.reqdata.get_combined_params()) 
+        context = io.Engine.taskqueue_run(self.reqdata.get_combined_params()) 
         
         if context:
            return context.response

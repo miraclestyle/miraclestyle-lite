@@ -8,7 +8,7 @@ import itertools
 import hashlib
  
 from app import ndb, settings
-from app.srv import io, uom, blob, rule, log
+from app.srv import event, uom, blob, rule, log
 
 from google.appengine.ext import blobstore
 
@@ -24,14 +24,14 @@ class Content(ndb.BaseModel):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('43', io.Action.build_key('43-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('43', io.Action.build_key('43-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('43', io.Action.build_key('43-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('43', io.Action.build_key('43-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('43', event.Action.build_key('43-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('43', event.Action.build_key('43-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('43', event.Action.build_key('43-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('43', event.Action.build_key('43-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ])
 
     _actions = {
-       'create' : io.Action(id='43-0',
+       'create' : event.Action(id='43-0',
                               arguments={
                       
                                  'title' : ndb.SuperStringProperty(required=True),
@@ -40,7 +40,7 @@ class Content(ndb.BaseModel):
                               }
                              ),
                 
-       'update' : io.Action(id='43-3',
+       'update' : event.Action(id='43-3',
                               arguments={
                                  'title' : ndb.SuperStringProperty(required=True),
                                  'body' : ndb.SuperTextProperty(required=True),
@@ -48,13 +48,13 @@ class Content(ndb.BaseModel):
                               }
                              ),
                 
-       'delete' : io.Action(id='43-1',
+       'delete' : event.Action(id='43-1',
                               arguments={
                                    'key' : ndb.SuperKeyProperty(kind='43', required=True)
                               }
                              ),
                 
-       'list' : io.Action(id='43-2',
+       'list' : event.Action(id='43-2',
                               arguments={
                                   'catalog' : ndb.SuperKeyProperty(kind='35'),
                               }
@@ -175,14 +175,14 @@ class Variant(ndb.BaseModel):
  
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('42', io.Action.build_key('42-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('42', io.Action.build_key('42-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('42', io.Action.build_key('42-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('42', io.Action.build_key('42-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('42', event.Action.build_key('42-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('42', event.Action.build_key('42-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('42', event.Action.build_key('42-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('42', event.Action.build_key('42-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ]) 
 
     _actions = {
-       'create' : io.Action(id='42-0',
+       'create' : event.Action(id='42-0',
                               arguments={
   
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -194,7 +194,7 @@ class Variant(ndb.BaseModel):
                               }
                              ),
 
-       'update' : io.Action(id='42-3',
+       'update' : event.Action(id='42-3',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'description' : ndb.SuperTextProperty(required=True),
@@ -204,13 +204,13 @@ class Variant(ndb.BaseModel):
                               }
                              ),
                 
-       'delete' : io.Action(id='42-1',
+       'delete' : event.Action(id='42-1',
                               arguments={
                                    'key' : ndb.SuperKeyProperty(kind='42', required=True)
                               }
                              ),
                 
-       'list' : io.Action(id='42-2',
+       'list' : event.Action(id='42-2',
                               arguments={
                                   'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
                               }
@@ -354,15 +354,15 @@ class Template(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('38', io.Action.build_key('38-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('38', io.Action.build_key('38-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('38', io.Action.build_key('38-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('38', io.Action.build_key('38-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('38', io.Action.build_key('38-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('38', event.Action.build_key('38-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('38', event.Action.build_key('38-4').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('38', event.Action.build_key('38-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('38', event.Action.build_key('38-2').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('38', event.Action.build_key('38-3').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                              ]) 
 
     _actions = {
-       'create' : io.Action(id='38-0',
+       'create' : event.Action(id='38-0',
                               arguments={
                              
                                  'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
@@ -386,7 +386,7 @@ class Template(ndb.BaseExpando):
                               }
                              ),
                 
-       'update' : io.Action(id='38-4',
+       'update' : event.Action(id='38-4',
                               arguments={
               
                                  'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
@@ -409,19 +409,19 @@ class Template(ndb.BaseExpando):
                               }
                              ),
                 
-       'delete' : io.Action(id='38-1',
+       'delete' : event.Action(id='38-1',
                               arguments={
                                    'key' : ndb.SuperKeyProperty(kind='38', required=True)
                               }
                              ),
                 
-       'list' : io.Action(id='38-2',
+       'list' : event.Action(id='38-2',
                               arguments={
                                   'catalog' : ndb.SuperKeyProperty(kind='35'),
                               }
                              ),
                 
-       'generate_product_instances' : io.Action(id='38-3',
+       'generate_product_instances' : event.Action(id='38-3',
                               arguments={
                                   'template' : ndb.SuperKeyProperty(kind='38'),
                               }
@@ -679,12 +679,12 @@ class Instance(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('39', io.Action.build_key('39-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
-                                            rule.ActionPermission('39', io.Action.build_key('39-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('39', event.Action.build_key('39-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('39', event.Action.build_key('39-1').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                             ]) 
 
     _actions = {
-       'update' : io.Action(id='39-0',
+       'update' : event.Action(id='39-0',
                               arguments={
                      
                                  'code' : ndb.SuperStringProperty(required=True),
@@ -704,7 +704,7 @@ class Instance(ndb.BaseExpando):
                                  'key' : ndb.SuperKeyProperty(kind='39', required=True)
                               }
                              ),
-       'list' : io.Action(id='39-1',
+       'list' : event.Action(id='39-1',
                               arguments={
                                   'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
                               }
@@ -841,11 +841,11 @@ class InventoryAdjustment(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('41', io.Action.build_key('41-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
+                                            rule.ActionPermission('41', event.Action.build_key('41-0').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.parent_entity.state == 'unpublished')"),
                                        ])
 
     _actions = {
-       'create' : io.Action(id='41-0',
+       'create' : event.Action(id='41-0',
                               arguments={
                          
                                  'comment' : ndb.SuperStringProperty(required=True),
