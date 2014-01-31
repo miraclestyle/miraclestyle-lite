@@ -405,14 +405,14 @@ class Tax(transaction.Plugin):
         allowed = False
         if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
           allowed = True
-          break
+ 
       # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
       elif (self.product_categories):
         allowed = False
         for line in entry._lines:
           if (self.product_categories.count(line.product_category)):
             allowed = True
-            break
+       
           
     return allowed
   

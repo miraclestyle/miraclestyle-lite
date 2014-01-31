@@ -396,7 +396,7 @@ class User(ndb.BaseExpando):
                                               'authorization_code' : user.generate_authorization_code(session),
                                               'session' : session
                                               })
-                  transaction()
+                  transaction(user)
                
         return context
       

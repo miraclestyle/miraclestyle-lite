@@ -729,20 +729,13 @@ class Instance(ndb.BaseExpando):
                if field_name in context.args:
                   set_args[field_name] = context.args.get(field_name)
                   
-           variants = []
+     
            contents = []
-           
-           for variant in context.args.get('variants', []):
-               if variant.key_namespace == entity.key_namespace:
-                  variants.append(variant)
-            
+  
            for content in context.args.get('contents', []):
-               if content.key_namespace == entity.key_namespace:
+               if content.key_parent == entity.key_parent:
                   contents.append(content)
-                  
-           if len(variants):       
-              set_args['variants'] = variants
-              
+  
            if len(contents):
               set_args['contents'] = contents
  
