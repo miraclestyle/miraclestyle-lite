@@ -73,9 +73,6 @@ class Engine:
           context.log.entities = []
           
     if (transaction):
-      try:
         ndb.transaction(lambda: log(context))
-      except Exception as e:
-        context.transaction_error(e)
     else:
       log(context)

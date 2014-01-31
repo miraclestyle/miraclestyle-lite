@@ -80,7 +80,7 @@ class CatalogImage(blob.Image):
                   rule.Engine.run(context)
                   
                   if not rule.executable(context):
-                     return context.not_authorized()
+                     raise rule.ActionDenied(context)
                   
                   catalog_image.sequence = sequences[i]
                   context.log.entities.append((catalog_image,))
@@ -91,11 +91,8 @@ class CatalogImage(blob.Image):
               
               context.response['images'] = catalog_images
 
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
-                    
+          transaction()
+ 
           return context
 
       
@@ -141,10 +138,7 @@ class CatalogImage(blob.Image):
                           
                    context.response['images'] = prepared_images
  
-           try:
-              transaction()
-           except Exception as e:
-              context.transaction_error(e)
+           transaction()
                      
            return context
        
@@ -158,7 +152,7 @@ class CatalogImage(blob.Image):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['images'] = cls.query(ancestor=catalog_key).fetch()
            
@@ -179,7 +173,7 @@ class CatalogImage(blob.Image):
                  context.rule.entity = entity
                  rule.Engine.run(context)
                  if not rule.executable(context):
-                    return context.not_authorized()
+                    raise rule.ActionDenied(context)
                   
                  entity.key.delete()
                  context.log.entities.append((entity,)) # cannot log on so many entity groups
@@ -188,10 +182,7 @@ class CatalogImage(blob.Image):
                  
              log.Engine.run(context) # cannot log on multiple entity groups
              
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
       
@@ -309,14 +300,14 @@ class Catalog(ndb.BaseExpando):
            return context.error('company', 'not_open')
          
         if company.key_namespace != entity.key_namespace:
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
            
 
         context.rule.entity = entity
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
                    
         entity.name = context.args.get('name')   
@@ -342,10 +333,7 @@ class Catalog(ndb.BaseExpando):
             
             cls.complete_save(entity, company, context)
        
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
         
         return context
        
@@ -364,10 +352,7 @@ class Catalog(ndb.BaseExpando):
              
             cls.complete_save(entity, company, context)
        
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
         
         return context
        
@@ -390,7 +375,7 @@ class Catalog(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             if cover:
                entity.cover = cover
@@ -403,10 +388,7 @@ class Catalog(ndb.BaseExpando):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
         
         return context
       
@@ -426,7 +408,7 @@ class Catalog(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'discontinued'
             entity.put()
@@ -436,10 +418,7 @@ class Catalog(ndb.BaseExpando):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
         
         return context
       
@@ -461,7 +440,7 @@ class Catalog(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'published'
             entity.put()
@@ -471,10 +450,7 @@ class Catalog(ndb.BaseExpando):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
       
@@ -491,7 +467,7 @@ class Catalog(ndb.BaseExpando):
              rule.Engine.run(context)
              
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
               
              entity.put() # ref project-documentation.py #L-244
   
@@ -500,10 +476,7 @@ class Catalog(ndb.BaseExpando):
               
              context.status(entity)
              
-         try:
-            transaction()
-         except Exception as e:
-            context.transaction_error(e)
+         transaction()
          
          return context
       
@@ -522,7 +495,7 @@ class Catalog(ndb.BaseExpando):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
            
@@ -598,7 +571,7 @@ class CatalogPricetag(ndb.BaseModel):
            rule.Engine.run(context)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
             
            set_args = {}
            for field_name in cls.get_fields():
@@ -626,10 +599,7 @@ class CatalogPricetag(ndb.BaseModel):
  
            cls.complete_save(entity, context)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
        
        return context
     
@@ -645,10 +615,7 @@ class CatalogPricetag(ndb.BaseModel):
   
            cls.complete_save(entity, context)
            
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
        
        return context
       
@@ -663,7 +630,7 @@ class CatalogPricetag(ndb.BaseModel):
                context.rule.entity = entity
                rule.Engine.run(context)
                if not rule.executable(context):
-                  return context.not_authorized()
+                  raise rule.ActionDenied(context)
                 
                entity.key.delete()
                context.log.entities.append((entity,))
@@ -671,10 +638,7 @@ class CatalogPricetag(ndb.BaseModel):
  
                context.status(entity)
                
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
+          transaction()
              
           return context
     
@@ -688,7 +652,7 @@ class CatalogPricetag(ndb.BaseModel):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['price_tags'] = cls.query(ancestor=catalog_key).fetch()
              

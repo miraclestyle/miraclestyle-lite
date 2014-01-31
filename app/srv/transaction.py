@@ -354,10 +354,7 @@ class Engine:
             
             ndb.put_multi(lines)
             
-    try:
-         transaction()
-    except Exception as e:
-         context.transaction_error(e)
+    transaction()
      
             
   

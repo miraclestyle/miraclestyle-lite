@@ -70,7 +70,7 @@ class Content(ndb.BaseModel):
         rule.Engine.run(context, True)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
          
         entity.populate(**set_args)
         entity.put()
@@ -90,10 +90,7 @@ class Content(ndb.BaseModel):
           
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
        
@@ -110,10 +107,7 @@ class Content(ndb.BaseModel):
             cls.complete_save(entity, context)
             
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
  
@@ -186,7 +180,7 @@ class ProductCategory(ndb.BaseModel):
         rule.Engine.run(context, True)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
         entity.populate(**set_args)
         entity.complete_name = ndb.make_complete_name(entity, 'name', 'parent_record')
@@ -207,10 +201,7 @@ class ProductCategory(ndb.BaseModel):
           
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
        
@@ -226,10 +217,7 @@ class ProductCategory(ndb.BaseModel):
             
             cls.complete_save(entity, context)
              
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
       
@@ -246,7 +234,7 @@ class ProductCategory(ndb.BaseModel):
              rule.Engine.run(context, True)
              
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
               
              entity.key.delete()
              context.log.entities.append((entity,))
@@ -254,10 +242,7 @@ class ProductCategory(ndb.BaseModel):
       
              context.status(entity)
              
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context   
 
@@ -355,7 +340,7 @@ class SupportRequest(ndb.BaseModel):
              rule.Engine.run(context, True)
              
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
     
              entity.reference = context.args.get('reference')
              entity.put()
@@ -365,10 +350,7 @@ class SupportRequest(ndb.BaseModel):
                 
              context.status(entity)
             
-         try:
-             transaction()
-         except Exception as e:
-             context.transaction_error(e)
+         transaction()
             
          return context
     
@@ -385,7 +367,7 @@ class SupportRequest(ndb.BaseModel):
             rule.Engine.run(context, True)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'closed'
             entity.put()
@@ -395,10 +377,7 @@ class SupportRequest(ndb.BaseModel):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
  
@@ -416,7 +395,7 @@ class SupportRequest(ndb.BaseModel):
            rule.Engine.run(context, True)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
             
            if context.args.get('state') not in ('su_opened', 'su_awaiting_closure'):
               return context.error('state', 'invalid_state')
@@ -429,10 +408,7 @@ class SupportRequest(ndb.BaseModel):
             
            context.status(entity)
  
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
            
        return context
     
@@ -449,7 +425,7 @@ class SupportRequest(ndb.BaseModel):
              rule.Engine.run(context, True)
              
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
               
              entity.put() # ref project-documentation.py #L-244
   
@@ -458,10 +434,7 @@ class SupportRequest(ndb.BaseModel):
               
              context.status(entity)
              
-         try:
-            transaction()
-         except Exception as e:
-            context.transaction_error(e)
+         transaction()
            
          return context
    

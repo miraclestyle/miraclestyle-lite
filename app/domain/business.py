@@ -174,7 +174,7 @@ class Company(ndb.BaseExpando):
          rule.Engine.run(context)
             
          if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
          
          set_args = {}
       
@@ -214,10 +214,7 @@ class Company(ndb.BaseExpando):
  
             cls.complete_save(entity, context)
  
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
         
         return context
       
@@ -232,11 +229,9 @@ class Company(ndb.BaseExpando):
            
             cls.complete_save(entity, context)
             
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
-        
+            
+        transaction()
+  
         return context
     
     @classmethod
@@ -252,7 +247,7 @@ class Company(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'closed'
             entity.put()
@@ -261,12 +256,9 @@ class Company(ndb.BaseExpando):
             log.Engine.run(context)
              
             context.status(entity)
-
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
-        
+ 
+        transaction()
+      
         return context
  
     @classmethod
@@ -282,7 +274,7 @@ class Company(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'open'
             entity.put()
@@ -292,11 +284,9 @@ class Company(ndb.BaseExpando):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
-           
+      
+        transaction()
+        
         return context
    
     @classmethod
@@ -389,19 +379,16 @@ class CompanyContent(ndb.BaseModel):
               context.rule.entity = entity
               rule.Engine.run(context)
               if not rule.executable(context):
-                 return context.not_authorized()
+                 raise rule.ActionDenied(context)
                
               entity.key.delete()
               context.log.entities.append((entity,))
               log.Engine.run(context)
 
               context.status(entity)
-              
-         try:
-            transaction()
-         except Exception as e:
-            context.transaction_error(e)
-            
+         
+         transaction()
+         
          return context
        
     @classmethod
@@ -411,7 +398,7 @@ class CompanyContent(ndb.BaseModel):
        rule.Engine.run(context)
        
        if not rule.executable(context):
-          return context.not_authorized()
+          raise rule.ActionDenied(context)
        
        entity.title = context.args.get('title')
        entity.body = context.args.get('body')
@@ -433,12 +420,9 @@ class CompanyContent(ndb.BaseModel):
              entity = cls(parent=company_key)
       
              cls.complete_save(entity, context)
-            
-         try:
-             transaction()
-         except Exception as e:
-             context.transaction_error(e)
-         
+    
+         transaction()
+      
          return context
       
     @classmethod
@@ -451,11 +435,8 @@ class CompanyContent(ndb.BaseModel):
              entity = entity_key.get()
   
              cls.complete_save(entity, context)
-            
-         try:
-             transaction()
-         except Exception as e:
-             context.transaction_error(e)
-         
+       
+         transaction()
+        
          return context
  

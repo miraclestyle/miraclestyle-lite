@@ -105,7 +105,7 @@ class Address(ndb.BaseExpando):
              context.rule.entity = entity
              rule.Engine.run(context, True)
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
               
              entity.key.delete()
              context.log.entities.append((entity,))
@@ -114,10 +114,7 @@ class Address(ndb.BaseExpando):
              context.response['deleted'] = True
              context.status(entity)
              
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
              
         return context
       
@@ -134,7 +131,7 @@ class Address(ndb.BaseExpando):
         rule.Engine.run(context, True)
             
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
          
         entity.populate(**set_args)
         entity.put()
@@ -172,10 +169,7 @@ class Address(ndb.BaseExpando):
    
             cls.complete_save(entity, context)
              
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
             
@@ -189,10 +183,7 @@ class Address(ndb.BaseExpando):
            
            cls.complete_save(entity, context)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
             
        return context
     
@@ -268,7 +259,7 @@ class Collection(ndb.BaseModel):
             rule.Engine.run(context, True)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
              
             entity.key.delete()
             context.log.entities.append((entity,))
@@ -276,10 +267,7 @@ class Collection(ndb.BaseModel):
 
             context.status(entity)
             
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
            
        return context
      
@@ -297,7 +285,7 @@ class Collection(ndb.BaseModel):
         rule.Engine.run(context, True)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
         entity.primary_email = context.auth.user.primary_email
         entity.populate(**set_args)
@@ -319,10 +307,7 @@ class Collection(ndb.BaseModel):
           
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
       
@@ -336,10 +321,7 @@ class Collection(ndb.BaseModel):
  
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
  
@@ -411,7 +393,7 @@ class CollectionCompany(ndb.BaseModel):
              context.rule.entity = entity
              rule.Engine.run(context, True)
              if not rule.executable(context):
-                return context.not_authorized()
+                raise rule.ActionDenied(context)
               
              entity.key.delete()
              context.log.entities.append((entity,))
@@ -419,10 +401,7 @@ class CollectionCompany(ndb.BaseModel):
      
              context.status(entity)
              
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
       
@@ -434,7 +413,7 @@ class CollectionCompany(ndb.BaseModel):
         rule.Engine.run(context, True)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
         company_key = context.args.get('company')
         company = company_key.get()
@@ -471,10 +450,7 @@ class CollectionCompany(ndb.BaseModel):
  
             cls.complete_save(entity, context)
               
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
       
@@ -489,10 +465,7 @@ class CollectionCompany(ndb.BaseModel):
   
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
   

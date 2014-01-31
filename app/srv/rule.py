@@ -11,7 +11,13 @@ from app.srv import event, log
 class ActionDenied(Exception):
     
     def __init__(self, context):
-       self.message = {'action' : context.action.key.urlsafe()}
+       # its better to be called action_denied, cuz it will look in response errors like
+       """
+        'errors' : {
+          'action_denied' : 'action_key_urlsafe',
+        }
+       """
+       self.message = {'action_denied' : context.action.key.urlsafe()}
        
 
 def _check_field(context, name, key):
@@ -310,7 +316,7 @@ class DomainRole(Role):
         Engine.run(context)
           
         if not executable(context):
-           return context.not_authorized()
+           raise ActionDenied(context)
             
         domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=entity.key_namespace).fetch()
      
@@ -333,10 +339,7 @@ class DomainRole(Role):
           else:
              context.not_found()      
            
-        try:
-          transaction()
-        except Exception as e:
-          context.transaction_error(e)
+        transaction()
            
         return context
       
@@ -347,7 +350,7 @@ class DomainRole(Role):
         Engine.run(context)
         
         if not executable(context):
-           return context.not_authorized()
+           raise ActionDenied(context)
          
         entity.name = context.args.get('name')
         entity.active = context.args.get('active')
@@ -392,10 +395,7 @@ class DomainRole(Role):
            
             cls.complete_save(entity, context)  
                
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
     
@@ -410,10 +410,7 @@ class DomainRole(Role):
           
             cls.complete_save(entity, context)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
 
@@ -428,7 +425,7 @@ class DomainRole(Role):
        Engine.run(context)
        
        if not executable(context):
-          return context.not_authorized()
+          raise ActionDenied(context)
        
        context.response['roles'] = cls.query(namespace=domain.key_namespace).fetch()
   
@@ -510,7 +507,7 @@ class DomainUser(ndb.BaseModel):
            Engine.run(context)
              
            if not executable(context):
-              return context.not_authorized()
+              raise ActionDenied(context)
             
            already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
            
@@ -537,10 +534,7 @@ class DomainUser(ndb.BaseModel):
            else:
               return context.error('user', 'user_not_active')      
             
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
          
         return context
       
@@ -559,7 +553,7 @@ class DomainUser(ndb.BaseModel):
           
           # if user can remove, or if the user can remove HIMSELF from the user role  
           if not executable(context):
-             return context.not_authorized()
+             raise ActionDenied(context)
           
           entity.key.delete()
           context.log.entities.append((entity,))
@@ -567,10 +561,7 @@ class DomainUser(ndb.BaseModel):
 
           context.status(entity)
           
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
         
        return context
  
@@ -588,7 +579,7 @@ class DomainUser(ndb.BaseModel):
            Engine.run(context)
            
            if not executable(context):
-              return context.not_authorized()
+              raise ActionDenied(context)
            
            entity.state = 'accepted'
            entity.put()
@@ -597,10 +588,7 @@ class DomainUser(ndb.BaseModel):
             
            context.status(entity)
            
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
          
         return context
     
@@ -619,7 +607,7 @@ class DomainUser(ndb.BaseModel):
              
        
              if not executable(context):
-                return context.not_authorized()
+                raise ActionDenied(context)
               
              domain_key = context.args.get('domain')
              domain = domain_key.get()
@@ -640,9 +628,6 @@ class DomainUser(ndb.BaseModel):
               
              context.status(entity)
              
-          try:
-             transaction()
-          except Exception as e:
-             context.transaction_error(e)
+          transaction()
            
           return context

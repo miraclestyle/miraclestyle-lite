@@ -68,7 +68,7 @@ class Content(ndb.BaseModel):
          rule.Engine.run(context)
          
          if not rule.executable(context):
-            return context.not_authorized()
+            raise rule.ActionDenied(context)
           
          entity.title = context.args.get('title')
          entity.body = context.args.get('body')
@@ -90,10 +90,7 @@ class Content(ndb.BaseModel):
  
              cls.complete_save(entity, context)
             
-         try:
-             transaction()
-         except Exception as e:
-             context.transaction_error(e)
+         transaction()
          
          return context
 
@@ -109,10 +106,7 @@ class Content(ndb.BaseModel):
              
              cls.complete_save(entity, context)
              
-         try:
-             transaction()
-         except Exception as e:
-             context.transaction_error(e)
+         transaction()
          
          return context
  
@@ -127,7 +121,7 @@ class Content(ndb.BaseModel):
             context.rule.entity = entity
             rule.Engine.run(context)
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
              
             entity.key.delete()
             context.log.entities.append((entity,))
@@ -135,10 +129,7 @@ class Content(ndb.BaseModel):
 
             context.status(entity)
             
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
           
        return context
       
@@ -152,7 +143,7 @@ class Content(ndb.BaseModel):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['contents'] = cls.query(ancestor=catalog_key).fetch()
            
@@ -224,7 +215,7 @@ class Variant(ndb.BaseModel):
          rule.Engine.run(context)
          
          if not rule.executable(context):
-            return context.not_authorized()
+            raise rule.ActionDenied(context)
           
          entity.name = context.args.get('name')
          entity.description = context.args.get('description')
@@ -248,10 +239,7 @@ class Variant(ndb.BaseModel):
               
            cls.complete_save(entity, context)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
        
        return context
     
@@ -267,10 +255,7 @@ class Variant(ndb.BaseModel):
            cls.complete_save(entity, context)
    
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
        
        return context
  
@@ -285,7 +270,7 @@ class Variant(ndb.BaseModel):
               context.rule.entity = entity
               rule.Engine.run(context)
               if not rule.executable(context):
-                 return context.not_authorized()
+                 raise rule.ActionDenied(context)
                
               entity.key.delete()
               context.log.entities.append((entity,))
@@ -293,10 +278,7 @@ class Variant(ndb.BaseModel):
   
               context.status(entity)
               
-         try:
-            transaction()
-         except Exception as e:
-            context.transaction_error(e)
+         transaction()
             
          return context
       
@@ -310,7 +292,7 @@ class Variant(ndb.BaseModel):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['variants'] = cls.query(ancestor=catalog_key).fetch()
            
@@ -441,7 +423,7 @@ class Template(ndb.BaseExpando):
          rule.Engine.run(context)
          
          if not rule.executable(context):
-            return context.not_authorized()
+            raise rule.ActionDenied(context)
           
          set_args = {}
          
@@ -499,10 +481,7 @@ class Template(ndb.BaseExpando):
          
            cls.complete_save(entity, context)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
         
        return context
     
@@ -523,10 +502,7 @@ class Template(ndb.BaseExpando):
          
            cls.complete_save(entity, context)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
         
        return context
  
@@ -543,7 +519,7 @@ class Template(ndb.BaseExpando):
             context.rule.entity = entity
             rule.Engine.run(context)
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
              
             entity.key.delete()
             context.log.entities.append((entity,))
@@ -558,7 +534,7 @@ class Template(ndb.BaseExpando):
           if delete_images:
              blobstore.delete(delete_images)
        except Exception as e:
-          context.transaction_error(e)
+          raise e
            
        return context
       
@@ -572,7 +548,7 @@ class Template(ndb.BaseExpando):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
 
         context.response['templates'] = cls.query(ancestor=catalog_key).fetch()
            
@@ -591,7 +567,7 @@ class Template(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
 
             # cant go delete multi cuz we also need to delete images
             # ndb.delete_multi(Instance.query(ancestor=product_template_key).fetch(keys_only=True))
@@ -639,10 +615,7 @@ class Template(ndb.BaseExpando):
                  
             log.Engine.run(context)
               
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
      
        return context
      
@@ -748,7 +721,7 @@ class Instance(ndb.BaseExpando):
            rule.Engine.run(context)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
             
            set_args = {}
            
@@ -788,10 +761,7 @@ class Instance(ndb.BaseExpando):
                    
            context.status(entity)
           
-       try:
-           transaction()
-       except Exception as e:
-           context.transaction_error(e)
+       transaction()
        
        return context
    
@@ -806,7 +776,7 @@ class Instance(ndb.BaseExpando):
         rule.Engine.run(context)
         
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
   
         context.response['instances'] = cls.query(ancestor=catalog_key).fetch()
         
@@ -870,7 +840,7 @@ class InventoryAdjustment(ndb.BaseModel):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
              
             entity.comment = context.args.get('comment')
             entity.quantity = context.args.get('quantity')
@@ -886,10 +856,7 @@ class InventoryAdjustment(ndb.BaseModel):
             context.status(entity)
             context.response['product_inventory_log'] = product_inventory_log
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
         
         return context
 

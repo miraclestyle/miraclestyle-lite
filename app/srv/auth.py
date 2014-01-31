@@ -205,7 +205,7 @@ class User(ndb.BaseExpando):
             rule.Engine.run(context, True)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
              
             new_state = 'active'
             
@@ -221,10 +221,7 @@ class User(ndb.BaseExpando):
             
             context.status(user_to_update)
             
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
       
@@ -239,7 +236,7 @@ class User(ndb.BaseExpando):
             rule.Engine.run(context, True)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
  
             primary_email = context.args.get('primary_email')
             disassociate = context.args.get('disassociate')
@@ -261,10 +258,7 @@ class User(ndb.BaseExpando):
             
             context.status(current_user)
             
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
   
@@ -277,13 +271,13 @@ class User(ndb.BaseExpando):
         rule.Engine.run(context, True)
        
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
         @ndb.transactional(xg=True)
         def transaction():
 
             if not current_user.logout_code == context.args.get('code'):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
          
             if current_user.sessions:
                current_user.sessions = []
@@ -298,10 +292,7 @@ class User(ndb.BaseExpando):
             
             context.status('logged_out')
         
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
               
         return context
      
@@ -318,7 +309,7 @@ class User(ndb.BaseExpando):
         rule.Engine.run(context, True)
 
         if not rule.executable(context):
-           return context.not_authorized()
+           raise rule.ActionDenied(context)
         
         if login_method not in settings.LOGIN_METHODS:
            context.error('login_method', 'not_allowed')
@@ -362,7 +353,7 @@ class User(ndb.BaseExpando):
                     rule.Engine.run(context, True)
                     
                     if not rule.executable(context):
-                       return context.not_authorized()
+                       raise rule.ActionDenied(context)
                      
                   
                   @ndb.transactional(xg=True)
@@ -405,10 +396,7 @@ class User(ndb.BaseExpando):
                                               'authorization_code' : user.generate_authorization_code(session),
                                               'session' : session
                                               })
-                  try:
-                     transaction(user) 
-                  except Exception as e:
-                     context.transaction_error(e)
+                  transaction()
                
         return context
       
@@ -529,7 +517,7 @@ class Domain(ndb.BaseExpando):
             rule.Engine.run(context, True)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
        
             primary_contact = context.args.get('primary_contact')
             
@@ -582,10 +570,7 @@ class Domain(ndb.BaseExpando):
                
             context.status(entity)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
  
@@ -603,7 +588,7 @@ class Domain(ndb.BaseExpando):
             rule.Engine.run(context)
                
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
                 
             primary_contact = context.args.get('primary_contact')
             
@@ -619,10 +604,7 @@ class Domain(ndb.BaseExpando):
                
             context.status(entity)
            
-        try:
-            transaction()
-        except Exception as e:
-            context.transaction_error(e)
+        transaction()
             
         return context
       
@@ -639,7 +621,7 @@ class Domain(ndb.BaseExpando):
             rule.Engine.run(context)
             
             if not rule.executable(context):
-               return context.not_authorized()
+               raise rule.ActionDenied(context)
             
             entity.state = 'suspended'
             entity.put()
@@ -649,10 +631,7 @@ class Domain(ndb.BaseExpando):
              
             context.status(entity)
 
-        try:
-           transaction()
-        except Exception as e:
-           context.transaction_error(e)
+        transaction()
            
         return context
  
@@ -669,7 +648,7 @@ class Domain(ndb.BaseExpando):
            rule.Engine.run(context)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
            
            entity.state = 'active'
            entity.put()
@@ -679,10 +658,7 @@ class Domain(ndb.BaseExpando):
             
            context.status(entity)
            
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
            
        return context
     
@@ -700,7 +676,7 @@ class Domain(ndb.BaseExpando):
            rule.Engine.run(context)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
             
            if context.args.get('state') not in ('active', 'su_suspended'):
               return context.error('state', 'invalid_state')
@@ -713,10 +689,7 @@ class Domain(ndb.BaseExpando):
             
            context.status(entity)
  
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
            
        return context
     
@@ -733,7 +706,7 @@ class Domain(ndb.BaseExpando):
            rule.Engine.run(context)
            
            if not rule.executable(context):
-              return context.not_authorized()
+              raise rule.ActionDenied(context)
             
            entity.put() # ref project-documentation.py #L-244
 
@@ -742,10 +715,7 @@ class Domain(ndb.BaseExpando):
             
            context.status(entity)
            
-       try:
-          transaction()
-       except Exception as e:
-          context.transaction_error(e)
+       transaction()
            
        return context
       
