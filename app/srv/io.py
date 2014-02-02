@@ -118,16 +118,6 @@ class Engine:
       raise ArgumentError(argument_error)
   
   @classmethod
-  def taskqueue_run(cls, input):
-    action = cls.get_action(input)
-    if action:
-      context = cls.realtime_run(action, input)
-      return context.output
-    else:
-      output = {'errors': {'invalid_action': input.get('action_key')}}
-      return output
-  
-  @classmethod
   def realtime_run(cls, action, input):
     context = Context()
     context.action = action
@@ -169,6 +159,16 @@ class Engine:
         taskqueue.add(url='/engine_run', params=input)
     
     return context
+  
+  @classmethod
+  def taskqueue_run(cls, input):
+    action = cls.get_action(input)
+    if action:
+      context = cls.realtime_run(action, input)
+      return context.output
+    else:
+      output = {'errors': {'invalid_action': input.get('action_key')}}
+      return output
   
   @classmethod
   def run(cls, input):
