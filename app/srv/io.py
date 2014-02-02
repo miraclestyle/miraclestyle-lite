@@ -12,18 +12,6 @@ from app import ndb
 from app.srv import event
 
 
-class RequiredError(Exception):
-  
-  def __init__(self, required):
-    self.message = {'required' : required}
-    
-
-class InvalidError(Exception):
-  
-  def __init__(self, invalid):
-    self.message = {'invalid' : invalid}
-    
-
 class ArgumentError(Exception):
   
   def __init__(self, argument_error):
@@ -128,10 +116,10 @@ class Engine:
         action_model = ndb.factory('app.%s' % input.get('action_model'))
         execute = getattr(action_model, input.get('action_key'))
         if execute and callable(execute):
-          return execute(context)
+          execute(context)
         else:
           service = importlib.import_module('app.srv.%s' % context.action.service)
-          return service.Engine.run(context)
+          service.Engine.run(context)
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
