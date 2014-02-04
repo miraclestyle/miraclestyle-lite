@@ -11,22 +11,25 @@ angular.module('app.ui.selection', ['app.ui.transition'])
 	  transclude: true,
 	  templateUrl: ngtemplate_path + 'template/selection/selection.html',
 	  
-	   scope: {
-	      label: '@',               // Interpolate the heading attribute onto this scope
+	  /*scope: {
+	      label: '@',                // uncommenting this, makes the scope private 
 	      isMultiple: '=?',
 	      name : '@'
-	    },
- 
-      link: function (scope, element, attrs) {
+	    },*/
+ 	 
+      link: function (scope, element, attrs, ngModel) {
+
    
         scope.options = scope.$eval(attrs.options);
+        scope.label = attrs.label;
+        scope.name = attrs.name;
+        
         scope.selectedOption = null;
         
         var init_label = scope.label;
         
         scope.active = attrs.active;
-        scope.name = attrs.name;
-      
+ 
         scope.opened = false;
         
 	    scope.openOptions = function ()
@@ -41,8 +44,11 @@ angular.module('app.ui.selection', ['app.ui.transition'])
 	    	
 	    	scope.label = option.label;
 	    	
-	    	scope.openOptions();
+	    	scope[scope.name] = option.value;
 	    	
+	    	scope.openOptions();
+ 
+	    	 
 	    	return false;
 	    };
         

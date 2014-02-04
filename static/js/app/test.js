@@ -80,4 +80,15 @@ var ModalDemoCtrl = function ($scope, $modal, $log) {
   };
 };
 
+
+function selectionCtrl($scope)
+{
+	$scope.country = Math.random();
+ 
+	
+	this.getCountry = function ()
+	{
+		console.log($scope);
+	};
+}
  

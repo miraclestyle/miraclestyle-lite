@@ -1,14 +1,14 @@
-.selection
+.selection_box
 {
 	position:relative;
 }
 
-.selection .button
+.selection_box .button
 {
 	min-width:200px;
 }
 
-.selection.opened .options
+.selection_box.opened .options
 {
  	display:block;
 }

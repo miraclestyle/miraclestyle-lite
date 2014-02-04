@@ -1,8 +1,9 @@
-<div ng-model="name" ng-class="{selection : true, opened: opened}">
+<div ng-class="{selection_box : true, opened: opened}">
 	<button ng-Click="openOptions()" class="button">{{label}}</button>
 	<div class="options">
 		<a href="javascript:;" ng-Click="selectOption(opt)" ng-repeat="opt in options" ng-class="{option : true, active: opt.value == active}">
 			{{opt.label}}
 		</a>
 	</div>
+	<input type="hidden" value="active" ng-model="name" />
 </div>
