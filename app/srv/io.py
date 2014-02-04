@@ -16,7 +16,7 @@ class ArgumentError(Exception):
   
   def __init__(self, argument_error):
     self.message = argument_error
-    
+
 
 class Context():
   
@@ -41,7 +41,7 @@ class Context():
       self.output['errors'][key] = []
     self.output['errors'][key].append(value)
     return self # Do we need this line?
-  
+
 
 class Engine:
   
