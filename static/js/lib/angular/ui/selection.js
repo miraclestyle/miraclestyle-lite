@@ -13,7 +13,7 @@ angular.module('app.ui.selection', ['app.ui.transition'])
 	  restrict:'EA',
 	  controller:'SelectionController',
 	  transclude: true,
-	  templateUrl: ngtemplate_path + 'templates/selection/selection.html',
+	  templateUrl: ngtemplate_path + 'template/selection/selection.html',
 	  
 	   scope: {
 	      label: '@',               // Interpolate the heading attribute onto this scope
