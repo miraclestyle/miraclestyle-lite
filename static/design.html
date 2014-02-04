@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="TestApp">
   <head>
     <title>MIRACLESTYLE</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular.js"></script>
+    <script src="js/lib/angular/ui/transition.js"></script>
+    <script src="js/lib/angular/ui/collapse.js"></script>
+    <script src="js/lib/angular/ui/accordion.js"></script>
+    <script src="js/app/test.js"></script>
     <script>
     	$(function () {
     		$('.segment_title').each(function () {
@@ -156,18 +161,7 @@
 			        </address>
 			        <blockquote>This is a blockquote.</blockquote>
 			        <hr>
-			        <h4>Audio and video:</h4>
-			        <p>Example of the <code>&lt;audio&gt;</code> element:</p>
-			        <audio controls>
-			          <source src="assets/audio/kahvi285d_jim_black-yoctosecond.ogg" />
-			          <!-- Find the audio file here: http://www.kahvi.org/releases.php?release_number=285 -->
-			          Your browser does not support OGG audio. Try using Safari, Chrome or Firefox.</audio>
-			        <p>Example of the <code>&lt;video&gt;</code> element:</p>
-			        <video width="400" height="300" src="assets/video/a-new-computer-small.ogg" controls autobuffer>
-			          <!-- Find the video file here: http://www.polycrystal.org/lego/movies.html -->
-			          <p>Try using Safari, Chrome or Firefox to view this video. You can also <a href="assets/video/a-new-computer-small.ogg">download the video</a>.</p>
-			        </video>
-			        <hr>
+			         
 			        <h4>Figure:</h4>
 			        <figure>
 			          <p>Use an <code>&lt;img&gt;</code>, <code>&lt;video&gt;</code> or <code>&lt;table&gt;</code> as content for the <code>&lt;figure&gt;</code> element.</p>
@@ -436,7 +430,32 @@
  		
  		<div class="segment">
  			<h1 class="segment_title">Accordions</h1>
- 			<div></div>
+ 
+ 			<div>
+ 				
+ 				<div ng-controller="AccordionDemoCtrl">
+					  <label class="checkbox">
+					    <input type="checkbox" ng-model="oneAtATime">
+					    Open only one at a time
+					  </label>
+					
+					  <accordion close-others="oneAtATime">
+					    <accordion-group heading="Static Header, initially expanded"  is-open="isopen">
+					      This content is straight in the template.
+					    </accordion-group>
+					    <accordion-group heading="{{group.title}}" ng-repeat="group in groups">
+					      {{group.content}}
+					    </accordion-group>
+					    <accordion-group heading="Dynamic Body Content">
+					      <p>The body of the accordion group grows to fit the contents</p>
+					        <button class="btn btn-default btn-sm" ng-click="addItem()">Add Item</button>
+					        <div ng-repeat="item in items">{{item}}</div>
+					    </accordion-group>
+				 
+					  </accordion>
+					</div>
+ 				
+ 			</div>
  		</div>
  		
  		
@@ -459,5 +478,6 @@
  				<div><button class="button" type="button">Button</button></div>
  			</div>
  		</div>
+ 
   </body>
 </html>
