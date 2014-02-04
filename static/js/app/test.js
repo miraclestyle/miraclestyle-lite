@@ -6,6 +6,7 @@ angular.module('app.ui',
 	   'app.ui.accordion',
 	   'app.ui.modal',
 	   'app.ui.selection',
+	   'app.ui.dropdown',
 	  ]
 );
 

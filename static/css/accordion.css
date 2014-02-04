@@ -1,0 +1,60 @@
+
+.panel {
+  margin-bottom: 20px;
+ 
+}
+ 
+.panel-heading {
+  padding: 10px 15px;
+ 
+}
+
+.panel-body {
+  padding: 15px;
+}
+
+.panel-heading > .dropdown .dropdown-toggle {
+  color: inherit;
+}
+
+.panel-title {
+  margin-top: 0;
+  margin-bottom: 0;
+ 
+  color: inherit;
+}
+
+.panel-title > a {
+  color: inherit;
+}
+
+ 
+.panel-group .panel {
+  margin-bottom: 0;
+  overflow: hidden;
+ 
+}
+
+.panel-group .panel + .panel {
+  margin-top: 5px;
+}
+
+.panel-group .panel-heading {
+  border-bottom: 0;
+}
+ 
+
+.panel-group .panel-footer {
+  border-top: 0;
+}
+ 
+.accordion-toggle
+{
+	cursor:pointer;
+}
+ 
+.panel-default > .panel-heading {
+  color: #333333;
+  background-color: #f5f5f5;
+ 
+}

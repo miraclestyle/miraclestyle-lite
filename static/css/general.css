@@ -1,0 +1,33 @@
+body
+{
+  font-size:14px;
+  font-family:"sawasdeeregular", Arial, Helvetica, sans-serif;
+  color: #333333;
+  line-height: 1.5em;
+}
+
+h1, h2, h3, h4, h5, h6
+{
+  font-weight: normal;
+}
+
+a
+{
+  color: #333333;
+}
+
+a:hover
+{
+  text-decoration: none;
+}
+
+a:visited
+{
+  color: #333333;
+}
+
+
+:focus
+{
+	outline: none;
+}

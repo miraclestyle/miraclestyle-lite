@@ -8,6 +8,7 @@
     <script src="js/lib/angular/ui/collapse.js"></script>
     <script src="js/lib/angular/ui/accordion.js"></script>
     <script src="js/lib/angular/ui/modal.js"></script>
+    <script src="js/lib/angular/ui/dropdown.js"></script>
     <script src="js/lib/angular/ui/selection.js"></script>
     <script src="js/app/test.js"></script>
  
@@ -483,7 +484,29 @@
  		<div class="segment">
  			<h1 class="segment_title">Selection</h1>
  			<div>
- 				<div><selection options="[{'value' : 'AL', name : 'Alabama'}, {'value' : 'CA', name : 'California'}]" label="Select A country"></selection></div>
+ 				<div><selection name="country" active="AL" 
+ 					   options="[{'value' : 'AL', 'label' : 'Alabama'}, {'value' : 'CA', 'label' : 'California'}]"
+ 					   label="Select A country"></selection>
+ 					   
+ 					   {{country.value}}
+ 			    </div>
+ 			</div>
+ 		</div>
+ 		
+ 		
+ 	    <div class="segment">
+ 			<h1 class="segment_title">Dropdown</h1>
+ 			<div>
+ 				 <div class="dropdown">
+					  <a class="dropdown-toggle">
+					    Click me for a dropdown, yo!
+					  </a>
+					  <ul class="dropdown-menu">
+					    <li ng-repeat="choice in ['one', 'two', 'three']">
+					      <a>{{choice}}</a>
+					    </li>
+					  </ul>
+				 </div>
  			</div>
  		</div>
  

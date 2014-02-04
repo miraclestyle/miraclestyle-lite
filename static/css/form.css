@@ -1,0 +1,36 @@
+
+.button
+{
+  border: 1px solid #AAAAAA;
+  background-color: #FFFFFF;
+  padding: 5px 20px;
+  outline: none;
+  text-align: center;
+  vertical-align: middle;
+  line-height:1.5em;
+}
+
+.button:focus
+{
+  border: 1px solid #333333;
+  background-color: #FFFFFF;
+}
+
+.button:hover
+{
+  border: 1px solid #333333;
+  background-color: #FAFAFA;
+}
+
+.text_input
+{
+  border: 1px solid #AAAAAA;
+  background-color: #FFFFFF;
+  outline: none;
+  padding: 5px;
+}
+
+.text_input:focus
+{
+  border: 1px solid #333333;
+}
