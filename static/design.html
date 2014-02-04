@@ -7,6 +7,8 @@
     <script src="js/lib/angular/ui/transition.js"></script>
     <script src="js/lib/angular/ui/collapse.js"></script>
     <script src="js/lib/angular/ui/accordion.js"></script>
+    <script src="js/lib/angular/ui/modal.js"></script>
+    <script src="js/lib/angular/ui/selection.js"></script>
     <script src="js/app/test.js"></script>
  
     <link rel="stylesheet" type="text/css" href="fonts/sawasdee/stylesheet.css"/>
@@ -407,7 +409,30 @@
  		
  		<div class="segment">
  			<h1 class="segment_title">Dialogs</h1>
- 			<div></div>
+ 			<div>
+ 				<div ng-controller="ModalDemoCtrl">
+				    <script type="text/ng-template" id="myModalContent.html">
+				        <div class="modal-header">
+				            <h3>I'm a modal!</h3>
+				        </div>
+				        <div class="modal-body">
+				            <ul>
+				                <li ng-repeat="item in items">
+				                    <a ng-click="selected.item = item">{{ item }}</a>
+				                </li>
+				            </ul>
+				            Selected: <b>{{ selected.item }}</b>
+				        </div>
+				        <div class="modal-footer">
+				            <button class="button" ng-click="ok()">OK</button>
+				            <button class="button" ng-click="cancel()">Cancel</button>
+				        </div>
+				    </script>
+				
+				    <button class="button" ng-click="open()">Open me!</button>
+				    <div ng-show="selected">Selection from a modal: {{ selected }}</div>
+				</div>
+ 			</div>
  		</div>
  		
  		
@@ -456,9 +481,9 @@
  		
  		
  		<div class="segment">
- 			<h1 class="segment_title">Helpers</h1>
+ 			<h1 class="segment_title">Selection</h1>
  			<div>
- 				<div><button class="button" type="button">Button</button></div>
+ 				<div><selection options="[{'value' : 'AL', name : 'Alabama'}, {'value' : 'CA', name : 'California'}]" label="Select A country"></selection></div>
  			</div>
  		</div>
  

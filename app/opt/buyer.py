@@ -198,7 +198,9 @@ class Collection(ndb.BaseModel):
     # composite index: ancestor:yes - name
     name = ndb.SuperStringProperty('1', required=True)
     notify = ndb.SuperBooleanProperty('2', required=True, default=False)
-    primary_email = ndb.SuperStringProperty('3', required=True, indexed=False)
+    companies = ndb.SuperKeyProperty('3', kind='44', repeated=True)
+    
+    primary_email = ndb.SuperStringProperty('4', required=True, indexed=False)
  
 
     _global_role = rule.GlobalRole(permissions=[
@@ -217,6 +219,7 @@ class Collection(ndb.BaseModel):
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'notify' : ndb.SuperBooleanProperty(default=False),
                                  'key' : ndb.SuperKeyProperty(kind='10', required=True),
+                                 'companies' : ndb.SuperKeyProperty(kind='44', repeated=True),
                               }
                              ),
                 
@@ -224,6 +227,7 @@ class Collection(ndb.BaseModel):
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'notify' : ndb.SuperBooleanProperty(default=False),
+                                 'companies' : ndb.SuperKeyProperty(kind='44'),
                               }
                              ),
                 
@@ -288,6 +292,16 @@ class Collection(ndb.BaseModel):
            raise rule.ActionDenied(context)
         
         entity.primary_email = context.auth.user.primary_email
+        
+        company_keys = set_args.get('companies', [])
+        
+        if company_keys:
+            companies = ndb.get_multi(company_keys)
+            company_keys = []
+            for company in companies:
+                if not company.state == 'open':
+                   company_keys.remove(company.key)
+                    
         entity.populate(**set_args)
         entity.put()
          
@@ -324,166 +338,3 @@ class Collection(ndb.BaseModel):
         transaction()
             
         return context
- 
-
-# done!
-class CollectionCompany(ndb.BaseModel):
-    
-    _kind = 11
-    # ancestor User
-    company = ndb.SuperKeyProperty('1', kind='44', required=True)
-    collections = ndb.SuperKeyProperty('2', kind='10', repeated=True)# soft limit 500x
-
- 
-
-    _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('11', event.Action.build_key('11-0').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('11', event.Action.build_key('11-3').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),                                                
-                                                rule.ActionPermission('11', event.Action.build_key('11-1').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                               ])
- 
-
-    _actions = {
-       'update' : event.Action(id='11-0',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='11', required=True),
-                                 'company' : ndb.SuperKeyProperty(kind='44', required=True),
-                                 'collections' : ndb.SuperKeyProperty(kind='10', repeated=True),
-                              }
-                             ),
-
-       'create' : event.Action(id='11-3',
-                              arguments={
-                                 'company' : ndb.SuperKeyProperty(kind='44', required=True),
-                                 'collections' : ndb.SuperKeyProperty(kind='10', repeated=True),
-                              }
-                             ),
-                
-       'delete' : event.Action(id='11-1',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='11', required=True),
-                              }
-                             ),
-                
-       'list' : event.Action(id='11-2',
-                              arguments={}
-                             ),
-    }  
- 
-    @classmethod
-    def list(cls, context):
- 
-        user = context.auth.user
-              
-        context.output['collection_companies'] = cls.query(ancestor=user.key).fetch()
-              
-        return context
-         
-    @classmethod
-    def delete(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                        
-             entity_key = context.input.get('key')
-             entity = entity_key.get()
-             context.rule.entity = entity
-             rule.Engine.run(context, True)
-             if not rule.executable(context):
-                raise rule.ActionDenied(context)
-              
-             entity.key.delete()
-             context.log.entities.append((entity,))
-             log.Engine.run(context)
-     
-             context.status(entity)
-             
-        transaction()
-           
-        return context
-      
-      
-    @classmethod
-    def complete_save(cls, entity, context):
-      
-        context.rule.entity = entity
-        rule.Engine.run(context, True)
-        
-        if not rule.executable(context):
-           raise rule.ActionDenied(context)
-        
-        company_key = context.input.get('company')
-        company = company_key.get()
-        
-        if company.state != 'open': 
-           # how to solve this? possible solution might be ndb.SuperKeyProperty(kind=Company, expr="value.state == 'active'", required=True) - this would be placed in arguments={}
-           # raise custom exception!!!
-           return context.error('company', 'not_open')
- 
-        collection_keys = context.input.get('collections')
-        collections_now = []
-        for collection_key in collection_keys:
-            if context.auth.user.key == collection_key.parent():
-               collections_now.append(collection_key)
-               
-        entity.collections = collections_now
-        
-            
-        entity.company = context.input.get('company')
-            
-        entity.put()
-         
-        context.log.entities.append((entity, ))
-        log.Engine.run(context)
-           
-        context.status(entity)
-      
-    @classmethod
-    def create(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
- 
-            entity = cls(parent=context.auth.user.key)
- 
-            cls.complete_save(entity, context)
-              
-        transaction()
-            
-        return context
-      
-    @classmethod
-    def update(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
- 
-            entity_key = context.input.get('key')
-            entity = entity_key.get()
-  
-            cls.complete_save(entity, context)
-           
-        transaction()
-            
-        return context
-  
-    
-# done! contention se moze zaobici ako write-ovi na ove entitete budu explicitno izolovani preko task queue
-class AggregateCollectionCatalog(ndb.BaseModel):
-    
-    _kind = 12
-    
-    # ancestor User
-    # not logged
-    # task queue radi agregaciju prilikom nekih promena na store-u
-    # mogao bi da se uvede index na collections radi filtera: AggregateBuyerCollectionCatalog.collections = 'collection', 
-    # ovaj model bi se trebao ukinuti u korist MapReduce resenja, koje bi bilo superiornije od ovog
-    # composite index: ancestor:yes - catalog_published_date:desc
-    company = ndb.SuperKeyProperty('1', kind='44', required=True)
-    collections = ndb.SuperKeyProperty('2', kind='10', repeated=True, indexed=False)# soft limit 500x
-    catalog = ndb.SuperKeyProperty('3', kind='35', required=True, indexed=False)
-    catalog_cover = ndb.SuperBlobKeyProperty('4', required=True, indexed=False)# blob ce se implementirati na GCS
-    catalog_published_date = ndb.SuperDateTimeProperty('5', required=True)
