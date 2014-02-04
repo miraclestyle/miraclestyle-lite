@@ -108,7 +108,7 @@ class Unit(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-                     'code' : ndb.SuperStringProperty('8', required=True), # Turn on index if projection query is required.
+                     'code' : ndb.SuperStringProperty('8', required=True),
                      'numeric_code' : ndb.SuperStringProperty('9'),
                      'grouping' : ndb.SuperStringProperty('10', required=True),
                      'decimal_separator' : ndb.SuperStringProperty('11', required=True),
@@ -129,16 +129,16 @@ class UOM(ndb.BaseExpando):
   # Local structured property
   measurement = ndb.SuperStringProperty('1', required=True, indexed=False)
   name = ndb.SuperStringProperty('2', required=True, indexed=False)
-  symbol = ndb.SuperStringProperty('3', required=True, indexed=False) # Turn on index if projection query is required.
-  rate = ndb.SuperDecimalProperty('4', required=True, indexed=False) # The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12).
-  factor = ndb.SuperDecimalProperty('5', required=True, indexed=False) # The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12).
-  rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False) # Rounding Precision - digits=(12, 12).
+  symbol = ndb.SuperStringProperty('3', required=True, indexed=False)
+  rate = ndb.SuperDecimalProperty('4', required=True, indexed=False)
+  factor = ndb.SuperDecimalProperty('5', required=True, indexed=False)
+  rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False)
   digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-                     'code' : ndb.SuperStringProperty('8', required=True), # Turn on index if projection query is required.
+                     'code' : ndb.SuperStringProperty('8', required=True),
                      'numeric_code' : ndb.SuperStringProperty('9'),
                      'grouping' : ndb.SuperStringProperty('10', required=True),
                      'decimal_separator' : ndb.SuperStringProperty('11', required=True),
