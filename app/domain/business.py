@@ -165,9 +165,9 @@ class Company(ndb.BaseExpando):
     @classmethod
     def complete_save(cls, entity, context):
       
-         upload_url = context.args.get('upload_url')
+         upload_url = context.input.get('upload_url')
          if upload_url:
-               context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
+               context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
                return context
                     
          context.rule.entity = entity
@@ -179,8 +179,8 @@ class Company(ndb.BaseExpando):
          set_args = {}
       
          for field_name in cls.get_fields():
-             if field_name in context.args:
-                set_args[field_name] = context.args.get(field_name)
+             if field_name in context.input:
+                set_args[field_name] = context.input.get(field_name)
   
          entity.populate(**set_args)
          
@@ -195,7 +195,7 @@ class Company(ndb.BaseExpando):
          log.Engine.run(context)
             
          # mark the logo as used, if it was just uploaded
-         if 'logo' in context.args:
+         if 'logo' in context.input:
              blob.Manager.used_blobs(entity.logo.image)
       
     @classmethod
@@ -204,12 +204,12 @@ class Company(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
  
-            domain_key = context.args.get('domain')
+            domain_key = context.input.get('domain')
             domain = domain_key.get()
             entity = cls(state='open', namespace=domain.key_namespace)
             
-            if 'upload_url' not in context.args: 
-                if 'logo' not in context.args:
+            if 'upload_url' not in context.input: 
+                if 'logo' not in context.input:
                     return context.required('logo')
  
             cls.complete_save(entity, context)
@@ -224,7 +224,7 @@ class Company(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
   
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
            
             cls.complete_save(entity, context)
@@ -240,7 +240,7 @@ class Company(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -252,7 +252,7 @@ class Company(ndb.BaseExpando):
             entity.state = 'closed'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -267,7 +267,7 @@ class Company(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -279,7 +279,7 @@ class Company(ndb.BaseExpando):
             entity.state = 'open'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -292,10 +292,10 @@ class Company(ndb.BaseExpando):
     @classmethod
     def list(cls, context):
  
-        domain_key = context.args.get('domain')
+        domain_key = context.input.get('domain')
         domain = domain_key.get()
            
-        context.response['companies'] = cls.query(namespace=domain.key_namespace).fetch()
+        context.output['companies'] = cls.query(namespace=domain.key_namespace).fetch()
   
         return context
  
@@ -360,11 +360,11 @@ class CompanyContent(ndb.BaseModel):
     @classmethod
     def list(cls, context):
  
-         company_key = context.args.get('company')
+         company_key = context.input.get('company')
          company = company_key.get()
          if not company.state == 'open':
             return context.error('company', 'not_open')
-         context.response['contents'] = cls.query(ancestor=company_key).fetch()
+         context.output['contents'] = cls.query(ancestor=company_key).fetch()
             
          return context
          
@@ -374,7 +374,7 @@ class CompanyContent(ndb.BaseModel):
          @ndb.transactional(xg=True)
          def transaction():
                          
-              entity_key = context.args.get('key')
+              entity_key = context.input.get('key')
               entity = entity_key.get()
               context.rule.entity = entity
               rule.Engine.run(context)
@@ -400,9 +400,9 @@ class CompanyContent(ndb.BaseModel):
        if not rule.executable(context):
           raise rule.ActionDenied(context)
        
-       entity.title = context.args.get('title')
-       entity.body = context.args.get('body')
-       entity.sequence = context.args.get('sequence')
+       entity.title = context.input.get('title')
+       entity.body = context.input.get('body')
+       entity.sequence = context.input.get('sequence')
        entity.put()
         
        context.log.entities.append((entity, ))
@@ -416,7 +416,7 @@ class CompanyContent(ndb.BaseModel):
          @ndb.transactional(xg=True)
          def transaction():
   
-             company_key = context.args.get('company')
+             company_key = context.input.get('company')
              entity = cls(parent=company_key)
       
              cls.complete_save(entity, context)
@@ -431,7 +431,7 @@ class CompanyContent(ndb.BaseModel):
          @ndb.transactional(xg=True)
          def transaction():
            
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
   
              cls.complete_save(entity, context)

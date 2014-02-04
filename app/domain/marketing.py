@@ -70,8 +70,8 @@ class CatalogImage(blob.Image):
           @ndb.transactional(xg=True)
           def transaction():
               
-              keys = context.args.get('keys')
-              sequences = context.args.get('sequences')
+              keys = context.input.get('keys')
+              sequences = context.input.get('sequences')
               catalog_images = ndb.get_multi(keys)
               
               for i,catalog_image in enumerate(catalog_images):
@@ -89,7 +89,7 @@ class CatalogImage(blob.Image):
               
               log.Engine.run(context)
               
-              context.response['images'] = catalog_images
+              context.output['images'] = catalog_images
 
           transaction()
  
@@ -99,12 +99,12 @@ class CatalogImage(blob.Image):
     @classmethod
     def multiple_upload(cls, context):
  
-           upload_url = context.args.get('upload_url')
-           images = context.args.get('images')
-           catalog_key = context.args.get('catalog')
+           upload_url = context.input.get('upload_url')
+           images = context.input.get('images')
+           catalog_key = context.input.get('catalog')
            
            if upload_url:
-              context.response['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+              context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
               return context
            else:
               if not images:
@@ -136,7 +136,7 @@ class CatalogImage(blob.Image):
                        if saved:
                           blob.Manager.used_blobs(saved.image)
                           
-                   context.response['images'] = prepared_images
+                   context.output['images'] = prepared_images
  
            transaction()
                      
@@ -145,7 +145,7 @@ class CatalogImage(blob.Image):
     @classmethod
     def list(cls, context):
  
-        catalog_key = context.args.get('catalog')
+        catalog_key = context.input.get('catalog')
         catalog = catalog_key.get()
         
         context.rule.entity = catalog
@@ -154,7 +154,7 @@ class CatalogImage(blob.Image):
         if not rule.executable(context):
            raise rule.ActionDenied(context)
 
-        context.response['images'] = cls.query(ancestor=catalog_key).fetch()
+        context.output['images'] = cls.query(ancestor=catalog_key).fetch()
            
         return context
   
@@ -164,10 +164,10 @@ class CatalogImage(blob.Image):
         @ndb.transactional(xg=True)
         def transaction():
                         
-             entity_keys = context.args.get('keys')
+             entity_keys = context.input.get('keys')
              
              entities = ndb.get_multi(entity_keys)
-             context.response['deleted'] = []
+             context.output['deleted'] = []
              
              for entity in entities:
                  context.rule.entity = entity
@@ -178,7 +178,7 @@ class CatalogImage(blob.Image):
                  entity.key.delete()
                  context.log.entities.append((entity,)) # cannot log on so many entity groups
                   
-                 context.response['deleted'].append(entity)
+                 context.output['deleted'].append(entity)
                  
              log.Engine.run(context) # cannot log on multiple entity groups
              
@@ -310,8 +310,8 @@ class Catalog(ndb.BaseExpando):
            raise rule.ActionDenied(context)
         
                    
-        entity.name = context.args.get('name')   
-        entity.company = context.args.get('company')
+        entity.name = context.input.get('name')   
+        entity.company = context.input.get('company')
         entity.put()
         
         context.status(entity)
@@ -326,7 +326,7 @@ class Catalog(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
   
-            company_key = context.args.get('company')
+            company_key = context.input.get('company')
             company = company_key.get() 
  
             entity = cls(state='unpublished', namespace=company.key_namespace)
@@ -344,10 +344,10 @@ class Catalog(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            company_key = context.args.get('company')
+            company_key = context.input.get('company')
             company = company_key.get() 
  
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
              
             cls.complete_save(entity, company, context)
@@ -366,7 +366,7 @@ class Catalog(ndb.BaseExpando):
         def transaction():
           
         
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
            
             cover = CatalogImage.query(ancestor=entity.key_parent).order(-CatalogImage.sequence).get(keys_only=True)
@@ -383,7 +383,7 @@ class Catalog(ndb.BaseExpando):
             entity.state = 'locked'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -401,7 +401,7 @@ class Catalog(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -413,7 +413,7 @@ class Catalog(ndb.BaseExpando):
             entity.state = 'discontinued'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -433,7 +433,7 @@ class Catalog(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -445,7 +445,7 @@ class Catalog(ndb.BaseExpando):
             entity.state = 'published'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -460,7 +460,7 @@ class Catalog(ndb.BaseExpando):
          @ndb.transactional(xg=True)
          def transaction():
            
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
         
              context.rule.entity = entity
@@ -471,7 +471,7 @@ class Catalog(ndb.BaseExpando):
               
              entity.put() # ref project-documentation.py #L-244
   
-             context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
              log.Engine.run(context)
               
              context.status(entity)
@@ -488,7 +488,7 @@ class Catalog(ndb.BaseExpando):
     @classmethod
     def list(cls, context):
  
-        domain_key = context.args.get('domain')
+        domain_key = context.input.get('domain')
         domain = domain_key.get()
       
         context.rule.entity = domain
@@ -497,7 +497,7 @@ class Catalog(ndb.BaseExpando):
         if not rule.executable(context):
            raise rule.ActionDenied(context)
 
-        context.response['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
+        context.output['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
            
         return context
 # done!
@@ -575,8 +575,8 @@ class CatalogPricetag(ndb.BaseModel):
             
            set_args = {}
            for field_name in cls.get_fields():
-              if field_name in context.args:
-                 set_args[field_name] = context.args.get(field_name)
+              if field_name in context.input:
+                 set_args[field_name] = context.input.get(field_name)
            
            entity.populate(**set_args)      
            entity.put()
@@ -594,7 +594,7 @@ class CatalogPricetag(ndb.BaseModel):
        @ndb.transactional(xg=True)
        def transaction():
  
-           catalog_key = context.args.get('catalog_key')
+           catalog_key = context.input.get('catalog_key')
            entity = cls(parent=catalog_key)
  
            cls.complete_save(entity, context)
@@ -610,7 +610,7 @@ class CatalogPricetag(ndb.BaseModel):
        @ndb.transactional(xg=True)
        def transaction():
   
-           entity_key = context.args.get('key')
+           entity_key = context.input.get('key')
            entity = entity_key.get()
   
            cls.complete_save(entity, context)
@@ -625,7 +625,7 @@ class CatalogPricetag(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
                           
-               entity_key = context.args.get('key')
+               entity_key = context.input.get('key')
                entity = entity_key.get()
                context.rule.entity = entity
                rule.Engine.run(context)
@@ -645,7 +645,7 @@ class CatalogPricetag(ndb.BaseModel):
     @classmethod
     def list(cls, context):
  
-        catalog_key = context.args.get('catalog')
+        catalog_key = context.input.get('catalog')
         catalog = catalog_key.get()
         
         context.rule.entity = catalog
@@ -654,7 +654,7 @@ class CatalogPricetag(ndb.BaseModel):
         if not rule.executable(context):
            raise rule.ActionDenied(context)
 
-        context.response['price_tags'] = cls.query(ancestor=catalog_key).fetch()
+        context.output['price_tags'] = cls.query(ancestor=catalog_key).fetch()
              
         return context
 

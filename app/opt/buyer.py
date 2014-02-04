@@ -90,7 +90,7 @@ class Address(ndb.BaseExpando):
       
         user = context.auth.user
               
-        context.response['addresses'] = cls.query(ancestor=user.key).fetch()
+        context.output['addresses'] = cls.query(ancestor=user.key).fetch()
               
         return context
      
@@ -100,7 +100,7 @@ class Address(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
                         
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
              context.rule.entity = entity
              rule.Engine.run(context, True)
@@ -111,7 +111,7 @@ class Address(ndb.BaseExpando):
              context.log.entities.append((entity,))
              log.Engine.run(context)
              
-             context.response['deleted'] = True
+             context.output['deleted'] = True
              context.status(entity)
              
         transaction()
@@ -124,8 +124,8 @@ class Address(ndb.BaseExpando):
         set_args = {}
         
         for field_key in cls.get_fields():
-             if field_key in context.args:
-                set_args[field_key] = context.args.get(field_key)
+             if field_key in context.input:
+                set_args[field_key] = context.input.get(field_key)
       
         context.rule.entity = entity
         rule.Engine.run(context, True)
@@ -164,7 +164,7 @@ class Address(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
             
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
    
             cls.complete_save(entity, context)
@@ -243,7 +243,7 @@ class Collection(ndb.BaseModel):
  
         user = context.auth.user
               
-        context.response['collections'] = cls.query(ancestor=user.key).fetch()
+        context.output['collections'] = cls.query(ancestor=user.key).fetch()
               
         return context
          
@@ -253,7 +253,7 @@ class Collection(ndb.BaseModel):
        @ndb.transactional(xg=True)
        def transaction():
                        
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
             context.rule.entity = entity
             rule.Engine.run(context, True)
@@ -278,8 +278,8 @@ class Collection(ndb.BaseModel):
         set_args = {}
         
         for field_key in cls.get_fields():
-             if field_key in context.args:
-                set_args[field_key] = context.args.get(field_key)
+             if field_key in context.input:
+                set_args[field_key] = context.input.get(field_key)
       
         context.rule.entity = entity
         rule.Engine.run(context, True)
@@ -302,7 +302,7 @@ class Collection(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
    
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
           
             cls.complete_save(entity, context)
@@ -378,7 +378,7 @@ class CollectionCompany(ndb.BaseModel):
  
         user = context.auth.user
               
-        context.response['collection_companies'] = cls.query(ancestor=user.key).fetch()
+        context.output['collection_companies'] = cls.query(ancestor=user.key).fetch()
               
         return context
          
@@ -388,7 +388,7 @@ class CollectionCompany(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
                         
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
              context.rule.entity = entity
              rule.Engine.run(context, True)
@@ -415,7 +415,7 @@ class CollectionCompany(ndb.BaseModel):
         if not rule.executable(context):
            raise rule.ActionDenied(context)
         
-        company_key = context.args.get('company')
+        company_key = context.input.get('company')
         company = company_key.get()
         
         if company.state != 'open': 
@@ -423,7 +423,7 @@ class CollectionCompany(ndb.BaseModel):
            # raise custom exception!!!
            return context.error('company', 'not_open')
  
-        collection_keys = context.args.get('collections')
+        collection_keys = context.input.get('collections')
         collections_now = []
         for collection_key in collection_keys:
             if context.auth.user.key == collection_key.parent():
@@ -432,7 +432,7 @@ class CollectionCompany(ndb.BaseModel):
         entity.collections = collections_now
         
             
-        entity.company = context.args.get('company')
+        entity.company = context.input.get('company')
             
         entity.put()
          
@@ -461,7 +461,7 @@ class CollectionCompany(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
  
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
   
             cls.complete_save(entity, context)

@@ -63,8 +63,8 @@ class Content(ndb.BaseModel):
         set_args = {}
         
         for field_key in cls.get_fields():
-             if field_key in context.args:
-                set_args[field_key] = context.args.get(field_key)
+             if field_key in context.input:
+                set_args[field_key] = context.input.get(field_key)
       
         context.rule.entity = entity
         rule.Engine.run(context, True)
@@ -101,7 +101,7 @@ class Content(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
   
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
             
             cls.complete_save(entity, context)
@@ -173,8 +173,8 @@ class ProductCategory(ndb.BaseModel):
         set_args = {}
         
         for field_key in cls.get_fields():
-             if field_key in context.args:
-                set_args[field_key] = context.args.get(field_key)
+             if field_key in context.input:
+                set_args[field_key] = context.input.get(field_key)
       
         context.rule.entity = entity
         rule.Engine.run(context, True)
@@ -212,7 +212,7 @@ class ProductCategory(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
   
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
             
             cls.complete_save(entity, context)
@@ -228,7 +228,7 @@ class ProductCategory(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
                         
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
              context.rule.entity = entity
              rule.Engine.run(context, True)
@@ -342,7 +342,7 @@ class SupportRequest(ndb.BaseModel):
              if not rule.executable(context):
                 raise rule.ActionDenied(context)
     
-             entity.reference = context.args.get('reference')
+             entity.reference = context.input.get('reference')
              entity.put()
                
              context.log.entities.append((entity,))
@@ -360,7 +360,7 @@ class SupportRequest(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -372,7 +372,7 @@ class SupportRequest(ndb.BaseModel):
             entity.state = 'closed'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -388,7 +388,7 @@ class SupportRequest(ndb.BaseModel):
        @ndb.transactional(xg=True)
        def transaction():
          
-           entity_key = context.args.get('key')
+           entity_key = context.input.get('key')
            entity = entity_key.get()
       
            context.rule.entity = entity
@@ -397,14 +397,14 @@ class SupportRequest(ndb.BaseModel):
            if not rule.executable(context):
               raise rule.ActionDenied(context)
             
-           if context.args.get('state') not in ('su_opened', 'su_awaiting_closure'):
+           if context.input.get('state') not in ('su_opened', 'su_awaiting_closure'):
              # raise custom exception!!!
               return context.error('state', 'invalid_state')
            
-           entity.state = context.args.get('state')
+           entity.state = context.input.get('state')
            entity.put()
            
-           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
            context.status(entity)
@@ -419,7 +419,7 @@ class SupportRequest(ndb.BaseModel):
          @ndb.transactional(xg=True)
          def transaction():
            
-             entity_key = context.args.get('key')
+             entity_key = context.input.get('key')
              entity = entity_key.get()
         
              context.rule.entity = entity
@@ -430,7 +430,7 @@ class SupportRequest(ndb.BaseModel):
               
              entity.put() # ref project-documentation.py #L-244
   
-             context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
              log.Engine.run(context)
               
              context.status(entity)

@@ -104,7 +104,7 @@ class Journal(ndb.BaseExpando):
   def get_local_journals(cls, context):
        
       journals = cls.query(cls.active == True, 
-                           cls.company == context.args.get('company'), 
+                           cls.company == context.input.get('company'), 
                            cls.subscriptions == context.action.key).order(cls.sequence).fetch()
          
       return journals
@@ -125,7 +125,7 @@ class Plugin(ndb.BasePolyExpando):
       plugins = cls.query( 
                           cls.active == True, 
                           cls.subscriptions == context.action.key,
-                          cls.company == context.args.get('company'),
+                          cls.company == context.input.get('company'),
                           ancestor=journal.key).order(cls.sequence).fetch()
       return plugins
 

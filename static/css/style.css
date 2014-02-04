@@ -444,13 +444,6 @@ a:hover
   text-decoration: none;
 }
 
-/*
-a:active
-{
-  text-decoration: underline;
-  font-weight: bold;
-}*/
-
 a:visited
 {
   color: #333333;
@@ -467,12 +460,6 @@ a:visited
 }
 
 .button:focus
-{
-  border: 1px solid #333333;
-  background-color: #FFFFFF;
-}
-
-.button:active
 {
   border: 1px solid #333333;
   background-color: #FFFFFF;
@@ -497,7 +484,7 @@ a:visited
   border: 1px solid #333333;
 }
 
-/* Accordion */
+/* Transitions */
 
 .fade {
   opacity: 0;
@@ -529,6 +516,10 @@ a:visited
 {
 	outline: none;
 }
+
+/* end Transitions */
+
+/* Accordion */
 
 .panel {
   margin-bottom: 20px;
@@ -586,7 +577,5 @@ a:visited
   background-color: #f5f5f5;
  
 }
-
- 
 
 /* end Accordion */

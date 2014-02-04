@@ -43,7 +43,7 @@ class AddressRule(transaction.Plugin):
     addresses_key = '%s_addresses' % self.address_type
     default_address_key = 'default_%s' % self.address_type
     
-    input_address_reference = context.args.get(address_reference_key)
+    input_address_reference = context.input.get(address_reference_key)
     entry_address_reference = getattr(entry, address_reference_key, None)
     entry_address = getattr(entry, address_key, None)
     
@@ -63,7 +63,7 @@ class AddressRule(transaction.Plugin):
     if not len(valid_addresses):
        raise PluginValidationError('no_valid_address')
     
-    context.response[addresses_key] = valid_addresses
+    context.output[addresses_key] = valid_addresses
     
     if not default_address and valid_addresses:
       default_address = valid_addresses.values()[0]
@@ -78,7 +78,7 @@ class AddressRule(transaction.Plugin):
       setattr(entry, address_reference_key, default_address.key)
       setattr(entry, address_key, location.get_location(default_address))
       
-      context.response[default_address_key] = default_address
+      context.output[default_address_key] = default_address
     else:
       raise PluginValidationError('no_address_found')
  
@@ -133,7 +133,7 @@ class CartInit(transaction.Plugin):
   
   def run(self, journal, context):
     # ucitaj postojeci entry na kojem ce se raditi write
-    catalog_key = context.args.get('catalog')
+    catalog_key = context.input.get('catalog')
     user_key = context.auth.user.key
     catalog = catalog_key.get()
     company = catalog.company.get()
@@ -198,11 +198,11 @@ class ProductToLine(transaction.Plugin):
     
     entry = context.transaction.entities[journal.key.id()]
    
-    catalog_pricetag_key = context.args.get('catalog_pricetag')
-    product_template_key = context.args.get('product_template')
-    product_instance_key = context.args.get('product_instance')
-    variant_signature = context.args.get('variant_signature')
-    custom_variants = context.args.get('custom_variants')
+    catalog_pricetag_key = context.input.get('catalog_pricetag')
+    product_template_key = context.input.get('product_template')
+    product_instance_key = context.input.get('product_instance')
+    variant_signature = context.input.get('variant_signature')
+    custom_variants = context.input.get('custom_variants')
  
     # svaka komponenta mora postovati pravila koja su odredjena u journal-u
     # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
@@ -512,10 +512,10 @@ class Carrier(transaction.Plugin):
       
     carrier_price = self.calculate_lines(valid_lines, entry)
     
-    if 'carriers' not in context.response:
-        context.response['carriers'] = []
+    if 'carriers' not in context.output:
+        context.output['carriers'] = []
     
-    context.response['carriers'].append({
+    context.output['carriers'].append({
                                      'name' : self.name,
                                      'price': carrier_price,
                                      'id' : self.key.urlsafe(),
@@ -663,11 +663,11 @@ class UpdateProductLine(transaction.Plugin):
     i = 0
     for line in entry._lines:
       if hasattr(line, 'catalog_pricetag_reference') and hasattr(line, 'product_instance_reference'):
-        if context.args.get('quantity')[i] <= 0:
+        if context.input.get('quantity')[i] <= 0:
             entry._lines.pop(i)
         else:
-            line.quantity = uom.format_value(context.args.get('quantity')[i], line.product_uom)
-        line.discount = uom.format_value(context.args.get('discount')[i], uom.UOM(digits=4))
+            line.quantity = uom.format_value(context.input.get('quantity')[i], line.product_uom)
+        line.discount = uom.format_value(context.input.get('discount')[i], uom.UOM(digits=4))
       i += 1
       
 class PayPalInit(transaction.Plugin):
@@ -676,17 +676,17 @@ class PayPalInit(transaction.Plugin):
   
   def run(self, journal, context):
     
-    ipns = log.Record.query(ndb.GenericProperty('ipn_txn_id') == context.args['txn_id']).fetch()
+    ipns = log.Record.query(ndb.GenericProperty('ipn_txn_id') == context.input['txn_id']).fetch()
     if len(ipns):
       for ipn in ipns:
-        if (ipn.payment_status == context.args['payment_status']):
+        if (ipn.payment_status == context.input['payment_status']):
           raise PluginValidationError('duplicate_entry')
       entry = ipns[0].parent_entity
-      if context.args['custom']:
-         if (entry.key.urlsafe() == context.args['custom']):
+      if context.input['custom']:
+         if (entry.key.urlsafe() == context.input['custom']):
            
             kwds = {'log_entity' : False}
-            kwds.update(dict([('ipn_%s' % key, value) for key,value in context.args.items()])) # prefix
+            kwds.update(dict([('ipn_%s' % key, value) for key,value in context.input.items()])) # prefix
             context.log.entities.append((entry, kwds))
             
          else:
@@ -696,11 +696,11 @@ class PayPalInit(transaction.Plugin):
       
     else:    
       
-      if not context.args['custom']:
+      if not context.input['custom']:
         raise PluginValidationError('invalid_ipn')
       else:
         try:
-          entry_key = ndb.Key(urlsafe=context.args['custom']) 
+          entry_key = ndb.Key(urlsafe=context.input['custom']) 
           entry = entry_key.get()
         except Exception as e:
           raise PluginValidationError('invalid_ipn')
@@ -709,7 +709,7 @@ class PayPalInit(transaction.Plugin):
       raise PluginValidationError('invalid_ipn')
     
     kwds = {'log_entity' : False}
-    kwds.update(dict([('ipn_%s' % key, value) for key,value in context.args.items()])) # prefix
+    kwds.update(dict([('ipn_%s' % key, value) for key,value in context.input.items()])) # prefix
     context.log.entities.append((entry, kwds))
     
     if not context.transaction.group:
@@ -720,36 +720,36 @@ class PayPalInit(transaction.Plugin):
     if not self.validate_entry(entry, context):
        raise PluginValidationError('fraud_check')
      
-    if (entry.paypal_payment_status == context.args['payment_status']):
+    if (entry.paypal_payment_status == context.input['payment_status']):
         return None
       
     update_paypal_payment_status = False  
       
     if (entry.paypal_payment_status == 'Pending'):
-        if (context.args['payment_status'] == 'Completed' or context.args == 'Denied'):
+        if (context.input['payment_status'] == 'Completed' or context.input == 'Denied'):
             update_paypal_payment_status = True
     elif (entry.paypal_payment_status == 'Completed'):
-        if (context.args['payment_status'] == 'Refunded' or context.args['payment_status'] == 'Reversed'):
+        if (context.input['payment_status'] == 'Refunded' or context.input['payment_status'] == 'Reversed'):
             update_paypal_payment_status = True
             
     if (update_paypal_payment_status):
         # ovo se verovatno treba jos doterati..
-        if (entry.state == 'processing' and context.args['payment_status'] == 'Completed'):
+        if (entry.state == 'processing' and context.input['payment_status'] == 'Completed'):
             entry.state = 'completed'
-            entry.paypal_payment_status = context.args['payment_status']
+            entry.paypal_payment_status = context.input['payment_status']
             context.log.entities.append((entry,))
-        elif (entry.state == 'processing' and context.args['payment_status'] == 'Denied'): # ovo cemo jos da razmotrimo
+        elif (entry.state == 'processing' and context.input['payment_status'] == 'Denied'): # ovo cemo jos da razmotrimo
             entry.state = 'canceled'
-            entry.paypal_payment_status = context.args['payment_status']
+            entry.paypal_payment_status = context.input['payment_status']
             context.log.entities.append((entry,))
         elif (entry.state == 'completed'):
-            entry.paypal_payment_status = context.args['payment_status']
+            entry.paypal_payment_status = context.input['payment_status']
             context.log.entities.append((entry,))
     
   def validate_entry(self, entry, context):
       
       mismatches = []
-      ipn = context.args
+      ipn = context.input
       shipping_address = entry.shipping_address
  
       if (entry.paypal_receiver_email != ipn['receiver_email']):

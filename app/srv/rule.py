@@ -309,7 +309,7 @@ class DomainRole(Role):
     @classmethod
     def delete(cls, context):
              
-        entity_key = context.args.get('key')
+        entity_key = context.input.get('key')
         entity = entity_key.get()
         
         context.rule.entity = entity
@@ -352,11 +352,11 @@ class DomainRole(Role):
         if not executable(context):
            raise ActionDenied(context)
          
-        entity.name = context.args.get('name')
-        entity.active = context.args.get('active')
+        entity.name = context.input.get('name')
+        entity.active = context.input.get('active')
             
       
-        permissions = context.args.get('permissions')
+        permissions = context.input.get('permissions')
         set_permissions = []
         for permission in permissions:
           
@@ -388,7 +388,7 @@ class DomainRole(Role):
         @ndb.transactional(xg=True)
         def transaction():
           
-            domain_key = context.args.get('domain')
+            domain_key = context.input.get('domain')
       
             domain = domain_key.get()
             entity = cls(namespace=domain.key_namespace)
@@ -405,7 +405,7 @@ class DomainRole(Role):
         @ndb.transactional(xg=True)
         def transaction():
         
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
           
             cls.complete_save(entity, context)
@@ -417,7 +417,7 @@ class DomainRole(Role):
     @classmethod
     def list(cls, context):
   
-       domain_key = context.args.get('domain')
+       domain_key = context.input.get('domain')
        domain = domain_key.get()
        
        context.rule.entity = domain
@@ -427,7 +427,7 @@ class DomainRole(Role):
        if not executable(context):
           raise ActionDenied(context)
        
-       context.response['roles'] = cls.query(namespace=domain.key_namespace).fetch()
+       context.output['roles'] = cls.query(namespace=domain.key_namespace).fetch()
   
        return context
  
@@ -491,14 +491,14 @@ class DomainUser(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
            
-           name = context.args.get('name')            
-           user_key = context.args.get('user')
-           role_keys = context.args.get('roles')
+           name = context.input.get('name')            
+           user_key = context.input.get('user')
+           role_keys = context.input.get('roles')
  
            get_roles = ndb.get_multi(role_keys)
            user = user_key.get()
            
-           domain_key = context.args.get('domain')
+           domain_key = context.input.get('domain')
            domain = domain_key.get()
            
            domain_user = cls(id=user.key_id_str, namespace=domain.key_namespace)
@@ -515,7 +515,7 @@ class DomainUser(ndb.BaseModel):
              # raise custom exception!!!
               return context.error('user', 'already_invited')
             
-           domain_key = context.args.get('domain')
+           domain_key = context.input.get('domain')
            domain = domain_key.get()
            
            if user.state == 'active':
@@ -547,7 +547,7 @@ class DomainUser(ndb.BaseModel):
        @ndb.transactional(xg=True)
        def transaction():
           
-          entity_key = context.args.get('key')            
+          entity_key = context.input.get('key')            
           entity = entity_key.get()
           
           context.rule.entity = entity
@@ -574,7 +574,7 @@ class DomainUser(ndb.BaseModel):
         @ndb.transactional(xg=True)
         def transaction():
            
-           entity_key = context.args.get('key')            
+           entity_key = context.input.get('key')            
            entity = entity_key.get()
            
            context.rule.entity = entity
@@ -601,7 +601,7 @@ class DomainUser(ndb.BaseModel):
           @ndb.transactional(xg=True)
           def transaction():
              
-             entity_key = context.args.get('key')            
+             entity_key = context.input.get('key')            
              entity = entity_key.get()
              
              context.rule.entity = entity
@@ -611,17 +611,17 @@ class DomainUser(ndb.BaseModel):
              if not executable(context):
                 raise ActionDenied(context)
               
-             domain_key = context.args.get('domain')
+             domain_key = context.input.get('domain')
              domain = domain_key.get()
              
-             get_roles = ndb.get_multi(context.args.get('roles')) 
+             get_roles = ndb.get_multi(context.input.get('roles')) 
              roles = []
              for role in get_roles:
                 # avoid rogue roles
                 if role.key.namespace() == domain.key_namespace:
                    roles.append(role.key) 
              
-             entity.name = context.args.get('name')
+             entity.name = context.input.get('name')
              entity.roles = roles
              entity.put()
              

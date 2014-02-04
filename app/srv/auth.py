@@ -196,9 +196,9 @@ class User(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            user_to_update_key = context.args.get('key')
-            message = context.args.get('message')
-            note = context.args.get('note')
+            user_to_update_key = context.input.get('key')
+            message = context.input.get('message')
+            note = context.input.get('note')
         
             user_to_update = user_to_update_key.get()
             context.rule.entity = user_to_update
@@ -238,8 +238,8 @@ class User(ndb.BaseExpando):
             if not rule.executable(context):
                raise rule.ActionDenied(context)
  
-            primary_email = context.args.get('primary_email')
-            disassociate = context.args.get('disassociate')
+            primary_email = context.input.get('primary_email')
+            disassociate = context.input.get('disassociate')
 
             for identity in current_user.identities:
                 if primary_email:
@@ -276,7 +276,7 @@ class User(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
 
-            if not current_user.logout_code == context.args.get('code'):
+            if not current_user.logout_code == context.input.get('code'):
                raise rule.ActionDenied(context)
          
             if current_user.sessions:
@@ -299,9 +299,9 @@ class User(ndb.BaseExpando):
     @classmethod
     def login(cls, context):
  
-        login_method = context.args.get('login_method')
-        error = context.args.get('error')
-        code = context.args.get('code')
+        login_method = context.input.get('login_method')
+        error = context.input.get('error')
+        code = context.input.get('code')
         current_user = cls.current_user()
         
         context.rule.entity = current_user
@@ -315,12 +315,12 @@ class User(ndb.BaseExpando):
           # raise custom exception!!!
            context.error('login_method', 'not_allowed')
         else:
-           context.response['providers'] = settings.LOGIN_METHODS
+           context.output['providers'] = settings.LOGIN_METHODS
            
            cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
            client = oauth2.Client(**cfg)
            
-           context.response['authorization_url'] = client.get_authorization_code_uri()
+           context.output['authorization_url'] = client.get_authorization_code_uri()
      
            if error:
              # raise custom exception!!!
@@ -334,7 +334,7 @@ class User(ndb.BaseExpando):
                 # raise custom exception!!!
                  return context.error('oauth2_error', 'failed_access_token')
                
-              context.response['access_token'] = client.access_token
+              context.output['access_token'] = client.access_token
               
               userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
               info = client.resource_request(url=userinfo)
@@ -395,7 +395,7 @@ class User(ndb.BaseExpando):
                      context.log.entities.append((user, {'ip_address' : os.environ['REMOTE_ADDR']}))
                      log.Engine.run(context)
                       
-                     context.response.update({'user' : user,
+                     context.output.update({'user' : user,
                                               'authorization_code' : user.generate_authorization_code(session),
                                               'session' : session
                                               })
@@ -522,12 +522,12 @@ class Domain(ndb.BaseExpando):
             if not rule.executable(context):
                raise rule.ActionDenied(context)
        
-            primary_contact = context.args.get('primary_contact')
+            primary_contact = context.input.get('primary_contact')
             
             if not primary_contact:
                primary_contact = context.auth.user.key
              
-            entity.name = context.args.get('name')
+            entity.name = context.input.get('name')
             entity.primary_contact = primary_contact
             entity.put()
             
@@ -583,7 +583,7 @@ class Domain(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
     
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
          
             context.rule.entity = entity
@@ -593,12 +593,12 @@ class Domain(ndb.BaseExpando):
             if not rule.executable(context):
                raise rule.ActionDenied(context)
                 
-            primary_contact = context.args.get('primary_contact')
+            primary_contact = context.input.get('primary_contact')
             
             if not primary_contact:
                primary_contact = context.auth.user.key
              
-            entity.name = context.args.get('name')
+            entity.name = context.input.get('name')
             entity.primary_contact = primary_contact
             entity.put()
             
@@ -617,7 +617,7 @@ class Domain(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
           
-            entity_key = context.args.get('key')
+            entity_key = context.input.get('key')
             entity = entity_key.get()
        
             context.rule.entity = entity
@@ -629,7 +629,7 @@ class Domain(ndb.BaseExpando):
             entity.state = 'suspended'
             entity.put()
             
-            context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
             context.status(entity)
@@ -644,7 +644,7 @@ class Domain(ndb.BaseExpando):
        @ndb.transactional(xg=True)
        def transaction():
          
-           entity_key = context.args.get('key')
+           entity_key = context.input.get('key')
            entity = entity_key.get()
       
            context.rule.entity = entity
@@ -656,7 +656,7 @@ class Domain(ndb.BaseExpando):
            entity.state = 'active'
            entity.put()
            
-           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
            context.status(entity)
@@ -672,7 +672,7 @@ class Domain(ndb.BaseExpando):
        @ndb.transactional(xg=True)
        def transaction():
          
-           entity_key = context.args.get('key')
+           entity_key = context.input.get('key')
            entity = entity_key.get()
       
            context.rule.entity = entity
@@ -681,14 +681,14 @@ class Domain(ndb.BaseExpando):
            if not rule.executable(context):
               raise rule.ActionDenied(context)
             
-           if context.args.get('state') not in ('active', 'su_suspended'):
+           if context.input.get('state') not in ('active', 'su_suspended'):
              # raise custom exception!!!
               return context.error('state', 'invalid_state')
            
-           entity.state = context.args.get('state')
+           entity.state = context.input.get('state')
            entity.put()
            
-           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
            context.status(entity)
@@ -703,7 +703,7 @@ class Domain(ndb.BaseExpando):
        @ndb.transactional(xg=True)
        def transaction():
          
-           entity_key = context.args.get('key')
+           entity_key = context.input.get('key')
            entity = entity_key.get()
       
            context.rule.entity = entity
@@ -714,7 +714,7 @@ class Domain(ndb.BaseExpando):
             
            entity.put() # ref project-documentation.py #L-244
 
-           context.log.entities.append((entity, {'message' : context.args.get('message'), 'note' : context.args.get('note')}))
+           context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
            context.status(entity)
@@ -726,7 +726,7 @@ class Domain(ndb.BaseExpando):
     @classmethod
     def list(cls, context):
  
-        context.response['domains'] = cls.query().fetch()
+        context.output['domains'] = cls.query().fetch()
               
         return context
         

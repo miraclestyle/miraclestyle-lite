@@ -57,7 +57,7 @@ class Template(ndb.BaseModel):
   @classmethod
   def get_local_templates(cls, context):
     templates = cls.query(cls.active == True, 
-                           cls.company == context.args.get('company'), 
+                           cls.company == context.input.get('company'), 
                            cls.subscriptions == context.action.key).fetch()
          
     return templates
