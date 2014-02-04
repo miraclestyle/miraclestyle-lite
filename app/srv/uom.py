@@ -105,20 +105,22 @@ class Unit(ndb.BaseExpando):
   digits = ndb.SuperIntegerProperty('6', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('7', default=True)
   
+  _default_indexed = False
+  
   _expando_fields = {
-                     'code' : ndb.SuperStringProperty('8', required=True, indexed=False), # Turn on index if projection query is required.
-                     'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
-                     'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
-                     'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
-                     'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
-                     'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
-                     'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
-                     'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
-                     'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
-                     'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
-                     'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
-                     'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
-                     'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
+                     'code' : ndb.SuperStringProperty('8', required=True), # Turn on index if projection query is required.
+                     'numeric_code' : ndb.SuperStringProperty('9'),
+                     'grouping' : ndb.SuperStringProperty('10', required=True),
+                     'decimal_separator' : ndb.SuperStringProperty('11', required=True),
+                     'thousands_separator' : ndb.SuperStringProperty('12'),
+                     'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True),
+                     'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True),
+                     'positive_sign' : ndb.SuperStringProperty('15'),
+                     'negative_sign' : ndb.SuperStringProperty('16'),
+                     'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True),
+                     'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True),
+                     'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True),
+                     'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True),
                      }
 
 
@@ -133,18 +135,20 @@ class UOM(ndb.BaseExpando):
   rounding = ndb.SuperDecimalProperty('6', required=True, indexed=False) # Rounding Precision - digits=(12, 12).
   digits = ndb.SuperIntegerProperty('7', required=True, indexed=False)
   
+  _default_indexed = False
+  
   _expando_fields = {
-                     'code' : ndb.SuperStringProperty('8', required=True, indexed=False), # Turn on index if projection query is required.
-                     'numeric_code' : ndb.SuperStringProperty('9', indexed=False),
-                     'grouping' : ndb.SuperStringProperty('10', required=True, indexed=False),
-                     'decimal_separator' : ndb.SuperStringProperty('11', required=True, indexed=False),
-                     'thousands_separator' : ndb.SuperStringProperty('12', indexed=False),
-                     'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True, indexed=False),
-                     'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True, indexed=False),
-                     'positive_sign' : ndb.SuperStringProperty('15', indexed=False),
-                     'negative_sign' : ndb.SuperStringProperty('16', indexed=False),
-                     'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True, indexed=False),
-                     'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True, indexed=False),
-                     'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True, indexed=False),
-                     'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True, indexed=False),
+                     'code' : ndb.SuperStringProperty('8', required=True), # Turn on index if projection query is required.
+                     'numeric_code' : ndb.SuperStringProperty('9'),
+                     'grouping' : ndb.SuperStringProperty('10', required=True),
+                     'decimal_separator' : ndb.SuperStringProperty('11', required=True),
+                     'thousands_separator' : ndb.SuperStringProperty('12'),
+                     'positive_sign_position' : ndb.SuperIntegerProperty('13', required=True),
+                     'negative_sign_position' : ndb.SuperIntegerProperty('14', required=True),
+                     'positive_sign' : ndb.SuperStringProperty('15'),
+                     'negative_sign' : ndb.SuperStringProperty('16'),
+                     'positive_currency_symbol_precedes' : ndb.SuperBooleanProperty('17', default=True),
+                     'negative_currency_symbol_precedes' : ndb.SuperBooleanProperty('18', default=True),
+                     'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True),
+                     'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True),
                      }
