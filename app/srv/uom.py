@@ -127,8 +127,8 @@ class Unit(ndb.BaseExpando):
 class UOM(ndb.BaseExpando):
   
   # Local structured property
-  measurement = ndb.SuperStringProperty('1', required=True)
-  name = ndb.SuperStringProperty('2', required=True)
+  measurement = ndb.SuperStringProperty('1', required=True, indexed=False)
+  name = ndb.SuperStringProperty('2', required=True, indexed=False)
   symbol = ndb.SuperStringProperty('3', required=True, indexed=False) # Turn on index if projection query is required.
   rate = ndb.SuperDecimalProperty('4', required=True, indexed=False) # The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12).
   factor = ndb.SuperDecimalProperty('5', required=True, indexed=False) # The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12).
