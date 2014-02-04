@@ -124,7 +124,7 @@ class Unit(ndb.BaseExpando):
 
 class UOM(ndb.BaseExpando):
   
-  # Local structured
+  # Local structured property
   measurement = ndb.SuperStringProperty('1', required=True)
   name = ndb.SuperStringProperty('2', required=True)
   symbol = ndb.SuperStringProperty('3', required=True, indexed=False) # Turn on index if projection query is required.
