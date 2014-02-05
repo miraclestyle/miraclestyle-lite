@@ -19,8 +19,8 @@
   font-size: 14px;
   list-style: none;
   background-color: #ffffff;
-  border: 1px solid #cccccc;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid #AAA;
+ 
  
   background-clip: padding-box;
 }
@@ -49,9 +49,9 @@
 
 .dropdown-menu > li > a:hover,
 .dropdown-menu > li > a:focus {
-  color: #262626;
+ 
   text-decoration: none;
-  background-color: #f5f5f5;
+  background-color: #FAFAFA;
 }
 
 .dropdown-menu > .active > a,
