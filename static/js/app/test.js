@@ -5,8 +5,8 @@ angular.module('app.ui',
 	   'app.ui.collapse', 
 	   'app.ui.accordion',
 	   'app.ui.modal',
-	   'app.ui.selection',
 	   'app.ui.dropdown',
+	   'app.ui.select2',
 	  ]
 );
 
@@ -81,14 +81,13 @@ var ModalDemoCtrl = function ($scope, $modal, $log) {
 };
 
 
-function selectionCtrl($scope)
+function TagCtrl($scope)
 {
-	$scope.country = Math.random();
- 
-	
-	this.getCountry = function ()
-	{
-		console.log($scope);
-	};
+    $scope.list_of_string = ['tag1', 'tag2'];
+    $scope.select2Options = {
+        'multiple': true,
+        'simple_tags': true,
+        'tags': ['tag1', 'tag2', 'tag3', 'tag4']  // Can be empty list.
+    };
 }
  

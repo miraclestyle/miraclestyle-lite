@@ -28,6 +28,7 @@
   background-color: #FFFFFF;
   outline: none;
   padding: 5px;
+  font-size:14px;
 }
 
 .text_input:focus

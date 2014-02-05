@@ -2,17 +2,31 @@
 <html ng-app="TestApp">
   <head>
     <title>MIRACLESTYLE</title>
+    
+    <!-- jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
+ 	<!-- end jquery -->
+ 	
+ 	<script src="js/lib/jquery/select2/select2.js"></script>
+ 	
  
+    <!-- angular -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular.js"></script>
+    <!-- end angular -->
+    
+    <!-- angular modules -->
     <script src="js/lib/angular/ui/transition.js"></script>
     <script src="js/lib/angular/ui/collapse.js"></script>
     <script src="js/lib/angular/ui/accordion.js"></script>
     <script src="js/lib/angular/ui/modal.js"></script>
     <script src="js/lib/angular/ui/dropdown.js"></script>
-    <script src="js/lib/angular/ui/selection.js"></script>
+    <script src="js/lib/angular/ui/select2.js"></script>
+    <!-- end angular modules -->
+    
     <script src="js/app/test.js"></script>
  
     <link rel="stylesheet" type="text/css" href="fonts/sawasdee/stylesheet.css"/>
+    <link rel="stylesheet" type="text/css" href="js/lib/jquery/select2/select2.css" />
     <link rel="stylesheet" type="text/css" href="css/style.css"/>
     <style>
    		 /* This css is only for this document */
@@ -484,14 +498,24 @@
  		<div class="segment">
  			<h1 class="segment_title">Selection</h1>
  			<div>
- 				<div><div data-selection name="country" data-active="AL" 
- 					   data-options="[{'value' : 'AL', 'label' : 'Alabama'}, {'value' : 'CA', 'label' : 'California'}]"
- 					   data-label="Select A country">
- 					 </div>
- 			 
- 			    </div>
+ 				<select style="width:300px" ui-select2 ng-model="select2" data-placeholder="Pick a number">
+				    <option value=""></option>
+				    <option value="one">First</option>
+				    <option value="two">Second</option>
+				    <option value="three">Third</option>
+				</select>
  			</div>
  		</div>
+ 		
+ 		
+ 		<div ng-Controller="TagCtrl" class="segment">
+ 			<h1 class="segment_title">Tagging</h1>
+ 			<div>
+ 				 <input type="text" style="width:300px" ui-select2="select2Options" ng-model="list_of_string" />
+ 			</div>
+ 		</div>
+ 		
+
  		
  		
  	    <div class="segment">
