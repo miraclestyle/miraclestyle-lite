@@ -280,6 +280,9 @@ class ProductSubtotalCalculate(transaction.Plugin):
         
 class PayPalPayment(transaction.Plugin):
   # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
+  # PayPal Shipping: Prompt for an address, but do not require one, 
+  # PayPal Shipping: Do not prompt for an address
+  # PayPal Shipping: Prompt for an address, and require one
   
   currency = ndb.SuperKeyProperty('5', kind=uom.Unit)
   reciever_email = ndb.SuperStringProperty('6')
