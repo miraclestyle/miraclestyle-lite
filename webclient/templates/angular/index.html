@@ -10,7 +10,7 @@
  	<!-- end jquery -->
  	
  	<!-- begin jquery plugins -->
- 	<script src="/static/js/lib/jquery/select2/select2.js"></script>
+ 	<script src="{{static_dir('js/lib/jquery/select2/select2.js')}}"></script>
  	<!-- end -->
  
     <!-- angular -->
@@ -19,12 +19,12 @@
     <!-- end angular -->
     
     <!-- angular modules -->
-    <script src="/static/js/lib/angular/ui/transition.js"></script>
-    <script src="/static/js/lib/angular/ui/collapse.js"></script>
-    <script src="/static/js/lib/angular/ui/accordion.js"></script>
-    <script src="/static/js/lib/angular/ui/modal.js"></script>
-    <script src="/static/js/lib/angular/ui/dropdown.js"></script>
-    <script src="/static/js/lib/angular/ui/select2.js"></script>
+    <script src="{{static_dir('js/lib/angular/ui/transition.js')}}"></script>
+    <script src="{{static_dir('js/lib/angular/ui/collapse.js')}}"></script>
+    <script src="{{static_dir('js/lib/angular/ui/accordion.js')}}"></script>
+    <script src="{{static_dir('js/lib/angular/ui/modal.js')}}"></script>
+    <script src="{{static_dir('js/lib/angular/ui/dropdown.js')}}"></script>
+    <script src="{{static_dir('js/lib/angular/ui/select2.js')}}"></script>
     <!-- end angular modules -->
     
     <script>
@@ -32,12 +32,12 @@
     	current_user = {{current_user|to_json|safe}};
     </script>
     
-    <script src="/static/js/lib/angular/helper.js"></script>
-    <script src="/static/js/app/main.js"></script>
+    <script src="{{static_dir('js/lib/angular/helper.js')}}"></script>
+    <script src="{{static_dir('js/app/main.js')}}"></script>
  
-    <link rel="stylesheet" type="text/css" href="/static/fonts/sawasdee/stylesheet.css"/>
-    <link rel="stylesheet" type="text/css" href="/static/js/lib/jquery/select2/select2.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/angular/style.css"/>
+    <link rel="stylesheet" type="text/css" href="{{static_dir('fonts/sawasdee/stylesheet.css')}}"/>
+    <link rel="stylesheet" type="text/css" href="{{static_dir('js/lib/jquery/select2/select2.css')}}" />
+    <link rel="stylesheet" type="text/css" href="{{static_dir('css/angular/style.css')}}"/>
   </head>
   <body>
 	{% block content %}

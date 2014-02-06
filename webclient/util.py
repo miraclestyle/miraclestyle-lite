@@ -32,6 +32,7 @@ def static_dir(file_path):
     return '/webclient/static/%s' % file_path
             
 register_filter('to_json', to_json)
+register_global('static_dir', static_dir)
  
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.
