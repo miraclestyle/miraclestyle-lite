@@ -29,12 +29,11 @@ class Record(ndb.BaseExpando):
   
   # Log entity's each property
   def log_entity(self, entity):
-    return self
     for p in entity._properties:
       prop = entity._properties.get(p)
       value = prop._get_value(entity)
       self._properties[prop._name] = prop
-      setattr(self, p, value)
+      prop._set_value(entity, value) # fix for log_entity
     return self
 
 
