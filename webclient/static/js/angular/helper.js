@@ -1,6 +1,6 @@
 function ui_template(file)
 {
-	return '/webclient/static/js/lib/angular/ui/template/' + file;
+	return '/webclient/static/js/lib/angular/template/' + file;
 }
 function logic_template(file)
 {

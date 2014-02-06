@@ -1,0 +1,11 @@
+<h1>Manage account</h1>
+<form ng-submit="save()" name="update_account">
+	<div>
+		<label>E-mail</label>
+		<input ng-model="user.primary_email" name="email" type="text" required />
+	</div>
+	
+	<div>
+		<input class="button" value="Save changes" type="submit">
+	</div>
+</form>
