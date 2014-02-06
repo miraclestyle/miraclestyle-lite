@@ -27,6 +27,9 @@ def register_global(name, value):
         
 def to_json(s):
     return json.dumps(s, indent=2, cls=JSONEncoderHTML)
+  
+def static_dir(file_path):
+    return '/webclient/static/%s' % file_path
             
 register_filter('to_json', to_json)
  

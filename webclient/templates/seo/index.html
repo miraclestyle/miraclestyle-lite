@@ -1,8 +1,15 @@
-{% include 'seo/partial/header.html' %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{title or 'MIRACLESTYLE'}}</title>
  
-<h1>Hello and welcome</h1>
+    <link rel="stylesheet" type="text/css" href="/static/fonts/sawasdee/stylesheet.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/seo/style.css"/>
+  </head>
+  <body>
  
-{% block content %}
-{% endblock %}
+	{% block content %}
+	{% endblock %}
 
-{% include 'seo/partial/footer.html' %}
+  </body>
+</html>

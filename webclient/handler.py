@@ -39,7 +39,7 @@ def wsgi_config(as_tuple=False):
     TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
       
     for a in webclient_settings.ACTIVE_CONTROLLERS:
-        importlib.import_module('webclient.controllers.%s' % a)
+        importlib.import_module('webclient.controller.%s' % a)
       
     # It won't change, so convert it to a tuple to save memory.   
     ROUTES = tuple(get_routes())

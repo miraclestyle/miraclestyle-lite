@@ -1,8 +1,47 @@
-{% include 'angular/partial/header.html' %}
+<!DOCTYPE html>
+<html ng-app="MainApp">
+  <head>
+    <title>{{title or 'MIRACLESTYLE'}}</title>
+    
+    <meta name="fragment" content="!" />
+    
+    <!-- jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
+ 	<!-- end jquery -->
+ 	
+ 	<!-- begin jquery plugins -->
+ 	<script src="/static/js/lib/jquery/select2/select2.js"></script>
+ 	<!-- end -->
  
-<h1>Hello and welcome - {{'{{current_user.primary_email}}'}}</h1>
+    <!-- angular -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular-route.js"></script>
+    <!-- end angular -->
+    
+    <!-- angular modules -->
+    <script src="/static/js/lib/angular/ui/transition.js"></script>
+    <script src="/static/js/lib/angular/ui/collapse.js"></script>
+    <script src="/static/js/lib/angular/ui/accordion.js"></script>
+    <script src="/static/js/lib/angular/ui/modal.js"></script>
+    <script src="/static/js/lib/angular/ui/dropdown.js"></script>
+    <script src="/static/js/lib/angular/ui/select2.js"></script>
+    <!-- end angular modules -->
+    
+    <script>
+    	initdata = {{initdata|to_json|safe}};
+    	current_user = {{current_user|to_json|safe}};
+    </script>
+    
+    <script src="/static/js/lib/angular/helper.js"></script>
+    <script src="/static/js/app/main.js"></script>
  
-{% block content %}
-{% endblock %}
-
-{% include 'angular/partial/footer.html' %}
+    <link rel="stylesheet" type="text/css" href="/static/fonts/sawasdee/stylesheet.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/js/lib/jquery/select2/select2.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/angular/style.css"/>
+  </head>
+  <body>
+	{% block content %}
+	<div ng-view></div>
+	{% endblock %}
+  </body> 
+  </html>
