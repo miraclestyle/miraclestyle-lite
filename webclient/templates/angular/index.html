@@ -1,4 +1,8 @@
 {% include 'angular/partial/header.html' %}
+ 
+<h1>Hello and welcome - {{'{{current_user.primary_email}}'}}</h1>
+ 
 {% block content %}
 {% endblock %}
+
 {% include 'angular/partial/footer.html' %}

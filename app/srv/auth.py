@@ -94,6 +94,7 @@ class User(ndb.BaseExpando):
         
         d['csrf'] = self.csrf
         d['is_guest'] = self.is_guest
+        d['primary_email'] = self.primary_email
         
         return d 
     

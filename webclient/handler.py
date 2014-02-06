@@ -107,9 +107,7 @@ class Handler(webapp2.RequestHandler):
             if isinstance(value, cgi.FieldStorage):
               if 'blob-key' in value.type_options:
                   blob.Manager.field_storage_unused_blobs(value)
-                  
-        if not self.request.cookies.get('XSRF-TOKEN'):
-           self.response.set_cookie('XSRF-TOKEN', '1234')
+
         
   
     def send_json(self, data):
@@ -170,6 +168,9 @@ class Handler(webapp2.RequestHandler):
  
  
     def dispatch(self):
+      
+        csrf = None
+        csrf_cookie_value = self.request.cookies.get('XSRF-TOKEN')
         
         if self.LOAD_CURRENT_USER:
           
@@ -178,7 +179,15 @@ class Handler(webapp2.RequestHandler):
            auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
            
            self.template['current_user'] = auth.User.current_user()
- 
+           
+           csrf = self.template['current_user'].csrf
+           
+                          
+        if not csrf_cookie_value or (csrf != None and csrf != csrf_cookie_value):
+           if csrf == None:
+              csrf = util.random_chars(32)
+           self.response.set_cookie('XSRF-TOKEN', csrf)
+            
         try:
             self.before()
             # Dispatch the request.

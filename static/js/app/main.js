@@ -10,8 +10,9 @@ angular.module('app.ui',
 );
 
 var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
-.config(['$routeProvider', '$httpProvider',
-  function($routeProvider, $httpProvider) {
+.config(['$routeProvider', '$httpProvider', '$locationProvider',
+  function($routeProvider, $httpProvider, $locationProvider) {
+  	
     $routeProvider.
       when('/', {
         templateUrl: logic_template('home.html'),
@@ -23,7 +24,14 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
       });
  
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
+     
+     $location.hashPrefix('!');
+     
 }])
+.run(function ($rootScope) {
+    
+    $rootScope.current_user = current_user;
+})
 .controller('HomePage', ['$scope', '$http', '$log', function ($scope, $http, $log) {
 	 
 }])
