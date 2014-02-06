@@ -36,7 +36,7 @@ def wsgi_config(as_tuple=False):
           return __WSGI_CONFIG
        return tuple(__WSGI_CONFIG.items())
   
-    TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
+    TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'template'),)
       
     for a in webclient_settings.ACTIVE_CONTROLLERS:
         importlib.import_module('webclient.controller.%s' % a)
@@ -239,8 +239,9 @@ class Angular(Handler):
              self.send_json(self.data)
              return
           else:
+            # always return the index.html rendering as init
             self.template['initdata'] = self.data
-            self.render('angular/init.html')
+            self.render('angular/index.html')
           
           
 class AngularSegments(Segments, Angular):

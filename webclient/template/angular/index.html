@@ -6,40 +6,40 @@
     <meta name="fragment" content="!" />
     
     <!-- jquery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
  	<!-- end jquery -->
  	
  	<!-- begin jquery plugins -->
- 	<script src="{{static_dir('js/lib/jquery/select2/select2.js')}}"></script>
+ 	<script type="text/javascript" src="{{static_dir('js/lib/jquery/select2/select2.js')}}"></script>
  	<!-- end -->
  
     <!-- angular -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular-route.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.11/angular-route.js"></script>
     <!-- end angular -->
     
     <!-- angular modules -->
-    <script src="{{static_dir('js/lib/angular/ui/transition.js')}}"></script>
-    <script src="{{static_dir('js/lib/angular/ui/collapse.js')}}"></script>
-    <script src="{{static_dir('js/lib/angular/ui/accordion.js')}}"></script>
-    <script src="{{static_dir('js/lib/angular/ui/modal.js')}}"></script>
-    <script src="{{static_dir('js/lib/angular/ui/dropdown.js')}}"></script>
-    <script src="{{static_dir('js/lib/angular/ui/select2.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/transition.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/collapse.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/accordion.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/modal.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/dropdown.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/lib/angular/ui/select2.js')}}"></script>
     <!-- end angular modules -->
     
-    <script>
+    <script type="text/javascript">
     	initdata = {{initdata|to_json|safe}};
     	current_user = {{current_user|to_json|safe}};
     </script>
     
-    <script src="{{static_dir('js/lib/angular/helper.js')}}"></script>
-    <script src="{{static_dir('js/app/main.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/angular/helper.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/angular/main.js')}}"></script>
  
     <link rel="stylesheet" type="text/css" href="{{static_dir('fonts/sawasdee/stylesheet.css')}}"/>
     <link rel="stylesheet" type="text/css" href="{{static_dir('js/lib/jquery/select2/select2.css')}}" />
     <link rel="stylesheet" type="text/css" href="{{static_dir('css/angular/style.css')}}"/>
   </head>
-  <body>
+  <body ng-class="{loading : loading}">
 	{% block content %}
 	<div ng-view></div>
 	{% endblock %}

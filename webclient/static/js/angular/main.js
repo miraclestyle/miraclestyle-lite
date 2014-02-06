@@ -25,20 +25,25 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
  
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
      
-     $location.hashPrefix('!');
+     $locationProvider.hashPrefix('!');
      
 }])
 .run(function ($rootScope) {
     
     $rootScope.current_user = current_user;
+    $rootScope.loading = false;
 })
 .controller('HomePage', ['$scope', '$http', '$log', function ($scope, $http, $log) {
 	 
 }])
-.controller('Login', ['$scope', '$http', '$log', '$modal', '$location', 
+.controller('Login', ['$scope', '$http', '$log', '$modal', '$location', '$rootScope', 
     function ($scope, $http, $log, $modal, $location) {
-	 
-	$http.get('/login/google').success(function (output) {
+	
+	$scope.loading = true;
+	
+	var handle = function (output) {
+		
+		$scope.loading = false;
 		
 		$scope.data = output.data;
 	 
@@ -66,5 +71,8 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
 	 
 		    });
 		 
-	  });
+	  };
+	
+	$http.get('/login/google').success(handle);
+	
 }]);
