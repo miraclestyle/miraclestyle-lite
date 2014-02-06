@@ -61,7 +61,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
     return {
       restrict: 'EA',
       replace: true,
-      templateUrl: ngtemplate_path + 'template/modal/backdrop.html',
+      templateUrl: ui_template('modal/backdrop.html'),
       link: function (scope) {
 
         scope.animate = false;
@@ -83,7 +83,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
       },
       replace: true,
       transclude: true,
-      templateUrl: ngtemplate_path + 'template/modal/window.html',
+      templateUrl: ui_template('modal/window.html'),
       link: function (scope, element, attrs) {
         scope.windowClass = attrs.windowClass || '';
 

@@ -10,24 +10,25 @@ import json
 
 from app import ndb
 
-class Jinja():
+JINJA_FILTERS = {}
+JINJA_GLOBALS = {}
+
+def register_filter(name, funct):
+  
+    global JINJA_FILTERS
     
-    filters = {}
-    globals = {}
+    JINJA_FILTERS[name] = funct
     
-    @classmethod
-    def register_filter(cls, name, funct):
-        cls.filters[name] = funct
+def register_global(name, value):
+  
+    global JINJA_GLOBALS
     
-    @staticmethod
-    def register_global(cls, name, value):
-        cls.globals[name] = value
-        
+    JINJA_GLOBALS[name] = value
         
 def to_json(s):
     return json.dumps(s, indent=2, cls=JSONEncoderHTML)
             
-Jinja.register_filter('to_json', to_json)
+register_filter('to_json', to_json)
  
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.

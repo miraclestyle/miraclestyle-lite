@@ -22,8 +22,8 @@ class Reset(Angular):
                 domain.business.Company, domain.business.CompanyContent, domain.marketing.Catalog,
                 domain.marketing.CatalogImage, domain.marketing.CatalogPricetag, domain.product.Content,
                 domain.product.Instance, domain.product.InventoryAdjustment, domain.product.InventoryLog,
-                domain.product.Variant, domain.product.Template, opt.buyer.Address, opt.buyer.Collection,
-                opt.buyer.CollectionCompany, opt.misc.Content, opt.misc.ProductCategory, opt.misc.SupportRequest]
+                domain.product.Variant, domain.product.Template, opt.buyer.Address, opt.buyer.Collection, 
+                opt.misc.Content, opt.misc.ProductCategory, opt.misc.SupportRequest]
       
       keys = []
       
@@ -37,32 +37,23 @@ class Reset(Angular):
 class Submitter(Angular):
   
     def respond(self):
-        return self.render('submitter.html')
-
-class Welcome(Angular):
-    
-    def respond(self):
-        return {}
+        return self.render('tests/submitter.html')
+      
       
 class Endpoint(Angular):
     
     def respond(self):
-        context = io.Engine.run(self.reqdata.get_combined_params())
-        
-        if context:
-           return context.response
+        output = io.Engine.run(self.get_input())
+        return output
       
 class Engine(Angular):
 
     def respond(self):      
-        context = io.Engine.taskqueue_run(self.reqdata.get_combined_params()) 
-        
-        if context:
-           return context.response
+        output = io.Engine.taskqueue_run(self.get_input())
+        return output
          
  
 register(('/endpoint', Endpoint), 
          ('/reset', Reset),
          ('/engine_run', Engine), 
-         ('/', Welcome),
          ('/submitter', Submitter))
