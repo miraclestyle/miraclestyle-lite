@@ -10,7 +10,7 @@ from app.srv import uom, event, rule, log, blob
 from google.appengine.api import images
 from google.appengine.ext import blobstore
  
-
+# this will fan-out as a single entity that is child of Company, and will contanin all company feedbacks
 class CompanyFeedback(ndb.BaseModel):
     
     _kind = 45
@@ -301,7 +301,7 @@ class Company(ndb.BaseExpando):
  
  
 
-# done!
+# this will fan-out as a single entity that is child of Company, and will contanin all company content
 class CompanyContent(ndb.BaseModel):
     
     _kind = 46
