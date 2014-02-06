@@ -37,13 +37,13 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
 	 
 }])
 .controller('Login', ['$scope', '$http', '$log', '$modal', '$location', '$rootScope', 
-    function ($scope, $http, $log, $modal, $location) {
+    function ($scope, $http, $log, $modal, $location, $rootScope) {
 	
-	$scope.loading = true;
+	$rootScope.loading = true;
 	
 	var handle = function (output) {
 		
-		$scope.loading = false;
+		$rootScope.loading = false;
 		
 		$scope.data = output.data;
 	 

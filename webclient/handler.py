@@ -141,8 +141,7 @@ class Handler(webapp2.RequestHandler):
         """
         This function is fired just before the handler, usefull for setting variables
         """
-        # testing
-        time.sleep(1)
+        time.sleep(2) # emulate slowness
         pass
     
     
@@ -150,7 +149,7 @@ class Handler(webapp2.RequestHandler):
         """
         This function is fired just after the handler is executed
         """
-        time.sleep(1)
+        time.sleep(1) # emulate slowness
         pass
     
     
