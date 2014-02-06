@@ -83,7 +83,7 @@ class User(ndb.BaseExpando):
                 
        'logout' : event.Action(id='0-3',
                               arguments={
-                                'code' : ndb.SuperStringProperty(required=True),
+                                'csrf' : ndb.SuperStringProperty(required=True),
                               }
                              )
     }
@@ -92,7 +92,7 @@ class User(ndb.BaseExpando):
       
         d = super(User, self).__todict__()
         
-        d['logout_code'] = self.logout_code
+        d['csrf'] = self.csrf
         d['is_guest'] = self.is_guest
         
         return d 
@@ -111,7 +111,7 @@ class User(ndb.BaseExpando):
         return i.email
     
     @property
-    def logout_code(self):
+    def csrf(self):
         session = self.current_user_session()
         if not session:
            return None
@@ -276,7 +276,7 @@ class User(ndb.BaseExpando):
         @ndb.transactional(xg=True)
         def transaction():
 
-            if not current_user.logout_code == context.input.get('code'):
+            if not current_user.csrf == context.input.get('csrf'):
                raise rule.ActionDenied(context)
          
             if current_user.sessions:

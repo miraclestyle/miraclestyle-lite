@@ -7,6 +7,7 @@ Created on Jul 15, 2013
 import os
 import cgi
 import json
+import time
 import webapp2
 import importlib
 import collections
@@ -93,12 +94,12 @@ class Handler(webapp2.RequestHandler):
         
         self.data = {}
         self.template = {}
-  
-  
+   
+   
     def get_input(self):
         return collections.OrderedDict(self.request.params.items())
- 
-        
+  
+  
     def initialize(self, request, response):
         super(Handler, self).initialize(request, response)
  
@@ -106,6 +107,9 @@ class Handler(webapp2.RequestHandler):
             if isinstance(value, cgi.FieldStorage):
               if 'blob-key' in value.type_options:
                   blob.Manager.field_storage_unused_blobs(value)
+                  
+        if not self.request.cookies.get('XSRF-TOKEN'):
+           self.response.set_cookie('XSRF-TOKEN', '1234')
         
   
     def send_json(self, data):
@@ -115,15 +119,18 @@ class Handler(webapp2.RequestHandler):
            self.response.headers['Content-Type'] = ent
         self.response.write(json.dumps(data, indent=2, cls=JSONEncoderHTML))
  
+ 
     @webapp2.cached_property
     def jinja2(self):
         # Returns a Jinja2 renderer cached in the app registry.
         return jinja2.get_jinja2(app=self.app)
     
+    
     def render_response(self, _template, **context):
         # Renders a template and writes the result to the response.
         rv = self.jinja2.render_template(_template, **context)
         self.response.write(rv) 
+  
   
     def render(self, tpl, data=None):
         if data == None:
@@ -131,27 +138,36 @@ class Handler(webapp2.RequestHandler):
         self.template.update(data)
         return self.render_response(tpl, **self.template)
     
+    
     def before(self):
         """
         This function is fired just before the handler, usefull for setting variables
         """
+        # testing
+        time.sleep(1)
         pass
+    
     
     def after(self):
         """
         This function is fired just after the handler is executed
         """
+        time.sleep(1)
         pass
+    
     
     def get(self, *args, **kwargs):
         return self.respond(*args, **kwargs)
         
+        
     def post(self, *args, **kwargs):
         return self.respond(*args, **kwargs)
+        
         
     def respond(self, *args, **kwargs):
         self.abort(404)
         self.response.write('<h1>404 Not found</h1>')
+ 
  
     def dispatch(self):
         
@@ -160,6 +176,8 @@ class Handler(webapp2.RequestHandler):
            from app.srv import auth
            
            auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
+           
+           self.template['current_user'] = auth.User.current_user()
  
         try:
             self.before()

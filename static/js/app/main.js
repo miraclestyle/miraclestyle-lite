@@ -1,15 +1,3 @@
-ngtemplate_path = '/static/js/lib/angular/ui/template/';
-nglogic_template_path = '/static/js/app/template/';
-
-function logic_template(file)
-{
-	return nglogic_template_path + file;
-}
-function ui_template(file)
-{
-	return ngtemplate_path + file;
-}
-
 angular.module('app.ui',
 	  [
 	   'app.ui.transition', 
@@ -21,53 +9,54 @@ angular.module('app.ui',
 	  ]
 );
 
-angular.module('MainApp', ['ngRoute', 'app.ui'])
-.config(['$routeProvider',
-  function($routeProvider) {
+var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
+.config(['$routeProvider', '$httpProvider',
+  function($routeProvider, $httpProvider) {
     $routeProvider.
       when('/', {
         templateUrl: logic_template('home.html'),
-        controller: 'Login'
+        controller: 'HomePage'
       }).
       when('/login', {
-        controller: 'Login'
+        controller: 'Login',
+        template : " ",
       });
+ 
+     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
 }])
-.controller('HomePage', ['$scope', '$log', function ($scope, $log) {
-	$log.debug('Ey man');
-}])
-.controller('Login', ['$scope', '$http', '$log', '$modal', function ($scope, $http, $log, $modal) {
+.controller('HomePage', ['$scope', '$http', '$log', function ($scope, $http, $log) {
 	 
-	$http.get('/login/google?force_ajax=1').success(function (data) {
+}])
+.controller('Login', ['$scope', '$http', '$log', '$modal', '$location', 
+    function ($scope, $http, $log, $modal, $location) {
+	 
+	$http.get('/login/google').success(function (output) {
 		
-		$log.debug(data);
-		
+		$scope.data = output.data;
+	 
 		var modalInstance = $modal.open({
 		      templateUrl: logic_template('login.html'),
-		      controller: function ($scope, $modalInstance, items) {
-				 
-				  $scope.login = function () {
-				    $modalInstance.close('closed');
-				  };
-				
+		      controller: function ($scope, $modalInstance, data) {
+				  
+				  $scope.data = data;
+			  
 				  $scope.cancel = function () {
 				    $modalInstance.dismiss('cancel');
+				    $location.path('/');
 				  };
 			  },
 		      resolve: {
-		        items: function () {
-		          return $scope.items;
+		        data: function () {
+		          return $scope.data;
 		        }
 		      }
 		    });
 		    
-		 modalInstance.result.then(function (message) {
-		      $log.debug(message);
-		    }, function () {
-		      $log.info(args);
-		 });
+			modalInstance.result.then(function (message) {
+			      $log.debug(message);
+			    }, function () {
+	 
+		    });
 		 
 	  });
- 
-	
 }]);

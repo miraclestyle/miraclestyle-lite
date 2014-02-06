@@ -1,15 +1,3 @@
-ngtemplate_path = '/static/js/lib/angular/ui/template/';
-nglogic_template_path = '/static/js/app/template/';
-
-function logic_template(file)
-{
-	return nglogic_template_path + file;
-}
-function ui_template(file)
-{
-	return ngtemplate_path + file;
-}
-
 angular.module('app.ui',
 	  [
 	   'app.ui.transition', 
