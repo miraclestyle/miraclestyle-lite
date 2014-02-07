@@ -10,7 +10,7 @@ from app.srv import blob, event, rule, log
 from google.appengine.ext import blobstore
  
 
-# done!
+# implements pricetags repeated local structured property
 class CatalogImage(blob.Image):
     
     _kind = 36
@@ -500,7 +500,7 @@ class Catalog(ndb.BaseExpando):
         context.output['catalogs'] = cls.query(namespace=domain.key_namespace).fetch()
            
         return context
-# done!
+# this is LocalStructuredProperty and is repeated per catalog image.
 class CatalogPricetag(ndb.BaseModel):
     
     _kind = 34
