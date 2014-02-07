@@ -1,3 +1,9 @@
+* {
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box;
+box-sizing: border-box;
+}
+
 body
 {
   font-size:14px;
@@ -35,4 +41,10 @@ a:visited
 :focus
 {
 	outline: none;
+}
+
+.content
+{
+	margin-right:15px;
+	margin-left:15px;
 }

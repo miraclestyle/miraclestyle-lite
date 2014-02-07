@@ -21,6 +21,14 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
       when('/manage_account', {
       	 controller: 'ManageAccount',
       	 templateUrl : logic_template('srv/auth/account.html'),
+      	 resolve : {
+      	 	// promise example
+      	 	registered : ['$http', function ($http) {
+      	 		return $http.get('/endpoint?action_model=srv.auth.User&action_key=account_manage').then(function (xhr) {
+			  	    return xhr.data.data.registered;
+			   });
+      	 	}]
+      	 }
       }).
       when('/login', {
         controller: 'Login',
@@ -84,9 +92,13 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
 .controller('HomePage', ['$scope', '$http', '$log', function ($scope, $http, $log) {
 	 
 }])
-.controller('ManageAccount', ['$scope', '$log', '$http', function ($scope, $log, $http) {
+.controller('ManageAccount', ['$scope', '$log', '$http', 'registered', function ($scope, $log, $http, registered) {
 	
+	  console.log(registered);
+	 
 	  $scope.user = current_user;
+	  
+	  $scope.user.registered = registered;
 	 
 	  $scope.save = function ()
 	  {

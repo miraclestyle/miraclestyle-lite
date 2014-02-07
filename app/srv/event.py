@@ -13,7 +13,7 @@ __SYSTEM_ACTIONS = {}
 def get_system_action(action_key):
   global __SYSTEM_ACTIONS
   action_key = ndb.Key(Action, action_key)
-  return __SYSTEM_ACTIONS.get(action_key.urlasfe())
+  return __SYSTEM_ACTIONS.get(action_key.urlsafe())
 
 def register_system_action(*actions):
   global __SYSTEM_ACTIONS

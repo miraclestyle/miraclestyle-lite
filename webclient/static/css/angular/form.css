@@ -29,9 +29,57 @@
   outline: none;
   padding: 5px;
   font-size:14px;
+  display: block;
+  width: 100%;
+ 
 }
 
 .text_input:focus
 {
   border: 1px solid #333333;
+}
+
+.form_control
+{
+	margin-bottom:10px;
+}
+
+.form_control:after
+{
+	clear:both;
+	content: " ";
+	display: table;
+}
+
+.form_label
+{
+	float:left;
+	text-align:right;
+	width: 16.666666666666664%;
+	position: relative;
+	min-height: 1px;
+	padding-left: 15px;
+	padding-right: 15px;
+	padding-top:7px;
+}
+
+.form_input
+{
+	float:left;
+	position: relative;
+	width:83.33333333333334%;
+	min-height: 1px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.form_text
+{
+	padding-top:5px;
+}
+
+.fieldset
+{
+	border-bottom:1px solid #333;
+	padding-bottom:5px;
 }

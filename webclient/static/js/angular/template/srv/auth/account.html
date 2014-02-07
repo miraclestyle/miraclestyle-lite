@@ -1,11 +1,53 @@
-<h1>Manage account</h1>
+<h1>Account management</h1>
 <form ng-submit="save()" name="update_account">
-	<div>
-		<label>E-mail</label>
-		<input ng-model="user.primary_email" name="email" type="text" required />
+	
+	<h2 class="fieldset">General</h2>
+	<div class="form_control">
+		<label class="form_label">ID</label>
+		<div class="form_input">
+			 <div class="form_text">
+			 	{{user.id}}
+			 </div>
+		</div>
 	</div>
 	
-	<div>
-		<input class="button" value="Save changes" type="submit">
+	<div class="form_control">
+		<label class="form_label">Registered</label>
+		<div class="form_input">
+			 <div class="form_text">
+			 	{{user.registered}}
+			 </div>
+		</div>
 	</div>
+	
+	
+	<div class="form_control">
+		<label class="form_label">Status</label>
+		<div class="form_input">
+			<div class="form_text">
+				 {{user.state}}
+			</div>
+		</div>
+	</div>
+	
+	
+	<div class="form_control">
+		<label class="form_label">Primary e-mail</label>
+		<div class="form_input">
+			<select ui-select2 ng-model="user.primary_email" data-placeholder="Select your primary e-mail">
+				    <option ng-repeat="email in user.emails" value="{{email}}">{{email}}</option>
+			</select>
+		</div>
+	</div>
+	
+	
+	<h2 class="fieldset">Providers</h2>
+	
+	<div class="form_control">
+		<label class="form_label"></label>
+		<div class="form_input">
+			<input class="button" value="Save changes" type="submit">
+		</div>
+	</div>
+ 
 </form>

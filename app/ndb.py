@@ -117,7 +117,8 @@ class _BaseModel():
       dic = self.to_dict()
       
       if self.key:
-         dic['id'] = self.key.urlsafe()
+         dic['key'] = self.key.urlsafe()
+         dic['id'] = self.key.id()
          
       for k,v in dic.items():
           if isinstance(v, Key):

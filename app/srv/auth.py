@@ -55,6 +55,7 @@ class User(ndb.BaseExpando):
                                                 rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
                                                 # rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                ])
     
     _actions = {
@@ -85,6 +86,10 @@ class User(ndb.BaseExpando):
                               arguments={
                                 'csrf' : ndb.SuperStringProperty(required=True),
                               }
+                             ),
+                
+       'account_manage' : event.Action(id='0-4',
+                              arguments={}
                              )
     }
  
@@ -187,6 +192,12 @@ class User(ndb.BaseExpando):
             if i.identity == identity_id:
                return i
         return False  
+    
+    @classmethod
+    def account_manage(cls, context):
+        record = log.Record.query(log.Record.action==cls._actions.get('login').key, ancestor=context.auth.user.key).get()
+        context.output['registered'] = record.logged
+        return context
       
     @classmethod
     def sudo(cls, context):
