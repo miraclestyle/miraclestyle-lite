@@ -14,7 +14,7 @@ from google.appengine.ext import blobstore
 class CatalogImage(blob.Image):
     
     _kind = 36
-    
+    # id = sequence, so we can construct keys and use get_multy for fetching image sets, instead of ancestor query
     sequence = ndb.SuperIntegerProperty('7', required=True)
     
     # this model is working on multiple images at once because they are always like grid....
