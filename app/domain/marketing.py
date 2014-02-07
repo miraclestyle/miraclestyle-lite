@@ -15,6 +15,7 @@ class CatalogImage(blob.Image):
     
     _kind = 36
     # id = sequence, so we can construct keys and use get_multy for fetching image sets, instead of ancestor query
+    # this will require delete/put on every update to image sequence, so it has to be evaluated further
     sequence = ndb.SuperIntegerProperty('7', required=True)
     
     # this model is working on multiple images at once because they are always like grid....
