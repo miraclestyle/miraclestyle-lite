@@ -349,7 +349,7 @@ class Engine:
                 line.company = entry.company
                 line.state = entry.state
                 line.date = entry.date
-                line.set_key(parent=entry_key) # parent key for line
+                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
                 lines.append(line)
             
             ndb.put_multi(lines)
