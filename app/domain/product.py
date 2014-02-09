@@ -12,7 +12,9 @@ from app.srv import event, uom, blob, rule, log
 
 from google.appengine.ext import blobstore
 
-# done!
+# this model will either serve as LocalStructuredProperty of Template/Instance, or will fan-out as single child entity
+# of Template, packed with multiple contents
+# this entity will reference only one Template/Instance, not multiple.. that will require Duplicate Product feature!
 class Content(ndb.BaseModel):
     
     _kind = 43
@@ -151,7 +153,9 @@ class Content(ndb.BaseModel):
      
   
 
-# done!
+# this model will either serve as LocalStructuredProperty of Template, or will fan-out as single child entity
+# of Template, packed with multiple variants
+# this entity will reference only one Template/Instance, not multiple.. that will require Duplicate Product feature!
 class Variant(ndb.BaseModel):
     
     _kind = 42
@@ -325,7 +329,7 @@ class Template(ndb.BaseExpando):
     _expando_fields = {
       'variants' : ndb.SuperKeyProperty('7', kind='42', repeated=True),# soft limit 100x
       'contents' : ndb.SuperKeyProperty('8', kind=Content, repeated=True),# soft limit 100x
-      'images' : ndb.SuperLocalStructuredProperty(blob.Image, '9', repeated=True),# soft limit 100x
+      'images' : ndb.SuperLocalStructuredProperty(blob.Image, '9', repeated=True),# soft limit 100x - fan-out this in separate entity
       'weight' : ndb.SuperPickleProperty('10'),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
       'volume' : ndb.SuperPickleProperty('11'),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
       'low_stock_quantity' : ndb.SuperDecimalProperty('12', default='0.00'),# notify store manager when qty drops below X quantity
