@@ -221,12 +221,12 @@ class Angular(Handler):
       def get(self, *args, **kwargs):
         data = self.respond(*args, **kwargs)
         if data:
-           self.data['data'] = data
+           self.data = data
         
       def post(self, *args, **kwargs):
         data = self.respond(*args, **kwargs)
         if data:
-           self.data['data'] = data
+           self.data = data
  
       def after(self):
           force_ajax = self.request.get('force_ajax')

@@ -1,4 +1,4 @@
-<h1>Account management</h1>
+<div class="modal-body">
 <form ng-submit="save()" name="update_account">
 	
 	<h2 class="fieldset">General</h2>
@@ -15,7 +15,7 @@
 		<label class="form_label">Registered</label>
 		<div class="form_input">
 			 <div class="form_text">
-			 	{{user.registered}}
+			 	{{user.created}}
 			 </div>
 		</div>
 	</div>
@@ -41,13 +41,16 @@
 	</div>
 	
 	
-	<h2 class="fieldset">Providers</h2>
-	
-	<div class="form_control">
-		<label class="form_label"></label>
-		<div class="form_input">
-			<input class="button" value="Save changes" type="submit">
-		</div>
-	</div>
+ 
  
 </form>
+</div>
+
+<div class="modal-footer">
+	<button class="button" ng-click="save()">
+		Save
+	</button>
+	<button class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>

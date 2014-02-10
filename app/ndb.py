@@ -502,7 +502,7 @@ class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
           
        for blob in blobs:
            
-           # these will throw errors if the `blob` is not cgi.FileStorage
+           # these will throw errors if the `blob` is not cgi.FileStorage
            info = blobstore.parse_file_info(blob)
            blob_info = blobstore.parse_blob_info(blob)
            

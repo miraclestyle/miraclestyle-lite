@@ -48,3 +48,80 @@ a:visited
 	margin-right:15px;
 	margin-left:15px;
 }
+
+#top_bar
+{
+	background:white;
+	z-index: 100;
+	height:50px;
+	border-bottom:1px solid #ddd;
+	top:0px;
+	position:fixed;
+	width:100%;
+}
+
+#top_bar a.logo_link
+{
+    text-align: center;
+	/*width: 215px;
+	margin-left: auto;
+	margin-right: auto;*/
+	text-decoration: none;
+	display:block;
+}
+
+#logo
+{
+	text-transform: uppercase;
+	font-size: 30px;
+	margin: 0px;
+	padding-top: 14px;
+	padding-bottom: 14px;
+	
+}
+
+.content
+{
+	margin-top:65px;
+}
+
+#main_menu
+{
+	background:white;
+	position:absolute;
+	top:50px;
+	z-index:100;
+	width:100%;
+	-webkit-box-shadow: 0 3px 3px 1px #383838;
+	box-shadow: 0 3px 3px 1px #383838;
+}
+
+.menu_inner
+{
+	padding-left:10px;
+	padding-right:10px;
+}
+
+.menu
+{
+	padding:0px;
+	margin:0px;
+	list-style:none;
+}
+
+.menu li
+{
+	display:block;
+	margin-bottom:5px;
+	
+}
+
+a.block, .block
+{
+	display:block;
+}
+
+#main_menu .button {
+padding-top: 14px;
+padding-bottom: 14px;
+}

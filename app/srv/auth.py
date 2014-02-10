@@ -303,8 +303,8 @@ class User(ndb.BaseExpando):
             log.Engine.run(context)
             
             current_user.set_current_user(None, None)
-            
-            context.status('logged_out')
+            context.output['anonymous_user'] = current_user.current_user()
+ 
         
         transaction()
               
@@ -619,7 +619,7 @@ class Domain(ndb.BaseExpando):
             context.log.entities.append((entity,))
             log.Engine.run(context)
                
-            context.status(entity)
+            context['updated_user'] = entity
            
         transaction()
             
