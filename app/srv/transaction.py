@@ -200,8 +200,8 @@ class Entry(ndb.BaseExpando):
   company = ndb.SuperKeyProperty('3', kind='44', required=True)
   state = ndb.SuperStringProperty('4', required=True)
   date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
-  created = ndb.SuperDateTimeProperty('6', auto_now_add=True, required=True)
-  updated = ndb.SuperDateTimeProperty('7', auto_now=True, required=True)
+  created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('7', auto_now=True)
   # Expando
   # 
   # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse

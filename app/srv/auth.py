@@ -42,6 +42,8 @@ class User(ndb.BaseExpando):
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperStringProperty('3', required=True)
     sessions = ndb.SuperLocalStructuredProperty(Session, '4', repeated=True)
+    created = ndb.SuperDateTimeProperty('5', auto_now_add=True)
+    updated = ndb.SuperDateTimeProperty('6', auto_now=True)
  
     _default_indexed = False
   
@@ -408,9 +410,9 @@ class User(ndb.BaseExpando):
                      log.Engine.run(context)
                       
                      context.output.update({'user' : user,
-                                              'authorization_code' : user.generate_authorization_code(session),
-                                              'session' : session
-                                              })
+                                            'authorization_code' : user.generate_authorization_code(session),
+                                            'session' : session
+                                           })
                   transaction(user)
                
         return context

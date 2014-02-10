@@ -94,7 +94,7 @@ class Handler(webapp2.RequestHandler):
         
         self.data = {}
         self.template = {}
-   
+ 
    
     def get_input(self):
         return collections.OrderedDict(self.request.params.items())

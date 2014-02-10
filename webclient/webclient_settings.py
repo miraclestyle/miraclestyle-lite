@@ -10,6 +10,10 @@ TEMPLATE_CACHE = 0
 
 SESSION_USER_KEY = 'usr'
 
+ANGULAR_MODULES = ['route', 'transition', 'collapse', 'accordion', 'modal', 'dropdown', 'select2', 'busy', 'checklist']
+ANGULAR_COMPONENTS = ['home/home', 'srv/auth/login', 'srv/auth/account', 'opt/buyer/buyer']
+JQUERY_PLUGINS = ['select2/select2']
+
 WEBAPP2_EXTRAS = {
     'webapp2_extras.sessions' : {
         'secret_key': 'd212k19f0k09sdkf009kfewwdw',

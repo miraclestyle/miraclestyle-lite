@@ -9,6 +9,7 @@ import os
 import json
 
 from app import ndb
+from webclient import webclient_settings
 
 JINJA_FILTERS = {}
 JINJA_GLOBALS = {}
@@ -33,7 +34,8 @@ def static_dir(file_path):
             
 register_filter('to_json', to_json)
 register_global('static_dir', static_dir)
- 
+register_global('webclient_settings', webclient_settings)
+
 class JSONEncoderHTML(json.JSONEncoder):
     """An encoder that produces JSON safe to embed in HTML.
 
