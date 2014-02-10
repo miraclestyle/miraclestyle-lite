@@ -15,7 +15,7 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
   function($httpProvider, $locationProvider) {
    
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
-     
+ 
      $locationProvider.hashPrefix('!');
      
 }])

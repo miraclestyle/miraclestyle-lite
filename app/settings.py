@@ -42,6 +42,15 @@ LOGIN_METHODS = {
     'facebook' : 2,
 }
 
+_https = os.environ.get('HTTPS') == 'on'
+_http = 'http://'
+
+if _https:
+  _http = 'https://'
+   
+
+HOST = '%s%s' % (_http, os.environ.get('HTTP_HOST'))
+
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
    'client_id'    : '283384992095.apps.googleusercontent.com',
@@ -49,7 +58,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : 'http://miraclestyle-demo.appspot.com/login/google',
+   'redirect_uri' : '%s/login/google' % HOST,
 
 }
 
@@ -61,7 +70,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : 'http://localhost:9982/login/facebook',
+   'redirect_uri' : '%s/login/facebook' % HOST,
 }
 
 FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'

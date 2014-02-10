@@ -97,7 +97,9 @@ class Handler(webapp2.RequestHandler):
  
    
     def get_input(self):
-        return collections.OrderedDict(self.request.params.items())
+        dicts = json.loads(self.request.body)
+        dicts.update(self.request.params)
+        return dicts
   
   
     def initialize(self, request, response):

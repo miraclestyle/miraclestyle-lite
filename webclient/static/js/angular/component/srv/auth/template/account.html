@@ -2,9 +2,10 @@
 <div class="modal-body">
 	
 	
-  <div tabset vertical="true" type="navType">
-    <div tab heading="General">
+  <div tabset over_heading="Account Management" vertical="true" type="navType">
+    <div tab heading="Account">
   
+  	<h2 class="fieldset">General</h2>
 	<div class="form_control">
 		<label class="form_label">ID</label>
 		<div class="form_input">
@@ -42,6 +43,23 @@
 			</select>
 		</div>
 	</div>
+	
+	<h2 class="fieldset">Providers</h2>
+	
+	<div class="form_control">
+		 <ul class="no_style">
+		 		<li ng-repeat="ident in user.identities">
+		 		   <strong>{{identiy_info.get(ident.identity)}}</strong>
+		 		    <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
+		 		    	<span ng-show="!ident.associated">Associate</span>
+		 		    	<span ng-show="ident.associated">Disassociate</span>
+		 		    </a>
+		 	    </li>
+		 </ul>
+	</div>
+	
+	
+	
 	</div>
     <div tab heading="Domains">Vertical content 2</div>
   </div>
@@ -50,10 +68,10 @@
 </div>
 
 <div class="modal-footer">
-	<button busy="Loading.." class="button" ng-click="save()">
+	<button busy="Loading.." class="button">
 		Save
 	</button>
-	<button class="button" ng-click="cancel()">
+	<button type="button" class="button" ng-click="cancel()">
 		Cancel
 	</button>
 </div>

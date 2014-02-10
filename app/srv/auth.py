@@ -254,23 +254,26 @@ class User(ndb.BaseExpando):
  
             primary_email = context.input.get('primary_email')
             disassociate = context.input.get('disassociate')
+ 
 
             for identity in current_user.identities:
                 if primary_email:
                     identity.primary = False
                     if identity.email == primary_email:
                        identity.primary = True
+                       
+                identity.associated = True
                  
                 if disassociate:  
-                    if identity.identity == disassociate:
-                       identity.associate = False
-                   
+                    if identity.identity in disassociate:
+                       identity.associated = False
+    
             current_user.put()
             
             context.log.entities.append((current_user, ))
             log.Engine.run(context)
             
-            context.status(current_user)
+            context.output['updated_user'] = current_user
             
         transaction()
            

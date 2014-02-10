@@ -8,6 +8,11 @@
   clear: both;
 }
 
+.clear
+{
+	clear:both;
+}
+
 .center-block {
   display: block;
   margin-right: auto;

@@ -125,3 +125,21 @@ a.block, .block
 padding-top: 14px;
 padding-bottom: 14px;
 }
+
+.no_style
+{
+	list-style:none;
+	padding:0px;
+	margin:0px;
+}
+.no_style li
+{
+	display:block;
+}
+
+
+strong, b
+{
+	font-family:'sawasdeebold', Arial, Helvetica, sans-serif;
+	font-weight:bold;
+}
