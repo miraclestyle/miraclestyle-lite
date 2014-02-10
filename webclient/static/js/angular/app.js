@@ -1,6 +1,7 @@
 angular.module('app.ui',
 	  [
 	   'app.ui.transition', 
+	   'app.ui.tabs',
 	   'app.ui.collapse', 
 	   'app.ui.accordion',
 	   'app.ui.modal',

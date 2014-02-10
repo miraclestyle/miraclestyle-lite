@@ -10,7 +10,8 @@ TEMPLATE_CACHE = 0
 
 SESSION_USER_KEY = 'usr'
 
-ANGULAR_MODULES = ['route', 'transition', 'collapse', 'accordion', 'modal', 'dropdown', 'select2', 'busy', 'checklist']
+ANGULAR_MODULES = ['route', 'transition', 'tabs', 'collapse', 'accordion', 'modal', 'dropdown', 'select2',
+                   'busy', 'checklist']
 ANGULAR_COMPONENTS = ['home/home', 'srv/auth/login', 'srv/auth/account', 'opt/buyer/buyer']
 JQUERY_PLUGINS = ['select2/select2']
 

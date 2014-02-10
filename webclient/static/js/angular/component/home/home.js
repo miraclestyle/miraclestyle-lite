@@ -100,10 +100,6 @@ MainApp.config(['$routeProvider',
 					  	  	$http.post('/endpoint?action_model=srv.auth.User&action_key=update', $scope.user)
 						     .success(function (data) {
 								 $rootScope.current_user = data.updated_user;
-								 alert('Saved');
-								 
-								 $modalInstance.dismiss('cancel');
-							 
 							});
 		
 					  	  };
@@ -137,7 +133,12 @@ MainApp.config(['$routeProvider',
 	$rootScope.doLogout = function ()
 	{
 		
-	   $http.get('/endpoint?action_model=srv.auth.User&action_key=logout&csrf=' + $rootScope.current_user.csrf)
+	   $http.get('/endpoint',
+	     {
+	   	   'csrf' : $rootScope.current_user.csrf,
+	   	   'action_model' : 'srv.auth.User',
+	   	   'action_key' : 'logout',
+	     })
 	     .success(function (data) {
 			 $rootScope.current_user = data.anonymous_user;
 			 $location.path('/');

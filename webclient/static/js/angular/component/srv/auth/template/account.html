@@ -1,7 +1,10 @@
-<div class="modal-body">
 <form ng-submit="save()" name="update_account">
+<div class="modal-body">
 	
-	<h2 class="fieldset">General</h2>
+	
+  <div tabset vertical="true" type="navType">
+    <div tab heading="General">
+  
 	<div class="form_control">
 		<label class="form_label">ID</label>
 		<div class="form_input">
@@ -39,18 +42,19 @@
 			</select>
 		</div>
 	</div>
-	
-	
+	</div>
+    <div tab heading="Domains">Vertical content 2</div>
+  </div>
  
  
-</form>
 </div>
 
 <div class="modal-footer">
-	<button class="button" ng-click="save()">
+	<button busy="Loading.." class="button" ng-click="save()">
 		Save
 	</button>
 	<button class="button" ng-click="cancel()">
 		Cancel
 	</button>
 </div>
+</form>
