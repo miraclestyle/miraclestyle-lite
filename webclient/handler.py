@@ -146,7 +146,7 @@ class Handler(webapp2.RequestHandler):
         """
         This function is fired just before the handler, usefull for setting variables
         """
-        #time.sleep(2) # emulate slowness
+        #time.sleep(3) # emulate slowness
         pass
     
     

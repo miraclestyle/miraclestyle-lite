@@ -10,7 +10,7 @@ angular.module('app.ui',
 	  ]
 );
 
-var MainApp = angular.module('MainApp', ['ngRoute', 'app.ui'])
+var MainApp = angular.module('MainApp', ['ngRoute', 'ngBusy', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    

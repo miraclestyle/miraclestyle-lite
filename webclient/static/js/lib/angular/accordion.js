@@ -59,7 +59,7 @@ angular.module('app.ui.accordion', ['app.ui.collapse'])
     restrict:'EA',
     transclude:true,              // It transcludes the contents of the directive into the template
     replace: true,                // The element containing the directive will be replaced with the template
-    templateUrl: ui_template('accordion/accordion-group.html'),
+    templateUrl: ui_template('accordion/accordion_group.html'),
     scope: {
       heading: '@',               // Interpolate the heading attribute onto this scope
       isOpen: '=?',

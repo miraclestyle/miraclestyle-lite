@@ -79,7 +79,9 @@ MainApp.run(['$rootScope',  '$http', '$location', '$modal', function ($rootScope
 				 
 			  };
 			
-			handle();
+			//handle();
+			
+			$http.get('/').success(handle);
 		
 	};
 	 
