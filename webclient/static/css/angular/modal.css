@@ -1,4 +1,4 @@
-.modal-open {
+.modal_open {
   overflow: hidden;
 }
 
@@ -14,7 +14,7 @@
   overflow-y: scroll;
 }
 
-.modal.fade .modal-dialog {
+.modal.fade .modal_dialog {
   -webkit-transform: translate(0, -25%);
       -ms-transform: translate(0, -25%);
           transform: translate(0, -25%);
@@ -24,20 +24,20 @@
           transition: transform 0.3s ease-out;
 }
 
-.modal.in .modal-dialog {
+.modal.in .modal_dialog {
   -webkit-transform: translate(0, 0);
       -ms-transform: translate(0, 0);
           transform: translate(0, 0);
 }
 
-.modal-dialog {
+.modal_dialog {
   position: relative;
   z-index: 1050;
   width: auto;
   margin: 10px;
 }
 
-.modal-content {
+.modal_content {
   position: relative;
   background-color: #ffffff;
   border: 1px solid #999999;
@@ -49,7 +49,7 @@
   background-clip: padding-box;
 }
 
-.modal-backdrop {
+.modal_backdrop {
   position: fixed;
   top: 0;
   right: 0;
@@ -59,72 +59,77 @@
   background-color: #000000;
 }
 
-.modal-backdrop.fade {
+.modal_backdrop.fade {
   opacity: 0;
   filter: alpha(opacity=0);
 }
 
-.modal-backdrop.in {
+.modal_backdrop.in {
   opacity: 0.5;
   filter: alpha(opacity=50);
 }
 
-.modal-header {
+.modal_header {
   min-height: 16.428571429px;
   padding: 15px;
   border-bottom: 1px solid #e5e5e5;
 }
 
-.modal-header .close {
+.modal_header .close {
   margin-top: -2px;
 }
 
-.modal-title {
+.modal_title {
   margin: 0;
   line-height: 1.428571429;
 }
 
-.modal-body {
+.modal_body {
   position: relative;
-  padding: 20px;
+  padding: 0px;
+  overflow:auto;
 }
 
-.modal-footer {
-  padding: 19px 20px 20px;
-  margin-top: 15px;
+.modal_footer {
+  padding: 10px;
   text-align: right;
-  border-top: 1px solid #e5e5e5;
+ 
 }
 
-.modal-footer:before,
-.modal-footer:after {
+.modal_footer:before,
+.modal_footer:after {
   display: table;
   content: " ";
 }
 
-.modal-footer:after {
+.modal_footer:after {
   clear: both;
 }
 
-.modal-footer:before,
-.modal-footer:after {
+.modal_footer:before,
+.modal_footer:after {
   display: table;
   content: " ";
 }
 
-.modal-footer:after {
+.modal_footer:after {
   clear: both;
 }
 
-.modal-footer .btn + .btn {
+ .btn + .btn {
   margin-bottom: 0;
   margin-left: 5px;
 }
 
-.modal-footer .btn-group .btn + .btn {
+.modal_footer .btn-group .btn + .btn {
   margin-left: -1px;
 }
 
-.modal-footer .btn-block + .btn-block {
+.modal_footer .btn-block + .btn-block {
   margin-left: 0;
+}
+
+.modal_body_inner {
+padding: 10px;
+padding-bottom: 0px;
 }

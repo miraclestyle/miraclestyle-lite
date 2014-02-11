@@ -97,7 +97,10 @@ class Handler(webapp2.RequestHandler):
  
    
     def get_input(self):
-        dicts = json.loads(self.request.body)
+        try:
+          dicts = json.loads(self.request.body)
+        except:
+          dicts = {}
         dicts.update(self.request.params)
         return dicts
   

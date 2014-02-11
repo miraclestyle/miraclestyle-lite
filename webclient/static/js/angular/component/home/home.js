@@ -60,8 +60,8 @@ MainApp.config(['$routeProvider',
     	}
     };
 }])
-.run(['$rootScope', '$http', '$location', '$modal', 'Login',
-     function ($rootScope, $http, $location, $modal, Login) {
+.run(['$rootScope',
+     function ($rootScope) {
 	
 	$rootScope.toggleMainMenu = function ()
 	{
@@ -85,108 +85,5 @@ MainApp.config(['$routeProvider',
 			});
 		}
 	};
-	
-	
-	$rootScope.manageAccount = function ()
-	{
-		
-		$rootScope.loading = true;
-	
-			var handle = function () {
-				
-				$rootScope.loading = false;
-				  
-				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'account.html'),
-				      controller: function ($scope, $modalInstance) {
-				  
-					  	  $scope.user = current_user;
-					  	  $scope.identiy_info = {
-					  	  	get : function (i)
-					  	  	{
-					  	  		var info = i.split('-');
-					  	  		
-					  	  		return login_methods[info[1]];
-					  	  	}
-					  	  };
-					  	   
-					  	  $scope.disAssociate = function(ident)
-					  	  {
-					  	  	 
-					  	  	  angular.forEach($scope.user.identities, function (value) {
-					  	  	  	   if (value.identity == ident)
-					  	  	  	   {
-					  	  	  	   	   value.associated = !value.associated;
-					  	  	  	   	 
- 					  	  	  	   }
-					  	  	  });
-					  	  };
-				 
-					  	  $scope.save = function ()
-					  	  {
-					  	  	var disassociated = [];
-					  	  	
-					  	  	angular.forEach($scope.user.identities, function (value) {
-					  	  	  	 
-					  	  	  	   	   if (!value.associated)
-					  	  	  	   	   {
-					  	  	  	   	   	  disassociated.push(value.identity);
-					  	  	  	   	   }
-					  	  	  	   
-					  	  	  });
-					  	  	
-					  	  	$http.post('/endpoint', {
-					  	  		primary_email : $scope.user.primary_email,
-					  	  		disassociate : disassociated,
-					  	  		action_model : 'srv.auth.User',
-					  	  	    action_key : 'update',
-					  	  	})
-						     .success(function (data) {
-								 $rootScope.current_user = $scope.user = data.updated_user;
-							});
-		
-					  	  };
-					  	  
-						  $scope.cancel = function () {
-						    $modalInstance.dismiss('cancel');
-						  };
-					  }
-				    });
-				    
-					modalInstance.result.then(function (message) {
-					     
-					    }, function () {
-			 			 
-				    });
-				 
-			  };
-			
-			handle();
-		
-	};
-	
-	$rootScope.doLogin = function ()
-	{
-		Login.ask(function () {
-			$location.path('/');
-		});
-	};
-	
-	$rootScope.doLogout = function ()
-	{
-		
-	   $http.get('/endpoint',
-	     {
-	   	   'csrf' : $rootScope.current_user.csrf,
-	   	   'action_model' : 'srv.auth.User',
-	   	   'action_key' : 'logout',
-	     })
-	     .success(function (data) {
-			 $rootScope.current_user = data.anonymous_user;
-			 $location.path('/');
-			 $rootScope.toggleMainMenu();
-		});
-		
-	};
-	
+	 
 }]);

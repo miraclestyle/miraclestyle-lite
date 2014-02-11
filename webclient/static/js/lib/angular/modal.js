@@ -92,6 +92,9 @@ angular.module('app.ui.modal', ['app.ui.transition'])
           scope.animate = true;
           // focus a freshly-opened modal
           element[0].focus();
+          
+          $(window).trigger('modal.init');
+          
         });
 
         scope.close = function (evt) {
@@ -109,7 +112,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
   .factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap',
     function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap) {
 
-      var OPENED_MODAL_CLASS = 'modal-open';
+      var OPENED_MODAL_CLASS = 'modal_open';
 
       var backdropDomEl, backdropScope;
       var openedWindows = $$stackedMap.createNew();
@@ -221,11 +224,11 @@ angular.module('app.ui.modal', ['app.ui.transition'])
         if (currBackdropIndex >= 0 && !backdropDomEl) {
           backdropScope = $rootScope.$new(true);
           backdropScope.index = currBackdropIndex;
-          backdropDomEl = $compile('<div modal-backdrop></div>')(backdropScope);
+          backdropDomEl = $compile('<div modal_backdrop></div>')(backdropScope);
           body.append(backdropDomEl);
         }
 
-        var angularDomEl = angular.element('<div modal-window></div>');
+        var angularDomEl = angular.element('<div modal_window></div>');
         angularDomEl.attr('window-class', modal.windowClass);
         angularDomEl.attr('index', openedWindows.length() - 1);
         angularDomEl.attr('animate', 'animate');
@@ -235,6 +238,8 @@ angular.module('app.ui.modal', ['app.ui.transition'])
         openedWindows.top().value.modalDomEl = modalDomEl;
         body.append(modalDomEl);
         body.addClass(OPENED_MODAL_CLASS);
+        
+
       };
 
       $modalStack.close = function (modalInstance, result) {
@@ -374,4 +379,26 @@ angular.module('app.ui.modal', ['app.ui.transition'])
     };
 
     return $modalProvider;
-  });
+});
+
+
+$(window).bind('resize modal.init', function () {
+	
+	$('.modal_dialog').each(function () {
+		
+		var modal_dialog = $(this);
+		
+		var height = $(window).height();
+		
+		height -= parseInt(modal_dialog.css('margin-top')) + parseInt(modal_dialog.css('margin-bottom'));
+		height -= 2;
+		
+		var modal_footer = modal_dialog.find('.modal_footer');
+		
+		if (modal_footer.length)
+		   height -= modal_footer.outerHeight()+3;
+		
+		modal_dialog.find('.modal_body').height(height);
+	});
+	
+}); 

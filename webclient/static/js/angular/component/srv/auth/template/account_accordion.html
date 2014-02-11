@@ -1,0 +1,32 @@
+<form ng-submit="save()" name="update_account">
+<div class="modal_body">
+<div class="modal_body_inner">
+	
+  <div accordion over_heading="Account Management" vertical="true" type="navType">
+    <div ng-repeat="item in [1,2,3,4,5,6,7,8,9]" accordion-group heading="Account #{{item}}">
+    	   <div accordion over_heading="Account Management" vertical="true" type="navType">
+			    <div ng-repeat="item2 in [1,2,3,4,5,6,7,8,9]" accordion-group heading="Child #{{item2}}">
+			    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam rutrum velit pulvinar, facilisis ante sit amet, commodo lorem. Mauris aliquam tellus a placerat sollicitudin. Etiam at molestie nulla. Nulla id odio vel lectus viverra sollicitudin. Aenean sollicitudin arcu ac ante euismod, nec vulputate risus sagittis. Nam pharetra nec massa vel laoreet. Etiam eu nisl ante. Ut eu molestie turpis, ac egestas sapien. Curabitur adipiscing dui eget justo vehicula condimentum. Aliquam sit amet euismod justo, vitae auctor orci. Nam euismod odio ut lectus porta sodales. Donec et pharetra arcu. Ut viverra nibh non leo ullamcorper facilisis.
+
+			    </div>
+		   </div>
+    </div>
+  </div>
+ 
+ 
+</div>
+</div>
+
+<div class="modal_footer">
+	<button type="button" class="button" ng-click="makeNewDialog()">New Dialog</button>
+	
+	<button busyMessage="Loading.." class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>
