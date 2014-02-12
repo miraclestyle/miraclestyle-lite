@@ -1,7 +1,6 @@
-
 .button
 {
-  border: 1px solid #AAAAAA;
+  border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
   padding: 5px 20px;
   outline: none;
@@ -11,6 +10,7 @@
   text-decoration: none;
   cursor:pointer;
   display: inline-block;
+  box-shadow: 1px 1px 3px #BBBBBB;
 }
 
 .button:focus
@@ -23,18 +23,18 @@
 {
   border: 1px solid #333333;
   background-color: #FAFAFA;
+  box-shadow: 1px 1px 3px #333333;
 }
 
 .text_input
 {
-  border: 1px solid #AAAAAA;
+  border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
   outline: none;
   padding: 5px;
   font-size:14px;
   display: block;
   width: 100%;
- 
 }
 
 .text_input:focus
@@ -83,6 +83,6 @@
 
 .fieldset
 {
-	border-bottom:1px solid #333;
+	border-bottom:1px solid #BBBBBB;
 	padding-bottom:5px;
 }
