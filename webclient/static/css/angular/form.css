@@ -10,6 +10,7 @@
   text-decoration: none;
   cursor:pointer;
   display: inline-block;
+  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
   box-shadow: 1px 1px 3px #BBBBBB;
 }
 
