@@ -48,22 +48,57 @@
 	<h2 class="fieldset">Providers</h2>
 	
 	<div class="form_control">
-		 <ul class="no_style">
-		 		<li ng-repeat="ident in current_user.identities">
-		 		   <strong>{{identiy_info(ident.identity)}}</strong>
-		 		    <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
+		
+		<div ng-repeat="ident in current_user.identities" class="form_control">
+			<label class="form_label"><strong>{{identiy_info(ident.identity)}}</strong></label>
+			<div class="form_input">
+				 <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
 		 		    	<span ng-show="!ident.associated">Associate</span>
 		 		    	<span ng-show="ident.associated">Disassociate</span>
 		 		    </a>
-		 	    </li>
-		 </ul>
+			</div>
+		</div>
+		
+	 
 	</div>
 	
 	
 	</div>
 	
     <div accordion-group heading="Apps">
-	
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Status</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-hide="app.state == 'removed'" ng-repeat="app in apps">
+					<td>{{app.name}}</td>
+					<td>{{app.state}}</td>
+					<td>
+						<a ng-click="removeFromApp(app)" ng-hide="app.state != 'accepted'" class="button" href="javascript:;">
+							Remove
+						</a>
+						
+						<span ng-hide="app.state != 'invited'">
+							
+							<a ng-click="acceptApp(app)" class="button" href="javascript:;">
+								Accept
+							</a>
+							
+							<a ng-click="declineApp(app)" class="button" href="javascript:;">
+								Decline
+							</a>
+							
+						</span>
+						
+					</td>
+				</tr>
+			</tbody>
+		</table>
     </div>
 	
 	</div>

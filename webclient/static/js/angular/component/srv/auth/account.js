@@ -74,6 +74,30 @@ MainApp
 					  	  		
 					  	  		return login_methods[info[1]];
 					  	  };
+					  	  
+					  	  $scope.apps = [{
+					  	  	  name : 'Armani',
+					  	  	  state : 'accepted',
+					  	  }, {
+					  	  	  name : 'Gucci',
+					  	  	  state : 'invited',
+					  	  }];
+					  	  
+					  	  $scope.removeFromApp = function(app)
+					  	  {
+					  	  	   app.state = 'removed';
+					  	  };
+					  	  
+					  	  $scope.acceptApp = function (app)
+					  	  {
+					  	  	  app.state = 'accepted';
+					  	  };
+					  	  
+					  	  $scope.declineApp = function(app)
+					  	  {
+					  	  	  app.state = 'declined';
+					  	  };
+					  	  
 					  	   
 					  	  $scope.disAssociate = function(ident)
 					  	  {
