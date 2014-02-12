@@ -24,10 +24,10 @@
   margin-bottom: 0;
   color: inherit;
 }
-
-.panel-title > a
-{
-  color: inherit;
+ 
+.panel-title > a {
+ color: inherit;
+ display: block;
 }
 
 .panel-group .panel

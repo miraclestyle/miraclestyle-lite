@@ -50,7 +50,7 @@
 	<div class="form_control">
 		
 		<div ng-repeat="ident in current_user.identities" class="form_control">
-			<label class="form_label"><strong>{{identiy_info(ident.identity)}}</strong></label>
+			<label class="form_label">{{identiy_info(ident.identity)}}</label>
 			<div class="form_input">
 				 <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
 		 		    	<span ng-show="!ident.associated">Associate</span>
