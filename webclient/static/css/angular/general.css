@@ -58,6 +58,8 @@ a:visited
   top: 0px;
   position: fixed;
   width: 100%;
+  -webkit-box-shadow: 0 3px 3px #BBBBBB;
+  box-shadow: 0 3px 3px #BBBBBB;
 }
 
 #top_bar a.logo_link
@@ -89,10 +91,9 @@ a:visited
   background: white;
   position: absolute;
   top: 50px;
-  z-index: 100;
+  z-index: 99;
   width: 100%;
-  -webkit-box-shadow: 0 3px 3px 1px #383838;
-  box-shadow: 0 3px 3px 1px #383838;
+  border-bottom: 1px solid #BBBBBB;
 }
 
 .menu_inner
