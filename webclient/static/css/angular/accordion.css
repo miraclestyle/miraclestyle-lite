@@ -5,7 +5,7 @@
 
 .panel-heading
 {
-  padding: 12px 24px;
+  
 }
 
 .panel-body
@@ -28,6 +28,7 @@
 .panel-title > a {
  color: inherit;
  display: block;
+ padding: 12px 24px;
 }
 
 .panel-group .panel
