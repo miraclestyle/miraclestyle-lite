@@ -143,3 +143,9 @@ strong, b
   font-family: 'sawasdeebold', Arial, Helvetica, sans-serif;
   font-weight: bold;
 }
+
+.login_buttons .button
+{
+  padding-top:14px;
+  padding-bottom:14px;
+}

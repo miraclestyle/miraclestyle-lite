@@ -1,50 +1,98 @@
-MainApp.run(['$rootScope',  '$http', '$location', '$modal', function ($rootScope, $http, $location, $modal) {
-	
-	$rootScope.makeNewDialog = function ()
-	{
-		$rootScope.manageAccount();
-	};
-	
-	$rootScope.manageAccount = function ()
-	{
+login_methods = {
+	'1' : 'Google',
+	'2' : 'Facebook',
+};
+
+MainApp
+.factory('Account', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 
+	function ($rootScope, $http, $location, $modal, Endpoint) {
+	 
+	return {
 		
-		$rootScope.loading = true;
-	
-			var handle = function () {
-				
-				$rootScope.loading = false;
-				  
+		logout : function (on_logout)
+		{
+			Endpoint.post('logout', 'srv.auth.User',
+		     {
+		   	   'csrf' : $rootScope.current_user.csrf,
+		     })
+		     .success(function (data) {
+				 $rootScope.current_user = data.anonymous_user;
+				 
+				 if (angular.isFunction(on_logout))
+				 on_logout();
+				 
+				 $rootScope.toggleMainMenu();
+			});
+		},
+		ask_login : function (on_close)
+		{
+ 
+			var handle = function (output) {
+ 
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'account_accordion.html'),
+				      templateUrl: logic_template('srv/auth', 'login.html'),
+				      controller: function ($scope, $modalInstance, data) {
+						  
+						  $scope.data = data;
+						  
+						  $scope.login_methods = login_methods;
+					  
+						  $scope.cancel = function () {
+						    $modalInstance.dismiss('cancel');
+						  };
+					  },
+				      resolve: {
+				        data: function () {
+				          return output;
+				        }
+				      }
+				    });
+				    
+					modalInstance.result.then(function (message) {
+		 
+					    }, function () {
+			 			 
+			 			 if (angular.isFunction(on_close)) on_close();
+				    });
+				 
+			  };
+			
+			$http.get('/login/google').success(handle);			
+		},
+		manage : function ()
+	    {
+ 
+			var handle = function () {
+ 
+				var modalInstance = $modal.open({
+				      templateUrl: logic_template('srv/auth', 'account.html'),
 				      controller: function ($scope, $modalInstance) {
-				  
-					  	  $scope.user = current_user;
-					  	  $scope.identiy_info = {
-					  	  	get : function (i)
-					  	  	{
+			 
+					  	  $scope.identiy_info = function (i)
+					  	  {
 					  	  		var info = i.split('-');
 					  	  		
 					  	  		return login_methods[info[1]];
-					  	  	}
 					  	  };
 					  	   
 					  	  $scope.disAssociate = function(ident)
 					  	  {
 					  	  	 
-					  	  	  angular.forEach($scope.user.identities, function (value) {
+					  	  	  angular.forEach($rootScope.current_user.identities, function (value) {
 					  	  	  	   if (value.identity == ident)
 					  	  	  	   {
 					  	  	  	   	   value.associated = !value.associated;
 					  	  	  	   	 
  					  	  	  	   }
 					  	  	  });
+			 
 					  	  };
 				 
 					  	  $scope.save = function ()
 					  	  {
 					  	  	var disassociated = [];
 					  	  	
-					  	  	angular.forEach($scope.user.identities, function (value) {
+					  	  	angular.forEach($rootScope.current_user.identities, function (value) {
 					  	  	  	 
 					  	  	  	   	   if (!value.associated)
 					  	  	  	   	   {
@@ -53,14 +101,12 @@ MainApp.run(['$rootScope',  '$http', '$location', '$modal', function ($rootScope
 					  	  	  	   
 					  	  	  });
 					  	  	
-					  	  	$http.post('/endpoint', {
-					  	  		primary_email : $scope.user.primary_email,
+					  	  	Endpoint.post('update', 'srv.auth.User', {
+					  	  		primary_email : $rootScope.current_user.primary_email,
 					  	  		disassociate : disassociated,
-					  	  		action_model : 'srv.auth.User',
-					  	  	    action_key : 'update',
 					  	  	})
 						     .success(function (data) {
-								 $rootScope.current_user = $scope.user = data.updated_user;
+								 $rootScope.current_user = data.updated_user;
 							});
 		
 					  	  };
@@ -70,18 +116,37 @@ MainApp.run(['$rootScope',  '$http', '$location', '$modal', function ($rootScope
 						  };
 					  }
 				    });
-				    
-					modalInstance.result.then(function (message) {
-					     
-					    }, function () {
-			 			 
-				    });
-				 
+		  
 			  };
 			
-			//handle();
-			
-			$http.get('/').success(handle);
+			handle();
+  
+	}
+	
+   };
+	 
+}])
+.run(['$rootScope', '$location', 'Account', 
+	function ($rootScope, $location, Account) {
+	 
+	$rootScope.manageAccount = function ()
+	{
+  		 Account.manage();
+	};
+	 
+    $rootScope.doLogin = function ()
+	{
+		Account.ask_login(function () {
+			$location.path('/');
+		});
+	};
+	
+	$rootScope.doLogout = function ()
+	{
+		
+	   Account.logout(function () {
+			$location.path('/');
+		});
 		
 	};
 	 

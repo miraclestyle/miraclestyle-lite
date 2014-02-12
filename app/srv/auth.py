@@ -338,6 +338,15 @@ class User(ndb.BaseExpando):
            client = oauth2.Client(**cfg)
            
            context.output['authorization_url'] = client.get_authorization_code_uri()
+           
+           urls = {}
+           
+           for label,key in settings.LOGIN_METHODS.items():
+               get_cfg = getattr(settings, '%s_OAUTH2' % label.upper())
+               generated_client = oauth2.Client(**get_cfg)
+               urls[key] = generated_client.get_authorization_code_uri()
+           
+           context.output['authorization_urls'] = urls
      
            if error:
              # raise custom exception!!!

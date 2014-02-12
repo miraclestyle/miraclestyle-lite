@@ -1,10 +1,19 @@
-<div class="modal-body">
-	Please Login, click on this link bellow<br />
-	<p>
-		<a href="{{data.authorization_url}}">{{data.authorization_url}}</a>
-	</p>
+<div class="modal_body">
+<div class="modal_body_inner">
+	
+	<div>
+		<p>
+			To login, click on the provider below:
+		</p>
+	</div>
+	<ul class="menu login_buttons">
+		<li ng-repeat="(method_key, method) in login_methods">
+			<a class="button block" href="{{data.authorization_urls[method_key]}}">{{method}}</a>
+		</li>
+	</ul>
 </div>
-<div class="modal-footer">
+</div>
+<div class="modal_footer">
 	<button class="button" ng-click="cancel()">
 		Cancel
 	</button>

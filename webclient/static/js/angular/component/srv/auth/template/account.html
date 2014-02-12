@@ -1,16 +1,17 @@
 <form ng-submit="save()" name="update_account">
-<div class="modal-body">
+<div class="modal_body">
+<div class="modal_body_inner">
 	
 	
-  <div tabset over_heading="Account Management" vertical="true" type="navType">
-    <div tab heading="Account">
-  
+	
+ <div accordion vertical="true" type="navType">
+  <div accordion-group heading="Account">
   	<h2 class="fieldset">General</h2>
 	<div class="form_control">
 		<label class="form_label">ID</label>
 		<div class="form_input">
 			 <div class="form_text">
-			 	{{user.id}}
+			 	{{current_user.id}}
 			 </div>
 		</div>
 	</div>
@@ -19,7 +20,7 @@
 		<label class="form_label">Registered</label>
 		<div class="form_input">
 			 <div class="form_text">
-			 	{{user.created}}
+			 	{{current_user.created}}
 			 </div>
 		</div>
 	</div>
@@ -29,7 +30,7 @@
 		<label class="form_label">Status</label>
 		<div class="form_input">
 			<div class="form_text">
-				 {{user.state}}
+				 {{current_user.state}}
 			</div>
 		</div>
 	</div>
@@ -38,8 +39,8 @@
 	<div class="form_control">
 		<label class="form_label">Primary e-mail</label>
 		<div class="form_input">
-			<select ui-select2 ng-model="user.primary_email" data-placeholder="Select your primary e-mail">
-				    <option ng-repeat="email in user.emails" value="{{email}}">{{email}}</option>
+			<select ui-select2 ng-model="current_user.primary_email" data-placeholder="Select your primary e-mail">
+				    <option ng-repeat="email in current_user.emails" value="{{email}}">{{email}}</option>
 			</select>
 		</div>
 	</div>
@@ -48,8 +49,8 @@
 	
 	<div class="form_control">
 		 <ul class="no_style">
-		 		<li ng-repeat="ident in user.identities">
-		 		   <strong>{{identiy_info.get(ident.identity)}}</strong>
+		 		<li ng-repeat="ident in current_user.identities">
+		 		   <strong>{{identiy_info(ident.identity)}}</strong>
 		 		    <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
 		 		    	<span ng-show="!ident.associated">Associate</span>
 		 		    	<span ng-show="ident.associated">Disassociate</span>
@@ -59,20 +60,28 @@
 	</div>
 	
 	
+	</div>
+	
+    <div accordion-group heading="Apps">
+	
+    </div>
 	
 	</div>
-    <div tab heading="Domains">Vertical content 2</div>
+	  
   </div>
  
  
 </div>
 
-<div class="modal-footer">
-	<button busyMessage="Loading.." class="button">
+<div class="modal_footer">
+ 
+	<button busy="Loading.." class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">
 		Cancel
 	</button>
 </div>
+
+
 </form>

@@ -1,9 +1,3 @@
-login_methods = {
-	'1' : 'Google',
-	'2' : 'Facebook',
-};
-
-
 MainApp.config(['$routeProvider',
   function($routeProvider) {
    
@@ -16,49 +10,6 @@ MainApp.config(['$routeProvider',
      
 }]).controller('HomePage', ['$scope', function ($scope) {
 	
-}])
-.factory('Login', ['$http', '$modal', '$rootScope', 
-
-    function ($http, $modal, $rootScope) {
-    	
-    return {
-    	ask : function (on_close)
-    	{
-    		$rootScope.loading = true;
-	
-			var handle = function (output) {
-				
-				$rootScope.loading = false;
-				  
-				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'login.html'),
-				      controller: function ($scope, $modalInstance, data) {
-						  
-						  $scope.data = data;
-					  
-						  $scope.cancel = function () {
-						    $modalInstance.dismiss('cancel');
-						  };
-					  },
-				      resolve: {
-				        data: function () {
-				          return output;
-				        }
-				      }
-				    });
-				    
-					modalInstance.result.then(function (message) {
-					      $log.debug(message);
-					    }, function () {
-			 			 
-			 			 if (on_close) on_close();
-				    });
-				 
-			  };
-			
-			$http.get('/login/google').success(handle);
-    	}
-    };
 }])
 .run(['$rootScope',
      function ($rootScope) {
