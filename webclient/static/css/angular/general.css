@@ -59,7 +59,7 @@ a:visited
   width: 100%;
   /**border-bottom: 1px solid #BBBBBB;**/
   -webkit-box-shadow: 0 3px 5px #BBBBBB;
-  box-shadow: 0 3px 3px #BBBBBB;
+  box-shadow: 0 3px 5px #BBBBBB;
 }
 
 #top_bar a.logo_link
