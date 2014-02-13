@@ -24,6 +24,7 @@ SALT = u'salt'
 HASH_BINDER = u'-'
 
 DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
+DEBUG = True # override because we are under development either way
 DO_LOGS = True
  
 # user settings
@@ -41,11 +42,10 @@ LOGIN_METHODS = {
     'google' : 1,
     'facebook' : 2,
 }
-
-_https = os.environ.get('HTTPS') == 'on'
+ 
 _http = 'http://'
 
-if _https:
+if os.environ.get('HTTPS') == 'on':
   _http = 'https://'
    
 

@@ -1,19 +1,19 @@
-<div class="modal_body">
-<div class="modal_body_inner">
+<div class="modal-body">
+<div class="modal-body-inner">
 	
 	<div>
 		<p>
 			To login, click on the provider below:
 		</p>
 	</div>
-	<ul class="menu login_buttons">
+	<ul class="menu login-buttons">
 		<li ng-repeat="(method_key, method) in login_methods">
 			<a class="button block" href="{{data.authorization_urls[method_key]}}">{{method}}</a>
 		</li>
 	</ul>
 </div>
 </div>
-<div class="modal_footer">
+<div class="modal-footer">
 	<button class="button" ng-click="cancel()">
 		Cancel
 	</button>

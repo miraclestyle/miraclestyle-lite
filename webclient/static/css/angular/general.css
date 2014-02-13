@@ -49,7 +49,7 @@ a:visited
   margin-left: 15px;
 }
 
-#top_bar
+#top-bar
 {
   background: white;
   z-index: 100;
@@ -62,7 +62,7 @@ a:visited
   box-shadow: 0 3px 3px #BBBBBB;
 }
 
-#top_bar a.logo_link
+#top-bar a.logo-link
 {
   text-align: center;
   /*width: 215px;
@@ -86,7 +86,7 @@ a:visited
   margin-top: 65px;
 }
 
-#main_menu
+#main-menu
 {
   background: white;
   position: absolute;
@@ -96,7 +96,7 @@ a:visited
   border-bottom: 1px solid #BBBBBB;
 }
 
-.menu_inner
+.menu-inner
 {
   padding-left: 10px;
   padding-right: 10px;
@@ -120,20 +120,20 @@ a.block, .block
   display: block;
 }
 
-#main_menu .button 
+#main-menu .button 
 {
   padding-top: 14px;
   padding-bottom: 14px;
 }
 
-.no_style
+.no-style
 {
   list-style: none;
   padding: 0px;
   margin: 0px;
 }
 
-.no_style li
+.no-style li
 {
   display: block;
 }
@@ -144,7 +144,7 @@ strong, b
   font-weight: bold;
 }
 
-.login_buttons .button
+.login-buttons .button
 {
   padding-top:14px;
   padding-bottom:14px;

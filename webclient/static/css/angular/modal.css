@@ -1,4 +1,4 @@
-.modal_open
+.modal-open
 {
   overflow: hidden;
 }
@@ -16,7 +16,7 @@
   overflow-y: scroll;
 }
 
-.modal.fade .modal_dialog
+.modal.fade .modal-dialog
 {
   -webkit-transform: translate(0, -25%);
   -ms-transform: translate(0, -25%);
@@ -27,14 +27,14 @@
   transition: transform 0.3s ease-out;
 }
 
-.modal.in .modal_dialog
+.modal.in .modal-dialog
 {
   -webkit-transform: translate(0, 0);
   -ms-transform: translate(0, 0);
   transform: translate(0, 0);
 }
 
-.modal_dialog
+.modal-dialog
 {
   position: relative;
   z-index: 1050;
@@ -42,7 +42,7 @@
   margin: 10px;
 }
 
-.modal_content
+.modal-content
 {
   position: relative;
   background-color: #FFFFFF;
@@ -53,7 +53,7 @@
   background-clip: padding-box;
 }
 
-.modal_backdrop
+.modal-backdrop
 {
   position: fixed;
   top: 0;
@@ -64,69 +64,69 @@
   background-color: #000000;
 }
 
-.modal_backdrop.fade
+.modal-backdrop.fade
 {
   opacity: 0;
   filter: alpha(opacity=0);
 }
 
-.modal_backdrop.in
+.modal-backdrop.in
 {
   opacity: 0.5;
   filter: alpha(opacity=50);
 }
 
-.modal_header
+.modal-header
 {
   min-height: 16.428571429px;
   padding: 15px;
   border-bottom: 1px solid #e5e5e5;
 }
 
-.modal_header .close
+.modal-header .close
 {
   margin-top: -2px;
 }
 
-.modal_title
+.modal-title
 {
   margin: 0;
   line-height: 1.428571429;
 }
 
-.modal_body
+.modal-body
 {
   position: relative;
   padding: 0px;
   overflow:auto;
 }
 
-.modal_footer
+.modal-footer
 {
   padding: 10px;
   text-align: right;
 }
 
-.modal_footer:before,
-.modal_footer:after 
+.modal-footer:before,
+.modal-footer:after 
 {
   display: table;
   content: " ";
 }
 
-.modal_footer:after
+.modal-footer:after
 {
   clear: both;
 }
 
-.modal_footer:before,
-.modal_footer:after
+.modal-footer:before,
+.modal-footer:after
 {
   display: table;
   content: " ";
 }
 
-.modal_footer:after
+.modal-footer:after
 {
   clear: both;
 }
@@ -137,17 +137,17 @@
   margin-left: 5px;
 }
 
-.modal_footer .btn-group .btn + .btn
+.modal-footer .btn-group .btn + .btn
 {
   margin-left: -1px;
 }
 
-.modal_footer .btn-block + .btn-block
+.modal-footer .btn-block + .btn-block
 {
   margin-left: 0;
 }
 
-.modal_body_inner
+.modal-body-inner
 {
   padding: 10px;
   padding-bottom: 0px;

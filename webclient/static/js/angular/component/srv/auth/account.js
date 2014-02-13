@@ -4,6 +4,35 @@ login_methods = {
 };
 
 MainApp
+.config(['$routeProvider',
+  function($routeProvider) {
+   
+    $routeProvider.
+      when('/login/:provider?', {
+        template: " ",
+        controller: 'LoginPage'
+      });
+ 
+       
+}]).controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', function ($scope, $rootScope, $location, Account) {
+ 
+ 	if (initdata['user'])
+	{
+			$rootScope.current_user = initdata['user'];
+		
+	}
+		
+	if ($rootScope.current_user.is_guest)
+	{
+		Account.ask_login(function () {
+			$location.path('/');
+		});
+	}
+	else
+	{ 
+		$location.path('/');
+	}
+}])
 .factory('Account', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 
 	function ($rootScope, $http, $location, $modal, Endpoint) {
 	 

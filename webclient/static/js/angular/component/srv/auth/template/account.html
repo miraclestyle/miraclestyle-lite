@@ -1,44 +1,44 @@
-<form ng-submit="save()" name="update_account">
-<div class="modal_body">
-<div class="modal_body_inner">
+<form ng-submit="save()">
+<div class="modal-body">
+<div class="modal-body-inner">
 	
 	
 	
  <div accordion vertical="true" type="navType">
   <div accordion-group heading="Account">
   	<h2 class="fieldset">General</h2>
-	<div class="form_control">
-		<label class="form_label">ID</label>
-		<div class="form_input">
-			 <div class="form_text">
+	<div class="form-control">
+		<label class="form-label">ID</label>
+		<div class="form-input">
+			 <div class="form-text">
 			 	{{current_user.id}}
 			 </div>
 		</div>
 	</div>
 	
-	<div class="form_control">
-		<label class="form_label">Registered</label>
-		<div class="form_input">
-			 <div class="form_text">
+	<div class="form-control">
+		<label class="form-label">Registered</label>
+		<div class="form-input">
+			 <div class="form-text">
 			 	{{current_user.created}}
 			 </div>
 		</div>
 	</div>
 	
 	
-	<div class="form_control">
-		<label class="form_label">Status</label>
-		<div class="form_input">
-			<div class="form_text">
+	<div class="form-control">
+		<label class="form-label">Status</label>
+		<div class="form-input">
+			<div class="form-text">
 				 {{current_user.state}}
 			</div>
 		</div>
 	</div>
 	
 	
-	<div class="form_control">
-		<label class="form_label">Primary e-mail</label>
-		<div class="form_input">
+	<div class="form-control">
+		<label class="form-label">Primary e-mail</label>
+		<div class="form-input">
 			<select ui-select2 ng-model="current_user.primary_email" data-placeholder="Select your primary e-mail">
 				    <option ng-repeat="email in current_user.emails" value="{{email}}">{{email}}</option>
 			</select>
@@ -47,11 +47,11 @@
 	
 	<h2 class="fieldset">Providers</h2>
 	
-	<div class="form_control">
+	<div class="form-control">
 		
-		<div ng-repeat="ident in current_user.identities" class="form_control">
-			<label class="form_label">{{identiy_info(ident.identity)}}</label>
-			<div class="form_input">
+		<div ng-repeat="ident in current_user.identities" class="form-control">
+			<label class="form-label">{{identiy_info(ident.identity)}}</label>
+			<div class="form-input">
 				 <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
 		 		    	<span ng-show="!ident.associated">Associate</span>
 		 		    	<span ng-show="ident.associated">Disassociate</span>
@@ -108,7 +108,7 @@
  
 </div>
 
-<div class="modal_footer">
+<div class="modal-footer">
  
 	<button busy="Loading.." class="button">
 		Save

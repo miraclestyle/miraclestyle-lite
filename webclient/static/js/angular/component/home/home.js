@@ -16,7 +16,7 @@ MainApp.config(['$routeProvider',
 	
 	$rootScope.toggleMainMenu = function ()
 	{
-		var mm = $('#main_menu');
+		var mm = $('#main-menu');
 		
 		if (mm.is(':visible'))
 		{
@@ -30,7 +30,7 @@ MainApp.config(['$routeProvider',
 		{
 			mm.show();
 			mm.stop().animate({
-				height : ($(window).height() - $('#top_bar').height()) + 'px',
+				height : ($(window).height() - $('#top-bar').height()) + 'px',
 			}, 400, function () {
 				
 			});

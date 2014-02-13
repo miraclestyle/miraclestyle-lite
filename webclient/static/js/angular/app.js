@@ -4,7 +4,6 @@ angular.module('app.ui',
 	   'app.ui.collapse', 
 	   'app.ui.accordion',
 	   'app.ui.modal',
-	   'app.ui.dropdown',
 	   'app.ui.select2',
 	  ]
 );
@@ -16,6 +15,8 @@ var MainApp = angular.module('MainApp', ['ngRoute', 'ngBusy', 'ngStorage', 'chec
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
  
      $locationProvider.hashPrefix('!');
+     
+     $locationProvider.html5Mode(true);
      
 }])
 .factory('Endpoint', ['$http', function ($http) {

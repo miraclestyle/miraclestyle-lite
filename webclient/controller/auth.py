@@ -11,7 +11,10 @@ from app.srv import io
 
 class Login(Angular):
   
-    def respond(self, provider):
+    def respond(self, provider=None):
+      
+           if provider is None:
+              provider = 'google'
       
            data = self.get_input()
            data['login_method'] = provider
@@ -46,5 +49,5 @@ class Logout(Angular):
         return output
             
     
-register((r'/login/<provider>', Login, 'login_provider'),
+register((r'/login', Login, 'login'), (r'/login/<provider>', Login, 'login_provider'),
          (r'/logout', Logout, 'logout'))

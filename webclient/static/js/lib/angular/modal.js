@@ -384,7 +384,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
 
 $(window).bind('resize modal.init', function () {
 	
-	$('.modal_dialog').each(function () {
+	$('.modal-dialog').each(function () {
 		
 		var modal_dialog = $(this);
 		
@@ -393,12 +393,12 @@ $(window).bind('resize modal.init', function () {
 		height -= parseInt(modal_dialog.css('margin-top')) + parseInt(modal_dialog.css('margin-bottom'));
 		height -= 2;
 		
-		var modal_footer = modal_dialog.find('.modal_footer');
+		var modal_footer = modal_dialog.find('.modal-footer');
 		
 		if (modal_footer.length)
 		   height -= modal_footer.outerHeight()+3;
 		
-		modal_dialog.find('.modal_body').height(height);
+		modal_dialog.find('.modal-body').height(height);
 	});
 	
 }); 

@@ -27,7 +27,7 @@
   /**box-shadow: 1px 1px 3px #333333;**/
 }
 
-.text_input
+.text-input
 {
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
@@ -38,24 +38,24 @@
   width: 100%;
 }
 
-.text_input:focus
+.text-input:focus
 {
   border: 1px solid #333333;
 }
 
-.form_control
+.form-control
 {
 	margin-bottom:10px;
 }
 
-.form_control:after
+.form-control:after
 {
 	clear:both;
 	content: " ";
 	display: table;
 }
 
-.form_label
+.form-label
 {
 	float:left;
 	text-align:right;
@@ -67,7 +67,7 @@
 	padding-top:7px;
 }
 
-.form_input
+.form-input
 {
 	float:left;
 	position: relative;
@@ -77,7 +77,7 @@
 	padding-right: 15px;
 }
 
-.form_text
+.form-text
 {
 	padding-top:5px;
 }
