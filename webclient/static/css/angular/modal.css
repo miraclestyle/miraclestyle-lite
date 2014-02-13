@@ -48,8 +48,8 @@
   background-color: #FFFFFF;
   /**border: 1px solid #FFFFFF;**/
   outline: none;
-  -webkit-box-shadow: 3px 3px 9px #333333;
-  box-shadow: 3px 3px 9px #333333;
+  -webkit-box-shadow: 3px 3px 5px #333333;
+  box-shadow: 3px 3px 5px #333333;
   background-clip: padding-box;
 }
 
@@ -61,7 +61,7 @@
   bottom: 0;
   left: 0;
   z-index: 1030;
-  background-color: #000000;
+  background-color: #333333;
 }
 
 .modal_backdrop.fade
@@ -80,7 +80,7 @@
 {
   min-height: 16.428571429px;
   padding: 15px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #BBBBBB;
 }
 
 .modal_header .close
