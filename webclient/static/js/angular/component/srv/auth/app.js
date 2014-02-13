@@ -137,9 +137,12 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 	
 	$scope.apps = apps;
 	
+	$scope.toggleMainMenu(1);
+	
 	$scope.manageApp = function(app)
 	{
 		 Domain.manage(app, $scope.apps);
+	
 	};
  
 }])
@@ -149,6 +152,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 	$rootScope.manageAccount = function ()
 	{
   	    Account.manage();
+  	    
 	};
 	 
     $rootScope.doLogin = function ()
