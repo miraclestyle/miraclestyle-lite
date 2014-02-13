@@ -98,7 +98,12 @@
 {
   position: relative;
   padding: 0px;
-  overflow:auto;
+  
+}
+
+.modal-body.scrollable
+{
+	overflow:auto;
 }
 
 .modal-footer
@@ -151,4 +156,35 @@
 {
   padding: 10px;
   padding-bottom: 0px;
+}
+
+.modal-small .modal-dialog
+{
+	width:40%;
+	margin:auto;
+}
+
+.modal-small, .modal-medium, .modal-large
+{
+	top:10%;
+}
+
+
+.modal-small .modal-dialog
+{
+	width:40%;
+	margin:auto;
+}
+
+.modal-medium .modal-dialog
+{
+	width:60%;
+	margin:auto;
+}
+
+
+.modal-large .modal-dialog
+{
+	width:60%;
+	margin:auto;
 }

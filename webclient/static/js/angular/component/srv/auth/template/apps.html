@@ -1,0 +1,24 @@
+<h1 class="fieldset with-button">
+	<span class="fieldset-text">Enterprise Apps</span>
+	<span class="fieldset-button"><a class="button" ng-click="manageApp()">New App</a></span>
+</h1>
+<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Status</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="app in apps">
+					<td>{{app.name}}</td>
+					<td>{{app.state}}</td>
+					<td class="text-right">
+						<a ng-click="manageApp(app)" class="button" href="javascript:;">
+							Edit
+						</a>
+					</td>
+				</tr>
+			</tbody>
+</table>

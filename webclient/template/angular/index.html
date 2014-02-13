@@ -41,6 +41,9 @@
  	{% for module in webclient_settings.ANGULAR_COMPONENTS %}
     <script type="text/javascript" src="{{static_dir('js/angular/component/%s.js' % module)}}"></script>
     {% endfor %}
+    
+    <script type="text/javascript" src="{{static_dir('js/angular/routes.js')}}"></script>
+    
 
   </head>
   <body ng-class="{loading : loading}">
@@ -58,10 +61,19 @@
 	  		<ul ng-show="current_user.is_guest" class="menu">
 	  		    <li><a class="button block" ng-click="doLogin()">Login</a></li>
 	  		</ul>
+	  		
+	  		<div ng-show="!current_user.is_guest">
+	  			<h1 class="fieldset">Selling Tools</h1>
+	  			<ul class="menu">
+	  		   		 <li><a class="button block" ui-sref="apps">Enterprise Apps</a></li>
+	  			</ul>
+	  		</div>
+	  		
+	  		
   		</div>
   	</div>
 	{% block content %}
-	<div class="content" ng-view></div>
+	<div class="content" ui-view></div>
 	{% endblock %}
   </body> 
   </html>

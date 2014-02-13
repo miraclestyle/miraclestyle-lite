@@ -80,6 +80,7 @@ class User(ndb.BaseExpando):
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='0', required=True),
                                  'message' : ndb.SuperKeyProperty(required=True),
+                                 'state' : ndb.SuperStringProperty(required=True),
                                  'note' : ndb.SuperKeyProperty(required=True)
                               }
                              ),
@@ -221,7 +222,12 @@ class User(ndb.BaseExpando):
             if not rule.executable(context):
                raise rule.ActionDenied(context)
              
-            new_state = 'active'
+            new_state = context.input.get('state')
+            
+            if new_state not in ('active', 'suspended'):
+             # raise custom exception!!!
+              return context.error('state', 'invalid_state')
+ 
             
             if user_to_update.state == 'active':
                new_state = 'suspended'
@@ -458,6 +464,7 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "True"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -479,7 +486,7 @@ class Domain(ndb.BaseExpando):
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
-                                 'note' : ndb.SuperTextProperty(required=True)
+                                 #'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
                 
@@ -487,7 +494,7 @@ class Domain(ndb.BaseExpando):
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
-                                 'note' : ndb.SuperTextProperty(required=True)
+                                 #'note' : ndb.SuperTextProperty(required=True)
                               }
                              ),
                 
@@ -512,6 +519,15 @@ class Domain(ndb.BaseExpando):
                               arguments={
                               }
                              ),
+                
+       'read' : event.Action(id='6-7',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
+                              }
+                             ),
+       'prepare' : event.Action(id='6-8',
+                              arguments={}
+                             ),
     }
  
     @property
@@ -522,7 +538,7 @@ class Domain(ndb.BaseExpando):
     def namespace_entity(self):
       return self
       
-    def __todict__(self):
+    def _unused__todict__(self):
       
       d = super(Domain, self).__todict__()
       
@@ -597,11 +613,40 @@ class Domain(ndb.BaseExpando):
             context.log.entities.append((entity,))
             log.Engine.run(context)
                
-            context.status(entity)
+            context.output['created_domain'] = entity
            
         transaction()
             
         return context
+      
+    @classmethod
+    def prepare(cls, context):
+      
+      entity = cls(state='active', primary_contact=context.auth.user.key)
+      
+      context.rule.entity = entity
+      
+      rule.Engine.run(context, True)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+      
+      return context      
+      
+    @classmethod
+    def read(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      rule.Engine.run(context)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+      
+      return context
  
     @classmethod
     def update(cls, context):
@@ -631,7 +676,7 @@ class Domain(ndb.BaseExpando):
             context.log.entities.append((entity,))
             log.Engine.run(context)
                
-            context['updated_user'] = entity
+            context.output['updated_domain'] = entity
            
         transaction()
             
@@ -655,10 +700,12 @@ class Domain(ndb.BaseExpando):
             entity.state = 'suspended'
             entity.put()
             
+            rule.Engine.run(context)
+            
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
-            context.status(entity)
+            context.output['updated_domain'] = entity
 
         transaction()
            
@@ -682,10 +729,12 @@ class Domain(ndb.BaseExpando):
            entity.state = 'active'
            entity.put()
            
+           rule.Engine.run(context)
+           
            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
-           context.status(entity)
+           context.output['updated_domain'] = entity
            
        transaction()
            
@@ -714,10 +763,12 @@ class Domain(ndb.BaseExpando):
            entity.state = context.input.get('state')
            entity.put()
            
+           rule.Engine.run(context)
+           
            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
             
-           context.status(entity)
+           context.output['updated_domain'] = entity
  
        transaction()
            

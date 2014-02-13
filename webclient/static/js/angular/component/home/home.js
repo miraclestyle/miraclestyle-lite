@@ -1,24 +1,14 @@
-MainApp.config(['$routeProvider',
-  function($routeProvider) {
-   
-    $routeProvider.
-      when('/', {
-        templateUrl: logic_template('home', 'home.html'),
-        controller: 'HomePage'
-      });
-      
-     
-}]).controller('HomePage', ['$scope', function ($scope) {
+MainApp.controller('HomePage', ['$scope', function ($scope) {
 	
 }])
 .run(['$rootScope',
      function ($rootScope) {
 	
-	$rootScope.toggleMainMenu = function ()
+	$rootScope.toggleMainMenu = function (hide)
 	{
 		var mm = $('#main-menu');
 		
-		if (mm.is(':visible'))
+		if (mm.is(':visible') || hide)
 		{
 			mm.stop().animate({
 				height : '0px'
@@ -34,7 +24,8 @@ MainApp.config(['$routeProvider',
 			}, 400, function () {
 				
 			});
-		}
+		}		
 	};
+ 
 	 
 }]);

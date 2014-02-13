@@ -1,0 +1,81 @@
+<form ng-submit="save()">
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+	
+
+<h2 class="fieldset">General</h2>
+
+    <div ng-hide="!app.id">
+	<div class="form-control">
+		<label class="form-label">ID</label>
+		<div class="form-input">
+			 <div class="form-text">
+			 	{{app.id}}
+			 </div>
+		</div>
+	</div>
+	
+	<div class="form-control">
+		<label class="form-label">Registered</label>
+		<div class="form-input">
+			 <div class="form-text">
+			 	{{app.created}}
+			 </div>
+		</div>
+	</div>
+	
+	
+	<div class="form-control">
+		<label class="form-label">Status</label>
+		<div class="form-input">
+			<div class="form-text">
+				 {{app.state}}
+			</div>
+		</div>
+	</div>
+	
+	</div>
+	
+	
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input class="text-input" type="text" ng-model="app.name" />
+			</div>
+		</div>
+	</div>
+	
+	 
+	<div class="form-control">
+		<label class="form-label">Primary Contact</label>
+		<div class="form-input">
+			<select ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
+				    <option value="{{current_user.key}}">{{current_user.primary_email}}</option>
+			</select>
+		</div>
+	</div>	 
+	  
+</div>
+</div>
+
+<div class="modal-footer">
+	
+	<button ng-click="suspend()" type="button" class="button" ng-show="rule.executable.suspend">
+		Suspend
+	</button>
+	
+	<button ng-click="activate()" type="button" class="button" ng-show="rule.executable.activate">
+		Activate
+	</button>
+ 
+	<button busy="Loading..." class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

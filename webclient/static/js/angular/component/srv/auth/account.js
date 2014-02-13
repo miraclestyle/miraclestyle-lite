@@ -3,18 +3,7 @@ login_methods = {
 	'2' : 'Facebook',
 };
 
-MainApp
-.config(['$routeProvider',
-  function($routeProvider) {
-   
-    $routeProvider.
-      when('/login/:provider?', {
-        template: " ",
-        controller: 'LoginPage'
-      });
- 
-       
-}]).controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', function ($scope, $rootScope, $location, Account) {
+MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', function ($scope, $rootScope, $location, Account) {
  
  	if (initdata['user'])
 	{

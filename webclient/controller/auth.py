@@ -9,6 +9,21 @@ from webclient.handler import Angular
 
 from app.srv import io
 
+class Apps(Angular):
+  
+  def respond(self):
+ 
+      data = self.get_input()
+      data.update({
+                   'action_model' : 'srv.auth.Domain',
+                   'action_key' : 'list',   
+                  })
+
+      output = io.Engine.run(data)  
+ 
+      return output
+    
+
 class Login(Angular):
   
     def respond(self, provider=None):
@@ -49,5 +64,7 @@ class Logout(Angular):
         return output
             
     
-register((r'/login', Login, 'login'), (r'/login/<provider>', Login, 'login_provider'),
+register((r'/login', Login, 'login'), 
+         (r'/login/<provider>', Login, 'login_provider'),
+         (r'/apps', Apps, 'apps'), 
          (r'/logout', Logout, 'logout'))

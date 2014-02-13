@@ -1,11 +1,11 @@
 <form ng-submit="save()">
-<div class="modal-body">
+<div class="modal-body scrollable">
 <div class="modal-body-inner">
 	
 	
 	
- <div accordion vertical="true" type="navType">
-  <div accordion-group heading="Account">
+ <div ng-init="isopen=true" accordion vertical="true" type="navType">
+  <div is-open="isopen" accordion-group heading="Account">
   	<h2 class="fieldset">General</h2>
 	<div class="form-control">
 		<label class="form-label">ID</label>

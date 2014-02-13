@@ -1,0 +1,46 @@
+<form name="user_admin" ng-submit="save()">
+<div class="modal-body">
+<div class="modal-body-inner">
+ 
+	<div class="form-control">
+ 		<label class="form-label"></label>
+		<div class="form-input">
+			<div ng-show="action=='suspend'">
+			You are about to suspend this app!<br />
+			Suspending app will stop serving all user requests to the app, and all app data will be scheduled for deletion.<br />
+			If you are sure you want to do this, please state the reason for suspension in the Message box below.<br />
+			</div>
+			
+			<div ng-show="action=='activate'">
+			You are about to activate this app!<br />
+			Activating app will start serving all user requests to the app, and all app data will be un-scheduled for deletion.<br />
+			If you are sure you want to do this, please state the reason for activation in the Message box below.<br />
+			</div>
+		</div>
+	</div>	 
+	  
+   
+   	<div class="form-control">
+		<label class="form-label">Message</label>
+		<div class="form-input">
+			<textarea class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
+		</div>
+	</div>	 
+	  
+	  
+</div>
+</div>
+
+<div class="modal-footer">
+ 
+ 
+	<button busy="Loading..." class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

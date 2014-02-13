@@ -81,3 +81,8 @@
   -webkit-transition: height 0.35s ease;
           transition: height 0.35s ease;
 }
+
+.text-right
+{
+	text-align:right;
+}

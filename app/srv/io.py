@@ -69,10 +69,10 @@ class Engine:
     input_invalid = []
     input_error = []
     argument_error = {'input_required': [], 'input_invalid': [], 'input_error': []}
-    
+ 
     for key, argument in context.action.arguments.items():
       value = input.get(key)
-      
+ 
       if argument._required:
         if key not in input:
           input_required.append(key)
@@ -81,12 +81,20 @@ class Engine:
       if key not in input and not argument._required:
         if argument._default is not None:
           value = argument._default
-      
+ 
       if argument and hasattr(argument, 'format'):
         if value is None:
           continue # If value is not set at all, shall we always consider it none?
         try:
           value = argument.format(value)
+           
+          if hasattr(argument, '_choices') and argument._choices:
+            if value not in argument._choices:
+              raise ndb.FormatError('value_not_allowed_values')
+            
+          if hasattr(argument, '_validator') and argument._validator:
+             argument._validator(argument, value)
+          
           context.input[key] = value
         except ndb.FormatError as e:
           input_error.append(key)
@@ -117,9 +125,18 @@ class Engine:
         execute = getattr(action_model, input.get('action_key'))
         if execute and callable(execute):
           execute(context)
-        else:
-          service = importlib.import_module('app.srv.%s' % context.action.service)
-          service.Engine.run(context)
+      else:
+        service = importlib.import_module('app.srv.%s' % context.action.service)
+        service.Engine.run(context)
+        
+        
+      if context.rule.entity:    
+        context.output['rule'] = {}
+        context.output['rule']['entity'] = context.rule.entity.__todict__()
+        context.output['rule']['entity']['_action_permissions'] = context.rule.entity._action_permissions
+        context.output['rule']['entity']['_field_permissions'] = context.rule.entity._field_permissions
+        context.output['rule']['entity']['_actions'] = context.rule.entity._actions
+          
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
@@ -145,7 +162,7 @@ class Engine:
         action_key, input = callback
         input['action_key'] = action_key
         taskqueue.add(url='/engine_run', params=input)
-    
+ 
     return context
   
   @classmethod

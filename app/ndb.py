@@ -94,6 +94,14 @@ def factory(module_model_path):
        util.logger('Failed to import %s. Error: %s' % (module_model_path, e), 'exception')
        return None
     return getattr(module, far)
+  
+  
+# monkeypatch ndb.Key
+
+def _get_entity(self):
+    return self.get()
+
+Key.entity = property(_get_entity)  
    
 class _BaseModel():
   
@@ -314,6 +322,16 @@ class BasePolyExpando(BasePoly, BaseExpando):
 class _BaseProperty(object):
  
     _max_size = None
+    
+    def __todict__(self):
+      
+       return {
+            'required' : self._required,
+            'max_size' : self._max_size, 
+            'choices' : self._choices,
+            'default' : self._default,
+            'repeated' : self._repeated,
+          }
  
     def __init__(self, *args, **kwds):
       
