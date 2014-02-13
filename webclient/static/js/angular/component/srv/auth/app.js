@@ -6,7 +6,6 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 		{
 			return Endpoint.post('list', 'srv.auth.Domain', {});
 		},
-		
 		manage : function (app, apps)
 	    {
 	    	var that = this;
@@ -19,7 +18,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 				      	  
 				      	  $scope.rule = RuleEngine.factory(output);
 				      	  
-				      	  if (!app) 
+				      	  if (!app['key']) 
 				      	  app = output.rule.entity;
  
 				      	  $scope.app = app;
@@ -54,8 +53,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 								      	  	'message' : '',
 								      	  	'key' : app['key'],
 								      	  };
-							
-				   
+							 
 									  	  $scope.save = function ()
 									  	  {
 									  	  	 
@@ -134,6 +132,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 }])
 .controller('AppsPage', ['$scope', 'Domain', 'apps', 'Confirm', 
 	function ($scope, Domain, apps, Confirm) {
+ 
 	
 	$scope.apps = apps;
 	
@@ -141,6 +140,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 	
 	$scope.manageApp = function(app)
 	{
+		 if (!app) app = {};
 		 Domain.manage(app, $scope.apps);
 	
 	};

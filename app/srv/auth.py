@@ -612,6 +612,9 @@ class Domain(ndb.BaseExpando):
               
             context.log.entities.append((entity,))
             log.Engine.run(context)
+            
+            context.rule.entity = entity
+            rule.Engine.run(context)
                
             context.output['created_domain'] = entity
            
@@ -802,8 +805,15 @@ class Domain(ndb.BaseExpando):
       
     @classmethod
     def list(cls, context):
+      
+        context.rule.entity = cls()
+      
+        rule.Engine.run(context, True)
+        
+        if not rule.executable(context):
+           raise rule.ActionDenied(context)
  
-        context.output['domains'] = cls.query().fetch()
+        context.output['domains'] = cls.query().order(-cls.created).fetch()
               
         return context
         
