@@ -43,7 +43,21 @@
 .panel-is-not-open:hover
 {
   border: 1px solid #333333;
+}
+
+.panel-is-not-open .panel-title > a:hover
+{
   background-color: #FAFAFA;
+}
+
+.panel-is-open .panel-title > a
+{
+  border-bottom: 1px solid #BBBBBB;
+}
+
+.panel-is-open .panel-title > a
+{
+  border-: 1px solid #333333;
 }
 
 .panel-group .panel + .panel
