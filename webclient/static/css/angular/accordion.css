@@ -40,7 +40,7 @@
   box-shadow: 1px 1px 3px #BBBBBB;
 }
 
-.panel-group .panel:hover
+.panel-is-not-open:hover
 {
   border: 1px solid #333333;
   background-color: #FAFAFA;
