@@ -61,7 +61,7 @@
 						$scope.busyMessageElement = element;
 					};
 				}],
-				link: function(scope, element, attrs) {
+				link: function(scope, element, attrs, $rootScope) {
 					attrs.$observe('busy', function(val) {
 						scope.busyMessage = val;
 					});
@@ -107,7 +107,7 @@
 						else return begin === true || config.remaining <= 0;
 					};
 
-					scope.$on('busy.begin', function(evt, config) {
+					$rootScope.$on('busy.begin', function(evt, config) {
 						if (!scope.busy && scope.isBusyFor(config, true)) {
 							scope.originalContent = element.html();
 							if (scope.busyDisabled) $timeout(function() {element.attr('disabled', true);});
@@ -120,7 +120,7 @@
 						}
 					});
 
-					scope.$on('busy.end', function(evt, config) {
+					$rootScope.$on('busy.end', function(evt, config) {
 						if (scope.busy && scope.isBusyFor(config)) {
 							if (scope.originalContent) element.html(scope.originalContent);
 							element.attr('disabled', scope.notBusyDisabled===true);

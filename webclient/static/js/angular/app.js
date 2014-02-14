@@ -8,9 +8,7 @@ angular.module('app.ui',
 	  ]
 );
 
-/* 'ngBusy',*/
-
-var MainApp = angular.module('MainApp', ['ui.router', 'ngStorage', 'checklist-model', 'app.ui'])
+var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    
@@ -203,5 +201,4 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngStorage', 'checklist-mo
 .run(function ($rootScope) {
     
     $rootScope.current_user = current_user;
-    $rootScope.loading = false;
 });
