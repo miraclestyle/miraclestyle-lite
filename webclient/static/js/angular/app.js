@@ -8,7 +8,9 @@ angular.module('app.ui',
 	  ]
 );
 
-var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'checklist-model', 'app.ui'])
+/* 'ngBusy',*/
+
+var MainApp = angular.module('MainApp', ['ui.router', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    
@@ -29,6 +31,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 		this.required = {};
 	    this.invisible = {};
 		this.writable = {};
+		this.arguments = {};
 		
 		this._action_permission_translate = function (action_name)
 		{
@@ -66,6 +69,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 		{
 	        angular.forEach(this._rule_actions, function (value, key) {
 		    	that.executable[key] = that._executable(key);
+		    	
+		    	angular.forEach(value.arguments, function (argument_value, argument_key) {
+		    		if (!that.arguments[key]) that.arguments[key] = {};
+		    		
+		    		that.arguments[key][argument_key] = argument_value;
+		    	});
+		    	
 		    });
 		    
 		    angular.forEach(this._rule_field_permissions, function (value, key) {

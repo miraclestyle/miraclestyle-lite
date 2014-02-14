@@ -23,7 +23,7 @@
    	<div class="form-control">
 		<label class="form-label">Message</label>
 		<div class="form-input">
-			<textarea class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
+			<textarea ng-required="rule.arguments[action].message.required" class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
 		</div>
 	</div>	 
 	  
@@ -34,7 +34,7 @@
 <div class="modal-footer">
  
  
-	<button busy="Loading..." class="button">
+	<button busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

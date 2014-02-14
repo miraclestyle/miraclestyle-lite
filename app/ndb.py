@@ -325,10 +325,15 @@ class _BaseProperty(object):
     
     def __todict__(self):
       
+       choices = self._choices
+       
+       if choices:
+          choices = list(self._choices)
+      
        return {
             'required' : self._required,
             'max_size' : self._max_size, 
-            'choices' : self._choices,
+            'choices' :  choices,
             'default' : self._default,
             'repeated' : self._repeated,
           }

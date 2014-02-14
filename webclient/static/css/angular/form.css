@@ -122,3 +122,10 @@
 {
 	line-height: 1em;
 }
+
+/* validation colors */
+
+.ng-dirty.ng-invalid-required
+{
+	border-color:red; /* this for now*/
+}

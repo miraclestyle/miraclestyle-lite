@@ -18,14 +18,14 @@ MainApp
         templateUrl: logic_template('srv/auth', 'apps.html'),
         controller: 'AppsPage',
         resolve : {
-        	apps : ['Domain', function (Domain) {
+        	apps : ['App', function (App) {
         		
         		if (initdata['domains'])
         		{
         			return initdata['domains'];
         		}
         		
-        		return Domain.list().then(function (output) {
+        		return App.list().then(function (output) {
 					return output.data.domains;
 				});
         	}]

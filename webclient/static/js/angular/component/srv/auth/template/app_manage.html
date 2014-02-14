@@ -1,4 +1,4 @@
-<form ng-submit="save()">
+<form name="manage_app" ng-submit="save()">
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
 	
@@ -41,7 +41,7 @@
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input class="text-input" type="text" ng-model="app.name" />
+				 <input ng-required="rule.arguments[action].name.required" class="text-input" type="text" ng-model="app.name" />
 			</div>
 		</div>
 	</div>
@@ -50,26 +50,30 @@
 	<div class="form-control">
 		<label class="form-label">Primary Contact</label>
 		<div class="form-input">
-			<select ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
+			<select ng-required="rule.arguments[action].primary_contact.required" ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
 				    <option value="{{current_user.key}}">{{current_user.primary_email}}</option>
 			</select>
 		</div>
 	</div>	 
-	  
+ 
 </div>
 </div>
 
 <div class="modal-footer">
 	
-	<button ng-click="suspend()" type="button" class="button" ng-show="rule.executable.suspend">
+	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.executable.sudo && app.key">
+		Administer
+	</button>
+	
+	<button busy ng-click="suspend()" type="button" class="button" ng-show="rule.executable.suspend">
 		Suspend
 	</button>
 	
-	<button ng-click="activate()" type="button" class="button" ng-show="rule.executable.activate">
+	<button busy ng-click="activate()" type="button" class="button" ng-show="rule.executable.activate">
 		Activate
 	</button>
  
-	<button busy="Loading..." class="button">
+	<button busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

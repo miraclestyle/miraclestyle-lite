@@ -1,4 +1,4 @@
-MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 
+MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 
 	function ($rootScope, $http, $location, $modal, Endpoint) {
 	 
 	return {
@@ -15,9 +15,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'app_manage.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
-				      	  
-				      	  $scope.rule = RuleEngine.factory(output);
-				      	  
+				      	   
 				      	  if (!app['key']) 
 				      	  app = output.rule.entity;
  
@@ -29,16 +27,60 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 					  	  {
 					  	  	 action = 'update';
 					  	  }
-					 
-					  	 $scope.sudo = function ()
-						 {
+					  	  
+					  	 $scope.rule = RuleEngine.factory(output);
+					  	 $scope.action = action;  
+					  	  
+					  	 $parentScope = $scope; 
+			  
+						 $scope.sudo = function ()
+						 {  
+						 	
+							var handle = function (output) {
+				 
+								var modalInstance = $modal.open({
+								      templateUrl: logic_template('srv/auth', 'app_sudo.html'),
+								      windowClass : 'modal-medium',
+								      controller: function ($scope, $modalInstance, RuleEngine) {
+								      	  
+								      	  $scope.rule = RuleEngine.factory(output);
+								      	  $scope.log = {
+								      	  	'message' : '',
+								      	  	'note' : '',
+								      	  	'state' : app['state'],
+								      	  	'key' : app['key'],
+								      	  };
+							 
+									  	  $scope.save = function ()
+									  	  {
+									  	  	 
+									  	  	Endpoint.post('sudo', 'srv.auth.Domain', $scope.log)
+										     .success(function (data) {
+ 
+										     	update(app, data['updated_domain']);
+										     	
+										     	$parentScope.rule.update(data);
+										 
+										     	$scope.cancel();
+										     	  
+											});
+						
+									  	  }; 
+									  	  
+										  $scope.cancel = function () {
+										    $modalInstance.dismiss();
+										  };
+									  }
+								    });
+						  
+							  };
+							 
+							Endpoint.post('read', 'srv.auth.Domain', app).success(handle);
 							
 						 };
 						 
 						 $scope._do_user_admin = function (app, action)
-						 { 
-						 	
-						 	var rule = $scope.rule;
+						 {  
 						 	
 							var handle = function (output) {
 				 
@@ -60,10 +102,11 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 									  	  	Endpoint.post(action, 'srv.auth.Domain', $scope.log)
 										     .success(function (data) {
  
-										     	app['state'] = data['updated_domain']['state'];
-										     	rule.update(data);
+										     	update(app, data['updated_domain']);
+										     	
+										     	$parentScope.rule.update(data);
 										 
-										     	$timeout($scope.cancel, 50);
+										     	$scope.cancel();
 										     	  
 											});
 						
@@ -98,12 +141,12 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 						     .success(function (data) {
 						     	 if (data['created_domain'])
 						     	 {
-						     	 	 $scope.app = data['created_domain'];
+						     	 	 update($scope.app, data['created_domain']);
 						     	 	 apps.unshift($scope.app);
 						     	 }
 						     	 else
 						     	 {
-						     	 	 $scope.app = data['updated_domain'];
+						     	 	 update($scope.app, data['updated_domain']);
 						     	 }
 								 
 								 $scope.rule.update(data);
@@ -130,8 +173,8 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
    };
 	 
 }])
-.controller('AppsPage', ['$scope', 'Domain', 'apps', 'Confirm', 
-	function ($scope, Domain, apps, Confirm) {
+.controller('AppsPage', ['$scope', 'App', 'apps', 'Confirm', 
+	function ($scope, App, apps, Confirm) {
  
 	
 	$scope.apps = apps;
@@ -141,8 +184,7 @@ MainApp.factory('Domain', ['$rootScope', '$http', '$location', '$modal', 'Endpoi
 	$scope.manageApp = function(app)
 	{
 		 if (!app) app = {};
-		 Domain.manage(app, $scope.apps);
-	
+		 App.manage(app, $scope.apps);
 	};
  
 }])

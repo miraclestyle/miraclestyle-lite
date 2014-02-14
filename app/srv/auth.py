@@ -55,7 +55,7 @@ class User(ndb.BaseExpando):
                                                 rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
-                                                # rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                ])
@@ -501,7 +501,7 @@ class Domain(ndb.BaseExpando):
        'sudo' : event.Action(id='6-3',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'state' : ndb.SuperStringProperty(required=True),
+                                 'state' : ndb.SuperStringProperty(required=True, choices=('active', 'suspended', 'su_suspended')),
                                  'message' : ndb.SuperTextProperty(required=True),
                                  'note' : ndb.SuperTextProperty(required=True)
                               }
@@ -758,10 +758,7 @@ class Domain(ndb.BaseExpando):
            
            if not rule.executable(context):
               raise rule.ActionDenied(context)
-            
-           if context.input.get('state') not in ('active', 'su_suspended'):
-             # raise custom exception!!!
-              return context.error('state', 'invalid_state')
+ 
            
            entity.state = context.input.get('state')
            entity.put()
