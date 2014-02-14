@@ -502,6 +502,8 @@ class Catalog(ndb.BaseExpando):
            
         return context
 # this is LocalStructuredProperty and is repeated per catalog image.
+# properties to remain in this class are: 
+# product_template, position_top (former source_position_top), position_left (former source_position_left), value
 class CatalogPricetag(ndb.BaseModel):
     
     _kind = 34
