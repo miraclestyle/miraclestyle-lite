@@ -77,6 +77,11 @@ class Engine:
         if key not in input:
           input_required.append(key)
           continue
+        
+      if hasattr(argument, '_choices') and argument._choices:
+        if value not in argument._choices:
+           input_invalid.append(key)
+           continue
       
       if key not in input and not argument._required:
         if argument._default is not None:
@@ -87,10 +92,6 @@ class Engine:
           continue # If value is not set at all, shall we always consider it none?
         try:
           value = argument.format(value)
-           
-          if hasattr(argument, '_choices') and argument._choices:
-            if value not in argument._choices:
-              raise ndb.FormatError('value_not_allowed_values')
             
           if hasattr(argument, '_validator') and argument._validator:
              argument._validator(argument, value)
@@ -131,11 +132,10 @@ class Engine:
         
         
       if context.rule.entity:    
-        context.output['rule'] = {}
-        context.output['rule']['entity'] = context.rule.entity.__todict__()
-        context.output['rule']['entity']['_action_permissions'] = context.rule.entity._action_permissions
-        context.output['rule']['entity']['_field_permissions'] = context.rule.entity._field_permissions
-        context.output['rule']['entity']['_actions'] = context.rule.entity._actions
+        context.output['entity'] = context.rule.entity.__todict__()
+        context.output['entity']['_action_permissions'] = context.rule.entity._action_permissions
+        context.output['entity']['_field_permissions'] = context.rule.entity._field_permissions
+        context.output['entity']['_actions'] = context.rule.entity._actions
           
     except Exception as e:
       throw = True

@@ -88,10 +88,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 		this.update = function (info)
 	    {
 			
-			this._rule = info['rule'];
-			this._rule_action_permissions = this._rule['entity']['_action_permissions'];
-			this._rule_field_permissions = this._rule['entity']['_field_permissions'];
-			this._rule_actions = this._rule['entity']['_actions'];
+			this._rule = info['entity'];
+			this._rule_action_permissions = this._rule['_action_permissions'];
+			this._rule_field_permissions = this._rule['_field_permissions'];
+			this._rule_actions = this._rule['_actions'];
 			 
 			this.init();
 			
@@ -99,7 +99,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 			 
 		};
 		
-		if (data && data['rule'])
+		if (data && data['entity'])
 		{
 			this.update(data);
 	    }
