@@ -1,3 +1,6 @@
+# setup.py napraviti, da bude setup engine, koji ce raditi na principu transaction engine-a, sa stagingom kojeg moze snimati, 
+# primajuci parametre od callback-a i snimajuci ih u svom modelu...
+
 # primer funkcije za filtering
 # projection query should be enforced whenever posible
 def view(cls, context): # filter() i list() su built in funkcije pythona, pa bi mozda bilo bolje da ovu funkciju nazovemo view ili search, ili nesto trece
