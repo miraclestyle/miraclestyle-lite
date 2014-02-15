@@ -1,4 +1,5 @@
 # primer funkcije za filtering
+# projection query should be enforced whenever posible
 def view(cls, context): # filter() i list() su built in funkcije pythona, pa bi mozda bilo bolje da ovu funkciju nazovemo view ili search, ili nesto trece
   entity = cls(state='active', primary_contact=context.auth.user.key)
   context.rule.entity = entity
