@@ -1,3 +1,22 @@
+# primer funkcije za filtering
+def view(cls, context): # filter() i list() su built in funkcije pythona, pa bi mozda bilo bolje da ovu funkciju nazovemo view ili search, ili nesto trece
+  entity = cls(state='active', primary_contact=context.auth.user.key)
+  context.rule.entity = entity
+  rule.Engine.run(context, True)
+  if not rule.executable(context):
+    raise rule.ActionDenied(context)
+  cursor = Cursor(urlsafe=context.input.get('cursor'))
+  page_size = context.input.get('page_size')
+  filters = context.input.get('filters') # some extraction processing required
+  orders = context.input.get('orders') # some extraction processing required
+  q = cls.query()
+  q = q.filter(filters)
+  q = q.order(orders)
+  entities, next_cursor, more = q.fetch_page_async(page_size, start_cursor=cursor)
+  context.output['entities'] = entities
+  context.output['next_cursor'] = next_cursor
+  context.output['more'] = more
+
 class PayPalQuery(transaction.Plugin):
   
   def run(self, journal, context):
