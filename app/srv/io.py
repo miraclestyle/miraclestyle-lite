@@ -73,10 +73,6 @@ class Engine:
  
     for key, argument in context.action.arguments.items():
       value = input.get(key)
-  
-      if key not in input and not argument._required:
-        if argument._default is not None:
-          value = argument._default
  
       if argument and hasattr(argument, 'format'):
         if value is None:

@@ -53,6 +53,10 @@ def _validate_prop(value, prop):
 
 def _property_value(prop, value):
   
+    if value is None and not prop._required:
+      if prop._default is not None:
+        value = prop._default
+   
     if prop._repeated:
        if not isinstance(value, (list, tuple)):
           value = [value]
