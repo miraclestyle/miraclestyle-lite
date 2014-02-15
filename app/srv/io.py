@@ -65,6 +65,7 @@ class Engine:
   
   @classmethod
   def process(cls, context, input):
+    
     input_required = []
     input_invalid = []
     input_error = []
@@ -72,17 +73,7 @@ class Engine:
  
     for key, argument in context.action.arguments.items():
       value = input.get(key)
- 
-      if argument._required:
-        if key not in input:
-          input_required.append(key)
-          continue
-        
-      if hasattr(argument, '_choices') and argument._choices:
-        if value not in argument._choices:
-           input_invalid.append(key)
-           continue
-      
+  
       if key not in input and not argument._required:
         if argument._default is not None:
           value = argument._default
@@ -92,13 +83,15 @@ class Engine:
           continue # If value is not set at all, shall we always consider it none?
         try:
           value = argument.format(value)
-            
-          if hasattr(argument, '_validator') and argument._validator:
-             argument._validator(argument, value)
           
+          if hasattr(argument, '_validator') and argument._validator: # this validator is a custom function that is available by ndb
+             argument._validator(argument, value)
+             
           context.input[key] = value
         except ndb.FormatError as e:
           input_error.append(key)
+        except ndb.FormatErrorRequired as e:
+          input_required.append(key)
         except Exception as e:
           input_invalid.append(e)
     

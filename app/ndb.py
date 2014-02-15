@@ -29,23 +29,40 @@ ctx.set_memcache_policy(False)
 class FormatError(Exception):
   pass
 
-def _property_value(prop, value):
+class FormatErrorRequired(Exception):
+  pass
+
+def _validate_prop(value, prop):
+    """
+    
+    This helper function will raise exception based on ndb property specification:
+    max_size, required, choices
+    
+    """
   
-    def validate_max_size(value, size):
-        if size:
-          if len(value) > size:
-             raise FormatError('max_size_exceeded')
+    if prop._max_size:
+      if len(value) > prop._max_size:
+        raise FormatError('max_size_exceeded')
+       
+    if value is None and prop._required:
+      raise FormatErrorRequired('required')
+     
+    if hasattr(prop, '_choices') and prop._choices:
+      if value not in prop._choices:
+        raise Exception('not_in_specified_choices') 
+
+def _property_value(prop, value):
   
     if prop._repeated:
        if not isinstance(value, (list, tuple)):
           value = [value]
        out = []   
        for v in value:
-           validate_max_size(v, prop._max_size)
+           _validate_prop(v, prop)
            out.append(v)
        return out
     else:
-       validate_max_size(value, prop._max_size)
+       _validate_prop(value, prop)
        return value
 
 
