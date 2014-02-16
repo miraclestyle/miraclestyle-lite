@@ -1,3 +1,5 @@
+################ setup.py start ################
+
 # system action is called by user, with supplied args that are required by the system action
 # system action runs setup.Engine.run() with all context parameters
 # setup.Engine creates instance of Configuration entity with parameters populated and as a child to the User entity.
@@ -74,6 +76,8 @@ class Engine:
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     entity.put()
+
+################ setup.py end ################
 
 # primer funkcije za filtering
 # projection query should be enforced whenever posible
