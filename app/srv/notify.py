@@ -76,6 +76,8 @@ class Engine:
  
   @classmethod
   def run(cls, context):
+  
+  # notify engine ce raditi kao komplementarni servis poput log engine, i pozivace se direktno iz root funkcija, a ne putem callback-a
    
     templates = get_system_templates(context)
     templates.extend(Template.get_local_templates(context))
