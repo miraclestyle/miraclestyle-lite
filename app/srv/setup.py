@@ -41,7 +41,7 @@ class Setup():
    runner = getattr(self, self.__get_next_operation())
    
    if runner:
-      ndb.transaction(runner, xg=True)
+      return ndb.transaction(runner, xg=True)
    
    
 class DomainSetup(Setup):
@@ -194,8 +194,8 @@ class Configuration(ndb.BaseExpando):
     return configurations
   
   def run(self):
-    setup = get_system_setup(self.setup)
-    return setup.run(self)
+    SetupClass = get_system_setup(self.setup)
+    return SetupClass(self).run()
     
 class Engine:
   
