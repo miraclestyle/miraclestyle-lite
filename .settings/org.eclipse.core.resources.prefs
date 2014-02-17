@@ -18,6 +18,7 @@ encoding//app/srv/log.py=utf-8
 encoding//app/srv/notify.py=utf-8
 encoding//app/srv/plugins.py=utf-8
 encoding//app/srv/rule.py=utf-8
+encoding//app/srv/setup.py=utf-8
 encoding//app/srv/transaction.py=utf-8
 encoding//app/srv/uom.py=utf-8
 encoding//app/util.py=utf-8
