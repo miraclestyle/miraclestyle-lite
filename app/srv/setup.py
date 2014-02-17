@@ -228,5 +228,5 @@ class Engine:
     entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
     entity.put()
     
-    taskqueue.add(url='/run_configuration', {'configuration_key' : entity.key.urlsafe()})
+    taskqueue.add(queue_name='setup', url='/run_configuration', , transactional=True, {'configuration_key' : entity.key.urlsafe()})
     
