@@ -4,7 +4,9 @@ Created on Feb 17, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
+import time
+
+from app import ndb, util
 
 from google.appengine.api import taskqueue
 
@@ -34,7 +36,11 @@ class Setup():
     if not self.config.next_operation:
        return 'execute_init'
      
-    return 'execute_%s' % self.config.next_operation
+    funct = 'execute_%s' % self.config.next_operation
+    
+    util.logger('Running function %s' % funct)
+    
+    return funct
     
     
  def run(self):
@@ -195,7 +201,17 @@ class Configuration(ndb.BaseExpando):
   
   def run(self):
     SetupClass = get_system_setup(self.setup)
-    return SetupClass(self).run()
+    setup = SetupClass(self)
+    
+    iterations = 1000
+    while self.state == 'active':
+       iterations -= 1
+       setup.run()
+       time.sleep(2)
+       
+       # dont do infinite loop, this is just for tests now.
+       if iterations < 1:
+          break
     
 class Engine:
   
@@ -212,5 +228,5 @@ class Engine:
     entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
     entity.put()
     
-    taskqueue.add(url='/run_setup', {'setup_key' : entity.key.urlsafe()})
+    taskqueue.add(url='/run_configuration', {'configuration_key' : entity.key.urlsafe()})
     
