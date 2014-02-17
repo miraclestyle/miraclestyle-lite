@@ -21,18 +21,15 @@ class ArgumentError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import auth, log, rule, transaction # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, transaction # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
-    self.callbacks = []
+    self.callback = callback.Context()
     self.auth = auth.Context()
     self.rule = rule.Context()
     self.log = log.Context()
     self.transaction = transaction.Context()
-  
-  def new_callback(self, action_key, input):
-    self.callbacks.append((action_key, input))
   
   def error(self, key, value):
     if 'errors' not in self.output:
@@ -144,13 +141,6 @@ class Engine:
       
       if throw:
         raise # Here we raise all other unhandled exceptions!
-    
-    # We need callback service to be available to taskqueue_run as well as to run methods!
-    if context and len(context.callbacks):
-      for callback in context.callbacks:
-        action_key, input = callback
-        input['action_key'] = action_key
-        taskqueue.add(url='/engine_run', params=input)
  
     return context
   
