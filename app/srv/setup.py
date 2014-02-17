@@ -10,6 +10,8 @@ from app import ndb, util
 
 from google.appengine.api import taskqueue
 
+# should implement it's own Context() probably, and be integrated in io.py Context.setup...
+
 __SYSTEM_SETUPS = {}
 
 # example: get_system_setup('domain_setup')
