@@ -205,14 +205,15 @@ class Configuration(ndb.BaseExpando):
     SetupClass = get_system_setup(self.setup)
     setup = SetupClass(self)
     
-    iterations = 1000
+    iterations = 100
     while self.state == 'active':
        iterations -= 1
        setup.run()
-       time.sleep(2)
+       time.sleep(1.5) # throughput demands one entity per sec, we will put 1.5
        
        # dont do infinite loop, this is just for tests now.
        if iterations < 1:
+          util.logger('Stopped iteration at %s' % iterations)
           break
     
 class Engine:
@@ -227,8 +228,11 @@ class Engine:
   def run(cls, context):
     # runs in transaction
     setup = context.input.get('setup')
-    entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
-    entity.put()
     
-    taskqueue.add(queue_name='setup', url='/run_configuration', , transactional=True, {'configuration_key' : entity.key.urlsafe()})
-    
+    if get_system_setup(setup):
+      
+      entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
+      entity.put()
+      
+      taskqueue.add(queue_name='setup', url='/run_configuration', transactional=True, {'configuration_key' : entity.key.urlsafe()})
+      
