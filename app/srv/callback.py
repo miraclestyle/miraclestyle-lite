@@ -1,11 +1,11 @@
 from google.appengine.api import taskqueue
-
+from app import ndb
 
 class Context():
   
   def __init__(self):
     self.inputs = []
-    self.transactional = False
+    self.transactional = None
 
 
 class Engine:
@@ -13,6 +13,8 @@ class Engine:
   @classmethod
   def run(cls, context):
     if len(context.callback.inputs):
+      if context.callback.transactional is None:
+        context.callback.transactional = ndb.in_transaction()
       if context.callback.transactional:
         if len(context.callback.inputs) > 5:
           context.callback.inputs = context.callback.inputs[:5]
