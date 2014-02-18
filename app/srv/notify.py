@@ -29,9 +29,8 @@ def register_system_templates(*args):
 class Context():
   
   def __init__(self):
-    self.user = None
-    self.action = None
     self.entity = None
+    self.transactional = None
 
 
 class Message():
