@@ -8,8 +8,6 @@ import time
 
 from app import ndb, util
 
-ndb.in_transaction()
-
 from google.appengine.api import taskqueue
 
 # should implement it's own Context() probably, and be integrated in io.py Context.setup...
