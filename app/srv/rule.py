@@ -516,6 +516,9 @@ class DomainUser(ndb.BaseModel):
                 if role is None:
                    entity.roles.pop(i)
             entity.put()
+            
+            context.log.entities.append((entity,))
+            log.Engine.run(context)
                 
         transaction()
         
