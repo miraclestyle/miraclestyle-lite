@@ -122,9 +122,9 @@ class Engine:
     if total_outlet_commands:      
        commands_per_task = math.ceil(total_outlet_commands / settings.OUTLET_TEMPLATES_PER_TASK)
        
-       for i in range(0, commands_per_task):
+       for i in range(0, commands_per_task+1):
          
-           cursored_outlet_commands = outlet_commands[i:settings.OUTLET_TEMPLATES_PER_TASK]
+           cursored_outlet_commands = outlet_commands[settings.OUTLET_TEMPLATES_PER_TASK*i:settings.OUTLET_TEMPLATES_PER_TASK*(i+1)]
             
            for outlet_command in cursored_outlet_commands:
              
@@ -134,17 +134,18 @@ class Engine:
                
                del copy_outlet_command['recipients']
                
-               for _i in range(0, how_many_recipients):
+               for _i in range(0, how_many_recipients+1):
                  
-                 new_recipient_list = outlet_command['recipients'][_i:settings.OUTLET_TEMPLATES_PER_TASK]
+                 new_recipient_list = outlet_command['recipients'][settings.OUTLET_RECIPIENTS_PER_TASK*_i:settings.OUTLET_RECIPIENTS_PER_TASK*(_i+1)]
                  
-                 new_outlet_command = copy_outlet_command.copy()
-                 new_outlet_command['recipients'] = new_recipient_list
-                 
-                 payload = {'data' : new_outlet_command}
-  
-                 task = taskqueue.Task(url='/task/notify_send', payload=json.dumps(payload))
-                 tasks.append(task)
+                 if new_recipient_list:
+                   new_outlet_command = copy_outlet_command.copy()
+                   new_outlet_command['recipients'] = new_recipient_list
+                   
+                   payload = {'data' : new_outlet_command}
+    
+                   task = taskqueue.Task(url='/task/notify_send', payload=json.dumps(payload))
+                   tasks.append(task)
              
   
   @classmethod
@@ -170,7 +171,7 @@ class Engine:
      
     templates = DomainTemplate.get_local_templates(action_key)
     
-    cls._templates(queue, tasks, entity, templates)
+    cls._templates(queue, tasks, entity, user, templates)
     
     if tasks:
        queue.add(tasks)
