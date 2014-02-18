@@ -10,7 +10,7 @@ import os
 from app import ndb, settings, memcache, util
 from app.srv import event, rule
 from app.lib import oauth2
-from app.srv import log
+from app.srv import log, setup
   
 class Context():
   
@@ -571,59 +571,10 @@ class Domain(ndb.BaseExpando):
             if not rule.executable(context):
                raise rule.ActionDenied(context)
        
-            primary_contact = context.input.get('primary_contact')
-            
-            if not primary_contact:
-               primary_contact = context.auth.user.key
-             
-            entity.name = context.input.get('name')
-            entity.primary_contact = primary_contact
-            entity.put()
-            
-            namespace = entity.key.urlsafe()
-       
-            # build a role - possible usage of app.etc
-            
-            # from app.domain import business, marketing, product
-            
-            permissions = []
-            
-            # from all objects specified here, the ActionPermission will be built. So the role we are creating
-            # will have all action permissions - taken `_actions` per model
-            from app.domain import business, marketing, product
-      
-            objects = [cls, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent,
-                       marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-                              product.Content, product.Instance, product.Template, product.Variant]
-            
-            for obj in objects:
-                if hasattr(obj, '_actions'):
-                  for friendly_action_key, action_instance in obj._actions.items():
-                      permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                               action=action_instance.key.urlsafe(),
-                                                               executable=True,
-                                                               condition='True'))
-            
-            role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
-            role.put()
-            
-            # context.log.entities.append((role, ))
-            
-             
-            domain_user = rule.DomainUser(namespace=namespace, id=context.auth.user.key_id_str,
-                                      name=context.auth.user.primary_email, state='accepted',
-                                      roles=[role.key])
-            
-            domain_user.put()
-            # context.log.entities.append((domain_user, ))
-              
-            context.log.entities.append((entity,))
-            log.Engine.run(context)
-            
-            context.rule.entity = entity
-            rule.Engine.run(context)
-               
-            context.output['created_domain'] = entity
+            context.setup.name = 'create_domain'
+            context.setup.input = context.input.copy()
+            context.setup.input['user'] = context.auth.user
+            setup.Engine.run(context)
            
         transaction()
             

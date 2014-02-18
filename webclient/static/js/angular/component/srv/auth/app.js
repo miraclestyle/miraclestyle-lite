@@ -9,27 +9,30 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 		manage : function (app, apps)
 	    {
 	    	var that = this;
+	        	
 	    	
 			var handle = function (output) {
- 
+				 
+	      	    if (!app['key']) 
+			    app = output.entity;
+	  
+			    var action = 'create';
+			    
+			    	
+		  	    if (app['key'])
+		  	    {
+		  	    	
+		  	  	 action = 'update';
+		  	  	 
+		  	    }	
+		  	  				 
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'app_manage.html'),
+				      templateUrl: logic_template('srv/auth', 'app_'+(action == 'update' ? 'manage' : 'setup')+'.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
-				      	   
-				      	  if (!app['key']) 
-				      	  app = output.rule.entity;
- 
-				      	  $scope.app = app;
-				      	  
-				      	  var action = 'create';
-					  	  	
-					  	  if ($scope.app['key'])
-					  	  {
-					  	  	 action = 'update';
-					  	  }
-					  	  
+				      	 
 					  	 $scope.rule = RuleEngine.factory(output);
 					  	 $scope.action = action;  
+					  	 $scope.app = app;
 					  	  
 					  	 $parentScope = $scope; 
 			  
@@ -43,7 +46,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 								      windowClass : 'modal-medium',
 								      controller: function ($scope, $modalInstance, RuleEngine) {
 								      	  
-								      	  $scope.rule = RuleEngine.factory(output);
+								      	  $scope.rule = RuleEngine(output);
 								      	  $scope.log = {
 								      	  	'message' : '',
 								      	  	'note' : '',

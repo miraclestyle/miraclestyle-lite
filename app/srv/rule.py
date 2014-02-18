@@ -46,9 +46,8 @@ def executable(context):
      return context.rule.entity._action_permissions[context.action.key.urlsafe()]['executable']
   else:
      return False
-  
-
-
+   
+   
 class Context():
   
   def __init__(self):
@@ -326,19 +325,11 @@ class DomainRole(Role):
           
         if not executable(context):
            raise ActionDenied(context)
-            
-        domain_users = DomainUser.query(DomainUser.roles == entity.key, namespace=entity.key_namespace).fetch()
-     
-        for domain_user in domain_users:
-            domain_user.roles.remove(entity.key)
-       
+ 
         @ndb.transactional(xg=True)
         def transaction():
 
           if entity and entity.loaded():
-            
-             ndb.put_multi(domain_users) # write changes to DomainUser
-             
              # log & delete
              context.log.entities.append((entity, ))
              entity.key.delete()
@@ -448,6 +439,7 @@ class DomainUser(ndb.BaseModel):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:no - name
     name = ndb.SuperStringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
+    user = ndb.SuperKeyProperty('2', required=True)
     roles = ndb.SuperKeyProperty('3', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
     state = ndb.SuperStringProperty('4', required=True)# invited/accepted
     
@@ -461,6 +453,7 @@ class DomainUser(ndb.BaseModel):
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.is_taskqueue"),
 
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -509,6 +502,13 @@ class DomainUser(ndb.BaseModel):
           
             entity_key = context.input.get('key')
             entity = entity_key.get()
+            
+            context.rule.entity = entity
+            
+            Engine.run(context, True)
+            
+            if not executable(context):
+               raise ActionDenied(context)
             
             roles = ndb.get_multi(entity.roles)
             
@@ -562,7 +562,7 @@ class DomainUser(ndb.BaseModel):
                   if role.key.namespace() == domain.key_namespace:
                      roles.append(role.key)
                      
-              domain_user.populate(name=name, state='invited', roles=roles)
+              domain_user.populate(name=name, user=user.key, state='invited', roles=roles)
               domain_user.put()
               
               context.log.entities.append((domain_user,))

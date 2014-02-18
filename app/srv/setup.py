@@ -8,6 +8,8 @@ import time
 
 from app import ndb, util
 
+ndb.in_transaction()
+
 from google.appengine.api import taskqueue
 
 # should implement it's own Context() probably, and be integrated in io.py Context.setup...
@@ -30,7 +32,8 @@ class Context():
   
   def __init__(self):
       self.input = {}
-    
+      self.name = None
+ 
 
 # this will be configuration for domain setup
 class Setup():
@@ -123,8 +126,7 @@ class DomainSetup(Setup):
      config_input = self.config.configuration_input
      self.config.next_operation_input = {'namespace' : namespace, 
                                          'role_key' : role.key,
-                                         'current_user_id' : config_input.get('current_user_id'),
-                                         'current_user_primary_email' : config_input.get('current_user_primary_email'),
+                                         'user' : config_input.get('user'),
                                         }
      self.config.next_operation = 'create_domain_user'
      self.config.put()
@@ -135,9 +137,10 @@ class DomainSetup(Setup):
      
      input = self.config.next_operation_input
      namespace = input.get('namespace')
+     user = input.get('user')
     
-     domain_user = rule.DomainUser(namespace=namespace, id=input.get('current_user_id'),
-                               name=input.get('current_user_primary_email'), state='accepted',
+     domain_user = rule.DomainUser(namespace=namespace, user=user.key, id=user.key_id_str,
+                               name=user.primary_email, state='accepted',
                                roles=[input.get('role_key')])
      
      domain_user.put()
@@ -183,9 +186,9 @@ class DomainSetup(Setup):
        
       self.config.state = 'complete'
       self.config.put()
- 
- 
-    
+      
+register_system_setup(('create_domain', DomainSetup))
+  
 
 class Configuration(ndb.BaseExpando):
   
@@ -233,12 +236,12 @@ class Engine:
   @classmethod
   def run(cls, context):
     # runs in transaction
-    setup = context.input.get('setup')
+    setup = context.setup.name
     
-    if get_system_setup(setup):
+    if setup and get_system_setup(setup):
       
-      entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
+      entity = Configuration(parent=context.auth.user.key, configuration_input=context.setup.input, setup=setup, state='active')
       entity.put()
       
-      taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=True, {'configuration_key' : entity.key.urlsafe()})
+      taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=True, params={'configuration_key' : entity.key.urlsafe()})
       
