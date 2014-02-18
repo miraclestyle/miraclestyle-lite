@@ -53,9 +53,9 @@ class Template(ndb.BaseModel):
   outlet = ndb.SuperStringProperty('5', required=True, default='mail')
  
   @classmethod
-  def get_local_templates(cls, context):
+  def get_local_templates(cls, action_key):
     templates = cls.query(cls.active == True,
-                          cls.action == context.action.key).fetch()
+                          cls.action == action_key).fetch()
     return templates
   
   def run(self, entity, user):
@@ -80,9 +80,7 @@ class DomainTemplate(Template):
       domain_users = ndb.get_multi(self.message_recievers)
       
       users = ndb.get_multi([reciever.user for reciever in domain_users])
-      
-      messages = []
-      
+ 
       domain_sender = self.message_sender.get()
       domain_sender_user = domain_sender.user.get()
       
@@ -95,9 +93,7 @@ class DomainTemplate(Template):
               'subject' : render_template(self.message_subject, template_values),
               'outlet' : self.outlet,
              }
-      
-      return messages
-    
+ 
     
 class Engine:
   
@@ -110,24 +106,9 @@ class Engine:
        mail.send_mail(outlet_command['sender'], outlet_command['recipients'],
                       outlet_command['subject'], outlet_command['body'])
   
+  
   @classmethod
-  def prepare(cls, input):
-    
-    entity_key = ndb.Key(urlsafe=input.get('entity_key'))
-    entity = entity_key.get()
-    
-    action_key = ndb.Key(urlsafe=input.get('action_key'))
-   
-    
-    user_key = ndb.Key(urlsafe=input.get('user_key'))
-    user = user_key.get()
-    
-    
-    queue = taskqueue.Queue(name='notify_send')
-    tasks = []
-    
-    # we are sending payload instead of "params", our server will parse that if it's formatted as json
-    templates = get_system_templates(action_key)
+  def _templates(cls, queue, tasks, entity, user, templates):
     
     outlet_commands = []
     
@@ -137,6 +118,7 @@ class Engine:
            outlet_commands.append(command)
     
     total_outlet_commands = len(outlet_commands)
+    
     if total_outlet_commands:      
        commands_per_task = math.ceil(total_outlet_commands / settings.OUTLET_TEMPLATES_PER_TASK)
        
@@ -163,8 +145,35 @@ class Engine:
   
                  task = taskqueue.Task(url='/task/notify_send', payload=json.dumps(payload))
                  tasks.append(task)
-            
-    queue.add(tasks)
+             
+  
+  @classmethod
+  def prepare(cls, input):
+    
+    entity_key = ndb.Key(urlsafe=input.get('entity_key'))
+    entity = entity_key.get()
+    
+    action_key = ndb.Key(urlsafe=input.get('action_key'))
+   
+    
+    user_key = ndb.Key(urlsafe=input.get('user_key'))
+    user = user_key.get()
+    
+    
+    queue = taskqueue.Queue(name='notify_send')
+    tasks = []
+    
+    # we are sending payload instead of "params", our server will parse that if it's formatted as json
+    templates = get_system_templates(action_key)
+    
+    cls._templates(queue, tasks, entity, user, templates)
+     
+    templates = DomainTemplate.get_local_templates(action_key)
+    
+    cls._templates(queue, tasks, entity, templates)
+    
+    if tasks:
+       queue.add(tasks)
      
      
   @classmethod
@@ -174,7 +183,7 @@ class Engine:
        context.notify.transacitonal = ndb.in_transaction()
     
     new_task = taskqueue.add(queue_name='notify', url='/task/notify_prepare',
-                             transactional=context.setup.transactional,
+                             transactional=context.notify.transactional,
                              params={'action_key' : context.action.key.urlsafe(),
                                      'user_key' : context.auth.key.urlsafe(),
                                      'entity_key' : context.notify.entity.key.urlsafe()})

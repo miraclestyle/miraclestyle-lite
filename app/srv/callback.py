@@ -15,7 +15,13 @@ class Engine:
     if len(context.callback.inputs):
       if context.callback.transactional is None:
         context.callback.transactional = ndb.in_transaction()
-      if context.callback.transactional:
-        context.callback.inputs = context.callback.inputs[:5]
+ 
+      context.callback.inputs = context.callback.inputs[:5]  
+        
+      queue = taskqueue.Queue(name='io')
+      tasks = []
       for input in context.callback.inputs:
-        taskqueue.add(queue_name='io', url='/task/io_engine_run', params=input, transactional=context.callback.transactional)
+          tasks.append(taskqueue.Task(url='/task/io_engine_run', params=input, transactional=context.callback.transactional))
+      
+      if tasks:
+        queue.add(tasks)
