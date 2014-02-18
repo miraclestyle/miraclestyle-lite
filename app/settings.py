@@ -36,6 +36,10 @@ COMPANY_LOGO_BUCKET = 'user_input/company_logo'
 CATALOG_IMAGE_BUCKET = 'user_input/catalog_image'
 PRODUCT_TEMPLATE_BUCKET = 'user_input/product_template_image'
 PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
+
+# task queue
+OUTLET_TEMPLATES_PER_TASK = 10
+OUTLET_RECIPIENTS_PER_TASK = 50
  
 
 LOGIN_METHODS = {

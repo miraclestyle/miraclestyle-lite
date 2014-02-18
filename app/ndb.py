@@ -352,11 +352,13 @@ class _BaseProperty(object):
           choices = list(self._choices)
       
        return {
+            'verbose_name' : getattr(self, '_verbose_name'),
             'required' : self._required,
             'max_size' : self._max_size, 
             'choices' :  choices,
             'default' : self._default,
             'repeated' : self._repeated,
+            'type' : self.__class__.__name__,
           }
  
     def __init__(self, *args, **kwds):
@@ -367,7 +369,6 @@ class _BaseProperty(object):
   
         if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
            kwds['kind'] = factory(custom_kind)
-           
             
         super(_BaseProperty, self).__init__(*args, **kwds)
         
