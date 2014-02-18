@@ -42,7 +42,7 @@ class Message():
     self.subject = None
 
 
-class Template(ndb.BaseModel):
+class DomainTemplate(ndb.BaseModel):
   
   _kind = 57
   
