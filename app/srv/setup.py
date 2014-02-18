@@ -33,6 +33,7 @@ class Context():
   def __init__(self):
       self.input = {}
       self.name = None
+      self.transactional = None
  
 
 # this will be configuration for domain setup
@@ -239,9 +240,11 @@ class Engine:
     setup = context.setup.name
     
     if setup and get_system_setup(setup):
+      if context.setup.transactional is None:
+        context.setup.transactional = ndb.in_transaction()
       
       entity = Configuration(parent=context.auth.user.key, configuration_input=context.setup.input, setup=setup, state='active')
       entity.put()
       
-      taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=True, params={'configuration_key' : entity.key.urlsafe()})
+      taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=context.setup.transactional, params={'configuration_key' : entity.key.urlsafe()})
       
