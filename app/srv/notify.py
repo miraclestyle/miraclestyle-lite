@@ -47,15 +47,15 @@ class Template(ndb.BaseModel):
   _kind = 57
   
   name = ndb.SuperStringProperty('1', required=True) # description for template editors
-  action = ndb.SuperKeyProperty('2', kind='56', required=True) # action to which it subscribes
-  kind = ndb.SuperStringProperty('3') # not sure if this is usefull or not ?
-  condition = ndb.SuperPickleProperty('4', required=True) # condition which has to be satisfied in order for template to generate message instance
-  active = ndb.SuperBooleanProperty('5', default=True) # usefull for turnig it on/of
-  outlet = ndb.SuperStringProperty('6') # not sure if this should be here or should we create separate template classes for each outlet
-  message_sender = ndb.SuperPickleProperty('7') # not sure if this is usefull or not ?
-  message_reciever = ndb.SuperPickleProperty('8') # non compiled version of message receiver / not sure if it should be pickle
-  message_subject = ndb.SuperStringProperty('9', required=True) # non compiled version of message subject / not sure if it should be pickle
-  message_body = ndb.SuperTextProperty('10') # non compiled version of message body / not sure if it should be pickle
+  kind = ndb.SuperStringProperty('2', required=True) # kind to which action belongs
+  action = ndb.SuperKeyProperty('3', kind='56', required=True) # action to which it subscribes
+  condition = ndb.SuperStringProperty('4', required=True) # condition which has to be satisfied in order for template to generate message instance
+  active = ndb.SuperBooleanProperty('5', required=True, default=True) # usefull for turnig it on/of
+  outlet = ndb.SuperStringProperty('6', required=True, default='mail')
+  message_sender = ndb.SuperKeyProperty('7', kind='8', required=True) # domain user who will be impersonated as the message sender
+  message_recievers = ndb.SuperKeyProperty('8', kind='8', repeated=True) # non compiled version of message receiver / not sure if it should be pickle
+  message_subject = ndb.SuperStringProperty('9', required=True) # non compiled version of message subject
+  message_body = ndb.SuperTextProperty('10', required=True) # non compiled version of message body
   
   @classmethod
   def get_local_templates(cls, context):
