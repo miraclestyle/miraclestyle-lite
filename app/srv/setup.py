@@ -26,6 +26,12 @@ def register_system_setup(*setups):
     __SYSTEM_SETUPS[setup[0]] = setup[1]
     
 
+class Context():
+  
+  def __init__(self):
+      self.input = {}
+    
+
 # this will be configuration for domain setup
 class Setup():
 
@@ -234,5 +240,5 @@ class Engine:
       entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
       entity.put()
       
-      taskqueue.add(queue_name='setup', url='/run_configuration', transactional=True, {'configuration_key' : entity.key.urlsafe()})
+      taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=True, {'configuration_key' : entity.key.urlsafe()})
       

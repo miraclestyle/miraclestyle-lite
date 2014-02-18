@@ -21,7 +21,7 @@ class ArgumentError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, transaction # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, setup, transaction # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -30,6 +30,7 @@ class Context():
     self.rule = rule.Context()
     self.log = log.Context()
     self.transaction = transaction.Context()
+    self.setup = setup.Context()
   
   def error(self, key, value):
     if 'errors' not in self.output:
@@ -162,7 +163,7 @@ class Engine:
         context = cls.realtime_run(action, input)
         return context.output
       else:
-        taskqueue.add(queue_name='io', url='/io_engine_run', params=input)
+        taskqueue.add(queue_name='io', url='/task/io_engine_run', params=input)
         return None # Perhaps, here we should return a signal that task queue is running the task.
     else:
       output = {'errors': {'invalid_action': input.get('action_key')}}

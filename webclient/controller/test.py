@@ -4,13 +4,12 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from webclient.route import register
-from webclient.handler import Angular
+from webclient import handler
  
 from app import ndb
 from app.srv import io
 
-class Reset(Angular):
+class Reset(handler.Angular):
   
   def respond(self):
     
@@ -34,26 +33,26 @@ class Reset(Angular):
       
       return {'models' : [f.__name__ for f in models]}
 
-class Submitter(Angular):
+class Submitter(handler.Angular):
   
     def respond(self):
         return self.render('tests/submitter.html')
       
       
-class Endpoint(Angular):
+class Endpoint(handler.Angular):
     
     def respond(self):
         output = io.Engine.run(self.get_input())
         return output
       
-class Engine(Angular):
+class Engine(handler.Angular):
 
     def respond(self):      
         output = io.Engine.taskqueue_run(self.get_input())
         return output
          
  
-register(('/endpoint', Endpoint), 
+handler.register(('/endpoint', Endpoint), 
          ('/reset', Reset),
          ('/engine_run', Engine), 
          ('/submitter', Submitter))

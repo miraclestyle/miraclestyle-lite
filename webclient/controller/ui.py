@@ -4,16 +4,15 @@ Created on Feb 5, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from webclient.route import register
-from webclient.handler import Angular
+from webclient import handler
 
-class Home(Angular):
+class Home(handler.Angular):
   
   def respond(self):
       return {'hello' : 'world'}
       
       
-register(('/', Home))
+handler.register(('/', Home))
 
 
 

@@ -7,10 +7,8 @@ Created on Jul 15, 2013
 import os
 import cgi
 import json
-import time
 import webapp2
 import importlib
-import collections
   
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
@@ -21,7 +19,88 @@ from app.memcache import _local
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
-from webclient.route import get_routes
+
+from webapp2 import Route
+
+__ROUTES = []
+
+class InvalidRouteError(Exception):
+      pass
+  
+class AngularRoute(Route):
+    
+    """
+    Angular compatible route
+    """
+    
+    angular_path = None
+    angular_controller = None
+    angular_template = None
+    angular_config = {}
+    
+    def _angular_make_path(self, p):
+        p = p.replace('<', ':')
+        p = p.replace('>', '')
+        return p
+    
+    def _angular_make_controller(self, c):
+        if not isinstance(c, basestring):
+            c = c.__name__
+        li = c.split('.')
+        li_last = li[-1]
+        del li[-1]
+        
+        co = [k.title() for k in li]
+        co.append(li_last)
+        
+        return u"".join(co)
+      
+    def __init__(self, template, handler=None, name=None, angular_template=False, angular_config={}, build_only=False):
+        """Initializes this route."""
+        super(AngularRoute, self).__init__(template, handler, name, build_only)
+        
+        self.angular_config = angular_config
+        self.angular_path = self._angular_make_path(template)
+        self.angular_controller = self._angular_make_controller(handler)
+        self.angular_template = angular_template
+        
+def get_routes():
+  
+    global __ROUTES
+    
+    return __ROUTES        
+
+def register(*args):
+  
+    global __ROUTES
+ 
+    prefix = None
+  
+    for arg in args:
+        if isinstance(arg, basestring):
+           prefix = arg
+           continue
+       
+        if isinstance(arg, (list, tuple)):
+            if prefix:
+                if isinstance(arg, tuple):
+                   arg = list(arg)
+                try:
+                   arg[1] = '%s.%s' % (prefix, arg[1])
+                except KeyError:
+                   pass
+            arg = AngularRoute(*arg)
+        if isinstance(arg, dict):
+            if prefix:
+               arg['handler'] = '%s.%s' % (prefix, arg['handler'])
+            arg = AngularRoute(**arg)
+            
+        if not isinstance(arg, AngularRoute):
+           raise InvalidRouteError
+    
+        __ROUTES.append(arg)
+    return __ROUTES
+
  
 __WSGI_CONFIG = None
  
@@ -77,7 +156,7 @@ def wsgi_config(as_tuple=False):
        return tuple(__WSGI_CONFIG.items())
   
   
-class Handler(webapp2.RequestHandler):
+class Base(webapp2.RequestHandler):
     
     """
     General-purpose handler that comes with:
@@ -90,7 +169,7 @@ class Handler(webapp2.RequestHandler):
  
     def __init__(self, *args, **kwargs):
       
-        super(Handler, self).__init__(*args, **kwargs)
+        super(Base, self).__init__(*args, **kwargs)
         
         self.data = {}
         self.template = {}
@@ -106,15 +185,14 @@ class Handler(webapp2.RequestHandler):
   
   
     def initialize(self, request, response):
-        super(Handler, self).initialize(request, response)
+        super(Base, self).initialize(request, response)
  
         for key, value in self.request.params.items():
             if isinstance(value, cgi.FieldStorage):
               if 'blob-key' in value.type_options:
                   blob.Manager.field_storage_unused_blobs(value)
 
-        
-  
+         
     def send_json(self, data):
         """ sends `data` to json format, accepts anything json compatible """
         ent = 'application/json;charset=utf-8'
@@ -182,8 +260,11 @@ class Handler(webapp2.RequestHandler):
            
            auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
            
-           self.template['current_user'] = auth.User.current_user()
+           current_user = auth.User.current_user()
+           current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName'))
            
+           self.template['current_user'] = current_user
+ 
            csrf = self.template['current_user'].csrf
            
                           
@@ -208,7 +289,7 @@ class Handler(webapp2.RequestHandler):
          
  
      
-class Segments(Handler):
+class Segments(Base):
       """
        Segments handler behaves in the way that you can construct multi-function "view"
       """
@@ -219,7 +300,7 @@ class Segments(Handler):
              return getattr(self, f)(*args, **kwargs)
          
          
-class Angular(Handler):
+class Angular(Base):
     
      # angular handles data differently, `respond` method can return value and that value will be force-set into self.data
     

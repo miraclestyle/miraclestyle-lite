@@ -107,6 +107,13 @@ class User(ndb.BaseExpando):
         return d 
     
     @property
+    def is_taskqueue(self):
+       return memcache.temp_memory_get('_current_request_is_taskqueue')
+     
+    def set_taskqueue(self, is_it):
+       return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
+    
+    @property
     def root_admin(self):
        return self.primary_email in settings.ROOT_ADMINS
     

@@ -4,12 +4,11 @@ Created on Oct 14, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from webclient.route import register
-from webclient.handler import Angular
+from webclient import handler
 
 from app.srv import io
 
-class Apps(Angular):
+class Apps(handler.Angular):
   
   def respond(self):
  
@@ -24,7 +23,7 @@ class Apps(Angular):
       return output
     
 
-class Login(Angular):
+class Login(handler.Angular):
   
     def respond(self, provider=None):
       
@@ -46,7 +45,7 @@ class Login(Angular):
            return output
             
  
-class Logout(Angular):
+class Logout(handler.Angular):
     
     def respond(self):
       
@@ -64,7 +63,7 @@ class Logout(Angular):
         return output
             
     
-register((r'/login', Login, 'login'), 
+handler.register((r'/login', Login, 'login'), 
          (r'/login/<provider>', Login, 'login_provider'),
          (r'/apps', Apps, 'apps'), 
          (r'/logout', Logout, 'logout'))

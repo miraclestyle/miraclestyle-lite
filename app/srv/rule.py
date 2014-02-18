@@ -6,7 +6,7 @@ Created on Dec 20, 2013
 '''
 from app import ndb
 from app.lib.safe_eval import safe_eval
-from app.srv import event, log
+from app.srv import event, log, callback
 
 class ActionDenied(Exception):
     
@@ -232,12 +232,21 @@ class Engine:
       if not skip_user_roles:
         domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.rule.entity.key_namespace)
         domain_user = domain_user_key.get()
+        clean_roles = False
+        
         if domain_user and domain_user.state == 'accepted':
             roles = ndb.get_multi(domain_user.roles)
             for role in roles:
-              if role.active:
-                 role.run(context)
- 
+              if role is None:
+                clean_roles = True
+              else:   
+                if role.active:
+                   role.run(context)
+                   
+            if clean_roles:
+              context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : 'srv.rule.DomainUser'})
+              callback.Engine.run(context)
+            
         # copy 
         local_action_permissions = context.rule.entity._action_permissions.copy()
         local_field_permissions = context.rule.entity._field_permissions.copy()
@@ -451,6 +460,8 @@ class DomainUser(ndb.BaseModel):
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.is_taskqueue"),
+
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -482,7 +493,33 @@ class DomainUser(ndb.BaseModel):
                                  'roles' : ndb.SuperKeyProperty(kind=DomainRole, repeated=True),
                               }
                              ),
+                
+       'clean_roles' : event.Action(id='8-4',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='8', required=True),
+                              }
+                             ),
     }
+    
+    @classmethod
+    def clean_roles(cls, context):
+      
+        @ndb.transactional(xg=True)
+        def transaction():
+          
+            entity_key = context.input.get('key')
+            entity = entity_key.get()
+            
+            roles = ndb.get_multi(entity.roles)
+            
+            for i,role in enumerate(roles):
+                if role is None:
+                   entity.roles.pop(i)
+            entity.put()
+                
+        transaction()
+        
+        return context
  
     # Poziva novog usera u domenu
     @classmethod

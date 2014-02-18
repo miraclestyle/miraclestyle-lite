@@ -28,7 +28,6 @@ encoding//webclient/controller/task.py=utf-8
 encoding//webclient/controller/test.py=utf-8
 encoding//webclient/controller/ui.py=utf-8
 encoding//webclient/handler.py=utf-8
-encoding//webclient/route.py=utf-8
 encoding//webclient/util.py=utf-8
 encoding//webclient/webclient_settings.py=utf-8
 encoding//webclient/wsgi.py=utf-8
