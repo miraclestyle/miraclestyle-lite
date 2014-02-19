@@ -1,3 +1,71 @@
+##################### start ####################
+# -*- coding: utf-8 -*-
+'''
+Created on Jan 6, 2014
+
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+'''
+
+from app import ndb
+
+
+__SYSTEM_FILTERS = {}
+
+def get_system_filters(filter_keys):
+  global __SYSTEM_FILTERS
+  searches = []
+  for search_key in search_keys:
+    search_key = ndb.Key(Search, search_key)
+    searches.append(__SYSTEM_FILTERS.get(search_key.urlsafe()))
+
+def register_system_filters(*filters):
+  global __SYSTEM_FILTERS
+  for filter in filters:
+    __SYSTEM_FILTERS[filter.key.urlsafe()] = filter
+
+
+class Filter(ndb.BaseExpando):
+  
+  _kind = 56
+  
+  # root (namespace Domain)
+  
+  name = ndb.SuperStringProperty('1', required=True) # name that is visible on the link
+  category = ndb.SuperStringProperty('2', required=True) # under which navigation fieldset this item apears
+  kind = ndb.SuperStringProperty('3', required=True) # which model (entity kind) this filter affects
+  query = ndb.SuperJsonProperty('4', required=True) # query parameters that are passed to search function of the model
+  active = ndb.SuperBooleanProperty('5', default=True) # whether this item is active or not
+  
+  @classmethod
+  def get_local_filters(cls, filter_keys):
+    filters = []
+    active_filters = []
+    filter_keys_urlsafe = []
+    for filter_key in filter_keys:
+      filter_keys_urlsafe.append(ndb.Key(urlsafe=filter_key))
+    searches = ndb.get_multi(search_keys_urlsafe)
+    for filter in filters:
+      if filter.active:
+        active_filters.append(filter)
+    return active_filter
+  
+class Engine:
+  
+  @classmethod
+  def run(cls, context):
+    filter_keys = []
+    filters = []
+    domain_key = context.input.get('domain')
+    domain = domain_key.get()
+    entity = Filter(namespace=domain.key_namespace)
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    for filter_permission in context.rule.entity._filter_permissions:
+      if filter_permission.visible:
+        filter_keys.append(filter_permission.filter_key)
+    context.output['menus'] = get_system_filters(filter_keys)
+    context.output['menus'] = ndb.get_multi(filter_keys)
+#################################################################### end #####################################
 
 
 # primer funkcije za filtering
