@@ -3,4 +3,21 @@ total_storage_limit: 120M
 queue:
 - name: notify
   rate: 20/s
-  bucket_size: 40
+  #bucket_size:20
+  #max_concurrent_requests: 10
+  #retry_parameters:
+  #  min_backoff_seconds: 10
+  #  max_backoff_seconds: 200
+  #  max_doublings: 0
+  #   task_retry_limit: 7
+  #   task_age_limit: 2d
+  #target:
+ 
+- name: notify_send
+  rate: 20/s
+  
+- name: io
+  rate: 20/s
+ 
+- name: setup
+  rate: 20/s

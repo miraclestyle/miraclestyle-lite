@@ -105,8 +105,7 @@ class Engine:
     if outlet_command['outlet'] == 'mail':
        mail.send_mail(outlet_command['sender'], outlet_command['recipients'],
                       outlet_command['subject'], outlet_command['body'])
-  
-  
+   
   @classmethod
   def _templates(cls, queue, tasks, entity, user, templates):
     
