@@ -152,6 +152,15 @@ class _BaseModel():
       for k,v in dic.items():
           if isinstance(v, Key):
              dic[k] = v.urlsafe()
+ 
+      if hasattr(self, '_action_permissions'):
+         dic['_action_permissions'] = self._action_permissions
+      
+      if hasattr(self, '_field_permissions'):
+         dic['_field_permissions'] = self._field_permissions
+      
+      if hasattr(self, '_actions'):
+         dic['_actions'] = self._actions
          
       return dic
    

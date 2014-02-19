@@ -7,10 +7,12 @@ Created on Jan 6, 2014
 import hashlib
 import os
 
+from google.appengine.api import blobstore
+ 
 from app import ndb, settings, memcache, util
-from app.srv import event, rule
 from app.lib import oauth2
-from app.srv import log, setup
+from app.srv import event, rule, log, setup, blob
+
   
 class Context():
   
@@ -477,8 +479,27 @@ class Domain(ndb.BaseExpando):
     _actions = {
        'create' : event.Action(id='6-0',
                               arguments={
-                                 'name' : ndb.SuperStringProperty(required=True),
-                               
+                                 
+                                 # domain
+                                 'domain_name' : ndb.SuperStringProperty(required=True),
+                                 
+                                 # company
+                                 'company_name' : ndb.SuperStringProperty(required=True),
+                                 'company_logo' : ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
+                
+                                 # company expando
+                                 'company_country' : ndb.SuperKeyProperty(kind='15'),
+                                 'company_region' : ndb.SuperKeyProperty(kind='16'),
+                                 'company_city' : ndb.SuperStringProperty(),
+                                 'company_postal_code' : ndb.SuperStringProperty(),
+                                 'company_street' : ndb.SuperStringProperty(),
+                                 'company_email' : ndb.SuperStringProperty(),
+                                 'company_telephone' : ndb.SuperStringProperty(),
+                                 'company_currency' : ndb.SuperKeyProperty(kind='19'),
+                                 'company_paypal_email' : ndb.SuperStringProperty(),
+                                 'company_tracking_id' : ndb.SuperStringProperty(),
+                                 'company_location_exclusion' : ndb.SuperBooleanProperty(),
+                                                             
                               }
                              ),
                 
@@ -522,7 +543,7 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
                 
-       'list' : event.Action(id='6-5',
+       'search' : event.Action(id='6-5',
                               arguments={
                               }
                              ),
@@ -533,7 +554,9 @@ class Domain(ndb.BaseExpando):
                               }
                              ),
        'prepare' : event.Action(id='6-8',
-                              arguments={}
+                              arguments={
+                                 'upload_url' : ndb.SuperStringProperty(required=True)           
+                              }
                              ),
     }
  
@@ -572,8 +595,12 @@ class Domain(ndb.BaseExpando):
                raise rule.ActionDenied(context)
        
             context.setup.name = 'create_domain'
+            
+            # context setup variables
             context.setup.input = context.input.copy()
             context.setup.input['user'] = context.auth.user
+            context.setup.input['domain_primary_contact'] = context.auth.user.key
+            
             setup.Engine.run(context)
            
         transaction()
@@ -591,6 +618,8 @@ class Domain(ndb.BaseExpando):
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
+       
+      context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
       
       return context      
       
@@ -759,16 +788,31 @@ class Domain(ndb.BaseExpando):
        return context
       
     @classmethod
-    def list(cls, context):
-      
-        context.rule.entity = cls()
+    def search(cls, context):
+        
+        entity = cls(state='active')
+        context.rule.entity = entity
       
         rule.Engine.run(context, True)
         
         if not rule.executable(context):
            raise rule.ActionDenied(context)
+         
+        domain_users = rule.DomainUser.query(rule.DomainUser.user == context.auth.user.key).fetch(keys_only=True)
+        
+        domain_keys = [ndb.Key(urlsafe=domain_user.key.namespace()) for domain_user in domain_users]
+        
+        print domain_users
  
-        context.output['domains'] = cls.query().order(-cls.created).fetch()
+        entities = ndb.get_multi(domain_keys)
+        
+        for _entity in entities:
+            context.rule.entity = _entity
+            rule.Engine.run(context)
+            
+        context.rule.entity = entity # show perms for initial entity
+ 
+        context.output['entities'] = entities
               
         return context
         

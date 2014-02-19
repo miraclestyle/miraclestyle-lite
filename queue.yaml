@@ -13,7 +13,7 @@ queue:
   #   task_age_limit: 2d
   #target:
  
-- name: notify_send
+- name: notify-send
   rate: 20/s
   
 - name: io

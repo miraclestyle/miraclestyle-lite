@@ -50,6 +50,12 @@ class Engine(handler.Angular):
     def respond(self):      
         output = io.Engine.taskqueue_run(self.get_input())
         return output
+      
+    def after(self):
+      if not self.data:
+         self.data = {}
+         
+      self.send_json(self.data)
          
  
 handler.register(('/endpoint', Endpoint), 

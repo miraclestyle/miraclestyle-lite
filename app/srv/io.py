@@ -120,9 +120,13 @@ class Engine:
         
       if context.rule.entity:    
         context.output['entity'] = context.rule.entity.__todict__()
+        """
         context.output['entity']['_action_permissions'] = context.rule.entity._action_permissions
         context.output['entity']['_field_permissions'] = context.rule.entity._field_permissions
         context.output['entity']['_actions'] = context.rule.entity._actions
+        """ 
+        # this goes trough __todict__() cuz we cant make it work see @ app.srv.auth.Domain.search #L-808
+        
           
     except Exception as e:
       throw = True

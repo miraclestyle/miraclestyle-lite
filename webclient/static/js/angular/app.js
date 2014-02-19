@@ -8,7 +8,7 @@ angular.module('app.ui',
 	  ]
 );
 
-var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'checklist-model', 'app.ui'])
+var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    
@@ -157,11 +157,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
     };
 	
 	return {
+		notice : function (options)
+		{
+			var defaults = {
+				text : {
+					Yes : 'Ok',
+				}
+			};
+			
+			options = angular.extend(defaults, options);
+			
+			Confirm(options);
+		},
 		sure : function (options) {
 			
 			Confirm(options);
 		},
-		change : function (options) {
+		changes : function (options) {
 			
 			Confirm(options);
 		},
@@ -169,6 +181,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 	};
 }])
 .factory('Endpoint', ['$http', function ($http) {
+	
+	
+	var endpoint_url = '/endpoint';
 	
 	var _compile = function(action, model, data, config)
 	{
@@ -182,11 +197,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 	};
 	
 	return {
+		url : endpoint_url,
 		post : function(action, model, data, config)
 		{
 		    compiled = _compile(action, model, data, config);
 			
-			return $http.post('/endpoint', compiled[0], compiled[1]);
+			return $http.post(endpoint_url, compiled[0], compiled[1]);
 		},
 		get : function(action, model, data, config)
 		{
@@ -194,7 +210,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngStorage', 'ch
 		    
 		    compiled[1]['params'] = $.param(compiled[0]);
 			
-			return $http.get('/endpoint', compiled[1]);
+			return $http.get(endpoint_url, compiled[1]);
 		},
 	};
 }])

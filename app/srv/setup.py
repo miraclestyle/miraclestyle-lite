@@ -74,13 +74,13 @@ class DomainSetup(Setup):
     
   def execute_create_domain(self):
      # this creates new domain
-     input = self.config.next_operation_input
-     primary_contact = input.get('primary_contact')
+     input = self.config.configuration_input
+     primary_contact = input.get('domain_primary_contact')
      
      from app.srv import auth
      
      entity = auth.Domain(state='active')
-     entity.name = input.get('name')
+     entity.name = input.get('domain_name')
      entity.primary_contact = primary_contact
      entity.put()
      
@@ -180,6 +180,7 @@ class DomainSetup(Setup):
       
       entity = business.Company(namespace=namespace)
       entity.populate(**input)
+      entity.state = 'open'
       ndb.make_complete_name(entity, 'name', 'parent_record')
       entity.put()
        

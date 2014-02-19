@@ -20,13 +20,13 @@ MainApp
         resolve : {
         	apps : ['App', function (App) {
         		
-        		if (initdata['domains'])
+        		if (initdata['entities'])
         		{
-        			return initdata['domains'];
+        			return initdata['entities'];
         		}
         		
-        		return App.list().then(function (output) {
-					return output.data.domains;
+        		return App.search().then(function (output) {
+					return output.data.entities;
 				});
         	}]
         }

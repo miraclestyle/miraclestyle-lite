@@ -1,6 +1,6 @@
 <h1 class="fieldset with-button">
 	<span class="fieldset-text">Enterprise Apps</span>
-	<span class="fieldset-button"><a class="button" busy ng-click="manageApp()">New App</a></span>
+	<span class="fieldset-button"><a class="button" busy ng-click="createApp()">New App</a></span>
 </h1>
 <table class="table">
 			<thead>
@@ -15,7 +15,7 @@
 					<td>{{app.name}}</td>
 					<td>{{app.state}}</td>
 					<td class="text-right">
-						<button busy ng-click="manageApp(app)" class="button">
+						<button busy ng-click="updateApp(app)" class="button">
 							Edit
 						</button>
 					</td>

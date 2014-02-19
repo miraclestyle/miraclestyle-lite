@@ -160,7 +160,7 @@ class Engine:
     user = user_key.get()
     
     
-    queue = taskqueue.Queue(name='notify_send')
+    queue = taskqueue.Queue(name='notify-send')
     tasks = []
     
     # we are sending payload instead of "params", our server will parse that if it's formatted as json

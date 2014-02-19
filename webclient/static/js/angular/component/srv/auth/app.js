@@ -2,38 +2,74 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	function ($rootScope, $http, $location, $modal, Endpoint) {
 	 
 	return {
-		list : function ()
+		search : function ()
 		{
-			return Endpoint.post('list', 'srv.auth.Domain', {});
+			return Endpoint.post('search', 'srv.auth.Domain', {});
 		},
-		manage : function (app, apps)
+		create : function ()
+		{
+	    	var that = this;
+	        	 
+			var handle = function (output) {
+ 
+				var modalInstance = $modal.open({
+				      templateUrl: logic_template('srv/auth', 'app_create.html'),
+				      controller: function ($scope, $modalInstance, RuleEngine, Confirm) {
+				      	 
+					  	 $scope.rule = RuleEngine.factory(output);
+					  	 $scope.app = {};
+					  	 $scope.step = 1;
+					  	 $scope.upload_url = output.upload_url;
+					  	 
+					  	 $scope.nextStep = function(which_step)
+					  	 {
+					  	 	  $scope.step = which_step;
+					  	 };
+				 
+					     $scope.completed = function (data)
+					  	  { 
+				  	  		  if (data['errors'])
+					     	  {
+						     	  Confirm.notice({
+						     	  	 message : 'An error occurred, please try again.',
+						     	  });
+					     	  }
+					     	  else {
+						     	  	
+						     	  Confirm.notice({
+						     	  	 message : 'Your app is now in process of creation, you will recieve an e-mail as soon as the application is created.',
+						     	  	  
+						     	  });
+					     	  }
+		
+					  	  };
+					  	  
+						 $scope.cancel = function () {
+						    $modalInstance.dismiss('cancel');
+						 };
+						 
+					  }
+				    });
+		  
+			  };
+			 
+			Endpoint.post('prepare', 'srv.auth.Domain', {'upload_url' : Endpoint.url}).success(handle);
+			 
+		},
+		update : function (app, apps)
 	    {
 	    	var that = this;
 	        	
 	    	
 			var handle = function (output) {
-				 
-	      	    if (!app['key']) 
-			    app = output.entity;
-	  
-			    var action = 'create';
-			    
-			    	
-		  	    if (app['key'])
-		  	    {
-		  	    	
-		  	  	 action = 'update';
-		  	  	 
-		  	    }	
-		  	  				 
+ 
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'app_'+(action == 'update' ? 'manage' : 'setup')+'.html'),
+				      templateUrl: logic_template('srv/auth', 'app_update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				      	 
 					  	 $scope.rule = RuleEngine.factory(output);
-					  	 $scope.action = action;  
 					  	 $scope.app = app;
-					  	  
+				 
 					  	 $parentScope = $scope; 
 			  
 						 $scope.sudo = function ()
@@ -166,11 +202,9 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 				    });
 		  
 			  };
-			
-			
-			Endpoint.post((app['key'] ? 'read' : 'prepare'), 'srv.auth.Domain', app).success(handle);
-			
-  
+			 
+			Endpoint.post('read', 'srv.auth.Domain', app).success(handle);
+			 
 	}
 	
    };
@@ -184,10 +218,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	
 	$scope.toggleMainMenu(1);
 	
-	$scope.manageApp = function(app)
+	$scope.updateApp = function(app)
 	{
-		 if (!app) app = {};
-		 App.manage(app, $scope.apps);
+		 App.update(app, $scope.apps);
+	};
+	
+	$scope.createApp = function ()
+	{
+		 App.create();
 	};
  
 }])
