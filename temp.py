@@ -1,83 +1,72 @@
-################ setup.py start ################
+##################### start ####################
+# -*- coding: utf-8 -*-
+'''
+Created on Jan 6, 2014
 
-# system action is called by user, with supplied args that are required by the system action
-# system action runs setup.Engine.run() with all context parameters
-# setup.Engine creates instance of Configuration entity with parameters populated and as a child to the User entity.
-# parameters among the others, select the apropriate setup that will take care of the setup process
-# on every cron setup.Engine.run_configuration() is called that performs setup, step by step..
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+'''
 
-__SYSTEM_SETUPS = {}
+from app import ndb
 
-def get_system_setup(setup):
-  global __SYSTEM_SETUPS
-  return __SYSTEM_SETUPS.get(setup)
 
-def register_system_setup(*setups):
-  global __SYSTEM_SETUPS
-  for setup in setups:
-    __SYSTEM_SETUPS[setup['name']] = setup
+__SYSTEM_FILTERS = {}
 
-# this will be configuration for domain setup
-class DomainSetup():
-  
-  # this method should run in a transaction somehow
-  def run():
-    # steps that can handle domain setup:
-    # Domain.create() to create domain
-    # Domain.read() to validate that domain has been created so it can move to next step 
-    # DomainRole.create() to create admin role
-    # DomainRole.read() to validate that admin role has been created so it can move to next step
-    # DomainUser.invite() to invite user that created configuration
-    # DomainUser.read() to validate that user has been invited so it can move to next step
-    # DomainUser.accept() to accept user as domain memeber
-    # DomainUser.read() to validate that user has been accepted so it can move to next step 
-    # Company.create() to create company
-    # Company.read() .....
-    # Cataegories create....
-    
+def get_system_filters(filter_keys):
+  global __SYSTEM_FILTERS
+  searches = []
+  for search_key in search_keys:
+    search_key = ndb.Key(Search, search_key)
+    searches.append(__SYSTEM_FILTERS.get(search_key.urlsafe()))
 
-class Configuration(ndb.BaseExpando):
+def register_system_filters(*filters):
+  global __SYSTEM_FILTERS
+  for filter in filters:
+    __SYSTEM_FILTERS[filter.key.urlsafe()] = filter
+
+
+class Filter(ndb.BaseExpando):
   
-  _kind = 49
+  _kind = 56
   
-  # ancestor User
-  # key.id() = prefix_<user supplied value>
+  # root (namespace Domain)
   
-  configuration_input = ndb.SuperPickleProperty('1', required=True, compressed=False) # original user supplied input
-  setup = ndb.SuperPickleProperty('2', required=True, compressed=False) 
-  next_operation = ndb.SuperStringProperty('3', required=True)
-  next_operation_input = ndb.SuperPickleProperty('4', required=True, compressed=False) # recorded by setup engine
-  state = ndb.SuperStringProperty('5', required=True) # working, error, completed....
-  created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('7', auto_now=True)
+  name = ndb.SuperStringProperty('1', required=True) # name that is visible on the link
+  category = ndb.SuperStringProperty('2', required=True) # under which navigation fieldset this item apears
+  kind = ndb.SuperStringProperty('3', required=True) # which model (entity kind) this filter affects
+  query = ndb.SuperJsonProperty('4', required=True) # query parameters that are passed to search function of the model
+  active = ndb.SuperBooleanProperty('5', default=True) # whether this item is active or not
   
-  def get_active_configurations(cls):
-    configurations = cls.query(cls.state == 'active').fetch(50)
-    return configurations
+  @classmethod
+  def get_local_filters(cls, filter_keys):
+    filters = []
+    active_filters = []
+    filter_keys_urlsafe = []
+    for filter_key in filter_keys:
+      filter_keys_urlsafe.append(ndb.Key(urlsafe=filter_key))
+    searches = ndb.get_multi(search_keys_urlsafe)
+    for filter in filters:
+      if filter.active:
+        active_filters.append(filter)
+    return active_filter
   
-  def run(self):
-    self.setup.run(self)
-    
 class Engine:
   
   @classmethod
-  def run_configuration(cls, context):
-    configurations = Configuration.get_active_configurations()
-    for configuration in configurations:
-      configuration.run()
-  
-  @classmethod
   def run(cls, context):
-    # runs in transaction
-    setup = get_system_setup(context.input.get('setup'))
-    entity = Configuration(parent=context.auth.user.key, configuration_input=context.input, setup=setup, state='active')
+    filter_keys = []
+    filters = []
+    domain_key = context.input.get('domain')
+    domain = domain_key.get()
+    entity = Filter(namespace=domain.key_namespace)
     context.rule.entity = entity
     rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    entity.put()
+    for filter_permission in context.rule.entity._filter_permissions:
+      if filter_permission.visible:
+        filter_keys.append(filter_permission.filter_key)
+    context.output['menus'] = get_system_filters(filter_keys)
+    context.output['menus'] = ndb.get_multi(filter_keys)
+#################################################################### end #####################################
 
-################ setup.py end ################
 
 # primer funkcije za filtering
 # projection query should be enforced whenever posible
