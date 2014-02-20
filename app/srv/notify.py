@@ -229,6 +229,6 @@ register_system_templates(GlobalTemplate(name='Send domain link after domain is 
                                          action=event.Action.build_key('6-9'), # reference to Domain.create_complete action
                                          message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                          message_sender=settings.NOTIFY_EMAIL,
-                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.auth.notify.py #L-232. Thanks.',
+                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                          message_recievers=create_domain_notify_message_recievers))
   
