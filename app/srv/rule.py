@@ -570,7 +570,7 @@ class DomainUser(ndb.BaseModel):
               
               ndb.put_multi([domain_user, user])
               
-              context.log.entities.append((domain_user,))
+              context.log.entities.append((domain_user,), (user,)) # log user as well
               log.Engine.run(context)
  
            else:
@@ -607,7 +607,7 @@ class DomainUser(ndb.BaseModel):
           user.domains.remove(ndb.Key(urlsafe=entity.key_namespace()))
           user.put() # should we log this removal of domains?
           
-          context.log.entities.append((entity,))
+          context.log.entities.append((entity,), (user, ))
           log.Engine.run(context)
  
        transaction()
