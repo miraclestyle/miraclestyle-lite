@@ -139,7 +139,7 @@ class DomainSetup(Setup):
      user = self.config.parent_entity
      namespace = input.get('namespace')
     
-     domain_user = rule.DomainUser(namespace=namespace, user=user.key, id=user.key_id_str,
+     domain_user = rule.DomainUser(namespace=namespace, id=user.key_id_str,
                                name=user.primary_email, state='accepted',
                                roles=[input.get('role_key')])
      

@@ -437,9 +437,8 @@ class DomainUser(ndb.BaseModel):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:no - name
     name = ndb.SuperStringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
-    user = ndb.SuperKeyProperty('2', required=True)
-    roles = ndb.SuperKeyProperty('3', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
-    state = ndb.SuperStringProperty('4', required=True)# invited/accepted
+    roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
+    state = ndb.SuperStringProperty('3', required=True)# invited/accepted
     
     _default_indexed = False
     
@@ -564,7 +563,12 @@ class DomainUser(ndb.BaseModel):
                      roles.append(role.key)
                      
               domain_user.populate(name=name, user=user.key, state='invited', roles=roles)
-              domain_user.put()
+           
+              user.domains.append(domain.key)
+              
+              # write both domain_user, and user
+              
+              ndb.put_multi([domain_user, user])
               
               context.log.entities.append((domain_user,))
               log.Engine.run(context)
@@ -587,6 +591,10 @@ class DomainUser(ndb.BaseModel):
           entity_key = context.input.get('key')            
           entity = entity_key.get()
           
+          from app.srv import auth
+          
+          user = auth.User.build_key(entity.key.id()).get()
+          
           context.rule.entity = entity
           Engine.run(context)
           
@@ -595,6 +603,10 @@ class DomainUser(ndb.BaseModel):
              raise ActionDenied(context)
           
           entity.key.delete()
+          
+          user.domains.remove(ndb.Key(urlsafe=entity.key_namespace()))
+          user.put() # should we log this removal of domains?
+          
           context.log.entities.append((entity,))
           log.Engine.run(context)
  
