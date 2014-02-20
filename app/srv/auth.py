@@ -11,7 +11,7 @@ from google.appengine.api import blobstore
  
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, setup, blob, notify
+from app.srv import event, rule, log, setup, blob, notify, callback
 
   
 class Context():
@@ -609,19 +609,23 @@ class Domain(ndb.BaseExpando):
             
             if not rule.executable(context):
                raise rule.ActionDenied(context)
-       
-            context.setup.name = 'create_domain'
-            
+ 
             # context setup variables
-            context.setup.input = context.input.copy()
+            config_input = context.input.copy()
             
-            company_logo = context.input.get('company_logo')
+            company_logo = config_input.get('company_logo')
             
             blob.Manager.used_blobs(company_logo.image)
             
-            context.setup.input['domain_primary_contact'] = context.auth.user.key
+            config_input['domain_primary_contact'] = context.auth.user.key
             
-            setup.Engine.run(context)
+            config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
+            config.put()
+            
+            context.callback.inputs.append({'action_key' : 'setup_domain',
+                                            'configuration_key' : config.key.urlsafe()})
+            
+            callback.Engine.run(context)
            
         transaction()
             
@@ -801,19 +805,3 @@ class Domain(ndb.BaseExpando):
        transaction()
            
        return context
-     
-    @classmethod
-    def create_complete(cls, context):
-      
-       entity_key = context.input.get('key')
-       entity = entity_key.get()
-  
-       context.rule.entity = entity
-       context.notify.entity = entity
-       
-       rule.Engine.run(context, True)
-       
-       if not rule.executable(context):
-          raise rule.ActionDenied(context)
-        
-       notify.Engine.run(context)

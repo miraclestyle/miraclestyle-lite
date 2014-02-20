@@ -21,7 +21,7 @@ class Engine:
       queue = taskqueue.Queue(name='io')
       tasks = []
       for input in context.callback.inputs:
-          tasks.append(taskqueue.Task(url='/task/io_engine_run', params=input, transactional=context.callback.transactional))
+          tasks.append(taskqueue.Task(url='/task/io_engine_run', params=input))
       
       if tasks:
-        queue.add(tasks)
+        queue.add(tasks, transactional=context.callback.transactional)

@@ -17,19 +17,15 @@ class Reset(handler.Angular):
       from app import domain
       from app import opt
     
-      models = [srv.auth.Domain, srv.auth.User, srv.rule.DomainRole, srv.rule.DomainUser,
+      models = [srv.auth.Domain, srv.log.Record, srv.setup.Configuration, srv.auth.User, srv.rule.DomainRole, srv.rule.DomainUser,
                 domain.business.Company, domain.business.CompanyContent, domain.marketing.Catalog,
                 domain.marketing.CatalogImage, domain.marketing.CatalogPricetag, domain.product.Content,
                 domain.product.Instance, domain.product.InventoryAdjustment, domain.product.InventoryLog,
                 domain.product.Variant, domain.product.Template, opt.buyer.Address, opt.buyer.Collection, 
                 opt.misc.Content, opt.misc.ProductCategory, opt.misc.SupportRequest]
-      
-      keys = []
-      
+ 
       for mod in models:
-          keys.extend(mod.query().fetch(keys_only=True))
-      
-      ndb.delete_multi(keys)
+          ndb.delete_multi(mod.query().fetch(keys_only=True))
       
       return {'models' : [f.__name__ for f in models]}
 

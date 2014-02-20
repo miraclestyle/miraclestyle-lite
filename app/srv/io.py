@@ -4,10 +4,11 @@ Created on Dec 17, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import importlib
+
 from google.appengine.api import taskqueue
 from google.appengine.ext.db import datastore_errors
+
 from app import ndb
 from app.srv import event
 
@@ -21,7 +22,7 @@ class ArgumentError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, setup, transaction, notify # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, notify # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -29,8 +30,6 @@ class Context():
     self.auth = auth.Context()
     self.rule = rule.Context()
     self.log = log.Context()
-    self.transaction = transaction.Context()
-    self.setup = setup.Context()
     self.notify = notify.Context()
   
   def error(self, key, value):

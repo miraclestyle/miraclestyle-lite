@@ -8,11 +8,20 @@ import time
 
 from app import ndb, util
 
-from google.appengine.api import taskqueue
+from app.srv import event, log, notify
+ 
+__SERVICE = 'setup'
+__DEFAULT_ARGUMENTS = {
+  'configuration_key' : ndb.SuperKeyProperty(kind='57', required=True)
+}
 
-from app.srv import io
-
-# should implement it's own Context() probably, and be integrated in io.py Context.setup...
+# for every setup, there must be a unique action, because other services that depend on actions (like notify)
+# wont know how to react
+event.register_system_action(event.Action(id='setup_domain',
+                                          service=__SERVICE,
+                                          arguments=__DEFAULT_ARGUMENTS
+                                          ))
+ 
 
 __SYSTEM_SETUPS = {}
 
@@ -39,12 +48,15 @@ class Context():
 # this will be configuration for domain setup
 class Setup():
 
- def __init__(self, configuration):
+ def __init__(self, configuration, context):
+   
+    # upon init, we setup context and configuration instance for use in the methods below
     self.config = configuration
+    self.context = context
      
      
  def __get_next_operation(self):
-    # protected method of chooising the  next operation
+    # protected method of pointing out which operation will be called next
     if not self.config.next_operation:
        return 'execute_init'
      
@@ -56,10 +68,11 @@ class Setup():
     
     
  def run(self):
+   # this is called in while loop. it wont stop calling functions until the configuration state equals something else then "active"
    runner = getattr(self, self.__get_next_operation())
    
    if runner:
-      return ndb.transaction(runner, xg=True)
+      return ndb.transaction(runner, xg=True) # each function is called in seperate transaction
    
    
 class DomainSetup(Setup):
@@ -67,6 +80,7 @@ class DomainSetup(Setup):
   def execute_init(self):
     
     config_input = self.config.configuration_input
+    
     self.config.next_operation_input = {'name' : config_input.get('domain_name'), 
                                         'primary_contact' : config_input.get('domain_primary_contact')
                                        }
@@ -75,7 +89,7 @@ class DomainSetup(Setup):
      
     
   def execute_create_domain(self):
-     # this creates new domain
+ 
      input = self.config.configuration_input
      primary_contact = input.get('domain_primary_contact')
      
@@ -86,15 +100,16 @@ class DomainSetup(Setup):
      entity.primary_contact = primary_contact
      entity.put()
      
+     self.context.log.entities.append((entity,))
+     
+     log.Engine.run(self.context)
+     
      namespace = entity.key.urlsafe()
  
      self.config.next_operation_input = {'namespace' : namespace}
      self.config.next_operation = 'create_domain_role'
      self.config.put()
-
-     # build a role - possible usage of app.etc
-     
-     # from app.domain import business, marketing, product
+      
      
   def execute_create_domain_role(self):
      
@@ -185,6 +200,10 @@ class DomainSetup(Setup):
       entity.state = 'open'
       ndb.make_complete_name(entity, 'name', 'parent_record')
       entity.put()
+      
+      self.context.log.entities.append((entity,))
+      
+      log.Engine.run(self.context)
        
       self.config.next_operation = 'add_user_domain'
       self.config.next_operation_input = {'namespace' : namespace}
@@ -198,17 +217,25 @@ class DomainSetup(Setup):
      
      namespace = input.get('namespace')
      
-     user.domains.append(ndb.Key(urlsafe=namespace))
-     user.put()      
+     domain_key = ndb.Key(urlsafe=namespace)
+     domain = domain_key.get()
+     
+     user.domains.append(domain_key)
+     user.put()
+     
+     self.context.log.entities.append((user,))
+     
+     log.Engine.run(self.context)
+     
+     self.context.notify.entity = domain
+     
+     notify.Engine.run(self.context)
      
      self.config.state = 'completed'
      self.config.put()
-     
-     io.Engine.run({'action_key' : 'create_complete', 'key' : namespace, 'action_model' : 'srv.auth.Domain'})
-     
-     
+ 
 
-register_system_setup(('create_domain', DomainSetup))
+register_system_setup(('setup_domain', DomainSetup))
   
 
 class Configuration(ndb.BaseExpando):
@@ -216,8 +243,7 @@ class Configuration(ndb.BaseExpando):
   _kind = 57
   
   # ancestor User
-  # key.id() = prefix_<user supplied value>
-  
+ 
   configuration_input = ndb.SuperPickleProperty('1', required=True, compressed=False) # original user supplied input
   setup = ndb.SuperStringProperty('2', required=True) 
   next_operation = ndb.SuperStringProperty('3')
@@ -231,17 +257,18 @@ class Configuration(ndb.BaseExpando):
     configurations = cls.query(cls.state == 'active').fetch(50)
     return configurations
   
-  def run(self):
+  def run(self, context):
+    
     SetupClass = get_system_setup(self.setup)
-    setup = SetupClass(self)
+    setup = SetupClass(self, context)
     
     iterations = 100
     while self.state == 'active':
        iterations -= 1
-       setup.run()
+       setup.run() # keep runing until state is completed - upon failure, the task will be re-sent until its 100% submitted trough transaction
        time.sleep(1.5) # throughput demands one entity per sec, we will put 1.5
        
-       # dont do infinite loop, this is just for tests now.
+       # do not do infinite loops, this is just for tests now.
        if iterations < 1:
           util.logger('Stopped iteration at %s' % iterations)
           break
@@ -249,7 +276,7 @@ class Configuration(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def run_configuration(cls, context):
+  def run_configurations(cls, context):
     configurations = Configuration.get_active_configurations()
     for configuration in configurations:
       configuration.run()
@@ -257,16 +284,14 @@ class Engine:
   @classmethod
   def run(cls, context):
     # runs in transaction
-    setup = context.setup.name
+    configuration_key = context.input.get('configuration_key')
+    configuration = configuration_key.get()
     
-    if setup and get_system_setup(setup):
-      if context.setup.transactional is None:
-        context.setup.transactional = ndb.in_transaction()
-      
-      entity = Configuration(parent=context.auth.user.key, configuration_input=context.setup.input, setup=setup, state='active')
-      entity.put()
-      
-      new_task = taskqueue.add(queue_name='setup', url='/task/run_configuration', transactional=context.setup.transactional, params={'configuration_key' : entity.key.urlsafe()})
-      
-      return [entity, new_task]
+    util.logger('Start configuration.run(context)')
+    
+    context.auth.user = configuration.parent_entity
+    
+    configuration.run(context)
+    
+    util.logger('End configuration.run(context)')
       
