@@ -20,7 +20,7 @@ MainApp
         resolve : {
         	apps : ['App', function (App) {
         		
-        		if (initdata['entities'])
+        		if ('entities' in initdata)
         		{
         			return initdata['entities'];
         		}

@@ -7,17 +7,40 @@
 				<tr>
 					<th>Name</th>
 					<th>Status</th>
-					<th></th>
+					<th>Manage</th>
+					<th>Membership</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr ng-repeat="app in apps">
-					<td>{{app.name}}</td>
-					<td>{{app.state}}</td>
-					<td class="text-right">
-						<button busy ng-click="updateApp(app)" class="button">
+					<td>{{app.domain.name}}</td>
+					<td>{{app.domain.state}}</td>
+					<td>
+						<button ng-show="app.user.state == 'accepted'" class="button" type="button">
+							Launch
+						</button>
+						<button ng-show="app.domain.rule.executable.update" busy ng-click="updateApp(app.domain)" class="button">
 							Edit
 						</button>
+					</td>
+					<td>
+						<span ng-show="app.domain.primary_contact != current_user.key">
+							<button ng-show="app.user.state == 'accepted'" busy ng-click="removeFromApp(app)" class="button" type="button">
+									Remove
+							</button>
+							
+							<span ng-show="app.user.state != 'accepted'">
+								<button busy ng-click="acceptApp(app)" class="button" type="button">
+									Accept
+								</button>
+								<button busy ng-click="declineApp(app)" class="button" type="button">
+									Decline
+								</button>
+							</span>
+						</span>
+						
+						<span ng-show="app.domain.primary_contact == current_user.key">Owner</span>
+						
 					</td>
 				</tr>
 			</tbody>

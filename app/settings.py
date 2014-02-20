@@ -23,9 +23,11 @@ SALT = u'salt'
 # {SALT}-value-value2
 HASH_BINDER = u'-'
 
-DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEBUG = True # override because we are under development either way
+REAL_DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
+DEBUG = True # REAL_DEBUG override because we are under development either way
 DO_LOGS = True
+
+NOTIFY_EMAIL = 'vertazzar@gmail.com'
  
 # user settings
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'

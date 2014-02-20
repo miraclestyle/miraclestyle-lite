@@ -334,8 +334,7 @@ class DomainRole(Role):
              context.log.entities.append((entity, ))
              entity.key.delete()
              log.Engine.run(context)
-              
-             context.status(entity)
+        
           else:
              context.not_found()      
            
@@ -379,8 +378,7 @@ class DomainRole(Role):
         
         context.log.entities.append((entity,))
         log.Engine.run(context)
-           
-        context.status(entity)
+ 
       
     @classmethod
     def create(cls, context):
@@ -452,8 +450,8 @@ class DomainUser(ndb.BaseModel):
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.is_taskqueue"),
-                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.user.is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.user.is_taskqueue"),
 
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -570,8 +568,7 @@ class DomainUser(ndb.BaseModel):
               
               context.log.entities.append((domain_user,))
               log.Engine.run(context)
-              
-              context.status(domain_user)
+ 
            else:
              # raise custom exception!!!
               return context.error('user', 'user_not_active')      
@@ -600,9 +597,7 @@ class DomainUser(ndb.BaseModel):
           entity.key.delete()
           context.log.entities.append((entity,))
           log.Engine.run(context)
-
-          context.status(entity)
-          
+ 
        transaction()
         
        return context
@@ -627,9 +622,7 @@ class DomainUser(ndb.BaseModel):
            entity.put()
            context.log.entities.append((entity,))
            log.Engine.run(context)
-            
-           context.status(entity)
-           
+   
         transaction()
          
         return context
@@ -667,9 +660,7 @@ class DomainUser(ndb.BaseModel):
              
              context.log.entities.append((entity,))
              log.Engine.run(context)
-              
-             context.status(entity)
-             
+       
           transaction()
            
           return context

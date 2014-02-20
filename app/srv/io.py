@@ -21,7 +21,7 @@ class ArgumentError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, setup, transaction # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, setup, transaction, notify # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -31,6 +31,7 @@ class Context():
     self.log = log.Context()
     self.transaction = transaction.Context()
     self.setup = setup.Context()
+    self.notify = notify.Context()
   
   def error(self, key, value):
     if 'errors' not in self.output:

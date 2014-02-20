@@ -98,9 +98,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngS
 			
 			 
 		};
-		
-		if (data && data['entity'])
+	
+		if ((data && data['entity'] && data['entity']['_action_permissions']))
 		{
+			
 			this.update(data);
 	    }
 

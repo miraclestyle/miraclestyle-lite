@@ -314,9 +314,7 @@ class Catalog(ndb.BaseExpando):
         entity.name = context.input.get('name')   
         entity.company = context.input.get('company')
         entity.put()
-        
-        context.status(entity)
-        
+      
         context.log.entities.append((entity, ))
         log.Engine.run(context)
  
@@ -386,9 +384,7 @@ class Catalog(ndb.BaseExpando):
             
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
-             
-            context.status(entity)
-
+ 
         transaction()
         
         return context
@@ -417,8 +413,7 @@ class Catalog(ndb.BaseExpando):
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
              
-            context.status(entity)
-
+  
         transaction()
         
         return context
@@ -448,9 +443,7 @@ class Catalog(ndb.BaseExpando):
             
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
-             
-            context.status(entity)
-
+      
         transaction()
            
         return context
@@ -474,9 +467,7 @@ class Catalog(ndb.BaseExpando):
   
              context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
              log.Engine.run(context)
-              
-             context.status(entity)
-             
+          
          transaction()
          
          return context
@@ -586,9 +577,7 @@ class CatalogPricetag(ndb.BaseModel):
             
            context.log.entities.append((entity, ))
            log.Engine.run(context)
-              
-           context.status(entity)      
-
+ 
     
     @classmethod
     def create(cls, context):
@@ -639,8 +628,6 @@ class CatalogPricetag(ndb.BaseModel):
                context.log.entities.append((entity,))
                log.Engine.run(context)
  
-               context.status(entity)
-               
           transaction()
              
           return context

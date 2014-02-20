@@ -11,7 +11,7 @@ from google.appengine.api import blobstore
  
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, setup, blob
+from app.srv import event, rule, log, setup, blob, notify
 
   
 class Context():
@@ -44,8 +44,9 @@ class User(ndb.BaseExpando):
     emails = ndb.SuperStringProperty('2', repeated=True)# soft limit 100x
     state = ndb.SuperStringProperty('3', required=True)
     sessions = ndb.SuperLocalStructuredProperty(Session, '4', repeated=True)
-    created = ndb.SuperDateTimeProperty('5', auto_now_add=True)
-    updated = ndb.SuperDateTimeProperty('6', auto_now=True)
+    domains = ndb.SuperKeyProperty('5', kind='6', repeated=True)
+    created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
+    updated = ndb.SuperDateTimeProperty('7', auto_now=True)
  
     _default_indexed = False
   
@@ -93,7 +94,7 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
-       'account_manage' : event.Action(id='0-4',
+       'apps' : event.Action(id='0-4',
                               arguments={}
                              )
     }
@@ -203,13 +204,7 @@ class User(ndb.BaseExpando):
         for i in self.identities:
             if i.identity == identity_id:
                return i
-        return False  
-    
-    @classmethod
-    def account_manage(cls, context):
-        record = log.Record.query(log.Record.action==cls._actions.get('login').key, ancestor=context.auth.user.key).get()
-        context.output['registered'] = record.logged
-        return context
+        return False
       
     @classmethod
     def sudo(cls, context):
@@ -247,9 +242,7 @@ class User(ndb.BaseExpando):
             
             context.log.entities.append((user_to_update, {'message' : message, 'note' : note}))
             log.Engine.run(context)
-            
-            context.status(user_to_update)
-            
+ 
         transaction()
            
         return context
@@ -287,11 +280,35 @@ class User(ndb.BaseExpando):
             
             context.log.entities.append((current_user, ))
             log.Engine.run(context)
-            
-            context.output['updated_user'] = current_user
-            
+ 
         transaction()
            
+        return context
+      
+    @classmethod
+    def apps(cls, context):
+ 
+        context.rule.entity = context.auth.user
+      
+        rule.Engine.run(context, True)
+        
+        if not rule.executable(context):
+           raise rule.ActionDenied(context)
+ 
+        domains = ndb.get_multi(context.auth.user.domains)
+        entities = []
+        
+        for domain in domains:
+            context.rule.entity = domain
+            rule.Engine.run(context)
+            domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
+            domain_user = domain_user_key.get()
+            entities.append({'domain' : domain, 'user' : domain_user})
+            
+        context.rule.entity = context.auth.user # show perms for initial entity
+ 
+        context.output['entities'] = entities
+              
         return context
   
     
@@ -474,6 +491,9 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                             rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "True"),
+                                            
+                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.is_taskqueue"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), False, "not context.auth.user.is_taskqueue"),                          
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -558,6 +578,12 @@ class Domain(ndb.BaseExpando):
                                  'upload_url' : ndb.SuperStringProperty(required=True)           
                               }
                              ),
+                
+       'create_complete' : event.Action(id='6-9',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
+                              }
+                             ),
     }
  
     @property
@@ -567,17 +593,7 @@ class Domain(ndb.BaseExpando):
     @property
     def namespace_entity(self):
       return self
-      
-    def _unused__todict__(self):
-      
-      d = super(Domain, self).__todict__()
-      
-      d['users'] = rule.DomainUser.query(namespace=self.key_namespace).fetch()
-      d['roles'] = rule.DomainRole.query(namespace=self.key_namespace).fetch()
-      d['logs'] = log.Record.query(ancestor=self.key).fetch()
-      
-      return d
-    
+  
     @classmethod
     def create(cls, context):
  
@@ -598,7 +614,6 @@ class Domain(ndb.BaseExpando):
             
             # context setup variables
             context.setup.input = context.input.copy()
-            context.setup.input['user'] = context.auth.user
             context.setup.input['domain_primary_contact'] = context.auth.user.key
             
             setup.Engine.run(context)
@@ -665,9 +680,7 @@ class Domain(ndb.BaseExpando):
             
             context.log.entities.append((entity,))
             log.Engine.run(context)
-               
-            context.output['updated_domain'] = entity
-           
+ 
         transaction()
             
         return context
@@ -780,39 +793,23 @@ class Domain(ndb.BaseExpando):
 
            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
-            
-           context.status(entity)
-           
+ 
        transaction()
            
        return context
-      
+     
     @classmethod
-    def search(cls, context):
-        
-        entity = cls(state='active')
-        context.rule.entity = entity
+    def create_complete(cls, context):
       
-        rule.Engine.run(context, True)
+       entity_key = context.input.get('key')
+       entity = entity_key.get()
+  
+       context.rule.entity = entity
+       context.notify.entity = entity
+       
+       rule.Engine.run(context, True)
+       
+       if not rule.executable(context):
+          raise rule.ActionDenied(context)
         
-        if not rule.executable(context):
-           raise rule.ActionDenied(context)
-         
-        domain_users = rule.DomainUser.query(rule.DomainUser.user == context.auth.user.key).fetch(keys_only=True)
-        
-        domain_keys = [ndb.Key(urlsafe=domain_user.key.namespace()) for domain_user in domain_users]
-        
-        print domain_users
- 
-        entities = ndb.get_multi(domain_keys)
-        
-        for _entity in entities:
-            context.rule.entity = _entity
-            rule.Engine.run(context)
-            
-        context.rule.entity = entity # show perms for initial entity
- 
-        context.output['entities'] = entities
-              
-        return context
-        
+       notify.Engine.run(context)

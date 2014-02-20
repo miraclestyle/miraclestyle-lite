@@ -14,8 +14,8 @@ class Apps(handler.Angular):
  
       data = self.get_input()
       data.update({
-                   'action_model' : 'srv.auth.Domain',
-                   'action_key' : 'list',   
+                   'action_model' : 'srv.auth.User',
+                   'action_key' : 'apps',   
                   })
 
       output = io.Engine.run(data)  

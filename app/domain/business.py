@@ -188,9 +188,7 @@ class Company(ndb.BaseExpando):
          
             
          entity.put()
-            
-         context.status(entity)
-            
+ 
          context.log.entities.append((entity, ))
          log.Engine.run(context)
             
@@ -254,8 +252,6 @@ class Company(ndb.BaseExpando):
             
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
-             
-            context.status(entity)
  
         transaction()
       
@@ -281,9 +277,7 @@ class Company(ndb.BaseExpando):
             
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
-             
-            context.status(entity)
-
+   
       
         transaction()
         
@@ -384,9 +378,7 @@ class CompanyContent(ndb.BaseModel):
               entity.key.delete()
               context.log.entities.append((entity,))
               log.Engine.run(context)
-
-              context.status(entity)
-         
+ 
          transaction()
          
          return context
@@ -407,9 +399,7 @@ class CompanyContent(ndb.BaseModel):
         
        context.log.entities.append((entity, ))
        log.Engine.run(context)
-          
-       context.status(entity)
-       
+ 
     @classmethod
     def create(cls, context):
  

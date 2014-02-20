@@ -45,18 +45,18 @@ class Endpoint(handler.Angular):
         output = io.Engine.run(self.get_input())
         return output
       
-class Engine(handler.Angular):
-
-    def respond(self):      
-        output = io.Engine.taskqueue_run(self.get_input())
-        return output
-      
     def after(self):
       if not self.data:
          self.data = {}
          
       self.send_json(self.data)
-         
+      
+class Engine(handler.Angular):
+
+    def respond(self):      
+        output = io.Engine.taskqueue_run(self.get_input())
+        return output
+   
  
 handler.register(('/endpoint', Endpoint), 
          ('/reset', Reset),

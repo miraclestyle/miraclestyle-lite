@@ -4,7 +4,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	return {
 		search : function ()
 		{
-			return Endpoint.post('search', 'srv.auth.Domain', {});
+			return Endpoint.post('apps', 'srv.auth.User', {});
 		},
 		create : function ()
 		{
@@ -56,7 +56,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 			Endpoint.post('prepare', 'srv.auth.Domain', {'upload_url' : Endpoint.url}).success(handle);
 			 
 		},
-		update : function (app, apps)
+		update : function (app)
 	    {
 	    	var that = this;
 	        	
@@ -82,7 +82,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 								      windowClass : 'modal-medium',
 								      controller: function ($scope, $modalInstance, RuleEngine) {
 								      	  
-								      	  $scope.rule = RuleEngine(output);
+								      	  $scope.rule = RuleEngine.factory(output);
 								      	  $scope.log = {
 								      	  	'message' : '',
 								      	  	'note' : '',
@@ -96,7 +96,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 									  	  	Endpoint.post('sudo', 'srv.auth.Domain', $scope.log)
 										     .success(function (data) {
  
-										     	update(app, data['updated_domain']);
+										     	update(app, data['entity']);
 										     	
 										     	$parentScope.rule.update(data);
 										 
@@ -114,7 +114,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 						  
 							  };
 							 
-							Endpoint.post('read', 'srv.auth.Domain', app).success(handle);
+							Endpoint.post('read', 'srv.auth.Domain', {'key' : app['key']}).success(handle);
 							
 						 };
 						 
@@ -159,7 +159,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 						  
 							  };
 							 
-							Endpoint.post('read', 'srv.auth.Domain', app).success(handle);
+							Endpoint.post('read', 'srv.auth.Domain', {'key' : app['key']}).success(handle);
 							
 						 };
 						 
@@ -176,17 +176,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 					     $scope.save = function ()
 					  	  {
 					  	  	 
-					  	  	Endpoint.post(action, 'srv.auth.Domain', $scope.app)
+					  	  	Endpoint.post('update', 'srv.auth.Domain', {
+					  	  		'name' : $scope.app['name'],
+					  	  		'primary_contact' : $scope.app['primary_contact'],
+					  	  		'key' : $scope.app['key'],
+					  	  	})
 						     .success(function (data) {
-						     	 if (data['created_domain'])
-						     	 {
-						     	 	 update($scope.app, data['created_domain']);
-						     	 	 apps.unshift($scope.app);
-						     	 }
-						     	 else
-						     	 {
-						     	 	 update($scope.app, data['updated_domain']);
-						     	 }
+						     	  
+						     	 update($scope.app, data['entity']);
 								 
 								 $scope.rule.update(data);
 						 
@@ -203,24 +200,27 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 		  
 			  };
 			 
-			Endpoint.post('read', 'srv.auth.Domain', app).success(handle);
+			Endpoint.post('read', 'srv.auth.Domain', {'key' : app['key']}).success(handle);
 			 
 	}
 	
    };
 	 
 }])
-.controller('AppsPage', ['$scope', 'App', 'apps', 'Confirm', 
-	function ($scope, App, apps, Confirm) {
+.controller('AppsPage', ['$scope', 'App', 'apps', 'Confirm', 'RuleEngine',
+	function ($scope, App, apps, Confirm, RuleEngine) {
+		
+	angular.forEach(apps, function (app, key) {
+		app.domain.rule = RuleEngine.factory({'entity' : app.domain}); // compile rule engine for each domain in the list
+	});
  
-	
 	$scope.apps = apps;
 	
 	$scope.toggleMainMenu(1);
 	
 	$scope.updateApp = function(app)
 	{
-		 App.update(app, $scope.apps);
+		 App.update(app);
 	};
 	
 	$scope.createApp = function ()

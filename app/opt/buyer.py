@@ -112,8 +112,7 @@ class Address(ndb.BaseExpando):
              log.Engine.run(context)
              
              context.output['deleted'] = True
-             context.status(entity)
-             
+     
         transaction()
              
         return context
@@ -155,8 +154,7 @@ class Address(ndb.BaseExpando):
   
         context.log.entities.append((entity, ))
         log.Engine.run(context)
-               
-        context.status(entity)
+ 
               
     @classmethod
     def update(cls, context): # im not sure if we are going to perform updates on multiple address instances - this is a UI thing
@@ -268,9 +266,7 @@ class Collection(ndb.BaseModel):
             entity.key.delete()
             context.log.entities.append((entity,))
             log.Engine.run(context)
-
-            context.status(entity)
-            
+ 
        transaction()
            
        return context
@@ -307,8 +303,7 @@ class Collection(ndb.BaseModel):
          
         context.log.entities.append((entity, ))
         log.Engine.run(context)
-           
-        context.status(entity)
+    
      
     @classmethod
     def update(cls, context):

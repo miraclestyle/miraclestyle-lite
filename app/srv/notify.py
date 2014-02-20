@@ -12,6 +12,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from google.appengine.api import mail
 from google.appengine.api import taskqueue
 from app import ndb, settings
+from app.srv import event
 from app.lib.safe_eval import safe_eval
 
 
@@ -60,6 +61,28 @@ class Template(ndb.BaseModel):
   
   def run(self, entity, user):
     pass
+  
+class GlobalTemplate(Template):
+  
+  _kind = 59
+  
+  name = ndb.SuperStringProperty('6', required=True)
+  message_sender = ndb.SuperStringProperty('7', required=True) # domain user who will be impersonated as the message sender
+  message_recievers = ndb.SuperPickleProperty() # this is a function that will be called to retrieve all relevant information regarding the recievers
+  message_subject = ndb.SuperStringProperty('9', required=True) # non compiled version of message subject
+  message_body = ndb.SuperTextProperty('10', required=True) # non compiled version of message body
+ 
+  def run(self, entity, user):
+    
+      template_values = {'entity' : entity}
+      
+      return {
+              'recipients' : self.message_recievers(entity, user),
+              'sender' :  self.message_sender,
+              'body' : render_template(self.message_body, template_values),
+              'subject' : render_template(self.message_subject, template_values),
+              'outlet' : self.outlet,
+             }
 
 class DomainTemplate(Template):
   
@@ -119,7 +142,7 @@ class Engine:
     total_outlet_commands = len(outlet_commands)
     
     if total_outlet_commands:      
-       commands_per_task = math.ceil(total_outlet_commands / settings.OUTLET_TEMPLATES_PER_TASK)
+       commands_per_task = int(math.ceil(total_outlet_commands / settings.OUTLET_TEMPLATES_PER_TASK))
        
        for i in range(0, commands_per_task+1):
          
@@ -127,7 +150,7 @@ class Engine:
             
            for outlet_command in cursored_outlet_commands:
              
-               how_many_recipients = math.ceil(len(outlet_command['recipients']) / settings.OUTLET_RECIPIENTS_PER_TASK)
+               how_many_recipients = int(math.ceil(len(outlet_command['recipients']) / settings.OUTLET_RECIPIENTS_PER_TASK))
                
                copy_outlet_command = outlet_command.copy()
                
@@ -155,9 +178,12 @@ class Engine:
     
     action_key = ndb.Key(urlsafe=input.get('action_key'))
    
+    user_key_str = input.get('user_key')
+    user = None
     
-    user_key = ndb.Key(urlsafe=input.get('user_key'))
-    user = user_key.get()
+    if user_key_str:
+       user_key = ndb.Key(urlsafe=input.get('user_key'))
+       user = user_key.get()
     
     
     queue = taskqueue.Queue(name='notify-send')
@@ -179,15 +205,30 @@ class Engine:
   @classmethod
   def run(cls, context):
     
-    if context.notify.transacitonal is None:
+    if context.notify.transactional is None:
        context.notify.transacitonal = ndb.in_transaction()
+    
+    params = {'action_key' : context.action.key.urlsafe(),
+              'entity_key' : context.notify.entity.key.urlsafe()}
+    
+    if context.auth.user.key:
+       params['user_key'] = context.auth.user.key.urlsafe()
     
     new_task = taskqueue.add(queue_name='notify', url='/task/notify_prepare',
                              transactional=context.notify.transactional,
-                             params={'action_key' : context.action.key.urlsafe(),
-                                     'user_key' : context.auth.key.urlsafe(),
-                                     'entity_key' : context.notify.entity.key.urlsafe()})
+                             params=params)
       
     return new_task
-      
+  
+
+def create_domain_notify_message_recievers(entity, user):
+    primary_contact = entity.primary_contact.get()
+    return [primary_contact.primary_email]
+ 
+register_system_templates(GlobalTemplate(name='Send domain link after domain is completed',
+                                         action=event.Action.build_key('6-9'), # reference to Domain.create_complete action
+                                         message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
+                                         message_sender=settings.NOTIFY_EMAIL,
+                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.auth.notify.py #L-232. Thanks.',
+                                         message_recievers=create_domain_notify_message_recievers))
   

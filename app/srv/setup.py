@@ -10,6 +10,8 @@ from app import ndb, util
 
 from google.appengine.api import taskqueue
 
+from app.srv import io
+
 # should implement it's own Context() probably, and be integrated in io.py Context.setup...
 
 __SYSTEM_SETUPS = {}
@@ -125,7 +127,6 @@ class DomainSetup(Setup):
      config_input = self.config.configuration_input
      self.config.next_operation_input = {'namespace' : namespace, 
                                          'role_key' : role.key,
-                                         'user' : config_input.get('user'),
                                         }
      self.config.next_operation = 'create_domain_user'
      self.config.put()
@@ -135,8 +136,8 @@ class DomainSetup(Setup):
      from app.srv import rule
      
      input = self.config.next_operation_input
+     user = self.config.parent_entity
      namespace = input.get('namespace')
-     user = input.get('user')
     
      domain_user = rule.DomainUser(namespace=namespace, user=user.key, id=user.key_id_str,
                                name=user.primary_email, state='accepted',
@@ -144,6 +145,7 @@ class DomainSetup(Setup):
      
      domain_user.put()
      # context.log.entities.append((domain_user, ))
+
      
      config_input = self.config.configuration_input
      self.config.next_operation_input = {'namespace' : namespace}
@@ -184,9 +186,28 @@ class DomainSetup(Setup):
       ndb.make_complete_name(entity, 'name', 'parent_record')
       entity.put()
        
-      self.config.state = 'complete'
+      self.config.next_operation = 'add_user_domain'
+      self.config.next_operation_input = {'namespace' : namespace}
       self.config.put()
       
+      
+  def execute_add_user_domain(self):
+      
+     input = self.config.next_operation_input
+     user = self.config.parent_entity
+     
+     namespace = input.get('namespace')
+     
+     user.domains.append(ndb.Key(urlsafe=namespace))
+     user.put()      
+     
+     self.config.state = 'completed'
+     self.config.put()
+     
+     io.Engine.run({'action_key' : 'create_complete', 'key' : namespace, 'action_model' : 'srv.auth.Domain'})
+     
+     
+
 register_system_setup(('create_domain', DomainSetup))
   
 

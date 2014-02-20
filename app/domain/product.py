@@ -78,9 +78,8 @@ class Content(ndb.BaseModel):
           
          context.log.entities.append((entity, ))
          log.Engine.run(context)
-            
-         context.status(entity)        
-    
+  
+  
     @classmethod
     def create(cls, context):
  
@@ -128,9 +127,7 @@ class Content(ndb.BaseModel):
             entity.key.delete()
             context.log.entities.append((entity,))
             log.Engine.run(context)
-
-            context.status(entity)
-            
+ 
        transaction()
           
        return context
@@ -229,9 +226,8 @@ class Variant(ndb.BaseModel):
           
          context.log.entities.append((entity, ))
          log.Engine.run(context)
-            
-         context.status(entity)
-    
+ 
+ 
     @classmethod
     def create(cls, context):
  
@@ -280,8 +276,7 @@ class Variant(ndb.BaseModel):
               context.log.entities.append((entity,))
               log.Engine.run(context)
   
-              context.status(entity)
-              
+     
          transaction()
             
          return context
@@ -464,9 +459,7 @@ class Template(ndb.BaseExpando):
          for saved in entity.images:
              if saved:
                 blob.Manager.used_blobs(saved.image)
-                 
-         context.status(entity)
-
+ 
     
     @classmethod
     def create(cls, context):
@@ -530,9 +523,7 @@ class Template(ndb.BaseExpando):
             log.Engine.run(context)
             
             delete_images = entity.images
-
-            context.status(entity)
-            
+ 
        try:
           transaction()
           if delete_images:
@@ -755,9 +746,7 @@ class Instance(ndb.BaseExpando):
            for saved in entity.images:
                if saved:
                   blob.Manager.used_blobs(saved.image)
-                   
-           context.status(entity)
-          
+ 
        transaction()
        
        return context
@@ -849,8 +838,7 @@ class InventoryAdjustment(ndb.BaseModel):
              
             context.log.entities.append((entity, ))
             log.Engine.run(context)
-               
-            context.status(entity)
+ 
             context.output['product_inventory_log'] = product_inventory_log
            
         transaction()
