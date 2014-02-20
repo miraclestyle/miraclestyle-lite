@@ -1,4 +1,5 @@
 MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 
+
 	function ($rootScope, $http, $location, $modal, Endpoint) {
 	 
 	return {
@@ -28,18 +29,27 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 				 
 					     $scope.completed = function (data)
 					  	  { 
-				  	  		  if (data['errors'])
-					     	  {
-						     	  Confirm.notice({
-						     	  	 message : 'An error occurred, please try again.',
+				  	  		 if (data['entity']){
+						     	  	
+						     	  Confirm.notice('Your app is now in process of creation, you will recieve an e-mail as soon as the application is created.',
+						     	  function ()
+						     	  {
+						     	  	  $scope.cancel();
 						     	  });
 					     	  }
-					     	  else {
-						     	  	
-						     	  Confirm.notice({
-						     	  	 message : 'Your app is now in process of creation, you will recieve an e-mail as soon as the application is created.',
-						     	  	  
-						     	  });
+					     	  else
+					     	  {
+					     	  	
+					     	  	 Confirm.notice('An error occurred, please try again.', function () {
+					     	  	 	  Endpoint.post('prepare', 'srv.auth.Domain',
+					     	  	 	      {'upload_url' : Endpoint.url}).success(function (output) {
+					     	  	 	  	  
+					     	  	 	  	  $scope.upload_url = output.upload_url;
+					     	  	 	  });
+					     	  	 });
+						     	  
+						     	  
+					     	  	
 					     	  }
 		
 					  	  };

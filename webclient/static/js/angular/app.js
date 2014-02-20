@@ -153,14 +153,18 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngS
  
 		   }, function dismiss(what) {
  
-			    if (angular.isFunction(options[what])) options[what]();
+			    if (angular.isFunction(options['callbacks'][what])) options['callbacks'][what]();
 		   });
     };
 	
 	return {
-		notice : function (options)
+		notice : function (message, ok, options)
 		{
 			var defaults = {
+				message : message,
+				callbacks : {
+					Yes : ok,
+				},
 				text : {
 					Yes : 'Ok',
 				}
@@ -170,11 +174,40 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngS
 			
 			Confirm(options);
 		},
-		sure : function (options) {
+		sure : function (yes, no, options) {
+			
+			var defaults = {
+				message : 'Are you sure you want to proceed with this action?',
+				callbacks : {
+					Yes : ok,
+					No : no,
+				},
+				text : {
+					Yes : 'Yes',
+					No : 'No',
+				}
+			};
+			
+			options = angular.extend(defaults, options);
 			
 			Confirm(options);
+			
 		},
-		changes : function (options) {
+		changes : function (ok, no, options) {
+			
+			var defaults = {
+				message : 'Do you want to save your changes before leaving?',
+				callbacks : {
+					Yes : ok,
+					No : no,
+				},
+				text : {
+					Yes : 'Yes',
+					No : 'No',
+				}
+			};
+			
+			options = angular.extend(defaults, options);
 			
 			Confirm(options);
 		},

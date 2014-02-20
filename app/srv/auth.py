@@ -614,6 +614,11 @@ class Domain(ndb.BaseExpando):
             
             # context setup variables
             context.setup.input = context.input.copy()
+            
+            company_logo = context.input.get('company_logo')
+            
+            blob.Manager.used_blobs(company_logo.image)
+            
             context.setup.input['domain_primary_contact'] = context.auth.user.key
             
             setup.Engine.run(context)
@@ -758,8 +763,7 @@ class Domain(ndb.BaseExpando):
            
            if not rule.executable(context):
               raise rule.ActionDenied(context)
- 
-           
+  
            entity.state = context.input.get('state')
            entity.put()
            
