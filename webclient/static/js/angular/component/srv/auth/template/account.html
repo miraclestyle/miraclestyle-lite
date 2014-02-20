@@ -1,11 +1,7 @@
 <form ng-submit="save()">
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
-	
-	
-	
- <div ng-init="isopen=true" accordion vertical="true" type="navType">
-  <div is-open="isopen" accordion-group heading="Account">
+ 
   	<h2 class="fieldset">General</h2>
 	<div class="form-control">
 		<label class="form-label">ID</label>
@@ -64,46 +60,8 @@
 	
 	
 	</div>
-	
-    <div accordion-group heading="Apps">
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Status</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-hide="app.state == 'removed'" ng-repeat="app in apps">
-					<td>{{app.name}}</td>
-					<td>{{app.state}}</td>
-					<td>
-						<a ng-click="removeFromApp(app)" ng-hide="app.state != 'accepted'" class="button" href="javascript:;">
-							Remove
-						</a>
-						
-						<span ng-hide="app.state != 'invited'">
-							
-							<a ng-click="acceptApp(app)" class="button" href="javascript:;">
-								Accept
-							</a>
-							
-							<a ng-click="declineApp(app)" class="button" href="javascript:;">
-								Decline
-							</a>
-							
-						</span>
-						
-					</td>
-				</tr>
-			</tbody>
-		</table>
-    </div>
-	
-	</div>
-	  
-  </div>
+ 
+ 
  
  
 </div>
