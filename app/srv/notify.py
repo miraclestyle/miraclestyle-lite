@@ -11,8 +11,9 @@ from jinja2.sandbox import SandboxedEnvironment
 
 from google.appengine.api import mail
 from google.appengine.api import taskqueue
+
 from app import ndb, settings
-from app.srv import event
+from app.srv import rule
 from app.lib.safe_eval import safe_eval
 
 
@@ -46,17 +47,17 @@ def render_template(template_as_string, values={}):
  
     
 class Template(ndb.BasePoly):
-  
-  kind = ndb.SuperStringProperty('1', required=True) # kind to which action belongs
-  action = ndb.SuperKeyProperty('2', kind='56', required=True) # action to which it subscribes
-  condition = ndb.SuperStringProperty('3', required=True) # condition which has to be satisfied in order for template to generate message instance
-  active = ndb.SuperBooleanProperty('4', required=True, default=True) # usefull for turnig it on/of
-  outlet = ndb.SuperStringProperty('5', required=True, default='mail')
+ 
+  action = ndb.SuperKeyProperty('1', kind='56', required=True) # action to which it subscribes
+  condition = ndb.SuperStringProperty('2', required=True) # condition which has to be satisfied in order for template to generate message instance
+  active = ndb.SuperBooleanProperty('3', required=True, default=True) # usefull for turnig it on/of
+  outlet = ndb.SuperStringProperty('4', required=True, default='mail')
  
   @classmethod
-  def get_local_templates(cls, action_key):
+  def get_local_templates(cls, entity, action_key):
     templates = cls.query(cls.active == True,
-                          cls.action == action_key).fetch()
+                          cls.action == action_key,
+                          namespace=entity.key_namespace).fetch()
     return templates
   
   def run(self, entity, user):
@@ -66,11 +67,11 @@ class GlobalTemplate(Template):
   
   _kind = 59
   
-  name = ndb.SuperStringProperty('6', required=True)
-  message_sender = ndb.SuperStringProperty('7', required=True) # domain user who will be impersonated as the message sender
-  message_recievers = ndb.SuperPickleProperty() # this is a function that will be called to retrieve all relevant information regarding the recievers
-  message_subject = ndb.SuperStringProperty('9', required=True) # non compiled version of message subject
-  message_body = ndb.SuperTextProperty('10', required=True) # non compiled version of message body
+  name = ndb.SuperStringProperty('5', required=True)
+  message_sender = ndb.SuperStringProperty('6', required=True) # domain user who will be impersonated as the message sender
+  message_recievers = ndb.SuperPickleProperty('7') # this is a function that will be called to retrieve all relevant information regarding the recievers
+  message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
+  message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
  
   def run(self, entity, user):
     
@@ -88,24 +89,30 @@ class DomainTemplate(Template):
   
   _kind = 58
   
-  name = ndb.SuperStringProperty('6', required=True) # description for template editors
-  message_sender = ndb.SuperKeyProperty('7', kind='8', required=True) # domain user who will be impersonated as the message sender
-  message_recievers = ndb.SuperKeyProperty('8', kind='8', repeated=True) # non compiled version of message receiver / not sure if it should be pickle
-  message_subject = ndb.SuperStringProperty('9', required=True) # non compiled version of message subject
-  message_body = ndb.SuperTextProperty('10', required=True) # non compiled version of message body
+  name = ndb.SuperStringProperty('5', required=True) # description for template editors
+  message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender
+  message_reciever = ndb.SuperKeyProperty('7', kind='60', repeated=True) # DomainRole.key
+  message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
+  message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
  
   def run(self, entity, user):
+    
+    from app.srv import auth # circular avoid, this will be avoided by placing these templates in app.etc.setup
     
     values = {'user' : user, 'entity' : entity}
     
     if safe_eval(self.condition, values):
       
-      domain_users = ndb.get_multi(self.message_recievers)
+      domain_users = rule.DomainUser.query(rule.DomainUser.roles.IN(self.message_reciever), 
+                                           namespace=self.message_reciever.namespace()).fetch()
       
-      users = ndb.get_multi([reciever.user for reciever in domain_users])
+      users_async = ndb.get_multi_async([auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
  
-      domain_sender = self.message_sender.get()
-      domain_sender_user = domain_sender.user.get()
+      domain_sender_user_key = auth.User.build_key(long(self.message_sender.id()))
+      domain_sender_user_async = domain_sender_user_key.get_async()
+      
+      users = users_async.get_result()
+      domain_sender_user = domain_sender_user_async.get_result()
       
       template_values = {'entity' : entity}
       
@@ -193,8 +200,9 @@ class Engine:
     templates = get_system_templates(action_key)
     
     cls._templates(queue, tasks, entity, user, templates)
-     
-    templates = DomainTemplate.get_local_templates(action_key)
+    
+    # instead of DomainTemplate it should run Template cuz its polymodel?
+    templates = Template.get_local_templates(entity, action_key)
     
     cls._templates(queue, tasks, entity, user, templates)
     

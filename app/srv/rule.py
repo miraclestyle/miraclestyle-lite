@@ -273,17 +273,17 @@ class GlobalRole(Role):
 
 class DomainRole(Role):
   
-    _kind = 56
+    _kind = 60
   
     _global_role = GlobalRole(permissions=[
-                                            ActionPermission('56', event.Action.build_key('56-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', event.Action.build_key('56-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', event.Action.build_key('56-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('56', event.Action.build_key('56-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
-       'create' : event.Action(id='56-0',
+       'create' : event.Action(id='60-0',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
@@ -292,22 +292,22 @@ class DomainRole(Role):
                               }
                              ),
                 
-       'update' : event.Action(id='56-3',
+       'update' : event.Action(id='60-3',
                               arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='56', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='60', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'permissions' : ndb.SuperJsonProperty(required=True),
                                  'active' : ndb.SuperBooleanProperty(default=True),
                               }
                              ),
                 
-       'delete' : event.Action(id='56-1',
+       'delete' : event.Action(id='60-1',
                               arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='56', required=True),
+                                 'key' : ndb.SuperKeyProperty(kind='60', required=True),
                               }
                              ),
                 
-       'list' : event.Action(id='56-2',
+       'list' : event.Action(id='60-2',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
@@ -437,16 +437,19 @@ class DomainUser(ndb.BaseModel):
     # mozda bude trebalo jos indexa u zavistnosti od potreba u UIUX
     # composite index: ancestor:no - name
     name = ndb.SuperStringProperty('1', required=True)# ovo je deskriptiv koji administratoru sluzi kako bi lakse spoznao usera
-    roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
+    roles = ndb.SuperKeyProperty('2', kind=DomainRole, indexed=True, repeated=True)# vazno je osigurati da se u ovoj listi ne nadju duplikati rola, jer to onda predstavlja security issue!!
     state = ndb.SuperStringProperty('3', required=True)# invited/accepted
     
     _default_indexed = False
     
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            
                                             ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str"),
-                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True, "(context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "(context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+
+                                            
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),

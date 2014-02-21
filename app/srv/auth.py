@@ -299,10 +299,21 @@ class User(ndb.BaseExpando):
         entities = []
         
         for domain in domains:
+          
+            # rule engine run on domain
             context.rule.entity = domain
             rule.Engine.run(context)
+            
             domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
             domain_user = domain_user_key.get()
+            
+            # rule engine on domain user as well...
+            
+            context.rule.entity = domain_user
+            rule.Engine.run(context)
+            
+            #print (context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)
+      
             entities.append({'domain' : domain, 'user' : domain_user})
             
         context.rule.entity = context.auth.user # show perms for initial entity
@@ -476,7 +487,6 @@ class Domain(ndb.BaseExpando):
     updated = ndb.SuperDateTimeProperty('3', auto_now=True)
     created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
     state = ndb.SuperStringProperty('5', required=True)
-   
     
     _default_indexed = False
     
@@ -489,12 +499,9 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True, "not context.auth.user.is_guest"),
                                             rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "True"),
                                             
-                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.is_taskqueue"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), False, "not context.auth.user.is_taskqueue"),                          
-                                          ])
+                                            ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
        'create' : event.Action(id='6-0',
@@ -562,11 +569,7 @@ class Domain(ndb.BaseExpando):
                                  'note' : ndb.SuperTextProperty(required=True),
                               }
                              ),
-                
-       'search' : event.Action(id='6-5',
-                              arguments={
-                              }
-                             ),
+ 
                 
        'read' : event.Action(id='6-7',
                               arguments={
@@ -576,12 +579,6 @@ class Domain(ndb.BaseExpando):
        'prepare' : event.Action(id='6-8',
                               arguments={
                                  'upload_url' : ndb.SuperStringProperty(required=True)           
-                              }
-                             ),
-                
-       'create_complete' : event.Action(id='6-9',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
     }

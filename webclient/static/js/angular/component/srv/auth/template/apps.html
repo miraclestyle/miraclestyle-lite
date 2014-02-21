@@ -17,8 +17,8 @@
 					<td>{{app.domain.state}}</td>
 
 					<td>
-						<span ng-show="app.domain.primary_contact != current_user.key">
-							<button ng-show="app.user.state == 'accepted'" busy ng-click="removeFromApp(app)" class="button" type="button">
+			 
+							<button ng-show="app.user.state == 'accepted' && app.user.rule.executable.remove" busy ng-click="removeFromApp(app)" class="button" type="button">
 									Remove
 							</button>
 							
@@ -30,9 +30,9 @@
 									Decline
 								</button>
 							</span>
-						</span>
+					 
 						
-						<span ng-show="app.domain.primary_contact == current_user.key">Owner</span>
+						<span ng-show="!app.user.rule.executable.remove">Owner</span>
 						
 					</td>
 					
