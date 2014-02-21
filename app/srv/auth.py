@@ -311,9 +311,7 @@ class User(ndb.BaseExpando):
             
             context.rule.entity = domain_user
             rule.Engine.run(context)
-            
-            #print (context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)
-      
+    
             entities.append({'domain' : domain, 'user' : domain_user})
             
         context.rule.entity = context.auth.user # show perms for initial entity
