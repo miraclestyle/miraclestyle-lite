@@ -7,7 +7,7 @@ Created on Feb 17, 2014
 import time
 import datetime
 
-from app import ndb, util
+from app import ndb, util, settings
 
 from app.srv import event, log, notify
  
@@ -24,12 +24,17 @@ event.register_system_action(event.Action(id='setup_domain',
                                           ))
 
 # this method should perhaps be incorporated in DomainSetup class ?
+
+# it could, however this code then must be below DomainSetup class
 def create_domain_notify_message_recievers(entity, user):
     primary_contact = entity.primary_contact.get()
     return [primary_contact.primary_email]
 
 # this registration call should perhaps be incorporated in DomainSetup constructor ?
-notify.register_system_templates(GlobalTemplate(name='Send domain link after domain is completed',
+
+# if we do that this function will be called every time the DomainSetup.__init__() is called, and that is alot 
+# because this should be called only once upon module import
+notify.register_system_templates(notify.GlobalTemplate(name='Send domain link after domain is completed',
                                          action=event.Action.build_key('setup_domain'), # reference to setup domain action implementation
                                          message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                          message_sender=settings.NOTIFY_EMAIL,
