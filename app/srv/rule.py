@@ -445,6 +445,7 @@ class DomainUser(ndb.BaseModel):
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
