@@ -9,62 +9,58 @@ Created on Jan 6, 2014
 from app import ndb
 
 
-__SYSTEM_FILTERS = {}
+__SYSTEM_WIDGETS = {}
 
-def get_system_filters(filter_keys):
-  global __SYSTEM_FILTERS
-  searches = []
-  for search_key in search_keys:
-    search_key = ndb.Key(Search, search_key)
-    searches.append(__SYSTEM_FILTERS.get(search_key.urlsafe()))
+def get_system_widgets(role_keys):
+  global __SYSTEM_WIDGETS
+  widgets = []
+  for role_key in role_keys:
+    widgets.append(__SYSTEM_WIDGETS.get(role_key.urlsafe()))
 
-def register_system_filters(*filters):
-  global __SYSTEM_FILTERS
-  for filter in filters:
-    __SYSTEM_FILTERS[filter.key.urlsafe()] = filter
+def register_system_widgets(*widgets):
+  global __SYSTEM_WIDGETS
+  for widget in widgets:
+    __SYSTEM_WIDGETS[widget.role.urlsafe()] = widget
 
-
-class Filter(ndb.BaseExpando):
+class Widget(ndb.BaseExpando):
   
   _kind = 56
   
   # root (namespace Domain)
   
-  name = ndb.SuperStringProperty('1', required=True) # name that is visible on the link
-  category = ndb.SuperStringProperty('2', required=True) # under which navigation fieldset this item apears
-  kind = ndb.SuperStringProperty('3', required=True) # which model (entity kind) this filter affects
-  query = ndb.SuperJsonProperty('4', required=True) # query parameters that are passed to search function of the model
-  active = ndb.SuperBooleanProperty('5', default=True) # whether this item is active or not
+  name = ndb.SuperStringProperty('1', required=True) # name of the fieldset
+  sequence = ndb.SuperIntegerProperty('2', required=True) # global sequence for ordering purposes
+  active = ndb.SuperBooleanProperty('3', default=True) # whether this item is active or not
+  role = ndb.SuperKeyProperty('4', kind=DomainRole, required=True) # to which role this group is attached
+  search_form = ndb.SuperBooleanProperty('5', default=True) # whether this group is search form or set of filter buttons/links
+  filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   @classmethod
-  def get_local_filters(cls, filter_keys):
-    filters = []
-    active_filters = []
-    filter_keys_urlsafe = []
-    for filter_key in filter_keys:
-      filter_keys_urlsafe.append(ndb.Key(urlsafe=filter_key))
-    searches = ndb.get_multi(search_keys_urlsafe)
-    for filter in filters:
-      if filter.active:
-        active_filters.append(filter)
-    return active_filter
+  def get_local_widgets(cls, roles):
+    return cls.query(cls.active == True,
+                     cls.role IN (roles)).order(cls.sequence).fetch()
+  
+class Filter(ndb.BaseExpando):
+  
+  _kind = 56
+  
+  # Local structured property
+  
+  name = ndb.SuperStringProperty('1', required=True) # name that is visible on the link
+  kind = ndb.SuperStringProperty('3', required=True) # which model (entity kind) this filter affects
+  query = ndb.SuperJsonProperty('4', required=True) # query parameters that are passed to search function of the model
   
 class Engine:
   
   @classmethod
   def run(cls, context):
-    filter_keys = []
-    filters = []
     domain_key = context.input.get('domain')
     domain = domain_key.get()
-    entity = Filter(namespace=domain.key_namespace)
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    for filter_permission in context.rule.entity._filter_permissions:
-      if filter_permission.visible:
-        filter_keys.append(filter_permission.filter_key)
-    context.output['menus'] = get_system_filters(filter_keys)
-    context.output['menus'] = ndb.get_multi(filter_keys)
+    domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
+    domain_user = domain_user_key.get()
+    context.output['menu'] = get_system_widgets(domain_user.roles)
+    context.output['menu'].extend(Widget.get_local_widgets(domain_user.roles))
+
 #################################################################### end #####################################
 
 
