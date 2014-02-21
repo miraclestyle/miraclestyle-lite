@@ -45,7 +45,7 @@ def render_template(template_as_string, values={}):
     return from_string_template.render(values)
  
     
-class Template(ndb.BaseModel):
+class Template(ndb.BasePoly):
   
   kind = ndb.SuperStringProperty('1', required=True) # kind to which action belongs
   action = ndb.SuperKeyProperty('2', kind='56', required=True) # action to which it subscribes
@@ -219,16 +219,3 @@ class Engine:
                              params=params)
       
     return new_task
-  
-
-def create_domain_notify_message_recievers(entity, user):
-    primary_contact = entity.primary_contact.get()
-    return [primary_contact.primary_email]
- 
-register_system_templates(GlobalTemplate(name='Send domain link after domain is completed',
-                                         action=event.Action.build_key('setup_domain'), # reference to setup domain action implementation
-                                         message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
-                                         message_sender=settings.NOTIFY_EMAIL,
-                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
-                                         message_recievers=create_domain_notify_message_recievers))
-  
