@@ -45,7 +45,7 @@ def render_template(template_as_string, values={}):
     return from_string_template.render(values)
  
     
-class Template(ndb.BaseModel):
+class Template(ndb.BasePoly):
   
   kind = ndb.SuperStringProperty('1', required=True) # kind to which action belongs
   action = ndb.SuperKeyProperty('2', kind='56', required=True) # action to which it subscribes
