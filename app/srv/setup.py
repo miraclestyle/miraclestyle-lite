@@ -5,6 +5,7 @@ Created on Feb 17, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import time
+import datetime
 
 from app import ndb, util
 
@@ -254,7 +255,8 @@ class Configuration(ndb.BaseExpando):
   
   @classmethod
   def get_active_configurations(cls):
-    configurations = cls.query(cls.state == 'active').fetch(50)
+    time_difference = datetime.datetime.now()-datetime.timedelta(minutes=15)
+    configurations = cls.query(cls.state == 'active', cls.updated < time_difference).fetch(50)
     return configurations
   
   def run(self, context):
@@ -276,10 +278,11 @@ class Configuration(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def run_configurations(cls, context):
+  def crun_run(cls, context):
     configurations = Configuration.get_active_configurations()
     for configuration in configurations:
-      configuration.run()
+      context.auth.user = configuration.parent_entity
+      configuration.run(context)
   
   @classmethod
   def run(cls, context):
