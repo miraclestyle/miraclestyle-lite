@@ -22,6 +22,12 @@ event.register_system_action(event.Action(id='setup_domain',
                                           arguments=__DEFAULT_ARGUMENTS
                                           ))
 
+# this method should perhaps be incorporated in DomainSetup class ?
+def create_domain_notify_message_recievers(entity, user):
+    primary_contact = entity.primary_contact.get()
+    return [primary_contact.primary_email]
+
+# this registration call should perhaps be incorporated in DomainSetup constructor ?
 notify.register_system_templates(GlobalTemplate(name='Send domain link after domain is completed',
                                          action=event.Action.build_key('setup_domain'), # reference to setup domain action implementation
                                          message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
