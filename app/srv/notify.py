@@ -91,7 +91,7 @@ class DomainTemplate(Template):
   
   name = ndb.SuperStringProperty('5', required=True) # description for template editors
   message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender
-  message_reciever = ndb.SuperKeyProperty('7', kind='60', repeated=True) # DomainRole.key
+  message_reciever = ndb.SuperKeyProperty('7', kind='60', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
  
