@@ -65,6 +65,8 @@ class Journal(ndb.BaseExpando):
   
   # root (namespace Domain)
   # key.id() = prefix_<user supplied value>
+  # key.id() = company.id() + '-' + <user supplied value>
+  # key.id defines constraint of unique journal code (<user supplied value> part of the key.id) per company
   
   name = ndb.SuperStringProperty('1', required=True)
   company = ndb.SuperKeyProperty('3', kind='44', required=True)
