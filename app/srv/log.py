@@ -70,4 +70,3 @@ class Engine:
       ndb.transaction(lambda: log(context))
     else:
       log(context)
- 
