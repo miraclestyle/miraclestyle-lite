@@ -26,7 +26,7 @@ class Action(ndb.BaseExpando):
   _kind = 56
   
   # root (namespace Domain)
-  # key.id() = code.code
+  # key.id() = <user supplied value> ?
   
   name = ndb.SuperStringProperty('1', required=True)
   arguments = ndb.SuperPickleProperty('2') # This is dictionary.
@@ -42,4 +42,3 @@ class Action(ndb.BaseExpando):
       return action
     else:
       return None
- 
