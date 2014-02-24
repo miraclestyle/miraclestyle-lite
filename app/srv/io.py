@@ -120,7 +120,7 @@ class Engine:
         
       if context.rule.entity:    
         context.output['entity'] = context.rule.entity
-        # this goes trough __todict__() cuz we cant make it work see @ app.srv.auth.Domain.search #L-808
+        # this goes trough __todict__() cuz we cant make it work see @ app.srv.auth.User.apps #L-808
         
           
     except Exception as e:

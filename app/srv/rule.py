@@ -11,12 +11,6 @@ from app.srv import event, log, callback
 class ActionDenied(Exception):
     
     def __init__(self, context):
-       # its better to be called action_denied, cuz it will look in response errors like
-       """
-        'errors' : {
-          'action_denied' : 'action_key_urlsafe',
-        }
-       """
        self.message = {'action_denied' : context.action.key.urlsafe()}
        
 
@@ -280,6 +274,10 @@ class DomainRole(Role):
                                             ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+                                            
+                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {

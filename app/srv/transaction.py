@@ -16,49 +16,8 @@ class Context:
  
       self.group = None
       self.entities = collections.OrderedDict()
-
-
-__SYSTEM_PLUGINS = []
-
-def get_system_plugins(journal, context):
-    # gets registered system journals
-    global __SYSTEM_PLUGINS
     
-    plugins = []
- 
-    for plugin in __SYSTEM_PLUGINS:
-        if journal.key == plugin.key.parent() and context.action.key in plugin.subscriptions:
-           plugins.append(plugin)
-           
-    return plugins
-  
-def register_system_plugins(*args):
-    global __SYSTEM_PLUGINS
-    
-    __SYSTEM_PLUGINS.extend(args)
-    
-            
-__SYSTEM_JOURNALS = []
-
-def get_system_journals(context):
-    # gets registered system journals
-    global __SYSTEM_JOURNALS
-    
-    journals = []
-    
-    if context.action:
-      for journal in __SYSTEM_JOURNALS:
-          if context.action.key in journal.subscriptions:
-             journals.append(journal)
- 
-    return journals
-  
-  
-def register_system_journals(*args):
-    global __SYSTEM_JOURNALS
-    __SYSTEM_JOURNALS.extend(args)
-    
-    
+      
 class Journal(ndb.BaseExpando):
   
   _kind = 49
@@ -67,6 +26,7 @@ class Journal(ndb.BaseExpando):
   # key.id() = prefix_<user supplied value>
   # key.id() = company.id() + '-' + <user supplied value>
   # key.id defines constraint of unique journal code (<user supplied value> part of the key.id) per company
+  # instead of active prop, there will be state prop, that can handle: draft, active, decommissioned states 
   
   name = ndb.SuperStringProperty('1', required=True)
   company = ndb.SuperKeyProperty('3', kind='44', required=True)
@@ -120,14 +80,12 @@ class Plugin(ndb.BasePolyExpando):
   sequence = ndb.SuperIntegerProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', default=True)
   subscriptions = ndb.SuperKeyProperty('3', kind='56', repeated=True)
-  company = ndb.SuperKeyProperty('4', kind='44', required=True)
-
+ 
   @classmethod
   def get_local_plugins(cls, journal, context):
       plugins = cls.query( 
                           cls.active == True, 
                           cls.subscriptions == context.action.key,
-                          cls.company == context.input.get('company'),
                           ancestor=journal.key).order(cls.sequence).fetch()
       return plugins
 
@@ -309,8 +267,7 @@ class Engine:
  
   @classmethod
   def run(cls, context):
-    journals = get_system_journals(context)
-    journals.extend(Journal.get_local_journals(context))
+    journals = Journal.get_local_journals(context)
         
     for journal in journals:
       journal.run(context)

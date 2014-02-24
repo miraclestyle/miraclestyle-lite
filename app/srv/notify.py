@@ -15,8 +15,7 @@ from google.appengine.api import taskqueue
 from app import ndb, settings
 from app.srv import rule
 from app.lib.safe_eval import safe_eval
-
-
+ 
 __SYSTEM_TEMPLATES = []
 
 def get_system_templates(action_key):
@@ -47,11 +46,12 @@ def render_template(template_as_string, values={}):
  
     
 class Template(ndb.BasePoly):
+  
+  _kind = 61
  
   action = ndb.SuperKeyProperty('1', kind='56', required=True) # action to which it subscribes
   condition = ndb.SuperStringProperty('2', required=True) # condition which has to be satisfied in order for template to generate message instance
   active = ndb.SuperBooleanProperty('3', required=True, default=True) # usefull for turnig it on/of
-  outlet = ndb.SuperStringProperty('4', required=True, default='mail')
  
   @classmethod
   def get_local_templates(cls, entity, action_key):
@@ -59,11 +59,9 @@ class Template(ndb.BasePoly):
                           cls.action == action_key,
                           namespace=entity.key_namespace).fetch()
     return templates
+ 
   
-  def run(self, entity, user):
-    pass
-  
-class GlobalTemplate(Template):
+class CustomNotify(Template):
   
   _kind = 59
   
@@ -72,6 +70,7 @@ class GlobalTemplate(Template):
   message_recievers = ndb.SuperPickleProperty('7') # this is a function that will be called to retrieve all relevant information regarding the recievers
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+  outlet = ndb.SuperStringProperty('10', required=True, default='mail')
  
   def run(self, entity, user):
     
@@ -85,7 +84,7 @@ class GlobalTemplate(Template):
               'outlet' : self.outlet,
              }
 
-class DomainTemplate(Template):
+class MailNotify(Template):
   
   _kind = 58
   
@@ -121,20 +120,64 @@ class DomainTemplate(Template):
               'sender' : domain_sender_user.primary_email,
               'body' : render_template(self.message_body, template_values),
               'subject' : render_template(self.message_subject, template_values),
-              'outlet' : self.outlet,
+              'outlet' : 'mail',
+             }
+       
+       
+class HttpNotify(Template):
+  
+  _kind = 62
+  
+  name = ndb.SuperStringProperty('5', required=True) # description for template editors
+  message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender
+  message_reciever = ndb.SuperStringProperty('7', kind='60', required=True) # DomainRole.key
+  message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
+  message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+ 
+  def run(self, entity, user):
+    
+    from app.srv import auth # circular avoid, this will be avoided by placing these templates in app.etc.setup
+    
+    values = {'user' : user, 'entity' : entity}
+    
+    if safe_eval(self.condition, values):
+ 
+      domain_sender_user_key = auth.User.build_key(long(self.message_sender.id()))
+      domain_sender_user = domain_sender_user_key.get()
+ 
+      template_values = {'entity' : entity}
+      
+      return {
+              'recipients' : [self.message_reciever], # must be a list to comply to Engine._templates
+              'sender' : domain_sender_user.primary_email,
+              'body' : render_template(self.message_body, template_values),
+              'subject' : render_template(self.message_subject, template_values),
+              'entity_key' : entity.key.urlsafe(),
+              'outlet' : 'http_notify',
              }
  
     
 class Engine:
+
+  @classmethod
+  def execute_http_notify(cls, outlet_command):
+      pass 
+  
+  @classmethod
+  def execute_mail(cls, outlet_command):
+      mail.send_mail(outlet_command['sender'], outlet_command['recipients'],
+                      outlet_command['subject'], outlet_command['body'])
   
   @classmethod
   def send(cls, input):
     
     outlet_command = input.get('data')
     
-    if outlet_command['outlet'] == 'mail':
-       mail.send_mail(outlet_command['sender'], outlet_command['recipients'],
-                      outlet_command['subject'], outlet_command['body'])
+    callback = getattr(cls, 'execute_%s' % outlet_command['outlet'])
+    
+    if callback:
+       callback(outlet_command)
+
    
   @classmethod
   def _templates(cls, queue, tasks, entity, user, templates):

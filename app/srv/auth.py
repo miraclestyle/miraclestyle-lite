@@ -11,7 +11,7 @@ from google.appengine.api import blobstore
  
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, setup, blob, notify, callback
+from app.srv import event, rule, log, setup, blob, callback
 
   
 class Context():

@@ -8,8 +8,7 @@ import time
 import datetime
 
 from app import ndb, util, settings
-
-from app.srv import event, log, notify
+from app.srv import event, log, notify, nav
  
 __SERVICE = 'setup'
 __DEFAULT_ARGUMENTS = {
@@ -34,7 +33,7 @@ def create_domain_notify_message_recievers(entity, user):
 
 # if we do that this function will be called every time the DomainSetup.__init__() is called, and that is alot 
 # because this should be called only once upon module import
-notify.register_system_templates(notify.GlobalTemplate(name='Send domain link after domain is completed',
+notify.register_system_templates(notify.CustomNotify(name='Send domain link after domain is completed',
                                          action=event.Action.build_key('setup_domain'), # reference to setup domain action implementation
                                          message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                          message_sender=settings.NOTIFY_EMAIL,
@@ -124,7 +123,7 @@ class DomainSetup(Setup):
      
      namespace = entity.key.urlsafe()
  
-     self.config.next_operation_input = {'namespace' : namespace}
+     self.config.next_operation_input = {'domain_key' : entity.key.urlsafe()}
      self.config.next_operation = 'create_domain_role'
      self.config.put()
       
@@ -132,7 +131,7 @@ class DomainSetup(Setup):
   def execute_create_domain_role(self):
      
      input = self.config.next_operation_input
-     namespace = input.get('namespace')
+     namespace = input.get('domain_key')
      permissions = []
      
      # from all objects specified here, the ActionPermission will be built. So the role we are creating
@@ -152,13 +151,12 @@ class DomainSetup(Setup):
                                                         executable=True,
                                                         condition='True'))
      
-     role = rule.DomainRole(namespace=namespace, name='Administrators', permissions=permissions)
+     role = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
      role.put()
      
      # context.log.entities.append((role, ))
-     
-     config_input = self.config.configuration_input
-     self.config.next_operation_input = {'namespace' : namespace, 
+ 
+     self.config.next_operation_input = {'domain_key' : namespace, 
                                          'role_key' : role.key,
                                         }
      self.config.next_operation = 'create_domain_user'
@@ -170,7 +168,7 @@ class DomainSetup(Setup):
      
      input = self.config.next_operation_input
      user = self.config.parent_entity
-     namespace = input.get('namespace')
+     namespace = input.get('domain_key')
     
      domain_user = rule.DomainUser(namespace=namespace, id=user.key_id_str,
                                name=user.primary_email, state='accepted',
@@ -181,7 +179,7 @@ class DomainSetup(Setup):
 
      
      config_input = self.config.configuration_input
-     self.config.next_operation_input = {'namespace' : namespace}
+     self.config.next_operation_input = {'domain_key' : namespace}
      other_info = ('name',
                    'logo',
                    'state',                                         
@@ -211,7 +209,7 @@ class DomainSetup(Setup):
       
       input = self.config.next_operation_input
       
-      namespace = input.pop('namespace')
+      namespace = input.pop('domain_key')
       
       entity = business.Company(namespace=namespace)
       entity.populate(**input)
@@ -223,8 +221,19 @@ class DomainSetup(Setup):
       
       log.Engine.run(self.context)
        
+      self.config.next_operation = 'create_widget'
+      self.config.next_operation_input = {'domain_key' : namespace}
+      self.config.put()
+      
+      
+  def execute_create_widget(self):
+    
+      input = self.config.next_operation_input
+      
+      # nav.Widget(id='...', name='...', filters=[nav.Filter, nav.Filter, nav.Filter])
+       
       self.config.next_operation = 'add_user_domain'
-      self.config.next_operation_input = {'namespace' : namespace}
+      self.config.next_operation_input = {'domain_key' : input.get('domain_key')}
       self.config.put()
       
       
@@ -233,7 +242,7 @@ class DomainSetup(Setup):
      input = self.config.next_operation_input
      user = self.config.parent_entity
      
-     namespace = input.get('namespace')
+     namespace = input.get('domain_key')
      
      domain_key = ndb.Key(urlsafe=namespace)
      domain = domain_key.get()
@@ -295,7 +304,7 @@ class Configuration(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def crun_run(cls, context):
+  def cron_run(cls, context):
     configurations = Configuration.get_active_configurations()
     for configuration in configurations:
       context.auth.user = configuration.parent_entity
