@@ -61,6 +61,9 @@ class User(ndb.BaseExpando):
                                                 rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                
+                                                rule.FieldPermission('0', 'identities', True, True, True, 'True') # by default user can manage identities no problem
+                                               
                                                ])
     
     _actions = {
@@ -262,19 +265,19 @@ class User(ndb.BaseExpando):
  
             primary_email = context.input.get('primary_email')
             disassociate = context.input.get('disassociate')
- 
-
-            for identity in current_user.identities:
-                if primary_email:
-                    identity.primary = False
-                    if identity.email == primary_email:
-                       identity.primary = True
-                       
-                identity.associated = True
-                 
-                if disassociate:  
-                    if identity.identity in disassociate:
-                       identity.associated = False
+            
+            if rule.writable(context, 'identities'): # checks if identities prop is writable?
+              for identity in current_user.identities:
+                  if primary_email:
+                      identity.primary = False
+                      if identity.email == primary_email:
+                         identity.primary = True
+                         
+                  identity.associated = True
+                   
+                  if disassociate:  
+                      if identity.identity in disassociate:
+                         identity.associated = False
     
             current_user.put()
             
@@ -498,6 +501,9 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "True"),
+  
+                                            rule.FieldPermission('6', 'name', True, True, True, 'True'), #  these might need context.rule.entity.state == 'active' and inversion?
+                                            rule.FieldPermission('6', 'primary_contact', True, True, True, 'True'), # these might need context.rule.entity == 'active' and inversion?
                                             
                                             ])
     # unique action naming, possible usage is '_kind_id-manage'

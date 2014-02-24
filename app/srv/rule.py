@@ -89,7 +89,7 @@ class FieldPermission(Permission):
              'visible' : self.visible, 'required' : self.required, 'condition' : self.condition}
     
     
-  def run(self, context):
+  def run(self, role, context):
  
     if (self.kind == context.rule.entity.get_kind()) and (self.field in context.rule.entity.get_fields()) and (safe_eval(self.condition, {'context' : context})):
       if (self.writable != None):

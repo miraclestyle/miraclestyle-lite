@@ -47,9 +47,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 					     	  	 	  	  $scope.upload_url = output.upload_url;
 					     	  	 	  });
 					     	  	 });
-						     	  
-						     	  
-					     	  	
+						     	 
 					     	  }
 		
 					  	  };
@@ -224,8 +222,6 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 		app.domain.rule = RuleEngine.factory({'entity' : app.domain}); // compile rule engine for each domain in the list
 		app.user.rule = RuleEngine.factory({'entity' : app.user});
 	});
-	
-	console.log(apps);
  
 	$scope.apps = apps;
 	

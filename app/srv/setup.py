@@ -8,7 +8,7 @@ import time
 import datetime
 
 from app import ndb, util, settings
-from app.srv import event, log, notify, nav
+from app.srv import event, log, notify, nav, rule
  
 __SERVICE = 'setup'
 __DEFAULT_ARGUMENTS = {
@@ -113,8 +113,17 @@ class DomainSetup(Setup):
      from app.srv import auth
      
      entity = auth.Domain(state='active')
-     entity.name = input.get('domain_name')
-     entity.primary_contact = primary_contact
+     
+     self.context.rule.entity = entity
+     
+     rule.Engine.run(self.context, True)
+     
+     if rule.writable(self.context, 'name'):
+        entity.name = input.get('domain_name')
+     
+     if rule.writable(self.context, 'primary_contact'):
+        entity.primary_contact = primary_contact
+        
      entity.put()
      
      self.context.log.entities.append((entity,))
@@ -123,7 +132,7 @@ class DomainSetup(Setup):
      
      namespace = entity.key.urlsafe()
  
-     self.config.next_operation_input = {'domain_key' : entity.key.urlsafe()}
+     self.config.next_operation_input = {'domain_key' : namespace}
      self.config.next_operation = 'create_domain_role'
      self.config.put()
       
@@ -136,7 +145,7 @@ class DomainSetup(Setup):
      
      # from all objects specified here, the ActionPermission will be built. So the role we are creating
      # will have all action permissions - taken `_actions` per model
-     from app.srv import auth, rule
+     from app.srv import auth
      from app.domain import business, marketing, product
 
      objects = [auth.Domain, rule.DomainRole, rule.DomainUser, business.Company, business.CompanyContent,

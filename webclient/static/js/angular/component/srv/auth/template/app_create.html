@@ -1,4 +1,4 @@
-<form ng-attr-action="{{upload_url}}" ng-upload="completed(content)" name="manage_app" ng-submit="save()">
+<form ng-attr-action="{{upload_url}}" ng-upload="completed(content)" name="manage_app">
 	
 <input type="hidden" name="action_key" value="create" />
 <input type="hidden" name="action_model" value="srv.auth.Domain" />
@@ -17,18 +17,7 @@
 			</div>
 		</div>
 	</div>
-	
-	<!--
-	<div class="form-control">
-		<label class="form-label">Primary Contact</label>
-		<div class="form-input">
-			<select ng-required="rule.arguments['create'].domain_primary_contact.required" ui-select2 ng-model="app.domain_primary_contact" data-placeholder="Select primary contact for this App">
-				    <option value="{{current_user.key}}">{{current_user.primary_email}}</option>
-			</select>
-		</div>
-	</div>-->
-	
- 
+  
 </div>
 
 
