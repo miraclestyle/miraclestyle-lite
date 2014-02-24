@@ -10,9 +10,28 @@ TEMPLATE_CACHE = 0
 
 SESSION_USER_KEY = 'usr'
 
-ANGULAR_MODULES = ['ui-router', 'ngStorage', 'ngUpload', 'transition', 'collapse', 'accordion', 'modal', 'select2',
-                   'busy', 'checklist']
-ANGULAR_COMPONENTS = ['home/home', 'srv/auth/account', 'srv/auth/app', 'opt/buyer/buyer']
+ANGULAR_MODULES = ['ui-router', 
+                   'ngStorage', 
+                   'ngUpload',
+                   'ngAnimate',
+                   'ngCookies',
+                   'ngSanitize',
+                   'ngTouch',
+                   'transition', 
+                   'collapse', 
+                   'accordion',
+                   'modal', 
+                   'select2',
+                   'busy', 
+                   'checklist'
+                  ]
+
+ANGULAR_COMPONENTS = ['home/home',
+                      'srv/auth/account',
+                      'srv/auth/app',
+                      'opt/buyer/buyer'
+                      ]
+
 JQUERY_PLUGINS = ['select2/select2']
 
 WEBAPP2_EXTRAS = {}

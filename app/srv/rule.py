@@ -11,7 +11,7 @@ from app.srv import event, log, callback
 class ActionDenied(Exception):
     
     def __init__(self, context):
-       self.message = {'action_denied' : context.action.key.urlsafe()}
+       self.message = {'action_denied' : context.action}
        
 
 def _check_field(context, name, key):
@@ -21,7 +21,7 @@ def _check_field(context, name, key):
          key = (key, )
       checks = []
       for k in key:
-          checks.append(context.entity._field_permissions[name][k])
+          checks.append(context.rule.entity._field_permissions[name][k])
       return all(checks)
     else:
       return False

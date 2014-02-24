@@ -500,10 +500,15 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "True"),
-  
-                                            rule.FieldPermission('6', 'name', True, True, True, 'True'), #  these might need context.rule.entity.state == 'active' and inversion?
-                                            rule.FieldPermission('6', 'primary_contact', True, True, True, 'True'), # these might need context.rule.entity == 'active' and inversion?
+                                            rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user.is_guest"),
+                                            
+                                            
+                                            # for basic checks it goes two field permissions per field, usually.
+                                            rule.FieldPermission('6', 'name', True, True, True, "context.rule.entity.state == 'active'"), #  these might need context.rule.entity.state == 'active' and inversion?
+                                            rule.FieldPermission('6', 'name', False, True, True, "not context.rule.entity.state == 'active'"), 
+                                            
+                                            rule.FieldPermission('6', 'primary_contact', True, True, True, "context.rule.entity.state == 'active'"), # these might need context.rule.entity == 'active' and inversion?
+                                            rule.FieldPermission('6', 'primary_contact', False, True, True, "not context.rule.entity.state == 'active'")
                                             
                                             ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -545,7 +550,7 @@ class Domain(ndb.BaseExpando):
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
-                                 #'note' : ndb.SuperTextProperty(required=True)
+                   
                               }
                              ),
                 
@@ -553,7 +558,7 @@ class Domain(ndb.BaseExpando):
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                                  'message' : ndb.SuperTextProperty(required=True),
-                                 #'note' : ndb.SuperTextProperty(required=True)
+                                
                               }
                              ),
                 
@@ -607,7 +612,7 @@ class Domain(ndb.BaseExpando):
             
             # no need for role check because the domain is not created
             rule.Engine.run(context, True)
-            
+ 
             if not rule.executable(context):
                raise rule.ActionDenied(context)
  

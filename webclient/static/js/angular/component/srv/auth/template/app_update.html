@@ -41,7 +41,7 @@
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input ng-required="rule.arguments[action].name.required" class="text-input" type="text" ng-model="app.name" />
+				 <input ng-disabled="!rule.writable.name" ng-required="rule.arguments[action].name.required" class="text-input" type="text" ng-model="app.name" />
 			</div>
 		</div>
 	</div>
@@ -50,7 +50,7 @@
 	<div class="form-control">
 		<label class="form-label">Primary Contact</label>
 		<div class="form-input">
-			<select ng-required="rule.arguments[action].primary_contact.required" ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
+			<select ng-disabled="!rule.writable.primary_contact" ng-required="rule.arguments[action].primary_contact.required" ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
 				    <option value="{{current_user.key}}">{{current_user.primary_email}}</option>
 			</select>
 		</div>

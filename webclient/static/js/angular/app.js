@@ -8,7 +8,7 @@ angular.module('app.ui',
 	  ]
 );
 
-var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngStorage', 'checklist-model', 'app.ui'])
+var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'ngUpload', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    
@@ -193,6 +193,36 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngS
 			Confirm(options);
 			
 		},
+		error500 : function (output, options)
+		{
+			var defaults = {
+				message : output,
+				templateUrl : logic_template('opt/misc', 'error500.html'),
+				text : {
+					Yes : 'Close',
+				}
+			};
+			
+			options = angular.extend(defaults, options);
+			
+			Confirm(options);
+		},
+		
+		action_denied : function (output, options)
+		{
+			var defaults = {
+				message : 'You do not have permission to perform this action.',
+				templateUrl : logic_template('opt/misc', 'action_denied.html'),
+				text : {
+					Yes : 'Ok',
+				}
+			};
+			
+			options = angular.extend(defaults, options);
+			
+			Confirm(options);
+		},
+		
 		changes : function (ok, no, options) {
 			
 			var defaults = {
@@ -248,7 +278,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngUpload', 'ngS
 		},
 	};
 }])
-.run(function ($rootScope) {
+.run(function ($rootScope, $state) {
     
     $rootScope.current_user = current_user;
+    $rootScope.$state = $state;
 });

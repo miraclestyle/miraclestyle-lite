@@ -244,7 +244,6 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	$rootScope.manageAccount = function ()
 	{
   	    Account.manage();
-  	    
 	};
 	 
     $rootScope.doLogin = function ()
