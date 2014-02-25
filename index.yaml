@@ -3,3 +3,9 @@ indexes:
   ancestor: yes
   properties:
   - name: "6"
+  
+- kind: "5"
+  ancestor: yes
+  properties:
+  - name: "99"
+    direction: desc

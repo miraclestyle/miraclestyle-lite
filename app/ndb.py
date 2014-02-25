@@ -544,8 +544,8 @@ class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
       models.append(prop._modelclass(**{
                                         'width': load_image.width,
                                         'height': load_image.height,
-                                        'size': info.size,
-                                        'content_type': info.content_type,
+                                        'size': file_info.size,
+                                        'content_type': file_info.content_type,
                                         'image': blob_info.key(),
                                         }))
       del image_data, load_image  # Free memory?

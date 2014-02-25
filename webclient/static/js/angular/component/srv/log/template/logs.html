@@ -1,0 +1,22 @@
+<div ng-controller="HandleLog">
+<div accordion>
+      <div accordion-group heading="History">
+ 
+		<table class="table">
+			<thead>
+				<th>Logged</th>
+				<th>Agent</th>
+				<th>Action</th>
+			</thead>
+			<tbody>
+				<tr ng-repeat="log in logs.entities">
+					<td>{{log.logged|date:"dd-MM-yyyy HH:mm:ss Z"}}</td>
+					<td>{{log.agent}}</td>
+					<td>{{log.action}}</td>
+				</tr>
+			</tbody>
+		</table>
+
+	  </div>	    
+</div>
+</div>

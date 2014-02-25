@@ -583,11 +583,18 @@ class Domain(ndb.BaseExpando):
        'read' : event.Action(id='6-7',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'cursor' : ndb.SuperStringProperty()
                               }
                              ),
        'prepare' : event.Action(id='6-8',
                               arguments={
                                  'upload_url' : ndb.SuperStringProperty(required=True)           
+                              }
+                             ),
+       'history' : event.Action(id='6-9',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
+                                 'cursor' : ndb.SuperStringProperty()
                               }
                              ),
     }
@@ -665,6 +672,26 @@ class Domain(ndb.BaseExpando):
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
+       
+      context.output['logs'] = log.Record.get_logs(entity, context.input.get('cursor'), 10)
+ 
+      return context
+    
+    
+    @classmethod
+    def history(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      rule.Engine.run(context)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+       
+      context.output['entities'] = log.Record.get_logs(entity, context.input.get('cursor'), 10)
       
       return context
  

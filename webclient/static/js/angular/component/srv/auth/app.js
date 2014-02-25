@@ -77,6 +77,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 				      	 
 					  	 $scope.rule = RuleEngine.factory(output);
 					  	 $scope.app = app;
+					  	 
+					  	 angular.forEach(output.logs.entities, function (value) {
+					  	 	  value.logged = new Date(value.logged); // this should be done differently
+					  	 });
+					  	 
+					  	 console.log(output.logs);
+					  	 
+					  	 $scope.logs = output.logs;
 				 
 					  	 $parentScope = $scope; 
 			  

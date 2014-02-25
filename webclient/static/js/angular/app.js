@@ -12,7 +12,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
    
-     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XmlHttpRequest';
+     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
  
      $locationProvider.hashPrefix('!');
      
@@ -142,6 +142,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				    $modalInstance.dismiss('No');
 				  };
 			},
+			
+			callbacks : {Yes : angular.noop, No : angular.noop}
     	 	
     	 };
     	 
@@ -278,8 +280,17 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		},
 	};
 }])
+.controller('HandleLog', ['$scope', '$q', '$http', function ($scope, $q, $http) {
+ 
+	$scope.deffered = function ()
+	{
+		return $http.get('/');
+	};
+}])
 .run(function ($rootScope, $state) {
     
     $rootScope.current_user = current_user;
     $rootScope.$state = $state;
+    $rootScope.ui_template = ui_template;
+    $rootScope.logic_template = logic_template;
 });
