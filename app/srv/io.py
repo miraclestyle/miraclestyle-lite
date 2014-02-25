@@ -4,6 +4,7 @@ Created on Dec 17, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import importlib
 
 from google.appengine.api import taskqueue
@@ -13,10 +14,10 @@ from app import ndb
 from app.srv import event
 
 
-class ArgumentError(Exception):
+class InputError(Exception):
   
-  def __init__(self, argument_error):
-    self.message = argument_error
+  def __init__(self, input_error):
+    self.message = input_error
 
 
 class Context():
@@ -64,10 +65,7 @@ class Engine:
   @classmethod
   def process(cls, context, input):
     
-    input_required = []
-    input_invalid = []
-    input_error = []
-    argument_error = {'input_required': [], 'input_invalid': [], 'input_error': []}
+    input_error = {}
  
     for key, argument in context.action.arguments.items():
       value = input.get(key)
@@ -78,28 +76,17 @@ class Engine:
         try:
           value = argument.format(value)
           
-          if hasattr(argument, '_validator') and argument._validator: # this validator is a custom function that is available by ndb
-             argument._validator(argument, value)
+          if hasattr(argument, '_validator') and argument._validator: # This validator is a custom function that is available by ndb
+            argument._validator(argument, value)
              
           context.input[key] = value
-        except ndb.FormatError as e:
-          input_error.append(key)
-        except ndb.FormatErrorRequired as e:
-          input_required.append(key)
+        except ndb.PropertyError as e:
+          input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
         except Exception as e:
-          input_invalid.append(e)
-    
-    if len(input_required):
-      argument_error['input_required'] = input_required
-    
-    if len(input_invalid):
-      argument_error['input_invalid'] = input_invalid
+          input_error['non_property_error'].append(e)  # Or perhaps, 'non_specific_error', or something simmilar.
     
     if len(input_error):
-      argument_error['input_error'] = input_error
-    
-    if len(input_required) or len(input_invalid) or len(input_error):
-      raise ArgumentError(argument_error)
+      raise InputError(input_error)
   
   @classmethod
   def realtime_run(cls, action, input):
