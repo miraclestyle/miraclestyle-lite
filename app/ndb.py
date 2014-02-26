@@ -2,7 +2,7 @@
 '''
 Created on Jul 9, 2013
 
-@author:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
 import decimal
