@@ -23,7 +23,7 @@ class InputError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, notify # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, notify  # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -66,19 +66,19 @@ class Engine:
   def process(cls, context, input):
     
     input_error = {}
- 
+    
     for key, argument in context.action.arguments.items():
       value = input.get(key)
- 
+      
       if argument and hasattr(argument, 'format'):
         if value is None:
-          continue # If value is not set at all, shall we always consider it none?
+          continue  # If value is not set at all, shall we always consider it none?
         try:
           value = argument.format(value)
           
-          if hasattr(argument, '_validator') and argument._validator: # This validator is a custom function that is available by ndb
+          if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
             argument._validator(argument, value)
-             
+          
           context.input[key] = value
         except ndb.PropertyError as e:
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
@@ -106,13 +106,10 @@ class Engine:
       else:
         service = importlib.import_module('app.srv.%s' % context.action.service)
         service.Engine.run(context)
-        
-        
-      if context.rule.entity:    
+      
+      if context.rule.entity:
         context.output['entity'] = context.rule.entity
-        # this goes trough __todict__() cuz we cant make it work see @ app.srv.auth.User.apps #L-808
-        
-          
+        # This goes trough __todict__() because we can't make it work (see @ app.srv.auth.User.apps #L-808)
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
@@ -130,8 +127,8 @@ class Engine:
         throw = False
       
       if throw:
-        raise # Here we raise all other unhandled exceptions!
- 
+        raise  # Here we raise all other unhandled exceptions!
+    
     return context
   
   @classmethod
@@ -153,7 +150,7 @@ class Engine:
         return context.output
       else:
         taskqueue.add(queue_name='io', url='/task/io_engine_run', params=input)
-        return None # Perhaps, here we should return a signal that task queue is running the task.
+        return None  # Perhaps, here we should return a signal that task queue is running the task.
     else:
       output = {'errors': {'invalid_action': input.get('action_key')}}
       return output
