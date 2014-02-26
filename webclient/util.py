@@ -7,6 +7,7 @@ Created on Oct 8, 2013
 import imp
 import os
 import json
+import datetime
 
 from app import ndb
 from webclient import webclient_settings
@@ -46,6 +47,9 @@ class JSONEncoderHTML(json.JSONEncoder):
     """
     
     def default(self, o):
+        
+        if isinstance(o, datetime.datetime):
+           return o.isoformat()
         
         if isinstance(o, ndb.Key):
            return o.urlsafe()

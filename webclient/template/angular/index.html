@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html ng-app="MainApp">
   <head>
-    <title>{{title or 'MIRACLESTYLE'}}</title>
+    <title ng-bind="pageTitle"></title>
     
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
@@ -40,6 +40,7 @@
     <script type="text/javascript" src="{{static_dir('js/angular/helper.js')}}"></script>
     
     <script type="text/javascript" src="{{static_dir('js/angular/app.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/angular/directive.js')}}"></script>
     
  	{% for module in webclient_settings.ANGULAR_COMPONENTS %}
     <script type="text/javascript" src="{{static_dir('js/angular/component/%s.js' % module)}}"></script>
@@ -71,6 +72,15 @@
 	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="apps">Enterprise Apps</a></li>
 	  			</ul>
 	  		</div>
+	  		
+	        <div ng-show="current_user.root_admin">
+	  			<h1 class="fieldset">Administration</h1>
+	  			<ul class="menu">
+	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_users">Users</a></li>
+	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_apps">Apps</a></li>
+	  			</ul>
+	  		</div>
+	  		
 	  		
 	  		
   		</div>

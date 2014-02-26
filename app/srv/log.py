@@ -72,7 +72,7 @@ class Record(ndb.BaseExpando):
     # query.map and fetch_page wont work in conjunction ---- query.map(fetch_agent)
     # entities = pager.fetch_page(query, _async, page_size=items_per_page, start_cursor=cursor)
     
-    entities, next_cursor, more = query.fetch_page(page_size=items_per_page, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
      
     @ndb.tasklet 
     def helper(entities):
@@ -81,7 +81,8 @@ class Record(ndb.BaseExpando):
        
        raise ndb.Return(results)
     
-    entities = [entity for entity in helper(entities).get_result()]
+    entities = helper(entities)
+    entities = [entity for entity in entities.get_result()]
       
     return {'entities' : entities, 'next_cursor' : next_cursor.urlsafe(), 'more' : more}
   

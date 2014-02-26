@@ -1,33 +1,61 @@
-MainApp
-.config(['$stateProvider',
+MainApp.config(['$stateProvider',
   function($stateProvider) {
    
-    $stateProvider.
-      state('home', {
+    $stateProvider.state('home', {
       	url : '/',
         templateUrl: logic_template('home', 'home.html'),
         controller: 'HomePage'
-      }).
-      state('login', {
+        
+      }).state('login', {
         url: '/login/:provider',
         template: " ",
         controller: 'LoginPage'
-      }).
-      state('apps', {
+        
+      }).state('apps', {
       	url: '/apps',
         templateUrl: logic_template('srv/auth', 'apps.html'),
-        controller: 'AppsPage',
+        controller: 'AppList',
         resolve : {
         	apps : ['App', function (App) {
         		
-        		if ('entities' in initdata)
-        		{
-        			return initdata['entities'];
-        		}
+				return useinit('entities', function () {
+        			return App.search().then(function (output) {
+						return output.data;
+					});
+        		});
+        	 
+        	}]
+        }
+      }).state('admin', {
+      	url: '/admin',
+      }).state('admin_apps', {
+      	url: '/admin/apps',
+        templateUrl: logic_template('admin', 'apps.html'),
+        controller: 'AdminApps',
+        resolve : {
+        	apps : ['App', function (App) {
         		
-        		return App.search().then(function (output) {
-					return output.data.entities;
-				});
+        		return useinit('entities', function () {
+        			return App.sudo_search().then(function (output) {
+						return output.data;
+					});
+        		});
+        		 
+        	}]
+        }
+      })
+      .state('admin_users', {
+      	url: '/admin/users',
+        templateUrl: logic_template('admin', 'users.html'),
+        controller: 'AdminUsers',
+        resolve : {
+        	users : ['Account', function (Account) {
+        		
+        		return useinit('entities', function () {
+        			return Account.sudo_search().then(function (output) {
+						return output.data;
+					});
+        		});
         	}]
         }
       });

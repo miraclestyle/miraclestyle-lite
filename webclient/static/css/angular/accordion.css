@@ -34,12 +34,17 @@
 .panel-group .panel
 {
   margin-bottom: 0;
-  overflow: hidden;
+  /*overflow: hidden;*/
   border: 1px solid #BBBBBB;
   -webkit-box-shadow: 1px 1px 3px #BBBBBB;
   box-shadow: 1px 1px 3px #BBBBBB;
 }
-
+.panel-scroller
+{
+	max-height:200px;
+	overflow-y:auto;
+	overflow-x:hidden;
+}
 .panel-is-not-open:hover
 {
   border: 1px solid #333333;

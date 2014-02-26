@@ -83,6 +83,9 @@ class Engine:
         except ndb.PropertyError as e:
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
         except Exception as e:
+          # if this is not defined it throws an error
+          if 'non_property_error' not in input_error:
+              input_error['non_property_error'] = []
           input_error['non_property_error'].append(e)  # Or perhaps, 'non_specific_error', or something simmilar.
     
     if len(input_error):

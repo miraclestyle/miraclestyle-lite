@@ -69,6 +69,7 @@ def make_complete_name(entity, name_property, parent_property=None, separator=No
   path = entity
   names = []
   while True:
+    parent = None
     if parent_property is None:
       parent_key = path.key.parent()
       parent = parent_key.get()

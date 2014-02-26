@@ -1,3 +1,74 @@
+var useinit = function (key, fun)
+{
+	if (initdata[key])
+	{
+		var initdata2 = {};
+		
+		angular.copy(initdata, initdata2);
+		 
+		delete initdata;
+	 
+		return initdata2;
+		
+	}
+	else
+	{
+	    var call = fun;
+	    
+	    if (angular.isFunction(fun))
+	    {
+	    	call = fun();
+	    }
+		 
+		return call;
+	}
+	
+};
+
+var handle_few_datatypes = function (response)
+{
+ 
+  	 	var formatter = {'created' : Date, 'updated' : Date, 'logged' : Date};
+  	 	 
+  	 	var do_format = function (entity) {
+  	 				
+			if (angular.isObject(entity))
+			{
+				angular.forEach(entity, function (value, key) {
+					if (key in formatter)
+					{
+						entity[key] = new formatter[key](value);
+						
+					}
+				 
+				});
+			}
+			
+  	 	};
+  	 	// this is probably just temporary because we will need more robust transformer
+  	 	if (angular.isObject(response))
+  	 	{
+ 
+  	 		if ('entities' in response)
+  	 		{ 
+  	 			angular.forEach(response.entities, do_format);
+ 
+  	 		}
+  	 		
+  	 		if ('entity' in response)
+  	 		{ 
+  	 			do_format(response.entity);
+ 
+  	 		}
+  	 		 
+  	 	}
+  	 	 
+  	 	return response;
+};
+
+handle_few_datatypes({'entity' : current_user});
+handle_few_datatypes({'entity' : initdata});
+
 angular.module('app.ui',
 	  [
 	   'app.ui.transition',
@@ -11,8 +82,9 @@ angular.module('app.ui',
 var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'ngUpload', 'ngStorage', 'checklist-model', 'app.ui'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
-   
+  	 
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+     $httpProvider.defaults.transformResponse.push(handle_few_datatypes);
  
      $locationProvider.hashPrefix('!');
      
@@ -87,6 +159,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		
 		this.update = function (info)
 	    {
+	    	
+	    	if (!info['entity'] || !info['entity']['_action_permissions'])
+	    	{
+	    		return;
+	    	}
 			
 			this._rule = info['entity'];
 			this._rule_action_permissions = this._rule['_action_permissions'];
@@ -280,17 +357,128 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		},
 	};
 }])
-.controller('HandleLog', ['$scope', '$q', '$http', function ($scope, $q, $http) {
+.factory('Title', ['$rootScope', function ($rootScope) {
+	
+	var suffix = 'MIRACLESTYLE', titles = [];
  
-	$scope.deffered = function ()
+	$rootScope.pageTitle = '';
+	
+	_compile = function (title_to_compile)
 	{
-		return $http.get('/');
+		title_to_compile.unshift(suffix);
+		title_to_compile.reverse();
+		return title_to_compile.join('-');
+	};
+	
+	return {
+		set : function (title)
+		{
+		   $rootScope.pageTitle = title + ' - ' + suffix;
+		   
+		   return this;
+		},
+		append : function (title) {
+			
+		   if (angular.isArray(title))
+		   {
+		   	  angular.forEach(title, function (a) {
+		   	  	  titles.push(a);
+		   	  });
+		   }
+		   else
+		   {
+		   	  titles.push(title);
+		   } 	
+		   
+		   
+		   $rootScope.pageTitle = _compile(titles);	
+		   
+		   return this;
+			
+		},
+		prepend : function () {
+			
+		   if (angular.isArray(title))
+		   {
+		   	  angular.forEach(title, function (a) {
+		   	  	  titles.unshift(a);
+		   	  });
+		   }
+		   else
+		   {
+		   	  titles.unshift(title);
+		   } 	
+			
+			$rootScope.pageTitle = _compile(titles);	
+			
+			return this;
+		},
+		reset : function()
+		{
+			titles = [];
+			
+			$rootScope.pageTitle = _compile(titles);
+			
+			return this;
+		}
 	};
 }])
-.run(function ($rootScope, $state) {
+.controller('HandleLog', ['$scope', 'Endpoint', function ($scope, Endpoint) {
+ 
+    $scope.logs = -1;
+	$scope.commander = {'isOpen' : false, 'loading' : false};
+	 
+	 
+	var load_more = function (that)
+	{
+		
+		if ($scope.logs != -1)
+		{
+			if (!$scope.commander.loading && $scope.history.args.more)
+			{
+				$scope.commander.loading = true;
+				
+				Endpoint.post('history', $scope.history.model, $scope.history.args).success(function (data) {
+					
+				 
+					angular.forEach(data.entities, function (value) {
+					     $scope.logs.push(value);
+					});
+ 
+					$scope.history.args.next_cursor = data.next_cursor;
+					$scope.history.args.more = data.more;
+					
+					$scope.commander.loading = false;
+				});		
+				
+			}
+		}		
+		
+	};
+	 
+	$scope.$on('scrollEnd', function (that) {
+ 		load_more(that);
+	});
+	
+	$scope.$watch('commander.isOpen', function (isOpen) {
+ 
+		if (isOpen && $scope.logs == -1)
+		{
+			Endpoint.post('history', $scope.history.model, $scope.history.args).success(function (data) {
+			 
+				$scope.logs = data.entities;
+				$scope.history.args.next_cursor = data.next_cursor;
+				$scope.history.args.more = data.more;
+			});
+		}  
+	});
+}])
+.run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
     
     $rootScope.current_user = current_user;
     $rootScope.$state = $state;
     $rootScope.ui_template = ui_template;
     $rootScope.logic_template = logic_template;
-});
+    $rootScope.DATE_FULL = "yyyy-MM-dd HH:mm:ss Z";
+  
+}]);

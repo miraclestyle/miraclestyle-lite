@@ -1,0 +1,27 @@
+<h1 class="fieldset with-button">Users</h1>
+<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Created</th>
+					<th>Updated</th>
+					<th>State</th>
+					<th>Primary E-mail</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="usr in users">
+					<td>{{usr.id}}</td>
+					<td>{{usr.created|date:DATE_FULL}}</td>
+					<td>{{usr.updated|date:DATE_FULL}}</td>
+					<td>{{usr.state}}</td>
+					<td>{{usr.primary_email}}</td>
+					<td>
+						<button busy ng-click="manage(usr)" class="button">
+							Edit
+						</button>
+					</td>
+				</tr>
+			</tbody>
+</table>

@@ -4,7 +4,7 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-ACTIVE_CONTROLLERS = ('test', 'auth', 'task', 'ui')
+ACTIVE_CONTROLLERS = ('test', 'auth', 'task', 'ui', 'admin')
 
 TEMPLATE_CACHE = 0
 
@@ -29,7 +29,10 @@ ANGULAR_MODULES = ['ui-router',
 ANGULAR_COMPONENTS = ['home/home',
                       'srv/auth/account',
                       'srv/auth/app',
-                      'opt/buyer/buyer'
+                      'opt/buyer/buyer',
+                      
+                      # this goes last
+                      'admin/admin',
                       ]
 
 JQUERY_PLUGINS = ['select2/select2']

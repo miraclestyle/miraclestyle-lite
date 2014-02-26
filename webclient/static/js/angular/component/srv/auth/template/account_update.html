@@ -1,5 +1,5 @@
 <form ng-submit="save()">
-<div class="modal-body scrollable">
+<div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
  
   	<h2 class="fieldset">General</h2>
@@ -7,7 +7,7 @@
 		<label class="form-label">ID</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{current_user.id}}
+			 	{{user.id}}
 			 </div>
 		</div>
 	</div>
@@ -16,7 +16,7 @@
 		<label class="form-label">Registered</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{current_user.created}}
+			 	{{user.created|date:DATE_FULL}}
 			 </div>
 		</div>
 	</div>
@@ -26,7 +26,7 @@
 		<label class="form-label">Status</label>
 		<div class="form-input">
 			<div class="form-text">
-				 {{current_user.state}}
+				 {{user.state}}
 			</div>
 		</div>
 	</div>
@@ -35,8 +35,8 @@
 	<div class="form-control">
 		<label class="form-label">Primary e-mail</label>
 		<div class="form-input">
-			<select ui-select2 ng-model="current_user.primary_email" data-placeholder="Select your primary e-mail">
-				    <option ng-repeat="email in current_user.emails" value="{{email}}">{{email}}</option>
+			<select ng-disabled="!rule.writable.identities" ui-select2 ng-model="user.primary_email" data-placeholder="Select your primary e-mail">
+				    <option ng-repeat="email in user.emails" value="{{email}}">{{email}}</option>
 			</select>
 		</div>
 	</div>
@@ -45,18 +45,25 @@
 	
 	<div class="form-control">
 		
-		<div ng-repeat="ident in current_user.identities" class="form-control">
+		<div ng-repeat="ident in user.identities" class="form-control">
 			<label class="form-label">{{identiy_info(ident.identity)}}</label>
 			<div class="form-input">
-				 <a class="button" ng-click="disAssociate(ident.identity)" href="javascript:;">
+				 <button ng-disabled="!rule.writable.identities" class="button" ng-click="disAssociate(ident.identity)">
 		 		    	<span ng-show="!ident.associated">Associate</span>
 		 		    	<span ng-show="ident.associated">Disassociate</span>
-		 		    </a>
+		 		 </button>
 			</div>
 		</div>
-		
-	 
+		 
 	</div>
+	
+	
+	<div ng-show="rule.executable.history" class="form-control">
+		<label class="form-label"></label>
+		<div class="form-input">
+			<div ng-include="logic_template('srv/log', 'logs.html')"></div>
+		</div>
+	</div>	 
 	
 	
 	</div>
@@ -67,8 +74,13 @@
 </div>
 
 <div class="modal-footer">
+	
+	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.executable.sudo">
+		Administer
+	</button>
+	
  
-	<button busy class="button">
+	<button ng-show="rule.executable.update" busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

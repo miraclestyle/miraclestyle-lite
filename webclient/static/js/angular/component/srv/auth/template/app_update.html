@@ -1,5 +1,5 @@
 <form name="manage_app" ng-submit="save()">
-<div class="modal-body scrollable">
+<div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
 	
 
@@ -19,7 +19,7 @@
 		<label class="form-label">Registered</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{app.created}}
+			 	{{app.created|date:DATE_FULL}}
 			 </div>
 		</div>
 	</div>

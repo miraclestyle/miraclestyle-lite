@@ -21,6 +21,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 					  	 $scope.app = {};
 					  	 $scope.step = 1;
 					  	 $scope.upload_url = output.upload_url;
+					   
 					  	 
 					  	 $scope.nextStep = function(which_step)
 					  	 {
@@ -67,38 +68,34 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 		update : function (app)
 	    {
 	    	var that = this;
-	        	
-	    	
+	        	 
 			var handle = function (output) {
- 
+	 
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'app_update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				      	 
 					  	 $scope.rule = RuleEngine.factory(output);
 					  	 $scope.app = app;
-					  	 
-					  	 angular.forEach(output.logs.entities, function (value) {
-					  	 	  value.logged = new Date(value.logged); // this should be done differently
-					  	 });
-					  	 
-					  	 console.log(output.logs);
-					  	 
-					  	 $scope.logs = output.logs;
-				 
+					  	 $scope.history = {
+					  	    'model' : 'srv.auth.Domain',
+					  	    'args' : {
+					  	    	'key' : app['key'],
+					  	    }
+					  	 };
+	 
 					  	 $parentScope = $scope; 
 			  
 						 $scope.sudo = function ()
-						 {  
-						 	
-							var handle = function (output) {
-				 
+						 {   
+							var handle = function () {
+						 
 								var modalInstance = $modal.open({
-								      templateUrl: logic_template('srv/auth', 'app_sudo.html'),
+								      templateUrl: logic_template('admin', 'sudo.html'),
 								      windowClass : 'modal-medium',
 								      controller: function ($scope, $modalInstance, RuleEngine) {
 								      	  
-								      	  $scope.rule = RuleEngine.factory(output);
+								      	  $scope.rule = $parentScope.rule;
 								      	  $scope.log = {
 								      	  	'message' : '',
 								      	  	'note' : '',
@@ -114,7 +111,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
  
 										     	update(app, data['entity']);
 										     	
-										     	$parentScope.rule.update(data);
+										     	$scope.rule.update(data);
 										 
 										     	$scope.cancel();
 										     	  
@@ -130,21 +127,20 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 						  
 							  };
 							 
-							Endpoint.post('read', 'srv.auth.Domain', {'key' : app['key']}).success(handle);
-							
+							handle();
 						 };
 						 
 						 $scope._do_user_admin = function (app, action)
 						 {  
 						 	
-							var handle = function (output) {
+							var handle = function () {
 				 
 								var modalInstance = $modal.open({
 								      templateUrl: logic_template('srv/auth', 'app_user_admin.html'),
 								      windowClass : 'modal-medium',
 								      controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
 								      	  
-								      	  $scope.rule = RuleEngine.factory(output);
+								      	  $scope.rule = $parentScope.rule;
 								      	  $scope.action = action;
 								      	  $scope.log = {
 								      	  	'message' : '',
@@ -157,9 +153,9 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 									  	  	Endpoint.post(action, 'srv.auth.Domain', $scope.log)
 										     .success(function (data) {
  
-										     	update(app, data['updated_domain']);
+										     	update(app, data['entity']);
 										     	
-										     	$parentScope.rule.update(data);
+										     	$scope.rule.update(data);
 										 
 										     	$scope.cancel();
 										     	  
@@ -175,7 +171,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 						  
 							  };
 							 
-							Endpoint.post('read', 'srv.auth.Domain', {'key' : app['key']}).success(handle);
+							handle();
 							
 						 };
 						 
@@ -223,12 +219,16 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
    };
 	 
 }])
-.controller('AppsPage', ['$scope', 'App', 'apps', 'Confirm', 'RuleEngine',
-	function ($scope, App, apps, Confirm, RuleEngine) {
+.controller('AppList', ['$scope', 'App', 'apps', 'Confirm', 'RuleEngine', 'Title',
+	function ($scope, App, apps, Confirm, RuleEngine, Title) {
 		
+	Title.set('Apps');
+ 
+	apps = apps.entities;
+ 
 	angular.forEach(apps, function (app, key) {
 		app.domain.rule = RuleEngine.factory({'entity' : app.domain}); // compile rule engine for each domain in the list
-		app.user.rule = RuleEngine.factory({'entity' : app.user});
+		app.user.rule = RuleEngine.factory({'entity' : app.user}); // compile rule engine for each domain user in the list
 	});
  
 	$scope.apps = apps;
@@ -248,11 +248,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 }])
 .run(['$rootScope', '$location', 'Account', 
 	function ($rootScope, $location, Account) {
-	 
-	$rootScope.manageAccount = function ()
-	{
-  	    Account.manage();
-	};
+ 
 	 
     $rootScope.doLogin = function ()
 	{

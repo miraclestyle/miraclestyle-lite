@@ -25,6 +25,7 @@ encoding//app/srv/transaction.py=utf-8
 encoding//app/srv/uom.py=utf-8
 encoding//app/util.py=utf-8
 encoding//dateutil/parser.py=iso-8859-1
+encoding//webclient/controller/admin.py=utf-8
 encoding//webclient/controller/auth.py=utf-8
 encoding//webclient/controller/task.py=utf-8
 encoding//webclient/controller/test.py=utf-8

@@ -8,6 +8,7 @@ import hashlib
 import os
 
 from google.appengine.api import blobstore
+from google.appengine.datastore.datastore_query import Cursor
  
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
@@ -56,13 +57,20 @@ class User(ndb.BaseExpando):
     
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
-                                                rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "context.rule.entity.key == context.auth.user.key and not context.rule.entity.is_guest"),
+                                                
                                                 rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
+                                                
                                                 rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity.is_guest"),
                                                 
-                                                rule.FieldPermission('0', 'identities', True, True, True, 'True') # by default user can manage identities no problem
+                                                rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user.root_admin"),
+                                                rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user.root_admin or context.auth.user.key == context.rule.entity.key"),
+
+                                                rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                                
+                                                rule.FieldPermission('0', 'identities', True, True, True, 'context.auth.user.key == context.rule.entity.key') # by default user can manage identities no problem
                                                
                                                ])
     
@@ -77,6 +85,7 @@ class User(ndb.BaseExpando):
                 
        'update' : event.Action(id='0-1',
                               arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='0', required=True),
                                  'primary_email' : ndb.SuperStringProperty(),
                                  'disassociate' : ndb.SuperStringProperty(),
                               }
@@ -86,7 +95,7 @@ class User(ndb.BaseExpando):
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='0', required=True),
                                  'message' : ndb.SuperKeyProperty(required=True),
-                                 'state' : ndb.SuperStringProperty(required=True),
+                                 'state' : ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
                                  'note' : ndb.SuperKeyProperty(required=True)
                               }
                              ),
@@ -97,9 +106,26 @@ class User(ndb.BaseExpando):
                               }
                              ),
                 
-       'apps' : event.Action(id='0-4',
-                              arguments={}
-                             )
+       'apps' : event.Action(id='0-4'),
+                
+       'history' : event.Action(id='0-5',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='0', required=True),
+                                 'next_cursor' : ndb.SuperStringProperty()
+                              }
+                             ),
+                
+       'read' : event.Action(id='0-6',
+                              arguments={
+                                 'key' : ndb.SuperKeyProperty(kind='0', required=True),
+                              }
+                             ),
+                
+       'sudo_search' : event.Action(id='0-7', 
+                                    arguments={
+                                       'next_cursor' : ndb.SuperStringProperty()
+                                    }),                
+                
     }
  
     def __todict__(self):
@@ -109,6 +135,7 @@ class User(ndb.BaseExpando):
         d['csrf'] = self.csrf
         d['is_guest'] = self.is_guest
         d['primary_email'] = self.primary_email
+        d['root_admin'] = self.root_admin
         
         return d 
     
@@ -257,6 +284,12 @@ class User(ndb.BaseExpando):
         def transaction():
         
             current_user = cls.current_user()
+            
+            entity_key = context.input.get('key')
+            
+            if entity_key != current_user.key:
+               current_user = entity_key.get()
+            
             context.rule.entity = current_user
             rule.Engine.run(context, True)
             
@@ -287,6 +320,61 @@ class User(ndb.BaseExpando):
         transaction()
            
         return context
+      
+    @classmethod
+    def history(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      rule.Engine.run(context, True)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+       
+      context.output = log.Record.get_logs(entity, context.input.get('next_cursor'))
+      
+      return context
+    
+    @classmethod
+    def read(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      rule.Engine.run(context, True)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+ 
+      return context
+    
+    @classmethod
+    def sudo_search(cls, context):
+      
+      context.rule.entity = context.auth.user
+    
+      rule.Engine.run(context, True)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+       
+      query = cls.query().order(-cls.created)
+      
+      cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+      
+      entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+       
+      context.output['entities'] = entities
+      context.output['next_cursor'] = next_cursor.urlsafe()
+      context.output['more'] = more
+       
+      return context
+ 
       
     @classmethod
     def apps(cls, context):
@@ -583,7 +671,6 @@ class Domain(ndb.BaseExpando):
        'read' : event.Action(id='6-7',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'cursor' : ndb.SuperStringProperty()
                               }
                              ),
        'prepare' : event.Action(id='6-8',
@@ -594,7 +681,7 @@ class Domain(ndb.BaseExpando):
        'history' : event.Action(id='6-9',
                               arguments={
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'cursor' : ndb.SuperStringProperty()
+                                 'next_cursor' : ndb.SuperStringProperty()
                               }
                              ),
     }
@@ -672,8 +759,6 @@ class Domain(ndb.BaseExpando):
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
-       
-      context.output['logs'] = log.Record.get_logs(entity, context.input.get('cursor'), 10)
  
       return context
     
@@ -691,7 +776,7 @@ class Domain(ndb.BaseExpando):
       if not rule.executable(context):
          raise rule.ActionDenied(context)
        
-      context.output['entities'] = log.Record.get_logs(entity, context.input.get('cursor'), 10)
+      context.output = log.Record.get_logs(entity, context.input.get('next_cursor'))
       
       return context
  

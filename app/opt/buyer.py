@@ -79,9 +79,7 @@ class Address(ndb.BaseExpando):
                               }
                              ),
                 
-       'list' : event.Action(id='9-2',
-                              arguments={}
-                             ),
+       'list' : event.Action(id='9-2'),
     }  
  
       
@@ -235,9 +233,7 @@ class Collection(ndb.BaseModel):
                               }
                              ),
                 
-       'list' : event.Action(id='10-2',
-                              arguments={}
-                             ),
+       'list' : event.Action(id='10-2'),
     }  
  
     @classmethod

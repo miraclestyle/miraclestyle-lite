@@ -3,7 +3,8 @@ login_methods = {
 	'2' : 'Facebook',
 };
 
-MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', function ($scope, $rootScope, $location, Account) {
+MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', 
+	function ($scope, $rootScope, $location, Account) {
  
  	if (initdata['user'])
 	{
@@ -54,6 +55,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
    * and broadcasts 'event:angular-auth-loginRequired'.
    */
   .config(['$httpProvider', function($httpProvider) {
+  	
     $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', '$injector', function($rootScope, $q, httpBuffer, $injector) {
       
       var handle_error = function (rejection)
@@ -162,6 +164,11 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				 $rootScope.toggleMainMenu();
 			});
 		},
+		
+		sudo_search : function ()
+        {
+        	return Endpoint.post('sudo_search', 'srv.auth.User');
+        },
 		ask_login : function (on_close)
 		{
  
@@ -169,21 +176,16 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
  
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'login.html'),
-				      controller: function ($scope, $modalInstance, data) {
+				      controller: function ($scope, $modalInstance) {
 						  
-						  $scope.data = data;
+						  $scope.data = output;
 						  
 						  $scope.login_methods = login_methods;
 					  
 						  $scope.cancel = function () {
 						    $modalInstance.dismiss('cancel');
 						  };
-					  },
-				      resolve: {
-				        data: function () {
-				          return output;
-				        }
-				      }
+					  }
 				    });
 				    
 					modalInstance.result.then(function (message) {
@@ -197,14 +199,71 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 			
 			$http.get('/login/google').success(handle);			
 		},
-		manage : function ()
+		update : function (user)
 	    {
  
-			var handle = function () {
+			var handle = function (output) {
  
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'account.html'),
-				      controller: function ($scope, $modalInstance) {
+				      templateUrl: logic_template('srv/auth', 'account_update.html'),
+				      controller: function ($scope, $modalInstance, RuleEngine) {
+				      	
+				      	  $scope.rule = RuleEngine.factory(output);
+				      	  $scope.user = user;
+				      	  $scope.history = {
+				      	  	  'model' : 'srv.auth.User',
+				      	  	  'args' : {
+				      	  	  	 'key' : user['key'],
+				      	  	  }
+				      	  };
+				      	  
+				      	  $parentScope = $scope;
+				      	  
+				      	  $scope.sudo = function ()
+						  {  
+						 	
+							var handle = function () {
+						 
+								var modalInstance = $modal.open({
+								      templateUrl: logic_template('admin', 'sudo.html'),
+								      windowClass : 'modal-medium',
+								      controller: function ($scope, $modalInstance, RuleEngine) {
+								      	  
+								      	  $scope.rule = $parentScope.rule;
+								      	  $scope.log = {
+								      	  	'message' : '',
+								      	  	'note' : '',
+								      	  	'state' : user['state'],
+								      	  	'key' : user['key'],
+								      	  };
+							 
+									  	  $scope.save = function ()
+									  	  {
+									  	  	 
+									  	  	Endpoint.post('sudo', 'srv.auth.User', $scope.log)
+										     .success(function (data) {
+ 
+										     	update(user, data['entity']);
+										     	
+										     	$scope.rule.update(data);
+										 
+										     	$scope.cancel();
+										     	  
+											});
+						
+									  	  }; 
+									  	  
+										  $scope.cancel = function () {
+										    $modalInstance.dismiss();
+										  };
+									  }
+								    });
+						  
+							  };
+							 
+							handle();
+							
+						 };
 			 
 					  	  $scope.identiy_info = function (i)
 					  	  {
@@ -212,35 +271,11 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  		
 					  	  		return login_methods[info[1]];
 					  	  };
-					  	  
-					  	  $scope.apps = [{
-					  	  	  name : 'Armani',
-					  	  	  state : 'accepted',
-					  	  }, {
-					  	  	  name : 'Gucci',
-					  	  	  state : 'invited',
-					  	  }];
-					  	  
-					  	  $scope.removeFromApp = function(app)
-					  	  {
-					  	  	   app.state = 'removed';
-					  	  };
-					  	  
-					  	  $scope.acceptApp = function (app)
-					  	  {
-					  	  	  app.state = 'accepted';
-					  	  };
-					  	  
-					  	  $scope.declineApp = function(app)
-					  	  {
-					  	  	  app.state = 'declined';
-					  	  };
-					  	  
-					  	   
+			 
 					  	  $scope.disAssociate = function(ident)
 					  	  {
 					  	  	 
-					  	  	  angular.forEach($rootScope.current_user.identities, function (value) {
+					  	  	  angular.forEach(user.identities, function (value) {
 					  	  	  	   if (value.identity == ident)
 					  	  	  	   {
 					  	  	  	   	   value.associated = !value.associated;
@@ -254,7 +289,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  {
 					  	  	var disassociated = [];
 					  	  	
-					  	  	angular.forEach($rootScope.current_user.identities, function (value) {
+					  	  	angular.forEach(user.identities, function (value) {
 					  	  	  	 
 					  	  	  	   	   if (!value.associated)
 					  	  	  	   	   {
@@ -264,11 +299,13 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  	  });
 					  	  	
 					  	  	Endpoint.post('update', 'srv.auth.User', {
-					  	  		primary_email : $rootScope.current_user.primary_email,
-					  	  		disassociate : disassociated,
-					  	  	})
+					  	  		'primary_email' : user['primary_email'],
+					  	  		'disassociate' : disassociated,
+					  	  		'key' : user['key'],
+					  	      })
 						     .success(function (data) {
-								 $rootScope.current_user = data.updated_user;
+								 update(user, data['entity']);
+								 $scope.rule.update(data);
 							});
 		
 					  	  };
@@ -281,7 +318,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		  
 			  };
 			
-			handle();
+			Endpoint.post('read', 'srv.auth.User', {'key' : user['key']}).success(handle);
   
 	}
 	
@@ -293,7 +330,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 	 
 	$rootScope.manageAccount = function ()
 	{
-  		 Account.manage();
+  		 Account.update($rootScope.current_user);
 	};
 	 
     $rootScope.doLogin = function ()
