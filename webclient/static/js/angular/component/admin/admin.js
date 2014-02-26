@@ -10,7 +10,7 @@ MainApp.controller('AdminUsers', ['$scope', 'users', 'Account', 'Title', functio
 	};
 	
 }])
-.controller('AdminApps', ['$scope', 'apps', 'App', 'Title', function ($scope, users, App, Title) {
+.controller('AdminApps', ['$scope', 'apps', 'App', 'Title', function ($scope, apps, App, Title) {
 	
 	Title.set('Apps');
 	

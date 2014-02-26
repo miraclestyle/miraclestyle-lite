@@ -1,0 +1,29 @@
+<h1 class="fieldset with-button">Apps</h1>
+<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Created</th>
+					<th>Updated</th>
+					<th>State</th>
+					<th>Primary Contact</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="app in apps">
+					<td>{{app.id}}</td>
+					<td>{{app.name}}</td>
+					<td>{{app.created|date:DATE_FULL}}</td>
+					<td>{{app.updated|date:DATE_FULL}}</td>
+					<td>{{app.state}}</td>
+					<td>{{app.primary_email}}</td>
+					<td>
+						<button busy ng-click="manage(app)" class="button">
+							Edit
+						</button>
+					</td>
+				</tr>
+			</tbody>
+</table>

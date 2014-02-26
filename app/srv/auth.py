@@ -94,9 +94,9 @@ class User(ndb.BaseExpando):
        'sudo' : event.Action(id='0-2',
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='0', required=True),
-                                 'message' : ndb.SuperKeyProperty(required=True),
+                                 'message' : ndb.SuperStringProperty(required=True),
                                  'state' : ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
-                                 'note' : ndb.SuperKeyProperty(required=True)
+                                 'note' : ndb.SuperStringProperty(required=True)
                               }
                              ),
                 
@@ -590,6 +590,11 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                             rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user.is_guest"),
                                             
+                                            rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
+                                            rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
+                                            
                                             
                                             # for basic checks it goes two field permissions per field, usually.
                                             rule.FieldPermission('6', 'name', True, True, True, "context.rule.entity.state == 'active'"), #  these might need context.rule.entity.state == 'active' and inversion?
@@ -684,6 +689,10 @@ class Domain(ndb.BaseExpando):
                                  'next_cursor' : ndb.SuperStringProperty()
                               }
                              ),
+       'sudo_search' : event.Action(id='6-10', 
+                                    arguments={
+                                       'next_cursor' : ndb.SuperStringProperty()
+                                    }),       
     }
  
     @property
@@ -693,6 +702,48 @@ class Domain(ndb.BaseExpando):
     @property
     def namespace_entity(self):
       return self
+    
+    @classmethod
+    def sudo_search(cls, context):
+      
+      context.rule.entity = cls()
+    
+      rule.Engine.run(context, True)
+      
+      if not rule.executable(context):
+         raise rule.ActionDenied(context)
+       
+      query = cls.query().order(-cls.created)
+      
+      cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+      
+      entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+      
+      @ndb.tasklet
+      def _async(entity):
+      
+        new_entity = entity.__todict__()
+        
+        user = yield entity.primary_contact.get_async()
+         
+        new_entity['primary_email'] = user.primary_email
+ 
+        raise ndb.Return(new_entity)
+      
+      @ndb.tasklet
+      def helper(entities):
+        
+          entities = yield map(_async, entities)
+        
+          raise ndb.Return(entities)
+        
+      entities = helper(entities).get_result()
+       
+      context.output['entities'] = entities
+      context.output['next_cursor'] = next_cursor.urlsafe()
+      context.output['more'] = more
+       
+      return context
   
     @classmethod
     def create(cls, context):

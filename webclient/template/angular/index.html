@@ -4,7 +4,7 @@
     <title ng-bind="pageTitle"></title>
     
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
+	<base href="/" />
     
     <meta name="fragment" content="!" />
     
@@ -58,12 +58,12 @@
   		<div class="menu-inner">
 	  		<h1 class="fieldset">Account</h1>
 	  		<ul ng-show="!current_user.is_guest" class="menu">
-	  		    <li><a class="button block" ng-click="manageAccount()">Manage</a></li>
-	  		    <li><a class="button block" ng-click="doLogout()">Logout</a></li>
+	  		    <li><button class="button block" ng-click="manageAccount()">Manage</button></li>
+	  		    <li><button class="button block" ng-click="doLogout()">Logout</button></li>
 	  		</ul>
 	  		
 	  		<ul ng-show="current_user.is_guest" class="menu">
-	  		    <li><a class="button block" ng-click="doLogin()">Login</a></li>
+	  		    <li><button busy class="button block" ng-click="doLogin()">Login</button></li>
 	  		</ul>
 	  		
 	  		<div ng-show="!current_user.is_guest">

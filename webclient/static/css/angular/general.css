@@ -115,7 +115,7 @@ a:visited
   margin-bottom: 5px;
 }
 
-a.block, .block
+a.block, .block, .button.block
 {
   display: block;
 }
@@ -124,6 +124,7 @@ a.block, .block
 {
   padding-top: 14px;
   padding-bottom: 14px;
+  width:100%;
 }
 
 .no-style

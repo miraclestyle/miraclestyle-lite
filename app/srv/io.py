@@ -10,7 +10,7 @@ import importlib
 from google.appengine.api import taskqueue
 from google.appengine.ext.db import datastore_errors
 
-from app import ndb
+from app import ndb, util
 from app.srv import event
 
 
@@ -86,7 +86,8 @@ class Engine:
           # if this is not defined it throws an error
           if 'non_property_error' not in input_error:
               input_error['non_property_error'] = []
-          input_error['non_property_error'].append(e)  # Or perhaps, 'non_specific_error', or something simmilar.
+          input_error['non_property_error'].append(key)  # Or perhaps, 'non_specific_error', or something simmilar.
+          util.logger(e, 'exception')
     
     if len(input_error):
       raise InputError(input_error)
