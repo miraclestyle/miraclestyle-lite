@@ -9,18 +9,6 @@ import datetime
 
 from app import ndb, util, settings
 from app.srv import event, log, notify, nav, rule
- 
-__SERVICE = 'setup'
-__DEFAULT_ARGUMENTS = {
-  'configuration_key' : ndb.SuperKeyProperty(kind='57', required=True)
-}
-
-# for every setup, there must be a unique action, because other services that depend on actions (like notify)
-# wont know how to react
-event.register_system_action(event.Action(id='setup_domain',
-                                          service=__SERVICE,
-                                          arguments=__DEFAULT_ARGUMENTS
-                                          ))
 
 # this method should perhaps be incorporated in DomainSetup class ?
 
