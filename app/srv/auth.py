@@ -772,8 +772,9 @@ class Domain(ndb.BaseExpando):
             config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
             config.put()
             
-            context.callback.inputs.append({'action_key' : 'setup_domain',
-                                            'configuration_key' : config.key.urlsafe()})
+            context.callback.inputs.append({'action_key' : 'install',
+                                            'action_model' : 'srv.setup.Configuration',
+                                            'key' : config.key.urlsafe()})
             
             callback.Engine.run(context)
            

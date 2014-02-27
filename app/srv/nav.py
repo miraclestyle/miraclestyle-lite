@@ -5,7 +5,7 @@ Created on Feb 24, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from app import ndb
-from app.srv import rule
+from app.srv import rule, event
 
 
 class Filter(ndb.BaseExpando):
@@ -30,20 +30,27 @@ class Widget(ndb.BaseExpando):
   search_form = ndb.SuperBooleanProperty('5', default=True) # whether this group is search form or set of filter buttons/links
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
-  @classmethod
-  def get_local_widgets(cls, domain, role):
-    return cls.query(cls.active == True,
-                     cls.role == role,
-                     namespace=domain.key_namespace).order(cls.sequence).fetch()
-   
-   
-class Engine:
+  _actions = {'build_menu' : event.Action(id='61-0',
+                                          arguments={
+                                            'domain' : ndb.SuperKeyProperty(kind='6')
+                                        })}
   
   @classmethod
-  def run(cls, context):
+  def build_menu(cls, context):
+    
     domain_key = context.input.get('domain')
+    
     domain = domain_key.get()
+    
     domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
     domain_user = domain_user_key.get()
+    
     if domain_user:
-       context.output['menu'] = Widget.get_local_widgets(domain, domain_user.roles)
+ 
+      widgets = cls.query(cls.active == True,
+                         cls.role.IN(domain_user.roles),
+                         namespace=domain.key_namespace).order(cls.sequence).fetch()
+                         
+      context.output['menu'] = widgets
+    
+    return context

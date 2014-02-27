@@ -34,11 +34,12 @@ def create_domain_notify_message_recievers(entity, user):
 # if we do that this function will be called every time the DomainSetup.__init__() is called, and that is alot 
 # because this should be called only once upon module import
 notify.register_system_templates(notify.CustomNotify(name='Send domain link after domain is completed',
-                                         action=event.Action.build_key('setup_domain'), # reference to setup domain action implementation
+                                         action=event.Action.build_key('57-0'),
                                          message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                          message_sender=settings.NOTIFY_EMAIL,
                                          message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
-                                         message_recievers=create_domain_notify_message_recievers))
+                                         message_recievers=create_domain_notify_message_recievers,
+                                         condition="entity.setup == 'setup_domain'"))
 
 __SYSTEM_SETUPS = {}
 
@@ -247,23 +248,28 @@ class DomainSetup(Setup):
       
       
   def execute_add_user_domain(self):
-      
-     input = self.config.next_operation_input
-     user = self.config.parent_entity
-     
-     namespace = input.get('domain_key')
-     
-     domain_key = ndb.Key(urlsafe=namespace)
-     
-     user.domains.append(domain_key)
-     user.put()
-     
-     self.context.log.entities.append((user,))
-     
-     log.Engine.run(self.context)
-     
-     self.config.state = 'completed'
-     self.config.put()
+        
+       input = self.config.next_operation_input
+       user = self.config.parent_entity
+       
+       namespace = input.get('domain_key')
+       
+       domain_key = ndb.Key(urlsafe=namespace)
+       domain = domain_key.get()
+       
+       user.domains.append(domain_key)
+       user.put()
+       
+       self.context.log.entities.append((user,))
+       
+       log.Engine.run(self.context)
+       
+       self.context.notify.entity = domain
+       
+       notify.Engine.run(self.context)
+       
+       self.config.state = 'completed'
+       self.config.put()
  
 
 register_system_setup(('setup_domain', DomainSetup))
@@ -283,11 +289,69 @@ class Configuration(ndb.BaseExpando):
   created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('7', auto_now=True)
   
+  _global_role = rule.GlobalRole(permissions=[
+                                            # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
+                                            rule.ActionPermission('57', event.Action.build_key('57-0').urlsafe(), True, "context.auth.user.is_taskqueue"),
+                                            rule.ActionPermission('57', event.Action.build_key('57-1').urlsafe(), True, "context.auth.user.is_taskqueue"),
+                              
+                                            ])  
+  
+  _actions = {
+              'install' : event.Action(id='57-0',
+                                          arguments={
+                                            'key' : ndb.SuperKeyProperty(required=True, kind='57')
+                                        }),
+              'cron_install' : event.Action(id='57-1')
+            }
+  
+  
   @classmethod
   def get_active_configurations(cls):
     time_difference = datetime.datetime.now()-datetime.timedelta(minutes=15)
     configurations = cls.query(cls.state == 'active', cls.updated < time_difference).fetch(50)
     return configurations
+  
+  
+  @classmethod
+  def cron_install(cls, context):
+    
+    context.rule.entity = cls()
+    
+    rule.Engine.run(context, True)
+    
+    if not rule.executable(context):
+       raise rule.ActionDenied(context)
+ 
+    configurations = Configuration.get_active_configurations()
+    for configuration in configurations:
+      context.auth.user = configuration.parent_entity
+      configuration.run(context)
+      
+    return context
+
+  
+  @classmethod
+  def install(cls, context):
+    
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    
+    context.rule.entity = entity
+    
+    rule.Engine.run(context, True)
+    
+    if not rule.executable(context):
+       raise rule.ActionDenied(context)
+    
+    util.logger('Start configuration.run(context)')
+    
+    context.auth.user = entity.parent_entity
+    
+    entity.run(context)
+    
+    util.logger('End configuration.run(context)')
+    
+    return context
   
   def run(self, context):
     
@@ -304,27 +368,4 @@ class Configuration(ndb.BaseExpando):
        if iterations < 1:
           util.logger('Stopped iteration at %s' % iterations)
           break
-    
-class Engine:
-  
-  @classmethod
-  def cron_run(cls, context):
-    configurations = Configuration.get_active_configurations()
-    for configuration in configurations:
-      context.auth.user = configuration.parent_entity
-      configuration.run(context)
-  
-  @classmethod
-  def run(cls, context):
-    # runs in transaction
-    configuration_key = context.input.get('configuration_key')
-    configuration = configuration_key.get()
-    
-    util.logger('Start configuration.run(context)')
-    
-    context.auth.user = configuration.parent_entity
-    
-    configuration.run(context)
-    
-    util.logger('End configuration.run(context)')
       
