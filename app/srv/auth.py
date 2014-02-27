@@ -343,22 +343,13 @@ class User(ndb.BaseExpando):
       
       entity_key = context.input.get('key')
       entity = entity_key.get()
-      primary_contact = entity.primary_contact.get_async()
-      
+
       context.rule.entity = entity
       
       rule.Engine.run(context, True)
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
-       
-      entity_dict = entity.__todict__()
-      
-      primary_contact = primary_contact.get_result()
-      
-      entity_dict['primary_contact_email'] = primary_contact.primary_email
-      
-      context.output['entity'] = entity_dict
  
       return context
     
@@ -642,6 +633,7 @@ class Domain(ndb.BaseExpando):
        'update' : event.Action(id='6-6',
                               arguments={
                                  'name' : ndb.SuperStringProperty(required=True),
+                                 'primary_contact' : ndb.SuperKeyProperty(required=True, kind='0'),
                                  'key' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
@@ -810,13 +802,22 @@ class Domain(ndb.BaseExpando):
       
       entity_key = context.input.get('key')
       entity = entity_key.get()
-      
+      primary_contact = entity.primary_contact.get_async()
+       
       context.rule.entity = entity
       
       rule.Engine.run(context)
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
+        
+      entity_dict = entity.__todict__()
+      
+      primary_contact = primary_contact.get_result()
+      
+      entity_dict['primary_contact_email'] = primary_contact.primary_email
+      
+      context.output['entity'] = entity_dict
  
       return context
     

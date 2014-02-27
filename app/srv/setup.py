@@ -155,7 +155,7 @@ class DomainSetup(Setup):
                                                         condition='True'))
                
          props = obj.get_fields() # for every object, all fields get FieldPermission writable, visible, and - required which is based on prop._required
-         for prop_name, prop in props:
+         for prop_name, prop in props.items():
              permissions.append(rule.FieldPermission(obj.get_kind(), prop_name, True, True, prop._required, 'True'))
      
      role = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)

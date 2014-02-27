@@ -121,6 +121,7 @@ class Record(ndb.BaseExpando):
     for p in entity._properties:
       prop = entity._properties.get(p)
       value = prop._get_value(entity)
+      self._properties[prop._name] = prop
       prop._set_value(self, value)
     return self
 

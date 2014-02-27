@@ -34,14 +34,28 @@ var handle_few_datatypes = function (response)
   	 				
 			if (angular.isObject(entity))
 			{
-				angular.forEach(entity, function (value, key) {
-					if (key in formatter)
-					{
-						entity[key] = new formatter[key](value);
-						
-					}
-				 
-				});
+				var _recursive = function (entity) {
+					
+					angular.forEach(entity, function (value, key) {
+						if (key in formatter)
+						{
+							if (angular.isObject(value))
+							{
+								_recursive(value);
+							}
+							else
+							{
+								entity[key] = new formatter[key](value);
+							}
+							
+							
+						}
+					 
+					});
+				
+				};
+				
+				_recursive(entity);
 			}
 			
   	 	};

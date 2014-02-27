@@ -76,6 +76,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				      	 
 					  	 $scope.rule = RuleEngine.factory(output);
+					  	 update(app, output['entity']);
 					  	 $scope.app = app;
 					  	 $scope.history = {
 					  	    'model' : 'srv.auth.Domain',

@@ -7,5 +7,5 @@ indexes:
 - kind: "5"
   ancestor: yes
   properties:
-  - name: "99"
+  - name: "l"
     direction: desc
