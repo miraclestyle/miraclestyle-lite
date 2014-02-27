@@ -7,6 +7,10 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 		{
 			return Endpoint.post('apps', 'srv.auth.User', {});
 		},
+		sudo_search : function ()
+		{
+			return Endpoint.post('sudo_search', 'srv.auth.Domain', {});
+		},
 		create : function ()
 		{
 	    	var that = this;

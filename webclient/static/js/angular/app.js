@@ -1,6 +1,7 @@
 var useinit = function (key, fun)
 {
-	if (initdata[key])
+	
+	if ('initdata' in window && initdata[key])
 	{
 		var initdata2 = {};
 		
