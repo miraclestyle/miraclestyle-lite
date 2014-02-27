@@ -96,7 +96,7 @@ def factory(module_model_path):
   far = custom_kinds[-1]
   del custom_kinds[-1]
   try:
-    module = importlib.import_module(".".join(custom_kinds))  # Replace util.import_module with importlib.import_module
+    module = importlib.import_module(".".join(custom_kinds))
   except Exception as e:
     util.logger('Failed to import %s. Error: %s.' % (module_model_path, e), 'exception')
     return None
