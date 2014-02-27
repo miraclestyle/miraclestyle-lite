@@ -18,14 +18,14 @@ class Context():
 class Record(ndb.BaseExpando):
   
   _kind = 5
-  # High numbers for field aliases are provided in order not to conflict with logged object fields!
-  logged = ndb.SuperDateTimeProperty('99', auto_now_add=True)
-  agent = ndb.SuperKeyProperty('98', kind='0', required=True)
-  action = ndb.SuperKeyProperty('97', kind='56', required=True)
+  # Letters for field aliases are provided in order not to conflict with logged object fields, and alow scaling!
+  logged = ndb.SuperDateTimeProperty('l', auto_now_add=True)
+  agent = ndb.SuperKeyProperty('u', kind='0', required=True)
+  action = ndb.SuperKeyProperty('a', kind='56', required=True)
   
   _expando_fields = {
-                     'message' : ndb.SuperTextProperty('96'),
-                     'note' : ndb.SuperTextProperty('95'),
+                     'message' : ndb.SuperTextProperty('m'),
+                     'note' : ndb.SuperTextProperty('n'),
                      }
   
   
