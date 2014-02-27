@@ -56,16 +56,11 @@
 		</div>
 		 
 	</div>
-	
-	
+	 
 	<div ng-show="rule.executable.history" class="form-control">
-		<label class="form-label"></label>
-		<div class="form-input">
-			<div ng-include="logic_template('srv/log', 'logs.html')"></div>
-		</div>
+		<div ng-include="logic_template('srv/log', 'logs.html')"></div>
 	</div>	 
-	
-	
+	 
 	</div>
  
  
@@ -78,8 +73,7 @@
 	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.executable.sudo">
 		Administer
 	</button>
-	
- 
+	 
 	<button ng-show="rule.executable.update" busy class="button">
 		Save
 	</button>

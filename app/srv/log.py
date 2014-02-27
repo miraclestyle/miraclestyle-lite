@@ -38,7 +38,7 @@ class Record(ndb.BaseExpando):
     query = cls.query(ancestor=entity.key).order(-cls.logged)
     
     @ndb.tasklet
-    def _async(entity):
+    def async(entity):
       
         new_entity = entity.__todict__()
       
@@ -77,7 +77,7 @@ class Record(ndb.BaseExpando):
     @ndb.tasklet 
     def helper(entities):
         
-       results = yield map(_async, entities)
+       results = yield map(async, entities)
        
        raise ndb.Return(results)
     

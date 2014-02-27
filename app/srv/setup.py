@@ -114,16 +114,10 @@ class DomainSetup(Setup):
      
      entity = auth.Domain(state='active')
      
-     self.context.rule.entity = entity
-     
-     rule.Engine.run(self.context, True)
-     
-     if rule.writable(self.context, 'name'):
-        entity.name = input.get('domain_name')
-     
-     if rule.writable(self.context, 'primary_contact'):
-        entity.primary_contact = primary_contact
-        
+     # rule engine is not needed here because user cannot reach this if he cannot call Domain.create()
+      
+     entity.name = input.get('domain_name')
+     entity.primary_contact = primary_contact
      entity.put()
      
      self.context.log.entities.append((entity,))
@@ -159,6 +153,10 @@ class DomainSetup(Setup):
                                                         action=action_instance.key.urlsafe(),
                                                         executable=True,
                                                         condition='True'))
+               
+         props = obj.get_fields() # for every object, all fields get FieldPermission writable, visible, and - required which is based on prop._required
+         for prop_name, prop in props:
+             permissions.append(rule.FieldPermission(obj.get_kind(), prop_name, True, True, prop._required, 'True'))
      
      role = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
      role.put()
@@ -206,7 +204,9 @@ class DomainSetup(Setup):
                    'location_exclusion')
      
      for info in other_info:
-         self.config.next_operation_input[info] = config_input.get('company_%s' % info)
+         key = 'company_%s' % info
+         if key in config_input: # these are expando fields, so they need to be set only if there's any value provided
+            self.config.next_operation_input[info] = config_input.get(key)
          
      self.config.next_operation = 'create_company'
      self.config.put()
@@ -254,7 +254,6 @@ class DomainSetup(Setup):
      namespace = input.get('domain_key')
      
      domain_key = ndb.Key(urlsafe=namespace)
-     domain = domain_key.get()
      
      user.domains.append(domain_key)
      user.put()
@@ -262,10 +261,6 @@ class DomainSetup(Setup):
      self.context.log.entities.append((user,))
      
      log.Engine.run(self.context)
-     
-     self.context.notify.entity = domain
-     
-     notify.Engine.run(self.context)
      
      self.config.state = 'completed'
      self.config.put()

@@ -8,7 +8,6 @@ MainApp.config(['$stateProvider',
         
       }).state('login', {
         url: '/login/:provider',
-        template: " ",
         controller: 'LoginPage'
         
       }).state('apps', {

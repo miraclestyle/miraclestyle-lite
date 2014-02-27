@@ -70,7 +70,7 @@ class User(ndb.BaseExpando):
 
                                                 rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user.root_admin"),
                                                 
-                                                rule.FieldPermission('0', 'identities', True, True, True, 'context.auth.user.key == context.rule.entity.key') # by default user can manage identities no problem
+                                                rule.FieldPermission('0', 'identities', True, True, True, 'True') # by default user can manage identities no problem
                                                
                                                ])
     
@@ -299,7 +299,7 @@ class User(ndb.BaseExpando):
             primary_email = context.input.get('primary_email')
             disassociate = context.input.get('disassociate')
             
-            if rule.writable(context, 'identities'): # checks if identities prop is writable?
+            if rule.writable(context, 'identities'): # checks if identities prop
               for identity in current_user.identities:
                   if primary_email:
                       identity.primary = False
@@ -343,6 +343,7 @@ class User(ndb.BaseExpando):
       
       entity_key = context.input.get('key')
       entity = entity_key.get()
+      primary_contact = entity.primary_contact.get_async()
       
       context.rule.entity = entity
       
@@ -350,6 +351,14 @@ class User(ndb.BaseExpando):
       
       if not rule.executable(context):
          raise rule.ActionDenied(context)
+       
+      entity_dict = entity.__todict__()
+      
+      primary_contact = primary_contact.get_result()
+      
+      entity_dict['primary_contact_email'] = primary_contact.primary_email
+      
+      context.output['entity'] = entity_dict
  
       return context
     
@@ -600,15 +609,7 @@ class Domain(ndb.BaseExpando):
                                             rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
                                             rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
-                                            
-                                            
-                                            # for basic checks it goes two field permissions per field, usually.
-                                            rule.FieldPermission('6', 'name', True, True, True, "context.rule.entity.state == 'active'"), #  these might need context.rule.entity.state == 'active' and inversion?
-                                            rule.FieldPermission('6', 'name', False, True, True, "not context.rule.entity.state == 'active'"), 
-                                            
-                                            rule.FieldPermission('6', 'primary_contact', True, True, True, "context.rule.entity.state == 'active'"), # these might need context.rule.entity == 'active' and inversion?
-                                            rule.FieldPermission('6', 'primary_contact', False, True, True, "not context.rule.entity.state == 'active'")
-                                            
+                       
                                             ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -726,7 +727,7 @@ class Domain(ndb.BaseExpando):
       entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
       
       @ndb.tasklet
-      def _async(entity):
+      def async(entity):
       
         new_entity = entity.__todict__()
         
@@ -739,7 +740,7 @@ class Domain(ndb.BaseExpando):
       @ndb.tasklet
       def helper(entities):
         
-          entities = yield map(_async, entities)
+          entities = yield map(async, entities)
         
           raise ndb.Return(entities)
         
@@ -854,13 +855,13 @@ class Domain(ndb.BaseExpando):
                raise rule.ActionDenied(context)
                 
             primary_contact = context.input.get('primary_contact')
-            
-            if not primary_contact:
-               primary_contact = context.auth.user.key
-             
-            entity.name = context.input.get('name')
-            entity.primary_contact = primary_contact
-            entity.put()
+        
+            if rule.writable(context, 'name'):
+               entity.name = context.input.get('name')
+               
+            if rule.writable(context, 'primary_contact'):
+               entity.primary_contact = primary_contact
+               entity.put()
             
             context.log.entities.append((entity,))
             log.Engine.run(context)
@@ -891,9 +892,7 @@ class Domain(ndb.BaseExpando):
             
             context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
             log.Engine.run(context)
-             
-            context.output['updated_domain'] = entity
-
+    
         transaction()
            
         return context
@@ -920,8 +919,7 @@ class Domain(ndb.BaseExpando):
            
            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
-            
-           context.output['updated_domain'] = entity
+ 
            
        transaction()
            
@@ -950,8 +948,6 @@ class Domain(ndb.BaseExpando):
            
            context.log.entities.append((entity, {'message' : context.input.get('message'), 'note' : context.input.get('note')}))
            log.Engine.run(context)
-            
-           context.output['updated_domain'] = entity
  
        transaction()
            
