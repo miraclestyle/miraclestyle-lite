@@ -389,21 +389,27 @@ class User(ndb.BaseExpando):
         domains = ndb.get_multi(context.auth.user.domains)
         entities = []
         
-        for domain in domains:
+        if context.auth.user.domains:
           
-            # rule engine run on domain
-            context.rule.entity = domain
-            rule.Engine.run(context)
+          domains = ndb.get_multi(context.auth.user.domains)
+        
+          for domain in domains:
             
-            domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
-            domain_user = domain_user_key.get()
-            
-            # rule engine on domain user as well...
-            
-            context.rule.entity = domain_user
-            rule.Engine.run(context)
-    
-            entities.append({'domain' : domain, 'user' : domain_user})
+              if domain:
+              
+                # rule engine run on domain
+                context.rule.entity = domain
+                rule.Engine.run(context)
+                
+                domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
+                domain_user = domain_user_key.get()
+                
+                # rule engine on domain user as well...
+                
+                context.rule.entity = domain_user
+                rule.Engine.run(context)
+        
+                entities.append({'domain' : domain, 'user' : domain_user})
             
         context.rule.entity = context.auth.user # show perms for initial entity
  
