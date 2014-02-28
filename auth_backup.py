@@ -425,181 +425,140 @@ class User(ndb.BaseExpando):
 
 
 class Domain(ndb.BaseExpando):
+  
+  _kind = 6
+  
+  _use_memcache = True
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  primary_contact = ndb.SuperKeyProperty('2', kind=User, required=True, indexed=False)
+  state = ndb.SuperStringProperty('3', required=True, choices=['active', 'suspended', 'su_suspended'])
+  created = ndb.SuperDateTimeProperty('4', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('5', required=True, auto_now=True)
+  
+  _default_indexed = False
+  
+  _expando_fields = {}
+  
+  _global_role = rule.GlobalRole(permissions=[
+                                              # is_guest check is not needed on other actions because it requires a loaded domain which will be evaluated with roles.
+                                              rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user.is_guest"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
+                                              ])
+  
+  _actions = {
+              'create': event.Action(id='6-0',
+                                     arguments={
+                                                # domain
+                                                'domain_name': ndb.SuperStringProperty(required=True),
+                                                # company
+                                                'company_name': ndb.SuperStringProperty(required=True),
+                                                'company_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
+                                                # company expando
+                                                'company_country': ndb.SuperKeyProperty(kind='15'),
+                                                'company_region': ndb.SuperKeyProperty(kind='16'),
+                                                'company_city': ndb.SuperStringProperty(),
+                                                'company_postal_code': ndb.SuperStringProperty(),
+                                                'company_street': ndb.SuperStringProperty(),
+                                                'company_email': ndb.SuperStringProperty(),
+                                                'company_telephone': ndb.SuperStringProperty(),
+                                                'company_currency': ndb.SuperKeyProperty(kind='19'),
+                                                'company_paypal_email': ndb.SuperStringProperty(),
+                                                'company_tracking_id': ndb.SuperStringProperty(),
+                                                'company_location_exclusion': ndb.SuperBooleanProperty(),
+                                                }),
+              'update': event.Action(id='6-6',
+                                     arguments={
+                                                'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                                'name': ndb.SuperStringProperty(required=True),
+                                                'primary_contact': ndb.SuperKeyProperty(required=True, kind='0'),
+                                                }),
+              'suspend': event.Action(id='6-1',
+                                      arguments={
+                                                 'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                                 'message': ndb.SuperTextProperty(required=True),
+                                                 }),
+              'activate': event.Action(id='6-2',
+                                       arguments={
+                                                  'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                                  'message': ndb.SuperTextProperty(required=True),
+                                                  }),
+              'sudo': event.Action(id='6-3',
+                                   arguments={
+                                              'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                              'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
+                                              'message': ndb.SuperTextProperty(required=True),
+                                              'note': ndb.SuperTextProperty(required=True),
+                                              }),
+              'log_message': event.Action(id='6-4',
+                                          arguments={
+                                                     'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                                     'message': ndb.SuperTextProperty(required=True),
+                                                     'note': ndb.SuperTextProperty(required=True),
+                                                     }),
+              'read': event.Action(id='6-7',
+                                   arguments={
+                                              'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                              }),
+              'prepare': event.Action(id='6-8',
+                                      arguments={
+                                                 'upload_url': ndb.SuperStringProperty(required=True),
+                                                 }),
+              'history': event.Action(id='6-9',
+                                      arguments={
+                                                 'key': ndb.SuperKeyProperty(kind='6', required=True),
+                                                 'next_cursor': ndb.SuperStringProperty(),
+                                                 }),
+              'sudo_search': event.Action(id='6-10',
+                                          arguments={
+                                                     'next_cursor': ndb.SuperStringProperty(),
+                                                     }),}
+  
+  @property
+  def key_namespace(self):
+    return self.key.urlsafe()
+  
+  @property
+  def namespace_entity(self):
+    return self
+  
+  @classmethod
+  def sudo_search(cls, context):
+    context.rule.entity = cls()
+    rule.Engine.run(context, True)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    query = cls.query().order(-cls.created)
+    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
     
-    # domain will use in-memory cache and memcache
-     
-    _use_memcache = True
+    @ndb.tasklet
+    def async(entity):
+      new_entity = entity.__todict__()
+      user = yield entity.primary_contact.get_async()
+      new_entity['primary_email'] = user.primary_email
+      raise ndb.Return(new_entity)
     
-    _kind = 6
+    @ndb.tasklet
+    def helper(entities):
+      entities = yield map(async, entities)
+      raise ndb.Return(entities)
     
-    # root
-    # composite index: ancestor:no - state,name
-    name = ndb.SuperStringProperty('1', required=True)
-    primary_contact = ndb.SuperKeyProperty('2', kind=User, required=True, indexed=False)
-    updated = ndb.SuperDateTimeProperty('3', auto_now=True)
-    created = ndb.SuperDateTimeProperty('4', auto_now_add=True)
-    state = ndb.SuperStringProperty('5', required=True)
-    
-    _default_indexed = False
-    
-    _global_role = rule.GlobalRole(permissions=[
-                                            # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user.is_guest"),
-                                            
-                                            rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
-                                            rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
-                       
-                                            ])
-    # unique action naming, possible usage is '_kind_id-manage'
-    _actions = {
-       'create' : event.Action(id='6-0',
-                              arguments={
-                                 
-                                 # domain
-                                 'domain_name' : ndb.SuperStringProperty(required=True),
-                                 
-                                 # company
-                                 'company_name' : ndb.SuperStringProperty(required=True),
-                                 'company_logo' : ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
-                
-                                 # company expando
-                                 'company_country' : ndb.SuperKeyProperty(kind='15'),
-                                 'company_region' : ndb.SuperKeyProperty(kind='16'),
-                                 'company_city' : ndb.SuperStringProperty(),
-                                 'company_postal_code' : ndb.SuperStringProperty(),
-                                 'company_street' : ndb.SuperStringProperty(),
-                                 'company_email' : ndb.SuperStringProperty(),
-                                 'company_telephone' : ndb.SuperStringProperty(),
-                                 'company_currency' : ndb.SuperKeyProperty(kind='19'),
-                                 'company_paypal_email' : ndb.SuperStringProperty(),
-                                 'company_tracking_id' : ndb.SuperStringProperty(),
-                                 'company_location_exclusion' : ndb.SuperBooleanProperty(),
-                                                             
-                              }
-                             ),
-                
-       'update' : event.Action(id='6-6',
-                              arguments={
-                                 'name' : ndb.SuperStringProperty(required=True),
-                                 'primary_contact' : ndb.SuperKeyProperty(required=True, kind='0'),
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                              }
-                             ),
-                
-       'suspend' : event.Action(id='6-1',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'message' : ndb.SuperTextProperty(required=True),
-                   
-                              }
-                             ),
-                
-       'activate' : event.Action(id='6-2',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'message' : ndb.SuperTextProperty(required=True),
-                                
-                              }
-                             ),
-                
-       'sudo' : event.Action(id='6-3',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'state' : ndb.SuperStringProperty(required=True, choices=('active', 'suspended', 'su_suspended')),
-                                 'message' : ndb.SuperTextProperty(required=True),
-                                 'note' : ndb.SuperTextProperty(required=True)
-                              }
-                             ),
-                
-       'log_message' : event.Action(id='6-4',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'message' : ndb.SuperTextProperty(required=True),
-                                 'note' : ndb.SuperTextProperty(required=True),
-                              }
-                             ),
- 
-                
-       'read' : event.Action(id='6-7',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                              }
-                             ),
-       'prepare' : event.Action(id='6-8',
-                              arguments={
-                                 'upload_url' : ndb.SuperStringProperty(required=True)           
-                              }
-                             ),
-       'history' : event.Action(id='6-9',
-                              arguments={
-                                 'key' : ndb.SuperKeyProperty(kind='6', required=True),
-                                 'next_cursor' : ndb.SuperStringProperty()
-                              }
-                             ),
-       'sudo_search' : event.Action(id='6-10', 
-                                    arguments={
-                                       'next_cursor' : ndb.SuperStringProperty()
-                                    }),       
-    }
- 
-    @property
-    def key_namespace(self):
-      return self.key.urlsafe()
-    
-    @property
-    def namespace_entity(self):
-      return self
-    
-    @classmethod
-    def sudo_search(cls, context):
-      
-      context.rule.entity = cls()
-    
-      rule.Engine.run(context, True)
-      
-      if not rule.executable(context):
-         raise rule.ActionDenied(context)
-       
-      query = cls.query().order(-cls.created)
-      
-      cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-      
-      entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
-      
-      @ndb.tasklet
-      def async(entity):
-      
-        new_entity = entity.__todict__()
-        
-        user = yield entity.primary_contact.get_async()
-         
-        new_entity['primary_email'] = user.primary_email
- 
-        raise ndb.Return(new_entity)
-      
-      @ndb.tasklet
-      def helper(entities):
-        
-          entities = yield map(async, entities)
-        
-          raise ndb.Return(entities)
-        
-      entities = helper(entities).get_result()
-       
-      context.output['entities'] = entities
-      context.output['next_cursor'] = next_cursor.urlsafe()
-      context.output['more'] = more
-       
-      return context
+    entities = helper(entities).get_result()
+    context.output['entities'] = entities
+    context.output['next_cursor'] = next_cursor.urlsafe()
+    context.output['more'] = more
+    return context
   
     @classmethod
     def create(cls, context):
