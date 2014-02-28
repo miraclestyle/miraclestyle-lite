@@ -10,7 +10,7 @@ TEMPLATE_CACHE = 0
 
 SESSION_USER_KEY = 'usr'
 
-ANGULAR_MODULES = ['ui-router', 
+ANGULAR_MODULES = ['router', 
                    'ngStorage', 
                    'ngUpload',
                    'ngAnimate',

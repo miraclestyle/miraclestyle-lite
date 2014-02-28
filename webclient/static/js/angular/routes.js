@@ -5,19 +5,19 @@ MainApp.config(['$stateProvider',
       	url : '/',
         templateUrl: logic_template('home', 'home.html'),
         controller: 'HomePage'
-        
-      }).state('login', {
+      })
+      .state('login', {
         url: '/login/:provider',
-        controller: 'LoginPage'
-        
-      }).state('apps', {
+        controller: 'LoginPage',
+      })
+      .state('apps', {
       	url: '/apps',
         templateUrl: logic_template('srv/auth', 'apps.html'),
         controller: 'AppList',
         resolve : {
         	apps : ['App', function (App) {
         		
-				return useinit('entities', function () {
+				return useInit('entities', function () {
         			return App.search().then(function (output) {
 						return output.data;
 					});
@@ -25,7 +25,8 @@ MainApp.config(['$stateProvider',
         	 
         	}]
         }
-      }).state('admin', {
+      })
+      .state('admin', {
       	url: '/admin',
       }).state('admin_apps', {
       	url: '/admin/apps',
@@ -34,7 +35,7 @@ MainApp.config(['$stateProvider',
         resolve : {
         	apps : ['App', function (App) {
         		
-        		return useinit('entities', function () {
+        		return useInit('entities', function () {
         			return App.sudo_search().then(function (output) {
 						return output.data;
 					});
@@ -50,7 +51,7 @@ MainApp.config(['$stateProvider',
         resolve : {
         	users : ['Account', function (Account) {
         		
-        		return useinit('entities', function () {
+        		return useInit('entities', function () {
         			return Account.sudo_search().then(function (output) {
 						return output.data;
 					});
@@ -58,6 +59,5 @@ MainApp.config(['$stateProvider',
         	}]
         }
       });
- 
-       
+  
 }]);

@@ -2,13 +2,18 @@
 <div accordion>
       <div is-open="commander.isOpen" accordion-group heading="History">
  
-		<table ng-show="logs != -1" class="table">
+		<table ng-show="commander.first" class="table">
 			<thead>
 				<th>Logged</th>
 				<th>Agent</th>
 				<th>Action</th>
 			</thead>
 			<tbody>
+				<tr ng-show="logs.length">
+					<td colspan="3">
+						No records found.
+					</td>
+				</tr>
 				<tr ng-repeat="log in logs">
 					<td>{{log.logged|date:DATE_FULL}}</td>
 					<td>{{log.agent}}</td>
@@ -17,7 +22,7 @@
 				
 				<tr ng-show="commander.loading">
 					<td colspan="3">
-						<div class="text-center" ng-show="logs == -1">
+						<div class="text-center">
 							<p>Loading...</p>
 						</div>
 					</td>
@@ -25,9 +30,12 @@
 			</tbody>
 		</table>
 		
-		<div class="text-center" ng-show="logs == -1">
+		<div class="text-center" ng-hide="commander.first">
 			<p>Loading...</p>
 		</div>
+		
+		<button busy ng-click="loadMore()" ng-show="history.args.more && commander.first && !commander.loading" 
+				class="button block load-more">Load More</button>
 
 	  </div>	    
 </div>

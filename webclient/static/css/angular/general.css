@@ -127,6 +127,8 @@ a.block, .block, .button.block
   width:100%;
 }
 
+.load-more {width:100%;}
+
 .no-style
 {
   list-style: none;

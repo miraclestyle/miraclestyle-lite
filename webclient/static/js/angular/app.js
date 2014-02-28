@@ -1,88 +1,5 @@
-var useinit = function (key, fun)
-{
-	
-	if ('initdata' in window && initdata[key])
-	{
-		var initdata2 = {};
-		
-		angular.copy(initdata, initdata2);
-		 
-		delete initdata;
-	 
-		return initdata2;
-		
-	}
-	else
-	{
-	    var call = fun;
-	    
-	    if (angular.isFunction(fun))
-	    {
-	    	call = fun();
-	    }
-		 
-		return call;
-	}
-	
-};
-
-var handle_few_datatypes = function (response)
-{
- 
-  	 	var formatter = {'created' : Date, 'updated' : Date, 'logged' : Date};
-  	 	 
-  	 	var do_format = function (entity) {
-  	 				
-			if (angular.isObject(entity))
-			{
-				var _recursive = function (entity) {
-					
-					angular.forEach(entity, function (value, key) {
-						if (key in formatter)
-						{
-							if (angular.isObject(value))
-							{
-								_recursive(value);
-							}
-							else
-							{
-								entity[key] = new formatter[key](value);
-							}
-							
-							
-						}
-					 
-					});
-				
-				};
-				
-				_recursive(entity);
-			}
-			
-  	 	};
-  	 	// this is probably just temporary because we will need more robust transformer
-  	 	if (angular.isObject(response))
-  	 	{
- 
-  	 		if ('entities' in response)
-  	 		{ 
-  	 			angular.forEach(response.entities, do_format);
- 
-  	 		}
-  	 		
-  	 		if ('entity' in response)
-  	 		{ 
-  	 			do_format(response.entity);
- 
-  	 		}
-  	 		 
-  	 	}
-  	 	 
-  	 	return response;
-};
-
-handle_few_datatypes({'entity' : current_user});
-handle_few_datatypes({'entity' : initdata});
+handleFewDatatypes({'entity' : current_user});
+handleFewDatatypes({'entity' : initdata});
 
 angular.module('app.ui',
 	  [
@@ -99,7 +16,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
   function($httpProvider, $locationProvider) {
   	 
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-     $httpProvider.defaults.transformResponse.push(handle_few_datatypes);
+     $httpProvider.defaults.transformResponse.push(handleFewDatatypes);
  
      $locationProvider.hashPrefix('!');
      
@@ -292,6 +209,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			var defaults = {
 				message : output,
 				templateUrl : logic_template('opt/misc', 'error500.html'),
+				windowClass : '',
 				text : {
 					Yes : 'Close',
 				}
@@ -345,7 +263,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	
 	var _compile = function(action, model, data, config)
 	{
-		 if (!config) config = {};
+		 config = alwaysObject(config);
+		 data = alwaysObject(data);
 			
 		 return [angular.extend({
 				action_model : model,
@@ -378,22 +297,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  
 	$rootScope.pageTitle = '';
 	
-	_compile = function (title_to_compile)
+	var _compile = function (title_to_compile)
 	{
-		title_to_compile.unshift(suffix);
-		title_to_compile.reverse();
-		return title_to_compile.join('-');
+ 
+		title_to_compile.push(suffix);
+		
+		return title_to_compile.join(' - ');
 	};
 	
 	return {
 		set : function (title)
 		{
-		   $rootScope.pageTitle = title + ' - ' + suffix;
+		   $rootScope.pageTitle = _compile(angular.isArray(title) ? title : [title]);
 		   
 		   return this;
 		},
 		append : function (title) {
-			
+ 
 		   if (angular.isArray(title))
 		   {
 		   	  angular.forEach(title, function (a) {
@@ -404,14 +324,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		   {
 		   	  titles.push(title);
 		   } 	
-		   
-		   
-		   $rootScope.pageTitle = _compile(titles);	
-		   
+		     
 		   return this;
 			
 		},
-		prepend : function () {
+		prepend : function (title) {
 			
 		   if (angular.isArray(title))
 		   {
@@ -423,8 +340,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		   {
 		   	  titles.unshift(title);
 		   } 	
-			
-			$rootScope.pageTitle = _compile(titles);	
+		 	
 			
 			return this;
 		},
@@ -432,29 +348,35 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		{
 			titles = [];
 			
+			$rootScope.pageTitle = _compile([]);
+			
+			return this;
+		},
+		finalize : function ()
+		{
+ 
 			$rootScope.pageTitle = _compile(titles);
 			
 			return this;
 		}
 	};
 }])
-.controller('HandleLog', ['$scope', 'Endpoint', function ($scope, Endpoint) {
+.controller('HandleLog', ['$scope', 'Endpoint', '$timeout', function ($scope, Endpoint, $timeout) {
  
-    $scope.logs = -1;
-	$scope.commander = {'isOpen' : false, 'loading' : false};
-	 
-	 
-	var load_more = function (that)
-	{
-		
-		if ($scope.logs != -1)
-		{
+    $scope.logs = [];
+    $scope.history.args.more = true;
+    
+	$scope.commander = {'isOpen' : false, 'first' : false, 'loading' : false};
+	  
+	var loadMore = function (that)
+	{ 
 			if (!$scope.commander.loading && $scope.history.args.more)
 			{
 				$scope.commander.loading = true;
 				
 				Endpoint.post('history', $scope.history.model, $scope.history.args).success(function (data) {
 					
+					$scope.commander.first = true;
 				 
 					angular.forEach(data.entities, function (value) {
 					     $scope.logs.push(value);
@@ -462,29 +384,30 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  
 					$scope.history.args.next_cursor = data.next_cursor;
 					$scope.history.args.more = data.more;
-					
+					 
 					$scope.commander.loading = false;
+			 
+					$timeout(function () {
+						$(window).trigger('resize');
+					});
+					
 				});		
-				
-			}
+		 
 		}		
 		
 	};
+	
+	$scope.loadMore = loadMore;
 	 
 	$scope.$on('scrollEnd', function (that) {
- 		load_more(that);
+ 		loadMore(that);
 	});
 	
 	$scope.$watch('commander.isOpen', function (isOpen) {
- 
-		if (isOpen && $scope.logs == -1)
+	
+		if (isOpen && !$scope.commander.first)
 		{
-			Endpoint.post('history', $scope.history.model, $scope.history.args).success(function (data) {
-			 
-				$scope.logs = data.entities;
-				$scope.history.args.next_cursor = data.next_cursor;
-				$scope.history.args.more = data.more;
-			});
+			loadMore();
 		}  
 	});
 }])
@@ -495,5 +418,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     $rootScope.ui_template = ui_template;
     $rootScope.logic_template = logic_template;
     $rootScope.DATE_FULL = "yyyy-MM-dd HH:mm:ss Z";
+    
+    $rootScope.$on('$stateChangeStart',
+		function(event, toState, toParams, fromState, fromParams){
+		    Title.reset();
+		});
   
 }]);

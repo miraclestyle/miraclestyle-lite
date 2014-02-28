@@ -1,5 +1,5 @@
-MainApp.controller('HomePage', ['$scope', function ($scope) {
-	
+MainApp.controller('HomePage', ['$scope', 'Title', function ($scope, Title) {
+ 
 }])
 .run(['$rootScope',
      function ($rootScope) {

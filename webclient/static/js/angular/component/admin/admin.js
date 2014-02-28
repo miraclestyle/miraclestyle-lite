@@ -1,6 +1,6 @@
 MainApp.controller('AdminUsers', ['$scope', 'users', 'Account', 'Title', function ($scope, users, Account, Title) {
 	
-	Title.set('Users');
+	Title.set(['Admin', 'Users']);
 	
 	$scope.users = users.entities;
 	
@@ -12,7 +12,7 @@ MainApp.controller('AdminUsers', ['$scope', 'users', 'Account', 'Title', functio
 }])
 .controller('AdminApps', ['$scope', 'apps', 'App', 'Title', function ($scope, apps, App, Title) {
 	
-	Title.set('Apps');
+	Title.set(['Admin', 'Apps']);
 	
 	$scope.apps = apps.entities;
 	

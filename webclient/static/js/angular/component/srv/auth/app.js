@@ -3,28 +3,28 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	function ($rootScope, $http, $location, $modal, Endpoint) {
 	 
 	return {
-		search : function ()
+		search : function (args, config)
 		{
-			return Endpoint.post('apps', 'srv.auth.User', {});
+			return Endpoint.post('apps', 'srv.auth.User', args, config);
 		},
-		sudo_search : function ()
+		sudo_search : function (args, config)
 		{
-			return Endpoint.post('sudo_search', 'srv.auth.Domain', {});
+			return Endpoint.post('sudo_search', 'srv.auth.Domain', args, config);
 		},
 		create : function ()
 		{
 	    	var that = this;
 	        	 
-			var handle = function (output) {
+			var handle = function (data) {
  
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'app_create.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine, Confirm) {
 				      	 
-					  	 $scope.rule = RuleEngine.factory(output);
+					  	 $scope.rule = RuleEngine.factory(data);
 					  	 $scope.app = {};
 					  	 $scope.step = 1;
-					  	 $scope.upload_url = output.upload_url;
+					  	 $scope.upload_url = data.upload_url;
 					   
 					  	 
 					  	 $scope.nextStep = function(which_step)
@@ -47,9 +47,9 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 					     	  	
 					     	  	 Confirm.notice('An error occurred, please try again.', function () {
 					     	  	 	  Endpoint.post('prepare', 'srv.auth.Domain',
-					     	  	 	      {'upload_url' : Endpoint.url}).success(function (output) {
+					     	  	 	      {'upload_url' : Endpoint.url}).success(function (data) {
 					     	  	 	  	  
-					     	  	 	  	  $scope.upload_url = output.upload_url;
+					     	  	 	  	  $scope.upload_url = data.upload_url;
 					     	  	 	  });
 					     	  	 });
 						     	 
@@ -73,14 +73,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 	    {
 	    	var that = this;
 	        	 
-			var handle = function (output) {
+			var handle = function (data) {
 	 
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'app_update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				      	 
-					  	 $scope.rule = RuleEngine.factory(output);
-					  	 update(app, output['entity']);
+					  	 $scope.rule = RuleEngine.factory(data);
+					  	 update(app, data['entity']);
 					  	 $scope.app = app;
 					  	 $scope.history = {
 					  	    'model' : 'srv.auth.Domain',

@@ -165,20 +165,20 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 			});
 		},
 		
-		sudo_search : function ()
+		sudo_search : function (args, config)
         {
-        	return Endpoint.post('sudo_search', 'srv.auth.User');
+        	return Endpoint.post('sudo_search', 'srv.auth.User', args, config);
         },
 		ask_login : function (on_close)
 		{
  
-			var handle = function (output) {
+			var handle = function (data) {
  
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'login.html'),
 				      controller: function ($scope, $modalInstance) {
 						  
-						  $scope.data = output;
+						  $scope.data = data;
 						  
 						  $scope.login_methods = login_methods;
 					  
@@ -202,13 +202,15 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		update : function (user)
 	    {
  
-			var handle = function (output) {
+			var handle = function (data) {
  
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'account_update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				      	
-				      	  $scope.rule = RuleEngine.factory(output);
+				      	  update(user, data);
+				      	
+				      	  $scope.rule = RuleEngine.factory(data);
 				      	  $scope.user = user;
 				      	  $scope.history = {
 				      	  	  'model' : 'srv.auth.User',
