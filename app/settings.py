@@ -76,6 +76,6 @@ FACEBOOK_OAUTH2 = {
 }
 
 LOGIN_METHODS = {
-    'google' : GOOGLE_OAUTH2,
-    'facebook' : FACEBOOK_OAUTH2,
+    'google': {'oauth2': GOOGLE_OAUTH2},
+    'facebook': {'oauth2': FACEBOOK_OAUTH2},
 }
