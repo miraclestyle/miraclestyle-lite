@@ -43,11 +43,6 @@ PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
 OUTLET_TEMPLATES_PER_TASK = 10
 OUTLET_RECIPIENTS_PER_TASK = 50
  
-
-LOGIN_METHODS = {
-    'google' : 1,
-    'facebook' : 2,
-}
  
 _http = 'http://'
 
@@ -65,10 +60,9 @@ GOOGLE_OAUTH2 = {
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
    'redirect_uri' : '%s/login/google' % HOST,
-
+   'type' : 1,
+   'userinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
-
-GOOGLE_OAUTH2_USERINFO = 'https://www.googleapis.com/oauth2/v1/userinfo'
  
 FACEBOOK_OAUTH2 = {
    'client_id'    : '125702284258635',
@@ -77,6 +71,11 @@ FACEBOOK_OAUTH2 = {
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
    'redirect_uri' : '%s/login/facebook' % HOST,
+   'type' : 2,
+   'userinfo' : 'https://graph.facebook.com/me',
 }
 
-FACEBOOK_OAUTH2_USERINFO = 'https://graph.facebook.com/me'
+LOGIN_METHODS = {
+    'google' : GOOGLE_OAUTH2,
+    'facebook' : FACEBOOK_OAUTH2,
+}
