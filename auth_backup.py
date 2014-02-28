@@ -25,7 +25,7 @@ class Context():
 class Session(ndb.BaseModel):
   
   session_id = ndb.SuperStringProperty('1', required=True, indexed=False)
-  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now_add=True, indexed=False)  # We do not use auto_now here!!
+  created = ndb.SuperDateTimeProperty('2', required=True, auto_now_add=True, indexed=False)
 
 
 class Identity(ndb.BaseModel):
@@ -71,7 +71,7 @@ class User(ndb.BaseExpando):
   _actions = {
               'login': event.Action(id='0-0',
                                     arguments={
-                                               'login_method': ndb.SuperStringProperty(required=True),
+                                               'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
                                                'code': ndb.SuperStringProperty(),
                                                'error': ndb.SuperStringProperty(),
                                                }),
@@ -305,7 +305,6 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    domains = ndb.get_multi(context.auth.user.domains)
     entities = []
     if context.auth.user.domains:
       domains = ndb.get_multi(context.auth.user.domains)
@@ -359,76 +358,69 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    if login_method not in settings.LOGIN_METHODS:
+    context.output['providers'] = settings.LOGIN_METHODS.keys()  # Not sure what is expected in output?
+    oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
+    client = oauth2.Client(**oauth2_cfg)
+    context.output['authorization_url'] = client.get_authorization_code_uri()
+    urls = {}
+    for urls_login_method, cfg in settings.LOGIN_METHODS.items():
+      urls_oauth2_cfg = cfg['oauth2']
+      urls_client = oauth2.Client(**urls_oauth2_cfg)
+      urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
+    context.output['authorization_urls'] = urls
+    if error:
       # raise custom exception!!!
-      context.error('login_method', 'not_allowed')
-    else:
-      context.output['providers'] = settings.LOGIN_METHODS
-      cfg = getattr(settings, '%s_OAUTH2' % login_method.upper())
-      client = oauth2.Client(**cfg)
-      context.output['authorization_url'] = client.get_authorization_code_uri()
-      urls = {}
-      for label, key in settings.LOGIN_METHODS.items():
-        get_cfg = getattr(settings, '%s_OAUTH2' % label.upper())
-        generated_client = oauth2.Client(**get_cfg)
-        urls[key] = generated_client.get_authorization_code_uri()
-      context.output['authorization_urls'] = urls
-      if error:
+      return context.error('oauth2_error', 'rejected_account_access')
+    if code:
+      client.get_token(code)
+      if not client.access_token:
         # raise custom exception!!!
-        return context.error('oauth2_error', 'rejected_account_access')
-      if code:
-        client.get_token(code)
-        if not client.access_token:
-          # raise custom exception!!!
-          return context.error('oauth2_error', 'failed_access_token')
-        context.output['access_token'] = client.access_token
-        userinfo = getattr(settings, '%s_OAUTH2_USERINFO' % login_method.upper())
-        info = client.resource_request(url=userinfo)
-        if info and 'email' in info:
-          identity = settings.LOGIN_METHODS.get(login_method)
-          identity_id = '%s-%s' % (info['id'], identity)
-          email = info['email']
-          user = cls.query(cls.identities.identity == identity_id).get()
-          if not user:
-            user = cls.query(cls.emails == email).get()
-          if user:
-            context.rule.entity = user
-            context.auth.user = user
-            rule.Engine.run(context, True)
-            if not rule.executable(context):
-              raise rule.ActionDenied(context)
-          
-          @ndb.transactional(xg=True)
-          def transaction(user):
-            if not user or user.is_guest:
-              user = cls()
-              user.emails.append(email)
-              user.identities.append(Identity(identity=identity_id, email=email, primary=True))
-              user.state = 'active'
-              session = user.new_session()
-              user.put()
+        return context.error('oauth2_error', 'failed_access_token')
+      context.output['access_token'] = client.access_token
+      userinfo = settings.LOGIN_METHODS[login_method]['oauth2']['userinfo']
+      info = client.resource_request(url=userinfo)
+      if info and 'email' in info:
+        identity = settings.LOGIN_METHODS[login_method]['oauth2']['type']
+        identity_id = '%s-%s' % (info['id'], identity)
+        email = info['email']
+        user = cls.query(cls.identities.identity == identity_id).get()
+        if not user:
+          user = cls.query(cls.emails == email).get()
+        if user:
+          context.rule.entity = user
+          context.auth.user = user
+          rule.Engine.run(context, True)
+          if not rule.executable(context):
+            raise rule.ActionDenied(context)
+        
+        @ndb.transactional(xg=True)
+        def transaction(entity):
+          if not entity or entity.is_guest:
+            entity = cls()
+            entity.emails.append(email)
+            entity.identities.append(Identity(identity=identity_id, email=email, primary=True))
+            entity.state = 'active'
+            entity.put()
+          else:
+            if email not in entity.emails:
+              entity.emails.append(email)
+            used_identity = entity.has_identity(identity_id)
+            if not used_identity:
+              entity.append(Identity(identity=identity_id, email=email, primary=False))
             else:
-              if email not in user.emails:
-                user.emails.append(email)
-              used_identity = user.has_identity(identity_id)
-              if not used_identity:
-                user.append(Identity(identity=identity_id, email=email, primary=False))
-              else:
-                used_identity.associated = True
-                if used_identity.email != email:
-                  used_identity.email = email
-              session = user.new_session()
-              user.put()
-            cls.set_current_user(user, session)
-            context.auth.user = user
-            context.log.entities.append((user, {'ip_address': os.environ['REMOTE_ADDR']}))
-            log.Engine.run(context)
-            context.output.update({'user': user,
-                                   'authorization_code': user.generate_authorization_code(session),
-                                   'session': session,
-                                   })
-          
-          transaction(user)
+              used_identity.associated = True
+              if used_identity.email != email:
+                used_identity.email = email
+            entity.put()
+          session = entity.new_session()
+          cls.set_current_user(entity, session)
+          context.auth.user = entity
+          context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
+          context.output.update({'user': entity,
+                                 'authorization_code': entity.generate_authorization_code(session),
+                                 'session': session,
+                                 })
+        transaction(user)
     return context
 
 
