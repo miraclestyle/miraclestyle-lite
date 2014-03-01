@@ -109,9 +109,15 @@ def _get_entity(self):
 Key.entity = property(_get_entity)
 
 
-class _BaseModel():
+class _BaseModel(object):
   
   _virtual_properties = None
+  
+  def __init__(self, *args, **kwargs):
+    
+     super(_BaseModel, self).__init__(*args, **kwargs)
+     
+     self.prepare_fields()
   
   def prepare_fields(self):
     
@@ -238,21 +244,11 @@ class _BaseModel():
 class BaseModel(_BaseModel, Model):
   """Base class for all 'ndb.Model' entities."""
   
-  def __init__(self, *args, **kwargs):
-    
-     super(BaseModel, self).__init__(*args, **kwargs)
-     
-     self.prepare_fields()
+
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
-  
-  def __init__(self, *args, **kwargs):
-    
-     super(BasePoly, self).__init__(*args, **kwargs)
-     
-     self.prepare_fields()
-  
+   
   @classmethod
   def _get_hierarchy(cls):
     """Internal helper method to return the list of polymorphic base classes.
@@ -286,13 +282,7 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 class BaseExpando(_BaseModel, Expando):
   """Base class for all 'ndb.Expando' entities."""
-  
-  def __init__(self, *args, **kwargs):
-    
-     super(BaseExpando, self).__init__(*args, **kwargs)
-     
-     self.prepare_fields()
-  
+   
   @classmethod
   def get_expando_fields(cls):
     if hasattr(cls, '_expando_fields'):
@@ -364,12 +354,7 @@ class BaseExpando(_BaseModel, Expando):
 
 
 class BasePolyExpando(BasePoly, BaseExpando):
-  
-  def __init__(self, *args, **kwargs):
-    
-     super(BasePolyExpando, self).__init__(*args, **kwargs)
-     
-     self.prepare_fields()
+   pass
 
 
 class _BaseProperty(object):

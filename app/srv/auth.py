@@ -419,6 +419,7 @@ class User(ndb.BaseExpando):
           cls.set_current_user(entity, session)
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
+          log.Engine.run(context)
           context.output.update({'user': entity,
                                  'authorization_code': entity.generate_authorization_code(session),
                                  'session': session,
