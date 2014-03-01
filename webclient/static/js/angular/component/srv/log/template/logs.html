@@ -9,7 +9,7 @@
 				<th>Action</th>
 			</thead>
 			<tbody>
-				<tr ng-show="logs.length">
+				<tr ng-show="!logs.length && commander.first">
 					<td colspan="3">
 						No records found.
 					</td>

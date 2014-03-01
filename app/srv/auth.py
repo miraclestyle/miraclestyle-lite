@@ -222,7 +222,7 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      if state = 'suspended':
+      if state == 'suspended':
         entity.sessions = []  # Delete sessions.
       entity.state = state
       entity.put()
@@ -294,8 +294,12 @@ class User(ndb.BaseExpando):
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+    
+    if next_cursor:
+       next_cursor = next_cursor.urlsafe()
+    
     context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor.urlsafe()
+    context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
   
@@ -377,10 +381,10 @@ class User(ndb.BaseExpando):
         # raise custom exception!!!
         return context.error('oauth2_error', 'failed_access_token')
       context.output['access_token'] = client.access_token
-      userinfo = settings.LOGIN_METHODS[login_method]['oauth2']['userinfo']
+      userinfo = oauth2_cfg['userinfo']
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
-        identity = settings.LOGIN_METHODS[login_method]['oauth2']['type']
+        identity = oauth2_cfg['type']
         identity_id = '%s-%s' % (info['id'], identity)
         email = info['email']
         user = cls.query(cls.identities.identity == identity_id).get()
@@ -400,6 +404,7 @@ class User(ndb.BaseExpando):
             entity.emails.append(email)
             entity.identities.append(Identity(identity=identity_id, email=email, primary=True))
             entity.state = 'active'
+            session = entity.new_session() # new_session function does not perform puts so it needs to go before .put()!
             entity.put()
           else:
             if email not in entity.emails:
@@ -411,8 +416,9 @@ class User(ndb.BaseExpando):
               used_identity.associated = True
               if used_identity.email != email:
                 used_identity.email = email
+            session = entity.new_session() # new_session function does not perform puts so it needs to go before .put()!    
             entity.put()
-          session = entity.new_session()
+          
           cls.set_current_user(entity, session)
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
@@ -554,9 +560,12 @@ class Domain(ndb.BaseExpando):
       entities = yield map(async, entities)
       raise ndb.Return(entities)
     
+    if next_cursor:
+       next_cursor = next_cursor.urlsafe()
+    
     entities = helper(entities).get_result()
     context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor.urlsafe()
+    context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
   

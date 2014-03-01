@@ -14,6 +14,22 @@ class Context():
   def __init__(self):
     self.entities = []
 
+"""
+This class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
+It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for() - that is because 
+if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
+meaning that simultaneously based on user actions, new properties will be appended to Record._properties and that will 
+cause complete inconsistency and errors while fetching, storing and deleting data. (This was noticed upon testing)
+
+Same approach must be done with the transaction / entry / entry line scenario, which implements its own logic for new
+properties.
+
+This implementation will not cause any performance issues or variable leak whatsoever, the _properties will be adjusted to
+be available in `self` - not `cls`. 
+
+In the begining i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
+allowed mutations to class(cls) scope.
+"""
 
 class Record(ndb.BaseExpando):
   
@@ -112,12 +128,14 @@ class Record(ndb.BaseExpando):
        # adds properties from parent class to the log entity making it possible to deserialize properties properly
        prop = modelclass._properties.get(next)
        if prop:
+          self._clone_properties() # clone properties, because if we dont, the Record._properties will be overriden
           self._properties[next] = prop
-       
+ 
     return super(Record, self)._get_property_for(p, indexed, depth)
   
   # Log entity's each property
   def log_entity(self, entity):
+    self._clone_properties() # clone properties, because if we dont, the Record._properties will be overriden
     for p in entity._properties:
       prop = entity._properties.get(p)
       value = prop._get_value(entity)
