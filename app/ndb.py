@@ -111,6 +111,25 @@ Key.entity = property(_get_entity)
 
 class _BaseModel():
   
+  _virtual_properties = None
+  
+  def prepare_fields(self):
+    
+      self._virtual_properties = []
+      
+      for key, prop in self.get_fields().items():
+          self.add_field(key)
+          
+      self.add_field('_actions')
+  
+  def add_field(self, name):
+      if name not in self._virtual_properties:
+         self._virtual_properties.append(name)
+    
+  def remove_field(self, name):
+      if name in self._virtual_properties:
+         self._virtual_properties.remove(name)
+  
   @classmethod
   def build_key(cls, *args, **kwargs):
     new_args = [cls._get_kind()]
@@ -122,26 +141,26 @@ class _BaseModel():
     return self._key
   
   def __todict__(self):
-    """This function can be used to make representation of the model into the dictionary.
-    The dictionary can then be used to get translated into other understandable code to clients (e.g. JSON).
-    Currently, this method calls native Model.to_dict() method which converts the values into dictionary format.
-    
     """
-    dic = self.to_dict()
+    This function can be used to make representation of the model into the dictionary.
+    The dictionary can then be used to get translated into other understandable code to clients (e.g. JSON).
+    """
+    dic = {}
+    
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
+ 
+    names = self._virtual_properties
     
+    for name in names:
+        value = getattr(self, name, None)
+        dic[name] = value
+     
     for k, v in dic.items():
       if isinstance(v, Key):
         dic[k] = v.urlsafe()
-    
-    if hasattr(self, '_action_permissions'):
-      dic['_action_permissions'] = self._action_permissions
-    if hasattr(self, '_field_permissions'):
-      dic['_field_permissions'] = self._field_permissions
-    if hasattr(self, '_actions'):
-      dic['_actions'] = self._actions
+         
     return dic
   
   def loaded(self):
@@ -218,9 +237,21 @@ class _BaseModel():
 
 class BaseModel(_BaseModel, Model):
   """Base class for all 'ndb.Model' entities."""
+  
+  def __init__(self, *args, **kwargs):
+    
+     super(BaseModel, self).__init__(*args, **kwargs)
+     
+     self.prepare_fields()
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
+  
+  def __init__(self, *args, **kwargs):
+    
+     super(BasePoly, self).__init__(*args, **kwargs)
+     
+     self.prepare_fields()
   
   @classmethod
   def _get_hierarchy(cls):
@@ -255,6 +286,12 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 class BaseExpando(_BaseModel, Expando):
   """Base class for all 'ndb.Expando' entities."""
+  
+  def __init__(self, *args, **kwargs):
+    
+     super(BaseExpando, self).__init__(*args, **kwargs)
+     
+     self.prepare_fields()
   
   @classmethod
   def get_expando_fields(cls):
@@ -327,7 +364,12 @@ class BaseExpando(_BaseModel, Expando):
 
 
 class BasePolyExpando(BasePoly, BaseExpando):
-  pass
+  
+  def __init__(self, *args, **kwargs):
+    
+     super(BasePolyExpando, self).__init__(*args, **kwargs)
+     
+     self.prepare_fields()
 
 
 class _BaseProperty(object):

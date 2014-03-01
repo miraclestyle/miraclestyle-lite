@@ -41,6 +41,14 @@ def executable(context):
   else:
      return False
    
+def write(entity, values):
+    # @todo
+    pass
+  
+def read(entity):
+    # @todo
+    pass
+   
    
 class Context():
   
@@ -260,6 +268,9 @@ class Engine:
      
       context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
       context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
+      
+      context.rule.entity.add_field('_action_permissions')
+      context.rule.entity.add_field('_field_permissions')
    
 
 class GlobalRole(Role):
