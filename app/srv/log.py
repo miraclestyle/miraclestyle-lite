@@ -89,6 +89,9 @@ class Record(ndb.BaseExpando):
     # entities = pager.fetch_page(query, _async, page_size=items_per_page, start_cursor=cursor)
     
     entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
+    
+    if next_cursor:
+       next_cursor = next_cursor.urlsafe()
      
     @ndb.tasklet 
     def helper(entities):
@@ -100,7 +103,7 @@ class Record(ndb.BaseExpando):
     entities = helper(entities)
     entities = [entity for entity in entities.get_result()]
       
-    return {'entities' : entities, 'next_cursor' : next_cursor.urlsafe(), 'more' : more}
+    return {'entities' : entities, 'next_cursor' : next_cursor, 'more' : more}
   
   
   def _get_property_for(self, p, indexed=True, depth=0):
