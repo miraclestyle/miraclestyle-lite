@@ -294,10 +294,8 @@ class User(ndb.BaseExpando):
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
-    
     if next_cursor:
-       next_cursor = next_cursor.urlsafe()
-    
+      next_cursor = next_cursor.urlsafe()
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
@@ -404,7 +402,7 @@ class User(ndb.BaseExpando):
             entity.emails.append(email)
             entity.identities.append(Identity(identity=identity_id, email=email, primary=True))
             entity.state = 'active'
-            session = entity.new_session() # new_session function does not perform puts so it needs to go before .put()!
+            session = entity.new_session()
             entity.put()
           else:
             if email not in entity.emails:
@@ -416,9 +414,8 @@ class User(ndb.BaseExpando):
               used_identity.associated = True
               if used_identity.email != email:
                 used_identity.email = email
-            session = entity.new_session() # new_session function does not perform puts so it needs to go before .put()!    
+            session = entity.new_session()
             entity.put()
-          
           cls.set_current_user(entity, session)
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
@@ -426,6 +423,7 @@ class User(ndb.BaseExpando):
                                  'authorization_code': entity.generate_authorization_code(session),
                                  'session': session,
                                  })
+        
         transaction(user)
     return context
 
@@ -561,8 +559,7 @@ class Domain(ndb.BaseExpando):
       raise ndb.Return(entities)
     
     if next_cursor:
-       next_cursor = next_cursor.urlsafe()
-    
+      next_cursor = next_cursor.urlsafe()
     entities = helper(entities).get_result()
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
