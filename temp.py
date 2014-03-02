@@ -1,3 +1,64 @@
+# few ideas:
+
+# Each class should have _virtual_fields = {}, which will be similar to _expando_fields = {}, i the way
+# that _virtual_fields will store ndb properties (referenced by a key/name) that will define features of the value stored
+# in the field, and will serve rule engine in eveluating field permissions. 
+# _virtual_fields will be retreaved by get_fields() function along with _properties and _expando_fields.
+# For the purposes of output class _BaseModel will have _output instead of _virtual_properties list, and this list will be
+# used in __todict__() function for selectively building the output for the client.
+# The _virtual_fields concept can go perhaps further, where each library (e.g. auth.py) will have each own properties 
+# defined that will maybe use async ndb features in custom functions for retreaving values, etc.
+
+# As for the input permissions it's a separate concept taht can be solved similar way the field permissions can be solved
+# with io.py using rule engine for prebuilding rules for action input.
+
+# Examples
+
+class _BaseModel(object):
+  
+  _output = None
+  
+  def __todict__(self):
+    dic = {}
+    
+    if self.key:
+      dic['key'] = self.key.urlsafe()
+      dic['id'] = self.key.id()
+ 
+    names = self._output
+    
+    for name in names:
+        value = getattr(self, name, None)
+        dic[name] = value
+     
+    for k, v in dic.items():
+      if isinstance(v, Key):
+        dic[k] = v.urlsafe()
+         
+    return dic
+
+class Domain(ndb.BaseExpando):
+  
+  _kind = 6
+  
+  _use_memcache = True
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  primary_contact = ndb.SuperKeyProperty('2', kind=User, required=True, indexed=False)
+  state = ndb.SuperStringProperty('3', required=True, choices=['active', 'suspended', 'su_suspended'])
+  created = ndb.SuperDateTimeProperty('4', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('5', required=True, auto_now=True)
+  
+  _default_indexed = False
+  
+  _expando_fields = {}
+  
+  _virtual_fields = {'_primary_email': ndb.SuperStringProperty('6', required=True)}
+  
+
+
+
+
 # Note: we should make notify engine use http outlet as well, that is, allow domain users to create templates 
 # that will initiate http request to recepient URL when they are trigered. 
 
