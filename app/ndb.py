@@ -117,24 +117,30 @@ class _BaseModel(object):
     
      super(_BaseModel, self).__init__(*args, **kwargs)
      
-     self.prepare_fields()
-  
-  def prepare_fields(self):
-    
-      self._virtual_properties = []
+     self._virtual_properties = []
       
-      for key, prop in self.get_fields().items():
-          self.add_field(key)
+     for key in self.get_fields():
+         self.add_field(key)
           
-      self.add_field('_actions')
-  
-  def add_field(self, name):
-      if name not in self._virtual_properties:
-         self._virtual_properties.append(name)
+     self.add_field('_actions')
     
-  def remove_field(self, name):
-      if name in self._virtual_properties:
-         self._virtual_properties.remove(name)
+ 
+  def add_field(self, names):
+      if not isinstance(names, (list, tuple)):
+         names = [names]
+         
+      for name in names:
+        if name not in self._virtual_properties:
+           self._virtual_properties.append(name)
+    
+  def remove_field(self, names):
+    
+      if not isinstance(names, (list, tuple)):
+         names = [names]
+         
+      for name in names:
+        if name not in self._virtual_properties:
+           self._virtual_properties.remove(name)
   
   @classmethod
   def build_key(cls, *args, **kwargs):
