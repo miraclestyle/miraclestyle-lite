@@ -52,7 +52,10 @@ class User(ndb.BaseExpando):
   
   _default_indexed = False
   
-  _expando_fields = {}
+  _expando_fields = {
+    'test_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
+  
+  }
   
   _global_role = rule.GlobalRole(permissions=[
                                               rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
@@ -64,7 +67,9 @@ class User(ndb.BaseExpando):
                                               rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user.root_admin"),
                                               rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user.root_admin or context.auth.user.key == context.rule.entity.key"),
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                              
                                               rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
+                  
                                               # What about field permission on state property?
                                               ])
   
@@ -283,6 +288,9 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
+    
+    rule.read(entity)
+    
     return context
   
   @classmethod
@@ -443,7 +451,9 @@ class Domain(ndb.BaseExpando):
   
   _default_indexed = False
   
-  _expando_fields = {}
+  _expando_fields = {
+
+  }
   
   _global_role = rule.GlobalRole(permissions=[
                                               # is_guest check is not needed on other actions because it requires a loaded domain which will be evaluated with roles.

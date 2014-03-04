@@ -110,14 +110,12 @@ Key.entity = property(_get_entity)
 
 
 class _BaseModel(object):
-  
-  _virtual_properties = None
-  
+ 
   def __init__(self, *args, **kwargs):
     
      super(_BaseModel, self).__init__(*args, **kwargs)
      
-     self._virtual_properties = []
+     self._output_properties = []
       
      for key in self.get_fields():
          self.add_field(key)
@@ -130,8 +128,8 @@ class _BaseModel(object):
          names = [names]
          
       for name in names:
-        if name not in self._virtual_properties:
-           self._virtual_properties.append(name)
+        if name not in self._output_properties:
+           self._output_properties.append(name)
     
   def remove_field(self, names):
     
@@ -139,8 +137,8 @@ class _BaseModel(object):
          names = [names]
          
       for name in names:
-        if name not in self._virtual_properties:
-           self._virtual_properties.remove(name)
+        if name in self._output_properties:
+           self._output_properties.remove(name)
   
   @classmethod
   def build_key(cls, *args, **kwargs):
@@ -163,7 +161,7 @@ class _BaseModel(object):
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
  
-    names = self._virtual_properties
+    names = self._output_properties
     
     for name in names:
         value = getattr(self, name, None)
@@ -245,6 +243,42 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
+    
+  @classmethod
+  def get_virtual_fields(cls):
+    if hasattr(cls, '_virtual_fields'):
+      for prop_key, prop in cls._virtual_fields.items():
+        if not prop._code_name:
+          prop._code_name = prop_key
+          cls._virtual_fields[prop_key] = prop
+      return cls._virtual_fields
+    else:
+      return False
+  
+  def __getattr__(self, name):
+    virtual_fields = self.get_virtual_fields()
+    if virtual_fields:
+      prop = virtual_fields.get(name)
+      if prop:
+        return prop._get_value(self)
+    return super(_BaseModel, self).__getattr__(name)
+  
+  def __setattr__(self, name, value):
+    get_virtual_fields = self.get_virtual_fields()
+    if get_virtual_fields:
+      prop = get_virtual_fields.get(name)
+      if prop:
+        prop._set_value(self, value)
+        return prop
+    return super(_BaseModel, self).__setattr__(name, value)
+  
+  def __delattr__(self, name):
+    virtual_fields = self.get_virtual_fields()
+    if virtual_fields:
+      prop = virtual_fields.get(name)
+      if prop:
+        prop._delete_value(self)
+    return super(BaseExpando, self).__delattr__(name)
 
 
 class BaseModel(_BaseModel, Model):
@@ -394,11 +428,23 @@ class BaseProperty(_BaseProperty, Property):
 
 
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
-  pass
+  
+  def __todict__(self):
+    
+    response = super(SuperLocalStructuredProperty, self).__todict__()
+    response['model'] = self._modelclass.get_fields()
+    
+    return response
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
-  pass
+
+  def __todict__(self):
+    
+    response = super(SuperStructuredProperty, self).__todict__()
+    response['model'] = self._modelclass.get_fields()
+    
+    return response
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -543,7 +589,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     return value
 
 
-class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
+class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
   
   @classmethod
   def _format_value(cls, prop, value):
@@ -596,7 +642,7 @@ class SuperLocalStructuredImageProperty(_BaseProperty, LocalStructuredProperty):
     return self._format_value(self, value)
 
 
-class SuperStructuredImageProperty(_BaseProperty, StructuredProperty):
+class SuperStructuredImageProperty(SuperStructuredProperty):
   
   def format(self, value):
     return SuperLocalStructuredImageProperty._format_value(self, value)
