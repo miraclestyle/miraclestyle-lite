@@ -78,7 +78,7 @@ class User(ndb.BaseExpando):
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               
                                               rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
-                  
+                            
                                               # What about field permission on state property?
                                               ])
   
@@ -259,7 +259,9 @@ class User(ndb.BaseExpando):
           if disassociate:
             if identity.identity in disassociate:
               identity.associated = False
+ 
       entity.put()
+      
       context.log.entities.append((entity, ))
       log.Engine.run(context)
     

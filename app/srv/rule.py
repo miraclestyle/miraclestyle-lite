@@ -4,6 +4,8 @@ Created on Dec 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import collections
+
 from app import ndb
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback
@@ -74,46 +76,46 @@ def executable(context):
   else:
      return False
    
+def _write_helper(initial_entity_value, entity_field_permissions, entity_structured_key, entity_structured_value, structured_field_key, structured_field):
+    # recursive function
+    
+    if is_structured_property(structured_field):
+       for _field_key, _field in structured_field._modelclass.get_fields().items():
+         
+           initial_entity_value = None
+           value_value = None
+           
+           if initial_entity_value is not None:
+              initial_entity_value = getattr(initial_entity_value, entity_structured_key)
+              
+           if entity_structured_value is not None:
+              value_value = getattr(entity_structured_value, _field_key)
+              
+           _write_helper(initial_entity_value, entity_field_permissions[structured_field_key], 
+                        structured_field_key, value_value, _field_key, _field)
+    else:
+           # @todo this needs work cuz its not working as it should
+           if not entity_field_permissions[structured_field_key]['writable']:
+              # if the property inside a structured class is not writable, we set the previous value 
+              # into a newly constructed structured property, therefore overriding whatever the user set
+              if structured_field._repeated:
+                 for entity_structured_value_item in entity_structured_value:
+                     setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) # puts back the original into newly constructed.
+              else:
+                 setattr_value = None
+                 if initial_entity_value is not None:
+                    setattr_value = getattr(initial_entity_value, structured_field_key) 
+                 setattr(entity_structured_value, setattr_value) # puts back the original into newly constructed.
+           
+           if structured_field._repeated:
+             for entity_structured_value_item in entity_structured_value:
+                 setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) 
+   
 def write(entity, values):
   
     # writes property values with respect to rule engine, im not sure if the provided value should be entity or context?
     
     entity_fields = entity.get_fields()
-    
-    def write_helper(initial_entity_value, entity_field_permissions, entity_structured_key, entity_structured_value, structured_field_key, structured_field):
-        # recursive function
-        
-        if is_structured_property(structured_field):
-           for _field_key, _field in structured_field._modelclass.get_fields().items():
-             
-               initial_entity_value = None
-               value_value = None
-               
-               if initial_entity_value is not None:
-                  initial_entity_value = getattr(initial_entity_value, entity_structured_key)
-                  
-               if value is not None:
-                  value_value = getattr(value, _field_key)
-                  
-               write_helper(initial_entity_value, entity_field_permissions[structured_field_key], 
-                            structured_field_key, value_value, _field_key, _field)
-        else:
-               # @todo this needs work cuz its not working as it should
-               if not entity_field_permissions[structured_field_key]['writable']:
-                  # if the property inside a structured class is not writable, we set the previous value 
-                  # into a newly constructed structured property, therefore overriding whatever the user set
-                  if structured_field._repeated:
-                     for entity_structured_value_item in entity_structured_value:
-                         setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) # puts back the original into newly constructed.
-                  else:
-                     setattr_value = None
-                     if initial_entity_value is not None:
-                        setattr_value = getattr(initial_entity_value, structured_field_key) 
-                     setattr(entity_structured_value, setattr_value) # puts back the original into newly constructed.
-               
-               if structured_field._repeated:
-                 for entity_structured_value_item in entity_structured_value:
-                     setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) 
   
     for value_key, value in values:
         if value_key in entity_fields: # check if the value is in entities field list
@@ -122,33 +124,31 @@ def write(entity, values):
              setattr(entity, value_key, value)
           elif is_structured_property(prop): # if the property is structured, iterate over its fields and determine what can be written
              for field_key, field in prop._modelclass.get_fields().items():
-                 write_helper(entity, entity._field_permissions[value_key], value_key, value, field_key, field) # recursive
+                 _write_helper(entity, entity._field_permissions[value_key], value_key, value, field_key, field) # recursive
            
-  
+def _read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
+    # recursive function
+
+    if is_structured_property(structured_field):
+       for _field_key, _field in structured_field._modelclass.get_fields().items():
+           if entity_structured_entity is not None:
+              entity_structured_entity = getattr(entity_structured_entity, _field_key)
+           _read_helper(entity_field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_entity, _field_key, _field)
+    else:
+       if not entity_field_permissions[structured_field_key]['visible']:
+          if entity_structured_field._repeated:
+             for entity_structured_value_item in entity_structured_entity:
+                 if entity_structured_value_item is not None:
+                    entity_structured_value_item.remove_field(structured_field_key)
+          else:
+             if entity_structured_entity is not None:
+                entity_structured_entity.remove_field(structured_field_key)
+                      
 def read(entity):
   
     # configures output variables for the provided entity with respect to rule engine. should the param be entity or context?
  
     entity_fields = entity.get_fields()
-    
-    def read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
-        # recursive function
- 
-        if is_structured_property(structured_field):
-           for _field_key, _field in structured_field._modelclass.get_fields().items():
-               if entity_structured_entity is not None:
-                  entity_structured_entity = getattr(entity_structured_entity, _field_key)
-               read_helper(entity_field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_entity, _field_key, _field)
-        else:
-           if not entity_field_permissions[structured_field_key]['visible']:
-              if entity_structured_field._repeated:
-                 for entity_structured_value_item in entity_structured_entity:
-                     if entity_structured_value_item is not None:
-                        entity_structured_value_item.remove_field(structured_field_key)
-              else:
-                 if entity_structured_entity is not None:
-                    entity_structured_entity.remove_field(structured_field_key)
- 
     
     for field_key, field in entity_fields.items():
         if not entity._field_permissions[field_key]['visible']: # checks if the field is not visible
@@ -156,7 +156,7 @@ def read(entity):
              # if the field is structured, check for its sub-fields recursively
              for _field_key, _field in field._modelclass.get_fields().items():
                  structured_entity = getattr(entity, field_key)
-                 read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
+                 _read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
            else:
               entity.remove_field(field_key) # if the field is not visible, remove it completely from output
    
@@ -185,9 +185,13 @@ class ActionPermission(Permission):
              'executable' : self.executable, 'condition' : self.condition}
     
   def run(self, role, context):
-     
-    if (self.kind == context.rule.entity.get_kind()) and (self.action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context})) and (self.executable != None):
-       context.rule.entity._action_permissions[self.action]['executable'].append(self.executable)
+    
+    if not isinstance(self.action, (tuple, list)):
+       self.action = [self.action]
+    
+    for action in self.action: 
+        if (self.kind == context.rule.entity.get_kind()) and (action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context, 'action' : action})) and (self.executable != None):
+           context.rule.entity._action_permissions[action]['executable'].append(self.executable)
 
 
 class FieldPermission(Permission):
@@ -209,15 +213,20 @@ class FieldPermission(Permission):
     
   def run(self, role, context):
     
-    dig = parse_property(context.rule.entity._field_permissions, self.field) # retrieves field value from foo.bar.far
- 
-    if (self.kind == context.rule.entity.get_kind()) and dig and (safe_eval(self.condition, {'context' : context})):
-      if (self.writable != None):
-        dig['writable'].append(self.writable)
-      if (self.visible != None):
-        dig['visible'].append(self.visible)
-      if (self.required != None):
-        dig['required'].append(self.required)
+    if not isinstance(self.field, (tuple, list)):
+       self.field = [self.field]
+    
+    for field in self.field:
+        dig = parse_property(context.rule.entity._field_permissions, field) # retrieves field value from foo.bar.far
+        
+        # added in safe eval `field` - the field that is currently in the loop 
+        if (self.kind == context.rule.entity.get_kind()) and dig and (safe_eval(self.condition, {'context' : context, 'field' : field})):
+          if (self.writable != None):
+            dig['writable'].append(self.writable)
+          if (self.visible != None):
+            dig['visible'].append(self.visible)
+          if (self.required != None):
+            dig['required'].append(self.required)
  
 
 class Role(ndb.BaseExpando):
@@ -243,26 +252,30 @@ class Role(ndb.BaseExpando):
 
 class Engine:
   
+    
+  @classmethod
+  def _prepare_fields_helper(cls): # it must be a function that makes this dictionary, dry
+      # this must build orderedDict because writable, visible, required NEEDS to be `decide()` 
+      # first in order to allow inheritence of permissions - like folder structure
+      return collections.OrderedDict([('writable', []), ('visible', []), ('required', [])])
+  
   @classmethod
   def prepare_fields(cls, props, fields, _props=None):
     # recursive method
-    
-    def default(): # it must be a function that makes this dictionary, dry
-      return {'writable' : [], 'visible' : [], 'required' : []}
-    
+ 
     for field_key, field in fields.items():
         if is_structured_property(field): # isinstance(Struct, Local)
            aprops = _props
            if aprops is None:
               aprops = props
            if field_key not in aprops:
-              aprops[field_key] = default()
+              aprops[field_key] = cls._prepare_fields_helper()
            cls.prepare_fields(props, field._modelclass.get_fields(), aprops[field_key])
         else:
            aprops = _props
            if aprops is None:
               aprops = props
-           aprops[field_key] = default()
+           aprops[field_key] = cls._prepare_fields_helper()
 
   @classmethod
   def prepare(cls, context):
@@ -278,20 +291,17 @@ class Engine:
        
     for action_key in actions:
        context.rule.entity._action_permissions[action_key] = {'executable' : []}
- 
+  
   @classmethod
-  def decide(cls, data, strict):
-    calc = {}
-    
-    def decide_helper(calc, element, prop, value):
+  def _decide_helper(cls, calc, element, prop, value, strict, parent=None):
         # recursive function
-        
+ 
         if element not in calc:
             calc[element] = {}
             
         if isinstance(value, dict):
            for _value_key, _value in value.items():
-               decide_helper(calc[element], prop, _value_key, _value)
+               cls._decide_helper(calc[element], prop, _value_key, _value, strict, element)
         else:
           if len(value):
             if (strict):
@@ -305,11 +315,59 @@ class Engine:
               calc[element][prop] = False
           else:
             calc[element][prop] = None
+            
+            if parent and not len(value):
+                calc[element][prop] = calc[prop] 
  
+  @classmethod
+  def decide(cls, data, strict):
+    calc = {}
+  
     for element, properties in data.items():
           for prop, value in properties.items():
-              decide_helper(calc, element, prop, value)
+              cls._decide_helper(calc, element, prop, value, strict)
     return calc
+  
+  @classmethod
+  def _compile_local_data_helper(cls, global_data_calc, local_data_calc, element, prop, value):
+      # recursive function
+      
+      if isinstance(value, dict):
+         for _value_key,_value in value.items():
+             cls._local_data_helper(global_data_calc[element], local_data_calc[element], prop, _value_key, _value)
+      else:   
+        if element in global_data_calc:
+           if prop in global_data_calc[element]:
+              gc = global_data_calc[element][prop]
+              if gc is not None and gc != value:
+                    cls._local_data_calc[element][prop] = gc
+            
+        if local_data_calc[element][prop] is None:
+           local_data_calc[element][prop] = False
+           
+  
+  @classmethod       
+  def _compile_global_data_calc_helper(cls, local_data_calc, element, prop, value):
+      # recursive function
+      
+      if isinstance(value, dict):
+         for _value_key,_value in value.items():
+             cls._compile_global_data_calc_helper(local_data_calc[element], prop, _value_key, _value)
+      else:
+        if prop not in local_data_calc[element]:
+           local_data_calc[element][prop] = value
+           
+  @classmethod
+  def _compile_just_global_data_calc_helper(cls, global_data_calc, element, prop, value):
+    # recursive function
+    
+    if isinstance(value, dict):
+       for _value_key,_value in value.items():
+          cls._compile_just_global_data_calc_helper(global_data_calc[element], prop, _value_key, _value)
+    else:
+      if value is None:
+         value = False
+      global_data_calc[element][prop] = value
   
   @classmethod
   def compile(cls, local_data, global_data, strict=False):
@@ -319,64 +377,26 @@ class Engine:
     # if any local data, process them
     if local_data:
        local_data_calc = cls.decide(local_data, strict)
-       
-       def local_data_helper(global_data_calc, local_data_calc, element, prop, value):
-            # recursive function
-            
-            if isinstance(value, dict):
-               for _value_key,_value in value.items():
-                   local_data_helper(global_data_calc[element], local_data_calc[element], prop, _value_key, _value)
-            else:   
-              if element in global_data_calc:
-                 if prop in global_data_calc[element]:
-                    gc = global_data_calc[element][prop]
-                    if gc is not None and gc != value:
-                          local_data_calc[element][prop] = gc
-                  
-              if local_data_calc[element][prop] is None:
-                 local_data_calc[element][prop] = False
-       
+        
        # iterate over local data, and override them with the global data, if any
        for element, properties in local_data_calc.items():
           for prop, value in properties.items():
-              local_data_helper(global_data_calc, local_data_calc, element, prop, value)
-              
-       def global_data_calc_helper(local_data_calc, element, prop, value):
-            # recursive function
-            
-            if isinstance(value, dict):
-               for _value_key,_value in value.items():
-                   global_data_calc_helper(local_data_calc[element], prop, _value_key, _value)
-            else:
-              if prop not in local_data_calc[element]:
-                 local_data_calc[element][prop] = value
-           
-                 
+              cls._compile_local_data_helper(global_data_calc, local_data_calc, element, prop, value)
+        
        # make sure that global data are always present
        for element, properties in global_data_calc.items():
           if element not in local_data_calc:
             for prop, value in properties.items():
-              global_data_calc_helper(local_data_calc, element, prop, value)
+              cls._compile_global_data_calc_helper(local_data_calc, element, prop, value)
             
        finals = local_data_calc
     
     # otherwise just use global data    
     else:
-       
-       def global_data_calc_helper(global_data_calc, element, prop, value):
-          # recursive function
-          
-          if isinstance(value, dict):
-             for _value_key,_value in value.items():
-                global_data_calc_helper(global_data_calc[element], prop, _value_key, _value)
-          else:
-            if value is None:
-               value = False
-            global_data_calc[element][prop] = value
-      
+ 
        for element, properties in global_data_calc.items():
           for prop, value in properties.items():
-            global_data_calc_helper(global_data_calc, element, prop, value)
+            cls._compile_just_global_data_calc_helper(global_data_calc, element, prop, value)
             
        finals = global_data_calc
     return finals
