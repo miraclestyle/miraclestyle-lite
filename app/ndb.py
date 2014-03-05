@@ -110,35 +110,27 @@ Key.entity = property(_get_entity)
 
 
 class _BaseModel(object):
- 
+  
   def __init__(self, *args, **kwargs):
-    
-     super(_BaseModel, self).__init__(*args, **kwargs)
-     
-     self._output_properties = []
-      
-     for key in self.get_fields():
-         self.add_field(key)
-          
-     self.add_field('_actions')
-    
- 
+    super(_BaseModel, self).__init__(*args, **kwargs)
+    self._output_properties = []
+    for key in self.get_fields():
+      self.add_field(key)
+    self.add_field('_actions')
+  
   def add_field(self, names):
-      if not isinstance(names, (list, tuple)):
-         names = [names]
-         
-      for name in names:
-        if name not in self._output_properties:
-           self._output_properties.append(name)
-    
+    if not isinstance(names, (list, tuple)):
+      names = [names]
+    for name in names:
+      if name not in self._output_properties:
+        self._output_properties.append(name)
+  
   def remove_field(self, names):
-    
-      if not isinstance(names, (list, tuple)):
-         names = [names]
-         
-      for name in names:
-        if name in self._output_properties:
-           self._output_properties.remove(name)
+    if not isinstance(names, (list, tuple)):
+      names = [names]
+    for name in names:
+      if name in self._output_properties:
+        self._output_properties.remove(name)
   
   @classmethod
   def build_key(cls, *args, **kwargs):
@@ -154,23 +146,19 @@ class _BaseModel(object):
     """
     This function can be used to make representation of the model into the dictionary.
     The dictionary can then be used to get translated into other understandable code to clients (e.g. JSON).
+    
     """
     dic = {}
-    
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
- 
     names = self._output_properties
-    
     for name in names:
-        value = getattr(self, name, None)
-        dic[name] = value
-     
+      value = getattr(self, name, None)
+      dic[name] = value
     for k, v in dic.items():
       if isinstance(v, Key):
         dic[k] = v.urlsafe()
-         
     return dic
   
   def loaded(self):
@@ -204,20 +192,16 @@ class _BaseModel(object):
   
   @classmethod
   def get_fields(cls):
-    # this function returns combined _properties, expando_fields, virtual_fields
     fields = {}
     for prop_key, prop in cls._properties.items():
       fields[prop._code_name] = prop
+    virtual_fields = cls.get_virtual_fields()
+    if virtual_fields:
+      fields.update(virtual_fields)
     if hasattr(cls, 'get_expando_fields'):
       expando_fields = cls.get_expando_fields()
       if expando_fields:
-         fields.update(expando_fields)
-          
-    virtual_fields = cls.get_virtual_fields()
-    
-    if virtual_fields:
-       fields.update(virtual_fields)
-    
+        fields.update(expando_fields)
     return fields
   
   @property
@@ -249,7 +233,7 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
-    
+  
   @classmethod
   def get_virtual_fields(cls):
     if hasattr(cls, '_virtual_fields'):
@@ -269,9 +253,9 @@ class _BaseModel(object):
     return super(_BaseModel, self).__getattr__(name)
   
   def __setattr__(self, name, value):
-    get_virtual_fields = self.get_virtual_fields()
-    if get_virtual_fields:
-      prop = get_virtual_fields.get(name)
+    virtual_fields = self.get_virtual_fields()
+    if virtual_fields:
+      prop = virtual_fields.get(name)
       if prop:
         prop._set_value(self, value)
         return prop
@@ -288,12 +272,10 @@ class _BaseModel(object):
 
 class BaseModel(_BaseModel, Model):
   """Base class for all 'ndb.Model' entities."""
-  
-
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
-   
+  
   @classmethod
   def _get_hierarchy(cls):
     """Internal helper method to return the list of polymorphic base classes.
@@ -327,7 +309,7 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 class BaseExpando(_BaseModel, Expando):
   """Base class for all 'ndb.Expando' entities."""
-   
+  
   @classmethod
   def get_expando_fields(cls):
     if hasattr(cls, '_expando_fields'):
@@ -398,7 +380,7 @@ class BaseExpando(_BaseModel, Expando):
 
 
 class BasePolyExpando(BasePoly, BaseExpando):
-   pass
+  pass
 
 
 class _BaseProperty(object):
@@ -434,20 +416,16 @@ class BaseProperty(_BaseProperty, Property):
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def __todict__(self):
-    
     response = super(SuperLocalStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
-    
     return response
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
-
+  
   def __todict__(self):
-    
     response = super(SuperStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
-    
     return response
 
 
