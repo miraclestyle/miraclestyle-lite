@@ -262,12 +262,11 @@ class Base(webapp2.RequestHandler):
            
            current_user = auth.User.current_user()
            current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName'))
-           
-           self.template['current_user'] = current_user
+            
+           self.template['current_user'] = current_user # @note here we reference entire exposed user object without rule.read() because that will be only available to the user who is currently logged in!
  
-           csrf = self.template['current_user']._csrf
-           
-                          
+           csrf = current_user._csrf
+            
         if not csrf_cookie_value or (csrf != csrf_cookie_value):
            if csrf == None:
               csrf = util.random_chars(32)

@@ -6,7 +6,7 @@ Created on Dec 20, 2013
 '''
 import collections
 
-from app import ndb
+from app import ndb, util
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback
 
@@ -105,13 +105,13 @@ def _write_helper(initial_value, field_permissions, supplied_structured_key, sup
                      if initial is not None:
                         supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
                         setattr(initial, structured_field_key, supplied_structured_value_item_far) 
-                        print 'wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far)            
+                        util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far))            
               else:
                  initial = getattr(initial_value, supplied_structured_key)
                  if initial is not None:
                     supplied_structured_value_far = getattr(supplied_structured_value, structured_field_key)
                     setattr(initial, structured_field_key, supplied_structured_value_far)
-                    print 'wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_far)
+                    util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_far))
  
    
 def write(entity, values):
@@ -130,7 +130,7 @@ def write(entity, values):
           else:
              if entity._field_permissions[value_key]['writable']:  # if the entire property is writable
                 setattr(entity, value_key, value) 
-                print 'wrote %s.%s=%s' % (entity.__class__.__name__, value_key, value)
+                util.logger('wrote %s.%s=%s' % (entity.__class__.__name__, value_key, value))
                 
 def _read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
     # recursive function

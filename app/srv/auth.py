@@ -57,8 +57,10 @@ class User(ndb.BaseExpando):
   }
   
   _virtual_fields = {
+                     
+    # by default these are helper properties that operate mainly on `self` without performing any queries.
   
-    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf()),
+    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf()), # like i said, we will need the csrf but it has to be incorporated into security mechanism - http://en.wikipedia.org/wiki/Cross-site_request_forgery
     '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest()),
     '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email()),
     '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin()),
@@ -78,7 +80,10 @@ class User(ndb.BaseExpando):
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               
                                               rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
-                                      
+                                              
+                                              # expose fields to the world
+                                              rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email', '_root_admin',
+                                                                         'created', 'updated', 'state'], False, True, True, 'True')
                                               # What about field permission on state property?
                                               ])
   
@@ -287,9 +292,8 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
-    data = dict([(key,getattr(entity, key)) for key in entity.get_fields()])
-    rule.write(entity, data)
+ 
+    rule.read(entity)
     
     return context
   
@@ -345,7 +349,7 @@ class User(ndb.BaseExpando):
     
     @ndb.transactional(xg=True)
     def transaction():
-      if not entity._csrf == context.input.get('csrf'):
+      if not entity._csrf == context.input.get('csrf'): # we will see what will be done about this, because CSRF protection must be done globally i think.
         raise rule.ActionDenied(context)
       if entity.sessions:
         entity.sessions = []
