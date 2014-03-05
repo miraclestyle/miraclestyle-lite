@@ -58,23 +58,24 @@ class User(ndb.BaseExpando):
   
   _virtual_fields = {
   
-    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf),
-    '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest),
-    '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email),
-    '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin)            
+    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf()),
+    '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest()),
+    '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email()),
+    '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin()),
+    '_is_taskqueue' : ndb.ComputedProperty(lambda self: self.is_taskqueue())         
   
   }
  
   _global_role = rule.GlobalRole(permissions=[
                                               rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "context.rule.entity.key == context.auth.user.key and not context.rule.entity._is_guest"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user._root_admin"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user._root_admin"),
                                               rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity._is_guest"),
                                               rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity._is_guest"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user.root_admin or context.auth.user.key == context.rule.entity.key"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user._root_admin"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               
                                               rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
                   
@@ -119,19 +120,16 @@ class User(ndb.BaseExpando):
                                           arguments={
                                                      'next_cursor': ndb.SuperStringProperty(),
                                                      }),}
-   
-  @property
+ 
   def is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
-  
-  @property
+ 
   def root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
-  
-  @property
+ 
   def primary_email(self):
     if not self.identities:
       return None
@@ -139,15 +137,13 @@ class User(ndb.BaseExpando):
       if identity.primary == True:
         return identity.email
     return identity.email
-  
-  @property
+ 
   def csrf(self):
     session = self.current_user_session()
     if not session:
       return None
     return hashlib.md5(session.session_id).hexdigest()
-  
-  @property
+ 
   def is_guest(self):
     return self.key == None
   
@@ -461,15 +457,15 @@ class Domain(ndb.BaseExpando):
                                               rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user._is_guest"),
                                               rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user._root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user._root_admin"),
                                               rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user._is_guest"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user._root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
                                               ])
   
   _actions = {

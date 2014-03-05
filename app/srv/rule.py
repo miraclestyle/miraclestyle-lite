@@ -157,7 +157,7 @@ class ActionPermission(Permission):
   def __init__(self, kind, action, executable=None, condition=None):
     
     self.kind = kind # entity kind identifier (entity._kind)
-    self.action = action # action id (action.key.id()), or action key (action.key) ?
+    self.action = action # action id (action.key.id()), or action key (action.key) ? ----- this could be a list
     self.executable = executable
     self.condition = condition
     
@@ -177,7 +177,7 @@ class FieldPermission(Permission):
   def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
     
     self.kind = kind # entity kind identifier (entity._kind)
-    self.field = field # this must be a field code name from ndb property (field._code_name)
+    self.field = field # this must be a field code name from ndb property (field._code_name) ---- This could be a list?
     self.writable = writable
     self.visible = visible
     self.required = required
