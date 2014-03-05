@@ -15,7 +15,7 @@ from app.srv import event, log, notify, nav, rule
 # it could, however this code then must be below DomainSetup class
 def create_domain_notify_message_recievers(entity, user):
     primary_contact = entity.primary_contact.get()
-    return [primary_contact.primary_email]
+    return [primary_contact._primary_email]
 
 # this registration call should perhaps be incorporated in DomainSetup constructor ?
 
@@ -167,7 +167,7 @@ class DomainSetup(Setup):
      namespace = input.get('domain_key')
     
      domain_user = rule.DomainUser(namespace=namespace, id=user.key_id_str,
-                               name=user.primary_email, state='accepted',
+                               name=user._primary_email, state='accepted',
                                roles=[input.get('role_key')])
      
      domain_user.put()

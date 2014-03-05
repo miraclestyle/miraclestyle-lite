@@ -210,8 +210,13 @@ class _BaseModel(object):
     if hasattr(cls, 'get_expando_fields'):
       expando_fields = cls.get_expando_fields()
       if expando_fields:
-        for expando_prop_key, expando_prop in expando_fields.items():
-          fields[expando_prop._code_name] = expando_prop
+         fields.update(expando_fields)
+          
+    virtual_fields = cls.get_virtual_fields()
+    
+    if virtual_fields:
+       fields.update(virtual_fields)
+    
     return fields
   
   @property

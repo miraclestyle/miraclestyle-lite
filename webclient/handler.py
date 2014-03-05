@@ -265,10 +265,10 @@ class Base(webapp2.RequestHandler):
            
            self.template['current_user'] = current_user
  
-           csrf = self.template['current_user'].csrf
+           csrf = self.template['current_user']._csrf
            
                           
-        if not csrf_cookie_value or (csrf != None and csrf != csrf_cookie_value):
+        if not csrf_cookie_value or (csrf != csrf_cookie_value):
            if csrf == None:
               csrf = util.random_chars(32)
            self.response.set_cookie('XSRF-TOKEN', csrf)

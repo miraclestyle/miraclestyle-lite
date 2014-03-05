@@ -64,7 +64,7 @@ class Record(ndb.BaseExpando):
            agent = agent.name
         else:
            agent = yield entity.agent.get_async()
-           agent = agent.primary_email
+           agent = agent._primary_email
            
         new_entity['agent'] = agent
  

@@ -116,8 +116,8 @@ class MailNotify(Template):
       template_values = {'entity' : entity}
       
       return {
-              'recipients' : [user.primary_email for user in users],
-              'sender' : domain_sender_user.primary_email,
+              'recipients' : [user._primary_email for user in users],
+              'sender' : domain_sender_user._primary_email,
               'body' : render_template(self.message_body, template_values),
               'subject' : render_template(self.message_subject, template_values),
               'outlet' : 'mail',
@@ -149,7 +149,7 @@ class HttpNotify(Template):
       
       return {
               'recipients' : [self.message_reciever], # must be a list to comply to Engine._templates
-              'sender' : domain_sender_user.primary_email,
+              'sender' : domain_sender_user._primary_email,
               'body' : render_template(self.message_body, template_values),
               'subject' : render_template(self.message_subject, template_values),
               'entity_key' : entity.key.urlsafe(),

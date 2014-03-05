@@ -53,17 +53,25 @@ class User(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'test_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
   
   }
   
+  _virtual_fields = {
+  
+    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf),
+    '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest),
+    '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email),
+    '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin)            
+  
+  }
+ 
   _global_role = rule.GlobalRole(permissions=[
-                                              rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity.is_guest or context.rule.entity.state == 'active'"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "context.rule.entity.key == context.auth.user.key and not context.rule.entity.is_guest"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "context.rule.entity.key == context.auth.user.key and not context.rule.entity._is_guest"),
                                               rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user.root_admin"),
                                               rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user.root_admin"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity.is_guest"),
-                                              rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity.is_guest"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity._is_guest"),
+                                              rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity._is_guest"),
                                               rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user.root_admin"),
                                               rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user.root_admin or context.auth.user.key == context.rule.entity.key"),
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user.root_admin"),
@@ -111,15 +119,7 @@ class User(ndb.BaseExpando):
                                           arguments={
                                                      'next_cursor': ndb.SuperStringProperty(),
                                                      }),}
-  
-  def __todict__(self):
-    d = super(User, self).__todict__()
-    d['csrf'] = self.csrf
-    d['is_guest'] = self.is_guest
-    d['primary_email'] = self.primary_email
-    d['root_admin'] = self.root_admin
-    return d
-  
+   
   @property
   def is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
@@ -129,7 +129,7 @@ class User(ndb.BaseExpando):
   
   @property
   def root_admin(self):
-    return self.primary_email in settings.ROOT_ADMINS
+    return self._primary_email in settings.ROOT_ADMINS
   
   @property
   def primary_email(self):
@@ -211,7 +211,8 @@ class User(ndb.BaseExpando):
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)
-  
+         
+         
   @classmethod
   def sudo(cls, context):
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
@@ -289,7 +290,7 @@ class User(ndb.BaseExpando):
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     
-    rule.read(entity)
+    #rule.read(entity)
     
     return context
   
@@ -405,7 +406,7 @@ class User(ndb.BaseExpando):
         
         @ndb.transactional(xg=True)
         def transaction(entity):
-          if not entity or entity.is_guest:
+          if not entity or entity._is_guest:
             entity = cls()
             entity.emails.append(email)
             entity.identities.append(Identity(identity=identity_id, email=email, primary=True))
@@ -457,7 +458,7 @@ class Domain(ndb.BaseExpando):
   
   _global_role = rule.GlobalRole(permissions=[
                                               # is_guest check is not needed on other actions because it requires a loaded domain which will be evaluated with roles.
-                                              rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user.is_guest"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user._is_guest"),
                                               rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user.root_admin"),
@@ -465,7 +466,7 @@ class Domain(ndb.BaseExpando):
                                               rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
                                               rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user.root_admin"),
-                                              rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user.is_guest"),
+                                              rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user._is_guest"),
                                               rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user.root_admin"),
                                               rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user.root_admin"),
                                               rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user.root_admin"),
@@ -561,7 +562,7 @@ class Domain(ndb.BaseExpando):
     def async(entity):
       new_entity = entity.__todict__()
       user = yield entity.primary_contact.get_async()
-      new_entity['primary_email'] = user.primary_email
+      new_entity['primary_email'] = user._primary_email
       raise ndb.Return(new_entity)
     
     @ndb.tasklet
@@ -624,7 +625,7 @@ class Domain(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     entity_dict = entity.__todict__()
     primary_contact = primary_contact.get_result()
-    entity_dict['primary_contact_email'] = primary_contact.primary_email
+    entity_dict['primary_contact_email'] = primary_contact._primary_email
     context.output['entity'] = entity_dict
     return context
   

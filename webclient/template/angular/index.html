@@ -57,16 +57,16 @@
   	<div style="display:none;" id="main-menu">
   		<div class="menu-inner">
 	  		<h1 class="fieldset">Account</h1>
-	  		<ul ng-show="!current_user.is_guest" class="menu">
+	  		<ul ng-show="!current_user._is_guest" class="menu">
 	  		    <li><button class="button block" ng-click="manageAccount()">Manage</button></li>
 	  		    <li><button class="button block" ng-click="doLogout()">Logout</button></li>
 	  		</ul>
 	  		
-	  		<ul ng-show="current_user.is_guest" class="menu">
+	  		<ul ng-show="current_user._is_guest" class="menu">
 	  		    <li><button busy class="button block" ng-click="doLogin()">Login</button></li>
 	  		</ul>
 	  		
-	  		<div ng-show="!current_user.is_guest">
+	  		<div ng-show="!current_user._is_guest">
 	  			<h1 class="fieldset">Selling Tools</h1>
 	  			<ul class="menu">
 	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="apps">Enterprise Apps</a></li>

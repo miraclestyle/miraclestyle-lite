@@ -35,8 +35,8 @@
 	<div class="form-control">
 		<label class="form-label">Primary e-mail</label>
 		<div class="form-input">
-			<select ng-disabled="!rule.writable.identities" ui-select2 ng-model="user.primary_email" data-placeholder="Select your primary e-mail">
-				    <option ng-repeat="email in user.emails" value="{{email}}">{{email}}</option>
+			<select ng-disabled="!rule.writable.identities" ui-select2 ng-model="user._primary_email" data-placeholder="Select your primary e-mail">
+				    <option ng-repeat="ident in user.identities" value="{{ident.email}}">{{ident.email}}</option>
 			</select>
 		</div>
 	</div>

@@ -11,7 +11,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		 $rootScope.current_user = initdata['user'];
 	}
 		
-	if ($rootScope.current_user.is_guest)
+	if ($rootScope.current_user._is_guest)
 	{
 		Account.ask_login(function () {
 			$location.path('/');

@@ -23,9 +23,9 @@ class Address(ndb.BaseExpando):
     _default_indexed = False
     
     _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('9', event.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', event.Action.build_key('9-3').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
-                                                rule.ActionPermission('9', event.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-3').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
+                                                rule.ActionPermission('9', event.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
                                                ])
  
     _expando_fields = {
@@ -201,11 +201,11 @@ class Collection(ndb.BaseModel):
 
     _global_role = rule.GlobalRole(permissions=[
                                                 rule.ActionPermission('10', event.Action.build_key('10-0').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
                                                 rule.ActionPermission('10', event.Action.build_key('10-3').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
                                                 rule.ActionPermission('10', event.Action.build_key('10-1').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user.is_guest)"),
+                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
                                                ])
  
 
@@ -283,7 +283,7 @@ class Collection(ndb.BaseModel):
         if not rule.executable(context):
            raise rule.ActionDenied(context)
         
-        entity.primary_email = context.auth.user.primary_email
+        entity.primary_email = context.auth.user._primary_email
         
         company_keys = set_args.get('companies', [])
         
