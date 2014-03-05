@@ -7,6 +7,7 @@ Created on Jan 6, 2014
 
 import hashlib
 import os
+import copy
 
 from google.appengine.api import blobstore
 from google.appengine.datastore.datastore_query import Cursor
@@ -292,8 +293,11 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
- 
-    rule.read(entity)
+    
+    # this is testing
+    data = dict([(key,copy.deepcopy(getattr(entity, key))) for key in entity.get_fields()])
+    data['identities'].append(Identity(associated=True, primary=False, identity='100', email='thug@yo.com'))
+    rule.write(entity, data)
     
     return context
   

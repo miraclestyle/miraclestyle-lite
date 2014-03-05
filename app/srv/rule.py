@@ -10,6 +10,150 @@ from app import ndb, util
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback
 
+"""
+This file is used to control input, and output trough the application Model actions.
+
+Examples:
+ 
+
+from app.srv import rule, event
+
+class OtherModel2(ndb.BaseModel):
+
+   name = ndb.SuperStringProperty()
+
+
+class OtherModel(ndb.BaseModel):
+
+   name = ndb.SuperStringProperty()
+   other = ndb.SuperStructuredProperty(OtherModel2)
+
+class Model(ndb.BaseModel):
+
+   foo = ndb.SuperStringProperty()
+   bar = ndb.SuperStructuredProperty(OtherModel)
+
+   _virtual_fields = {
+     'my_magic_field' : ndb.ComputedProperty(lambda self: 'this field does magic!')
+   }
+ 
+   
+   _global_role = rule.GlobalRole(permissions=[
+                                  
+                                  Action permissions:
+                                  
+                                  work very simple, its a key-value checking system with conditions
+                                  rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context variable available, valid any `simple` python expression"),
+                                  
+                                  
+                                  Field permissions:
+                              
+                                  rule.FieldPermission('0', 'bar', True, True, True, 'True'), 
+                                  
+                                  This field permission definition would generate:
+                                  
+                                   bar : {
+                                     writable : True,
+                                     required : True,
+                                     visible : True,
+                                     name : {
+                                         writable : True,
+                                         required : True,
+                                         visible : True,
+                                     },
+                                     
+                                     other : {
+                                        writable : True,
+                                        required : True,
+                                        visible : True,
+                                        name : {
+                                          writable : True,
+                                          required : True,
+                                          visible : True,
+                                        }
+                                        
+                                     }
+                                  }
+                                  
+                                  If you specify rule like this
+                                  
+                                  rule.FieldPermission('0', 'bar.other.name', False, False, False, 'True'),
+                                  
+                                  This field permission definition would generate:
+                                  
+                                   bar : {
+                                     writable : True,
+                                     required : True,
+                                     visible : True,
+                                     name : {
+                                         writable : True,
+                                         required : True,
+                                         visible : True,
+                                     },
+                                     
+                                     other : {
+                                        writable : True,
+                                        required : True,
+                                        visible : True,
+                                        name : {
+                                          writable : False,
+                                          required : False,
+                                          visible : False,
+                                        }
+                                      
+                                     }
+                                  }
+                                   
+                                  rule.FieldPermission('0', ['my_magic_field', 'foo', 'bar'])
+                                  
+  _actions = {
+     'friendly_action_name' : event.Action(id='0-0',
+                                           arguments={
+                                             'my_input_name' : ndb.<Any NDB property that begins with `Super`>
+                                           })
+    
+  }
+  
+  @classmethod
+  def friendly_action_name(context):
+      
+      Now, rule engine will only work if the entity is set into the context like so
+      
+      context.rule.entity = entity
+      
+      `entity` must be an instance of any subclass of ndb.Base<Type> 
+        and it should have _global_role if its not part of domain
+        
+      By default all actions and field permissions are False, only way to override that is to define rules for each of 
+      the types, either field or action
+      
+      
+      
+      .....
+      
+      
+      rule.write function should be used before doing entity.put()
+      
+      the rule.write will ensure that there wont be illegal property changes to the entity before putting.
+      
+      the rule.write will only set the value(s) if the conditions are met from the rule engine - entity._field_permissons
+      
+      there is a problem that comes with repeated Structured properties:
+ 
+      when the rule.write is fired it wont be a problem to update existing properties in the list (respecting the field perms)
+      
+      the problem is if the additional item is added into the list, in that case if the structured property permission is not
+      set to writable that item will not get appended into the list
+      
+      
+      ....
+      
+      rule.read works on system of elimination, if the property is not visible, it will be hidden from output,
+      
+      if the property is structured, it will check its fields recursively until they are all hidden if needed.
+          
+"""
+
 class ActionDenied(Exception):
     
     def __init__(self, context):
@@ -76,13 +220,13 @@ def executable(context):
   else:
      return False
    
-def _write_helper(initial_value, field_permissions, supplied_structured_key, supplied_structured_field, supplied_structured_value, structured_field_key, structured_field):
+def _write_helper(initial_value, field_permissions, supplied_structured_key, supplied_structured_field, 
+                  supplied_structured_value, structured_field_key, structured_field, is_writable):
     # recursive function
     
     if is_structured_property(structured_field):
        for _field_key, _field in structured_field._modelclass.get_fields().items():
-         
-           initial_value = None
+ 
            value_value = None
            
            if initial_value is not None:
@@ -90,30 +234,43 @@ def _write_helper(initial_value, field_permissions, supplied_structured_key, sup
               
            if supplied_structured_value is not None:
               value_value = getattr(supplied_structured_value, _field_key)
-              
+ 
            _write_helper(initial_value, field_permissions[structured_field_key], 
-                        structured_field_key, supplied_structured_field, value_value, _field_key, _field)
+                        structured_field_key, supplied_structured_field, value_value, _field_key, _field,
+                        field_permissions[structured_field_key]['writable'])
     else:
-           # @todo this needs work cuz its not working as it should
-           if field_permissions[structured_field_key]['writable']:
-              # if the property inside a structured class is not writable, we set the initial value
-              # into a newly constructed structured property, therefore overriding whatever the user set
- 
-              if supplied_structured_field._repeated:
-                 for i,supplied_structured_value_item in enumerate(supplied_structured_value):
-                     initial = getattr(initial_value, supplied_structured_key)[i]
-                     if initial is not None:
-                        supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
-                        setattr(initial, structured_field_key, supplied_structured_value_item_far) 
-                        util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far))            
-              else:
-                 initial = getattr(initial_value, supplied_structured_key)
+       if field_permissions[structured_field_key]['writable']:
+          # if the property inside a structured class is not writable, we set the initial value
+          # into a newly constructed structured property, therefore overriding whatever the user set 
+          if supplied_structured_field._repeated:
+             for i,supplied_structured_value_item in enumerate(supplied_structured_value):
+                 # gets the unchanged structured value
+                 initial = None
+                 initial_structured = getattr(initial_value, supplied_structured_key)
+                 if not initial_structured: # if it isnt there it must be a list then
+                   initial_structured = []
+                 try:
+                   initial = initial_structured[i] # attempt to edit 
+                 except IndexError as e:
+                   # doesnt exist, this is a new item in the list?
+                   # now only way to be in able to ADD a new item is to have "writable" permssion on the entire structured field
+                   # in that case setting writable false on those fields doesnt make sense
+                   if is_writable:
+                     util.logger('creating a new %s' % supplied_structured_value_item) 
+                     initial = supplied_structured_value_item
+                     initial_structured.append(initial)
+                   
                  if initial is not None:
-                    supplied_structured_value_far = getattr(supplied_structured_value, structured_field_key)
-                    setattr(initial, structured_field_key, supplied_structured_value_far)
-                    util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_far))
- 
-   
+                    supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
+                    setattr(initial, structured_field_key, supplied_structured_value_item_far) # this here changes the unstructured property value
+                    util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far))            
+          else:
+             initial = getattr(initial_value, supplied_structured_key)
+             if initial is not None:
+                supplied_structured_value_far = getattr(supplied_structured_value, structured_field_key)
+                setattr(initial, structured_field_key, supplied_structured_value_far)
+                util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_far))
+
 def write(entity, values):
   
     # writes property values with respect to rule engine, im not sure if the provided value should be entity or context?
@@ -123,32 +280,34 @@ def write(entity, values):
     for value_key, value in values.items():
         if value_key in entity_fields: # check if the value is in entities field list
           prop = entity_fields.get(value_key)
+          is_writable = entity._field_permissions[value_key]['writable']
           
           if is_structured_property(prop): # if the property is structured, iterate over its fields and determine what can be written
              for field_key, field in prop._modelclass.get_fields().items():
-                 _write_helper(entity, entity._field_permissions[value_key], value_key, prop, value, field_key, field) # recursive
+                 _write_helper(entity, entity._field_permissions[value_key], value_key, prop, value, field_key, field, is_writable) # recursive
           else:
-             if entity._field_permissions[value_key]['writable']:  # if the entire property is writable
+             if is_writable:  # if the entire property is writable
                 setattr(entity, value_key, value) 
                 util.logger('wrote %s.%s=%s' % (entity.__class__.__name__, value_key, value))
                 
-def _read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
+def _read_helper(field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_value,
+                  structured_field_key, structured_field):
     # recursive function
 
     if is_structured_property(structured_field):
        for _field_key, _field in structured_field._modelclass.get_fields().items():
-           if entity_structured_entity is not None:
-              entity_structured_entity = getattr(entity_structured_entity, _field_key)
-           _read_helper(entity_field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_entity, _field_key, _field)
+           if entity_structured_value is not None:
+              entity_structured_value = getattr(entity_structured_value, _field_key)
+           _read_helper(field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_value, _field_key, _field)
     else:
-       if not entity_field_permissions[structured_field_key]['visible']:
+       if not field_permissions[structured_field_key]['visible']:
           if entity_structured_field._repeated:
-             for entity_structured_value_item in entity_structured_entity:
+             for entity_structured_value_item in entity_structured_value:
                  if entity_structured_value_item is not None:
                     entity_structured_value_item.remove_field(structured_field_key)
           else:
-             if entity_structured_entity is not None:
-                entity_structured_entity.remove_field(structured_field_key)
+             if entity_structured_value is not None:
+                entity_structured_value.remove_field(structured_field_key)
                       
 def read(entity):
   
