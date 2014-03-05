@@ -62,22 +62,40 @@ def write(entity, values):
     
     entity_fields = entity.get_fields()
     
-    def write_helper(initial_entity, entity_field_permissions, entity_structured_key, entity_structured_value, structured_field_key, structured_field):
+    def write_helper(initial_entity_value, entity_field_permissions, entity_structured_key, entity_structured_value, structured_field_key, structured_field):
         # recursive function
         
         if is_structured_property(structured_field):
            for _field_key, _field in structured_field._modelclass.get_fields().items():
-               write_helper(getattr(initial_entity, entity_structured_key), entity_field_permissions[structured_field_key], 
-                            structured_field_key, getattr(value, _field_key), _field_key, _field)
-           else:
+             
+               initial_entity_value = None
+               value_value = None
+               
+               if initial_entity_value is not None:
+                  initial_entity_value = getattr(initial_entity_value, entity_structured_key)
+                  
+               if value is not None:
+                  value_value = getattr(value, _field_key)
+                  
+               write_helper(initial_entity_value, entity_field_permissions[structured_field_key], 
+                            structured_field_key, value_value, _field_key, _field)
+        else:
+               # @todo this needs work cuz its not working as it should
                if not entity_field_permissions[structured_field_key]['writable']:
                   # if the property inside a structured class is not writable, we set the previous value 
                   # into a newly constructed structured property, therefore overriding whatever the user set
                   if structured_field._repeated:
                      for entity_structured_value_item in entity_structured_value:
-                         setattr(entity_structured_value_item, getattr(initial_entity, structured_field_key)) # puts back the original into newly constructed.
+                         setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) # puts back the original into newly constructed.
                   else:
-                     setattr(entity_structured_value, getattr(initial_entity, structured_field_key)) # puts back the original into newly constructed.
+                     setattr_value = None
+                     if initial_entity_value is not None:
+                        setattr_value = getattr(initial_entity_value, structured_field_key) 
+                     setattr(entity_structured_value, setattr_value) # puts back the original into newly constructed.
+               
+               if structured_field._repeated:
+                 for entity_structured_value_item in entity_structured_value:
+                     setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) 
   
     for value_key, value in values:
         if value_key in entity_fields: # check if the value is in entities field list
@@ -107,7 +125,8 @@ def read(entity):
               # into a newly constructed structured property, therefore overriding whatever the user set
               if entity_structured_field._repeated:
                  for entity_structured_value_item in entity_structured_value:
-                     entity_structured_value_item.remove_field(structured_field_key)
+                     if entity_structured_value_item is not None:
+                        entity_structured_value_item.remove_field(structured_field_key)
               else:
                  if entity_structured_value is not None:
                     entity_structured_value.remove_field(structured_field_key)
