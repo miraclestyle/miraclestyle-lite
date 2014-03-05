@@ -78,7 +78,7 @@ class User(ndb.BaseExpando):
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               
                                               rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
-                            
+                                      
                                               # What about field permission on state property?
                                               ])
   
@@ -288,7 +288,8 @@ class User(ndb.BaseExpando):
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     
-    #rule.read(entity)
+    data = dict([(key,getattr(entity, key)) for key in entity.get_fields()])
+    rule.write(entity, data)
     
     return context
   
@@ -338,12 +339,13 @@ class User(ndb.BaseExpando):
     entity = cls.current_user()
     context.rule.entity = entity
     rule.Engine.run(context, True)
+ 
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      if not entity.csrf == context.input.get('csrf'):
+      if not entity._csrf == context.input.get('csrf'):
         raise rule.ActionDenied(context)
       if entity.sessions:
         entity.sessions = []

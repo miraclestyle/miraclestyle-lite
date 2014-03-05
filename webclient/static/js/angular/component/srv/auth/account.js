@@ -153,7 +153,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		{
 			Endpoint.post('logout', 'srv.auth.User',
 		     {
-		   	   'csrf' : $rootScope.current_user.csrf,
+		   	   'csrf' : $rootScope.current_user._csrf,
 		     })
 		     .success(function (data) {
 				 $rootScope.current_user = data.anonymous_user;
@@ -207,8 +207,8 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				var modalInstance = $modal.open({
 				      templateUrl: logic_template('srv/auth', 'account_update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
-				      	
-				      	  update(user, data);
+				     
+				      	  update(user, data['entity']);
 				      	
 				      	  $scope.rule = RuleEngine.factory(data);
 				      	  $scope.user = user;

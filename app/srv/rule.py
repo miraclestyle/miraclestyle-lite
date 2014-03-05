@@ -76,40 +76,43 @@ def executable(context):
   else:
      return False
    
-def _write_helper(initial_entity_value, entity_field_permissions, entity_structured_key, entity_structured_value, structured_field_key, structured_field):
+def _write_helper(initial_value, field_permissions, supplied_structured_key, supplied_structured_field, supplied_structured_value, structured_field_key, structured_field):
     # recursive function
     
     if is_structured_property(structured_field):
        for _field_key, _field in structured_field._modelclass.get_fields().items():
          
-           initial_entity_value = None
+           initial_value = None
            value_value = None
            
-           if initial_entity_value is not None:
-              initial_entity_value = getattr(initial_entity_value, entity_structured_key)
+           if initial_value is not None:
+              initial_value = getattr(initial_value, supplied_structured_key)
               
-           if entity_structured_value is not None:
-              value_value = getattr(entity_structured_value, _field_key)
+           if supplied_structured_value is not None:
+              value_value = getattr(supplied_structured_value, _field_key)
               
-           _write_helper(initial_entity_value, entity_field_permissions[structured_field_key], 
-                        structured_field_key, value_value, _field_key, _field)
+           _write_helper(initial_value, field_permissions[structured_field_key], 
+                        structured_field_key, supplied_structured_field, value_value, _field_key, _field)
     else:
            # @todo this needs work cuz its not working as it should
-           if not entity_field_permissions[structured_field_key]['writable']:
-              # if the property inside a structured class is not writable, we set the previous value 
+           if field_permissions[structured_field_key]['writable']:
+              # if the property inside a structured class is not writable, we set the initial value
               # into a newly constructed structured property, therefore overriding whatever the user set
-              if structured_field._repeated:
-                 for entity_structured_value_item in entity_structured_value:
-                     setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) # puts back the original into newly constructed.
+ 
+              if supplied_structured_field._repeated:
+                 for i,supplied_structured_value_item in enumerate(supplied_structured_value):
+                     initial = getattr(initial_value, supplied_structured_key)[i]
+                     if initial is not None:
+                        supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
+                        setattr(initial, structured_field_key, supplied_structured_value_item_far) 
+                        print 'wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far)            
               else:
-                 setattr_value = None
-                 if initial_entity_value is not None:
-                    setattr_value = getattr(initial_entity_value, structured_field_key) 
-                 setattr(entity_structured_value, setattr_value) # puts back the original into newly constructed.
-           
-           if structured_field._repeated:
-             for entity_structured_value_item in entity_structured_value:
-                 setattr(entity_structured_value_item, getattr(initial_entity_value, structured_field_key)) 
+                 initial = getattr(initial_value, supplied_structured_key)
+                 if initial is not None:
+                    supplied_structured_value_far = getattr(supplied_structured_value, structured_field_key)
+                    setattr(initial, structured_field_key, supplied_structured_value_far)
+                    print 'wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_far)
+ 
    
 def write(entity, values):
   
@@ -117,15 +120,18 @@ def write(entity, values):
     
     entity_fields = entity.get_fields()
   
-    for value_key, value in values:
+    for value_key, value in values.items():
         if value_key in entity_fields: # check if the value is in entities field list
           prop = entity_fields.get(value_key)
-          if entity._field_permissons[value_key]['writable']:  # if the entire property is writable, skip the per-property check
-             setattr(entity, value_key, value)
-          elif is_structured_property(prop): # if the property is structured, iterate over its fields and determine what can be written
+          
+          if is_structured_property(prop): # if the property is structured, iterate over its fields and determine what can be written
              for field_key, field in prop._modelclass.get_fields().items():
-                 _write_helper(entity, entity._field_permissions[value_key], value_key, value, field_key, field) # recursive
-           
+                 _write_helper(entity, entity._field_permissions[value_key], value_key, prop, value, field_key, field) # recursive
+          else:
+             if entity._field_permissions[value_key]['writable']:  # if the entire property is writable
+                setattr(entity, value_key, value) 
+                print 'wrote %s.%s=%s' % (entity.__class__.__name__, value_key, value)
+                
 def _read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
     # recursive function
 
@@ -149,17 +155,18 @@ def read(entity):
     # configures output variables for the provided entity with respect to rule engine. should the param be entity or context?
  
     entity_fields = entity.get_fields()
-    
+ 
     for field_key, field in entity_fields.items():
-        if not entity._field_permissions[field_key]['visible']: # checks if the field is not visible
-           if is_structured_property(field):
-             # if the field is structured, check for its sub-fields recursively
-             for _field_key, _field in field._modelclass.get_fields().items():
-                 structured_entity = getattr(entity, field_key)
-                 _read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
-           else:
+ 
+        if is_structured_property(field):
+          # if the field is structured, check for its sub-fields recursively
+          for _field_key, _field in field._modelclass.get_fields().items():
+              structured_entity = getattr(entity, field_key)
+              _read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
+        else:
+           if not entity._field_permissions[field_key]['visible']:
               entity.remove_field(field_key) # if the field is not visible, remove it completely from output
-   
+
 class Context():
   
   def __init__(self):
@@ -189,7 +196,7 @@ class ActionPermission(Permission):
     if not isinstance(self.action, (tuple, list)):
        self.action = [self.action]
     
-    for action in self.action: 
+    for action in self.action:
         if (self.kind == context.rule.entity.get_kind()) and (action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context, 'action' : action})) and (self.executable != None):
            context.rule.entity._action_permissions[action]['executable'].append(self.executable)
 
