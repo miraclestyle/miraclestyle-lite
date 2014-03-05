@@ -204,6 +204,7 @@ class _BaseModel(object):
   
   @classmethod
   def get_fields(cls):
+    # this function returns combined _properties, expando_fields, virtual_fields
     fields = {}
     for prop_key, prop in cls._properties.items():
       fields[prop._code_name] = prop
@@ -255,7 +256,6 @@ class _BaseModel(object):
       for prop_key, prop in cls._virtual_fields.items():
         if not prop._code_name:
           prop._code_name = prop_key
-          cls._virtual_fields[prop_key] = prop
       return cls._virtual_fields
     else:
       return False
@@ -334,7 +334,6 @@ class BaseExpando(_BaseModel, Expando):
       for prop_key, prop in cls._expando_fields.items():
         if not prop._code_name:
           prop._code_name = prop_key
-          cls._expando_fields[prop_key] = prop
       return cls._expando_fields
     else:
       return False

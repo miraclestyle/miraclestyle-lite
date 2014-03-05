@@ -14,22 +14,34 @@ class ActionDenied(Exception):
        self.message = {'action_denied' : context.action}
        
 def is_structured_property(field):
+    # checks if the provided value is instance of one of the structured properties, and also checks if the model class is set
     return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
     
-def parse_property(dic, field):
+def parse_property(values, field):
+  
+    # digs trough path provided for the "values" provided - values recognizes dict, and objects with __getattr__
   
     field_path = field.split('.')
     
+    is_dict = isinstance(values, dict)
+    
     for path in field_path:
-       try:
-         dic = dic[path]
-       except KeyError:
-         return None
+       if is_dict:
+         try:
+           values = values[path]
+         except KeyError as e:
+           return None
+       else:
+          try:
+             values = getattr(values, path)
+          except ValueError as e:
+             return None
        
-    return dic
+    return values
        
 
 def _check_field(context, name, key):
+    # internal helper to check if the field for provided rule context is either writable, invisible, or required
  
     if context.rule.entity:
       # this is like this because we can use it like writable(context, ('field1', 'field2'))
@@ -44,21 +56,27 @@ def _check_field(context, name, key):
       return False
 
 def writable(context, name):
+  # checks if the field is writable for provided rule context
   return _check_field(context, name, 'writable')
 
 def visible(context, name):
+  # checks if the field is visible for provided rule context
   return _check_field(context, name, 'visible')
 
 def required(context, name):
+  # checks if the field is required for provided rule context
   return _check_field(context, name, 'required')
 
 def executable(context):
+  # checks if the action is executable for the provided rule context
   if context.rule.entity:
      return context.rule.entity._action_permissions[context.action.key.urlsafe()]['executable']
   else:
      return False
    
 def write(entity, values):
+  
+    # writes property values with respect to rule engine, im not sure if the provided value should be entity or context?
     
     entity_fields = entity.get_fields()
     
@@ -108,36 +126,37 @@ def write(entity, values):
            
   
 def read(entity):
+  
+    # configures output variables for the provided entity with respect to rule engine. should the param be entity or context?
  
     entity_fields = entity.get_fields()
     
-    def read_helper(entity_field_permissions, entity_structured_key, entity_structured_field, entity_structured_value, structured_field_key, structured_field):
+    def read_helper(entity_field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_entity, structured_field_key, structured_field):
         # recursive function
  
         if is_structured_property(structured_field):
            for _field_key, _field in structured_field._modelclass.get_fields().items():
-               if entity_structured_value is not None:
-                  entity_structured_value = getattr(entity_structured_value, _field_key)
-               read_helper(entity_field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_value, _field_key, _field)
+               if entity_structured_entity is not None:
+                  entity_structured_entity = getattr(entity_structured_entity, _field_key)
+               read_helper(entity_field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_entity, _field_key, _field)
         else:
            if not entity_field_permissions[structured_field_key]['visible']:
-              # if the property inside a structured class is not writable, we set the previous value 
-              # into a newly constructed structured property, therefore overriding whatever the user set
               if entity_structured_field._repeated:
-                 for entity_structured_value_item in entity_structured_value:
+                 for entity_structured_value_item in entity_structured_entity:
                      if entity_structured_value_item is not None:
                         entity_structured_value_item.remove_field(structured_field_key)
               else:
-                 if entity_structured_value is not None:
-                    entity_structured_value.remove_field(structured_field_key)
+                 if entity_structured_entity is not None:
+                    entity_structured_entity.remove_field(structured_field_key)
  
     
     for field_key, field in entity_fields.items():
         if not entity._field_permissions[field_key]['visible']: # checks if the field is not visible
            if is_structured_property(field):
-           # now we check for every structured's class property which ones are invisible   
+             # if the field is structured, check for its sub-fields recursively
              for _field_key, _field in field._modelclass.get_fields().items():
-                 read_helper(entity._field_permissions[field_key], field_key, field, getattr(entity, field_key), _field_key, _field) # recursive     
+                 structured_entity = getattr(entity, field_key)
+                 read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
            else:
               entity.remove_field(field_key) # if the field is not visible, remove it completely from output
    
@@ -148,7 +167,7 @@ class Context():
 
     
 class Permission():
-  pass
+  """ Base class for all permissions """
 
 
 class ActionPermission(Permission):
@@ -215,12 +234,7 @@ class Role(ndb.BaseExpando):
     
     ### za ovo smo rekli da svakako treba da se radi validacija pri inputu 
     # treba da postoji validator da proverava prilikom put()-a da li su u permissions listi instance Permission klase
-    # napr:
-    #def _pre_put_hook(self):
-    #for perm in self.permissions:
-        #if not isinstance(perm, Permission):
-           #raise ValueError('Expected instance of Permission, got %r' % perm)
-    
+ 
     def run(self, context):
         for permission in self.permissions:
             permission.run(self, context)
@@ -269,7 +283,7 @@ class Engine:
   def decide(cls, data, strict):
     calc = {}
     
-    def helper(calc, element, prop, value):
+    def decide_helper(calc, element, prop, value):
         # recursive function
         
         if element not in calc:
@@ -277,7 +291,7 @@ class Engine:
             
         if isinstance(value, dict):
            for _value_key, _value in value.items():
-               helper(calc[element], prop, _value_key, _value)
+               decide_helper(calc[element], prop, _value_key, _value)
         else:
           if len(value):
             if (strict):
@@ -294,7 +308,7 @@ class Engine:
  
     for element, properties in data.items():
           for prop, value in properties.items():
-              helper(calc, element, prop, value)
+              decide_helper(calc, element, prop, value)
     return calc
   
   @classmethod
