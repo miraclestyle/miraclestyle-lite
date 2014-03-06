@@ -113,46 +113,39 @@ class _BaseModel(object):
   
   def __init__(self, *args, **kwargs):
     super(_BaseModel, self).__init__(*args, **kwargs)
-    self._output_properties = []
+    self._output = []
     for key in self.get_fields():
-      self.add_field(key)
-    self.add_field('_actions')
+      self.add_output(key)
+    self.add_output('_actions')
   
-  def add_field(self, names):
+  def add_output(self, names):
     if not isinstance(names, (list, tuple)):
       names = [names]
     for name in names:
-      if name not in self._output_properties:
-        self._output_properties.append(name)
+      if name not in self._output:
+        self._output.append(name)
   
-  def remove_field(self, names):
+  def remove_output(self, names):
     if not isinstance(names, (list, tuple)):
       names = [names]
     for name in names:
-      if name in self._output_properties:
-        self._output_properties.remove(name)
-  
-  @classmethod
-  def build_key(cls, *args, **kwargs):
-    new_args = [cls._get_kind()]
-    new_args.extend(args)
-    return Key(*new_args, **kwargs)
-  
-  def set_key(self, *args, **kwargs):
-    self._key = self.build_key(*args, **kwargs)
-    return self._key
+      if name in self._output:
+        self._output.remove(name)
   
   def __todict__(self):
     """
-    This function can be used to make representation of the model into the dictionary.
-    The dictionary can then be used to get translated into other understandable code to clients (e.g. JSON).
+    This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
+    Currently however, 'self._output' contains '_actions' branch, which is meta data, and in the future should be
+    excluded from 'self._output'. The future convention would rename this function from '__todict__' to 'get_output', 
+    and include 'get_meta' function in '_BaseModel' which will return dictionary of meta data of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
     dic = {}
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
-    names = self._output_properties
+    names = self._output
     for name in names:
       value = getattr(self, name, None)
       dic[name] = value
@@ -163,6 +156,16 @@ class _BaseModel(object):
   
   def loaded(self):
     return self.key != None and self.key.id()
+  
+  @classmethod
+  def build_key(cls, *args, **kwargs):
+    new_args = [cls._get_kind()]
+    new_args.extend(args)
+    return Key(*new_args, **kwargs)
+  
+  def set_key(self, *args, **kwargs):
+    self._key = self.build_key(*args, **kwargs)
+    return self._key
   
   @classmethod
   def _get_kind(cls):
@@ -204,36 +207,6 @@ class _BaseModel(object):
         fields.update(expando_fields)
     return fields
   
-  @property
-  def key_id(self):
-    return self.key.id()
-  
-  @property
-  def key_id_str(self):
-    return str(self.key_id)
-  
-  @property
-  def key_namespace(self):
-    return self.key.namespace()
-  
-  @property
-  def key_parent(self):
-    return self.key.parent()
-  
-  @property
-  def namespace_entity(self):
-    if self.key.namespace():
-      return Key(urlsafe=self.key.namespace()).get()
-    else:
-      return None
-  
-  @property
-  def parent_entity(self):
-    if self.key.parent():
-      return self.key.parent().get()
-    else:
-      return None
-  
   @classmethod
   def get_virtual_fields(cls):
     if hasattr(cls, '_virtual_fields'):
@@ -268,6 +241,36 @@ class _BaseModel(object):
       if prop:
         prop._delete_value(self)
     return super(BaseExpando, self).__delattr__(name)
+  
+  @property
+  def key_id(self):
+    return self.key.id()
+  
+  @property
+  def key_id_str(self):
+    return str(self.key_id)
+  
+  @property
+  def key_namespace(self):
+    return self.key.namespace()
+  
+  @property
+  def key_parent(self):
+    return self.key.parent()
+  
+  @property
+  def namespace_entity(self):
+    if self.key.namespace():
+      return Key(urlsafe=self.key.namespace()).get()
+    else:
+      return None
+  
+  @property
+  def parent_entity(self):
+    if self.key.parent():
+      return self.key.parent().get()
+    else:
+      return None
 
 
 class BaseModel(_BaseModel, Model):
@@ -388,6 +391,13 @@ class _BaseProperty(object):
   _max_size = None
   
   def __todict__(self):
+    """
+    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
+    counterpart in _BaseModel does) of the model. The future convention would rename this function 
+    from '__todict__' to 'get_meta'.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    """
     choices = self._choices
     if choices:
       choices = list(self._choices)
@@ -416,6 +426,13 @@ class BaseProperty(_BaseProperty, Property):
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def __todict__(self):
+    """
+    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
+    counterpart in _BaseModel does) of the model. The future convention would rename this function 
+    from '__todict__' to 'get_meta'.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    """
     response = super(SuperLocalStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
     return response
@@ -424,6 +441,13 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
   def __todict__(self):
+    """
+    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
+    counterpart in _BaseModel does) of the model. The future convention would rename this function 
+    from '__todict__' to 'get_meta'.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    """
     response = super(SuperStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
     return response
