@@ -5,8 +5,8 @@
 	<div class="form-control">
 		<label class="form-label">Target State</label>
 		<div class="form-input">
-			<select style="width:40%;" ng-required="rule.arguments.sudo.state.required" ui-select2 ng-model="log.state" data-placeholder="Select target state for this App">
-				    <option ng-repeat="state in rule.arguments.sudo.state.choices" value="{{state}}">{{state}}</option>
+			<select style="width:40%;" ng-required="rule.input.sudo.state.required" ui-select2 ng-model="log.state" data-placeholder="Select target state for this App">
+				    <option ng-repeat="state in rule.input.sudo.state.choices" value="{{state}}">{{state}}</option>
 			</select>
 		</div>
 	</div>	 
@@ -15,14 +15,14 @@
    	<div class="form-control">
 		<label class="form-label">Message</label>
 		<div class="form-input">
-			<textarea ng-required="rule.arguments.sudo.message.required" class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
+			<textarea ng-required="rule.input.sudo.message.required" class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
 		</div>
 	</div>	 
 	
 	<div class="form-control">
 		<label class="form-label">Note</label>
 		<div class="form-input">
-			<textarea ng-required="rule.arguments.sudo.note.required" 
+			<textarea ng-required="rule.input.sudo.note.required" 
 					class="text-input text-textarea" ng-model="log.note" name="note"></textarea>
 		</div>
 	</div>	

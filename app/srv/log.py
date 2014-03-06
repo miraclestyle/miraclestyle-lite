@@ -6,7 +6,7 @@ Created on Dec 25, 2013
 '''
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb
+from app import ndb, settings
 
 
 class Context():
@@ -39,6 +39,11 @@ class Record(ndb.BaseExpando):
   agent = ndb.SuperKeyProperty('u', kind='0', required=True)
   action = ndb.SuperKeyProperty('a', kind='56', required=True)
   
+  _virtual_fields = {
+     '_agent' : ndb.SuperStringProperty(),
+     '_action' : ndb.SuperStringProperty(),
+  }
+  
   _expando_fields = {
                      'message' : ndb.SuperTextProperty('m'),
                      'note' : ndb.SuperTextProperty('n'),
@@ -46,18 +51,17 @@ class Record(ndb.BaseExpando):
   
   
   @classmethod
-  def get_logs(cls, entity, urlsafe_cursor, items_per_page=10):
+  def get_records(cls, entity, urlsafe_cursor):
     
     from app.srv import rule
     
+    items_per_page = settings.RECORDS_PER_PAGE
     cursor = Cursor(urlsafe=urlsafe_cursor)
     query = cls.query(ancestor=entity.key).order(-cls.logged)
     
     @ndb.tasklet
     def async(entity):
-      
-        new_entity = entity.__todict__()
-      
+    
         if entity.key_namespace:
            domain_user_key = rule.DomainRole.build_key(entity.agent.key_id_str, namespace=entity.key_namespace)
            agent = yield domain_user_key.get_async()
@@ -66,7 +70,7 @@ class Record(ndb.BaseExpando):
            agent = yield entity.agent.get_async()
            agent = agent._primary_email
            
-        new_entity['agent'] = agent
+        entity._agent = agent
  
         action_key_id = str(entity.action.id()).split('-')
  
@@ -78,16 +82,13 @@ class Record(ndb.BaseExpando):
            if modelclass and hasattr(modelclass, '_actions'):
               for action_key, action in modelclass._actions.items():
                   if entity.action == action.key:
-                     new_entity['action'] = '%s.%s' % (modelclass.__name__, action_key)
+                     entity._action = '%s.%s' % (modelclass.__name__, action_key)
                      break
         else:
-           new_entity['action'] = entity.action.id()
-                  
-        raise ndb.Return(new_entity)
-         
-    # query.map and fetch_page wont work in conjunction ---- query.map(fetch_agent)
-    # entities = pager.fetch_page(query, _async, page_size=items_per_page, start_cursor=cursor)
-    
+           entity._action = entity.action.id()
+  
+        raise ndb.Return(entity)
+ 
     entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
     
     if next_cursor:
@@ -103,7 +104,7 @@ class Record(ndb.BaseExpando):
     entities = helper(entities)
     entities = [entity for entity in entities.get_result()]
       
-    return {'entities' : entities, 'next_cursor' : next_cursor, 'more' : more}
+    return entities, next_cursor, more
   
   
   def _get_property_for(self, p, indexed=True, depth=0):

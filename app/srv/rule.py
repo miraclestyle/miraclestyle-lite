@@ -48,7 +48,7 @@ class Model(ndb.BaseModel):
                                   
                                   Field permissions:
                               
-                                  rule.FieldPermission('0', 'bar', True, True, True, 'True'), 
+                                  rule.FieldPermission('0', 'bar', True, True, 'True'), 
                                   
                                   This field permission definition would generate:
                                   
@@ -77,7 +77,7 @@ class Model(ndb.BaseModel):
                                   
                                   If you specify rule like this
                                   
-                                  rule.FieldPermission('0', 'bar.other.name', False, False, False, 'True'),
+                                  rule.FieldPermission('0', 'bar.other.name', False, False, 'True'),
                                   
                                   This field permission definition would generate:
                                   
@@ -368,7 +368,7 @@ class ActionPermission(Permission):
 class FieldPermission(Permission):
   
   
-  def __init__(self, kind, field, writable=None, visible=None, required=None, condition=None):
+  def __init__(self, kind, field, writable=None, visible=None, condition=None):
     
     self.kind = kind # entity kind identifier (entity._kind)
     self.field = field # this must be a field code name from ndb property (field._code_name) ---- This could be a list?

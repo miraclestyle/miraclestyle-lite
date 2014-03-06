@@ -29,11 +29,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	{
 		var that = this;
 		
-		this.executable = {};
-		this.required = {};
-	    this.invisible = {};
-		this.writable = {};
-		this.arguments = {};
+		this.action = {'executable' : {}};
+		this.input = {};
+ 
 		
 		this._action_permission_translate = function (action_name)
 		{
@@ -44,22 +42,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	    {
 	    	return this._rule_field_permissions[name][what];
 	    };
-	    
-		this._writable = function (name)
-	    {
-	    	return this._check_field(name, 'writable');
-	    };
-	    
-		this._invisible = function (name)
-	    {
-	    	return this._check_field(name, 'invisible');
-	    };
-	    
-		this._required = function (name)
-	    {
-	    	return this._check_field(name, 'required');
-	    };
-		
+	 
 		this._executable = function (action_name)
 	    {
 	    	var gets = this._action_permission_translate(action_name);
@@ -70,23 +53,18 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		this.init = function ()
 		{
 	        angular.forEach(this._rule_actions, function (value, key) {
-		    	that.executable[key] = that._executable(key);
+		    	that.action['executable'][key] = that._executable(key);
 		    	
 		    	angular.forEach(value.arguments, function (argument_value, argument_key) {
-		    		if (!that.arguments[key]) that.arguments[key] = {};
+		    		if (!that.input[key]) that.input[key] = {};
 		    		
-		    		that.arguments[key][argument_key] = argument_value;
+		    		that.input[key][argument_key] = argument_value;
 		    	});
 		    	
 		    });
 		    
-		    angular.forEach(this._rule_field_permissions, function (value, key) {
-		    	
-		    	that.required[key] = that._required(key);
-		    	that.writable[key] = that._writable(key);
-		    	that.invisible[key] = that._invisible(key);
-		    	
-		    });
+		    that.field = that._rule_field_permissions;
+		  
 	    };
 		
 		this.update = function (info)
@@ -378,7 +356,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 					
 					$scope.commander.first = true;
 				 
-					angular.forEach(data.entities, function (value) {
+					angular.forEach(data.entity._records, function (value) {
 					     $scope.logs.push(value);
 					});
  

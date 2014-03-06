@@ -7,8 +7,7 @@ Created on Jan 6, 2014
 
 import hashlib
 import os
-import copy
-
+ 
 from google.appengine.api import blobstore
 from google.appengine.datastore.datastore_query import Cursor
 
@@ -65,7 +64,11 @@ class User(ndb.BaseExpando):
     '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest()),
     '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email()),
     '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin()),
-    '_is_taskqueue' : ndb.ComputedProperty(lambda self: self.is_taskqueue())         
+    '_is_taskqueue' : ndb.ComputedProperty(lambda self: self.is_taskqueue()),
+    
+    '_records' : ndb.SuperLocalStructuredProperty(log.Record, repeated=True),
+    '_records_next_cursor' : ndb.SuperStringProperty(),
+    '_records_more' : ndb.SuperBooleanProperty(),       
   
   }
  
@@ -80,11 +83,15 @@ class User(ndb.BaseExpando):
                                               rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
                                               rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
                                               
-                                              rule.FieldPermission('0', 'identities', True, True, True, 'True'),  # By default user can manage identities, no problem.
+                                              rule.FieldPermission('0', 'identities', True, True, 'True'),  # By default user can manage identities, no problem.
                                               
                                               # expose fields to the world
                                               rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email', '_root_admin',
-                                                                         'created', 'updated', 'state'], False, True, True, 'True')
+                                                                         'created', 'updated', 'state'], False, True, 'True'),
+                                              
+                                              rule.FieldPermission('0', '_records', False, True, 'True'),
+                                              rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
+                                              rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin')
                                               # What about field permission on state property?
                                               ])
   
@@ -277,12 +284,21 @@ class User(ndb.BaseExpando):
   @classmethod
   def history(cls, context):
     entity_key = context.input.get('key')
+    next_cursor = context.input.get('next_cursor')
     entity = entity_key.get()
     context.rule.entity = entity
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    context.output = log.Record.get_logs(entity, context.input.get('next_cursor'))
+    
+    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
+    
+    entity._records = entities
+    entity._records_next_cursor = next_cursor
+    entity._records_more = more
+ 
+    rule.read(entity)
+     
     return context
   
   @classmethod
@@ -293,9 +309,7 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
-    # this is testing
-    # data = dict([(key,copy.deepcopy(getattr(entity, key))) for key in entity.get_fields()])
+ 
     rule.read(entity)
     
     return context

@@ -42,6 +42,9 @@ PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
 # task queue
 OUTLET_TEMPLATES_PER_TASK = 10
 OUTLET_RECIPIENTS_PER_TASK = 50
+
+# records
+RECORDS_PER_PAGE = 10
  
  
 _http = 'http://'
