@@ -295,24 +295,39 @@ def write(entity, values):
                 setattr(entity, value_key, value) 
                 util.logger('wrote %s.%s=%s' % (entity.__class__.__name__, value_key, value))
                 
-def _read_helper(field_permissions, entity_structured_field_key, entity_structured_field, entity_structured_value,
-                  structured_field_key, structured_field):
-    # recursive function
 
-    if is_structured_property(structured_field):
-       for _field_key, _field in structured_field._modelclass.get_fields().items():
-           if entity_structured_value is not None:
-              entity_structured_value = getattr(entity_structured_value, _field_key)
-           _read_helper(field_permissions[structured_field_key], structured_field_key, structured_field, entity_structured_value, _field_key, _field)
-    else:
-       if not field_permissions[structured_field_key]['visible']:
-          if entity_structured_field._repeated:
-             for entity_structured_value_item in entity_structured_value:
-                 if entity_structured_value_item is not None:
-                    entity_structured_value_item.remove_field(structured_field_key)
-          else:
-             if entity_structured_value is not None:
-                entity_structured_value.remove_field(structured_field_key)
+def _read_helper(field_permissions, operator, field_key, field, parent_field_key=None, parent_field=None):
+  
+  if is_structured_property(field):
+    
+     if field._repeated and isinstance(operator, list):
+        for op in operator:
+           _read_helper(field_permissions, op, field_key, field, parent_field_key, parent_field)
+        return
+
+     parent_structure = getattr(operator, field_key)
+     parent_structure_meta = parent_structure
+     if field._repeated:
+        try:
+          parent_structure_meta = parent_structure[0]
+        except IndexError:
+          parent_structure_meta = None
+          
+     if parent_structure_meta:
+       initial_fields = parent_structure_meta.get_fields()
+       initial_fields.update(dict([(p._code_name, p) for _, p in parent_structure_meta._properties.items()]))
+       
+       for new_field_key, new_field in initial_fields.items():
+           _read_helper(field_permissions[field_key], parent_structure, new_field_key, new_field, field_key, field)
+     
+  else:
+    if not field_permissions[field_key]['visible']:
+       if parent_field and parent_field._repeated:
+          for op in operator:
+              op.remove_output(field_key)
+       else:
+           operator.remove_output(field_key) 
+     
                       
 def read(entity):
   
@@ -321,15 +336,7 @@ def read(entity):
     entity_fields = entity.get_fields()
  
     for field_key, field in entity_fields.items():
- 
-        if is_structured_property(field):
-          # if the field is structured, check for its sub-fields recursively
-          for _field_key, _field in field._modelclass.get_fields().items():
-              structured_entity = getattr(entity, field_key)
-              _read_helper(entity._field_permissions[field_key], field_key, field, structured_entity, _field_key, _field) # recursive     
-        else:
-           if not entity._field_permissions[field_key]['visible']:
-              entity.remove_field(field_key) # if the field is not visible, remove it completely from output
+        _read_helper(entity._field_permissions, entity, field_key, field)
 
 class Context():
   
@@ -388,7 +395,6 @@ class FieldPermission(Permission):
     
     for field in self.field:
         dig = parse_property(context.rule.entity._field_permissions, field) # retrieves field value from foo.bar.far
-        
         # added in safe eval `field` - the field that is currently in the loop 
         if (self.kind == context.rule.entity.get_kind()) and dig and (safe_eval(self.condition, {'context' : context, 'field' : field})):
           if (self.writable != None):
@@ -428,37 +434,41 @@ class Engine:
       return collections.OrderedDict([('writable', []), ('visible', [])])
   
   @classmethod
-  def prepare_fields(cls, props, fields, _props=None):
+  def prepare_fields(cls, field_permissions, fields, entity):
     # recursive method
  
     for field_key, field in fields.items():
         if is_structured_property(field): # isinstance(Struct, Local)
-           aprops = _props
-           if aprops is None:
-              aprops = props
-           if field_key not in aprops:
-              aprops[field_key] = cls._prepare_fields_helper()
-           cls.prepare_fields(props, field._modelclass.get_fields(), aprops[field_key])
+           if field_key not in field_permissions:
+              field_permissions[field_key] = cls._prepare_fields_helper()
+              
+           new_fields = field._modelclass.get_fields()
+           if field._modelclass.get_kind() == '5' and entity:
+               parent_fields = entity.get_fields()
+               parent_fields.pop(field._code_name)
+               new_fields.update(parent_fields)
+               
+                 
+           cls.prepare_fields(field_permissions[field_key], new_fields, entity)
         else:
-           aprops = _props
-           if aprops is None:
-              aprops = props
-           aprops[field_key] = cls._prepare_fields_helper()
+           field_permissions[field_key] = cls._prepare_fields_helper()
 
   @classmethod
   def prepare(cls, context):
     
-    context.rule.entity._field_permissions = {} 
-    context.rule.entity._action_permissions = {} 
+    entity = context.rule.entity
+    
+    entity._field_permissions = {} 
+    entity._action_permissions = {} 
  
-    fields = context.rule.entity.get_fields()
+    fields = entity.get_fields()
  
-    cls.prepare_fields(context.rule.entity._field_permissions, fields)
+    cls.prepare_fields(entity._field_permissions, fields, entity)
  
-    actions = context.rule.entity.get_actions()
+    actions = entity.get_actions()
        
     for action_key in actions:
-       context.rule.entity._action_permissions[action_key] = {'executable' : []}
+       entity._action_permissions[action_key] = {'executable' : []}
   
   @classmethod
   def _decide_helper(cls, calc, element, prop, value, strict, parent=None):
@@ -620,8 +630,8 @@ class Engine:
       context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
       context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
       
-      context.rule.entity.add_field('_action_permissions')
-      context.rule.entity.add_field('_field_permissions')
+      context.rule.entity.add_output('_action_permissions')
+      context.rule.entity.add_output('_field_permissions')
    
 
 class GlobalRole(Role):

@@ -91,7 +91,9 @@ class User(ndb.BaseExpando):
                                               
                                               rule.FieldPermission('0', '_records', False, True, 'True'),
                                               rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
-                                              rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin')
+                                              rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin'),
+                                              rule.FieldPermission('0', '_records.sessions', False, False, 'True'),
+                                              rule.FieldPermission('0', '_records.identities', False, False, 'True'),
                                               # What about field permission on state property?
                                               ])
   

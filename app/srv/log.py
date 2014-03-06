@@ -106,6 +106,32 @@ class Record(ndb.BaseExpando):
       
     return entities, next_cursor, more
   
+  def _if_properties_are_cloned(self):
+     return not (self.__class__._properties is self._properties)
+   
+  def _retrieve_cloned_name(self, name):
+      for _, prop in self._properties.items():
+          if name == prop._code_name:
+             return prop._name
+          
+  
+  def __setattr__(self, name, value):
+     if self._if_properties_are_cloned():
+        _name = self._retrieve_cloned_name(name)
+        if _name:
+           name = _name
+         
+     return super(Record, self).__setattr__(name, value)
+    
+  def __getattr__(self, name):
+ 
+     if self._if_properties_are_cloned():
+        _name = self._retrieve_cloned_name(name)
+        if _name:
+           name = _name
+           
+     return super(Record, self).__getattr__(name)
+  
   
   def _get_property_for(self, p, indexed=True, depth=0):
     """Overrides ndb.BaseExpando._get_property_for. 
@@ -128,23 +154,24 @@ class Record(ndb.BaseExpando):
        # this loads up proper class to deal with the expandos
        kind = self.key_parent.kind()
        modelclass = self._kind_map.get(kind)
-       
+       properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().items()]) # we cannot use entity.get_fields here directly cuz it returns friendly_field_name : prop, we need prop._name : prop
        # adds properties from parent class to the log entity making it possible to deserialize properties properly
-       prop = modelclass._properties.get(next)
+       prop = properties.get(next)
        if prop:
           self._clone_properties() # clone properties, because if we dont, the Record._properties will be overriden
           self._properties[next] = prop
+          self.add_output(prop._code_name) # besides rule engine this must be here as well
  
     return super(Record, self)._get_property_for(p, indexed, depth)
   
   # Log entity's each property
   def log_entity(self, entity):
     self._clone_properties() # clone properties, because if we dont, the Record._properties will be overriden
-    for p in entity._properties:
-      prop = entity._properties.get(p)
+    for _, prop in entity._properties.items(): # we do not call get_fields here because all fields that have been written are in _properties
       value = prop._get_value(entity)
       self._properties[prop._name] = prop
       prop._set_value(self, value)
+      self.add_output(prop._code_name) # convinience
     return self
 
 
