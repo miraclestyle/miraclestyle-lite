@@ -295,9 +295,8 @@ class User(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     
     # this is testing
-    data = dict([(key,copy.deepcopy(getattr(entity, key))) for key in entity.get_fields()])
-    data['identities'].append(Identity(associated=True, primary=False, identity='100', email='thug@yo.com'))
-    rule.write(entity, data)
+    # data = dict([(key,copy.deepcopy(getattr(entity, key))) for key in entity.get_fields()])
+    rule.read(entity)
     
     return context
   

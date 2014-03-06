@@ -243,27 +243,32 @@ def _write_helper(initial_value, field_permissions, supplied_structured_key, sup
           # if the property inside a structured class is not writable, we set the initial value
           # into a newly constructed structured property, therefore overriding whatever the user set 
           if supplied_structured_field._repeated:
-             for i,supplied_structured_value_item in enumerate(supplied_structured_value):
-                 # gets the unchanged structured value
-                 initial = None
-                 initial_structured = getattr(initial_value, supplied_structured_key)
-                 if not initial_structured: # if it isnt there it must be a list then
-                   initial_structured = []
-                 try:
-                   initial = initial_structured[i] # attempt to edit 
-                 except IndexError as e:
-                   # doesnt exist, this is a new item in the list?
-                   # now only way to be in able to ADD a new item is to have "writable" permssion on the entire structured field
-                   # in that case setting writable false on those fields doesnt make sense
-                   if is_writable:
-                     util.logger('creating a new %s' % supplied_structured_value_item) 
-                     initial = supplied_structured_value_item
-                     initial_structured.append(initial)
-                   
-                 if initial is not None:
-                    supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
-                    setattr(initial, structured_field_key, supplied_structured_value_item_far) # this here changes the unstructured property value
-                    util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far))            
+             if supplied_structured_value is None or not len(supplied_structured_value):
+                if is_writable:
+                   util.logger('found nothing, setting %s.%s=%s' % (initial_value, supplied_structured_key, supplied_structured_value))
+                   setattr(initial_value, supplied_structured_key, supplied_structured_value)
+             else:
+                 for i,supplied_structured_value_item in enumerate(supplied_structured_value):
+                     # gets the unchanged structured value
+                     initial = None
+                     initial_structured = getattr(initial_value, supplied_structured_key)
+                     if not initial_structured: # if it isnt there it must be a list then
+                       initial_structured = []
+                     try:
+                       initial = initial_structured[i] # attempt to edit 
+                     except IndexError as e:
+                       # doesnt exist, this is a new item in the list?
+                       # now only way to be in able to ADD a new item is to have "writable" permssion on the entire structured field
+                       # in that case setting writable false on those fields doesnt make sense
+                       if is_writable:
+                         util.logger('creating a new %s' % supplied_structured_value_item) 
+                         initial = supplied_structured_value_item
+                         initial_structured.append(initial)
+                       
+                     if initial is not None:
+                        supplied_structured_value_item_far = getattr(supplied_structured_value_item, structured_field_key)
+                        setattr(initial, structured_field_key, supplied_structured_value_item_far) # this here changes the unstructured property value
+                        util.logger('wrote %s.%s=%s' % (initial.__class__.__name__, structured_field_key, supplied_structured_value_item_far))            
           else:
              initial = getattr(initial_value, supplied_structured_key)
              if initial is not None:
@@ -369,12 +374,11 @@ class FieldPermission(Permission):
     self.field = field # this must be a field code name from ndb property (field._code_name) ---- This could be a list?
     self.writable = writable
     self.visible = visible
-    self.required = required
     self.condition = condition
     
   def __todict__(self):
      return {'kind' : self.kind, 'field' : self.field, 'writable' : self.writable,
-             'visible' : self.visible, 'required' : self.required, 'condition' : self.condition}
+             'visible' : self.visible, 'condition' : self.condition}
     
     
   def run(self, role, context):
@@ -391,8 +395,6 @@ class FieldPermission(Permission):
             dig['writable'].append(self.writable)
           if (self.visible != None):
             dig['visible'].append(self.visible)
-          if (self.required != None):
-            dig['required'].append(self.required)
  
 
 class Role(ndb.BaseExpando):
@@ -423,7 +425,7 @@ class Engine:
   def _prepare_fields_helper(cls): # it must be a function that makes this dictionary, dry
       # this must build orderedDict because writable, visible, required NEEDS to be `decide()` 
       # first in order to allow inheritence of permissions - like folder structure
-      return collections.OrderedDict([('writable', []), ('visible', []), ('required', [])])
+      return collections.OrderedDict([('writable', []), ('visible', [])])
   
   @classmethod
   def prepare_fields(cls, props, fields, _props=None):
