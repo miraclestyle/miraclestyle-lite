@@ -193,19 +193,6 @@ class _BaseModel(object):
       actions[action.key.urlsafe()] = action
     return actions
   
-  def get_instance_fields(self):
-    fields = {}
-    for prop_key, prop in self._properties.items():
-      fields[prop._code_name] = prop
-    virtual_fields = self.get_instance_virtual_fields()
-    if virtual_fields:
-      fields.update(virtual_fields)
-    if hasattr(self, 'get_instance_expando_fields'):
-      expando_fields = self.get_instance_expando_fields()
-      if expando_fields:
-        fields.update(expando_fields)
-    return fields
-  
   @classmethod
   def get_fields(cls):
     fields = {}
@@ -219,15 +206,6 @@ class _BaseModel(object):
       if expando_fields:
         fields.update(expando_fields)
     return fields
-  
-  def get_instance_virtual_fields(self):
-    if hasattr(self, '_virtual_fields'):
-      for prop_key, prop in self._virtual_fields.items():
-        if not prop._code_name:
-          prop._code_name = prop_key
-      return self._virtual_fields
-    else:
-      return False
   
   @classmethod
   def get_virtual_fields(cls):
@@ -334,15 +312,6 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 class BaseExpando(_BaseModel, Expando):
   """Base class for all 'ndb.Expando' entities."""
-  
-  def get_instance_expando_fields(self):
-    if hasattr(self, '_expando_fields'):
-      for prop_key, prop in self._expando_fields.items():
-        if not prop._code_name:
-          prop._code_name = prop_key
-      return self._expando_fields
-    else:
-      return False
   
   @classmethod
   def get_expando_fields(cls):
