@@ -240,7 +240,6 @@ def _write_helper(field_permissions, entity, field_key, field, field_value, pare
      if isinstance(entity, list):
         util.logger('got list as entity, recurse it' % entity)
         for ent in entity:
-           print field
            for new_field_key, new_field in field._modelclass.get_fields().items():
                _write_helper(field_permissions[field_key], ent, new_field_key, new_field, getattr(ent, field_key), field_key, field, field_permissions[field_key]['writable'])
         return
