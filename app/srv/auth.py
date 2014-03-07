@@ -89,7 +89,7 @@ class User(ndb.BaseExpando):
                                               rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email', '_root_admin',
                                                                          'created', 'updated', 'state'], False, True, 'True'),
                                               
-                                              rule.FieldPermission('0', '_records', False, True, 'True'),
+                                              rule.FieldPermission('0', '_records', True, True, 'True'),
                                               rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
                                               rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin'),
                                               rule.FieldPermission('0', '_records.sessions', False, False, 'True'),
@@ -298,7 +298,15 @@ class User(ndb.BaseExpando):
     entity._records = entities
     entity._records_next_cursor = next_cursor
     entity._records_more = more
- 
+    
+    #import copy
+    
+    #data = dict([(key,copy.deepcopy(getattr(entity, key))) for key in entity.get_fields()])
+    
+    #print data
+  
+    #rule.write(entity, data)
+    
     rule.read(entity)
      
     return context
