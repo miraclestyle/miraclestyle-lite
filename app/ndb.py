@@ -214,7 +214,7 @@ class _BaseModel(object):
         if not prop._code_name:
           prop._code_name = prop_key
         if not prop._name:
-           prop._name = prop_key
+          prop._name = prop_key
       return cls._virtual_fields
     else:
       return False
