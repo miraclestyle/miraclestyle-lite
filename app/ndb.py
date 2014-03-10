@@ -427,13 +427,11 @@ class BaseProperty(_BaseProperty, Property):
 
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
-  def __init__(self, *args, **kwargs): # this allows you to set ndb.SuperLocalStructuredProperty('0') which is like setting SuperLocalStructuredProperty(User) - this is made because of class referencing problem in the same file
-      args = list(args)
-      
-      if isinstance(args[0], basestring):
-         args[0] = Model._kind_map.get(args[0])
-  
-      super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
+  def __init__(self, *args, **kwargs):
+    args = list(args)
+    if isinstance(args[0], basestring):
+      args[0] = Model._kind_map.get(args[0])
+    super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
   
   def __todict__(self):
     """
@@ -453,14 +451,11 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
-  def __init__(self, *args, **kwargs): # this allows you to set ndb.SuperLocalStructuredProperty('0') which is like setting SuperLocalStructuredProperty(User) - this is made because of class referencing problem in the same file
-      args = list(args)
-      
-      if isinstance(args[0], basestring):
-         args[0] = Model._kind_map.get(args[0])
-  
-      super(SuperStructuredProperty, self).__init__(*args, **kwargs)
-  
+  def __init__(self, *args, **kwargs):
+    args = list(args)
+    if isinstance(args[0], basestring):
+      args[0] = Model._kind_map.get(args[0])
+    super(SuperStructuredProperty, self).__init__(*args, **kwargs)
   
   def __todict__(self):
     """

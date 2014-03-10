@@ -107,7 +107,6 @@ class Engine:
       else:
         service = importlib.import_module('app.srv.%s' % context.action.service)
         service.Engine.run(context)
-        # This goes trough __todict__() because we can't make it work (see @ app.srv.auth.User.apps #L-808)
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
