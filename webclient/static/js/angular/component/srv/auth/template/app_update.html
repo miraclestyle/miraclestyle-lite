@@ -60,7 +60,7 @@
 	</div>	 
 	 
 	
-	<div ng-show="rule.field.history.writable" class="form-control">
+	<div ng-show="rule.action.read_records.executable" class="form-control">
 		<div ng-include="logic_template('srv/log', 'logs.html')"></div>
 	</div>
 	
@@ -70,15 +70,15 @@
 
 <div class="modal-footer">
 	
-	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.action.executable.sudo">
+	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.action.sudo.executable">
 		Administer
 	</button>
 	
-	<button busy ng-click="suspend()" type="button" class="button" ng-show="rule.action.executable.suspend">
+	<button busy ng-click="suspend()" type="button" class="button" ng-show="rule.action.suspend.executable">
 		Suspend
 	</button>
 	
-	<button busy ng-click="activate()" type="button" class="button" ng-show="rule.action.executable.activate">
+	<button busy ng-click="activate()" type="button" class="button" ng-show="rule.action.activate.executable">
 		Activate
 	</button>
  

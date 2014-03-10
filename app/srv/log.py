@@ -129,7 +129,7 @@ class Record(ndb.BaseExpando):
         _name = self._retrieve_cloned_name(name)
         if _name:
            name = _name
-           
+     print name      
      return super(Record, self).__getattr__(name)
   
   

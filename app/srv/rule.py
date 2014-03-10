@@ -208,11 +208,7 @@ def writable(context, name):
 def visible(context, name):
   # checks if the field is visible for provided rule context
   return _check_field(context, name, 'visible')
-
-def required(context, name):
-  # checks if the field is required for provided rule context
-  return _check_field(context, name, 'required')
-
+ 
 def executable(context):
   # checks if the action is executable for the provided rule context
   if context.rule.entity:
@@ -234,14 +230,15 @@ def write(entity, values):
 def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None, is_writable=None):
   
   if is_structured_property(field):
-    
+  
      util.logger('is structured - recursion %s.%s' % (entity.__class__.__name__, field_key))
      
-     if isinstance(entity, list):
+     if field._repeated and isinstance(entity, list):
         util.logger('got list as entity, recurse it' % entity)
         for ent in entity:
            for new_field_key, new_field in field._modelclass.get_fields().items():
-               _write_helper(field_permissions[field_key], ent, new_field_key, new_field, getattr(ent, field_key), field_key, field, field_permissions[field_key]['writable'])
+               new_field_value = getattr(ent, field_key)
+               _write_helper(field_permissions[field_key], ent, new_field_key, new_field, new_field_value, field_key, field, field_permissions[field_key]['writable'])
         return
       
      structured_value = getattr(entity, field_key)

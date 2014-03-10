@@ -29,7 +29,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	{
 		var that = this;
 		
-		this.action = {'executable' : {}};
+		this.action = {};
 		this.input = {};
  
 		
@@ -53,7 +53,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		this.init = function ()
 		{
 	        angular.forEach(this._rule_actions, function (value, key) {
-		    	that.action['executable'][key] = that._executable(key);
+	        	
+	        	if (!that.action[key])
+	        	{
+	        		that.action[key] = {};
+	        	}
+	        	
+		    	that.action[key]['executable'] = that._executable(key);
 		    	
 		    	angular.forEach(value.arguments, function (argument_value, argument_key) {
 		    		if (!that.input[key]) that.input[key] = {};
@@ -352,7 +358,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			{
 				$scope.commander.loading = true;
 				
-				Endpoint.post('history', $scope.history.model, $scope.history.args).success(function (data) {
+				Endpoint.post('read_records', $scope.history.model, $scope.history.args).success(function (data) {
 					
 					$scope.commander.first = true;
 				 

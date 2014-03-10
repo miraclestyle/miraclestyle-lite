@@ -18,7 +18,7 @@
 
 					<td>
 			 
-							<button ng-show="app.user.state == 'accepted' && app.user.rule.action.executable.remove" busy ng-click="removeFromApp(app)" class="button" type="button">
+							<button ng-show="app.user.state == 'accepted' && app.user.rule.action.remove.executable" busy ng-click="removeFromApp(app)" class="button" type="button">
 									Remove
 							</button>
 							
@@ -32,7 +32,7 @@
 							</span>
 					 
 						
-						<span ng-show="!app.user.rule.action.executable.remove">Owner</span>
+						<span ng-show="!app.user.rule.action.remove.executable">Owner</span>
 						
 					</td>
 					
@@ -40,7 +40,7 @@
 						<button ng-show="app.user.state == 'accepted'" class="button" type="button">
 							Launch
 						</button>
-						<button ng-show="app.domain.rule.action.executable.update || app.domain.rule.action.executable.sudo || app.domain.rule.executable.log_message || app.domain.rule.executable.activate || app.domain.rule.executable.suspend"
+						<button ng-show="app.domain.rule.action.update.executable || app.domain.rule.action.sudo.executable || app.domain.rule.action.log_message.executable || app.domain.rule.action.activate.executable || app.domain.rule.action.suspend.executable"
 						        busy ng-click="updateApp(app.domain)" class="button">
 							Edit
 						</button>
