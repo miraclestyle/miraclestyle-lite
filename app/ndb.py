@@ -438,6 +438,9 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     response = super(SuperLocalStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
     return response
+  
+  def get_model_fields(self):
+    return self._modelclass.get_fields()
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
@@ -453,6 +456,9 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     response = super(SuperStructuredProperty, self).__todict__()
     response['model'] = self._modelclass.get_fields()
     return response
+  
+  def get_model_fields(self):
+    return self._modelclass.get_fields()
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
