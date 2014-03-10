@@ -243,7 +243,7 @@ class User(ndb.BaseExpando):
         raise rule.ActionDenied(context)
       values = {'state' : state}
       if state == 'suspended':
-        values['sessions'] = [] # Delete sessions.
+        entity.sessions = [] # Delete sessions. @todo should we put this into rule.writable see def logout as well
       rule.write(entity, values)
       entity.put()
       context.log.entities.append((entity, {'message': message, 'note': note}))
