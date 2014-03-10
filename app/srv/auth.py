@@ -7,6 +7,7 @@ Created on Jan 6, 2014
 
 import hashlib
 import os
+import copy
  
 from google.appengine.api import blobstore
 from google.appengine.datastore.datastore_query import Cursor
@@ -59,6 +60,8 @@ class User(ndb.BaseExpando):
   _virtual_fields = {
                      
     # by default these are helper properties that operate mainly on `self` without performing any queries.
+    
+    'ip_address' : ndb.SuperStringProperty(),
   
     '_csrf' : ndb.ComputedProperty(lambda self: self.csrf()), # like i said, we will need the csrf but it has to be incorporated into security mechanism - http://en.wikipedia.org/wiki/Cross-site_request_forgery
     '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest()),
@@ -66,7 +69,7 @@ class User(ndb.BaseExpando):
     '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin()),
     '_is_taskqueue' : ndb.ComputedProperty(lambda self: self.is_taskqueue()),
     
-    '_records' : ndb.SuperLocalStructuredProperty(log.Record, repeated=True),
+    '_records' : log.SuperLocalStructuredRecordProperty('0', repeated=True),
     '_records_next_cursor' : ndb.SuperStringProperty(),
     '_records_more' : ndb.SuperBooleanProperty(),       
   
@@ -238,12 +241,15 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
+      values = {'state' : state}
       if state == 'suspended':
-        entity.sessions = []  # Delete sessions.
-      entity.state = state
+        values['sessions'] = [] # Delete sessions.
+      rule.write(entity, values)
       entity.put()
       context.log.entities.append((entity, {'message': message, 'note': note}))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -263,21 +269,26 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      if rule.writable(context, 'identities'):  # Checks if identities prop
-        for identity in entity.identities:
-          if primary_email:
-            identity.primary = False
-            if identity.email == primary_email:
-              identity.primary = True
-          identity.associated = True
-          if disassociate:
-            if identity.identity in disassociate:
-              identity.associated = False
- 
+      
+      identities = copy.deepcopy(entity.identities)
+      
+      for identity in identities:
+        if primary_email:
+          identity.primary = False
+          if identity.email == primary_email:
+            identity.primary = True
+        identity.associated = True
+        if disassociate:
+          if identity.identity in disassociate:
+            identity.associated = False
+      
+      rule.write(entity, {'identities' : identities})
       entity.put()
       
       context.log.entities.append((entity, ))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -299,7 +310,9 @@ class User(ndb.BaseExpando):
     entity._records_more = more
  
     rule.read(entity)
-     
+    
+    context.output['entity'] = entity
+    
     return context
   
   @classmethod
@@ -313,10 +326,12 @@ class User(ndb.BaseExpando):
  
     rule.read(entity)
     
+    context.output['entity'] = entity
+    
     return context
   
   @classmethod
-  def sudo_search(cls, context):
+  def sudo_search(cls, context): # this is not decided yet
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -326,13 +341,15 @@ class User(ndb.BaseExpando):
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
+    
+    context.output['entity'] = context.auth.user
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
   
   @classmethod
-  def apps(cls, context):
+  def apps(cls, context): # this is not decided yet
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -352,7 +369,7 @@ class User(ndb.BaseExpando):
           rule.Engine.run(context)
           entities.append({'domain': domain, 'user': domain_user})
     
-    context.rule.entity = context.auth.user  # Show permissions for initial entity.
+    context.output['entity'] = context.auth.user
     context.output['entities'] = entities
     return context
   
@@ -367,15 +384,14 @@ class User(ndb.BaseExpando):
     
     @ndb.transactional(xg=True)
     def transaction():
-      if not entity._csrf == context.input.get('csrf'): # we will see what will be done about this, because CSRF protection must be done globally i think.
+      if not entity._csrf == context.input.get('csrf'): # we will see what will be done about this, because CSRF protection must be done globally.
         raise rule.ActionDenied(context)
       if entity.sessions:
-        entity.sessions = []
+        entity.sessions = [] # @todo not sure if rule.write is needed here ? this is logout
       entity.put()
-      context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']})) # @todo this property does not exist in User, so it wont be shown ..... solving this would be implementing a "ip_address" field on User model
-      log.Engine.run(context)
+      context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
       entity.set_current_user(None, None)
-      context.output['anonymous_user'] = entity.current_user() #@todo
+      context.output['entity'] = entity.current_user()
     
     transaction()
     return context
@@ -409,7 +425,7 @@ class User(ndb.BaseExpando):
       if not client.access_token:
         # raise custom exception!!!
         return context.error('oauth2_error', 'failed_access_token')
-      context.output['access_token'] = client.access_token
+ 
       userinfo = oauth2_cfg['userinfo']
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
@@ -451,9 +467,8 @@ class User(ndb.BaseExpando):
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
           log.Engine.run(context)
-          context.output.update({'user': entity,
+          context.output.update({'entity': entity,
                                  'authorization_code': entity.generate_authorization_code(session),
-                                 'session': session,
                                  })
         
         transaction(user)
@@ -482,7 +497,7 @@ class Domain(ndb.BaseExpando):
                      
     # by default these are helper properties that operate mainly on `self` without performing any queries.
     '_primary_contact_email' : ndb.SuperStringProperty(),
-    '_records' : ndb.SuperLocalStructuredProperty(log.Record, repeated=True),
+    '_records' : log.SuperLocalStructuredRecordProperty('6', repeated=True),
     '_records_next_cursor' : ndb.SuperStringProperty(),
     '_records_more' : ndb.SuperBooleanProperty(),       
   
@@ -503,7 +518,7 @@ class Domain(ndb.BaseExpando):
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       
-      rule.FieldPermission('0', ['name', 'primary_contact'], True, True, 'True'),  # User can change identities
+      rule.FieldPermission('0', ['name', 'primary_contact'], True, True, 'True'),
       
       # expose these fields by default
       rule.FieldPermission('0', ['_primary_contact_email', 'created', 'updated', 'state'], False, True, 'True'),
@@ -590,8 +605,9 @@ class Domain(ndb.BaseExpando):
     return self
   
   @classmethod
-  def sudo_search(cls, context):
-    context.rule.entity = cls()
+  def sudo_search(cls, context): # not decided yet
+    entity = cls()
+    context.rule.entity = entity
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -613,6 +629,8 @@ class Domain(ndb.BaseExpando):
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     entities = helper(entities).get_result()
+    
+    context.output['entity'] = entity
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
@@ -651,6 +669,9 @@ class Domain(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
+    
+    # @todo not sure if we should put here rule.read?
+    context.output['entity'] = entity
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
     return context
   
@@ -668,6 +689,8 @@ class Domain(ndb.BaseExpando):
     entity._primary_contact_email = primary_contact._primary_email
     
     rule.read(entity)
+    
+    context.output['entity'] = entity
     
     return context
   
@@ -688,6 +711,8 @@ class Domain(ndb.BaseExpando):
     entity._records_more = more
  
     rule.read(entity)
+    
+    context.output['entity'] = entity
      
     return context
   
@@ -708,6 +733,8 @@ class Domain(ndb.BaseExpando):
       entity.put()
       context.log.entities.append((entity,))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -723,11 +750,13 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      entity.state = 'suspended'
+      rule.write(entity, {'state' : 'suspended'})
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -743,11 +772,14 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      entity.state = 'active'
+      
+      rule.write(entity, {'state' : 'active'})
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -763,11 +795,14 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      entity.state = context.input.get('state')
+      
+      rule.write(entity, {'state' : context.input.get('state')})
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -786,6 +821,8 @@ class Domain(ndb.BaseExpando):
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
       log.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context

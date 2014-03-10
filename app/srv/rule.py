@@ -236,14 +236,14 @@ def _write_helper(field_permissions, entity, field_key, field, field_value, pare
      if field._repeated and isinstance(entity, list):
         util.logger('got list as entity, recurse it' % entity)
         for ent in entity:
-           for new_field_key, new_field in field._modelclass.get_fields().items():
+           for new_field_key, new_field in field.get_model_fields().items():
                new_field_value = getattr(ent, field_key)
                _write_helper(field_permissions[field_key], ent, new_field_key, new_field, new_field_value, field_key, field, field_permissions[field_key]['writable'])
         return
       
      structured_value = getattr(entity, field_key)
  
-     for new_field_key, new_field in field._modelclass.get_fields().items():
+     for new_field_key, new_field in field.get_model_fields().items():
          _write_helper(field_permissions[field_key], structured_value, new_field_key, new_field, field_value, field_key, field, field_permissions[field_key]['writable'])
    
   else:
@@ -412,13 +412,11 @@ class Engine:
            if field_key not in field_permissions:
               field_permissions[field_key] = cls._prepare_fields_helper()
               
-           new_fields = field._modelclass.get_fields()
-           if field._modelclass.get_kind() == '5' and entity:
-               parent_fields = entity.get_fields()
-               parent_fields.pop(field._code_name)
-               new_fields.update(parent_fields)
-               
-                 
+           new_fields = field.get_model_fields()
+ 
+           if field._code_name in new_fields:
+              new_fields.pop(field._code_name)
+                
            cls.prepare_fields(field_permissions[field_key], new_fields, entity)
         else:
            field_permissions[field_key] = cls._prepare_fields_helper()

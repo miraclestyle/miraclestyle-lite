@@ -30,6 +30,54 @@ be available in `self` - not `cls`.
 In the begining i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
 allowed mutations to class(cls) scope.
 """
+  
+class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
+  
+  def __init__(self, *args, **kwargs):
+    
+      args = list(args)
+       
+      self._modelclass2 = args[0]
+      args[0] = Record
+       
+      super(SuperLocalStructuredRecordProperty, self).__init__(*args, **kwargs)
+  
+  def get_model_fields(self):
+    
+    parent = super(SuperLocalStructuredRecordProperty, self).get_model_fields()
+    
+    if isinstance(self._modelclass2, basestring):
+       self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+ 
+    parent.update(self._modelclass2.get_fields())
+   
+    return parent
+
+
+class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
+  
+  """ Usage: '_records' : ndb.SuperStructuredRecordProperty(Domain or '6') """
+  
+  def __init__(self, *args, **kwargs):
+    
+      args = list(args)
+       
+      self._modelclass2 = args[0]
+      args[0] = Record
+       
+      super(SuperStructuredRecordProperty, self).__init__(*args, **kwargs)
+  
+  def get_model_fields(self):
+    
+    parent = super(SuperStructuredRecordProperty, self).get_model_fields()
+    
+    if isinstance(self._modelclass2, basestring):
+       self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+ 
+    parent.update(self._modelclass2.get_fields())
+   
+    return parent
+
 
 class Record(ndb.BaseExpando):
   
@@ -129,7 +177,7 @@ class Record(ndb.BaseExpando):
         _name = self._retrieve_cloned_name(name)
         if _name:
            name = _name
-     print name      
+      
      return super(Record, self).__getattr__(name)
   
   

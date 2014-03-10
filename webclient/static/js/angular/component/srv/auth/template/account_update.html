@@ -57,7 +57,7 @@
 		 
 	</div>
 	 
-	<div ng-show="rule.action.executable.read_records" class="form-control">
+	<div ng-show="rule.action.read_records.executable" class="form-control">
 		<div ng-include="logic_template('srv/log', 'logs.html')"></div>
 	</div>	 
 	 
@@ -68,11 +68,11 @@
 
 <div class="modal-footer">
 	
-	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.action.executable.sudo">
+	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.action.sudo.executable">
 		Administer
 	</button>
 	 
-	<button ng-show="rule.action.executable.update" busy class="button">
+	<button ng-show="rule.action.update.executable" busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

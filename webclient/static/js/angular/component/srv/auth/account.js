@@ -6,9 +6,9 @@ login_methods = {
 MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', 
 	function ($scope, $rootScope, $location, Account) {
  
- 	if (initdata['user'])
+ 	if (initdata['entity'])
 	{
-		 $rootScope.current_user = initdata['user'];
+		 $rootScope.current_user = initdata['entity'];
 	}
 		
 	if ($rootScope.current_user._is_guest)
@@ -156,7 +156,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		   	   'csrf' : $rootScope.current_user._csrf,
 		     })
 		     .success(function (data) {
-				 $rootScope.current_user = data.anonymous_user;
+				 $rootScope.current_user = data.entity;
 				 
 				 if (angular.isFunction(on_logout))
 				 on_logout();
@@ -211,6 +211,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				      	  update(user, data['entity']);
 				      	
 				      	  $scope.rule = RuleEngine.factory(data);
+				 
 				      	  $scope.user = user;
 				      	  $scope.history = {
 				      	  	  'model' : 'srv.auth.User',
