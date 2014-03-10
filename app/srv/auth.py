@@ -518,14 +518,11 @@ class Domain(ndb.BaseExpando):
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       
-      rule.FieldPermission('0', ['name', 'primary_contact'], True, True, 'True'),
+      rule.FieldPermission('6', 'name', False, False, 'True'),
       
-      # expose these fields by default
-      rule.FieldPermission('0', ['_primary_contact_email', 'created', 'updated', 'state'], False, True, 'True'),
-      
-      rule.FieldPermission('0', '_records', True, True, 'True'),
-      rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin'),
+      # all fields that are returned by get_fields() have writable and visible set to true upon domain creation
+      rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user.root_admin'),
+      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user.root_admin'),
                                  
   ])
   
@@ -658,6 +655,8 @@ class Domain(ndb.BaseExpando):
                                       'key': config.key.urlsafe(),
                                       })
       callback.Engine.run(context)
+      
+      context.output['entity'] = entity
     
     transaction()
     return context

@@ -54,7 +54,7 @@
 				    ng-required="rule.input[action].primary_contact.required"
 				    ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
 				    
-				    <option value="{{app.primary_contact}}">{{app.primary_contact_email}}</option>
+				    <option value="{{app.primary_contact}}">{{app._primary_contact_email}}</option>
 			</select>
 		</div>
 	</div>	 
@@ -82,7 +82,7 @@
 		Activate
 	</button>
  
-	<button ng-show="rule.action.executable.update" busy class="button">
+	<button ng-show="rule.action.update.executable" busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

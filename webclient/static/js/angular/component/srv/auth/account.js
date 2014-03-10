@@ -211,6 +211,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				      	  update(user, data['entity']);
 				      	
 				      	  $scope.rule = RuleEngine.factory(data);
+				      	  
 				 
 				      	  $scope.user = user;
 				      	  $scope.history = {

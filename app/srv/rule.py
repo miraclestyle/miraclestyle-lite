@@ -256,7 +256,7 @@ def _write_helper(field_permissions, entity, field_key, field, field_value, pare
                    already = entity[i]
                    far_key = getattr(field_value_item, field_key)
                    setattr(already, field_key, far_key)
-                   util.logger('repeated set - ', (already.__class__.__name__, field_key, far_key))
+                   util.logger('repeated set - %s.%s=%s' % (already.__class__.__name__, field_key, far_key))
                  except IndexError:
                    entity.append(field_value_item)
                    util.logger('appending new %s to %s' % (field_value_item, entity.__class__.__name__))
@@ -480,13 +480,13 @@ class Engine:
       
       if isinstance(value, dict):
          for _value_key,_value in value.items():
-             cls._local_data_helper(global_data_calc[element], local_data_calc[element], prop, _value_key, _value)
+             cls._compile_local_data_helper(global_data_calc[element], local_data_calc[element], prop, _value_key, _value)
       else:   
         if element in global_data_calc:
            if prop in global_data_calc[element]:
               gc = global_data_calc[element][prop]
               if gc is not None and gc != value:
-                    cls._local_data_calc[element][prop] = gc
+                    local_data_calc[element][prop] = gc
             
         if local_data_calc[element][prop] is None:
            local_data_calc[element][prop] = False
@@ -593,7 +593,7 @@ class Engine:
       global_field_permissions = context.rule.entity._field_permissions.copy()
       
       # empty
-      cls.prepare(context)
+      cls.prepare(context) 
      
       context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
       context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)

@@ -48,7 +48,7 @@
 		<div ng-repeat="ident in user.identities" class="form-control">
 			<label class="form-label">{{identiy_info(ident.identity)}}</label>
 			<div class="form-input">
-				 <button ng-disabled="!rule.field.identities.writable" class="button" ng-click="disAssociate(ident.identity)">
+				 <button type="button" ng-disabled="!rule.field.identities.writable" class="button" ng-click="disAssociate(ident.identity)">
 		 		    	<span ng-show="!ident.associated">Associate</span>
 		 		    	<span ng-show="ident.associated">Disassociate</span>
 		 		 </button>
