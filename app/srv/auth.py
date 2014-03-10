@@ -517,9 +517,7 @@ class Domain(ndb.BaseExpando):
       rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
-      
-      rule.FieldPermission('6', 'name', False, False, 'True'),
-      
+       
       # all fields that are returned by get_fields() have writable and visible set to true upon domain creation
       rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user.root_admin'),
       rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user.root_admin'),
