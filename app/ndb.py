@@ -403,15 +403,13 @@ class _BaseProperty(object):
     choices = self._choices
     if choices:
       choices = list(self._choices)
-    return {
-            'verbose_name': getattr(self, '_verbose_name'),
+    return {'verbose_name': getattr(self, '_verbose_name'),
             'required': self._required,
             'max_size': self._max_size,
             'choices':  choices,
             'default': self._default,
             'repeated': self._repeated,
-            'type': self.__class__.__name__,
-            }
+            'type': self.__class__.__name__}
   
   def __init__(self, *args, **kwds):
     self._max_size = kwds.pop('max_size', self._max_size)
@@ -647,13 +645,11 @@ class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
       cloudstorage_file.close()
       # _modelclass (SuperLocalStructuredImageProperty(ModelClass)) must have
       # 'width', 'height', 'size', and 'image' properties (see @app.srv.blob.Image as an example).
-      models.append(prop._modelclass(**{
-                                        'width': load_image.width,
+      models.append(prop._modelclass(**{'width': load_image.width,
                                         'height': load_image.height,
                                         'size': file_info.size,
                                         'content_type': file_info.content_type,
-                                        'image': blob_info.key(),
-                                        }))
+                                        'image': blob_info.key()}))
       del image_data, load_image  # Free memory?
     
     if not prop._repeated:
