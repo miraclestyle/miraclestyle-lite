@@ -55,7 +55,7 @@
   		<a ng-click="toggleMainMenu()" class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
   	</div>
   	<div style="display:none;" id="main-menu">
-  		<div class="menu-inner">
+  		<div ng-show="!domain_mode" class="menu-inner">
 	  		<h1 class="fieldset">Account</h1>
 	  		<ul ng-show="!current_user._is_guest" class="menu">
 	  		    <li><button class="button block" ng-click="manageAccount()">Manage</button></li>
@@ -80,10 +80,21 @@
 	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_apps">Apps</a></li>
 	  			</ul>
 	  		</div>
-	  		
-	  		
-	  		
+	  		 
   		</div>
+  		
+  		
+  		<div ng-show="domain_menu" ng-controller="AppMenu" class="menu-inner">
+  			<div ng-repeat="menu_item in domain_menu.menu">
+	  			<h1 ng-bind="menu_item.name" class="fieldset"></h1>
+		  		<ul class="menu">
+		  		    <li ng-repeat="menu_filter in menu_item.filters">
+		  		    	<button ui-sref="app_view_search({widget_id : menu_item.key, app_id : domain_menu.domain.key, filter : $index})" ui-sref-active="active" class="button block" ng-bind="menu_filter.name"></button>
+		  		    </li>
+		  		</ul>
+	  		</div>
+  		</div>
+  		
   	</div>
 	{% block content %}
 	<div class="content" ui-view></div>

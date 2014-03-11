@@ -17,12 +17,30 @@ MainApp.config(['$stateProvider',
         resolve : {
         	apps : ['App', function (App) {
         		
-				return useInit('entities', function () {
-        			return App.search().then(function (output) {
+				return App.search().then(function (output) {
 						return output.data;
 					});
-        		});
-        	 
+        	}]
+        }
+      })
+      .state('app_view', {
+      	url: '/app/:app_id',
+        templateUrl: logic_template('srv/auth', 'app_view.html'),
+        controller: 'AppView',
+      })
+      .state('app_view_search', {
+      	url: '/app/:app_id/search/:widget_id/:filter',
+        templateUrl: logic_template('srv/auth', 'app_view_search.html'),
+        controller: 'AppSearch',
+        resolve : {
+        	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
+ 
+			       return Endpoint.post('search', 'srv.nav.Widget', {
+								'filter' : $stateParams.filter,
+								'key' : $stateParams.widget_id,
+						   }).then(function (output) {
+							  return output.data;
+						   });
         	}]
         }
       })
@@ -35,11 +53,9 @@ MainApp.config(['$stateProvider',
         resolve : {
         	apps : ['App', function (App) {
         		
-        		return useInit('entities', function () {
-        			return App.sudo_search().then(function (output) {
+        		return App.sudo_search().then(function (output) {
 						return output.data;
 					});
-        		});
         		 
         	}]
         }
@@ -51,11 +67,9 @@ MainApp.config(['$stateProvider',
         resolve : {
         	users : ['Account', function (Account) {
         		
-        		return useInit('entities', function () {
-        			return Account.sudo_search().then(function (output) {
+        		return Account.sudo_search().then(function (output) {
 						return output.data;
 					});
-        		});
         	}]
         }
       });

@@ -9,3 +9,9 @@ indexes:
   properties:
   - name: "l"
     direction: desc
+     
+- kind: "62"
+  properties:
+  - name: "3"
+  - name: "4"
+  - name: "2"

@@ -13,13 +13,13 @@ class Filter(ndb.BaseExpando):
   # Local structured property
   
   name = ndb.SuperStringProperty('1', required=True) # name that is visible on the link
-  kind = ndb.SuperStringProperty('3', required=True) # which model (entity kind) this filter affects
-  query = ndb.SuperJsonProperty('4', required=True) # query parameters that are passed to search function of the model
-
+  kind = ndb.SuperStringProperty('2', required=True) # which model (entity kind) this filter affects
+  query = ndb.SuperJsonProperty('3', required=True, default={}) # query parameters that are passed to search function of the model
+ 
 
 class Widget(ndb.BaseExpando):
   
-  _kind = 61
+  _kind = 62
   
   # root (namespace Domain)
   
@@ -32,7 +32,7 @@ class Widget(ndb.BaseExpando):
   
   _actions = {'build_menu' : event.Action(id='61-0',
                                           arguments={
-                                            'domain' : ndb.SuperKeyProperty(kind='6')
+                                            'domain' : ndb.SuperKeyProperty(kind='6', required=True)
                                         })}
   
   @classmethod
@@ -48,9 +48,10 @@ class Widget(ndb.BaseExpando):
     if domain_user:
  
       widgets = cls.query(cls.active == True,
-                         cls.role.IN(domain_user.roles),
-                         namespace=domain.key_namespace).order(cls.sequence).fetch()
+                          cls.role.IN(domain_user.roles),
+                          namespace=domain.key_namespace).order(cls.sequence).fetch()
                          
       context.output['menu'] = widgets
+      context.output['domain'] = domain
     
     return context

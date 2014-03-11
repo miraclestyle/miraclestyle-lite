@@ -286,7 +286,10 @@ class Base(webapp2.RequestHandler):
             # support the core's locals, and release them upon request complete
             _local.__release_local__()
          
- 
+class Blank(Base):
+  
+  def respond(self, *args, **kwargs):
+      pass
      
 class Segments(Base):
       """
@@ -329,4 +332,10 @@ class Angular(Base):
           
           
 class AngularSegments(Segments, Angular):
+      pass
+
+
+class AngularBlank(Angular):
+  
+  def respond(self):
       pass

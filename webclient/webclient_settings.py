@@ -4,7 +4,7 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-ACTIVE_CONTROLLERS = ('test', 'auth', 'task', 'ui', 'admin')
+ACTIVE_CONTROLLERS = ('test', 'auth', 'task', 'ui', 'admin', 'domain')
 
 TEMPLATE_CACHE = 0
 

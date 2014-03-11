@@ -97,10 +97,14 @@ def factory(module_model_path):
   del custom_kinds[-1]
   try:
     module = importlib.import_module(".".join(custom_kinds))
+    model = getattr(module, far)
+    if not isinstance(model, Model):
+       raise Exception('Not instance of %s' % Model)
+    else:
+      return model
   except Exception as e:
     util.logger('Failed to import %s. Error: %s.' % (module_model_path, e), 'exception')
     return None
-  return getattr(module, far)
 
 # Monkeypatch ndb.Key
 def _get_entity(self):

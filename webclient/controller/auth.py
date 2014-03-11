@@ -7,21 +7,7 @@ Created on Oct 14, 2013
 from webclient import handler
 
 from app.srv import io
-
-class Apps(handler.Angular):
-  
-  def respond(self):
  
-      data = self.get_input()
-      data.update({
-                   'action_model' : 'srv.auth.User',
-                   'action_key' : 'apps',   
-                  })
-
-      output = io.Engine.run(data)  
- 
-      return output
-    
 
 class Login(handler.Angular):
   
@@ -65,5 +51,5 @@ class Logout(handler.Angular):
     
 handler.register((r'/login', Login, 'login'), 
          (r'/login/<provider>', Login, 'login_provider'),
-         (r'/apps', Apps, 'apps'), 
+         (r'/apps', handler.AngularBlank, 'apps'), 
          (r'/logout', Logout, 'logout'))

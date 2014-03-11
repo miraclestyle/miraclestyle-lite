@@ -112,10 +112,8 @@ class DomainSetup(Setup):
      self.context.log.entities.append((entity,))
      
      log.Engine.run(self.context)
-     
-     namespace = entity.key.urlsafe()
  
-     self.config.next_operation_input = {'domain_key' : namespace}
+     self.config.next_operation_input = {'domain_key' : entity.key}
      self.config.next_operation = 'create_domain_role'
      self.config.put()
       
@@ -123,7 +121,8 @@ class DomainSetup(Setup):
   def execute_create_domain_role(self):
      
      input = self.config.next_operation_input
-     namespace = input.get('domain_key')
+     domain_key = input.get('domain_key')
+     namespace = domain_key.urlsafe()
      permissions = []
      
      # from all objects specified here, the ActionPermission will be built. So the role we are creating
@@ -152,11 +151,82 @@ class DomainSetup(Setup):
      
      # context.log.entities.append((role, ))
  
-     self.config.next_operation_input = {'domain_key' : namespace, 
+     self.config.next_operation_input = {'domain_key' : domain_key, 
                                          'role_key' : role.key,
                                         }
-     self.config.next_operation = 'create_domain_user'
+     self.config.next_operation = 'create_widget_step_1'
      self.config.put()
+     
+  def execute_create_widget_step_1(self):
+    
+      input = self.config.next_operation_input
+      domain_key = input.get('domain_key')
+      namespace = domain_key.urlsafe()
+      role_key = input.get('role_key')
+ 
+      to_put = [nav.Widget(id='admin_marketing', 
+                           namespace=namespace,
+                           name='Marketing',
+                           role=role_key,
+                           filters=[nav.Filter(name='Catalog', kind='35')]),
+                 nav.Widget(id='admin_business',
+                            namespace=namespace, 
+                            name='Business', 
+                            role=role_key,
+                            filters=[nav.Filter(name='Companies', kind='44')]),
+                 nav.Widget(id='admin_security', 
+                            namespace=namespace,
+                            name='Security',
+                            role=role_key,
+                            filters=[nav.Filter(name='Roles', kind='60'),
+                                     nav.Filter(name='Filter Groups', kind='62')]),
+                 nav.Widget(id='admin_app_users',
+                            namespace=namespace,
+                            name='App Users',
+                            role=role_key,
+                            filters=[nav.Filter(name='Users', kind='8')]),
+ 
+                    ]
+      
+      for i,to in enumerate(to_put):
+          to.sequence = i
+      
+      ndb.put_multi(to_put)
+       
+      self.config.next_operation_input = {'domain_key' : domain_key, 
+                                          'role_key' : role_key,
+                                          'sequence' : i,
+                                        }
+      self.config.next_operation = 'create_widget_step_2'
+      self.config.put()
+      
+      
+  def execute_create_widget_step_2(self):
+    
+      input = self.config.next_operation_input
+      domain_key = input.get('domain_key')
+      namespace = domain_key.urlsafe()
+      role_key = input.get('role_key')
+      sequence = input.get('sequence')
+ 
+      to_put = [nav.Widget(id='admin_notifications', 
+                            namespace=namespace,
+                            name='Notifications',
+                            role=role_key,
+                            filters=[nav.Filter(name='Templates', kind='61')]),
+                ]
+ 
+      for i,to in enumerate(to_put):
+          to.sequence = (i+1)+sequence
+      
+      ndb.put_multi(to_put)      
+      
+      self.config.next_operation_input = {'domain_key' : domain_key, 
+                                          'role_key' : role_key,
+                                        }
+      self.config.next_operation = 'create_domain_user'
+      self.config.put()
+
      
   def execute_create_domain_user(self):
     
@@ -164,7 +234,8 @@ class DomainSetup(Setup):
      
      input = self.config.next_operation_input
      user = self.config.parent_entity
-     namespace = input.get('domain_key')
+     domain_key = input.get('domain_key')
+     namespace = domain_key.urlsafe()
     
      domain_user = rule.DomainUser(namespace=namespace, id=user.key_id_str,
                                name=user._primary_email, state='accepted',
@@ -175,7 +246,7 @@ class DomainSetup(Setup):
 
      
      config_input = self.config.configuration_input
-     self.config.next_operation_input = {'domain_key' : namespace}
+     self.config.next_operation_input = {'domain_key' : domain_key}
      other_info = ('name',
                    'logo',
                    'state',                                         
@@ -207,7 +278,8 @@ class DomainSetup(Setup):
       
       input = self.config.next_operation_input
       
-      namespace = input.pop('domain_key')
+      domain_key = input.pop('domain_key')
+      namespace = domain_key.urlsafe()
       
       entity = business.Company(namespace=namespace)
       entity.populate(**input)
@@ -219,30 +291,18 @@ class DomainSetup(Setup):
       
       log.Engine.run(self.context)
        
-      self.config.next_operation = 'create_widget'
-      self.config.next_operation_input = {'domain_key' : namespace}
-      self.config.put()
-      
-      
-  def execute_create_widget(self):
-    
-      input = self.config.next_operation_input
-      
-      # nav.Widget(id='...', name='...', filters=[nav.Filter, nav.Filter, nav.Filter])
        
       self.config.next_operation = 'add_user_domain'
-      self.config.next_operation_input = {'domain_key' : input.get('domain_key')}
+      self.config.next_operation_input = {'domain_key' : domain_key}
       self.config.put()
-      
+       
       
   def execute_add_user_domain(self):
         
        input = self.config.next_operation_input
        user = self.config.parent_entity
        
-       namespace = input.get('domain_key')
-       
-       domain_key = ndb.Key(urlsafe=namespace)
+       domain_key = input.get('domain_key')
        domain = domain_key.get()
        
        user.domains.append(domain_key)

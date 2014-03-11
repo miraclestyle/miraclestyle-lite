@@ -226,10 +226,30 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
    };
 	 
 }])
+.controller('AppView', ['$scope', 'Title', '$rootScope',
+	function ($scope, Title, $rootScope) {
+  
+}])
+.controller('AppMenu', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope',
+	function ($scope, Title, Endpoint, $stateParams, $rootScope) {
+		
+	return;
+  
+    Endpoint.post('build_menu', 'srv.nav.Widget', {
+								'domain' : $stateParams.app_id
+			     }).success(function (data) {
+ 						Title.set(['My Apps', data.domain.name]);
+ 						$rootScope.domain_menu = data.menu;
+				 });
+ 
+}])
+.controller('AppSearch', ['$scope', 'search', function () {
+	
+}])
 .controller('AppList', ['$scope', 'App', 'apps', 'Confirm', 'RuleEngine', 'Title',
 	function ($scope, App, apps, Confirm, RuleEngine, Title) {
 		
-	Title.set('Apps');
+	Title.set('My Apps');
  
 	apps = apps.entities;
  

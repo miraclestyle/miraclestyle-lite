@@ -95,7 +95,7 @@ def temp_memory_set(k, v):
     
 def temp_memory_delete(k):
     try:
-      del _local[k]
+      delattr(_local, k)
     except:
       pass   
   

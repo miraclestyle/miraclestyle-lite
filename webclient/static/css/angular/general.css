@@ -94,6 +94,7 @@ a:visited
   z-index: 90;
   width: 100%;
   border-bottom: 1px solid #BBBBBB;
+  overflow:auto;
 }
 
 .menu-inner

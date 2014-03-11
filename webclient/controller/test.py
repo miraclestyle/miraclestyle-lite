@@ -6,7 +6,7 @@ Created on Oct 10, 2013
 '''
 from webclient import handler
  
-from app import ndb
+from app import ndb, memcache
 from app.srv import io
 
 class Reset(handler.Angular):
@@ -26,7 +26,9 @@ class Reset(handler.Angular):
  
       for mod in models:
           ndb.delete_multi(mod.query().fetch(keys_only=True))
+          
       
+      memcache.flush_all()
       return {'models' : [f.__name__ for f in models]}
 
 class Submitter(handler.Angular):
