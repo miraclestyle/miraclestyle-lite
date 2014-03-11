@@ -101,7 +101,6 @@ def factory(module_model_path):
   except Exception as e:
     util.logger('Failed to import %s. Error: %s.' % (module_model_path, e), 'exception')
     return None
-  
   return model
 
 # Monkeypatch ndb.Key
