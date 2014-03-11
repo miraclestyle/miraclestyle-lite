@@ -1,7 +1,7 @@
 <form ng-attr-action="{{upload_url}}" ng-upload="completed(content)" name="manage_app">
 	
 <input type="hidden" name="action_key" value="create" />
-<input type="hidden" name="action_model" value="srv.auth.Domain" />
+<input type="hidden" name="action_model" value="6" />
 	
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
@@ -60,7 +60,7 @@
 	<button type="button" class="button" ng-click="nextStep(2)" ng-show="step == 1" ng-disabled="!domain_form.$valid">
 		Next
 	</button>
-	<button ng-disabled="!manage_app.$valid || $isUploading" ng-show="step == 2" busy class="button">
+	<button  ng-disabled="!manage_app.$valid || $isUploading" ng-show="step == 2" busy class="button">
 		Submit
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

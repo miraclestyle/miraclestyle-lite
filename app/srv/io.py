@@ -50,8 +50,8 @@ class Engine:
     action_key = input.get('action_key')
     
     if action_model:
-      action_model = ndb.factory('app.%s' % action_model)
-      if hasattr(action_model, '_actions'):
+      action_model = ndb.Model._kind_map.get(action_model)
+      if action_model and hasattr(action_model, '_actions'):
         actions = getattr(action_model, '_actions')
         if action_key in actions:
           return actions[action_key]
@@ -100,7 +100,7 @@ class Engine:
     try:
       cls.process(context, input)
       if 'action_model' in input and 'action_key' in input:
-        action_model = ndb.factory('app.%s' % input.get('action_model'))
+        action_model = ndb.Model._kind_map.get(input.get('action_model'))
         execute = getattr(action_model, input.get('action_key'))
         if execute and callable(execute):
           execute(context)

@@ -19,7 +19,7 @@ class Login(handler.Angular):
            data = self.get_input()
            data['login_method'] = provider
            data.update({
-                        'action_model' : 'srv.auth.User',
+                        'action_model' : '0',
                         'action_key' : 'login',   
                        })
  
@@ -38,7 +38,7 @@ class Logout(handler.Angular):
         data = self.get_input()
         
         data.update({
-                     'action_model' : 'srv.auth.User',
+                     'action_model' : '0',
                      'action_key' : 'logout',   
                    })
  

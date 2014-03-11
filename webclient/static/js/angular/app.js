@@ -76,12 +76,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		this.update = function (info)
 	    {
 	    	
-	    	if (!info['entity'] || !info['entity']['_action_permissions'])
+	    	if (!info || !info['_action_permissions'])
 	    	{
 	    		return;
 	    	}
 			
-			this._rule = info['entity'];
+			this._rule = info;
 			this._rule_action_permissions = this._rule['_action_permissions'];
 			this._rule_field_permissions = this._rule['_field_permissions'];
 			this._rule_actions = this._rule['_actions'];
@@ -92,7 +92,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			 
 		};
 	
-		if ((data && data['entity'] && data['entity']['_action_permissions']))
+		if ((data && data['_action_permissions']))
 		{
 			
 			this.update(data);
@@ -402,6 +402,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     $rootScope.ui_template = ui_template;
     $rootScope.logic_template = logic_template;
     $rootScope.DATE_FULL = "yyyy-MM-dd HH:mm:ss Z";
+    $rootScope.JSON = JSON;
     
     $rootScope.$on('$stateChangeStart',
 		function(event, toState, toParams, fromState, fromParams){

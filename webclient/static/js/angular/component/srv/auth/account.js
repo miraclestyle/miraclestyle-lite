@@ -151,7 +151,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		logout : function (on_logout)
 		{
-			Endpoint.post('logout', 'srv.auth.User',
+			Endpoint.post('logout', '0',
 		     {
 		   	   'csrf' : $rootScope.current_user._csrf,
 		     })
@@ -167,7 +167,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		sudo_search : function (args, config)
         {
-        	return Endpoint.post('sudo_search', 'srv.auth.User', args, config);
+        	return Endpoint.post('sudo_search', '0', args, config);
         },
 		ask_login : function (on_close)
 		{
@@ -210,12 +210,12 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				     
 				      	  update(user, data['entity']);
 				      	
-				      	  $scope.rule = RuleEngine.factory(data);
+				      	  $scope.rule = RuleEngine.factory(data['entity']);
 				      	  
 				 
 				      	  $scope.user = user;
 				      	  $scope.history = {
-				      	  	  'model' : 'srv.auth.User',
+				      	  	  'model' : '0',
 				      	  	  'args' : {
 				      	  	  	 'key' : user['key'],
 				      	  	  }
@@ -244,12 +244,12 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 									  	  $scope.save = function ()
 									  	  {
 									  	  	 
-									  	  	Endpoint.post('sudo', 'srv.auth.User', $scope.log)
+									  	  	Endpoint.post('sudo', '0', $scope.log)
 										     .success(function (data) {
  
 										     	update(user, data['entity']);
 										     	
-										     	$scope.rule.update(data);
+										     	$scope.rule.update(data['entity']);
 										 
 										     	$scope.cancel();
 										     	  
@@ -302,14 +302,14 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  	  	   
 					  	  	  });
 					  	  	
-					  	  	Endpoint.post('update', 'srv.auth.User', {
+					  	  	Endpoint.post('update', '0', {
 					  	  		'primary_email' : user['primary_email'],
 					  	  		'disassociate' : disassociated,
 					  	  		'key' : user['key'],
 					  	      })
 						     .success(function (data) {
 								 update(user, data['entity']);
-								 $scope.rule.update(data);
+								 $scope.rule.update(data['entity']);
 							});
 		
 					  	  };
@@ -322,7 +322,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		  
 			  };
 			
-			Endpoint.post('read', 'srv.auth.User', {'key' : user['key']}).success(handle);
+			Endpoint.post('read', '0', {'key' : user['key']}).success(handle);
   
 	}
 	

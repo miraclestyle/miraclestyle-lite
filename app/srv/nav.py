@@ -4,8 +4,10 @@ Created on Feb 24, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
-from app.srv import rule, event
+from google.appengine.datastore.datastore_query import Cursor
+
+from app import ndb, settings
+from app.srv import rule, event, log
 
 
 class Filter(ndb.BaseExpando):
@@ -33,13 +35,195 @@ class Widget(ndb.BaseExpando):
   _actions = {'build_menu' : event.Action(id='61-0',
                                           arguments={
                                             'domain' : ndb.SuperKeyProperty(kind='6', required=True)
-                                        })}
+                                        }),
+              'search' : event.Action(id='61-1',
+                                      arguments={
+                                         'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                         'next_cursor' : ndb.SuperStringProperty(),
+                                        }),
+              
+              'create' : event.Action(id='61-2', 
+                                      arguments={
+                                        'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                        'name' : ndb.SuperStringProperty(required=True), # name of the fieldset
+                                        'sequence' : ndb.SuperIntegerProperty(required=True), # global sequence for ordering purposes
+                                        'active' : ndb.SuperBooleanProperty(default=True), # whether this item is active or not
+                                        'role' : ndb.SuperKeyProperty(kind='60', required=True), # to which role this group is attached
+                                        'search_form' : ndb.SuperBooleanProperty(default=True), # whether this group is search form or set of filter buttons/links
+                                        'filters' : ndb.SuperJsonProperty(),                  
+                                      }),
+              'read' : event.Action(id='61-3', 
+                                    arguments={
+                                        'key' : ndb.SuperKeyProperty(kind='62', required=True),
+                                      }),
+              'update' : event.Action(id='61-4', 
+                                      arguments={
+                                        'key' : ndb.SuperKeyProperty(kind='62', required=True),
+                                        'name' : ndb.SuperStringProperty(required=True),  
+                                        'sequence' : ndb.SuperIntegerProperty(required=True), 
+                                        'active' : ndb.SuperBooleanProperty(default=True), 
+                                        'role' : ndb.SuperKeyProperty(kind='60', required=True), 
+                                        'search_form' : ndb.SuperBooleanProperty(default=True),
+                                        'filters' : ndb.SuperJsonProperty(),                  
+                                      }),
+              'delete' : event.Action(id='61-5', 
+                                      arguments={
+                                        'key' : ndb.SuperKeyProperty(kind='62', required=True),
+                                      }),
+              'prepare' : event.Action(id='61-6', 
+                                       arguments={
+                                        'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                                       }),
+              
+             }
+  
+  
+  @classmethod
+  def _complete_save_helper(cls, entity, context, create):
+      
+    context.rule.entity = entity
+    rule.Engine.run(context)
+   
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    
+    role_key = context.input.get('role')
+    role = role_key.get()
+    
+    if role.key_namespace != entity.key_namespace: # both the role and the entity namespace must match
+       raise rule.ActionDenied(context)
+     
+    filters = []
+    
+    input_filters = context.input.get('filters')
+    
+    for filter_data in input_filters:
+       filters.append(Filter(**filter_data))
+    
+    values = {
+      'name' : context.input.get('name'),
+      'sequence' : context.input.get('sequence'),
+      'active' : context.input.get('active'),
+      'role' : role_key,
+      'search_form' : context.input.get('search_form'),
+      'filters' : filters,          
+    }
+     
+    if not create:
+       rule.write(entity, values)
+    else:
+       entity.populate(values)
+       
+    entity.put()
+    
+    context.log.entities.append((entity,))
+    
+    log.Engine.run(context)
+    
+    context.output['entity'] = entity
+       
+  @classmethod
+  def create(cls, context):
+ 
+    @ndb.transactional(xg=True)
+    def transaction():
+      
+      domain_key = context.input.get('domain')
+
+      domain = domain_key.get()
+      entity = cls(namespace=domain.key_namespace)
+     
+      cls._complete_save_helper(entity, context, True)  
+           
+    transaction()
+        
+    return context
+  
+  @classmethod
+  def update(cls, context):
+ 
+    @ndb.transactional(xg=True)
+    def transaction():
+    
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+    
+      cls._complete_save_helper(entity, context, False)
+       
+    transaction()
+        
+    return context
+  
+  
+  @classmethod
+  def prepare(cls, context):
+    
+    domain_key = context.input.get('domain')
+    domain = domain_key.get()
+ 
+    entity = cls(namespace=domain.key_namespace)
+    
+    context.rule.entity = entity
+    
+    rule.Engine.run(context)
+    
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+ 
+    context.output['entity'] = entity
+    
+    return context
+  
+  @classmethod
+  def read(cls, context):
+    
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    
+    context.rule.entity = entity
+    
+    rule.Engine.run(context)
+    
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    
+    rule.read(entity)
+    
+    context.output['entity'] = entity
+    
+    return context
+     
+  
+  @classmethod
+  def search(cls, context):
+    
+    domain_key = context.input.get('domain')
+    urlsafe_cursor = context.input.get('next_cursor')
+    cursor = Cursor(urlsafe=urlsafe_cursor)
+    
+    query = cls.query(namespace=domain_key.urlsafe()).order(cls.sequence)
+    
+    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+ 
+    for entity in entities:
+       context.rule.entity = entity
+       rule.Engine.run(context)
+       rule.read(entity)
+    
+    if next_cursor:
+       next_cursor = next_cursor.urlsafe()
+    
+    context.output['entities'] = entities
+    context.output['next_cursor'] = next_cursor
+    context.output['more'] = more
+ 
+    return context
+  
   
   @classmethod
   def build_menu(cls, context):
     
     domain_key = context.input.get('domain')
-    
     domain = domain_key.get()
     
     domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())

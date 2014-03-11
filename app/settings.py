@@ -45,7 +45,7 @@ OUTLET_RECIPIENTS_PER_TASK = 50
 
 # records
 RECORDS_PER_PAGE = 10
- 
+DOMAIN_ADMIN_PER_PAGE = 10
  
 _http = 'http://'
 

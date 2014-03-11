@@ -1,5 +1,9 @@
 MainApp.config(['$stateProvider',
   function($stateProvider) {
+  	
+  	var resolve_menu = ['App', '$stateParams', function (App, $stateParams) {
+        	return App.get_menu($stateParams);
+        }];
    
     $stateProvider.state('home', {
       	url : '/',
@@ -25,22 +29,27 @@ MainApp.config(['$stateProvider',
       })
       .state('app_view', {
       	url: '/app/:app_id',
-        templateUrl: logic_template('srv/auth', 'app_view.html'),
+        template: '',
         controller: 'AppView',
+        resolve : {
+        	menu : resolve_menu,
+        }
       })
       .state('app_view_search', {
-      	url: '/app/:app_id/search/:widget_id/:filter',
+      	url: '/app/:app_id/search/:kind/:query',
         templateUrl: logic_template('srv/auth', 'app_view_search.html'),
         controller: 'AppSearch',
         resolve : {
+        	menu : resolve_menu,
         	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
- 
-			       return Endpoint.post('search', 'srv.nav.Widget', {
-								'filter' : $stateParams.filter,
-								'key' : $stateParams.widget_id,
-						   }).then(function (output) {
+        		  
+        		  var query = JSON.parse($stateParams['query']);
+        		  
+        		  query['domain'] = $stateParams['app_id'];
+        		  
+			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
 							  return output.data;
-						   });
+						 });
         	}]
         }
       })

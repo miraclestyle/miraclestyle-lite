@@ -1,0 +1,26 @@
+<h1 class="fieldset with-button">
+	<span class="fieldset-text">{{title}}</span>
+	<span class="fieldset-button"><a class="button" busy ng-click="create()">{{add_new}}</a></span>
+</h1>
+<table class="table">
+			<thead>
+				<tr>
+					<th ng-repeat="field in fields">{{field.label}}</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="entity in search.entities">
+					<td ng-repeat="field in fields">
+						 {{entity[field.key]}}
+					</td>
+	 
+					<td>
+						<button type="button" ng-show="entity.rule.action.update.executable"
+						        busy ng-click="update(entity)" class="button">
+							Edit
+						</button>
+					</td>
+				</tr>
+			</tbody>
+</table>

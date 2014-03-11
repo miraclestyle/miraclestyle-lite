@@ -55,41 +55,43 @@
   		<a ng-click="toggleMainMenu()" class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
   	</div>
   	<div style="display:none;" id="main-menu">
-  		<div ng-show="!domain_mode" class="menu-inner">
+  		<div ng-show="!nav.menu" class="menu-inner">
 	  		<h1 class="fieldset">Account</h1>
 	  		<ul ng-show="!current_user._is_guest" class="menu">
-	  		    <li><button class="button block" ng-click="manageAccount()">Manage</button></li>
-	  		    <li><button class="button block" ng-click="doLogout()">Logout</button></li>
+	  		    <li><button type="button" class="button block" ng-click="manageAccount()">Manage</button></li>
+	  		    <li><button type="button" class="button block" ng-click="doLogout()">Logout</button></li>
 	  		</ul>
 	  		
 	  		<ul ng-show="current_user._is_guest" class="menu">
-	  		    <li><button busy class="button block" ng-click="doLogin()">Login</button></li>
+	  		    <li><button type="button" busy class="button block" ng-click="doLogin()">Login</button></li>
 	  		</ul>
 	  		
 	  		<div ng-show="!current_user._is_guest">
 	  			<h1 class="fieldset">Selling Tools</h1>
 	  			<ul class="menu">
-	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="apps">Enterprise Apps</a></li>
+	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="apps">Enterprise Apps</button></li>
 	  			</ul>
 	  		</div>
 	  		
 	        <div ng-show="current_user._root_admin">
 	  			<h1 class="fieldset">Administration</h1>
 	  			<ul class="menu">
-	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_users">Users</a></li>
-	  		   		 <li><a ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_apps">Apps</a></li>
+	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_users">Users</button></li>
+	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_apps">Apps</button></li>
 	  			</ul>
 	  		</div>
 	  		 
   		</div>
   		
   		
-  		<div ng-show="domain_menu" ng-controller="AppMenu" class="menu-inner">
-  			<div ng-repeat="menu_item in domain_menu.menu">
+  		<div ng-show="nav.menu" class="menu-inner">
+  			<div ng-repeat="menu_item in nav.menu">
 	  			<h1 ng-bind="menu_item.name" class="fieldset"></h1>
 		  		<ul class="menu">
 		  		    <li ng-repeat="menu_filter in menu_item.filters">
-		  		    	<button ui-sref="app_view_search({widget_id : menu_item.key, app_id : domain_menu.domain.key, filter : $index})" ui-sref-active="active" class="button block" ng-bind="menu_filter.name"></button>
+		  		    	<button type="button" ng-click="toggleMainMenu(1)"
+		  		    		    ui-sref="app_view_search({app_id : nav.domain.key, query: JSON.stringify(menu_filter.query), kind : menu_filter.kind})" 
+		  		    		    ui-sref-active="active" class="button block" ng-bind="menu_filter.name"></button>
 		  		    </li>
 		  		</ul>
 	  		</div>

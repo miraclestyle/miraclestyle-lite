@@ -302,11 +302,12 @@ def _read_helper(field_permissions, operator, field_key, field):
 def read(entity):
   
     # configures output variables for the provided entity with respect to rule engine. should the param be entity or context?
- 
     entity_fields = entity.get_fields()
  
     for field_key, field in entity_fields.items():
         _read_helper(entity._field_permissions, entity, field_key, field)
+        
+    return entity
 
 class Context():
   
@@ -574,7 +575,7 @@ class Engine:
                    role.run(context)
                    
             if clean_roles:
-              context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : 'srv.rule.DomainUser'})
+              context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : '8'})
               callback.Engine.run(context)
             
         # copy 

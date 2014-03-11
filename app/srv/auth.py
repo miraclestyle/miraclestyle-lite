@@ -649,7 +649,7 @@ class Domain(ndb.BaseExpando):
       config.put()
       context.callback.inputs.append({
                                       'action_key': 'install',
-                                      'action_model': 'srv.setup.Configuration',
+                                      'action_model': '57',
                                       'key': config.key.urlsafe(),
                                       })
       callback.Engine.run(context)
