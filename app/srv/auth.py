@@ -8,7 +8,7 @@ Created on Jan 6, 2014
 import hashlib
 import os
 import copy
- 
+
 from google.appengine.api import blobstore
 from google.appengine.datastore.datastore_query import Cursor
 
@@ -25,8 +25,8 @@ class Context():
 
 class Session(ndb.BaseModel):
   
-  session_id = ndb.SuperStringProperty('1', required=True, indexed=False)
-  created = ndb.SuperDateTimeProperty('2', required=True, auto_now_add=True, indexed=False)
+  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
+  session_id = ndb.SuperStringProperty('2', required=True, indexed=False)
 
 
 class Identity(ndb.BaseModel):
@@ -43,110 +43,103 @@ class User(ndb.BaseExpando):
   
   _use_memcache = True
   
-  identities = ndb.SuperStructuredProperty(Identity, '1', repeated=True)  # Soft limit 100 instances?
-  emails = ndb.SuperStringProperty('2', repeated=True)  # Soft limit 100 instances?
-  state = ndb.SuperStringProperty('3', required=True, choices=['active', 'suspended'])  # Shall we disable indexing here?
-  sessions = ndb.SuperLocalStructuredProperty(Session, '4', repeated=True)  # Soft limit 100 instances?
-  domains = ndb.SuperKeyProperty('5', kind='6', repeated=True)  # Soft limit 100 instances? Shall we disable indexing here?
-  created = ndb.SuperDateTimeProperty('6', required=True, auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('7', required=True, auto_now=True)
+  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
+  identities = ndb.SuperStructuredProperty(Identity, '3', repeated=True)  # Soft limit 100 instances?
+  emails = ndb.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances?
+  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # Shall we disable indexing here?
+  sessions = ndb.SuperLocalStructuredProperty(Session, '6', repeated=True)  # Soft limit 100 instances?
+  domains = ndb.SuperKeyProperty('7', kind='6', repeated=True)  # Soft limit 100 instances? Shall we disable indexing here?
   
   _default_indexed = False
   
-  _expando_fields = {
-  
-  }
+  _expando_fields = {}
   
   _virtual_fields = {
-                     
-    # by default these are helper properties that operate mainly on `self` without performing any queries.
-    
-    'ip_address' : ndb.SuperStringProperty(),
+    # By default these are helper properties that operate mainly on 'self' without performing any queries.
+    'ip_address': ndb.SuperStringProperty(),
+    '_csrf': ndb.ComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
+    '_is_guest': ndb.ComputedProperty(lambda self: self.is_guest()),
+    '_primary_email': ndb.ComputedProperty(lambda self: self.primary_email()),
+    '_root_admin': ndb.ComputedProperty(lambda self: self.root_admin()),
+    '_is_taskqueue': ndb.ComputedProperty(lambda self: self.is_taskqueue()),
+    '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
+    '_records_next_cursor': ndb.SuperStringProperty(),
+    '_records_more': ndb.SuperBooleanProperty()
+    }
   
-    '_csrf' : ndb.ComputedProperty(lambda self: self.csrf()), # like i said, we will need the csrf but it has to be incorporated into security mechanism - http://en.wikipedia.org/wiki/Cross-site_request_forgery
-    '_is_guest' : ndb.ComputedProperty(lambda self: self.is_guest()),
-    '_primary_email' : ndb.ComputedProperty(lambda self: self.primary_email()),
-    '_root_admin' : ndb.ComputedProperty(lambda self: self.root_admin()),
-    '_is_taskqueue' : ndb.ComputedProperty(lambda self: self.is_taskqueue()),
-    
-    '_records' : log.SuperLocalStructuredRecordProperty('0', repeated=True),
-    '_records_next_cursor' : ndb.SuperStringProperty(),
-    '_records_more' : ndb.SuperBooleanProperty(),       
-  
-  }
- 
-  _global_role = rule.GlobalRole(permissions=[
-      rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True, "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
-      rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True, "context.rule.entity.key == context.auth.user.key and not context.rule.entity._is_guest"),
+  _global_role = rule.GlobalRole(
+    permissions=[
+      rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True,
+                            "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
+      rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True,
+                            "context.rule.entity.key == context.auth.user.key and not context.rule.entity._is_guest"),
       rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user._root_admin"),
       rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity._is_guest"),
       rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity._is_guest"),
       rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True, "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
+      rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True,
+                            "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
       rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
-      
-      rule.FieldPermission('0', 'identities', True, True, 'True'),  # User can change identities
-      
-      # expose these fields by default
-      rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email', '_root_admin',
-                                 'created', 'updated', 'state'], False, True, 'True'),
-      
+      rule.FieldPermission('0', 'identities', True, True, 'True'),  # User can change identities.
+      # Expose these fields by default.
+      rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email',
+                                 '_root_admin', 'created', 'updated', 'state'], False, True, 'True'),
       rule.FieldPermission('0', '_records', True, True, 'True'),
       rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('0', '_records.note', False, True, 'context.auth.user.root_admin'),
- 
-  ])
+      rule.FieldPermission('0', '_records.note', True, True, 'context.auth.user.root_admin')
+      ]
+  )
   
   _actions = {
-    'login': event.Action(id='0-0',
-                          arguments={
-                           'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
-                           'code': ndb.SuperStringProperty(),
-                           'error': ndb.SuperStringProperty(),
-                           }),
-    'update': event.Action(id='0-1',
-                           arguments={
-                            'key': ndb.SuperKeyProperty(kind='0', required=True),
-                            'primary_email': ndb.SuperStringProperty(),
-                            'disassociate': ndb.SuperStringProperty(),
-                            }),
-    'sudo': event.Action(id='0-2',
-                         arguments={
-                            'key': ndb.SuperKeyProperty(kind='0', required=True),
-                            'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
-                            'message': ndb.SuperStringProperty(required=True),
-                            'note': ndb.SuperStringProperty(),
-                             }),
-    'logout': event.Action(id='0-3',
-                           arguments={
-                            'csrf': ndb.SuperStringProperty(required=True),
-                            }),
+    'login': event.Action(
+      id='0-0',
+      arguments={
+        'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
+        'code': ndb.SuperStringProperty(),
+        'error': ndb.SuperStringProperty()
+        }
+      ),
+    'update': event.Action(
+      id='0-1',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'primary_email': ndb.SuperStringProperty(),
+        'disassociate': ndb.SuperStringProperty()
+        }
+      ),
+    'sudo': event.Action(
+      id='0-2',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
+        'message': ndb.SuperStringProperty(required=True),
+        'note': ndb.SuperStringProperty()
+        }
+      ),
+    'logout': event.Action(id='0-3', arguments={'csrf': ndb.SuperStringProperty(required=True)}),
     'apps': event.Action(id='0-4'),
-    'read_records': event.Action(id='0-5',
-                            arguments={
-                             'key': ndb.SuperKeyProperty(kind='0', required=True),
-                             'next_cursor': ndb.SuperStringProperty(),
-                             }),
-    'read': event.Action(id='0-6',
-                         arguments={
-                            'key': ndb.SuperKeyProperty(kind='0', required=True),
-                            }),
-    'sudo_search': event.Action(id='0-7',
-                                arguments={
-                                  'next_cursor': ndb.SuperStringProperty(),
-                                  }),
-  }
-
+    'read_records': event.Action(
+      id='0-5',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'read': event.Action(id='0-6',arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
+    'sudo_search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
+    }
+  
   def is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
- 
+  
   def root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
- 
+  
   def primary_email(self):
     if not self.identities:
       return None
@@ -154,13 +147,13 @@ class User(ndb.BaseExpando):
       if identity.primary == True:
         return identity.email
     return identity.email
- 
+  
   def csrf(self):
     session = self.current_user_session()
     if not session:
       return None
     return hashlib.md5(session.session_id).hexdigest()
- 
+  
   def is_guest(self):
     return self.key == None
   
@@ -224,8 +217,7 @@ class User(ndb.BaseExpando):
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)
-         
-         
+  
   @classmethod
   def sudo(cls, context):
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
@@ -241,14 +233,13 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      values = {'state' : state}
       if state == 'suspended':
-        entity.sessions = [] # Delete sessions. @todo should we put this into rule.writable see def logout as well
+        entity.sessions = []  # Delete sessions. @todo Should we put this into rule.writable (see def logout as well)?
+      values = {'state': state}  # Since values doesn't take 'message' and 'note', are field permissions for those two fields respected?
       rule.write(entity, values)
       entity.put()
-      context.log.entities.append((entity, {'message': message, 'note': note}))
+      context.log.entities.append((entity, {'message': message, 'note': note}))  # Are field permissions for 'message' and 'note' fields respected?
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -269,9 +260,7 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
       identities = copy.deepcopy(entity.identities)
-      
       for identity in identities:
         if primary_email:
           identity.primary = False
@@ -281,13 +270,10 @@ class User(ndb.BaseExpando):
         if disassociate:
           if identity.identity in disassociate:
             identity.associated = False
-      
       rule.write(entity, {'identities' : identities})
       entity.put()
-      
       context.log.entities.append((entity, ))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -302,17 +288,12 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    
     entity._records = entities
     entity._records_next_cursor = next_cursor
     entity._records_more = more
- 
     rule.read(entity)
-    
     context.output['entity'] = entity
-    
     return context
   
   @classmethod
@@ -323,15 +304,12 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
- 
     rule.read(entity)
-    
     context.output['entity'] = entity
-    
     return context
   
   @classmethod
-  def sudo_search(cls, context): # this is not decided yet
+  def sudo_search(cls, context):  # Name of this function will most likely remain sudo_ prefixed (taking search UI into consideration)!
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -341,7 +319,6 @@ class User(ndb.BaseExpando):
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
-    
     context.output['entity'] = context.auth.user
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
@@ -349,7 +326,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def apps(cls, context): # this is not decided yet
+  def apps(cls, context):  # Name of this function is not decided yet.
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -363,7 +340,7 @@ class User(ndb.BaseExpando):
           context.rule.entity = domain
           rule.Engine.run(context)
           domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
-          domain_user = domain_user_key.get()
+          domain_user = domain_user_key.get()  # These gets have to be done in async!
           # Rule engine run on domain user as well.
           context.rule.entity = domain_user
           rule.Engine.run(context)
@@ -378,18 +355,18 @@ class User(ndb.BaseExpando):
     entity = cls.current_user()
     context.rule.entity = entity
     rule.Engine.run(context, True)
- 
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      if not entity._csrf == context.input.get('csrf'): # we will see what will be done about this, because CSRF protection must be done globally.
+      if not entity._csrf == context.input.get('csrf'):  # We will see what will be done about this, because CSRF protection must be done globally.
         raise rule.ActionDenied(context)
       if entity.sessions:
-        entity.sessions = [] # @todo not sure if rule.write is needed here ? this is logout
+        entity.sessions = []  # @todo Not sure if rule.write is needed here (this is logout)?
       entity.put()
       context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
+      log.Engine.run(context)
       entity.set_current_user(None, None)
       context.output['entity'] = entity.current_user()
     
@@ -425,7 +402,6 @@ class User(ndb.BaseExpando):
       if not client.access_token:
         # raise custom exception!!!
         return context.error('oauth2_error', 'failed_access_token')
- 
       userinfo = oauth2_cfg['userinfo']
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
@@ -468,8 +444,7 @@ class User(ndb.BaseExpando):
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
           log.Engine.run(context)
           context.output.update({'entity': entity,
-                                 'authorization_code': entity.generate_authorization_code(session),
-                                 })
+                                 'authorization_code': entity.generate_authorization_code(session)})
         
         transaction(user)
     return context
