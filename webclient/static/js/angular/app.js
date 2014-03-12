@@ -121,7 +121,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	 		No : 'No',
     	 	},
     	 	message : 'Are you sure you want to proceed with this action?',
-    	 	templateUrl : logic_template('opt/misc', 'basic_confirm.html'),
+    	 	templateUrl : logic_template('misc/basic_confirm.html'),
     	 	windowClass : 'modal-small',
     	 	controller: function ($scope, $modalInstance) {
 						  
@@ -192,7 +192,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		{
 			var defaults = {
 				message : output,
-				templateUrl : logic_template('opt/misc', 'error500.html'),
+				templateUrl : logic_template('misc/error500.html'),
 				windowClass : '',
 				text : {
 					Yes : 'Close',
@@ -208,7 +208,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		{
 			var defaults = {
 				message : 'You do not have permission to perform this action.',
-				templateUrl : logic_template('opt/misc', 'action_denied.html'),
+				templateUrl : logic_template('misc/action_denied.html'),
 				text : {
 					Yes : 'Ok',
 				}

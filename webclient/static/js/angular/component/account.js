@@ -175,7 +175,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 			var handle = function (data) {
  
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'login.html'),
+				      templateUrl: logic_template('account/login.html'),
 				      controller: function ($scope, $modalInstance) {
 						  
 						  $scope.data = data;
@@ -205,7 +205,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 			var handle = function (data) {
  
 				var modalInstance = $modal.open({
-				      templateUrl: logic_template('srv/auth', 'account_update.html'),
+				      templateUrl: logic_template('account/update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				     
 				      	  update(user, data['entity']);
@@ -229,7 +229,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 							var handle = function () {
 						 
 								var modalInstance = $modal.open({
-								      templateUrl: logic_template('admin', 'sudo.html'),
+								      templateUrl: logic_template('admin/sudo.html'),
 								      windowClass : 'modal-medium',
 								      controller: function ($scope, $modalInstance, RuleEngine) {
 								      	  

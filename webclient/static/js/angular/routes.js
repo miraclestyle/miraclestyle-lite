@@ -1,13 +1,13 @@
 MainApp.config(['$stateProvider',
   function($stateProvider) {
   	
-  	var resolve_menu = ['App', '$stateParams', function (App, $stateParams) {
-        	return App.get_menu($stateParams);
+  	var resolve_menu = ['Nav', '$stateParams', function (Nav, $stateParams) {
+        	return Nav.build_menu($stateParams);
         }];
    
     $stateProvider.state('home', {
       	url : '/',
-        templateUrl: logic_template('home', 'home.html'),
+        templateUrl: logic_template('home/index.html'),
         controller: 'HomePage'
       })
       .state('login', {
@@ -16,7 +16,7 @@ MainApp.config(['$stateProvider',
       })
       .state('apps', {
       	url: '/apps',
-        templateUrl: logic_template('srv/auth', 'apps.html'),
+        templateUrl: logic_template('app/apps.html'),
         controller: 'AppList',
         resolve : {
         	apps : ['App', function (App) {
@@ -37,7 +37,7 @@ MainApp.config(['$stateProvider',
       })
       .state('app_view_search', {
       	url: '/app/:app_id/search/:kind/:query',
-        templateUrl: logic_template('srv/auth', 'app_view_search.html'),
+        templateUrl: logic_template('app/view_search.html'),
         controller: 'AppSearch',
         resolve : {
         	menu : resolve_menu,
@@ -57,7 +57,7 @@ MainApp.config(['$stateProvider',
       	url: '/admin',
       }).state('admin_apps', {
       	url: '/admin/apps',
-        templateUrl: logic_template('admin', 'apps.html'),
+        templateUrl: logic_template('admin/apps.html'),
         controller: 'AdminApps',
         resolve : {
         	apps : ['App', function (App) {
@@ -71,7 +71,7 @@ MainApp.config(['$stateProvider',
       })
       .state('admin_users', {
       	url: '/admin/users',
-        templateUrl: logic_template('admin', 'users.html'),
+        templateUrl: logic_template('admin/users.html'),
         controller: 'AdminUsers',
         resolve : {
         	users : ['Account', function (Account) {

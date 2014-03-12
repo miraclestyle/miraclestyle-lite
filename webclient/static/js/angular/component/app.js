@@ -1,42 +1,23 @@
-SEARCH_KIND_FIELDS = {
-    '62': [{
-        'label': 'Name',
-        'key': 'name'
-    }, {
-        'label': 'Active',
-        'key': 'active'
-    }]
+SEARCH_KIND_CONFIG = {
+    '62': {
+    	'title' : 'Widgets',
+    	'add_new' : 'Add New',
+    	'service' : 'Nav',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'Active',
+				    'key': 'active'
+				    }]
+    },
 };
-
-SEARCH_KIND_TITLE = {
-    '62': 'Widgets',
-};
-
-SEARCH_KIND_ADD_NEW = {
-    '62': 'Add New',
-};
-
 MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 'Title',
 
     function ($rootScope, $http, $location, $modal, Endpoint, Title) {
 
         return {
-            get_menu: function (params) {
-
-                if(!$rootScope.nav['menu']) {
-                    return Endpoint.post('build_menu', '62', {
-                        'domain': params['app_id']
-                    }).then(function (output) {
-                        update($rootScope.nav, output.data);
-                        Title.set(['My Apps', $rootScope.nav.domain.name]);
-                        return output.data;
-                    });
-                } else {
-                    Title.set(['My Apps', $rootScope.nav.domain.name]);
-                    return $rootScope.nav;
-                }
-
-            },
             search: function (args, config) {
                 return Endpoint.post('apps', '0', args, config);
             },
@@ -49,7 +30,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                 var handle = function (data) {
 
                     var modalInstance = $modal.open({
-                        templateUrl: logic_template('srv/auth', 'app_create.html'),
+                        templateUrl: logic_template('app/create.html'),
                         controller: function ($scope, $modalInstance, RuleEngine, Confirm) {
 
                             $scope.rule = RuleEngine.factory(data['entity']);
@@ -104,7 +85,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                 var handle = function (data) {
 
                     var modalInstance = $modal.open({
-                        templateUrl: logic_template('srv/auth', 'app_update.html'),
+                        templateUrl: logic_template('app/update.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
 
                             update(app, data['entity']);
@@ -125,7 +106,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                 var handle = function () {
 
                                     var modalInstance = $modal.open({
-                                        templateUrl: logic_template('admin', 'sudo.html'),
+                                        templateUrl: logic_template('admin/sudo.html'),
                                         windowClass: 'modal-medium',
                                         controller: function ($scope, $modalInstance, RuleEngine) {
 
@@ -168,7 +149,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                 var handle = function () {
 
                                     var modalInstance = $modal.open({
-                                        templateUrl: logic_template('srv/auth', 'app_user_admin.html'),
+                                        templateUrl: logic_template('app/user_admin.html'),
                                         windowClass: 'modal-medium',
                                         controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
 
@@ -264,26 +245,28 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
         }
     ])
-    .controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search',
-        function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search) {
+    .controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector',
+        function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector) {
 
             angular.forEach(search.entities, function (value) {
                 value.rule = RuleEngine.factory(value);
             });
 
             var kind = $stateParams['kind'];
+            var config = SEARCH_KIND_CONFIG[kind];
 
             $scope.search = search;
-            $scope.fields = SEARCH_KIND_FIELDS[kind];
-            $scope.title = SEARCH_KIND_TITLE[kind];
-            $scope.add_new = SEARCH_KIND_ADD_NEW[kind];
+            $scope.fields = config['fields'];
+            $scope.title = config['title'];
+            $scope.add_new = config['add_new'];
+            var service = $injector.get(config['service']);
 
             $scope.create = function () {
-
+				service.create();
             };
 
             $scope.update = function (entity) {
-
+				service.update(entity);
             };
 
         }

@@ -77,6 +77,10 @@ class Widget(ndb.BaseExpando):
               
              }
   
+  @classmethod
+  def selection_roles_helper(cls, namespace):
+    return rule.DomainRole.query(rule.DomainRole.active == True, namespace=namespace).fetch()
+  
   
   @classmethod
   def _complete_save_helper(cls, entity, context, create):
@@ -90,7 +94,7 @@ class Widget(ndb.BaseExpando):
     role_key = context.input.get('role')
     role = role_key.get()
     
-    if role.key_namespace != entity.key_namespace: # both the role and the entity namespace must match
+    if role.key_namespace != entity.key_namespace: # both the role and the entity namespace must match, this could be done with rule engine maybe? idk
        raise rule.ActionDenied(context)
      
     filters = []
@@ -171,6 +175,7 @@ class Widget(ndb.BaseExpando):
       raise rule.ActionDenied(context)
  
     context.output['entity'] = entity
+    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
     
     return context
   
@@ -190,6 +195,7 @@ class Widget(ndb.BaseExpando):
     rule.read(entity)
     
     context.output['entity'] = entity
+    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
     
     return context
      

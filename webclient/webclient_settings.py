@@ -26,13 +26,12 @@ ANGULAR_MODULES = ['router',
                    'checklist'
                   ]
 
-ANGULAR_COMPONENTS = ['home/home',
-                      'srv/auth/account',
-                      'srv/auth/app',
-                      'opt/buyer/buyer',
-                      
+ANGULAR_COMPONENTS = ['home',
+                      'account',
+                      'app',
+                      'nav'
                       # this goes last
-                      'admin/admin',
+                      'admin',
                       ]
 
 JQUERY_PLUGINS = ['select2/select2']
