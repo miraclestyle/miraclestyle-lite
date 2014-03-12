@@ -43,7 +43,7 @@ class Reset(handler.Angular):
              modelpath = modelpath.replace('/', '.')
              paths[mod.get_kind()] = modelpath
         
-      return {'models' : [f.__name__ for f in models], 'paths' : paths}
+      return {'models' : dict([(model.get_kind(), model.__name__) for model in models]), 'paths' : paths}
 
 class Submitter(handler.Angular):
   

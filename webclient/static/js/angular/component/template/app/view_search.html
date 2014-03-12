@@ -20,6 +20,11 @@
 						        busy ng-click="update(entity)" class="button">
 							Edit
 						</button>
+						
+						<button type="button" ng-show="entity.rule.action.delete.executable"
+						        busy ng-click="remove(entity)" class="button">
+							Delete
+						</button>
 					</td>
 				</tr>
 			</tbody>

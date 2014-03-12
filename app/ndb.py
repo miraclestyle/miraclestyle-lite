@@ -8,6 +8,7 @@ Created on Jul 9, 2013
 import decimal
 import cgi
 import importlib
+import json
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
@@ -481,7 +482,13 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
-  pass
+  
+  def format(self, value):
+    
+    if isinstance(value, basestring):
+       return json.loads(value)
+    else:
+       return value
 
 
 class SuperTextProperty(_BaseProperty, TextProperty):

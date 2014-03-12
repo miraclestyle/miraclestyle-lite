@@ -54,4 +54,38 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 	    	});
 	    }
 	  };
-}]);
+}]).directive('toggle', function() {
+    return {
+        scope: {
+            ngModel: '='
+        },
+        link: function(scope, element, attrs, controller) {
+        	
+        	var toggle = attrs.toggle;
+        	if (!toggle) toggle = 'Yes/No';
+        	var splits = toggle.split('/');
+ 
+        	var init = function ()
+        	{
+        		if (scope.ngModel)
+	        	{
+	        		element.text(splits[0]);
+	        	}
+	        	else
+	        	{
+	        		element.text(splits[1]);
+	        	}
+        	};
+        	
+        	init();
+        	
+            element.bind('click', function() {
+                scope.$apply(function() {
+                    scope.ngModel = !scope.ngModel;
+                    
+                    init();
+                });
+            });
+        }
+    };
+});

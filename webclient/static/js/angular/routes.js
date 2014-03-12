@@ -2,7 +2,7 @@ MainApp.config(['$stateProvider',
   function($stateProvider) {
   	
   	var resolve_menu = ['Nav', '$stateParams', function (Nav, $stateParams) {
-        	return Nav.build_menu($stateParams);
+        	return Nav.build_menu($stateParams['domain_key']);
         }];
    
     $stateProvider.state('home', {
@@ -28,7 +28,7 @@ MainApp.config(['$stateProvider',
         }
       })
       .state('app_view', {
-      	url: '/app/:app_id',
+      	url: '/app/:domain_key',
         template: '',
         controller: 'AppView',
         resolve : {
@@ -36,7 +36,7 @@ MainApp.config(['$stateProvider',
         }
       })
       .state('app_view_search', {
-      	url: '/app/:app_id/search/:kind/:query',
+      	url: '/app/:domain_key/search/:kind/:query',
         templateUrl: logic_template('app/view_search.html'),
         controller: 'AppSearch',
         resolve : {
@@ -45,7 +45,7 @@ MainApp.config(['$stateProvider',
         		  
         		  var query = JSON.parse($stateParams['query']);
         		  
-        		  query['domain'] = $stateParams['app_id'];
+        		  query['domain'] = $stateParams['domain_key'];
         		  
 			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
 							  return output.data;

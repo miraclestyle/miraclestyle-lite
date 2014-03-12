@@ -12,6 +12,13 @@ SEARCH_KIND_CONFIG = {
 				    'key': 'active'
 				    }]
     },
+    
+    'default': {
+    	'title' : 'No data specified for this kind',
+    	'add_new' : 'N/A',
+    	'service' : '',
+    	'fields' : []
+    },
 };
 MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint', 'Title',
 
@@ -34,7 +41,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                         controller: function ($scope, $modalInstance, RuleEngine, Confirm) {
 
                             $scope.rule = RuleEngine.factory(data['entity']);
-                            $scope.app = {};
+                            $scope.entity = data['entity'];
                             $scope.step = 1;
                             $scope.upload_url = data.upload_url;
 
@@ -79,7 +86,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                 }).success(handle);
 
             },
-            update: function (app) {
+            update: function (entity) {
                 var that = this;
 
                 var handle = function (data) {
@@ -88,15 +95,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                         templateUrl: logic_template('app/update.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
 
-                            update(app, data['entity']);
+                            update(entity, data['entity']);
 
                             $scope.rule = RuleEngine.factory(data['entity']);
-
-                            $scope.app = app;
+                            $scope.entity = angular.copy(entity);
                             $scope.history = {
-                                'model': '6',
+                                'kind': '6',
                                 'args': {
-                                    'key': app['key'],
+                                    'key': entity['key'],
                                 }
                             };
 
@@ -114,8 +120,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                             $scope.log = {
                                                 'message': '',
                                                 'note': '',
-                                                'state': app['state'],
-                                                'key': app['key'],
+                                                'state': $parentScope.entity['state'],
+                                                'key': $parentScope.entity['key'],
                                             };
 
                                             $scope.save = function () {
@@ -123,7 +129,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                                 Endpoint.post('sudo', '6', $scope.log)
                                                     .success(function (data) {
 
-                                                        update(app, data['entity']);
+                                                        update($parentScope.entity, entity, data['entity']);
 
                                                         $scope.rule.update(data['entity']);
 
@@ -144,7 +150,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                 handle();
                             };
 
-                            $scope._do_user_admin = function (app, action) {
+                            $scope._do_user_admin = function (entity, action) {
 
                                 var handle = function () {
 
@@ -157,7 +163,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                             $scope.action = action;
                                             $scope.log = {
                                                 'message': '',
-                                                'key': app['key'],
+                                                'key': $parentScope.entity['key'],
                                             };
 
                                             $scope.save = function () {
@@ -165,7 +171,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                                 Endpoint.post(action, 'srv.auth.Domain', $scope.log)
                                                     .success(function (data) {
 
-                                                        update(app, data['entity']);
+                                                        update($parentScope.entity, entity, data['entity']);
 
                                                         $scope.rule.update(data['entity']);
 
@@ -188,27 +194,27 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                             };
 
                             $scope.suspend = function () {
-                                this._do_user_admin(app, 'suspend');
+                                this._do_user_admin(entity, 'suspend');
                             };
 
                             $scope.activate = function () {
-                                this._do_user_admin(app, 'activate');
+                                this._do_user_admin(entity, 'activate');
                             };
 
                             $scope.save = function () {
 
                                 Endpoint.post('update', '6', {
-                                    'name': $scope.app['name'],
-                                    'primary_contact': $scope.app['primary_contact'],
-                                    'key': $scope.app['key'],
+                                    'name': $scope.entity['name'],
+                                    'primary_contact': $scope.entity['primary_contact'],
+                                    'key': $scope.entity['key'],
                                 })
-                                    .success(function (data) {
+                                .success(function (data) {
 
-                                        update($scope.app, data['entity']);
+                                        update($scope.entity, entity, data['entity']);
 
                                         $scope.rule.update(data['entity']);
 
-                                    });
+                                 });
 
                             };
 
@@ -222,7 +228,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                 };
 
                 Endpoint.post('read', '6', {
-                    'key': app['key']
+                    'key': entity['key']
                 }).success(handle);
 
             }
@@ -238,7 +244,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             var menu = nav['menu'][0]['filters'][0];
 
             $state.go('app_view_search', {
-                'app_id': nav.domain.key,
+                'domain_key': nav.domain.key,
                 'kind': menu['kind'],
                 'query': JSON.stringify(menu['query'])
             });
@@ -254,19 +260,38 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
             var kind = $stateParams['kind'];
             var config = SEARCH_KIND_CONFIG[kind];
+            
+            if (!config)
+            {
+            	config = SEARCH_KIND_CONFIG['default'];
+            	var service = undefined;
+            }
+            else
+            {
+            	var service = $injector.get(config['service']);
+            }
 
             $scope.search = search;
             $scope.fields = config['fields'];
             $scope.title = config['title'];
             $scope.add_new = config['add_new'];
-            var service = $injector.get(config['service']);
-
+             
             $scope.create = function () {
-				service.create();
+				service.create($stateParams['domain_key'], function (new_entity) {
+					new_entity.rule = RuleEngine.factory(new_entity);
+					$scope.search.entities.push(new_entity);
+				});
             };
 
             $scope.update = function (entity) {
 				service.update(entity);
+            };
+            
+            $scope.remove = function (entity) {
+				service.remove(entity, function () {
+					  	var index = $scope.search.entities.indexOf(entity);
+  						$scope.search.entities.splice(index,1);     
+				});
             };
 
         }

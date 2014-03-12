@@ -37,7 +37,7 @@
 					</td>
 					
 					<td>
-						<button ui-sref="app_view({app_id : app.domain.key})" ng-show="app.user.state == 'accepted'" class="button" type="button">
+						<button ui-sref="app_view({domain_key : app.domain.key})" ng-show="app.user.state == 'accepted'" class="button" type="button">
 							Launch
 						</button>
 						<button ng-show="app.domain.rule.action.update.executable || app.domain.rule.action.sudo.executable || app.domain.rule.action.log_message.executable || app.domain.rule.action.activate.executable || app.domain.rule.action.suspend.executable"

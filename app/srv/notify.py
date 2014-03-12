@@ -126,7 +126,7 @@ class MailNotify(Template):
        
 class HttpNotify(Template):
   
-  _kind = 62
+  _kind = 63
   
   name = ndb.SuperStringProperty('5', required=True) # description for template editors
   message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender

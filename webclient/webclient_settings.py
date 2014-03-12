@@ -29,7 +29,7 @@ ANGULAR_MODULES = ['router',
 ANGULAR_COMPONENTS = ['home',
                       'account',
                       'app',
-                      'nav'
+                      'nav',
                       # this goes last
                       'admin',
                       ]

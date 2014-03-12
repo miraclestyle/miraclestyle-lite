@@ -81,6 +81,8 @@ class Engine:
           
           context.input[key] = value
         except ndb.PropertyError as e:
+          if e.message not in input_error:
+            input_error[e.message] = [] # if the e.message is not set, set it otherwise KeyError
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
         except Exception as e:
           # If this is not defined it throws an error.

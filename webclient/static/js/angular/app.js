@@ -1,5 +1,5 @@
-handleFewDatatypes({'entity' : current_user});
-handleFewDatatypes({'entity' : initdata});
+handleDataTypes({'entity' : current_user});
+handleDataTypes({'entity' : initdata});
 
 angular.module('app.ui',
 	  [
@@ -16,7 +16,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
   function($httpProvider, $locationProvider) {
   	 
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-     $httpProvider.defaults.transformResponse.push(handleFewDatatypes);
+     $httpProvider.defaults.transformResponse.push(handleDataTypes);
  
      $locationProvider.hashPrefix('!');
      
@@ -31,8 +31,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		
 		this.action = {};
 		this.input = {};
- 
-		
+  
 		this._action_permission_translate = function (action_name)
 		{
 			return this._rule_action_permissions[this._rule_actions[action_name]['key']];
@@ -80,11 +79,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	    	{
 	    		return;
 	    	}
-			
-			this._rule = info;
-			this._rule_action_permissions = this._rule['_action_permissions'];
-			this._rule_field_permissions = this._rule['_field_permissions'];
-			this._rule_actions = this._rule['_actions'];
+	 
+			this._rule_action_permissions = info['_action_permissions'];
+			this._rule_field_permissions = info['_field_permissions'];
+			this._rule_actions = info['_actions'];
 			 
 			this.init();
 			
@@ -99,7 +97,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	    }
 
 		      
-		}
+	  }
   
 	
 	return {
@@ -148,8 +146,18 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  
 		   }, function dismiss(what) {
  
-			    if (angular.isFunction(options['callbacks'][what])) options['callbacks'][what]();
+			    if (angular.isFunction(options['callbacks'][what]))
+			    {
+			    	options['callbacks'][what]();
+			    }
+			    else if (angular.isFunction(options['callbacks']['Default']))
+			    {
+			    	options['callbacks']['Default']();
+			    }
+			     
 		   });
+		   
+		 return modalInstance;
     };
 	
 	return {
@@ -159,22 +167,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				message : message,
 				callbacks : {
 					Yes : ok,
+					Default : ok,
 				},
 				text : {
-					Yes : 'Ok',
+					Yes : 'Close',
 				}
 			};
 			
 			options = angular.extend(defaults, options);
 			
-			Confirm(options);
+			return Confirm(options);
 		},
 		sure : function (yes, no, options) {
 			
 			var defaults = {
 				message : 'Are you sure you want to proceed with this action?',
 				callbacks : {
-					Yes : ok,
+					Yes : yes,
 					No : no,
 				},
 				text : {
@@ -185,7 +194,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			
 			options = angular.extend(defaults, options);
 			
-			Confirm(options);
+			return Confirm(options);
 			
 		},
 		error500 : function (output, options)
@@ -201,7 +210,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			
 			options = angular.extend(defaults, options);
 			
-			Confirm(options);
+			return Confirm(options);
 		},
 		
 		action_denied : function (output, options)
@@ -216,7 +225,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			
 			options = angular.extend(defaults, options);
 			
-			Confirm(options);
+			return Confirm(options);
 		},
 		
 		changes : function (ok, no, options) {
@@ -235,7 +244,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			
 			options = angular.extend(defaults, options);
 			
-			Confirm(options);
+			return Confirm(options);
 		},
 		
 	};
@@ -346,6 +355,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	};
 }])
 .controller('HandleLog', ['$scope', 'Endpoint', '$timeout', function ($scope, Endpoint, $timeout) {
+	
+	
+	if (!$scope.history) return false;
  
     $scope.logs = [];
     $scope.history.args.more = true;
@@ -358,7 +370,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			{
 				$scope.commander.loading = true;
 				
-				Endpoint.post('read_records', $scope.history.model, $scope.history.args).success(function (data) {
+				Endpoint.post('read_records', $scope.history.kind, $scope.history.args).success(function (data) {
 					
 					$scope.commander.first = true;
 				 
@@ -384,7 +396,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	$scope.loadMore = loadMore;
 	 
 	$scope.$on('scrollEnd', function (that) {
- 		loadMore(that);
+		
+		if ($scope.commander.isOpen)
+		{
+			loadMore(that);
+		}
+ 		
 	});
 	
 	$scope.$watch('commander.isOpen', function (isOpen) {
@@ -397,6 +414,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 }])
 .run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
     
+    $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_user = current_user;
     $rootScope.$state = $state;
     $rootScope.ui_template = ui_template;

@@ -199,7 +199,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 			
 			$http.get('/login/google').success(handle);			
 		},
-		update : function (user)
+		update : function (entity)
 	    {
  
 			var handle = function (data) {
@@ -208,16 +208,14 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				      templateUrl: logic_template('account/update.html'),
 				      controller: function ($scope, $modalInstance, RuleEngine) {
 				     
-				      	  update(user, data['entity']);
+				      	  update(entity, data['entity']);
 				      	
 				      	  $scope.rule = RuleEngine.factory(data['entity']);
-				      	  
-				 
-				      	  $scope.user = user;
+				      	  $scope.entity = angular.copy(entity);
 				      	  $scope.history = {
-				      	  	  'model' : '0',
+				      	  	  'kind' : '0',
 				      	  	  'args' : {
-				      	  	  	 'key' : user['key'],
+				      	  	  	 'key' : entity['key'],
 				      	  	  }
 				      	  };
 				      	  
@@ -237,8 +235,8 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 								      	  $scope.log = {
 								      	  	'message' : '',
 								      	  	'note' : '',
-								      	  	'state' : user['state'],
-								      	  	'key' : user['key'],
+								      	  	'state' : $parentScope.entity['state'],
+								      	  	'key' : $parentScope.entity['key'],
 								      	  };
 							 
 									  	  $scope.save = function ()
@@ -247,8 +245,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 									  	  	Endpoint.post('sudo', '0', $scope.log)
 										     .success(function (data) {
  
-										     	update(user, data['entity']);
-										     	
+										     	update($parentScope.entity, entity, data['entity']);
 										     	$scope.rule.update(data['entity']);
 										 
 										     	$scope.cancel();
@@ -279,7 +276,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  $scope.disAssociate = function(ident)
 					  	  {
 					  	  	 
-					  	  	  angular.forEach(user.identities, function (value) {
+					  	  	  angular.forEach($scope.entity.identities, function (value) {
 					  	  	  	   if (value.identity == ident)
 					  	  	  	   {
 					  	  	  	   	   value.associated = !value.associated;
@@ -293,7 +290,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  {
 					  	  	var disassociated = [];
 					  	  	
-					  	  	angular.forEach(user.identities, function (value) {
+					  	  	angular.forEach($scope.entity.identities, function (value) {
 					  	  	  	 
 					  	  	  	   	   if (!value.associated)
 					  	  	  	   	   {
@@ -303,12 +300,12 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  	  });
 					  	  	
 					  	  	Endpoint.post('update', '0', {
-					  	  		'primary_email' : user['primary_email'],
+					  	  		'primary_email' : $scope.entity['primary_email'],
 					  	  		'disassociate' : disassociated,
-					  	  		'key' : user['key'],
+					  	  		'key' : $scope.entity['key'],
 					  	      })
 						     .success(function (data) {
-								 update(user, data['entity']);
+								 update($scope.entity, entity, data['entity']);
 								 $scope.rule.update(data['entity']);
 							});
 		
@@ -322,7 +319,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		  
 			  };
 			
-			Endpoint.post('read', '0', {'key' : user['key']}).success(handle);
+			Endpoint.post('read', '0', {'key' : entity['key']}).success(handle);
   
 	}
 	

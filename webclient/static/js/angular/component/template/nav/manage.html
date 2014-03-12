@@ -1,0 +1,102 @@
+<form ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.name.writable" name="name" ng-required="rule.input.create.name.required" class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+	</div>
+	 
+    <div class="form-control">
+		<label class="form-label">Role</label>
+		<div class="form-input">
+			<select name="role" ng-disabled="!rule.field.role.writable" ui-select2 ng-model="entity.role" data-placeholder="Select a role">
+				    <option value=""></option>
+				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>
+			</select>
+		</div>
+	</div>
+	
+   <div class="form-control">
+		<label class="form-label">Sequence</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.sequence.writable" name="sequence" ng-required="rule.input.create.sequence.required" class="text-input" type="text" ng-model="entity.sequence" />
+			</div>
+		</div>
+	</div>
+	 
+	
+	
+	<div class="form-control">
+		<label class="form-label">Search Form</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.search_form.writable" class="button" type="button" ng-model="entity.search_form"></button>
+			</div>
+		</div>
+	</div>
+	
+	<div class="form-control">
+		<label class="form-label">Active</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.active.writable" class="button" type="button" ng-model="entity.active"></button>
+			</div>
+		</div>
+	</div>
+	
+	
+	<h1 class="fieldset with-button">
+			<span class="fieldset-text">Filters</span>
+			<span ng-show="rule.field.filters.writable" class="fieldset-button"><a class="button" busy ng-click="addFilter()">Add Filter</a></span>
+		</h1>
+		<table class="table">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Kind</th>
+							<th>Query</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="filter in entity.filters">
+							<td>{{filter.name}}</td>
+							<td>{{FRIENDLY_KIND_NAMES[filter.kind]}}</td>
+							<td>{{filter.query}}</td>
+							<td>
+								<button ng-click="editFilter(filter)" type="button" class="button">Edit</button>
+								<button ng-click="removeFilter(filter)" type="button" class="button">Delete</button>
+							</td>
+						</tr>
+					</tbody>
+		</table>
+	 
+	<div ng-show="rule.action.read_records.executable && history" class="form-control">
+		<div ng-include="logic_template('misc/logs.html')"></div>
+	</div>	 
+	 
+
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button  ng-show="rule.action.update.executable" busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

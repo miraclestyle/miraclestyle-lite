@@ -180,11 +180,7 @@ class DomainSetup(Setup):
                             role=role_key,
                             filters=[nav.Filter(name='Roles', kind='60'),
                                      nav.Filter(name='Filter Groups', kind='62')]),
-                 nav.Widget(id='admin_app_users',
-                            namespace=namespace,
-                            name='App Users',
-                            role=role_key,
-                            filters=[nav.Filter(name='Users', kind='8')]),
+
  
                     ]
       
@@ -192,6 +188,11 @@ class DomainSetup(Setup):
           to.sequence = i
       
       ndb.put_multi(to_put)
+      
+      for to in to_put:
+          self.context.log.entities.append((to,))
+           
+      log.Engine.run(self.context)
        
       self.config.next_operation_input = {'domain_key' : domain_key, 
                                           'role_key' : role_key,
@@ -209,7 +210,12 @@ class DomainSetup(Setup):
       role_key = input.get('role_key')
       sequence = input.get('sequence')
  
-      to_put = [nav.Widget(id='admin_notifications', 
+      to_put = [nav.Widget(id='admin_app_users',
+                            namespace=namespace,
+                            name='App Users',
+                            role=role_key,
+                            filters=[nav.Filter(name='Users', kind='8')]),
+               nav.Widget(id='admin_notifications', 
                             namespace=namespace,
                             name='Notifications',
                             role=role_key,
@@ -219,7 +225,12 @@ class DomainSetup(Setup):
       for i,to in enumerate(to_put):
           to.sequence = (i+1)+sequence
       
-      ndb.put_multi(to_put)      
+      ndb.put_multi(to_put) 
+
+      for to in to_put:
+          self.context.log.entities.append((to,))
+           
+      log.Engine.run(self.context)
       
       self.config.next_operation_input = {'domain_key' : domain_key, 
                                           'role_key' : role_key,

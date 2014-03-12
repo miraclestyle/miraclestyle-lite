@@ -7,7 +7,7 @@
 		<label class="form-label">ID</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{user.id}}
+			 	{{entity.id}}
 			 </div>
 		</div>
 	</div>
@@ -16,7 +16,7 @@
 		<label class="form-label">Registered</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{user.created|date:DATE_FULL}}
+			 	{{entity.created|date:DATE_FULL}}
 			 </div>
 		</div>
 	</div>
@@ -26,7 +26,7 @@
 		<label class="form-label">Status</label>
 		<div class="form-input">
 			<div class="form-text">
-				 {{user.state}}
+				 {{entity.state}}
 			</div>
 		</div>
 	</div>
@@ -35,8 +35,9 @@
 	<div class="form-control">
 		<label class="form-label">Primary e-mail</label>
 		<div class="form-input">
-			<select ng-disabled="!rule.field.identities.writable" ui-select2 ng-model="user._primary_email" data-placeholder="Select your primary e-mail">
-				    <option ng-repeat="ident in user.identities" value="{{ident.email}}">{{ident.email}}</option>
+			<select ng-disabled="!rule.field.identities.writable" ui-select2 ng-model="entity._primary_email" data-placeholder="Select your primary e-mail">
+				    <option value=""></option>
+				    <option ng-repeat="ident in entity.identities" value="{{ident.email}}">{{ident.email}}</option>
 			</select>
 		</div>
 	</div>
@@ -45,7 +46,7 @@
 	
 	<div class="form-control">
 		
-		<div ng-repeat="ident in user.identities" class="form-control">
+		<div ng-repeat="ident in entity.identities" class="form-control">
 			<label class="form-label">{{identiy_info(ident.identity)}}</label>
 			<div class="form-input">
 				 <button type="button" ng-disabled="!rule.field.identities.writable" class="button" ng-click="disAssociate(ident.identity)">

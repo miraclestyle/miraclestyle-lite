@@ -5,12 +5,12 @@
 
 <h2 class="fieldset">General</h2>
 
-    <div ng-hide="!app.id">
+    <div ng-hide="!entity.id">
 	<div class="form-control">
 		<label class="form-label">ID</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{app.id}}
+			 	{{entity.id}}
 			 </div>
 		</div>
 	</div>
@@ -19,7 +19,7 @@
 		<label class="form-label">Registered</label>
 		<div class="form-input">
 			 <div class="form-text">
-			 	{{app.created|date:DATE_FULL}}
+			 	{{entity.created|date:DATE_FULL}}
 			 </div>
 		</div>
 	</div>
@@ -29,7 +29,7 @@
 		<label class="form-label">Status</label>
 		<div class="form-input">
 			<div class="form-text">
-				 {{app.state}}
+				 {{entity.state}}
 			</div>
 		</div>
 	</div>
@@ -41,7 +41,7 @@
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input ng-disabled="!rule.field.name.writable" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="app.name" />
+				 <input ng-disabled="!rule.field.name.writable" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
 			</div>
 		</div>
 	</div>
@@ -52,9 +52,9 @@
 		<div class="form-input">
 			<select ng-disabled="!rule.field.primary_contact.writable" 
 				    ng-required="rule.input[action].primary_contact.required"
-				    ui-select2 ng-model="app.primary_contact" data-placeholder="Select primary contact for this App">
-				    
-				    <option value="{{app.primary_contact}}">{{app._primary_contact_email}}</option>
+				    ui-select2 ng-model="entity.primary_contact" data-placeholder="Select primary contact for this App">
+				    <option value=""></option>
+				    <option value="{{entity.primary_contact}}">{{entity._primary_contact_email}}</option>
 			</select>
 		</div>
 	</div>	 

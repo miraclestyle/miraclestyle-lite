@@ -111,7 +111,7 @@ class Record(ndb.BaseExpando):
     def async(entity):
     
         if entity.key_namespace:
-           domain_user_key = rule.DomainRole.build_key(entity.agent.key_id_str, namespace=entity.key_namespace)
+           domain_user_key = rule.DomainUser.build_key(str(entity.agent.id()), namespace=entity.key_namespace)
            agent = yield domain_user_key.get_async()
            agent = agent.name
         else:

@@ -32,17 +32,35 @@ class Widget(ndb.BaseExpando):
   search_form = ndb.SuperBooleanProperty('5', default=True) # whether this group is search form or set of filter buttons/links
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
-  _actions = {'build_menu' : event.Action(id='61-0',
+  _virtual_fields = {
+    '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True),
+    '_records_next_cursor': ndb.SuperStringProperty(),
+    '_records_more': ndb.SuperBooleanProperty()
+  }
+  
+  _global_role = rule.GlobalRole(
+    permissions=[
+  
+      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True,
+                            "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
+      rule.FieldPermission('62', '_records', True, True, 'True'),
+      rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user.root_admin'),
+      rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user.root_admin')
+      ]
+  )
+  
+  
+  _actions = {'build_menu' : event.Action(id='62-0',
                                           arguments={
                                             'domain' : ndb.SuperKeyProperty(kind='6', required=True)
                                         }),
-              'search' : event.Action(id='61-1',
+              'search' : event.Action(id='62-1',
                                       arguments={
                                          'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                          'next_cursor' : ndb.SuperStringProperty(),
                                         }),
               
-              'create' : event.Action(id='61-2', 
+              'create' : event.Action(id='62-2', 
                                       arguments={
                                         'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                         'name' : ndb.SuperStringProperty(required=True), # name of the fieldset
@@ -52,11 +70,11 @@ class Widget(ndb.BaseExpando):
                                         'search_form' : ndb.SuperBooleanProperty(default=True), # whether this group is search form or set of filter buttons/links
                                         'filters' : ndb.SuperJsonProperty(),                  
                                       }),
-              'read' : event.Action(id='61-3', 
+              'read' : event.Action(id='62-3', 
                                     arguments={
                                         'key' : ndb.SuperKeyProperty(kind='62', required=True),
                                       }),
-              'update' : event.Action(id='61-4', 
+              'update' : event.Action(id='62-4', 
                                       arguments={
                                         'key' : ndb.SuperKeyProperty(kind='62', required=True),
                                         'name' : ndb.SuperStringProperty(required=True),  
@@ -66,14 +84,21 @@ class Widget(ndb.BaseExpando):
                                         'search_form' : ndb.SuperBooleanProperty(default=True),
                                         'filters' : ndb.SuperJsonProperty(),                  
                                       }),
-              'delete' : event.Action(id='61-5', 
+              'delete' : event.Action(id='62-5', 
                                       arguments={
                                         'key' : ndb.SuperKeyProperty(kind='62', required=True),
                                       }),
-              'prepare' : event.Action(id='61-6', 
+              'prepare' : event.Action(id='62-6', 
                                        arguments={
                                         'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                                        }),
+              'read_records': event.Action(
+                id='62-7',
+                arguments={
+                  'key': ndb.SuperKeyProperty(kind='62', required=True),
+                  'next_cursor': ndb.SuperStringProperty()
+                  }
+                ),
               
              }
   
@@ -98,7 +123,7 @@ class Widget(ndb.BaseExpando):
        raise rule.ActionDenied(context)
      
     filters = []
-    
+  
     input_filters = context.input.get('filters')
     
     for filter_data in input_filters:
@@ -116,7 +141,7 @@ class Widget(ndb.BaseExpando):
     if not create:
        rule.write(entity, values)
     else:
-       entity.populate(values)
+       entity.populate(**values)
        
     entity.put()
     
@@ -198,6 +223,28 @@ class Widget(ndb.BaseExpando):
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
     
     return context
+  
+  
+  @classmethod
+  def delete(cls, context):
+    
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    
+    entity.key.delete()
+    context.log.entities.append((entity,))
+    log.Engine.run(context)
+ 
+    context.output['entity'] = entity
+ 
+    return context
+     
      
   
   @classmethod
@@ -223,6 +270,24 @@ class Widget(ndb.BaseExpando):
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
  
+    return context
+  
+  
+  @classmethod
+  def read_records(cls, context):
+    entity_key = context.input.get('key')
+    next_cursor = context.input.get('next_cursor')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context, True)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
+    entity._records = entities
+    entity._records_next_cursor = next_cursor
+    entity._records_more = more
+    rule.read(entity)
+    context.output['entity'] = entity
     return context
   
   
