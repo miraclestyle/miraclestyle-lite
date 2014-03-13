@@ -90,7 +90,7 @@ class User(ndb.BaseExpando):
       rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
       rule.FieldPermission('0', '_records.note', True, True, 'context.auth.user.root_admin')
       ]
-  )
+    )
   
   _actions = {
     'login': event.Action(
@@ -235,8 +235,7 @@ class User(ndb.BaseExpando):
         raise rule.ActionDenied(context)
       if state == 'suspended':
         entity.sessions = []  # Delete sessions. @todo Should we put this into rule.writable (see def logout as well)?
-      values = {'state': state}  # Since values doesn't take 'message' and 'note', are field permissions for those two fields respected?
-      rule.write(entity, values)
+      rule.write(entity, {'state': state})  # @todo Since rule.write doesn't take 'message' and 'note', are field permissions for those two fields respected?
       entity.put()
       context.log.entities.append((entity, {'message': message, 'note': note}))  # Are field permissions for 'message' and 'note' fields respected?
       log.Engine.run(context)
@@ -456,33 +455,30 @@ class Domain(ndb.BaseExpando):
   
   _use_memcache = True
   
-  name = ndb.SuperStringProperty('1', required=True)
-  primary_contact = ndb.SuperKeyProperty('2', kind=User, required=True, indexed=False)
-  state = ndb.SuperStringProperty('3', required=True, choices=['active', 'suspended', 'su_suspended'])
-  created = ndb.SuperDateTimeProperty('4', required=True, auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('5', required=True, auto_now=True)
+  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
+  name = ndb.SuperStringProperty('3', required=True)
+  primary_contact = ndb.SuperKeyProperty('4', kind=User, required=True, indexed=False)
+  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
   
   _default_indexed = False
   
-  _expando_fields = {
-
-  }
-   
+  _expando_fields = {}
+  
   _virtual_fields = {
-                     
-    # by default these are helper properties that operate mainly on `self` without performing any queries.
-    '_primary_contact_email' : ndb.SuperStringProperty(),
-    '_records' : log.SuperLocalStructuredRecordProperty('6', repeated=True),
-    '_records_next_cursor' : ndb.SuperStringProperty(),
-    '_records_more' : ndb.SuperBooleanProperty(),       
+    '_primary_contact_email': ndb.SuperStringProperty(),
+    '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True),
+    '_records_next_cursor': ndb.SuperStringProperty(),
+    '_records_more': ndb.SuperBooleanProperty()
+    }
   
-  }
-  
-  _global_role = rule.GlobalRole(permissions=[
+  _global_role = rule.GlobalRole(
+    permissions=[
       # is_guest check is not needed on other actions because it requires a loaded domain which will be evaluated with roles.
       rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user._is_guest"),
       rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False, "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
+      rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False,
+                            "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
       rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
@@ -492,79 +488,85 @@ class Domain(ndb.BaseExpando):
       rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
-       
-      # all fields that are returned by get_fields() have writable and visible set to true upon domain creation
+      # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
       rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user.root_admin'),
-                                 
-  ])
+      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user.root_admin')
+      ]
+    )
   
   _actions = {
-    'create': event.Action(id='6-0',
-                           arguments={
-                                      # domain
-                                      'domain_name': ndb.SuperStringProperty(required=True),
-                                      # company
-                                      'company_name': ndb.SuperStringProperty(required=True),
-                                      'company_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
-                                      # company expando
-                                      'company_country': ndb.SuperKeyProperty(kind='15'),
-                                      'company_region': ndb.SuperKeyProperty(kind='16'),
-                                      'company_city': ndb.SuperStringProperty(),
-                                      'company_postal_code': ndb.SuperStringProperty(),
-                                      'company_street': ndb.SuperStringProperty(),
-                                      'company_email': ndb.SuperStringProperty(),
-                                      'company_telephone': ndb.SuperStringProperty(),
-                                      'company_currency': ndb.SuperKeyProperty(kind='19'),
-                                      'company_paypal_email': ndb.SuperStringProperty(),
-                                      'company_tracking_id': ndb.SuperStringProperty(),
-                                      'company_location_exclusion': ndb.SuperBooleanProperty(),
-                                      }),
-    'update': event.Action(id='6-6',
-                           arguments={
-                                      'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                      'name': ndb.SuperStringProperty(required=True),
-                                      'primary_contact': ndb.SuperKeyProperty(required=True, kind='0'),
-                                      }),
-    'suspend': event.Action(id='6-1',
-                            arguments={
-                                       'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                       'message': ndb.SuperTextProperty(required=True),
-                                       }),
-    'activate': event.Action(id='6-2',
-                             arguments={
-                                        'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                        'message': ndb.SuperTextProperty(required=True),
-                                        }),
-    'sudo': event.Action(id='6-3',
-                         arguments={
-                                    'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                    'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
-                                    'message': ndb.SuperTextProperty(required=True),
-                                    'note': ndb.SuperTextProperty(),
-                                    }),
-    'log_message': event.Action(id='6-4',
-                                arguments={
-                                           'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                           'message': ndb.SuperTextProperty(required=True),
-                                           'note': ndb.SuperTextProperty(),
-                                           }),
-    'read': event.Action(id='6-7',
-                         arguments={
-                                    'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                    }),
-    'prepare': event.Action(id='6-8',
-                            arguments={
-                                       'upload_url': ndb.SuperStringProperty(required=True),
-                                       }),
-    'read_records': event.Action(id='6-9',
-                            arguments={
-                                       'key': ndb.SuperKeyProperty(kind='6', required=True),
-                                       'next_cursor': ndb.SuperStringProperty(),
-                                       }),
-    'sudo_search': event.Action(id='6-10',
-                                arguments={'next_cursor': ndb.SuperStringProperty(),}),
-  }
+    'create': event.Action(
+      id='6-0',
+      arguments={
+        # Domain
+        'domain_name': ndb.SuperStringProperty(required=True),
+        # Company
+        'company_name': ndb.SuperStringProperty(required=True),
+        'company_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
+        # Company Expando
+        'company_country': ndb.SuperKeyProperty(kind='15'),
+        'company_region': ndb.SuperKeyProperty(kind='16'),
+        'company_city': ndb.SuperStringProperty(),
+        'company_postal_code': ndb.SuperStringProperty(),
+        'company_street': ndb.SuperStringProperty(),
+        'company_email': ndb.SuperStringProperty(),
+        'company_telephone': ndb.SuperStringProperty(),
+        'company_currency': ndb.SuperKeyProperty(kind='19'),
+        'company_paypal_email': ndb.SuperStringProperty(),
+        'company_tracking_id': ndb.SuperStringProperty(),
+        'company_location_exclusion': ndb.SuperBooleanProperty()
+        }
+      ),
+    'update': event.Action(
+      id='6-6',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'name': ndb.SuperStringProperty(required=True),
+        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
+        }
+      ),
+    'suspend': event.Action(
+      id='6-1',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        }
+      ),
+    'activate': event.Action(
+      id='6-2',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        }
+      ),
+    'sudo': event.Action(
+      id='6-3',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty()
+        }
+      ),
+    'log_message': event.Action(
+      id='6-4',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty()
+        }
+      ),
+    'read': event.Action(id='6-7', arguments={'key': ndb.SuperKeyProperty(kind='6', required=True)}),
+    'prepare': event.Action(id='6-8', arguments={'upload_url': ndb.SuperStringProperty(required=True)}),
+    'read_records': event.Action(
+      id='6-9',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'sudo_search': event.Action(id='6-10', arguments={'next_cursor': ndb.SuperStringProperty()})
+    }
   
   @property
   def key_namespace(self):
@@ -575,7 +577,7 @@ class Domain(ndb.BaseExpando):
     return self
   
   @classmethod
-  def sudo_search(cls, context): # not decided yet
+  def sudo_search(cls, context):  # Name of this function will most likely remain sudo_ prefixed (taking search UI into consideration)!
     entity = cls()
     context.rule.entity = entity
     rule.Engine.run(context, True)
@@ -599,7 +601,6 @@ class Domain(ndb.BaseExpando):
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     entities = helper(entities).get_result()
-    
     context.output['entity'] = entity
     context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
@@ -622,13 +623,10 @@ class Domain(ndb.BaseExpando):
       config_input['domain_primary_contact'] = context.auth.user.key
       config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
       config.put()
-      context.callback.inputs.append({
-                                      'action_key': 'install',
+      context.callback.inputs.append({'action_key': 'install',
                                       'action_model': '57',
-                                      'key': config.key.urlsafe(),
-                                      })
+                                      'key': config.key.urlsafe()})
       callback.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -641,8 +639,7 @@ class Domain(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
-    # @todo not sure if we should put here rule.read?
+    # @todo Not sure if we should put here rule.read?
     context.output['entity'] = entity
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
     return context
@@ -656,14 +653,10 @@ class Domain(ndb.BaseExpando):
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
- 
     primary_contact = primary_contact.get_result()
     entity._primary_contact_email = primary_contact._primary_email
-    
     rule.read(entity)
-    
     context.output['entity'] = entity
-    
     return context
   
   @classmethod
@@ -675,17 +668,12 @@ class Domain(ndb.BaseExpando):
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    
     entity._records = entities
     entity._records_next_cursor = next_cursor
     entity._records_more = more
- 
     rule.read(entity)
-    
     context.output['entity'] = entity
-     
     return context
   
   @classmethod
@@ -699,13 +687,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
- 
-      rule.write(entity, {'name' : context.input.get('name'),
-                          'primary_contact' : context.input.get('primary_contact')})
+      rule.write(entity, {'name': context.input.get('name'),
+                          'primary_contact': context.input.get('primary_contact')})
       entity.put()
-      context.log.entities.append((entity,))
+      context.log.entities.append((entity, ))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -722,12 +708,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      rule.write(entity, {'state' : 'suspended'})
+      rule.write(entity, {'state': 'suspended'})  # @todo Since rule.write doesn't take 'message', are field permissions for that field respected?
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -744,13 +729,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
-      rule.write(entity, {'state' : 'active'})
+      rule.write(entity, {'state': 'active'})  # @todo Since rule.write doesn't take 'message', are field permissions for that field respected?
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -767,13 +750,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
-      rule.write(entity, {'state' : context.input.get('state')})
+      rule.write(entity, {'state': context.input.get('state')})  # @todo Since rule.write doesn't take 'message' and 'note', are field permissions for those two fields respected?
       entity.put()
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
@@ -790,11 +771,12 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
+      # @todo Why is rule.write missing here?
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
       log.Engine.run(context)
-      
       context.output['entity'] = entity
     
     transaction()
     return context
+

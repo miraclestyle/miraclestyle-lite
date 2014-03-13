@@ -484,11 +484,10 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def format(self, value):
-    
     if isinstance(value, basestring):
-       return json.loads(value)
+      return json.loads(value)
     else:
-       return value
+      return value
 
 
 class SuperTextProperty(_BaseProperty, TextProperty):
