@@ -122,7 +122,7 @@ class Category(ndb.BaseExpando):
   name = ndb.SuperStringProperty('2', required=True)
   code = ndb.SuperStringProperty('3', required=True)
   active = ndb.SuperBooleanProperty('4', default=True)
-  company = ndb.SuperKeyProperty('5', kind='44', required=True)
+  company = ndb.SuperKeyProperty('5', kind='44', required=True) # -------- company will be removed -----------------
   complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
   # Expando
   # description = ndb.TextProperty('7', required=True)# soft limit 16kb

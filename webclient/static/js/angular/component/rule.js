@@ -1,35 +1,26 @@
-MainApp.factory('Nav', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title', 'Confirm',
+/**
+ * 
+ * All entity editing needs to be more dryer, try implementing EntityEditor service as a helper with event handling and seal the deal.
+ * 
+ * 
+ */
+MainApp.factory('Role', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title', 'Confirm',
 
     function ($rootScope, $modal, $timeout, Endpoint, Title, Confirm) {
 
         return {
-            build_menu: function (domain_key) {
 
-                if(!$rootScope.nav['menu']) {
-                    return Endpoint.post('build_menu', '62', {
-                        'domain': domain_key
-                    }).then(function (output) {
-                        update($rootScope.nav, output.data);
-                        Title.set(['My Apps', $rootScope.nav.domain.name]);
-                        return output.data;
-                    });
-                } else {
-                    Title.set(['My Apps', $rootScope.nav.domain.name]);
-                    return $rootScope.nav;
-                }
-
-            },
-            _manage_filter : function (filter, entity)
+            _manage_permission : function (permission, entity)
             {
             	
             	var modalInstance = $modal.open({
-                        templateUrl: logic_template('nav/manage_filter.html'),
+                        templateUrl: logic_template('role/manage_permission.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
-                            $scope.filter = angular.copy(filter ? filter : {});
+                            $scope.filter = angular.copy(permission ? permission : {});
                             $scope.kinds = FRIENDLY_KIND_NAMES;
                             
-                            var new_filter = filter ? false : true;
+                            var new_permission = permission ? false : true;
              
                             $scope.save = function () {
 

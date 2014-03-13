@@ -40,6 +40,9 @@ class Widget(ndb.BaseExpando):
   
   _global_role = rule.GlobalRole(
     permissions=[
+                 
+      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), True,
+                            "not context.auth.user._is_guest"),
   
       rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True,
                             "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
@@ -236,19 +239,30 @@ class Widget(ndb.BaseExpando):
     
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
-    entity.key.delete()
-    context.log.entities.append((entity,))
-    log.Engine.run(context)
- 
-    context.output['entity'] = entity
- 
-    return context
      
+    @ndb.transactional(xg=True)
+    def transaction():
+    
+      entity.key.delete()
+      context.log.entities.append((entity,))
+      log.Engine.run(context)
+   
+      context.output['entity'] = entity
+       
+    transaction()
+        
+    return context
+ 
      
   
   @classmethod
   def search(cls, context):
+    
+    context.rule.entity = cls()
+    rule.Engine.run(context)
+    
+    if not rule.executable(context):
+       raise rule.ActionDenied(context)
     
     domain_key = context.input.get('domain')
     urlsafe_cursor = context.input.get('next_cursor')
@@ -279,7 +293,7 @@ class Widget(ndb.BaseExpando):
     next_cursor = context.input.get('next_cursor')
     entity = entity_key.get()
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
@@ -293,6 +307,12 @@ class Widget(ndb.BaseExpando):
   
   @classmethod
   def build_menu(cls, context):
+    
+    context.rule.entity = cls()
+    rule.Engine.run(context)
+    
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     
     domain_key = context.input.get('domain')
     domain = domain_key.get()

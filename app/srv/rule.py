@@ -6,7 +6,9 @@ Created on Dec 20, 2013
 '''
 import collections
 
-from app import ndb, util
+from google.appengine.datastore.datastore_query import Cursor
+
+from app import ndb, util, settings
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback
 
@@ -561,29 +563,30 @@ class Engine:
       local_field_permissions = {}
       
       if not skip_user_roles:
-        domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.rule.entity.key_namespace)
-        domain_user = domain_user_key.get()
-        clean_roles = False
-        
-        if domain_user and domain_user.state == 'accepted':
-            roles = ndb.get_multi(domain_user.roles)
-            for role in roles:
-              if role is None:
-                clean_roles = True
-              else:   
-                if role.active:
-                   role.run(context)
-                   
-            if clean_roles:
-              context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : '8'})
-              callback.Engine.run(context)
+        if not context.auth.user._is_guest:
+          domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.rule.entity.key_namespace)
+          domain_user = domain_user_key.get()
+          clean_roles = False
+          
+          if domain_user and domain_user.state == 'accepted':
+              roles = ndb.get_multi(domain_user.roles)
+              for role in roles:
+                if role is None:
+                  clean_roles = True
+                else:   
+                  if role.active:
+                     role.run(context)
+                     
+              if clean_roles:
+                context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : '8'})
+                callback.Engine.run(context)
             
-        # copy 
-        local_action_permissions = context.rule.entity._action_permissions.copy()
-        local_field_permissions = context.rule.entity._field_permissions.copy()
-      
-        # empty
-        cls.prepare(context)
+          # copy 
+          local_action_permissions = context.rule.entity._action_permissions.copy()
+          local_field_permissions = context.rule.entity._field_permissions.copy()
+        
+          # empty
+          cls.prepare(context)
    
       entity = context.rule.entity
       if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
@@ -646,11 +649,22 @@ class DomainRole(Role):
                               }
                              ),
                 
-       'list' : event.Action(id='60-2',
+       'search' : event.Action(id='60-2',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
+                
+       'read' : event.Action(id='60-4', 
+                             arguments={
+                               'key' : ndb.SuperKeyProperty(kind='60', required=True),
+                             }),
+       'prepare' : event.Action(id='60-5',
+                              arguments={
+                                 'domain' : ndb.SuperKeyProperty(kind='6', required=True),
+                              }
+                             ),
+                
     }
  
     @classmethod
@@ -667,33 +681,25 @@ class DomainRole(Role):
  
         @ndb.transactional(xg=True)
         def transaction():
-
-          if entity and entity.loaded():
-             # log & delete
-             context.log.entities.append((entity, ))
-             entity.key.delete()
-             log.Engine.run(context)
-        
-          else:
-             context.not_found()      
-           
+  
+          entity.key.delete()
+          context.log.entities.append((entity, ))
+          log.Engine.run(context)
+          context.output['entity'] = entity
+  
         transaction()
            
         return context
       
     @classmethod
-    def complete_save(cls, entity, context):
+    def complete_save(cls, entity, context, create):
       
         context.rule.entity = entity
         Engine.run(context)
         
         if not executable(context):
            raise ActionDenied(context)
-         
-        entity.name = context.input.get('name')
-        entity.active = context.input.get('active')
-            
-      
+ 
         permissions = context.input.get('permissions')
         set_permissions = []
         for permission in permissions:
@@ -702,22 +708,29 @@ class DomainRole(Role):
                set_permissions.append(FieldPermission(permission.get('kind'),
                                                        permission.get('field'),
                                                        permission.get('writable'),
-                                                       permission.get('visible'), 
-                                                       permission.get('required'),
+                                                       permission.get('visible'),
                                                        permission.get('condition')))
-               
             else:
               set_permissions.append(ActionPermission(permission.get('kind'),
                                                       permission.get('action'),
                                                       permission.get('executable'),
                                                       permission.get('condition')))
-        entity.permissions = set_permissions  
         
+          
+        values = {'name' : context.input.get('name'),
+                  'active' : context.input.get('active'),
+                  'permissions' : permissions,
+                  }
+        
+        if create:
+          entity.populate(**values)
+        else:
+          write(entity, values)
+             
         entity.put()
-        
         context.log.entities.append((entity,))
         log.Engine.run(context)
- 
+        context.output['entity'] = entity
       
     @classmethod
     def create(cls, context):
@@ -730,7 +743,7 @@ class DomainRole(Role):
             domain = domain_key.get()
             entity = cls(namespace=domain.key_namespace)
            
-            cls.complete_save(entity, context)  
+            cls.complete_save(entity, context, True)  
                
         transaction()
             
@@ -745,28 +758,81 @@ class DomainRole(Role):
             entity_key = context.input.get('key')
             entity = entity_key.get()
           
-            cls.complete_save(entity, context)
+            cls.complete_save(entity, context, False)
            
         transaction()
             
         return context
 
     @classmethod
-    def list(cls, context):
-  
-       domain_key = context.input.get('domain')
-       domain = domain_key.get()
-       
-       context.rule.entity = domain
-       
-       Engine.run(context)
-       
-       if not executable(context):
-          raise ActionDenied(context)
-       
-       context.output['roles'] = cls.query(namespace=domain.key_namespace).fetch()
-  
-       return context
+    def search(cls, context):
+      
+      context.rule.entity = cls()
+      Engine.run(context)
+      
+      if not executable(context):
+         raise ActionDenied(context)
+      
+      domain_key = context.input.get('domain')
+      urlsafe_cursor = context.input.get('next_cursor')
+      cursor = Cursor(urlsafe=urlsafe_cursor)
+      
+      query = cls.query(namespace=domain_key.urlsafe()).order(cls.name)
+      
+      entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+   
+      for entity in entities:
+         context.rule.entity = entity
+         Engine.run(context)
+         read(entity)
+      
+      if next_cursor:
+         next_cursor = next_cursor.urlsafe()
+      
+      context.output['entities'] = entities
+      context.output['next_cursor'] = next_cursor
+      context.output['more'] = more
+   
+      return context
+    
+    @classmethod
+    def prepare(cls, context):
+      
+      domain_key = context.input.get('domain')
+      domain = domain_key.get()
+   
+      entity = cls(namespace=domain.key_namespace)
+      
+      context.rule.entity = entity
+      
+      Engine.run(context)
+      
+      if not executable(context):
+        raise ActionDenied(context)
+   
+      context.output['entity'] = entity
+ 
+      return context
+    
+    @classmethod
+    def read(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      Engine.run(context)
+      
+      if not executable(context):
+        raise ActionDenied(context)
+      
+      read(entity)
+      
+      context.output['entity'] = entity
+ 
+      return context
+ 
  
 class DomainUser(ndb.BaseModel):
     
@@ -832,6 +898,10 @@ class DomainUser(ndb.BaseModel):
                                  'key' : ndb.SuperKeyProperty(kind='8', required=True),
                               }
                              ),
+       'read' : event.Action(id='8-5', 
+                             arguments={
+                               'key' : ndb.SuperKeyProperty(kind='8', required=True),
+                             }),
     }
     
     @classmethod
@@ -994,8 +1064,7 @@ class DomainUser(ndb.BaseModel):
              
              context.rule.entity = entity
              Engine.run(context)
-             
-       
+              
              if not executable(context):
                 raise ActionDenied(context)
               
@@ -1008,9 +1077,14 @@ class DomainUser(ndb.BaseModel):
                 # avoid rogue roles
                 if role.key.namespace() == domain.key_namespace:
                    roles.append(role.key) 
+   
+             values = {
+              'name' : context.input.get('name'),
+              'roles' : roles,
+             }
              
-             entity.name = context.input.get('name')
-             entity.roles = roles
+             write(entity, values)
+             
              entity.put()
              
              context.log.entities.append((entity,))
@@ -1019,3 +1093,29 @@ class DomainUser(ndb.BaseModel):
           transaction()
            
           return context
+ 
+    
+    @classmethod
+    def read(cls, context):
+      
+      entity_key = context.input.get('key')
+      entity = entity_key.get()
+      
+      context.rule.entity = entity
+      
+      Engine.run(context)
+      
+      if not executable(context):
+        raise ActionDenied(context)
+      
+      read(entity)
+      
+      context.output['entity'] = entity
+      context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
+      
+      return context
+    
+    
+    @classmethod
+    def selection_roles_helper(cls, namespace):
+      return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()

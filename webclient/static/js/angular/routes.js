@@ -53,9 +53,7 @@ MainApp.config(['$stateProvider',
         	}]
         }
       })
-      .state('admin', {
-      	url: '/admin',
-      }).state('admin_apps', {
+      .state('admin_apps', {
       	url: '/admin/apps',
         templateUrl: logic_template('admin/apps.html'),
         controller: 'AdminApps',
