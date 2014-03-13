@@ -1,6 +1,8 @@
 /**
  * 
- * All entity editing needs to be more dryer, try implementing EntityEditor service as a helper with event handling and seal the deal.
+ * All entity editing needs to be more drier...
+ * Try implementing EntityEditor service as a helper with event handling to avoid writing so much repetetive code.
+ * This goes to all services regarding crud and other operations.
  * 
  * 
  */
