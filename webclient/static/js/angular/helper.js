@@ -147,3 +147,17 @@ function update()
 	return objects;
 }
 
+function resolveDefaults(defaults, options)
+{
+	options = alwaysObject(options);
+	
+	angular.forEach(defaults, function (value, key) {
+		if ( ! (key in options))
+		{
+			options[key] = value;
+		}
+	});
+	
+	return options;
+}
+

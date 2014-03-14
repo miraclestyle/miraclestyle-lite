@@ -1,0 +1,60 @@
+<form ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.name.writable" name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+	</div>
+	 
+    <div class="form-control">
+		<label class="form-label">Role</label>
+		<div class="form-input">
+			<select multiple="true" name="role" ng-required="rule.input[action].roles.required" ng-disabled="!rule.field.roles.writable" ui-select2 ng-model="entity.roles" data-placeholder="Select roles for this user">
+				    <option value=""></option>
+				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>
+			</select>
+		</div>
+	</div>
+  
+	<div class="form-control">
+		<label class="form-label">State</label>
+		<div class="form-input">
+			<div class="form-text">
+				 {{entity.state}}
+			</div>
+		</div>
+	</div>
+ 
+	 
+	<div ng-show="rule.action.read_records.executable && history" class="form-control">
+		<div ng-include="logic_template('misc/logs.html')"></div>
+	</div>	 
+	 
+
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+	
+	<button ng-show="rule.action.remove.executable" type="button" class="button" ng-click="remove()">
+		Remove
+	</button>
+ 
+	<button  ng-show="rule.action.update.executable" busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

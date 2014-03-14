@@ -42,8 +42,11 @@ MainApp.config(['$stateProvider',
         resolve : {
         	menu : resolve_menu,
         	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
+        	 
         		  
         		  var query = JSON.parse($stateParams['query']);
+        
+        		  if (!angular.isObject(query)) query = {};
         		  
         		  query['domain'] = $stateParams['domain_key'];
         		  

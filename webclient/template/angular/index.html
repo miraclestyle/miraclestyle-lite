@@ -41,6 +41,7 @@
     
     <script type="text/javascript" src="{{static_dir('js/angular/app.js')}}"></script>
     <script type="text/javascript" src="{{static_dir('js/angular/directive.js')}}"></script>
+    <script type="text/javascript" src="{{static_dir('js/angular/filter.js')}}"></script>
     
  	{% for module in webclient_settings.ANGULAR_COMPONENTS %}
     <script type="text/javascript" src="{{static_dir('js/angular/component/%s.js' % module)}}"></script>

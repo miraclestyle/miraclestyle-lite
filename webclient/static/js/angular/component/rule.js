@@ -1,38 +1,93 @@
-/**
- * 
- * All entity editing needs to be more drier...
- * Try implementing EntityEditor service as a helper with event handling to avoid writing so much repetetive code.
- * This goes to all services regarding crud and other operations.
- * 
- * 
- */
-MainApp.factory('Role', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title', 'Confirm',
+PERMISSION_TYPES = {
+	'field' : 'Field',
+	'action' : 'Action',
+};
 
-    function ($rootScope, $modal, $timeout, Endpoint, Title, Confirm) {
+MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
+    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+ 
+    	
         return {
-
-            _manage_permission : function (permission, entity)
+            create: function (domain_key, oncreate) {
+             
+            	  
+               return EntityEditor.create({
+	                	 'kind' : '8',
+	                	 'entity' : {},
+	                	 'handle' : function (data)
+				         {
+				            this.roles = data['roles'];
+				            this.entity['domain'] = domain_key;
+				         },
+	                	 'complete' : oncreate,
+	                	 'templateUrl' : logic_template('rule/manage_user.html'),
+	                	 'args' : {
+	                	 	'domain' : domain_key,
+	                	 }
+                });
+                
+            },
+            remove : function (entity, ondelete)
             {
-            	
-            	var modalInstance = $modal.open({
-                        templateUrl: logic_template('role/manage_permission.html'),
+               
+               return EntityEditor.remove({
+               	  'kind' : '8',
+               	  'entity' : entity,
+               	  'complete' : ondelete,
+               });
+         
+            },
+            update: function (entity, onupdate)
+            {
+             
+                return EntityEditor.update({
+                	 'kind' : '8',
+                	 'entity' : entity,
+                	 'handle' : function (data)
+			         {
+			            this.roles = data['roles'];
+			         },
+                	 'complete' : onupdate,
+                	 'templateUrl' : logic_template('rule/manage_user.html'),
+                	 'args' : {
+                	 	'key' : entity['key'],
+                	 }
+                });
+            }
+
+        };
+
+    }
+]).factory('AppRole', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+
+    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+    	  
+        var scope = {
+        	
+        	'types' : PERMISSION_TYPES,
+        
+        	'_managePermission' : function (permission, entity)
+        	{
+        		var modalInstance = $modal.open({
+                        templateUrl: logic_template('rule/manage_role_permission.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
-                            $scope.filter = angular.copy(permission ? permission : {});
+                            $scope.permission = angular.copy(permission ? permission : {});
                             $scope.kinds = FRIENDLY_KIND_NAMES;
-                            
+                   
                             var new_permission = permission ? false : true;
              
                             $scope.save = function () {
-
-                                 if (new_filter)
+                            	
+                             
+                                 if (new_permission)
                                  {
-                                 	entity.filters.push($scope.filter);
+                                 	entity.permissions.push($scope.permission);
                                  }
                                  else
                                  {
-                                 	update(filter, $scope.filter);
+                                 	update(permission, $scope.permission);
                                  }
                                  
                                  $scope.cancel();
@@ -44,131 +99,65 @@ MainApp.factory('Role', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title'
 
                         }
                     });
-            	
-            },
+        	},
+    	 	'addPermissions' : function ()
+    	 	{
+    	 		this._managePermission(false, this.entity);
+    	 	},
+    	 	'editPermission' : function (permission)
+    	 	{
+    	 		this._managePermission(permission, this.entity);
+    	 	},
+    	 	'removePermission' : function (perm)
+    	 	{
+    	 		var index = this.entity.permissions.indexOf(filter);
+  			    this.entity.permissions.splice(index,1);    
+    	 	},
+    	};
+    	
+        return {
             create: function (domain_key, oncreate) {
-            	
-                return this.manage(true, domain_key, oncreate);
+             
+            	  
+               return EntityEditor.create({
+                	 'kind' : '60',
+                	 'entity' : {},
+                	 'scope' : scope,
+                	 'handle' : function (data)
+			         {
+			            this.entity['domain'] = domain_key;
+			         },
+                	 'complete' : oncreate,
+                	 'templateUrl' : logic_template('rule/manage_role.html'),
+                	 'args' : {
+                	 	'domain' : domain_key,
+                	 }
+                });
                 
             },
             remove : function (entity, ondelete)
             {
-             
-                Confirm.sure(function () {
-            		
-            		 Endpoint.post('delete', '62', entity).success(function (data) {
-	            		if (data['entity'])
-	            		{
-	            			var modal = Confirm.notice('Successfully deleted widget!', ondelete);
-	            			
-	            			$timeout(function () {
-	            				modal.dismiss();
-	            			}, 1500);
-	            		}
-	            	});
-            	});
-            	
+               
+               return EntityEditor.remove({
+               	  'kind' : '60',
+               	  'entity' : entity,
+               	  'complete' : ondelete,
+               });
          
             },
             update: function (entity, onupdate)
             {
-            	return this.manage(false, entity, onupdate);
-            },
-            manage: function (create, entity, oncomplete) {
-            	
-                var that = this;
-                 
-                var action = 'update';
-                var action2 = 'read';
-                var args = {'domain' : entity};
-                
-                if (create)
-                {	
-                	action = 'create';
-                	action2 = 'prepare';
-                }
-                else
-                {
-                	args = {
-                      'key': entity['key']
-               		};
-                }
-
-                var handle = function (data) {
-
-                    var modalInstance = $modal.open({
-                        templateUrl: logic_template('nav/manage.html'),
-                        controller: function ($scope, $modalInstance, RuleEngine) {
-							
-							if (!create)
-							{
-								update(entity, data['entity']);
-								 
-								$scope.history = {
-	                                'kind': '62',
-	                                'args': {
-	                                    'key': entity['key'],
-	                                }
-	                            };
-							}
-                            else
-                            {
-                            	entity = data['entity'];
-                            	entity['domain'] = args['domain'];
-                            }
-                            
-                            
- 							$scope.rule = RuleEngine.factory(data['entity']);
-                            $scope.entity = angular.copy(entity);
-                            $scope.roles = data['roles'];
-                            $scope.action = action;
-                            $scope.action2 = action2;
-                            
-                            $scope.addFilter = function ()
-                            {
-                            	that._manage_filter(false, $scope.entity);
-                            };
-                            
-                            $scope.editFilter = function (filter)
-                            {
-                            	that._manage_filter(filter, $scope.entity);
-                            };
-                            
-                            $scope.removeFilter = function(filter)
-                            {
-                            	var index = $scope.entity.filters.indexOf(filter);
-  								$scope.entity.filters.splice(index,1);     
-                            };
-                             
-                            $scope.save = function () {
- 
-                                Endpoint.post(action, '62', $scope.entity)
-                                .success(function (data) {
-
-                                        update(entity, $scope.entity, data['entity']);
-                                        $scope.rule.update(data['entity']);
-                                        
-                                        if (angular.isFunction(oncomplete))
-                                        {
-                                        	oncomplete(entity);
-                                        }
-                                        
-                                        $scope.cancel();
-
-                                });
-                            };
-
-                            $scope.cancel = function () {
-                                $modalInstance.dismiss('cancel');
-                            };
-
-                        }
-                    });
-
-                };
-                
-                Endpoint.post(action2, '62', args).success(handle);
-
+             
+                return EntityEditor.update({
+                	 'kind' : '60',
+                	 'entity' : entity,
+                	 'scope' : scope,
+                	 'complete' : onupdate,
+                	 'templateUrl' : logic_template('rule/manage_role.html'),
+                	 'args' : {
+                	 	'key' : entity['key'],
+                	 }
+                });
             }
 
         };

@@ -1,0 +1,76 @@
+<form ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.name.writable" name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+	</div>
+ 
+	<div class="form-control">
+		<label class="form-label">Active</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.active.writable" class="button" type="button" ng-model="entity.active"></button>
+			</div>
+		</div>
+	</div>
+	
+	
+	<h1 class="fieldset with-button">
+			<span class="fieldset-text">Permissions</span>
+			<span ng-show="rule.field.permissions.writable" class="fieldset-button"><a class="button" busy ng-click="addPermission()">Add Permission</a></span>
+		</h1>
+		<table class="table">
+					<thead>
+						<tr>
+							<th>Kind</th>
+							<th>Type</th>
+							<th>Rule</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="perm in entity.permissions">
+							<td>{{FRIENDLY_KIND_NAMES[perm.kind]}}</td>
+							<td>{{perm.field|join:',' || perm.action|join:','}}</td>
+							<td>
+								<span ng-show="perm.executable != null">Executable: {{perm.executable}}</span>
+								<span ng-show="perm.writable != null">Writable: {{perm.writable}}</span>
+								<span ng-show="perm.visible != null">Visible: {{perm.visible}}</span>
+							</td>
+							<td>
+								<button ng-click="editPermission(perm)" type="button" class="button">Edit</button>
+								<button ng-click="removePermission(perm)" type="button" class="button">Delete</button>
+							</td>
+						</tr>
+					</tbody>
+		</table>
+	 
+	<div ng-show="rule.action.read_records.executable && history" class="form-control">
+		<div ng-include="logic_template('misc/logs.html')"></div>
+	</div>	 
+	 
+
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button  ng-show="rule.action.update.executable" busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

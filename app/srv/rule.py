@@ -766,18 +766,20 @@ class DomainRole(Role):
 
     @classmethod
     def search(cls, context):
+        
+      domain_key = context.input.get('domain')
+      domain = domain_key.get()
       
-      context.rule.entity = cls()
+      context.rule.entity = cls(namespace=domain.key_namespace)
       Engine.run(context)
       
       if not executable(context):
-         raise ActionDenied(context)
-      
-      domain_key = context.input.get('domain')
+        raise ActionDenied(context)
+ 
       urlsafe_cursor = context.input.get('next_cursor')
       cursor = Cursor(urlsafe=urlsafe_cursor)
       
-      query = cls.query(namespace=domain_key.urlsafe()).order(cls.name)
+      query = cls.query(namespace=domain.key_namespace).order(cls.name)
       
       entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
    
@@ -902,6 +904,13 @@ class DomainUser(ndb.BaseModel):
                              arguments={
                                'key' : ndb.SuperKeyProperty(kind='8', required=True),
                              }),
+                
+       'search' : event.Action(id='8-6',
+                              arguments={
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
+                              }
+         ),
+                
     }
     
     @classmethod
@@ -1113,6 +1122,40 @@ class DomainUser(ndb.BaseModel):
       context.output['entity'] = entity
       context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
       
+      return context
+    
+    
+    @classmethod
+    def search(cls, context):
+        
+      domain_key = context.input.get('domain')
+      domain = domain_key.get()
+      
+      context.rule.entity = cls(namespace=domain.key_namespace)
+      Engine.run(context)
+      
+      if not executable(context):
+        raise ActionDenied(context)
+ 
+      urlsafe_cursor = context.input.get('next_cursor')
+      cursor = Cursor(urlsafe=urlsafe_cursor)
+      
+      query = cls.query(namespace=domain.key_namespace).order(cls.name)
+      
+      entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+   
+      for entity in entities:
+         context.rule.entity = entity
+         Engine.run(context)
+         read(entity)
+      
+      if next_cursor:
+         next_cursor = next_cursor.urlsafe()
+      
+      context.output['entities'] = entities
+      context.output['next_cursor'] = next_cursor
+      context.output['more'] = more
+   
       return context
     
     

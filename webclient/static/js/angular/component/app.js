@@ -12,6 +12,32 @@ SEARCH_KIND_CONFIG = {
 				    'key': 'active'
 				    }]
     },
+   '60': {
+    	'title' : 'Roles',
+    	'add_new' : 'Add New',
+    	'service' : 'AppRole',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'Active',
+				    'key': 'active'
+				    }]
+    },
+   '8': {
+    	'title' : 'Users',
+    	'add_new' : 'Invite New',
+    	'service' : 'AppUser',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'State',
+				    'key': 'state'
+				    }]
+    },
     
     'default': {
     	'title' : 'No data specified for this kind',

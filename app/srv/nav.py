@@ -33,6 +33,7 @@ class Widget(ndb.BaseExpando):
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _virtual_fields = {
+    '_is_admin' : ndb.ComputedProperty(lambda self: self.is_admin()),
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True),
     '_records_next_cursor': ndb.SuperStringProperty(),
     '_records_more': ndb.SuperBooleanProperty()
@@ -43,6 +44,9 @@ class Widget(ndb.BaseExpando):
                  
       rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), True,
                             "not context.auth.user._is_guest"),
+                 
+      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False, "context.rule.entity._is_admin"),
+      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), True, "not context.rule.entity._is_admin"),
   
       rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True,
                             "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
@@ -104,6 +108,9 @@ class Widget(ndb.BaseExpando):
                 ),
               
              }
+  
+  def is_admin(self):
+    return self.key_id_str.startswith('admin_')
   
   @classmethod
   def selection_roles_helper(cls, namespace):
@@ -257,14 +264,16 @@ class Widget(ndb.BaseExpando):
   
   @classmethod
   def search(cls, context):
+     
+    domain_key = context.input.get('domain')
+    domain = domain_key.get()
     
-    context.rule.entity = cls()
+    context.rule.entity = cls(namespace=domain.key_namespace)
     rule.Engine.run(context)
     
     if not rule.executable(context):
        raise rule.ActionDenied(context)
-    
-    domain_key = context.input.get('domain')
+
     urlsafe_cursor = context.input.get('next_cursor')
     cursor = Cursor(urlsafe=urlsafe_cursor)
     
@@ -307,16 +316,16 @@ class Widget(ndb.BaseExpando):
   
   @classmethod
   def build_menu(cls, context):
+     
+    domain_key = context.input.get('domain')
+    domain = domain_key.get()
     
-    context.rule.entity = cls()
+    context.rule.entity = cls(namespace=domain.key_namespace)
     rule.Engine.run(context)
     
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    
-    domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    
+ 
     domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
     domain_user = domain_user_key.get()
     

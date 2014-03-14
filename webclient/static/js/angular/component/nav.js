@@ -1,37 +1,25 @@
-MainApp.factory('Nav', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title', 'Confirm',
+MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
-    function ($rootScope, $modal, $timeout, Endpoint, Title, Confirm) {
-
-        return {
-            build_menu: function (domain_key) {
-
-                if(!$rootScope.nav['menu']) {
-                    return Endpoint.post('build_menu', '62', {
-                        'domain': domain_key
-                    }).then(function (output) {
-                        update($rootScope.nav, output.data);
-                        Title.set(['My Apps', $rootScope.nav.domain.name]);
-                        return output.data;
-                    });
-                } else {
-                    Title.set(['My Apps', $rootScope.nav.domain.name]);
-                    return $rootScope.nav;
-                }
-
-            },
-            _manage_filter : function (filter, entity)
-            {
-            	
-            	var modalInstance = $modal.open({
+    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+    	  
+        var scope = {
+        	
+        	'_manageFilter' : function (filter, entity)
+        	{
+        		var modalInstance = $modal.open({
                         templateUrl: logic_template('nav/manage_filter.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
                             $scope.filter = angular.copy(filter ? filter : {});
                             $scope.kinds = FRIENDLY_KIND_NAMES;
                             
+                            $scope.filter.query = JSON.stringify($scope.filter.query);
+                            
                             var new_filter = filter ? false : true;
              
                             $scope.save = function () {
+                            	
+                            	 $scope.filter.query = JSON.parse($scope.filter.query);
 
                                  if (new_filter)
                                  {
@@ -51,131 +39,86 @@ MainApp.factory('Nav', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Title',
 
                         }
                     });
-            	
+        	},
+    	 	'addFilter' : function ()
+    	 	{
+    	 		this._manageFilter(false, this.entity);
+    	 	},
+    	 	'editFilter' : function (filter)
+    	 	{
+    	 		this._manageFilter(filter, this.entity);
+    	 	},
+    	 	'removeFilter' : function (filter)
+    	 	{
+    	 		var index = this.entity.filters.indexOf(filter);
+  			    this.entity.filters.splice(index,1);    
+    	 	},
+    	};
+    	
+        return {
+            build_menu: function (domain_key) {
+
+                if(!$rootScope.nav['menu']) {
+                    return Endpoint.post('build_menu', '62', {
+                        'domain': domain_key
+                    }).then(function (output) {
+                        update($rootScope.nav, output.data);
+                        Title.set(['My Apps', $rootScope.nav.domain.name]);
+                        return output.data;
+                    });
+                } else {
+                    Title.set(['My Apps', $rootScope.nav.domain.name]);
+                    return $rootScope.nav;
+                }
+
             },
             create: function (domain_key, oncreate) {
-            	
-                return this.manage(true, domain_key, oncreate);
+             
+            	  
+               return EntityEditor.create({
+                	 'kind' : '62',
+                	 'entity' : {},
+                	 'scope' : scope,
+                	 'handle' : function (data)
+			         {
+			            this.roles = data['roles'];
+			            this.entity['domain'] = domain_key;
+			         },
+                	 'complete' : oncreate,
+                	 'templateUrl' : logic_template('nav/manage.html'),
+                	 'args' : {
+                	 	'domain' : domain_key,
+                	 }
+                });
                 
             },
             remove : function (entity, ondelete)
             {
-             
-                Confirm.sure(function () {
-            		
-            		 Endpoint.post('delete', '62', entity).success(function (data) {
-	            		if (data['entity'])
-	            		{
-	            			var modal = Confirm.notice('Successfully deleted widget!', ondelete);
-	            			
-	            			$timeout(function () {
-	            				modal.dismiss();
-	            			}, 1500);
-	            		}
-	            	});
-            	});
-            	
+               
+               return EntityEditor.remove({
+               	  'kind' : '62',
+               	  'entity' : entity,
+               	  'complete' : ondelete,
+               });
          
             },
             update: function (entity, onupdate)
             {
-            	return this.manage(false, entity, onupdate);
-            },
-            manage: function (create, entity, oncomplete) {
-            	
-                var that = this;
-                 
-                var action = 'update';
-                var action2 = 'read';
-                var args = {'domain' : entity};
-                
-                if (create)
-                {	
-                	action = 'create';
-                	action2 = 'prepare';
-                }
-                else
-                {
-                	args = {
-                      'key': entity['key']
-               		};
-                }
-
-                var handle = function (data) {
-
-                    var modalInstance = $modal.open({
-                        templateUrl: logic_template('nav/manage.html'),
-                        controller: function ($scope, $modalInstance, RuleEngine) {
-							
-							if (!create)
-							{
-								update(entity, data['entity']);
-								 
-								$scope.history = {
-	                                'kind': '62',
-	                                'args': {
-	                                    'key': entity['key'],
-	                                }
-	                            };
-							}
-                            else
-                            {
-                            	entity = data['entity'];
-                            	entity['domain'] = args['domain'];
-                            }
-                            
-                            
- 							$scope.rule = RuleEngine.factory(data['entity']);
-                            $scope.entity = angular.copy(entity);
-                            $scope.roles = data['roles'];
-                            $scope.action = action;
-                            $scope.action2 = action2;
-                            
-                            $scope.addFilter = function ()
-                            {
-                            	that._manage_filter(false, $scope.entity);
-                            };
-                            
-                            $scope.editFilter = function (filter)
-                            {
-                            	that._manage_filter(filter, $scope.entity);
-                            };
-                            
-                            $scope.removeFilter = function(filter)
-                            {
-                            	var index = $scope.entity.filters.indexOf(filter);
-  								$scope.entity.filters.splice(index,1);     
-                            };
-                             
-                            $scope.save = function () {
- 
-                                Endpoint.post(action, '62', $scope.entity)
-                                .success(function (data) {
-
-                                        update(entity, $scope.entity, data['entity']);
-                                        $scope.rule.update(data['entity']);
-                                        
-                                        if (angular.isFunction(oncomplete))
-                                        {
-                                        	oncomplete(entity);
-                                        }
-                                        
-                                        $scope.cancel();
-
-                                });
-                            };
-
-                            $scope.cancel = function () {
-                                $modalInstance.dismiss('cancel');
-                            };
-
-                        }
-                    });
-
-                };
-                
-                Endpoint.post(action2, '62', args).success(handle);
-
+             
+                return EntityEditor.update({
+                	 'kind' : '62',
+                	 'entity' : entity,
+                	 'scope' : scope,
+                	 'handle' : function (data)
+			         {
+			            this.roles = data['roles'];
+			         },
+                	 'complete' : onupdate,
+                	 'templateUrl' : logic_template('nav/manage.html'),
+                	 'args' : {
+                	 	'key' : entity['key'],
+                	 }
+                });
             }
 
         };

@@ -1,0 +1,85 @@
+<form ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+	
+	<div class="form-control">
+		<label class="form-label">Type</label>
+		<div class="form-input">
+			<select ng-change="changedType()" name="type" ng-required="true" ui-select2 ng-model="permission.type" data-placeholder="Select a type">
+					<option value=""></option>
+				    <option ng-repeat="(type_key, type) in types" value="{{type_key}}">{{type}}</option>
+			</select>
+		</div>
+	</div>
+ 
+	 
+    <div class="form-control">
+		<label class="form-label">Kind</label>
+		<div class="form-input">
+			<select name="kind" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a kind">
+					<option value=""></option>
+				    <option ng-repeat="(kind_key, kind) in kinds" value="{{kind_key}}">{{kind}}</option>
+			</select>
+		</div>
+	</div>
+	
+	
+	<div ng-show="permission.type == 'action'" class="form-control">
+		<label class="form-label">Action</label>
+		<div class="form-input">
+			<select name="kind" ng-required="true" ui-select2 ng-model="permission.action" data-placeholder="Select a action">
+					<option value=""></option>
+				    <option ng-repeat="(action_key, action) in actions" value="{{action_key}}">{{action}}</option>
+			</select>
+		</div>
+	</div>
+	
+	<div ng-show="permission.type == 'field'" class="form-control">
+		<label class="form-label">Field</label>
+		<div class="form-input">
+			<select name="fields" ng-required="true" multiple="true" ui-select2 ng-model="permission.field" data-placeholder="Select a field">
+					<option value=""></option>
+				    <option ng-repeat="(field_key, field) in fields" value="{{field_key}}">{{field}}</option>
+			</select>
+		</div>
+	</div>
+	
+	
+	
+	<div class="form-control">
+		<label class="form-label">Kind</label>
+		<div class="form-input">
+			<select name="kind" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a kind">
+					<option value=""></option>
+				    <option ng-repeat="(kind_key, kind) in kinds" value="{{kind_key}}">{{kind}}</option>
+			</select>
+		</div>
+	</div>
+   
+	
+   <div class="form-control">
+		<label class="form-label">Condition</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea name="condition" ng-required="true" class="text-input" ng-model="permission.condition"></textarea>
+			</div>
+		</div>
+	</div>
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

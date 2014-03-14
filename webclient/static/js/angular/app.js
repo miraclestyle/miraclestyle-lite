@@ -412,6 +412,171 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		}  
 	});
 }])
+.factory('EntityEditor', ['$rootScope', '$modal', '$timeout', 'Endpoint', 'Confirm',
+
+    function ($rootScope, $modal, $timeout, Endpoint, Confirm) {
+    	
+    	var defaults = {
+    		'scope' : {},
+    		'entity' : {},
+    		'close' : true,
+    		'complete' : angular.noop,
+    		'handle' : angular.noop,
+    		'cancel' : angular.noop,
+    		'dismiss' : true,
+    		'confirm_options' : {},
+    		'message_success' : 'Successfully deleted!',
+    		'templateUrl' : '',
+    		'args' : {},
+    		'kind' : '',
+    	};
+    	
+    	var resolveOptions = function (options)
+    	{
+    		options = resolveDefaults(defaults, options);
+    		
+    		var functs = ['complete', 'handle', 'cancel'];
+    		
+    		angular.forEach(functs, function (value) {
+    			 if (!angular.isFunction(options[value]))
+    			 {
+    			 	options[value] = angular.noop;
+    			 }
+    		});
+    		
+    		return options;
+    	};
+
+        return {
+            create: function (options) {
+            
+                return this.manage(true, options);
+                
+            },
+            remove : function (options)
+            {
+             
+             	options = resolveOptions(options);
+             	
+             	var confirm_defaults = {
+					message : 'Are you sure you want to proceed with this action?',
+					callbacks : {
+						Yes : function () {
+            		
+		            		 Endpoint.post('delete', options['kind'], options['entity']).success(function (data) {
+			            		if (data['entity'])
+			            		{
+			            			var modal = Confirm.notice(options['message_success'], options['complete']);
+			            			
+			            			if (options['dismiss'])
+			            			{
+			            				$timeout(function () {
+			      							try
+			      							{
+			      								modal.dismiss();
+			      								
+			      							}catch(e) {}
+				            				
+				            			}, 1500);
+			            			}
+			            			
+			            		}
+			            	});
+		            	},
+			 
+					},
+				 
+				};
+				
+				angular.extend(confirm_defaults, options['confirm_options']);
+			 
+                Confirm.sure(null, null, confirm_defaults);
+            	 
+            },
+            update: function (options)
+            {
+            	return this.manage(false, options);
+            },
+            manage: function (create, options) {
+            	
+            	options = resolveOptions(options);
+            	
+                var that = this;
+                 
+                var action = 'update';
+                var action2 = 'read';
+                var args = {};
+           
+                if (create)
+                {	
+                	action = 'create';
+                	action2 = 'prepare';
+                }
+                
+                args = options['args'];
+            
+                var handle = function (data) {
+
+                    var modalInstance = $modal.open({
+                        templateUrl: options['templateUrl'],
+                        controller: function ($scope, $modalInstance, RuleEngine) {
+                        	
+                        	var entity = options['entity'];
+                        	
+                        	update(entity, data['entity']);
+                        	
+                        	$scope.options = options;
+                        	 
+ 							$scope.rule = RuleEngine.factory(data['entity']);
+                            $scope.entity = angular.copy(entity);
+                            $scope.action = action;
+                            $scope.action2 = action2;
+                            
+                            $scope.resolve_handle = options['handle'];
+                            $scope.resolve_complete = options['complete'];
+                            $scope.resolve_cancel = options['cancel'];
+                              
+                            $scope.save = function () {
+ 
+                                Endpoint.post(action, options['kind'], $scope.entity)
+                                .success(function (data) {
+
+                                        update(entity, $scope.entity, data['entity']);
+                                        $scope.rule.update(data['entity']);
+                                        
+                                        $scope.resolve_complete(entity);
+                                        
+                                        if (options['close'])
+                                        {
+                                        	$scope.cancel();
+                                        } 
+                                         
+                                });
+                            };
+ 
+                            angular.extend($scope, options['scope']);
+                            
+                            $scope.resolve_handle(data);
+                             
+                            $scope.cancel = function () {
+                            	
+                            	$scope.resolve_cancel($modalInstance);
+                                $modalInstance.dismiss('cancel');
+                            };
+
+                        }
+                    });
+
+                };
+                
+                Endpoint.post(action2, options['kind'], args).success(handle);
+
+            }
+
+        };
+
+    }
+])
 .run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
     
     $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
