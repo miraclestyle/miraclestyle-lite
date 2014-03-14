@@ -17,6 +17,12 @@ from app.lib import oauth2
 from app.srv import event, rule, log, setup, blob, callback
 
 
+class OAuth2Error(Exception):
+  
+  def __init__(self, error):
+    self.message = {'oauth2_error' : error}
+
+
 class Context():
   
   def __init__(self):
@@ -45,18 +51,17 @@ class User(ndb.BaseExpando):
   
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
-  identities = ndb.SuperStructuredProperty(Identity, '3', repeated=True)  # Soft limit 100 instances?
-  emails = ndb.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances?
-  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # Shall we disable indexing here?
-  sessions = ndb.SuperLocalStructuredProperty(Session, '6', repeated=True)  # Soft limit 100 instances?
-  domains = ndb.SuperKeyProperty('7', kind='6', repeated=True)  # Soft limit 100 instances? Shall we disable indexing here?
+  identities = ndb.SuperStructuredProperty(Identity, '3', repeated=True)  # Soft limit 100 instances.
+  emails = ndb.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances.
+  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # @todo Shall we disable indexing here?
+  sessions = ndb.SuperLocalStructuredProperty(Session, '6', repeated=True)  # Soft limit 100 instances.
+  domains = ndb.SuperKeyProperty('7', kind='6', repeated=True)  # Soft limit 100 instances. @todo Shall we disable indexing here?
   
   _default_indexed = False
   
   _expando_fields = {}
   
   _virtual_fields = {
-    # By default these are helper properties that operate mainly on 'self' without performing any queries.
     'ip_address': ndb.SuperStringProperty(),
     '_csrf': ndb.ComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
     '_is_guest': ndb.ComputedProperty(lambda self: self.is_guest()),
@@ -128,7 +133,7 @@ class User(ndb.BaseExpando):
         }
       ),
     'read': event.Action(id='0-6',arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
-    'sudo_search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
+    'search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
     }
   
   def is_taskqueue(self):
@@ -220,8 +225,10 @@ class User(ndb.BaseExpando):
   
   @classmethod
   def sudo(cls, context):
-    # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
-    # i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
+    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    
+    """
     @ndb.transactional(xg=True)
     def transaction():
       entity_key = context.input.get('key')
@@ -234,12 +241,12 @@ class User(ndb.BaseExpando):
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       if state == 'suspended':
-        entity.sessions = []  # Delete sessions. @todo Should we put this into rule.writable (see def logout as well)?
-      rule.write(entity, {'state': state})  # @todo Since rule.write doesn't take 'message' and 'note', are field permissions for those two fields respected?
+        entity.sessions = []  # Delete sessions. @todo If state field is writable and is being changed to 'suspended', then we can respect this statement!!
+      rule.write(entity, {'state': state})
       entity.put()
-      context.log.entities.append((entity, {'message': message, 'note': note}))  # Are field permissions for 'message' and 'note' fields respected?
+      context.log.entities.append((entity, {'message': message, 'note': note}))  # @todo Handle permissions externally.
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -273,7 +280,7 @@ class User(ndb.BaseExpando):
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -308,7 +315,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def sudo_search(cls, context):  # Name of this function will most likely remain sudo_ prefixed (taking search UI into consideration)!
+  def search(cls, context):
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -319,13 +326,13 @@ class User(ndb.BaseExpando):
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     context.output['entity'] = context.auth.user
-    context.output['entities'] = entities
+    context.output['entities'] = entities  # @todo Apply rule.read() for each instance in entities prior returning them.
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
   
   @classmethod
-  def apps(cls, context):  # Name of this function is not decided yet.
+  def apps(cls, context):  # @todo This function has to undergo rewrite.
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
@@ -383,7 +390,6 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    context.output['providers'] = settings.LOGIN_METHODS.keys()  # Not sure what is expected in output?
     oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
     client = oauth2.Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
@@ -394,13 +400,11 @@ class User(ndb.BaseExpando):
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
     context.output['authorization_urls'] = urls
     if error:
-      # raise custom exception!!!
-      return context.error('oauth2_error', 'rejected_account_access')
+      raise OAuth2Error('rejected_account_access')
     if code:
       client.get_token(code)
       if not client.access_token:
-        # raise custom exception!!!
-        return context.error('oauth2_error', 'failed_access_token')
+        raise OAuth2Error('failed_access_token')
       userinfo = oauth2_cfg['userinfo']
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
@@ -443,13 +447,13 @@ class User(ndb.BaseExpando):
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
           log.Engine.run(context)
           context.output.update({'entity': entity,
-                                 'authorization_code': entity.generate_authorization_code(session)})
+                                 'authorization_code': entity.generate_authorization_code(session)})  # @todo Apply rule.read() prior returning entity?
         
         transaction(user)
     return context
 
 
-class Domain(ndb.BaseExpando):
+class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumping business module!
   
   _kind = 6
   
@@ -565,7 +569,7 @@ class Domain(ndb.BaseExpando):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'sudo_search': event.Action(id='6-10', arguments={'next_cursor': ndb.SuperStringProperty()})
+    'search': event.Action(id='6-10', arguments={'next_cursor': ndb.SuperStringProperty()})
     }
   
   @property
@@ -577,7 +581,7 @@ class Domain(ndb.BaseExpando):
     return self
   
   @classmethod
-  def sudo_search(cls, context):  # Name of this function will most likely remain sudo_ prefixed (taking search UI into consideration)!
+  def search(cls, context):
     entity = cls()
     context.rule.entity = entity
     rule.Engine.run(context, True)
@@ -602,7 +606,7 @@ class Domain(ndb.BaseExpando):
       next_cursor = next_cursor.urlsafe()
     entities = helper(entities).get_result()
     context.output['entity'] = entity
-    context.output['entities'] = entities
+    context.output['entities'] = entities  # @todo Apply rule.read() for each instance in entities prior returning them.
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
@@ -627,7 +631,7 @@ class Domain(ndb.BaseExpando):
                                       'action_model': '57',
                                       'key': config.key.urlsafe()})
       callback.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity?
     
     transaction()
     return context
@@ -692,7 +696,7 @@ class Domain(ndb.BaseExpando):
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -708,12 +712,12 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      rule.write(entity, {'state': 'suspended'})  # @todo Since rule.write doesn't take 'message', are field permissions for that field respected?
+      rule.write(entity, {'state': 'suspended'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))
+      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -729,12 +733,12 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      rule.write(entity, {'state': 'active'})  # @todo Since rule.write doesn't take 'message', are field permissions for that field respected?
+      rule.write(entity, {'state': 'active'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))
+      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -750,12 +754,12 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      rule.write(entity, {'state': context.input.get('state')})  # @todo Since rule.write doesn't take 'message' and 'note', are field permissions for those two fields respected?
+      rule.write(entity, {'state': context.input.get('state')})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
+      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -771,12 +775,10 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      # @todo Why is rule.write missing here?
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
-      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))
+      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
-      context.output['entity'] = entity
+      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
-
