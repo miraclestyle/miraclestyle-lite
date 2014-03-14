@@ -333,7 +333,7 @@ class ActionPermission(Permission):
     
   def __todict__(self):
      return {'kind' : self.kind, 'action' : self.action,
-             'executable' : self.executable, 'condition' : self.condition}
+             'executable' : self.executable, 'condition' : self.condition, 'type' : self.__class__.__name__}
     
   def run(self, role, context):
     
@@ -358,7 +358,7 @@ class FieldPermission(Permission):
     
   def __todict__(self):
      return {'kind' : self.kind, 'field' : self.field, 'writable' : self.writable,
-             'visible' : self.visible, 'condition' : self.condition}
+             'visible' : self.visible, 'condition' : self.condition, 'type' : self.__class__.__name__}
     
     
   def run(self, role, context):

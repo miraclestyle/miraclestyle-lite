@@ -1,6 +1,6 @@
 PERMISSION_TYPES = {
-	'field' : 'Field',
-	'action' : 'Action',
+	'FieldPermission' : 'Field',
+	'ActionPermission' : 'Action',
 };
 
 MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
@@ -64,9 +64,7 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
     	  
         var scope = {
-        	
-        	'types' : PERMISSION_TYPES,
-        
+     
         	'_managePermission' : function (permission, entity)
         	{
         		var modalInstance = $modal.open({
@@ -75,6 +73,7 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
  
                             $scope.permission = angular.copy(permission ? permission : {});
                             $scope.kinds = FRIENDLY_KIND_NAMES;
+                            $scope.types = PERMISSION_TYPES;
                    
                             var new_permission = permission ? false : true;
              

@@ -34,6 +34,12 @@ MainApp.filter('bool', function () {
 })
 .filter('join', function () {
   return function (array, separator) {
+  	
+  	if (!angular.isArray(array))
+  	{
+  		return array;
+  	}
+  	
     if (!array) {
       return '';
     }
