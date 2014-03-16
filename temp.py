@@ -1,3 +1,8 @@
+# omoguciti da se u jednoj domeni trasakciona definicija konfigurise sa pluginovima koji mogu raditi notify na http tako da se moze raditi centralizacija
+# user inputa sa vise domena na jednu, a pre svega u implementaciji notify engine-a napraviti da pored templeta za slanje ima i template-e za primanje http postova
+# ovo je koncept sa transakcionim definicijama, a moglo bi se i resavati na journal definicijama, u zavisnosti kako odlucimo da resavamo cross entry processing.
+
+
 # few ideas:
 
 # Each class should have _virtual_fields = {}, which will be similar to _expando_fields = {}, i the way
