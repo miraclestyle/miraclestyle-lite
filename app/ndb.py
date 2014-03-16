@@ -118,7 +118,6 @@ class _BaseModel(object):
     self._output = []
     for key in self.get_fields():
       self.add_output(key)
-    self.add_output('_actions')
   
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
@@ -134,12 +133,9 @@ class _BaseModel(object):
       if name in self._output:
         self._output.remove(name)
   
-  def __todict__(self):
+  def get_output(self):
     """
     This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
-    Currently however, 'self._output' contains '_actions' branch, which is meta data, and in the future should be
-    excluded from 'self._output'. The future convention would rename this function from '__todict__' to 'get_output', 
-    and include 'get_meta' function in '_BaseModel' which will return dictionary of meta data of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -154,6 +150,18 @@ class _BaseModel(object):
     for k, v in dic.items():
       if isinstance(v, Key):
         dic[k] = v.urlsafe()
+    return dic
+  
+  @classmethod
+  def get_meta(cls):
+    """
+    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    """
+    dic = {}
+    dic['_actions'] = getattr(cls, '_actions', {})
+    dic.update(cls.get_fields())
     return dic
   
   def loaded(self):
@@ -394,11 +402,9 @@ class _BaseProperty(object):
   
   _max_size = None
   
-  def __todict__(self):
+  def get_meta(self):
     """
-    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
-    counterpart in _BaseModel does) of the model. The future convention would rename this function 
-    from '__todict__' to 'get_meta'.
+    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -424,8 +430,10 @@ class _BaseProperty(object):
 class BaseProperty(_BaseProperty, Property):
   """Base property class for all properties capable of having _max_size option."""
 
+
 class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass
+
 
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
@@ -435,15 +443,13 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
       args[0] = Model._kind_map.get(args[0])
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
   
-  def __todict__(self):
+  def get_meta(self):
     """
-    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
-    counterpart in _BaseModel does) of the model. The future convention would rename this function 
-    from '__todict__' to 'get_meta'.
+    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
-    response = super(SuperLocalStructuredProperty, self).__todict__()
+    response = super(SuperLocalStructuredProperty, self).get_meta()
     response['model'] = self._modelclass.get_fields()
     return response
   
@@ -459,15 +465,13 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
       args[0] = Model._kind_map.get(args[0])
     super(SuperStructuredProperty, self).__init__(*args, **kwargs)
   
-  def __todict__(self):
+  def get_meta(self):
     """
-    This function returns dictionary of meta data (not stored or dynamically generated data, like it's 
-    counterpart in _BaseModel does) of the model. The future convention would rename this function 
-    from '__todict__' to 'get_meta'.
+    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
-    response = super(SuperStructuredProperty, self).__todict__()
+    response = super(SuperStructuredProperty, self).get_meta()
     response['model'] = self._modelclass.get_fields()
     return response
   
