@@ -424,6 +424,8 @@ class _BaseProperty(object):
 class BaseProperty(_BaseProperty, Property):
   """Base property class for all properties capable of having _max_size option."""
 
+class SuperComputedProperty(_BaseProperty, ComputedProperty):
+  pass
 
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   

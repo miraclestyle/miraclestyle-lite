@@ -33,7 +33,7 @@ class Widget(ndb.BaseExpando):
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _virtual_fields = {
-    '_is_admin' : ndb.ComputedProperty(lambda self: self.is_admin()),
+    '_is_admin' : ndb.SuperComputedProperty(lambda self: self.is_admin()),
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True),
     '_records_next_cursor': ndb.SuperStringProperty(),
     '_records_more': ndb.SuperBooleanProperty()

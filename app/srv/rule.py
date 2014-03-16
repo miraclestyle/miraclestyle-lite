@@ -36,7 +36,7 @@ class Model(ndb.BaseModel):
    bar = ndb.SuperStructuredProperty(OtherModel)
 
    _virtual_fields = {
-     'my_magic_field' : ndb.ComputedProperty(lambda self: 'this field does magic!')
+     'my_magic_field' : ndb.SuperComputedProperty(lambda self: 'this field does magic!')
    }
  
    

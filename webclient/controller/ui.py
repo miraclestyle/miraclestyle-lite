@@ -8,11 +8,17 @@ import json
 
 from webclient import handler
 from webclient.util import JSONEncoderHTML
+
+class Index(handler.Angular):
+  
+  def respond(self):
+    return {}
   
 class ModelInfo(handler.Base):
   
   def respond(self):
     
+    # beside the content type include the cache headers in the future
     self.response.headers['Content-Type'] = 'text/javascript'
     
     script = u''
@@ -22,7 +28,7 @@ class ModelInfo(handler.Base):
     from app import domain
     from app import opt
     
-    
+    # here we would combine all classes that are models with their _actions and get_fields() methods
     models = [srv.auth.Domain, srv.log.Record, srv.setup.Configuration, srv.auth.User, srv.rule.DomainRole, srv.rule.DomainUser,
                 srv.setup.Configuration, srv.nav.Widget, srv.event.Action, srv.notify.Template,
                 domain.business.Company, domain.business.CompanyContent, domain.marketing.Catalog,
@@ -39,18 +45,16 @@ class ModelInfo(handler.Base):
  
     for model in models:
       if hasattr(model, '_actions'):
-        actions[model.get_kind()] = model.get_actions()
+        actions[model.get_kind()] = model._actions
         
       if hasattr(model, 'get_fields'):
         fields[model.get_kind()] = model.get_fields()
         
-    script += "ModelInfo.actions = %s; \n" % json.dumps(actions, cls=JSONEncoderHTML)
-    script += "ModelInfo.properties = %s; \n" % json.dumps(fields, cls=JSONEncoderHTML)
+    script += "ModelInfo.actions = %s; \n" % json.dumps(actions, indent=2, cls=JSONEncoderHTML)
+    script += "ModelInfo.fields = %s; \n" % json.dumps(fields, indent=2, cls=JSONEncoderHTML)
     
     self.response.write(script)
       
       
-handler.register(('/model_info.js', ModelInfo))
-
-
-
+handler.register(('/', Index),
+                 ('/model_info.js', ModelInfo))

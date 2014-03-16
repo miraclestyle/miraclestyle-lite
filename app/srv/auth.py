@@ -63,11 +63,11 @@ class User(ndb.BaseExpando):
   
   _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
-    '_csrf': ndb.ComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
-    '_is_guest': ndb.ComputedProperty(lambda self: self.is_guest()),
-    '_primary_email': ndb.ComputedProperty(lambda self: self.primary_email()),
-    '_root_admin': ndb.ComputedProperty(lambda self: self.root_admin()),
-    '_is_taskqueue': ndb.ComputedProperty(lambda self: self.is_taskqueue()),
+    '_csrf': ndb.SuperComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
+    '_is_guest': ndb.SuperComputedProperty(lambda self: self.is_guest()),
+    '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
+    '_root_admin': ndb.SuperComputedProperty(lambda self: self.root_admin()),
+    '_is_taskqueue': ndb.SuperComputedProperty(lambda self: self.is_taskqueue()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
     '_records_next_cursor': ndb.SuperStringProperty(),
     '_records_more': ndb.SuperBooleanProperty()
