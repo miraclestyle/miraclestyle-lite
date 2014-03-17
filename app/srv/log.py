@@ -196,36 +196,29 @@ class Record(ndb.BaseExpando):
 class Engine:
   
   @classmethod
-  def run(cls, context, transaction=False):
+  def run(cls, context):
     """We always run log engine from within a transaction, 
     because it is a helper service, not independent service!
-    Is it safe to remove def log function?
     
     """
-    def log(context):
-      if len(context.log.entities):
-        records = []
-        for config in context.log.entities:
-          entity = config[0]
-          try:
-            kwargs = config[1]
-          except:
-            kwargs = None
-          if not kwargs:
-            kwargs = {}
-          log_entity = kwargs.pop('log_entity', True)
-          record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
-          if log_entity is True:
-            log_entity = entity
-          if log_entity:
-            record.log_entity(log_entity)
-          records.append(record)
-        
-        if len(records):
-          recorded = ndb.put_multi(records)
-          context.log.entities = []
-    
-    if (transaction):
-      ndb.transaction(lambda: log(context))
-    else:
-      log(context)
+    if len(context.log.entities):
+      records = []
+      for config in context.log.entities:
+        entity = config[0]
+        try:
+          kwargs = config[1]
+        except:
+          kwargs = None
+        if not kwargs:
+          kwargs = {}
+        log_entity = kwargs.pop('log_entity', True)
+        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
+        if log_entity is True:
+          log_entity = entity
+        if log_entity:
+          record.log_entity(log_entity)
+        records.append(record)
+      
+      if len(records):
+        recorded = ndb.put_multi(records)
+        context.log.entities = []
