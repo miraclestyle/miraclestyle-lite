@@ -197,9 +197,9 @@ class Engine:
   
   @classmethod
   def run(cls, context, transaction=False):
-    """We always run log engine from inside transaction, 
+    """We always run log engine from within a transaction, 
     because it is a helper service, not independent service!
-    Shall we remove def log function?
+    Is it safe to remove def log function?
     
     """
     def log(context):
