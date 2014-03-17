@@ -590,6 +590,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+    if next_cursor:
+      next_cursor = next_cursor.urlsafe()
     
     @ndb.tasklet
     def async(entity):
@@ -602,8 +604,6 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       entities = yield map(async, entities)
       raise ndb.Return(entities)
     
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
     entities = helper(entities).get_result()
     context.output['entity'] = entity
     context.output['entities'] = entities  # @todo Apply rule.read() for each instance in entities prior returning them.
