@@ -331,7 +331,7 @@ class ActionPermission(Permission):
     self.executable = executable
     self.condition = condition
     
-  def __todict__(self):
+  def get_meta(self):
      return {'kind' : self.kind, 'action' : self.action,
              'executable' : self.executable, 'condition' : self.condition, 'type' : self.__class__.__name__}
     
@@ -356,7 +356,7 @@ class FieldPermission(Permission):
     self.visible = visible
     self.condition = condition
     
-  def __todict__(self):
+  def get_meta(self):
      return {'kind' : self.kind, 'field' : self.field, 'writable' : self.writable,
              'visible' : self.visible, 'condition' : self.condition, 'type' : self.__class__.__name__}
     
@@ -619,9 +619,13 @@ class DomainRole(Role):
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             
-                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
-                                            ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
-                                            ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
+                                            
+                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-3').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-1').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -704,13 +708,13 @@ class DomainRole(Role):
         set_permissions = []
         for permission in permissions:
           
-            if 'action' not in permission:
+            if permission.get('type') == 'FieldPermission':
                set_permissions.append(FieldPermission(permission.get('kind'),
                                                        permission.get('field'),
                                                        permission.get('writable'),
                                                        permission.get('visible'),
                                                        permission.get('condition')))
-            else:
+            elif permission.get('type') == 'ActionPermission':
               set_permissions.append(ActionPermission(permission.get('kind'),
                                                       permission.get('action'),
                                                       permission.get('executable'),
@@ -719,7 +723,7 @@ class DomainRole(Role):
           
         values = {'name' : context.input.get('name'),
                   'active' : context.input.get('active'),
-                  'permissions' : permissions,
+                  'permissions' : set_permissions,
                   }
         
         if create:

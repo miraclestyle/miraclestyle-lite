@@ -5,18 +5,20 @@
 	<div class="form-control">
 		<label class="form-label">Type</label>
 		<div class="form-input">
-			<select name="type" ng-required="true" ui-select2 ng-model="permission.type" data-placeholder="Select a type">
+			<select ng-change="get_meta()" name="type" ng-required="true" ui-select2 ng-model="permission.type" data-placeholder="Select a type">
 					<option value=""></option>
 				    <option ng-repeat="(type_key, type) in types" value="{{type_key}}">{{type}}</option>
 			</select>
 		</div>
 	</div>
+	
+	<div ng-show="permission.type">
  
 	 
     <div class="form-control">
 		<label class="form-label">Kind</label>
 		<div class="form-input">
-			<select name="kind" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a kind">
+			<select name="kind" ng-change="get_meta()" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a kind">
 					<option value=""></option>
 				    <option ng-repeat="(kind_key, kind) in kinds" value="{{kind_key}}">{{kind}}</option>
 			</select>
@@ -24,24 +26,57 @@
 	</div>
 	
 	
-	<div ng-show="permission.type == 'ActionPermission'" class="form-control">
+	<div ng-show="permission.type == 'ActionPermission'">
+		<div class="form-control">
 		<label class="form-label">Action</label>
 		<div class="form-input">
-			<select name="kind" multiple="true" ng-required="true" ui-select2 ng-model="permission.action" data-placeholder="Select a action">
-					<option value=""></option>
+			<select name="kind" multiple="true" ng-required="permission.type == 'ActionPermission'" ui-select2 ng-model="permission.action" data-placeholder="Select a action">
+ 
 				    <option ng-repeat="(action_key, action) in actions" value="{{action_key}}">{{action}}</option>
 			</select>
 		</div>
+		</div>
+		<div class="form-control">
+			<label class="form-label">Executable</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <button toggle class="button" type="button" ng-model="permission.executable"></button>
+				</div>
+			</div>
+		</div>
+		
 	</div>
 	
-	<div ng-show="permission.type == 'FieldPermission'" class="form-control">
+	<div ng-show="permission.type == 'FieldPermission'">
+		<div class="form-control">
 		<label class="form-label">Field</label>
 		<div class="form-input">
-			<select name="fields" multiple="true" ng-required="true" ui-select2 ng-model="permission.field" data-placeholder="Select a field">
-					<option value=""></option>
+			<select name="fields" multiple="true" ng-required="permission.type == 'FieldPermission'" ui-select2 ng-model="permission.field" data-placeholder="Select a field">
+		 
 				    <option ng-repeat="(field_key, field) in fields" value="{{field_key}}">{{field}}</option>
 			</select>
 		</div>
+		</div>
+		
+		
+		<div class="form-control">
+			<label class="form-label">Writable</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <button toggle class="button" type="button" ng-model="permission.writable"></button>
+				</div>
+			</div>
+		</div>
+		
+		<div class="form-control">
+			<label class="form-label">Visible</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <button toggle class="button" type="button" ng-model="permission.visible"></button>
+				</div>
+			</div>
+		</div>
+		
 	</div>
  
    <div class="form-control">
@@ -51,6 +86,8 @@
 				 <textarea name="condition" ng-required="true" class="text-input" ng-model="permission.condition"></textarea>
 			</div>
 		</div>
+	</div>
+	
 	</div>
 	  
 </div>

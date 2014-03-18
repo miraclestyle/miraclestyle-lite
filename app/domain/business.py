@@ -153,14 +153,7 @@ class Company(ndb.BaseExpando):
                               }
                              ),
     }
-  
-    def __todict__(self, *args, **kwargs):
-      
-        dic = super(Company, self).__todict__(*args, **kwargs)
-        
-        dic['logo'] = images.get_serving_url(self.logo.image, 240)
-        
-        return dic
+ 
       
     @classmethod
     def complete_save(cls, entity, context):

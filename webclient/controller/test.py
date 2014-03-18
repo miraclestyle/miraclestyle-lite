@@ -44,12 +44,7 @@ class Reset(handler.Angular):
              paths[mod.get_kind()] = modelpath
         
       return {'models' : dict([(model.get_kind(), model.__name__) for model in models]), 'paths' : paths}
-
-class Submitter(handler.Angular):
   
-    def respond(self):
-        return self.render('tests/submitter.html')
-      
       
 class Endpoint(handler.Angular):
     
@@ -62,15 +57,7 @@ class Endpoint(handler.Angular):
          self.data = {}
          
       self.send_json(self.data)
-      
-class Engine(handler.Angular):
-
-    def respond(self):      
-        output = io.Engine.taskqueue_run(self.get_input())
-        return output
-   
+ 
  
 handler.register(('/endpoint', Endpoint), 
-         ('/reset', Reset),
-         ('/engine_run', Engine), 
-         ('/submitter', Submitter))
+                 ('/reset', Reset))

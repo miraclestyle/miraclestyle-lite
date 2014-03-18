@@ -1,3 +1,41 @@
+KINDS.friendlyActionName = function(kind, action_key)
+{
+	var info = this.get(kind);
+	var actions = info['actions'];
+	var ra = null;
+	
+	for (var action_name in actions)
+	{
+		 
+		if (action_name == undefined) continue;
+		
+ 		if (actions[action_name]['key'] == action_key)
+		{
+			ra = action_name;
+			break;
+		}
+	}
+	
+	return ra;
+};
+KINDS.get = function (kind_id)
+{
+   var kind = this.info[kind_id];
+   var fields = {};
+   
+   angular.forEach(kind, function (value, key) {
+   		if (key != '_actions')
+   		{
+   			fields[key] = value;
+   		}
+   });
+   
+   return {
+   	  'actions' : kind['_actions'],
+   	  'fields' : fields,
+   };
+};
+
 FRIENDLY_KIND_NAMES = {
     "60": "DomainRole", 
     "61": "Template", 
@@ -26,7 +64,7 @@ FRIENDLY_KIND_NAMES = {
     "34": "CatalogPricetag"
 };
 
-var alwaysObject = function (obj)
+var always_object = function (obj)
 {
 	if (!angular.isObject(obj))
 	{
@@ -36,7 +74,7 @@ var alwaysObject = function (obj)
 	return obj;
 };
 
-var useInit = function (key, fun)
+var use_init = function (key, fun)
 {
 	
 	if ('initdata' in window && initdata[key])
@@ -64,7 +102,7 @@ var useInit = function (key, fun)
 	
 };
 
-var handleDataTypes = function (response)
+var handle_data_types = function (response)
 {
  
   	 	var formatter = {'created' : Date, 'updated' : Date, 'logged' : Date};
@@ -147,9 +185,9 @@ function update()
 	return objects;
 }
 
-function resolveDefaults(defaults, options)
+function resolve_defaults(defaults, options)
 {
-	options = alwaysObject(options);
+	options = always_object(options);
 	
 	angular.forEach(defaults, function (value, key) {
 		if ( ! (key in options))

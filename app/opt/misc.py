@@ -315,13 +315,6 @@ class SupportRequest(ndb.BaseModel):
  
     }  
  
-    def __todict__(self):
-      
-      d = super(SupportRequest, self).__todict__()
- 
-      d['messages'] = log.Record.query(ancestor=self.key).fetch()
-      
-      return d
     
     @classmethod
     def create(cls, context):

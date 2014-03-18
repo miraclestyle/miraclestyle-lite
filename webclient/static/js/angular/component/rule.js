@@ -3,7 +3,18 @@ PERMISSION_TYPES = {
 	'ActionPermission' : 'Action',
 };
 
-MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+MainApp.filter('permissionResolveActionName', function() {
+    return function(input) {
+ 
+       var outputs = [];
+       angular.forEach(input.action, function (value) {
+    	    outputs.push(KINDS.friendlyActionName(input.kind, value));
+       });
+ 
+       
+       return outputs;
+    };
+}).factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
  
@@ -74,6 +85,33 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             $scope.permission = angular.copy(permission ? permission : {});
                             $scope.kinds = FRIENDLY_KIND_NAMES;
                             $scope.types = PERMISSION_TYPES;
+                            $scope.actions = {};
+                            $scope.fields = {};
+                            
+                            $scope.get_meta = function ()
+                            {
+                            	 
+                            	if ($scope.permission.kind == null) return;
+                            	
+                            	var info = KINDS.get($scope.permission.kind);
+                            	
+                            	var actions = {};
+                            	var fields = {};
+                            	
+                            	angular.forEach(info['actions'], function (value, key) {
+                            		actions[value.key] = key;
+                            	});
+                            	
+                            	angular.forEach(info['fields'], function (value, key) {
+                            		fields[key] = key;
+                            	});
+                            	
+                            	$scope.actions = actions;
+                            	$scope.fields = fields;
+                            	
+                            };
+                            
+                            $scope.get_meta();
                    
                             var new_permission = permission ? false : true;
              
@@ -82,6 +120,11 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                              
                                  if (new_permission)
                                  {
+                                 	if (!entity.permissions)
+                                 	{
+                                 		entity.permissions = [];
+                                 	}
+                                 	 
                                  	entity.permissions.push($scope.permission);
                                  }
                                  else
@@ -99,7 +142,7 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                         }
                     });
         	},
-    	 	'addPermissions' : function ()
+    	 	'addPermission' : function ()
     	 	{
     	 		this._managePermission(false, this.entity);
     	 	},
@@ -112,6 +155,7 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
     	 		var index = this.entity.permissions.indexOf(filter);
   			    this.entity.permissions.splice(index,1);    
     	 	},
+    	 
     	};
     	
         return {
@@ -120,7 +164,9 @@ MainApp.factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             	  
                return EntityEditor.create({
                 	 'kind' : '60',
-                	 'entity' : {},
+                	 'entity' : {
+                	 	'permissions' : [],
+                	 },
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {

@@ -1,5 +1,5 @@
-handleDataTypes({'entity' : current_user});
-handleDataTypes({'entity' : initdata});
+handle_data_types({'entity' : current_user});
+handle_data_types({'entity' : initdata});
 
 angular.module('app.ui',
 	  [
@@ -16,7 +16,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
   function($httpProvider, $locationProvider) {
   	 
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-     $httpProvider.defaults.transformResponse.push(handleDataTypes);
+     $httpProvider.defaults.transformResponse.push(handle_data_types);
  
      $locationProvider.hashPrefix('!');
      
@@ -28,7 +28,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	function RuleEngine(data)
 	{
 		var that = this;
-		
+ 
 		this.action = {};
 		this.input = {};
   
@@ -79,10 +79,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	    	{
 	    		return;
 	    	}
-	 
+	    	
+	    	var kind_info = KINDS.get(info['kind']);
+	  
 			this._rule_action_permissions = info['_action_permissions'];
 			this._rule_field_permissions = info['_field_permissions'];
-			this._rule_actions = info['_actions'];
+			this._rule_actions = kind_info['actions'];
 			 
 			this.init();
 			
@@ -256,8 +258,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	
 	var _compile = function(action, model, data, config)
 	{
-		 config = alwaysObject(config);
-		 data = alwaysObject(data);
+		 config = always_object(config);
+		 data = always_object(data);
 			
 		 return [angular.extend({
 				action_model : model,
@@ -433,7 +435,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	
     	var resolveOptions = function (options)
     	{
-    		options = resolveDefaults(defaults, options);
+    		options = resolve_defaults(defaults, options);
     		
     		var functs = ['complete', 'handle', 'cancel'];
     		
@@ -578,7 +580,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     }
 ])
 .run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
-    
+     
+   
     $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_user = current_user;
     $rootScope.$state = $state;
