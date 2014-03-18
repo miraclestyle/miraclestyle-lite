@@ -140,6 +140,7 @@ class _BaseModel(object):
     
     """
     dic = {}
+    dic['kind'] = self._kind
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
