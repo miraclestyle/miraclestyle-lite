@@ -14,7 +14,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, setup, blob, callback
+from app.srv import event, rule, log, notify, setup, blob, callback
 
 
 class OAuth2Error(Exception):
@@ -224,7 +224,7 @@ class User(ndb.BaseExpando):
         cls.set_current_user(user, session)
   
   @classmethod
-  def sudo(cls, context):  # @todo Integrate notify.
+  def sudo(cls, context):
     """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
     i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
     
@@ -246,13 +246,15 @@ class User(ndb.BaseExpando):
       entity.put()
       context.log.entities.append((entity, {'message': message, 'note': note}))  # @todo Handle permissions externally.
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
   
   @classmethod
-  def update(cls, context):  # @todo Integrate notify.
+  def update(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -280,6 +282,8 @@ class User(ndb.BaseExpando):
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
@@ -681,7 +685,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def update(cls, context):  # @todo Integrate notify.
+  def update(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -696,13 +700,15 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
   
   @classmethod
-  def suspend(cls, context):  # @todo Integrate notify.
+  def suspend(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -717,13 +723,15 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
   
   @classmethod
-  def activate(cls, context):  # @todo Integrate notify.
+  def activate(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -738,13 +746,15 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
   
   @classmethod
-  def sudo(cls, context):  # @todo Integrate notify.
+  def sudo(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -759,13 +769,15 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
     return context
   
   @classmethod
-  def log_message(cls, context):  # @todo Integrate notify.
+  def log_message(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -778,6 +790,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
       context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
       log.Engine.run(context)
+      context.notify.entity = entity
+      notify.Engine.run(context)
       context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
     
     transaction()
