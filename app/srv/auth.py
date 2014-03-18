@@ -224,7 +224,7 @@ class User(ndb.BaseExpando):
         cls.set_current_user(user, session)
   
   @classmethod
-  def sudo(cls, context):
+  def sudo(cls, context):  # @todo Integrate notify.
     """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
     i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
     
@@ -252,7 +252,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def update(cls, context):
+  def update(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -681,7 +681,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def update(cls, context):
+  def update(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -702,7 +702,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def suspend(cls, context):
+  def suspend(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -723,7 +723,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def activate(cls, context):
+  def activate(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -744,7 +744,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def sudo(cls, context):
+  def sudo(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -765,7 +765,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
     return context
   
   @classmethod
-  def log_message(cls, context):
+  def log_message(cls, context):  # @todo Integrate notify.
     
     @ndb.transactional(xg=True)
     def transaction():
