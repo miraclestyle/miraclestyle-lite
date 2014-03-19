@@ -106,6 +106,7 @@ class DomainSetup(Setup):
      # rule engine is not needed here because user cannot reach this if he cannot call Domain.create()
       
      entity.name = input.get('domain_name')
+     entity.logo = input.get('domain_logo')
      entity.primary_contact = primary_contact
      entity.put()
      
@@ -130,7 +131,7 @@ class DomainSetup(Setup):
      from app.srv import auth, nav
      from app.domain import business, marketing, product
 
-     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget, business.Company, business.CompanyContent,
+     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget,
                 marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                        product.Content, product.Instance, product.Template, product.Variant]
      
@@ -143,8 +144,10 @@ class DomainSetup(Setup):
                                                         condition='True'))
                
          props = obj.get_fields() # for every object, all fields get FieldPermission writable, visible, and - required which is based on prop._required
+         prop_names = []
          for prop_name, prop in props.items():
-             permissions.append(rule.FieldPermission(obj.get_kind(), prop_name, True, True, 'True'))
+             prop_names.append(prop_name)
+         permissions.append(rule.FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
      
      role = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
      role.put()
@@ -240,9 +243,7 @@ class DomainSetup(Setup):
 
      
   def execute_create_domain_user(self):
-    
-     from app.srv import rule
-     
+ 
      input = self.config.next_operation_input
      user = self.config.parent_entity
      domain_key = input.get('domain_key')
@@ -254,60 +255,11 @@ class DomainSetup(Setup):
      
      domain_user.put()
      # context.log.entities.append((domain_user, ))
-
-     
-     config_input = self.config.configuration_input
+     self.config.next_operation = 'add_user_domain'
      self.config.next_operation_input = {'domain_key' : domain_key}
-     other_info = ('name',
-                   'logo',
-                   'state',                                         
-                   'country',
-                   'region',
-                   'city',
-                   'postal_code',
-                   'street',
-                   'email',
-                   'telephone',
-                   'currency',
-                   'paypal_email',
-                   'tracking_id',
-                   'feedbacks',
-                   'location_exclusion')
-     
-     for info in other_info:
-         key = 'company_%s' % info
-         if key in config_input: # these are expando fields, so they need to be set only if there's any value provided
-            self.config.next_operation_input[info] = config_input.get(key)
-         
-     self.config.next_operation = 'create_company'
      self.config.put()
  
- 
-  def execute_create_company(self):
-    
-      from app.domain import business
-      
-      input = self.config.next_operation_input
-      
-      domain_key = input.pop('domain_key')
-      namespace = domain_key.urlsafe()
-      
-      entity = business.Company(namespace=namespace)
-      entity.populate(**input)
-      entity.state = 'open'
-      ndb.make_complete_name(entity, 'name', 'parent_record')
-      entity.put()
-      
-      self.context.log.entities.append((entity,))
-      
-      log.Engine.run(self.context)
-       
-       
-      self.config.next_operation = 'add_user_domain'
-      self.config.next_operation_input = {'domain_key' : domain_key}
-      self.config.put()
-       
-      
+  
   def execute_add_user_domain(self):
         
        input = self.config.next_operation_input
@@ -350,8 +302,8 @@ class Configuration(ndb.BaseExpando):
   
   _global_role = rule.GlobalRole(permissions=[
                                             # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
-                                            rule.ActionPermission('57', event.Action.build_key('57-0').urlsafe(), True, "context.auth.user.is_taskqueue"),
-                                            rule.ActionPermission('57', event.Action.build_key('57-1').urlsafe(), True, "context.auth.user.is_taskqueue"),
+                                            rule.ActionPermission('57', event.Action.build_key('57-0').urlsafe(), True, "context.auth.user._is_taskqueue"),
+                                            rule.ActionPermission('57', event.Action.build_key('57-1').urlsafe(), True, "context.auth.user._is_taskqueue"),
                               
                                             ])  
   

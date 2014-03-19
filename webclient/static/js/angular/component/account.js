@@ -213,7 +213,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				      	  $scope.rule = RuleEngine.factory(data['entity']);
 				      	  $scope.entity = angular.copy(entity);
 				      	  $scope.history = {
-				      	  	  'kind' : '0',
+				      	  	  'kind' : entity['kind'],
 				      	  	  'args' : {
 				      	  	  	 'key' : entity['key'],
 				      	  	  }

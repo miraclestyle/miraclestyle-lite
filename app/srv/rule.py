@@ -156,6 +156,11 @@ class Model(ndb.BaseModel):
           
 """
 
+class DomainUserError(Exception):
+  
+  def __init__(self, message):
+    self.message = {'domain_user' : message}
+
 class ActionDenied(Exception):
     
     def __init__(self, context):
@@ -326,6 +331,9 @@ class ActionPermission(Permission):
    
   def __init__(self, kind, action, executable=None, condition=None):
     
+    if not isinstance(action, (tuple, list)):
+      action = [action]
+    
     self.kind = kind # entity kind identifier (entity._kind)
     self.action = action # action id (action.key.id()), or action key (action.key) ? ----- this could be a list
     self.executable = executable
@@ -336,10 +344,7 @@ class ActionPermission(Permission):
              'executable' : self.executable, 'condition' : self.condition, 'type' : self.__class__.__name__}
     
   def run(self, role, context):
-    
-    if not isinstance(self.action, (tuple, list)):
-       self.action = [self.action]
-    
+     
     for action in self.action:
         if (self.kind == context.rule.entity.get_kind()) and (action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context, 'action' : action})) and (self.executable != None):
            context.rule.entity._action_permissions[action]['executable'].append(self.executable)
@@ -349,6 +354,9 @@ class FieldPermission(Permission):
   
   
   def __init__(self, kind, field, writable=None, visible=None, condition=None):
+    
+    if not isinstance(field, (tuple, list)):
+      field = [field]
     
     self.kind = kind # entity kind identifier (entity._kind)
     self.field = field # this must be a field code name from ndb property (field._code_name) ---- This could be a list?
@@ -362,10 +370,7 @@ class FieldPermission(Permission):
     
     
   def run(self, role, context):
-    
-    if not isinstance(self.field, (tuple, list)):
-       self.field = [self.field]
-    
+     
     for field in self.field:
         dig = parse_property(context.rule.entity._field_permissions, field) # retrieves field value from foo.bar.far
         # added in safe eval `field` - the field that is currently in the loop 
@@ -619,11 +624,9 @@ class DomainRole(Role):
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             
-                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
                                             ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
                                             
-                                            ActionPermission('60', event.Action.build_key('60-0').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
                                             ActionPermission('60', event.Action.build_key('60-3').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
                                           ])
@@ -689,6 +692,7 @@ class DomainRole(Role):
           entity.key.delete()
           context.log.entities.append((entity, ))
           log.Engine.run(context)
+          read(entity)
           context.output['entity'] = entity
   
         transaction()
@@ -734,6 +738,7 @@ class DomainRole(Role):
         entity.put()
         context.log.entities.append((entity,))
         log.Engine.run(context)
+        read(entity)
         context.output['entity'] = entity
       
     @classmethod
@@ -863,9 +868,10 @@ class DomainUser(ndb.BaseModel):
                                             
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
+                                            
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.user.is_taskqueue"),
-                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.user.is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.user._is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.user._is_taskqueue"),
 
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -964,9 +970,9 @@ class DomainUser(ndb.BaseModel):
            domain_key = context.input.get('domain')
            domain = domain_key.get()
            
-           domain_user = cls(id=user.key_id_str, namespace=domain.key_namespace)
+           entity = cls(id=user.key_id_str, namespace=domain.key_namespace)
 
-           context.rule.entity = domain_user
+           context.rule.entity = entity
            Engine.run(context)
              
            if not executable(context):
@@ -976,7 +982,7 @@ class DomainUser(ndb.BaseModel):
            
            if already_invited:
              # raise custom exception!!!
-              return context.error('user', 'already_invited')
+              raise DomainUserError('already_invited')
             
            domain_key = context.input.get('domain')
            domain = domain_key.get()
@@ -988,20 +994,22 @@ class DomainUser(ndb.BaseModel):
                   if role.key.namespace() == domain.key_namespace:
                      roles.append(role.key)
                      
-              domain_user.populate(name=name, user=user.key, state='invited', roles=roles)
+              entity.populate(name=name, user=user.key, state='invited', roles=roles)
            
               user.domains.append(domain.key)
               
-              # write both domain_user, and user
+              # write both entity, and user
               
-              ndb.put_multi([domain_user, user])
+              ndb.put_multi([entity, user])
               
-              context.log.entities.append((domain_user,), (user,)) # log user as well
+              context.log.entities.append((entity,), (user,)) # log user as well
               log.Engine.run(context)
+              read(entity)
+              context.output['entity'] = entity
  
            else:
              # raise custom exception!!!
-              return context.error('user', 'user_not_active')      
+              raise DomainUserError('not_active')    
             
         transaction()
          
@@ -1031,10 +1039,12 @@ class DomainUser(ndb.BaseModel):
           entity.key.delete()
           
           user.domains.remove(ndb.Key(urlsafe=entity.key_namespace()))
-          user.put() # should we log this removal of domains?
+          user.put()
           
           context.log.entities.append((entity,), (user, ))
           log.Engine.run(context)
+          read(entity)
+          context.output['entity'] = entity
  
        transaction()
         
@@ -1060,6 +1070,8 @@ class DomainUser(ndb.BaseModel):
            entity.put()
            context.log.entities.append((entity,))
            log.Engine.run(context)
+           read(entity)
+           context.output['entity'] = entity
    
         transaction()
          
@@ -1102,6 +1114,8 @@ class DomainUser(ndb.BaseModel):
              
              context.log.entities.append((entity,))
              log.Engine.run(context)
+             read(entity)
+             context.output['entity'] = entity
        
           transaction()
            

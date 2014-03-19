@@ -556,7 +556,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 });
                             };
  
-                            angular.extend($scope, options['scope']);
+                            update($scope, options['scope']);
                             
                             $scope.resolve_handle(data);
                              

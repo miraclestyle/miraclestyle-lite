@@ -63,14 +63,8 @@ class User(ndb.BaseExpando):
   
   _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
-    '_csrf': ndb.SuperComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
-    '_is_guest': ndb.SuperComputedProperty(lambda self: self.is_guest()),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
-    '_root_admin': ndb.SuperComputedProperty(lambda self: self.root_admin()),
-    '_is_taskqueue': ndb.SuperComputedProperty(lambda self: self.is_taskqueue()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
-    '_records_next_cursor': ndb.SuperStringProperty(),
-    '_records_more': ndb.SuperBooleanProperty()
     }
   
   _global_role = rule.GlobalRole(
@@ -89,11 +83,10 @@ class User(ndb.BaseExpando):
       rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
       rule.FieldPermission('0', 'identities', True, True, 'True'),  # User can change identities.
       # Expose these fields by default.
-      rule.FieldPermission('0', ['_csrf', '_is_guest', '_primary_email',
-                                 '_root_admin', 'created', 'updated', 'state'], False, True, 'True'),
+      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True, 'True'),
       rule.FieldPermission('0', '_records', True, True, 'True'),
-      rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('0', '_records.note', True, True, 'context.auth.user.root_admin')
+      rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user._root_admin'),
+      rule.FieldPermission('0', '_records.note', True, True, 'context.auth.user._root_admin')
       ]
     )
   
@@ -136,13 +129,15 @@ class User(ndb.BaseExpando):
     'search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
     }
   
-  def is_taskqueue(self):
+  @property
+  def _is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
   
-  def root_admin(self):
+  @property
+  def _root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
   
   def primary_email(self):
@@ -153,13 +148,15 @@ class User(ndb.BaseExpando):
         return identity.email
     return identity.email
   
-  def csrf(self):
+  @property
+  def _csrf(self):
     session = self.current_user_session()
     if not session:
       return None
     return hashlib.md5(session.session_id).hexdigest()
   
-  def is_guest(self):
+  @property
+  def _is_guest(self):
     return self.key == None
   
   @classmethod
@@ -248,7 +245,8 @@ class User(ndb.BaseExpando):
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -284,7 +282,8 @@ class User(ndb.BaseExpando):
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -300,10 +299,10 @@ class User(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
     entity._records = entities
-    entity._records_next_cursor = next_cursor
-    entity._records_more = more
     rule.read(entity)
     context.output['entity'] = entity
+    context.output['next_cursor'] = next_cursor
+    context.output['more'] = more
     return context
   
   @classmethod
@@ -450,6 +449,7 @@ class User(ndb.BaseExpando):
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
           log.Engine.run(context)
+          # rule.read(entity) in order to apply rule.read here the entity aka user must undergo rule.engine.run
           context.output.update({'entity': entity,
                                  'authorization_code': entity.generate_authorization_code(session)})  # @todo Apply rule.read() prior returning entity?
         
@@ -457,7 +457,7 @@ class User(ndb.BaseExpando):
     return context
 
 
-class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumping business module!
+class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumping business module!
   
   _kind = 6
   
@@ -468,6 +468,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
   name = ndb.SuperStringProperty('3', required=True)
   primary_contact = ndb.SuperKeyProperty('4', kind=User, required=True, indexed=False)
   state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
+  logo = ndb.SuperLocalStructuredImageProperty(blob.Image, '6', required=True)
   
   _default_indexed = False
   
@@ -476,8 +477,6 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
   _virtual_fields = {
     '_primary_contact_email': ndb.SuperStringProperty(),
     '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True),
-    '_records_next_cursor': ndb.SuperStringProperty(),
-    '_records_more': ndb.SuperBooleanProperty()
     }
   
   _global_role = rule.GlobalRole(
@@ -497,8 +496,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
-      rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user.root_admin')
+      rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user._root_admin'),
+      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user._root_admin')
       ]
     )
   
@@ -508,21 +507,7 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
-        # Company
-        'company_name': ndb.SuperStringProperty(required=True),
-        'company_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
-        # Company Expando
-        'company_country': ndb.SuperKeyProperty(kind='15'),
-        'company_region': ndb.SuperKeyProperty(kind='16'),
-        'company_city': ndb.SuperStringProperty(),
-        'company_postal_code': ndb.SuperStringProperty(),
-        'company_street': ndb.SuperStringProperty(),
-        'company_email': ndb.SuperStringProperty(),
-        'company_telephone': ndb.SuperStringProperty(),
-        'company_currency': ndb.SuperKeyProperty(kind='19'),
-        'company_paypal_email': ndb.SuperStringProperty(),
-        'company_tracking_id': ndb.SuperStringProperty(),
-        'company_location_exclusion': ndb.SuperBooleanProperty()
+        'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
         }
       ),
     'update': event.Action(
@@ -609,8 +594,13 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       raise ndb.Return(entities)
     
     entities = helper(entities).get_result()
-    context.output['entity'] = entity
-    context.output['entities'] = entities  # @todo Apply rule.read() for each instance in entities prior returning them.
+    
+    for entity in entities:
+       context.rule.entity = entity
+       rule.Engine.run(context)
+       rule.read(entity)
+ 
+    context.output['entities'] = entities  # @done Apply rule.read() for each instance in entities prior returning them.
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
@@ -626,8 +616,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       config_input = context.input.copy()
-      company_logo = config_input.get('company_logo')
-      blob.Manager.used_blobs(company_logo.image)
+      domain_logo = config_input.get('domain_logo')
+      blob.Manager.used_blobs(domain_logo.image)
       config_input['domain_primary_contact'] = context.auth.user.key
       config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
       config.put()
@@ -635,7 +625,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
                                       'action_model': '57',
                                       'key': config.key.urlsafe()})
       callback.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity?
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity?
     
     transaction()
     return context
@@ -678,10 +669,10 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       raise rule.ActionDenied(context)
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
     entity._records = entities
-    entity._records_next_cursor = next_cursor
-    entity._records_more = more
     rule.read(entity)
     context.output['entity'] = entity
+    context.output['next_cursor'] = next_cursor
+    context.output['more'] = more
     return context
   
   @classmethod
@@ -702,7 +693,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -725,7 +717,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -744,11 +737,12 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       rule.write(entity, {'state': 'active'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
+      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally. - why here cuz it only accepts message param?
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -771,7 +765,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context
@@ -792,7 +787,8 @@ class Domain(ndb.BaseExpando):  # @todo implement logo here, since we are dumpin
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
-      context.output['entity'] = entity  # @todo Apply rule.read() prior returning entity.
+      rule.read(entity)
+      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
     
     transaction()
     return context

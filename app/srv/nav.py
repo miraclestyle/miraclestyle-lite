@@ -33,10 +33,7 @@ class Widget(ndb.BaseExpando):
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _virtual_fields = {
-    '_is_admin' : ndb.SuperComputedProperty(lambda self: self.is_admin()),
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True),
-    '_records_next_cursor': ndb.SuperStringProperty(),
-    '_records_more': ndb.SuperBooleanProperty()
   }
   
   _global_role = rule.GlobalRole(
@@ -51,8 +48,8 @@ class Widget(ndb.BaseExpando):
       rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True,
                             "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
       rule.FieldPermission('62', '_records', True, True, 'True'),
-      rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user.root_admin'),
-      rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user.root_admin')
+      rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user._root_admin'),
+      rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user._root_admin')
       ]
   )
   
@@ -108,8 +105,8 @@ class Widget(ndb.BaseExpando):
                 ),
               
              }
-  
-  def is_admin(self):
+  @property
+  def _is_admin(self):
     return self.key_id_str.startswith('admin_')
   
   @classmethod
@@ -159,6 +156,7 @@ class Widget(ndb.BaseExpando):
     
     log.Engine.run(context)
     
+    rule.read(entity)
     context.output['entity'] = entity
        
   @classmethod
@@ -307,10 +305,10 @@ class Widget(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
     entity._records = entities
-    entity._records_next_cursor = next_cursor
-    entity._records_more = more
     rule.read(entity)
     context.output['entity'] = entity
+    context.output['next_cursor'] = next_cursor
+    context.output['more'] = more
     return context
   
   
