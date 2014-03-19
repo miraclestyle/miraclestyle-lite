@@ -315,15 +315,15 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.remove = function (entity) {
 				service.remove(entity, function () {
-					  	var index = $scope.search.entities.indexOf(entity);
-  						$scope.search.entities.splice(index,1);     
+					  	$scope.search.entities.remove(entity);
+  					 
 				});
             };
 
         }
     ])
-    .controller('AppList', ['$scope', 'App', 'apps', 'Confirm', 'RuleEngine', 'Title',
-        function ($scope, App, apps, Confirm, RuleEngine, Title) {
+    .controller('AppList', ['$scope', 'App', 'AppUser', 'apps', 'Confirm', 'RuleEngine', 'Title',
+        function ($scope, App, AppUser, apps, Confirm, RuleEngine, Title) {
 
             Title.set('My Apps');
 
@@ -344,6 +344,46 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
             $scope.createApp = function () {
                 App.create();
+            };
+            
+            $scope.acceptApp = function (app)
+            {
+ 
+            	 AppUser.accept(app.user.key, function (data) {
+            	 	if (data['entity'])
+            	 	{
+            	 		update(app.user, data['entity']);
+            	 		update(app.domain, data['domain']);
+            	 		
+            	 		app.user.rule.update(data['entity']);
+            	 		app.domain.rule.update(data['domain']);
+            	 	}
+            	 });
+            };
+            
+            $scope.declineApp = function (app)
+            {
+            	AppUser.decline(app.user.key, function (data) {
+            	 
+            		if (data['entity'])
+            		{
+            		    apps.remove(app);
+  					 
+            		}
+            	});
+            };
+            
+            $scope.removeFromApp = function (app)
+            {
+            	
+            	AppUser.remove(app.user.key, function (data) {
+            		if (data['entity'])
+            		{
+            			 apps.remove(app);
+  						 
+            		}
+            	});
+            	
             };
 
         }

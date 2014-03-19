@@ -858,13 +858,19 @@ class DomainUser(ndb.BaseModel):
     
     _default_indexed = False
     
+    _virtual_fields = {
+     '_records': log.SuperLocalStructuredRecordProperty('8', repeated=True),                   
+    }
+    
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             
                                             ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True, "(context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
-                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "(context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+                                            ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "(context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
 
+                                            FieldPermission('8', 'roles', False, True, "(context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+                                         
                                             
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
                                             ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True, "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
@@ -880,7 +886,7 @@ class DomainUser(ndb.BaseModel):
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
                                  'name' : ndb.SuperStringProperty(required=True),
-                                 'user' : ndb.SuperKeyProperty(kind='0'),
+                                 'email' : ndb.SuperStringProperty(required=True),
                                  'roles' : ndb.SuperKeyProperty(kind=DomainRole, repeated=True),
                               }
                              ),
@@ -922,9 +928,16 @@ class DomainUser(ndb.BaseModel):
        'prepare' : event.Action(id='8-7',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
-                              })
+                              }),
+                
+        'read_records' : event.Action(id='8-8', 
+                             arguments={
+                               'key' : ndb.SuperKeyProperty(kind='8', required=True),
+                             }),
                 
     }
+    
+
     
     @classmethod
     def clean_roles(cls, context):
@@ -979,37 +992,44 @@ class DomainUser(ndb.BaseModel):
     # Poziva novog usera u domenu
     @classmethod
     def invite(cls, context):
- 
+        
+        from app.srv import auth
+        
+        # operating on too many entity groups
+        # All Datastore operations in a transaction must operate on entities in the same entity group 
+        # This includes querying for entities by ancestor, retrieving entities by key, updating entities, and deleting entities.
+        
+        email = context.input.get('email')
+        
+        user = auth.User.query(auth.User.emails == email).get()
+        
+        if not user:
+          raise DomainUserError('email_not_found')
+        
+        role_keys = context.input.get('roles')
+        get_roles = ndb.get_multi(role_keys)
+           
+        domain_key = context.input.get('domain')
+        domain = domain_key.get()
+          
+        already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
+           
+        if already_invited:
+          # raise custom exception!!!
+          raise DomainUserError('already_invited') 
+        
+           
+        entity = cls(id=user.key_id_str, namespace=domain.key_namespace)
+
+        context.rule.entity = entity
+        Engine.run(context)
+             
+        if not executable(context):
+          raise ActionDenied(context)        
+        
         @ndb.transactional(xg=True)
         def transaction():
-           
-           name = context.input.get('name')            
-           user_key = context.input.get('user')
-           role_keys = context.input.get('roles')
  
-           get_roles = ndb.get_multi(role_keys)
-           user = user_key.get()
-           
-           domain_key = context.input.get('domain')
-           domain = domain_key.get()
-           
-           entity = cls(id=user.key_id_str, namespace=domain.key_namespace)
-
-           context.rule.entity = entity
-           Engine.run(context)
-             
-           if not executable(context):
-              raise ActionDenied(context)
-            
-           already_invited = cls.build_key(user.key_id_str, namespace=domain.key_namespace).get()
-           
-           if already_invited:
-             # raise custom exception!!!
-              raise DomainUserError('already_invited')
-            
-           domain_key = context.input.get('domain')
-           domain = domain_key.get()
-           
            if user.state == 'active':
               roles = []
               for role in get_roles:
@@ -1017,7 +1037,7 @@ class DomainUser(ndb.BaseModel):
                   if role.key.namespace() == domain.key_namespace:
                      roles.append(role.key)
                      
-              entity.populate(name=name, user=user.key, state='invited', roles=roles)
+              entity.populate(name=context.input.get('name'), state='invited', roles=roles)
            
               user.domains.append(domain.key)
               
@@ -1025,7 +1045,9 @@ class DomainUser(ndb.BaseModel):
               
               ndb.put_multi([entity, user])
               
-              context.log.entities.append((entity,), (user,)) # log user as well
+              context.log.entities.append((entity,))
+              context.log.entities.append((user,)) # log user as well
+              
               log.Engine.run(context)
               read(entity)
               context.output['entity'] = entity
@@ -1050,7 +1072,7 @@ class DomainUser(ndb.BaseModel):
           
           from app.srv import auth
           
-          user = auth.User.build_key(entity.key.id()).get()
+          user = auth.User.build_key(long(entity.key.id())).get()
           
           context.rule.entity = entity
           Engine.run(context)
@@ -1061,10 +1083,12 @@ class DomainUser(ndb.BaseModel):
           
           entity.key.delete()
           
-          user.domains.remove(ndb.Key(urlsafe=entity.key_namespace()))
+          user.domains.remove(ndb.Key(urlsafe=entity.key_namespace))
           user.put()
           
-          context.log.entities.append((entity,), (user, ))
+          context.log.entities.append((entity,))
+          context.log.entities.append((user, ))
+          
           log.Engine.run(context)
           read(entity)
           context.output['entity'] = entity
@@ -1093,8 +1117,18 @@ class DomainUser(ndb.BaseModel):
            entity.put()
            context.log.entities.append((entity,))
            log.Engine.run(context)
+           Engine.run(context)
+           
+           domain = entity.namespace_entity
+           
+           context.rule.entity = domain
+           Engine.run(context)
+           
            read(entity)
+           read(domain)
+           
            context.output['entity'] = entity
+           context.output['domain'] = domain
    
         transaction()
          
@@ -1103,6 +1137,8 @@ class DomainUser(ndb.BaseModel):
     # Azurira postojeceg usera u domeni
     @classmethod
     def update(cls, context):
+      
+          get_roles = ndb.get_multi(context.input.get('roles')) 
        
           @ndb.transactional(xg=True)
           def transaction():
@@ -1115,9 +1151,8 @@ class DomainUser(ndb.BaseModel):
               
              if not executable(context):
                 raise ActionDenied(context)
-             
-             
-             get_roles = ndb.get_multi(context.input.get('roles')) 
+              
+            
              roles = []
              for role in get_roles:
                 # avoid rogue roles
@@ -1197,7 +1232,23 @@ class DomainUser(ndb.BaseModel):
    
       return context
     
-    
+    @classmethod
+    def read_records(cls, context):
+      entity_key = context.input.get('key')
+      next_cursor = context.input.get('next_cursor')
+      entity = entity_key.get()
+      context.rule.entity = entity
+      Engine.run(context)
+      if not executable(context):
+        raise ActionDenied(context)
+      entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
+      entity._records = entities
+      read(entity)
+      context.output['entity'] = entity
+      context.output['next_cursor'] = next_cursor
+      context.output['more'] = more
+      return context
+     
     @classmethod
     def selection_roles_helper(cls, namespace):
       return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()

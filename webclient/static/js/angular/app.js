@@ -140,8 +140,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	 	
     	 };
     	 
-    	 options = angular.extend(defaults, options);
-    	 
+    	 options =  resolve_defaults(defaults, options);
+  
     	 var modalInstance = $modal.open(options);
     	  
     	 modalInstance.result.then(function close(what) {
@@ -459,13 +459,16 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
             {
              
              	options = resolveOptions(options);
+             	var action = 'delete';
+             	
+             	if (options['action']) action = options['action'];
              	
              	var confirm_defaults = {
 					message : 'Are you sure you want to proceed with this action?',
 					callbacks : {
 						Yes : function () {
             		
-		            		 Endpoint.post('delete', options['kind'], options['entity']).success(function (data) {
+		            		 Endpoint.post(action, options['kind'], options['entity']).success(function (data) {
 			            		if (data['entity'])
 			            		{
 			            			var modal = Confirm.notice(options['message_success'], options['complete']);
@@ -536,6 +539,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             $scope.entity = angular.copy(entity);
                             $scope.action = action;
                             $scope.action2 = action2;
+                            
+                            $scope.history = {
+                            	'kind' : entity['kind'],
+                            	'args' : {
+                            		'key' : entity['key'],
+                            	}
+                            };
                             
                             $scope.resolve_handle = options['handle'];
                             $scope.resolve_complete = options['complete'];

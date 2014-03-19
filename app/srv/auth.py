@@ -65,11 +65,9 @@ class User(ndb.BaseExpando):
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
-    
     '_csrf': ndb.SuperComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
     '_is_guest': ndb.SuperComputedProperty(lambda self: self.is_guest()),
     '_root_admin': ndb.SuperComputedProperty(lambda self: self.root_admin()),
-    
     }
   
   _global_role = rule.GlobalRole(

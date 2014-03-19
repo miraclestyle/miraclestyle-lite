@@ -137,9 +137,11 @@ class DomainSetup(Setup):
      
      for obj in objects:
          if hasattr(obj, '_actions'):
+           actions = []
            for friendly_action_key, action_instance in obj._actions.items():
-               permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                        action=action_instance.key.urlsafe(),
+               actions.append(action_instance.key.urlsafe())
+           permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
+                                                        action=actions,
                                                         executable=True,
                                                         condition='True'))
                

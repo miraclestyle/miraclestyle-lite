@@ -113,7 +113,6 @@ class Widget(ndb.BaseExpando):
   def selection_roles_helper(cls, namespace):
     return rule.DomainRole.query(rule.DomainRole.active == True, namespace=namespace).fetch()
   
-  
   @classmethod
   def _complete_save_helper(cls, entity, context, create):
       

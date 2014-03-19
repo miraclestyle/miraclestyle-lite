@@ -50,8 +50,8 @@ MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$mod
     	 	},
     	 	'removeFilter' : function (filter)
     	 	{
-    	 		var index = this.entity.filters.indexOf(filter);
-  			    this.entity.filters.splice(index,1);    
+    	 		this.entity.filters.remove(filter);
+  	 
     	 	},
     	};
     	

@@ -199,3 +199,11 @@ function resolve_defaults(defaults, options)
 	return options;
 }
 
+Array.prototype.remove = function (val)
+{
+	var index = this.indexOf(val);
+  	this.splice(index,1);  
+  	
+  	return this;
+};
+

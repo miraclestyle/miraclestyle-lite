@@ -14,12 +14,29 @@ MainApp.filter('permissionResolveActionName', function() {
        
        return outputs;
     };
-}).factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+}).factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',
 
-    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+    function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
  
     	
         return {
+        	
+        	accept : function (domain_key, handle)
+        	{
+        		Confirm.sure(function () {
+        			Endpoint.post('accept', '8', {
+        				'key' : domain_key,
+        			}).success(handle);
+        		});
+        	},
+        	decline : function (domain_key, handle)
+        	{
+        		Confirm.sure(function () {
+        			Endpoint.post('decline', '8', {
+        				'key' : domain_key,
+        			}).success(handle);
+        		});
+        	},
             create: function (domain_key, oncreate) {
               
                return EntityEditor.create({
@@ -40,18 +57,19 @@ MainApp.filter('permissionResolveActionName', function() {
                 });
                 
             },
-            remove : function (entity, ondelete)
+            remove : function (entity_key, handle)
             {
                
-               return EntityEditor.remove({
-               	  'kind' : '8',
-               	  'entity' : entity,
-               	  'complete' : ondelete,
-               });
+               Confirm.sure(function () {
+        			Endpoint.post('remove', '8', {
+        				'key' : entity_key,
+        			}).success(handle);
+        		});
          
             },
             update: function (entity, onupdate)
             {
+            	var that = this;
              
                 return EntityEditor.update({
                 	 'kind' : '8',
@@ -59,6 +77,7 @@ MainApp.filter('permissionResolveActionName', function() {
                 	 'handle' : function (data)
 			         {
 			            this.roles = data['roles'];
+			            
 			         },
                 	 'complete' : onupdate,
                 	 'templateUrl' : logic_template('rule/manage_user.html'),
@@ -76,6 +95,7 @@ MainApp.filter('permissionResolveActionName', function() {
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
     	  
         var scope = {
+    
      
         	'_managePermission' : function (permission, entity)
         	{
@@ -153,8 +173,8 @@ MainApp.filter('permissionResolveActionName', function() {
     	 	},
     	 	'removePermission' : function (perm)
     	 	{
-    	 		var index = this.entity.permissions.indexOf(filter);
-  			    this.entity.permissions.splice(index,1);    
+    	 		this.entity.permissions.remove(filter);
+  			      
     	 	},
     	 
     	};
