@@ -21,18 +21,19 @@ MainApp.filter('permissionResolveActionName', function() {
     	
         return {
             create: function (domain_key, oncreate) {
-             
-            	  
+              
                return EntityEditor.create({
 	                	 'kind' : '8',
 	                	 'entity' : {},
+	                	 'action' : 'invite',
+	                	 
 	                	 'handle' : function (data)
 				         {
 				            this.roles = data['roles'];
 				            this.entity['domain'] = domain_key;
 				         },
 	                	 'complete' : oncreate,
-	                	 'templateUrl' : logic_template('rule/manage_user.html'),
+	                	 'templateUrl' : logic_template('rule/invite_user.html'),
 	                	 'args' : {
 	                	 	'domain' : domain_key,
 	                	 }

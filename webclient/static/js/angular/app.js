@@ -515,6 +515,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                 	action2 = 'prepare';
                 }
                 
+                if ('action' in options) action = options['action'];
+                if ('action2' in options) action2 = options['action2'];
+                
                 args = options['args'];
             
                 var handle = function (data) {
@@ -571,8 +574,15 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
                 };
                 
-                Endpoint.post(action2, options['kind'], args).success(handle);
-
+                if ('data' in options)
+                {
+                	handle(options['data']);
+                }
+                else
+                {
+                	Endpoint.post(action2, options['kind'], args).success(handle);
+                }
+                 
             }
 
         };

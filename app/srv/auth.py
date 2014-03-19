@@ -65,6 +65,11 @@ class User(ndb.BaseExpando):
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
+    
+    '_csrf': ndb.SuperComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
+    '_is_guest': ndb.SuperComputedProperty(lambda self: self.is_guest()),
+    '_root_admin': ndb.SuperComputedProperty(lambda self: self.root_admin()),
+    
     }
   
   _global_role = rule.GlobalRole(
@@ -135,9 +140,8 @@ class User(ndb.BaseExpando):
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
-  
-  @property
-  def _root_admin(self):
+   
+  def root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
   
   def primary_email(self):
@@ -148,15 +152,13 @@ class User(ndb.BaseExpando):
         return identity.email
     return identity.email
   
-  @property
-  def _csrf(self):
+  def csrf(self):
     session = self.current_user_session()
     if not session:
       return None
     return hashlib.md5(session.session_id).hexdigest()
   
-  @property
-  def _is_guest(self):
+  def is_guest(self):
     return self.key == None
   
   @classmethod

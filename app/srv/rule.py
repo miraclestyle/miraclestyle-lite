@@ -918,8 +918,11 @@ class DomainUser(ndb.BaseModel):
        'search' : event.Action(id='8-6',
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
-                              }
-         ),
+                               }),
+       'prepare' : event.Action(id='8-7',
+                              arguments={
+                                 'domain' : ndb.SuperKeyProperty(kind='6'),
+                              })
                 
     }
     
@@ -952,6 +955,26 @@ class DomainUser(ndb.BaseModel):
         transaction()
         
         return context
+      
+    @classmethod
+    def prepare(cls, context):
+      
+      domain_key = context.input.get('domain')
+      domain = domain_key.get()
+   
+      entity = cls(namespace=domain.key_namespace)
+      
+      context.rule.entity = entity
+      
+      Engine.run(context)
+      
+      if not executable(context):
+        raise ActionDenied(context)
+   
+      context.output['entity'] = entity
+      context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
+ 
+      return context
  
     # Poziva novog usera u domenu
     @classmethod
@@ -1092,15 +1115,13 @@ class DomainUser(ndb.BaseModel):
               
              if not executable(context):
                 raise ActionDenied(context)
-              
-             domain_key = context.input.get('domain')
-             domain = domain_key.get()
+             
              
              get_roles = ndb.get_multi(context.input.get('roles')) 
              roles = []
              for role in get_roles:
                 # avoid rogue roles
-                if role.key.namespace() == domain.key_namespace:
+                if role.key.namespace() == entity.key_namespace:
                    roles.append(role.key) 
    
              values = {

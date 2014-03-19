@@ -24,7 +24,7 @@
 	
 	<h1 class="fieldset with-button">
 			<span class="fieldset-text">Permissions</span>
-			<span ng-show="rule.field.permissions.writable" class="fieldset-button"><a class="button" busy ng-click="addPermission()">Add Permission</a></span>
+			<span ng-show="rule.field.permissions.writable && rule.action.update.executable" class="fieldset-button"><a class="button" busy ng-click="addPermission()">Add Permission</a></span>
 		</h1>
 		<table class="table">
 					<thead>
@@ -32,7 +32,7 @@
 							<th>Kind</th>
 							<th>Type</th>
 							<th>Rule</th>
-							<th></th>
+							<th ng-show="rule.action.update.executable"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -47,7 +47,7 @@
 								<span ng-show="perm.writable != null">Writable: {{perm.writable}}</span>
 								<span ng-show="perm.visible != null">Visible: {{perm.visible}}</span>
 							</td>
-							<td>
+							<td ng-show="rule.action.update.executable">
 								<button ng-click="editPermission(perm)" type="button" class="button">Edit</button>
 								<button ng-click="removePermission(perm)" type="button" class="button">Delete</button>
 							</td>
