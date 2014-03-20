@@ -692,7 +692,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       rule.write(entity, {'name': context.input.get('name'),
-                          'primary_contact': context.input.get('primary_contact')})
+                          'primary_contact': context.input.get('primary_contact')})  # @todo What about logo?
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
