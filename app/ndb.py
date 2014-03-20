@@ -239,7 +239,7 @@ class _BaseModel(object):
     try:
       return super(_BaseModel, self).__getattr__(name)
     except AttributeError as e:
-      raise Exception('No attribute `%s` found in instance of `%s`' % (name, self.__class__.__name__))
+      raise Exception('No attribute "%s" found in instance of "%s"' % (name, self.__class__.__name__))
   
   def __setattr__(self, name, value):
     virtual_fields = self.get_virtual_fields()
