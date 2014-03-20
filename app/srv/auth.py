@@ -61,7 +61,7 @@ class User(ndb.BaseExpando):
   
   _expando_fields = {}
   
-  _virtual_fields = {  # @todo We should strongly respect what virtual fields are, and try to find other way to supply required values that do not represent user data!
+  _virtual_fields = {  # @todo We should strongly respect what virtual fields are, and try to find other way to supply required values that do not represent user data! Can we overide get_output() and include functional values there?
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
