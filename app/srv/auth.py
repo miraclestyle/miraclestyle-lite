@@ -61,7 +61,7 @@ class User(ndb.BaseExpando):
   
   _expando_fields = {}
   
-  _virtual_fields = {
+  _virtual_fields = {  # @todo We should strongly respect what virtual fields are, and try to find other way to supply required values that do not represent user data!
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
@@ -138,7 +138,7 @@ class User(ndb.BaseExpando):
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
-   
+  
   def root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
   
@@ -238,19 +238,19 @@ class User(ndb.BaseExpando):
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       values = {'state': state}
-      if state == 'suspended':
+      if rule.writable(context, 'state') and state == 'suspended':
         values['sessions'] = []  # Delete sessions. @done If state field is writable and is being changed to 'suspended', then we can respect this statement!!
       rule.write(entity, values)
       entity.put()
-      values = {'message': message, 'note': note}
+      values = {'message': message, 'note': note}  # This is somewhat confusing due to the fact that action argument 'message' is required, and if field 'message' should implement field permissions...
       if not rule.writable(context, '_records.note'):
-         values.pop('note')
-      context.log.entities.append((entity, values))  # @done Handle permissions externally.
+        values.pop('note')
+      context.log.entities.append((entity, values))
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -287,7 +287,7 @@ class User(ndb.BaseExpando):
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -336,7 +336,7 @@ class User(ndb.BaseExpando):
       context.rule.entity = entity
       rule.Engine.run(context)
       rule.read(entity)
-    context.output['entities'] = entities  # @done Apply rule.read() for each instance in entities prior returning them.
+    context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
@@ -483,7 +483,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   _virtual_fields = {
     '_primary_contact_email': ndb.SuperStringProperty(),
-    '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True),
+    '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True)
     }
   
   _global_role = rule.GlobalRole(
@@ -514,7 +514,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True),
+        'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True)
         }
       ),
     'update': event.Action(
@@ -601,13 +601,11 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       raise ndb.Return(entities)
     
     entities = helper(entities).get_result()
-    
     for entity in entities:
-       context.rule.entity = entity
-       rule.Engine.run(context)
-       rule.read(entity)
- 
-    context.output['entities'] = entities  # @done Apply rule.read() for each instance in entities prior returning them.
+      context.rule.entity = entity
+      rule.Engine.run(context)
+      rule.read(entity)
+    context.output['entities'] = entities
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
@@ -633,7 +631,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
                                       'key': config.key.urlsafe()})
       callback.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity?
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -701,7 +699,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -725,7 +723,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -749,7 +747,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -770,13 +768,13 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.Engine.run(context)
       values = {'message': context.input.get('message'), 'note': context.input.get('note')}
       if not rule.writable(context, '_records.note'):
-         values.pop('note')
-      context.log.entities.append((entity, values))  # @done Handle permissions externally.
+        values.pop('note')
+      context.log.entities.append((entity, values))
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
@@ -795,13 +793,13 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
       values = {'message': context.input.get('message'), 'note': context.input.get('note')}
       if not rule.writable(context, '_records.note'):
-         values.pop('note')
-      context.log.entities.append((entity, values))  # @done Handle permissions externally.
+        values.pop('note')
+      context.log.entities.append((entity, values))
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
       rule.read(entity)
-      context.output['entity'] = entity  # @done Apply rule.read() prior returning entity.
+      context.output['entity'] = entity
     
     transaction()
     return context
