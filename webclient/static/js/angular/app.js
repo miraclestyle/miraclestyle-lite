@@ -536,16 +536,21 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         	$scope.options = options;
                         	 
  							$scope.rule = RuleEngine.factory(data['entity']);
+ 							$scope.live_entity = entity;
                             $scope.entity = angular.copy(entity);
                             $scope.action = action;
                             $scope.action2 = action2;
                             
-                            $scope.history = {
-                            	'kind' : entity['kind'],
-                            	'args' : {
-                            		'key' : entity['key'],
-                            	}
-                            };
+                            if (!create)
+                            {
+                            	$scope.history = {
+	                            	'kind' : entity['kind'],
+	                            	'args' : {
+	                            		'key' : entity['key'],
+	                            	}
+	                            };
+                            }
+                            
                             
                             $scope.resolve_handle = options['handle'];
                             $scope.resolve_complete = options['complete'];

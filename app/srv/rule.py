@@ -617,6 +617,10 @@ class GlobalRole(Role):
 class DomainRole(Role):
   
     _kind = 60
+    
+    _virtual_fields = {
+     '_records': log.SuperLocalStructuredRecordProperty('60', repeated=True),                   
+    }
   
     _global_role = GlobalRole(permissions=[
                                             ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
@@ -629,6 +633,11 @@ class DomainRole(Role):
                                             
                                             ActionPermission('60', event.Action.build_key('60-3').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
                                             ActionPermission('60', event.Action.build_key('60-1').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
+                                            ActionPermission('60', event.Action.build_key('60-6').urlsafe(), True, "context.auth.user._root_admin"),
+                          
+                                            FieldPermission('60', '_records.note', False, False, 'not context.auth.user._root_admin'),
+                                            FieldPermission('60', '_records.note', True, True, 'context.auth.user._root_admin'),
+                                            
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
     _actions = {
@@ -671,7 +680,11 @@ class DomainRole(Role):
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),
                               }
                              ),
-                
+       'read_records' : event.Action(id='60-6', 
+                             arguments={
+                               'key' : ndb.SuperKeyProperty(kind='60', required=True),
+                               'next_cursor': ndb.SuperStringProperty(),
+                             }),
     }
  
     @classmethod
@@ -843,6 +856,23 @@ class DomainRole(Role):
       context.output['entity'] = entity
  
       return context
+    
+    @classmethod
+    def read_records(cls, context):
+      entity_key = context.input.get('key')
+      next_cursor = context.input.get('next_cursor')
+      entity = entity_key.get()
+      context.rule.entity = entity
+      Engine.run(context)
+      if not executable(context):
+        raise ActionDenied(context)
+      entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
+      entity._records = entities
+      read(entity)
+      context.output['entity'] = entity
+      context.output['next_cursor'] = next_cursor
+      context.output['more'] = more
+      return context
  
  
 class DomainUser(ndb.BaseModel):
@@ -878,6 +908,10 @@ class DomainUser(ndb.BaseModel):
                                             ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
                                             ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.user._is_taskqueue"),
                                             ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.user._is_taskqueue"),
+                                            ActionPermission('8', event.Action.build_key('8-8').urlsafe(), True, "context.auth.user._root_admin"),
+                          
+                                            FieldPermission('8', '_records.note', False, False, 'not context.auth.user._root_admin'),
+                                            FieldPermission('8', '_records.note', True, True, 'context.auth.user._root_admin'),
 
                                           ])
     # unique action naming, possible usage is '_kind_id-manage'
@@ -929,10 +963,10 @@ class DomainUser(ndb.BaseModel):
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6'),
                               }),
-                
-        'read_records' : event.Action(id='8-8', 
+       'read_records' : event.Action(id='8-8', 
                              arguments={
                                'key' : ndb.SuperKeyProperty(kind='8', required=True),
+                               'next_cursor': ndb.SuperStringProperty()
                              }),
                 
     }
@@ -1063,24 +1097,24 @@ class DomainUser(ndb.BaseModel):
     # Uklanja postojeceg usera iz domene
     @classmethod
     def remove(cls, context):
+       
+       entity_key = context.input.get('key')            
+       entity = entity_key.get()
+      
+       from app.srv import auth
+      
+       user = auth.User.build_key(long(entity.key.id())).get()
+      
+       context.rule.entity = entity
+       Engine.run(context)    
+ 
+       # if user can remove, or if the user can remove HIMSELF from the user role  
+       if not executable(context):
+         raise ActionDenied(context) 
   
        @ndb.transactional(xg=True)
        def transaction():
-          
-          entity_key = context.input.get('key')            
-          entity = entity_key.get()
-          
-          from app.srv import auth
-          
-          user = auth.User.build_key(long(entity.key.id())).get()
-          
-          context.rule.entity = entity
-          Engine.run(context)
-          
-          # if user can remove, or if the user can remove HIMSELF from the user role  
-          if not executable(context):
-             raise ActionDenied(context)
-          
+ 
           entity.key.delete()
           
           user.domains.remove(ndb.Key(urlsafe=entity.key_namespace))
@@ -1120,6 +1154,8 @@ class DomainUser(ndb.BaseModel):
            Engine.run(context)
            
            domain = entity.namespace_entity
+           
+           entity.key.delete(use_datastore=False)
            
            context.rule.entity = domain
            Engine.run(context)

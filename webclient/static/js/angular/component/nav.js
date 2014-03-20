@@ -72,7 +72,7 @@ MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$mod
                 }
 
             },
-            create: function (domain_key, oncreate) {
+            create: function (domain_key, complete) {
              
             	  
                return EntityEditor.create({
@@ -84,7 +84,7 @@ MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$mod
 			            this.roles = data['roles'];
 			            this.entity['domain'] = domain_key;
 			         },
-                	 'complete' : oncreate,
+                	 'complete' : complete,
                 	 'templateUrl' : logic_template('nav/manage.html'),
                 	 'args' : {
                 	 	'domain' : domain_key,
@@ -92,17 +92,17 @@ MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$mod
                 });
                 
             },
-            remove : function (entity, ondelete)
+            remove : function (entity, complete)
             {
                
                return EntityEditor.remove({
                	  'kind' : '62',
                	  'entity' : entity,
-               	  'complete' : ondelete,
+               	  'complete' : complete,
                });
          
             },
-            update: function (entity, onupdate)
+            update: function (entity, complete)
             {
              
                 return EntityEditor.update({
@@ -113,7 +113,7 @@ MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$mod
 			         {
 			            this.roles = data['roles'];
 			         },
-                	 'complete' : onupdate,
+                	 'complete' : complete,
                 	 'templateUrl' : logic_template('nav/manage.html'),
                 	 'args' : {
                 	 	'key' : entity['key'],

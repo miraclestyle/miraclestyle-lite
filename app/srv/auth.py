@@ -237,11 +237,15 @@ class User(ndb.BaseExpando):
       rule.Engine.run(context, True)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
+      values = {'state': state}
       if state == 'suspended':
-        entity.sessions = []  # Delete sessions. @todo If state field is writable and is being changed to 'suspended', then we can respect this statement!!
-      rule.write(entity, {'state': state})
+        values['sessions'] = []  # Delete sessions. @done If state field is writable and is being changed to 'suspended', then we can respect this statement!!
+      rule.write(entity, values)
       entity.put()
-      context.log.entities.append((entity, {'message': message, 'note': note}))  # @todo Handle permissions externally.
+      values = {'message': message, 'note': note}
+      if not rule.writable(context, '_records.note'):
+         values.pop('note')
+      context.log.entities.append((entity, values))  # @done Handle permissions externally.
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -328,8 +332,11 @@ class User(ndb.BaseExpando):
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
-    context.output['entity'] = context.auth.user
-    context.output['entities'] = entities  # @todo Apply rule.read() for each instance in entities prior returning them.
+    for entity in entities:
+      context.rule.entity = entity
+      rule.Engine.run(context)
+      rule.read(entity)
+    context.output['entities'] = entities  # @done Apply rule.read() for each instance in entities prior returning them.
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
     return context
@@ -638,7 +645,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    # @todo Not sure if we should put here rule.read?
+    # @todo Not sure if we should put here rule.read? - well we are outputing an empty cls() really dont see the need to put .read into prepare actions
     context.output['entity'] = entity
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
     return context
@@ -713,7 +720,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.write(entity, {'state': 'suspended'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally.
+      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @done Handle permissions externally - no need here because it only accepts message as param.
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -737,7 +744,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.write(entity, {'state': 'active'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @todo Handle permissions externally. - why here cuz it only accepts message param?
+      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @done Handle permissions externally. - no need here because it only accepts message as param.
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -761,7 +768,10 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.write(entity, {'state': context.input.get('state')})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
+      values = {'message': context.input.get('message'), 'note': context.input.get('note')}
+      if not rule.writable(context, '_records.note'):
+         values.pop('note')
+      context.log.entities.append((entity, values))  # @done Handle permissions externally.
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -783,7 +793,10 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
-      context.log.entities.append((entity, {'message': context.input.get('message'), 'note': context.input.get('note')}))  # @todo Handle permissions externally.
+      values = {'message': context.input.get('message'), 'note': context.input.get('note')}
+      if not rule.writable(context, '_records.note'):
+         values.pop('note')
+      context.log.entities.append((entity, values))  # @done Handle permissions externally.
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)

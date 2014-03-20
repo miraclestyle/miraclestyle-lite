@@ -46,8 +46,7 @@ class Widget(ndb.BaseExpando):
       rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), True, "not context.rule.entity._is_admin"),
   
       rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True,
-                            "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
-      rule.FieldPermission('62', '_records', True, True, 'True'),
+                            "context.auth.user._root_admin"),
       rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user._root_admin'),
       rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user._root_admin')
       ]

@@ -8,9 +8,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 	    
 	    	var hide_load_more = function () {
 	    		var has_vertical_scroll = element.prop('scrollHeight') > element.height();
-	    		
-	    		$log.debug(element.prop('scrollHeight'), element.height());
-	     
+	    
 	    		if (has_vertical_scroll)
 	    		{
 	    			element.find('.load-more').css('visibility', 'hidden');

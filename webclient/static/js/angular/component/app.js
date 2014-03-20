@@ -302,22 +302,26 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.title = config['title'];
             $scope.add_new = config['add_new'];
              
+            $scope.removeItem = function (e) {
+            	 $scope.search.entities.remove(e);
+            };
+ 
             $scope.create = function () {
 				service.create($stateParams['domain_key'], function (new_entity) {
 					new_entity.rule = RuleEngine.factory(new_entity);
 					$scope.search.entities.push(new_entity);
-				});
+				}, $scope);
             };
 
             $scope.update = function (entity) {
-				service.update(entity);
+				service.update(entity, null, $scope);
             };
             
             $scope.remove = function (entity) {
 				service.remove(entity, function () {
 					  	$scope.search.entities.remove(entity);
   					 
-				});
+				}, $scope);
             };
 
         }
@@ -337,7 +341,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.apps = apps;
 
             $scope.toggleMainMenu(1);
-
+       
             $scope.updateApp = function (app) {
                 App.update(app);
             };

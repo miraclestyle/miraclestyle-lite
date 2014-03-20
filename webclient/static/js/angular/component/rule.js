@@ -21,23 +21,23 @@ MainApp.filter('permissionResolveActionName', function() {
     	
         return {
         	
-        	accept : function (domain_key, handle)
+        	accept : function (entity_key, complete)
         	{
         		Confirm.sure(function () {
         			Endpoint.post('accept', '8', {
-        				'key' : domain_key,
-        			}).success(handle);
+        				'key' : entity_key,
+        			}).success(complete);
         		});
         	},
-        	decline : function (domain_key, handle)
+        	decline : function (entity_key, complete)
         	{
         		Confirm.sure(function () {
         			Endpoint.post('decline', '8', {
-        				'key' : domain_key,
-        			}).success(handle);
+        				'key' : entity_key,
+        			}).success(complete);
         		});
         	},
-            create: function (domain_key, oncreate) {
+            create: function (domain_key, complete) {
               
                return EntityEditor.create({
 	                	 'kind' : '8',
@@ -49,7 +49,7 @@ MainApp.filter('permissionResolveActionName', function() {
 				            this.roles = data['roles'];
 				            this.entity['domain'] = domain_key;
 				         },
-	                	 'complete' : oncreate,
+	                	 'complete' : complete,
 	                	 'templateUrl' : logic_template('rule/invite_user.html'),
 	                	 'args' : {
 	                	 	'domain' : domain_key,
@@ -57,29 +57,42 @@ MainApp.filter('permissionResolveActionName', function() {
                 });
                 
             },
-            remove : function (entity_key, handle)
+            remove : function (entity_key, complete)
             {
                
                Confirm.sure(function () {
         			Endpoint.post('remove', '8', {
         				'key' : entity_key,
-        			}).success(handle);
+        			}).success(complete);
         		});
          
             },
-            update: function (entity, onupdate)
+            update: function (entity, complete, $parentScope)
             {
             	var that = this;
              
                 return EntityEditor.update({
                 	 'kind' : '8',
                 	 'entity' : entity,
+                	 'scope' : {
+				        'remove' : function ()
+				    	 {
+				    	 	var scope = this;
+				    	 	that.remove(entity.key, function (data) {
+				    	 		if (data['entity'])
+				    	 		{
+				    	 			$parentScope.removeItem(scope.live_entity);
+				    	 			scope.cancel();
+				    	 		}
+				    	 	});
+				    	    
+				    	 },  
+                	 },
                 	 'handle' : function (data)
 			         {
 			            this.roles = data['roles'];
-			            
 			         },
-                	 'complete' : onupdate,
+                	 'complete' : complete,
                 	 'templateUrl' : logic_template('rule/manage_user.html'),
                 	 'args' : {
                 	 	'key' : entity['key'],
@@ -95,8 +108,7 @@ MainApp.filter('permissionResolveActionName', function() {
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
     	  
         var scope = {
-    
-     
+    	
         	'_managePermission' : function (permission, entity)
         	{
         		var modalInstance = $modal.open({
@@ -180,7 +192,7 @@ MainApp.filter('permissionResolveActionName', function() {
     	};
     	
         return {
-            create: function (domain_key, oncreate) {
+            create: function (domain_key, complete) {
              
             	  
                return EntityEditor.create({
@@ -193,7 +205,7 @@ MainApp.filter('permissionResolveActionName', function() {
 			         {
 			            this.entity['domain'] = domain_key;
 			         },
-                	 'complete' : oncreate,
+                	 'complete' : complete,
                 	 'templateUrl' : logic_template('rule/manage_role.html'),
                 	 'args' : {
                 	 	'domain' : domain_key,
@@ -201,24 +213,24 @@ MainApp.filter('permissionResolveActionName', function() {
                 });
                 
             },
-            remove : function (entity, ondelete)
+            remove : function (entity, complete)
             {
                
                return EntityEditor.remove({
                	  'kind' : '60',
                	  'entity' : entity,
-               	  'complete' : ondelete,
+               	  'complete' : complete,
                });
          
             },
-            update: function (entity, onupdate)
+            update: function (entity, complete)
             {
              
                 return EntityEditor.update({
                 	 'kind' : '60',
                 	 'entity' : entity,
                 	 'scope' : scope,
-                	 'complete' : onupdate,
+                	 'complete' : complete,
                 	 'templateUrl' : logic_template('rule/manage_role.html'),
                 	 'args' : {
                 	 	'key' : entity['key'],
