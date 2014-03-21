@@ -266,7 +266,7 @@ def _write_helper(field_permissions, entity, field_key, field, field_value, pare
 def write(entity, values):
   entity_fields = entity.get_fields()
   for field_key, field_value in values.items():
-    if field_key in entity_fields:  # Check if the value is in entities field list.
+    if field_key in entity_fields:
       field = entity_fields.get(field_key)
       writable = entity._field_permissions[field_key]['writable']
       _write_helper(entity._field_permissions, entity, field_key, field, field_value, is_writable=writable)
@@ -290,9 +290,8 @@ def _read_helper(field_permissions, operator, field_key, field):
   else:
     if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
       operator.remove_output(field_key)
-# @todo ??
+
 def read(entity):
-  # Configures output variables for the provided entity with respect to rule engine. Should the param be entity or context?
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
     _read_helper(entity._field_permissions, entity, field_key, field)
@@ -370,34 +369,35 @@ class Role(ndb.BaseExpando):
 
 
 class Engine:
-  # @todo ??
+  
   @classmethod
-  def _prepare_fields_helper(cls):
-    return collections.OrderedDict([('writable', []), ('visible', [])])
-  # @todo ??
+  def prepare_actions(cls, action_permissions, actions):
+    for action_key in actions:
+      action_permissions[action_key] = {'executable': []}
+  
   @classmethod
-  def prepare_fields(cls, field_permissions, fields, entity):
+  def prepare_fields(cls, field_permissions, fields):
     for field_key, field in fields.items():
       if _is_structured_field(field):
         if field_key not in field_permissions:
-          field_permissions[field_key] = cls._prepare_fields_helper()
-        new_fields = field.get_model_fields()
-        if field._code_name in new_fields:
-          new_fields.pop(field._code_name)
-        cls.prepare_fields(field_permissions[field_key], new_fields, entity)
+          field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
+        model_fields = field.get_model_fields()
+        if field._code_name in model_fields:
+          model_fields.pop(field._code_name)
+        cls.prepare_fields(field_permissions[field_key], model_fields)
       else:
-        field_permissions[field_key] = cls._prepare_fields_helper()
-  # @todo ??
+        field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
+  
   @classmethod
   def prepare(cls, context):
     entity = context.rule.entity
-    entity._field_permissions = {}
     entity._action_permissions = {}
-    fields = entity.get_fields()
-    cls.prepare_fields(entity._field_permissions, fields, entity)
+    entity._field_permissions = {}
     actions = entity.get_actions()
-    for action_key in actions:
-      entity._action_permissions[action_key] = {'executable' : []}
+    fields = entity.get_fields()
+    cls.prepare_actions(entity._action_permissions, actions)
+    cls.prepare_fields(entity._field_permissions, fields)
+  
   # @todo ??
   @classmethod
   def _decide_helper(cls, calc, element, prop, value, strict, parent=None):
