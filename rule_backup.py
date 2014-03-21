@@ -229,6 +229,39 @@ def executable(context):
     return context.rule.entity._action_permissions[context.action.key.urlsafe()]['executable']
   else:
     return False
+# @todo ??
+def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None, is_writable=None):
+  if _is_structured_field(field):
+    util.logger('is structured - recursion %s.%s' % (entity.__class__.__name__, field_key))
+    if field._repeated and isinstance(entity, list):
+      util.logger('got list as entity, recurse it' % entity)
+      for ent in entity:
+        for new_field_key, new_field in field.get_model_fields().items():
+          new_field_value = getattr(ent, field_key)
+          _write_helper(field_permissions[field_key], ent, new_field_key, new_field, new_field_value, field_key, field, field_permissions[field_key]['writable'])
+      return
+    structured_value = getattr(entity, field_key)
+    for new_field_key, new_field in field.get_model_fields().items():
+      _write_helper(field_permissions[field_key], structured_value, new_field_key, new_field, field_value, field_key, field, field_permissions[field_key]['writable'])
+  else:
+    if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
+      if parent_field and parent_field._repeated:
+        if isinstance(entity, list):
+          for i, field_value_item in enumerate(field_value):
+            try:
+              already = entity[i]
+              far_key = getattr(field_value_item, field_key)
+              setattr(already, field_key, far_key)
+              util.logger('repeated set - %s.%s=%s' % (already.__class__.__name__, field_key, far_key))
+            except IndexError:
+              entity.append(field_value_item)
+              util.logger('appending new %s to %s' % (field_value_item, entity.__class__.__name__))
+          return
+      util.logger('not structured - setting %s.%s' % (entity.__class__.__name__, field_key))
+      try:
+        setattr(entity, field_key, field_value)
+      except ndb.ComputedPropertyError:
+        pass
 
 def write(entity, values):
   entity_fields = entity.get_fields()
@@ -237,254 +270,164 @@ def write(entity, values):
       field = entity_fields.get(field_key)
       writable = entity._field_permissions[field_key]['writable']
       _write_helper(entity._field_permissions, entity, field_key, field, field_value, is_writable=writable)
-
-# revision stop!
-def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None, is_writable=None):
-  
-  if is_structured_property(field):
-  
-     util.logger('is structured - recursion %s.%s' % (entity.__class__.__name__, field_key))
-     
-     if field._repeated and isinstance(entity, list):
-        util.logger('got list as entity, recurse it' % entity)
-        for ent in entity:
-           for new_field_key, new_field in field.get_model_fields().items():
-               new_field_value = getattr(ent, field_key)
-               _write_helper(field_permissions[field_key], ent, new_field_key, new_field, new_field_value, field_key, field, field_permissions[field_key]['writable'])
-        return
-      
-     structured_value = getattr(entity, field_key)
- 
-     for new_field_key, new_field in field.get_model_fields().items():
-         _write_helper(field_permissions[field_key], structured_value, new_field_key, new_field, field_value, field_key, field, field_permissions[field_key]['writable'])
-   
-  else:
-    if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
-       
-       if parent_field and parent_field._repeated:
-          if isinstance(entity, list):
-             for i,field_value_item in enumerate(field_value):
-                 try:
-                   already = entity[i]
-                   far_key = getattr(field_value_item, field_key)
-                   setattr(already, field_key, far_key)
-                   util.logger('repeated set - %s.%s=%s' % (already.__class__.__name__, field_key, far_key))
-                 except IndexError:
-                   entity.append(field_value_item)
-                   util.logger('appending new %s to %s' % (field_value_item, entity.__class__.__name__))
-                   
-             return
-           
-       util.logger('not structured - setting %s.%s' % (entity.__class__.__name__, field_key))
-       
-       try:
-         setattr(entity, field_key, field_value)
-       except ndb.ComputedPropertyError:
-         pass
-              
-
+# @todo ??
 def _read_helper(field_permissions, operator, field_key, field):
- 
   if is_structured_property(field):
-      
-     structured_field_value = getattr(operator, field_key)
-     
-     if field._repeated and isinstance(structured_field_value, list):
-        for op in structured_field_value:
-           initial_fields = op.get_fields()
-           initial_fields.update(dict([(p._code_name, p) for _, p in op._properties.items()]))
-           for new_field_key, new_field in initial_fields.items():
-              _read_helper(field_permissions[field_key], op, new_field_key, new_field)
-     else:
-        
-       parent_structure = getattr(operator, field_key)
-       
-       if parent_structure is not None:
-          initial_fields = parent_structure.get_fields()
-          initial_fields.update(dict([(p._code_name, p) for _, p in parent_structure._properties.items()]))
-         
-          for new_field_key, new_field in initial_fields.items():
-             _read_helper(field_permissions[field_key], parent_structure, new_field_key, new_field)
-       
+    structured_field_value = getattr(operator, field_key)
+    if field._repeated and isinstance(structured_field_value, list):
+      for op in structured_field_value:
+        initial_fields = op.get_fields()
+        initial_fields.update(dict([(p._code_name, p) for _, p in op._properties.items()]))
+        for new_field_key, new_field in initial_fields.items():
+          _read_helper(field_permissions[field_key], op, new_field_key, new_field)
+    else:
+      parent_structure = getattr(operator, field_key)
+      if parent_structure is not None:
+        initial_fields = parent_structure.get_fields()
+        initial_fields.update(dict([(p._code_name, p) for _, p in parent_structure._properties.items()]))
+        for new_field_key, new_field in initial_fields.items():
+          _read_helper(field_permissions[field_key], parent_structure, new_field_key, new_field)
   else:
     if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
-       operator.remove_output(field_key) 
-     
-                      
+      operator.remove_output(field_key)
+# @todo ??
 def read(entity):
-  
-    # configures output variables for the provided entity with respect to rule engine. should the param be entity or context?
-    entity_fields = entity.get_fields()
- 
-    for field_key, field in entity_fields.items():
-        _read_helper(entity._field_permissions, entity, field_key, field)
-        
-    return entity
+  # Configures output variables for the provided entity with respect to rule engine. Should the param be entity or context?
+  entity_fields = entity.get_fields()
+  for field_key, field in entity_fields.items():
+    _read_helper(entity._field_permissions, entity, field_key, field)
+  return entity
+
 
 class Context():
   
   def __init__(self):
     self.entity = None
 
-    
+
 class Permission():
   """ Base class for all permissions """
 
 
 class ActionPermission(Permission):
-   
-   
-  def __init__(self, kind, action, executable=None, condition=None):
-    
-    if not isinstance(action, (tuple, list)):
-      action = [action]
-    
-    self.kind = kind # entity kind identifier (entity._kind)
-    self.action = action # action id (action.key.id()), or action key (action.key) ? ----- this could be a list
+  
+  def __init__(self, kind, actions, executable=None, condition=None):
+    if not isinstance(actions, (tuple, list)):
+      actions = [actions]
+    self.kind = kind  # Entity kind identifier (entity._kind).
+    self.actions = actions  # List of action urlsafe keys. @todo This has been renamed from 'action' to 'actions'!
     self.executable = executable
     self.condition = condition
-    
-  def get_meta(self):
-     return {'kind' : self.kind, 'action' : self.action,
-             'executable' : self.executable, 'condition' : self.condition, 'type' : self.__class__.__name__}
-    
+  
+  def get_output(self):
+    return {'kind': self.kind, 'actions': self.actions,
+            'executable': self.executable, 'condition': self.condition, 'type': self.__class__.__name__}
+  
   def run(self, role, context):
-     
-    for action in self.action:
-        if (self.kind == context.rule.entity.get_kind()) and (action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context' : context, 'action' : action})) and (self.executable != None):
-           context.rule.entity._action_permissions[action]['executable'].append(self.executable)
+    for action in self.actions:
+      if (self.kind == context.rule.entity.get_kind()) and (action in context.rule.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
+        context.rule.entity._action_permissions[action]['executable'].append(self.executable)
 
 
 class FieldPermission(Permission):
   
-  
-  def __init__(self, kind, field, writable=None, visible=None, condition=None):
-    
-    if not isinstance(field, (tuple, list)):
-      field = [field]
-    
-    self.kind = kind # entity kind identifier (entity._kind)
-    self.field = field # this must be a field code name from ndb property (field._code_name) ---- This could be a list?
+  def __init__(self, kind, fields, writable=None, visible=None, condition=None):
+    if not isinstance(fields, (tuple, list)):
+      fields = [fields]
+    self.kind = kind  # Entity kind identifier (entity._kind).
+    self.fields = fields  # List of field code names from ndb property (field._code_name). @todo This has been renamed from 'field' to 'fields'!
     self.writable = writable
     self.visible = visible
     self.condition = condition
-    
-  def get_meta(self):
-     return {'kind' : self.kind, 'field' : self.field, 'writable' : self.writable,
-             'visible' : self.visible, 'condition' : self.condition, 'type' : self.__class__.__name__}
-    
-    
+  
+  def get_output(self):
+    return {'kind': self.kind, 'fields': self.fields, 'writable': self.writable,
+            'visible': self.visible, 'condition': self.condition, 'type': self.__class__.__name__}
+  
   def run(self, role, context):
-     
-    for field in self.field:
-        dig = parse_property(context.rule.entity._field_permissions, field) # retrieves field value from foo.bar.far
-        # added in safe eval `field` - the field that is currently in the loop 
-        if (self.kind == context.rule.entity.get_kind()) and dig and (safe_eval(self.condition, {'context' : context, 'field' : field})):
-          if (self.writable != None):
-            dig['writable'].append(self.writable)
-          if (self.visible != None):
-            dig['visible'].append(self.visible)
- 
+    for field in self.fields:
+      parsed_field = _parse_field(context.rule.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
+      if (self.kind == context.rule.entity.get_kind()) and parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
+        if (self.writable != None):
+          parsed_field['writable'].append(self.writable)
+        if (self.visible != None):
+          parsed_field['visible'].append(self.visible)
+
 
 class Role(ndb.BaseExpando):
-    
-    # root (namespace Domain)
-    # ovaj model ili LocalRole se jedino mogu koristiti u runtime i cuvati u datastore, dok se GlobalRole moze samo programski iskoristiti
-    # ovo bi bilo tlacno za resurse ali je jedini preostao feature sa kojim 
-    # bi ovaj rule engine koncept prevazisao sve ostale security modele
-    # parent_record = ndb.SuperKeyProperty('1', kind='44', indexed=False) 
-    # complete_name = ndb.SuperTextProperty('3')
-    name = ndb.SuperStringProperty('1', required=True)
-    active = ndb.SuperBooleanProperty('2', default=True)
-    permissions = ndb.SuperPickleProperty('3', required=True, compressed=False) # [permission1, permission2,...]
-    
-    ### za ovo smo rekli da svakako treba da se radi validacija pri inputu 
-    # treba da postoji validator da proverava prilikom put()-a da li su u permissions listi instance Permission klase
- 
-    def run(self, context):
-        for permission in self.permissions:
-            permission.run(self, context)
- 
+  
+  # root (namespace Domain)
+  # feature proposition (though it should create overhead due to the required drilldown process!)
+  # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
+  # complete_name = ndb.SuperTextProperty('2')
+  name = ndb.SuperStringProperty('1', required=True)
+  active = ndb.SuperBooleanProperty('2', required=True, default=True)
+  permissions = ndb.SuperPickleProperty('3', required=True, compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
+  
+  def run(self, context):
+    for permission in self.permissions:
+      permission.run(self, context)
 
 
 class Engine:
-  
-    
+  # @todo ??
   @classmethod
-  def _prepare_fields_helper(cls): # it must be a function that makes this dictionary, dry
-      # this must build orderedDict because writable, visible, required NEEDS to be `decide()` 
-      # first in order to allow inheritence of permissions - like folder structure
-      return collections.OrderedDict([('writable', []), ('visible', [])])
-  
+  def _prepare_fields_helper(cls):
+    return collections.OrderedDict([('writable', []), ('visible', [])])
+  # @todo ??
   @classmethod
   def prepare_fields(cls, field_permissions, fields, entity):
-    # recursive method
- 
     for field_key, field in fields.items():
-        if is_structured_property(field): # isinstance(Struct, Local)
-           if field_key not in field_permissions:
-              field_permissions[field_key] = cls._prepare_fields_helper()
-              
-           new_fields = field.get_model_fields()
- 
-           if field._code_name in new_fields:
-              new_fields.pop(field._code_name)
-                
-           cls.prepare_fields(field_permissions[field_key], new_fields, entity)
-        else:
-           field_permissions[field_key] = cls._prepare_fields_helper()
-
+      if _is_structured_field(field):
+        if field_key not in field_permissions:
+          field_permissions[field_key] = cls._prepare_fields_helper()
+        new_fields = field.get_model_fields()
+        if field._code_name in new_fields:
+          new_fields.pop(field._code_name)
+        cls.prepare_fields(field_permissions[field_key], new_fields, entity)
+      else:
+        field_permissions[field_key] = cls._prepare_fields_helper()
+  # @todo ??
   @classmethod
   def prepare(cls, context):
-    
     entity = context.rule.entity
-    
-    entity._field_permissions = {} 
-    entity._action_permissions = {} 
- 
+    entity._field_permissions = {}
+    entity._action_permissions = {}
     fields = entity.get_fields()
- 
     cls.prepare_fields(entity._field_permissions, fields, entity)
- 
     actions = entity.get_actions()
-       
     for action_key in actions:
-       entity._action_permissions[action_key] = {'executable' : []}
-  
+      entity._action_permissions[action_key] = {'executable' : []}
+  # @todo ??
   @classmethod
   def _decide_helper(cls, calc, element, prop, value, strict, parent=None):
-        # recursive function
- 
-        if element not in calc:
-            calc[element] = {}
-            
-        if isinstance(value, dict):
-           for _value_key, _value in value.items():
-               cls._decide_helper(calc[element], prop, _value_key, _value, strict, element)
-        else:
-          if len(value):
-            if (strict):
-              if all(value):
-                 calc[element][prop] = True
-              else:
-                 calc[element][prop] = False
-            elif any(value):
-              calc[element][prop] = True
-            else:
-              calc[element][prop] = False
+    if element not in calc:
+      calc[element] = {}
+    if isinstance(value, dict):
+      for _value_key, _value in value.items():
+        cls._decide_helper(calc[element], prop, _value_key, _value, strict, element)
+    else:
+      if len(value):
+        if (strict):
+          if all(value):
+            calc[element][prop] = True
           else:
-            calc[element][prop] = None
-            
-            if parent and not len(value):
-                calc[element][prop] = calc[prop] 
- 
+            calc[element][prop] = False
+        elif any(value):
+          calc[element][prop] = True
+        else:
+          calc[element][prop] = False
+      else:
+        calc[element][prop] = None
+        if parent and not len(value):
+          calc[element][prop] = calc[prop]
+  
   @classmethod
   def decide(cls, data, strict):
     calc = {}
-  
     for element, properties in data.items():
-          for prop, value in properties.items():
-              cls._decide_helper(calc, element, prop, value, strict)
+      for prop, value in properties.items():
+        cls._decide_helper(calc, element, prop, value, strict)
     return calc
   
   @classmethod
