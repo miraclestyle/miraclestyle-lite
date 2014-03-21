@@ -423,12 +423,12 @@ class _BaseProperty(object):
             'repeated': self._repeated,
             'type': self.__class__.__name__}
   
-  def __init__(self, *args, **kwds):
-    self._max_size = kwds.pop('max_size', self._max_size)
-    custom_kind = kwds.get('kind')
+  def __init__(self, *args, **kwargs):
+    self._max_size = kwargs.pop('max_size', self._max_size)
+    custom_kind = kwargs.get('kind')
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
-      kwds['kind'] = factory(custom_kind)
-    super(_BaseProperty, self).__init__(*args, **kwds)
+      kwargs['kind'] = factory(custom_kind)
+    super(_BaseProperty, self).__init__(*args, **kwargs)
 
 
 class BaseProperty(_BaseProperty, Property):
@@ -709,3 +709,131 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def _from_base_type(self, value):
     return decimal.Decimal(value)
+
+
+class SuperSearchProperty(SuperJsonProperty):
+  
+  def __init__(self, *args, **kwargs):
+    """ 
+      Filters work like this
+      
+      filters = {
+        'field' : {
+          'operators' : ['==', '>', '<', '>=', '<=', 'contains'], # possible operators
+          'value' : ['str', 'list'], # possible values,
+        }
+      }
+      
+      indexes = [
+        {
+          'filter' : ['field1', 'field2', 'field3'],
+          'order_by' : ['field1', 'asc'],
+        },
+        {
+          'filter' : ['field1', 'field2'],
+          'order_by' : ['field1', 'asc'],
+        },
+      ]
+      
+      order_by = {
+        'field' : {
+          'operators' : ['asc', 'desc']
+        },
+      }
+      
+      search = SuperSearchProperty(filters=filters, indexes=indexes, order_by=order_by)
+      
+      Values provided will be validated trough def format() 
+      
+      Value sent will be
+      
+      'search' : {
+        'filters' : [
+          {
+            'field' : 'name',
+            'operator' : '==',
+            'value' : 'Test',
+          }
+        ],
+        'order_by' : [
+          {
+            'field' : 'name',
+            'operator' : 'asc',
+          } 
+        ],
+      }
+      
+    """
+    filters = kwargs.pop('filters', {})
+    order_by = kwargs.pop('order_by', {})
+    indexes = kwargs.pop('indexes', {})
+    
+    self._filters = filters
+    self._order_by = order_by
+    self._indexes = indexes
+    
+    super(SuperSearchProperty, self).__init__(*args, **kwargs)
+    
+  def get_meta(self):
+    out = super(SuperSearchProperty, self).get_meta()
+    out['filters'] = self._filters
+    out['order_by'] = self._order_by
+    out['indexes'] = self._indexes
+   
+  @classmethod  
+  def translate(cls, str_type):
+      if str_type == 'str':
+         return str
+      if str_type == 'list':
+         return list
+      if str_type == 'long':
+         return long
+      if str_type == 'dict':
+         return dict
+  
+  def format(self, value):
+     
+    value = super(SuperSearchProperty, self).format(value)
+    search = {
+      'filters' : value.get('filters'),
+      'order_by' : value.get('order_by'),          
+    }
+    
+    for_composite_filter = []
+    for config in search['filters']:
+      key = config.get('field')
+      _filter = self._filters.get(key)
+      if not _filter:
+         raise PropertyError('field_not_in_filter_list')
+        
+      assert config.get('operator') in _filter['operators']  
+      assert isinstance(config.get('value'), self.translate(_filter['value']))
+      
+      for_composite_filter.append(key)
+    
+    for_composite_order_by = []  
+    for config in search['order_by']:
+       key = config.get('field')
+       _order_by = self._order_by.get(key)
+       if not _order_by:
+          raise PropertyError('field_not_in_orer_by_list')
+         
+       assert config.get('operator') in _order_by['operators']
+       
+       for_composite_order_by.append(key)
+       for_composite_order_by.append(config.get('operator'))
+    
+    composite_filter = False
+    composite_order_by = False  
+    
+    for index in self._indexes:
+      if index.get('filter') == for_composite_filter:
+         composite_filter = True
+      
+      if index.get('order_by') == for_composite_order_by:
+         composite_order_by = True
+         
+    assert composite_filter is True and composite_order_by is True
+    
+    return search
+    
