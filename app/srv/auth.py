@@ -84,12 +84,12 @@ class User(ndb.BaseExpando):
       rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True,
                             "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
       rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.FieldPermission('0', 'identities', True, True, 'True'),  # User can change identities.
+      rule.FieldPermission('0', 'identities', True, True, "True"),  # User can change identities.
       # Expose these fields by default.
-      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True, 'True'),
-      rule.FieldPermission('0', '_records', True, True, 'True'),
-      rule.FieldPermission('0', '_records.note', False, False, 'not context.auth.user._root_admin'),
-      rule.FieldPermission('0', '_records.note', True, True, 'context.auth.user._root_admin')
+      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True, "True"),
+      rule.FieldPermission('0', '_records', True, True, "True"),
+      rule.FieldPermission('0', '_records.note', False, False, "not context.auth.user._root_admin"),
+      rule.FieldPermission('0', '_records.note', True, True, "context.auth.user._root_admin")
       ]
     )
   
@@ -503,8 +503,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
-      rule.FieldPermission('6', '_records.note', False, False, 'not context.auth.user._root_admin'),
-      rule.FieldPermission('6', '_records.note', False, True, 'context.auth.user._root_admin')
+      rule.FieldPermission('6', '_records.note', False, False, "not context.auth.user._root_admin"),
+      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin")
       ]
     )
   
