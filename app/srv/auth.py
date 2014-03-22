@@ -332,7 +332,7 @@ class User(ndb.BaseExpando):
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
-    for entity in entities:
+    for entity in entities:  # @todo Can we async this?
       context.rule.entity = entity
       rule.Engine.run(context)
       rule.read(entity)
@@ -601,7 +601,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       raise ndb.Return(entities)
     
     entities = helper(entities).get_result()
-    for entity in entities:
+    for entity in entities:  # @todo Can we async this?
       context.rule.entity = entity
       rule.Engine.run(context)
       rule.read(entity)
