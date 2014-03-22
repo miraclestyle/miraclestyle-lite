@@ -272,7 +272,7 @@ def write(entity, values):
       _write_helper(entity._field_permissions, entity, field_key, field, field_value, is_writable=writable)
 # @todo ??
 def _read_helper(field_permissions, operator, field_key, field):
-  if is_structured_property(field):
+  if _is_structured_field(field):
     structured_field_value = getattr(operator, field_key)
     if field._repeated and isinstance(structured_field_value, list):
       for op in structured_field_value:
@@ -295,7 +295,7 @@ def read(entity):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
     _read_helper(entity._field_permissions, entity, field_key, field)
-  return entity
+  return entity  # @todo Why this return?
 
 
 class Context():
@@ -305,7 +305,15 @@ class Context():
 
 
 class Permission():
-  """ Base class for all permissions """
+  """Base class for all permissions.
+  If the futuer deems scaling a problem, possible solutions could be to:
+  a) Create DomainUserPermissions entity, taht will fan-out on DomainUser entity,
+  and will contain all permissions for the domain user (based on it's domain role membership) in it;
+  b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...), 
+  and store each permission in datasotre as child entity of DomainUser;
+  c) Some other similar pattern.
+  
+  """
 
 
 class ActionPermission(Permission):
@@ -383,13 +391,16 @@ class Engine:
           field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
-          model_fields.pop(field._code_name)
+          model_fields.pop(field._code_name)  # @todo If child property has a field of the same name as parent property, what happens to it?
         cls.prepare_fields(field_permissions[field_key], model_fields)
       else:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
   
   @classmethod
   def prepare(cls, context):
+    """This method builds dictionaries that will hold permissions inside
+    context.rule.entity object.
+    """
     entity = context.rule.entity
     entity._action_permissions = {}
     entity._field_permissions = {}
@@ -398,169 +409,142 @@ class Engine:
     cls.prepare_actions(entity._action_permissions, actions)
     cls.prepare_fields(entity._field_permissions, fields)
   
-  # @todo ??
   @classmethod
-  def _decide_helper(cls, calc, element, prop, value, strict, parent=None):
-    if element not in calc:
-      calc[element] = {}
-    if isinstance(value, dict):
-      for _value_key, _value in value.items():
-        cls._decide_helper(calc[element], prop, _value_key, _value, strict, element)
+  def _decide_helper(cls, decisions, element, prop, values, strict, parent=None):
+    if element not in decisions:
+      decisions[element] = {}
+    if isinstance(values, dict):
+      for _prop, _values in values.items():
+        cls._decide_helper(decisions[element], prop, _prop, _values, strict, element)
     else:
-      if len(value):
+      if len(values):
         if (strict):
-          if all(value):
-            calc[element][prop] = True
+          if all(values):
+            decisions[element][prop] = True
           else:
-            calc[element][prop] = False
-        elif any(value):
-          calc[element][prop] = True
+            decisions[element][prop] = False
+        elif any(values):
+          decisions[element][prop] = True
         else:
-          calc[element][prop] = False
+          decisions[element][prop] = False
       else:
-        calc[element][prop] = None
-        if parent and not len(value):
-          calc[element][prop] = calc[prop]
+        decisions[element][prop] = None
+        if parent and not len(values):
+          decisions[element][prop] = decisions[prop]
   
   @classmethod
-  def decide(cls, data, strict):
-    calc = {}
-    for element, properties in data.items():
-      for prop, value in properties.items():
-        cls._decide_helper(calc, element, prop, value, strict)
-    return calc
+  def decide(cls, permissions, strict):
+    decisions = {}
+    for element, properties in permissions.items():
+      for prop, values in properties.items():
+        cls._decide_helper(decisions, element, prop, values, strict)
+    return decisions
   
   @classmethod
-  def _compile_local_data_helper(cls, global_data_calc, local_data_calc, element, prop, value):
-      # recursive function
-      
-      if isinstance(value, dict):
-         for _value_key,_value in value.items():
-             cls._compile_local_data_helper(global_data_calc[element], local_data_calc[element], prop, _value_key, _value)
-      else:   
-        if element in global_data_calc:
-           if prop in global_data_calc[element]:
-              gc = global_data_calc[element][prop]
-              if gc is not None and gc != value:
-                    local_data_calc[element][prop] = gc
-            
-        if local_data_calc[element][prop] is None:
-           local_data_calc[element][prop] = False
-           
-  
-  @classmethod       
-  def _compile_global_data_calc_helper(cls, local_data_calc, element, prop, value):
-      # recursive function
-      
-      if isinstance(value, dict):
-         for _value_key,_value in value.items():
-             cls._compile_global_data_calc_helper(local_data_calc[element], prop, _value_key, _value)
-      else:
-        if prop not in local_data_calc[element]:
-           local_data_calc[element][prop] = value
-           
-  @classmethod
-  def _compile_just_global_data_calc_helper(cls, global_data_calc, element, prop, value):
-    # recursive function
-    
-    if isinstance(value, dict):
-       for _value_key,_value in value.items():
-          cls._compile_just_global_data_calc_helper(global_data_calc[element], prop, _value_key, _value)
+  def override_local_permissions(cls, global_permissions_decisions, local_permissions_decisions, element, prop, values):
+    if isinstance(values, dict):
+      for _prop, _values in values.items():
+        cls.override_local_permissions(global_permissions_decisions[element], local_permissions_decisions[element], prop, _prop, _values)
     else:
-      if value is None:
-         value = False
-      global_data_calc[element][prop] = value
+      if element in global_permissions_decisions:
+        if prop in global_permissions_decisions[element]:
+          gpd_values = global_permissions_decisions[element][prop]
+          if gpd_values is not None and gpd_values != values:
+            local_permissions_decisions[element][prop] = gpd_values
+      if local_permissions_decisions[element][prop] is None:
+        local_permissions_decisions[element][prop] = False
   
   @classmethod
-  def compile(cls, local_data, global_data, strict=False):
-    
-    global_data_calc = cls.decide(global_data, strict)
- 
-    # if any local data, process them
-    if local_data:
-       local_data_calc = cls.decide(local_data, strict)
-        
-       # iterate over local data, and override them with the global data, if any
-       for element, properties in local_data_calc.items():
-          for prop, value in properties.items():
-              cls._compile_local_data_helper(global_data_calc, local_data_calc, element, prop, value)
-        
-       # make sure that global data are always present
-       for element, properties in global_data_calc.items():
-          if element not in local_data_calc:
-            for prop, value in properties.items():
-              cls._compile_global_data_calc_helper(local_data_calc, element, prop, value)
-            
-       finals = local_data_calc
-    
-    # otherwise just use global data    
+  def complement_local_permissions(cls, local_permissions_decisions, element, prop, values):
+    if isinstance(values, dict):
+      for _prop, _values in values.items():
+        cls.complement_local_permissions(local_permissions_decisions[element], prop, _prop, _values)
     else:
- 
-       for element, properties in global_data_calc.items():
-          for prop, value in properties.items():
-            cls._compile_just_global_data_calc_helper(global_data_calc, element, prop, value)
-            
-       finals = global_data_calc
-    return finals
+      if prop not in local_permissions_decisions[element]:
+        local_permissions_decisions[element][prop] = values
+  
+  @classmethod
+  def compile_global_permissions(cls, global_permissions_decisions, element, prop, values):
+    if isinstance(values, dict):
+      for _prop, _values in values.items():
+        cls.compile_global_permissions(global_permissions_decisions[element], prop, _prop, _values)
+    else:
+      if values is None:
+        values = False
+      global_permissions_decisions[element][prop] = values
+  
+  @classmethod
+  def compile(cls, local_permissions, global_permissions, strict):
+    global_permissions_decisions = cls.decide(global_permissions, strict)
+    # If local permissions are present, process them.
+    if local_permissions:
+      local_permissions_decisions = cls.decide(local_permissions, strict)
+      # Iterate over local permissions, and override them with the global permissions.
+      for element, properties in local_permissions_decisions.items():
+        for prop, values in properties.items():
+          cls.override_local_permissions(global_permissions_decisions, local_permissions_decisions, element, prop, values)
+      # Make sure that global permissions are always present.
+      for element, properties in global_permissions_decisions.items():
+        if element not in local_permissions_decisions:
+          for prop, values in properties.items():
+            cls.complement_local_permissions(local_permissions_decisions, element, prop, values)
+      permissions_decisions = local_permissions_decisions
+    # Otherwise just process global permissions.
+    else:
+      for element, properties in global_permissions_decisions.items():
+        for prop, values in properties.items():
+          cls.compile_global_permissions(global_permissions_decisions, element, prop, values)
+      permissions_decisions = global_permissions_decisions
+    return permissions_decisions
   
   @classmethod
   def run(cls, context, skip_user_roles=False, strict=False):
+    """This method generates permissions situation for the context.rule.entity object,
+    at the time of execution.
     
-    # datastore system
-    
+    """
     if context.rule.entity:
- 
-      # call prepare first, populates required dicts into the entity instance
       cls.prepare(context)
       local_action_permissions = {}
       local_field_permissions = {}
-      
       if not skip_user_roles:
         if not context.auth.user._is_guest:
           domain_user_key = DomainUser.build_key(context.auth.user.key_id_str, namespace=context.rule.entity.key_namespace)
           domain_user = domain_user_key.get()
           clean_roles = False
-          
           if domain_user and domain_user.state == 'accepted':
-              roles = ndb.get_multi(domain_user.roles)
-              for role in roles:
-                if role is None:
-                  clean_roles = True
-                else:   
-                  if role.active:
-                     role.run(context)
-                     
-              if clean_roles:
-                context.callbacks.inputs.append({'action_key' : 'clean_roles', 'key' : domain_user.key.urlsafe(), 'action_model' : '8'})
-                callback.Engine.run(context)
-            
-          # copy 
+            roles = ndb.get_multi(domain_user.roles)
+            for role in roles:
+              if role is None:
+                clean_roles = True
+              else:
+                if role.active:
+                  role.run(context)
+            if clean_roles:
+              context.callbacks.inputs.append({'action_model': '8', 'action_key': 'clean_roles', 'key': domain_user.key.urlsafe()})
+              callback.Engine.run(context)
+          # Copy generated entity permissions to separate dictionary.
           local_action_permissions = context.rule.entity._action_permissions.copy()
           local_field_permissions = context.rule.entity._field_permissions.copy()
-        
-          # empty
+          # Reset permissions structures.
           cls.prepare(context)
-   
       entity = context.rule.entity
       if hasattr(entity, '_global_role') and isinstance(entity._global_role, GlobalRole):
-         entity._global_role.run(context)
-      
-      # copy   
+        entity._global_role.run(context)
+      # Copy generated entity permissions to separate dictionary.
       global_action_permissions = context.rule.entity._action_permissions.copy()
       global_field_permissions = context.rule.entity._field_permissions.copy()
-      
-      # empty
-      cls.prepare(context) 
-     
+      # Reset permissions structures.
+      cls.prepare(context)
       context.rule.entity._action_permissions = cls.compile(local_action_permissions, global_action_permissions, strict)
       context.rule.entity._field_permissions = cls.compile(local_field_permissions, global_field_permissions, strict)
-      
       context.rule.entity.add_output('_action_permissions')
       context.rule.entity.add_output('_field_permissions')
-   
+
 
 class GlobalRole(Role):
-      pass
+  pass
+
 
 class DomainRole(Role):
   
