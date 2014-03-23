@@ -714,9 +714,7 @@ class SuperDecimalProperty(SuperStringProperty):
 class SuperSearchProperty(SuperJsonProperty):
   
   def __init__(self, *args, **kwargs):
-    """ 
-      Filters work like this
-      
+    """Filters work like this:
       filters = {
         'field' : {
           'operators' : ['==', '>', '<', '>=', '<=', 'contains'], # possible operators
@@ -762,78 +760,61 @@ class SuperSearchProperty(SuperJsonProperty):
           } 
         ],
       }
-      
+    
     """
     filters = kwargs.pop('filters', {})
     order_by = kwargs.pop('order_by', {})
     indexes = kwargs.pop('indexes', {})
-    
     self._filters = filters
     self._order_by = order_by
     self._indexes = indexes
-    
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
-    
+  
   def get_meta(self):
     out = super(SuperSearchProperty, self).get_meta()
     out['filters'] = self._filters
     out['order_by'] = self._order_by
     out['indexes'] = self._indexes
-   
-  @classmethod  
+  
+  @classmethod
   def translate(cls, str_type):
-      if str_type == 'str':
-         return str
-      if str_type == 'list':
-         return list
-      if str_type == 'long':
-         return long
-      if str_type == 'dict':
-         return dict
+    if str_type == 'str':
+      return str
+    if str_type == 'list':
+      return list
+    if str_type == 'long':
+      return long
+    if str_type == 'dict':
+      return dict
   
   def format(self, value):
-     
     value = super(SuperSearchProperty, self).format(value)
-    search = {
-      'filters' : value.get('filters'),
-      'order_by' : value.get('order_by'),          
-    }
-    
+    search = {'filters': value.get('filters'),
+              'order_by': value.get('order_by')}
     for_composite_filter = []
     for config in search['filters']:
       key = config.get('field')
       _filter = self._filters.get(key)
       if not _filter:
-         raise PropertyError('field_not_in_filter_list')
-        
-      assert config.get('operator') in _filter['operators']  
+        raise PropertyError('field_not_in_filter_list')
+      assert config.get('operator') in _filter['operators']
       assert isinstance(config.get('value'), self.translate(_filter['value']))
-      
       for_composite_filter.append(key)
-    
-    for_composite_order_by = []  
+    for_composite_order_by = []
     for config in search['order_by']:
-       key = config.get('field')
-       _order_by = self._order_by.get(key)
-       if not _order_by:
-          raise PropertyError('field_not_in_orer_by_list')
-         
-       assert config.get('operator') in _order_by['operators']
-       
-       for_composite_order_by.append(key)
-       for_composite_order_by.append(config.get('operator'))
-    
+      key = config.get('field')
+      _order_by = self._order_by.get(key)
+      if not _order_by:
+        raise PropertyError('field_not_in_orer_by_list')
+      assert config.get('operator') in _order_by['operators']
+      for_composite_order_by.append(key)
+      for_composite_order_by.append(config.get('operator'))
     composite_filter = False
-    composite_order_by = False  
-    
+    composite_order_by = False
     for index in self._indexes:
       if index.get('filter') == for_composite_filter:
-         composite_filter = True
-      
+        composite_filter = True
       if index.get('order_by') == for_composite_order_by:
-         composite_order_by = True
-         
+        composite_order_by = True
     assert composite_filter is True and composite_order_by is True
-    
     return search
-    
