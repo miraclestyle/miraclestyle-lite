@@ -229,20 +229,18 @@ def executable(context):
     return context.rule.entity._action_permissions[context.action.key.urlsafe()]['executable']
   else:
     return False
-# @todo ??
-def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None, is_writable=None):
+
+def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None):
   if _is_structured_field(field):
-    util.logger('is structured - recursion %s.%s' % (entity.__class__.__name__, field_key))
     if field._repeated and isinstance(entity, list):
-      util.logger('got list as entity, recurse it' % entity)
-      for ent in entity:
-        for new_field_key, new_field in field.get_model_fields().items():
-          new_field_value = getattr(ent, field_key)
-          _write_helper(field_permissions[field_key], ent, new_field_key, new_field, new_field_value, field_key, field, field_permissions[field_key]['writable'])
+      for sub_entity in entity:
+        for sub_field_key, sub_field in field.get_model_fields().items():
+          sub_field_value = getattr(sub_entity, field_key)
+          _write_helper(field_permissions[field_key], sub_entity, sub_field_key, sub_field, sub_field_value, field_key, field)
       return
-    structured_value = getattr(entity, field_key)
-    for new_field_key, new_field in field.get_model_fields().items():
-      _write_helper(field_permissions[field_key], structured_value, new_field_key, new_field, field_value, field_key, field, field_permissions[field_key]['writable'])
+    sub_entity = getattr(entity, field_key)
+    for sub_field_key, sub_field in field.get_model_fields().items():
+      _write_helper(field_permissions[field_key], sub_entity, sub_field_key, sub_field, field_value, field_key, field)
   else:
     if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
       if parent_field and parent_field._repeated:
@@ -252,12 +250,9 @@ def _write_helper(field_permissions, entity, field_key, field, field_value, pare
               already = entity[i]
               far_key = getattr(field_value_item, field_key)
               setattr(already, field_key, far_key)
-              util.logger('repeated set - %s.%s=%s' % (already.__class__.__name__, field_key, far_key))
             except IndexError:
               entity.append(field_value_item)
-              util.logger('appending new %s to %s' % (field_value_item, entity.__class__.__name__))
           return
-      util.logger('not structured - setting %s.%s' % (entity.__class__.__name__, field_key))
       try:
         setattr(entity, field_key, field_value)
       except ndb.ComputedPropertyError:
@@ -268,28 +263,27 @@ def write(entity, values):
   for field_key, field_value in values.items():
     if field_key in entity_fields:
       field = entity_fields.get(field_key)
-      writable = entity._field_permissions[field_key]['writable']
-      _write_helper(entity._field_permissions, entity, field_key, field, field_value, is_writable=writable)
-# @todo ??
-def _read_helper(field_permissions, operator, field_key, field):
+      _write_helper(entity._field_permissions, entity, field_key, field, field_value)
+
+def _read_helper(field_permissions, entity, field_key, field):
   if _is_structured_field(field):
-    structured_field_value = getattr(operator, field_key)
-    if field._repeated and isinstance(structured_field_value, list):
-      for op in structured_field_value:
-        initial_fields = op.get_fields()
-        initial_fields.update(dict([(p._code_name, p) for _, p in op._properties.items()]))
-        for new_field_key, new_field in initial_fields.items():
-          _read_helper(field_permissions[field_key], op, new_field_key, new_field)
+    values = getattr(entity, field_key)
+    if field._repeated and isinstance(values, list):
+      for value in values:
+        sub_fields = value.get_fields()
+        sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
+        for sub_field_key, sub_field in sub_fields.items():
+          _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
     else:
-      parent_structure = getattr(operator, field_key)
-      if parent_structure is not None:
-        initial_fields = parent_structure.get_fields()
-        initial_fields.update(dict([(p._code_name, p) for _, p in parent_structure._properties.items()]))
-        for new_field_key, new_field in initial_fields.items():
-          _read_helper(field_permissions[field_key], parent_structure, new_field_key, new_field)
+      value = getattr(entity, field_key)
+      if value is not None:
+        sub_fields = value.get_fields()
+        sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
+        for sub_field_key, sub_field in sub_fields.items():
+          _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
   else:
     if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
-      operator.remove_output(field_key)
+      entity.remove_output(field_key)
 
 def read(entity):
   entity_fields = entity.get_fields()
