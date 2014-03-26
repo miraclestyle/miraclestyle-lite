@@ -217,11 +217,11 @@ def _check_field(context, field, properties):  # Not sure if 'properties' cause 
 
 def writable(context, field):
   """Checks if the field is writable for given context."""
-  return _check_field(context, name, 'writable')
+  return _check_field(context, field, 'writable')
 
 def visible(context, field):
   """Checks if the field is visible for given context."""
-  return _check_field(context, name, 'visible')
+  return _check_field(context, field, 'visible')
 
 def executable(context):
   """Checks if the action is executable for given context."""
@@ -230,40 +230,41 @@ def executable(context):
   else:
     return False
 
-def _write_helper(field_permissions, entity, field_key, field, field_value, parent_field_key=None, parent_field=None):
-  if _is_structured_field(field):
-    if field._repeated and isinstance(entity, list):
-      for sub_entity in entity:
-        for sub_field_key, sub_field in field.get_model_fields().items():
-          sub_field_value = getattr(sub_entity, field_key)
-          _write_helper(field_permissions[field_key], sub_entity, sub_field_key, sub_field, sub_field_value, field_key, field)
-      return
+def _write_helper(field_permissions, field_key, field, field_value, entity, position=None):
+  if position is not None:
+    sub_entity = getattr(entity[position], field_key)
+  else:
     sub_entity = getattr(entity, field_key)
-    for sub_field_key, sub_field in field.get_model_fields().items():
-      _write_helper(field_permissions[field_key], sub_entity, sub_field_key, sub_field, field_value, field_key, field)
+  if _is_structured_field(field):
+    if field._repeated:
+      for i, value in enumerate(field_value):
+        for sub_field_key, sub_field in field.get_model_fields().items():
+          sub_field_value = getattr(value, sub_field_key)
+          _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, i)
+      return
+    else:
+      for sub_field_key, sub_field in field.get_model_fields().items():
+        sub_field_value = getattr(sub_entity, sub_field_key)
+        _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, i)
   else:
     if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
-      if parent_field and parent_field._repeated:
-        if isinstance(entity, list):
-          for i, field_value_item in enumerate(field_value):
-            try:
-              already = entity[i]
-              far_key = getattr(field_value_item, field_key)
-              setattr(already, field_key, far_key)
-            except IndexError:
-              entity.append(field_value_item)
-          return
-      try:
-        setattr(entity, field_key, field_value)
-      except ndb.ComputedPropertyError:
-        pass
+      if position is not None and isinstance(entity, list):
+        try:
+          setattr(sub_entity, field_key, field_value)
+        except IndexError:
+          entity.append(field_value)
+      else:
+        try:
+          setattr(entity, field_key, field_value)
+        except ndb.ComputedPropertyError:
+          pass
 
 def write(entity, values):
   entity_fields = entity.get_fields()
   for field_key, field_value in values.items():
     if field_key in entity_fields:
       field = entity_fields.get(field_key)
-      _write_helper(entity._field_permissions, entity, field_key, field, field_value)
+      _write_helper(entity._field_permissions, field_key, field, field_value, entity)
 
 def _read_helper(field_permissions, entity, field_key, field):
   if _is_structured_field(field):
