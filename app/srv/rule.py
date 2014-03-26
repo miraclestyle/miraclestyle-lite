@@ -234,12 +234,12 @@ def _write_helper(field_permissions, field_key, field, field_value, parent_value
   if _is_structured_field(field):
     if position is not None:
       try:
-        sub_entity = getattr(entity[position], field_key)
+        sub_entity = getattr(parent_value[position], field_key)
       except IndexError as e:
-        sub_entity = parent
-        entity.append(sub_entity)
+        sub_entity = parent._modelclass()
+        parent_value.append(sub_entity)
     else:
-      sub_entity = getattr(entity, field_key)
+      sub_entity = getattr(parent_value, field_key)
     if field._repeated:
       for i, value in enumerate(field_value):
         for sub_field_key, sub_field in field.get_model_fields().items():
@@ -252,15 +252,16 @@ def _write_helper(field_permissions, field_key, field, field_value, parent_value
         _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, field, i)
   else:
     if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
-      if position is not None and isinstance(entity, list):
+      if position is not None and isinstance(parent_value, list):
          try:
-           sub_entity = entity[position]
+           sub_entity = parent_value[position]
          except IndexError as e:
-           sub_entity = parent
+           sub_entity = parent._modelclass()
+           parent_value.append(sub_entity)
          setattr(sub_entity, field_key, field_value)
       else:
         try:
-          setattr(entity, field_key, field_value)
+          setattr(parent_value, field_key, field_value)
         except ndb.ComputedPropertyError:
           pass
 
