@@ -271,6 +271,8 @@ class User(ndb.BaseExpando):
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       identities = copy.deepcopy(entity.identities)
+      # testing rule.write
+      #identities.append(Identity(email='foo@bar.com', identity='1010-1', associated=True, primary=False))
       for identity in identities:
         if primary_email:
           identity.primary = False

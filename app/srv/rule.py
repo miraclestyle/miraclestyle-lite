@@ -233,7 +233,11 @@ def executable(context):
 def _write_helper(field_permissions, field_key, field, field_value, entity, position=None):
   if _is_structured_field(field):
     if position is not None:
-      sub_entity = getattr(entity[position], field_key)
+      try:
+        sub_entity = getattr(entity[position], field_key)
+      except IndexError as e:
+        sub_entity = field._model_class()
+        entity.append(sub_entity)
     else:
       sub_entity = getattr(entity, field_key)
     if field._repeated:
@@ -249,10 +253,11 @@ def _write_helper(field_permissions, field_key, field, field_value, entity, posi
   else:
     if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
       if position is not None and isinstance(entity, list):
-        try:
-          setattr(entity[position], field_key, field_value)
-        except IndexError:
-          entity.append(field_value)
+         try:
+           sub_entity = entity[position]
+         except IndexError as e:
+           sub_entity = parent_field._modelclass() # here we need parent_field cuz we dont know how to set a new one
+         setattr(sub_entity, field_key, field_value)
       else:
         try:
           setattr(entity, field_key, field_value)
