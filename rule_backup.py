@@ -609,7 +609,7 @@ class DomainRole(Role):
     }
   
   @classmethod
-  def delete(cls, context):
+  def delete(cls, context):  # @todo Transaction 'outbound' code presence!
     entity_key = context.input.get('key')
     entity = entity_key.get()
     context.rule.entity = entity
@@ -652,7 +652,7 @@ class DomainRole(Role):
               'active': context.input.get('active'),
               'permissions': permissions}
     if create:
-      entity.populate(**values)
+      entity.populate(**values)  # @todo We do not have field level write control here (known issue with required fields)!
     else:
       write(entity, values)
     entity.put()
@@ -687,7 +687,7 @@ class DomainRole(Role):
     return context
   
   @classmethod
-  def search(cls, context):
+  def search(cls, context):  # @todo Implement search input property!
     domain_key = context.input.get('domain')
     domain = domain_key.get()
     context.rule.entity = cls(namespace=domain.key_namespace)
@@ -696,7 +696,7 @@ class DomainRole(Role):
       raise ActionDenied(context)
     query = cls.query(namespace=domain.key_namespace).order(cls.name)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
@@ -867,7 +867,7 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def invite(cls, context):
+  def invite(cls, context):  # @todo Transaction 'outbound' code presence!
     from app.srv import auth
     # Operating on too many entity groups.
     # All datastore operations in a transaction must operate on entities in the same entity group.
@@ -911,10 +911,10 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def remove(cls, context):
+  def remove(cls, context):  # @todo Transaction 'outbound' code presence!
+    from app.srv import auth
     entity_key = context.input.get('key')
     entity = entity_key.get()
-    from app.srv import auth
     user = auth.User.build_key(long(entity.key.id())).get()
     context.rule.entity = entity
     Engine.run(context)
@@ -964,7 +964,7 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def update(cls, context):
+  def update(cls, context):  # @todo Transaction 'outbound' code presence!
     input_roles = ndb.get_multi(context.input.get('roles'))
     
     @ndb.transactional(xg=True)
@@ -1006,7 +1006,7 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def search(cls, context):
+  def search(cls, context):  # @todo Implement search input property!
     domain_key = context.input.get('domain')
     domain = domain_key.get()
     context.rule.entity = cls(namespace=domain.key_namespace)
@@ -1015,7 +1015,7 @@ class DomainUser(ndb.BaseModel):
       raise ActionDenied(context)
     query = cls.query(namespace=domain.key_namespace).order(cls.name)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
@@ -1045,5 +1045,5 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def selection_roles_helper(cls, namespace):
+  def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!?
     return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()
