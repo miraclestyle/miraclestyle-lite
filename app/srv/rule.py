@@ -230,13 +230,13 @@ def executable(context):
   else:
     return False
 
-def _write_helper(field_permissions, field_key, field, field_value, entity, position=None):
+def _write_helper(field_permissions, field_key, field, field_value, parent_value=None, parent=None, position=None):
   if _is_structured_field(field):
     if position is not None:
       try:
         sub_entity = getattr(entity[position], field_key)
       except IndexError as e:
-        sub_entity = field._model_class()
+        sub_entity = parent
         entity.append(sub_entity)
     else:
       sub_entity = getattr(entity, field_key)
@@ -244,19 +244,19 @@ def _write_helper(field_permissions, field_key, field, field_value, entity, posi
       for i, value in enumerate(field_value):
         for sub_field_key, sub_field in field.get_model_fields().items():
           sub_field_value = getattr(value, sub_field_key)
-          _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, i)
+          _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, field, i)
       return
     else:
       for sub_field_key, sub_field in field.get_model_fields().items():
         sub_field_value = getattr(sub_entity, sub_field_key)
-        _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, i)
+        _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, field, i)
   else:
     if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
       if position is not None and isinstance(entity, list):
          try:
            sub_entity = entity[position]
          except IndexError as e:
-           sub_entity = parent_field._modelclass() # here we need parent_field cuz we dont know how to set a new one
+           sub_entity = parent
          setattr(sub_entity, field_key, field_value)
       else:
         try:
