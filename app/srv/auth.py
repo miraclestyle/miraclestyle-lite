@@ -322,14 +322,14 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def search(cls, context):
+  def search(cls, context):  # @todo Implement search input property!
     context.rule.entity = context.auth.user
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
@@ -367,7 +367,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def logout(cls, context):
+  def logout(cls, context):  # @todo Transaction 'outbound' code presence!
     entity = cls.current_user()
     context.rule.entity = entity
     rule.Engine.run(context, True)
@@ -390,7 +390,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def login(cls, context):
+  def login(cls, context):  # @todo Transaction 'outbound' code presence!
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -577,7 +577,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     return self
   
   @classmethod
-  def search(cls, context):
+  def search(cls, context):  # @todo Implement search input property!
     entity = cls()
     context.rule.entity = entity
     rule.Engine.run(context, True)
@@ -585,7 +585,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       raise rule.ActionDenied(context)
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     
