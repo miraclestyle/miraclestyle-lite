@@ -411,91 +411,81 @@ class Engine:
     cls.prepare_fields(entity._field_permissions, fields)
   
   @classmethod
-  def _decide_helper(cls, decisions, element, prop, values, strict, parent=None):
-    if element not in decisions:
-      decisions[element] = {}
-    if isinstance(values, dict):
-      for _prop, _values in values.items():
-        cls._decide_helper(decisions[element], prop, _prop, _values, strict, element)
-    else:
-      if len(values):
-        if (strict):
-          if all(values):
-            decisions[element][prop] = True
-          else:
-            decisions[element][prop] = False
-        elif any(values):
-          decisions[element][prop] = True
-        else:
-          decisions[element][prop] = False
+  def decide(cls, permissions, strict, parent_key=None, parent_permissions=None):
+    for key, value in permissions.items():
+      if isinstance(value, dict):
+        cls.decide(value, strict, key, permissions)
       else:
-        decisions[element][prop] = None
-        if parent and not len(values):
-          decisions[element][prop] = decisions[prop]
+        if isinstance(value, list) and len(value):
+          if (strict):
+            if all(value):
+              permissions[key] = True
+            else:
+              permissions[key] = False
+          elif any(value):
+            permissions[key] = True
+          else:
+            permissions[key] = False
+        else:
+          permissions[key] = None
+          if parent_key and not len(value):
+            permissions[key] = parent_permissions[key]
   
   @classmethod
-  def decide(cls, permissions, strict):
-    decisions = {}
-    for element, properties in permissions.items():
-      for prop, values in properties.items():
-        cls._decide_helper(decisions, element, prop, values, strict)
-    return decisions
-  
-  @classmethod
-  def override_local_permissions(cls, global_permissions_decisions, local_permissions_decisions, element, prop, values):
+  def override_local_permissions(cls, global_permissions, local_permissions, element, prop, values):
     if isinstance(values, dict):
       for _prop, _values in values.items():
-        cls.override_local_permissions(global_permissions_decisions[element], local_permissions_decisions[element], prop, _prop, _values)
+        cls.override_local_permissions(global_permissions[element], local_permissions[element], prop, _prop, _values)
     else:
-      if element in global_permissions_decisions:
-        if prop in global_permissions_decisions[element]:
-          gpd_values = global_permissions_decisions[element][prop]
-          if gpd_values is not None and gpd_values != values:
-            local_permissions_decisions[element][prop] = gpd_values
-      if local_permissions_decisions[element][prop] is None:
-        local_permissions_decisions[element][prop] = False
+      if element in global_permissions:
+        if prop in global_permissions[element]:
+          gp_values = global_permissions[element][prop]
+          if gp_values is not None and gp_values != values:
+            local_permissions[element][prop] = gp_values
+      if local_permissions[element][prop] is None:
+        local_permissions[element][prop] = False
   
   @classmethod
-  def complement_local_permissions(cls, local_permissions_decisions, element, prop, values):
+  def complement_local_permissions(cls, local_permissions, element, prop, values):
     if isinstance(values, dict):
       for _prop, _values in values.items():
-        cls.complement_local_permissions(local_permissions_decisions[element], prop, _prop, _values)
+        cls.complement_local_permissions(local_permissions[element], prop, _prop, _values)
     else:
-      if prop not in local_permissions_decisions[element]:
-        local_permissions_decisions[element][prop] = values
+      if prop not in local_permissions[element]:
+        local_permissions[element][prop] = values
   
   @classmethod
-  def compile_global_permissions(cls, global_permissions_decisions, element, prop, values):
+  def compile_global_permissions(cls, global_permissions, element, prop, values):
     if isinstance(values, dict):
       for _prop, _values in values.items():
-        cls.compile_global_permissions(global_permissions_decisions[element], prop, _prop, _values)
+        cls.compile_global_permissions(global_permissions[element], prop, _prop, _values)
     else:
       if values is None:
         values = False
-      global_permissions_decisions[element][prop] = values
+      global_permissions[element][prop] = values
   
   @classmethod
   def compile(cls, local_permissions, global_permissions, strict):
-    global_permissions_decisions = cls.decide(global_permissions, strict)
+    cls.decide(global_permissions, strict)
     # If local permissions are present, process them.
     if local_permissions:
-      local_permissions_decisions = cls.decide(local_permissions, strict)
+      cls.decide(local_permissions, strict)
       # Iterate over local permissions, and override them with the global permissions.
-      for element, properties in local_permissions_decisions.items():
+      for element, properties in local_permissions.items():
         for prop, values in properties.items():
-          cls.override_local_permissions(global_permissions_decisions, local_permissions_decisions, element, prop, values)
+          cls.override_local_permissions(global_permissions, local_permissions, element, prop, values)
       # Make sure that global permissions are always present.
-      for element, properties in global_permissions_decisions.items():
-        if element not in local_permissions_decisions:
+      for element, properties in global_permissions.items():
+        if element not in local_permissions:
           for prop, values in properties.items():
-            cls.complement_local_permissions(local_permissions_decisions, element, prop, values)
-      permissions_decisions = local_permissions_decisions
+            cls.complement_local_permissions(local_permissions, element, prop, values)
+      permissions_decisions = local_permissions
     # Otherwise just process global permissions.
     else:
-      for element, properties in global_permissions_decisions.items():
+      for element, properties in global_permissions.items():
         for prop, values in properties.items():
-          cls.compile_global_permissions(global_permissions_decisions, element, prop, values)
-      permissions_decisions = global_permissions_decisions
+          cls.compile_global_permissions(global_permissions, element, prop, values)
+      permissions_decisions = global_permissions
     return permissions_decisions
   
   @classmethod
