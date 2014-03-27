@@ -479,14 +479,14 @@ class Engine:
         if element not in local_permissions:
           for prop, values in properties.items():
             cls.complement_local_permissions(local_permissions, element, prop, values)
-      permissions_decisions = local_permissions
+      permissions = local_permissions
     # Otherwise just process global permissions.
     else:
       for element, properties in global_permissions.items():
         for prop, values in properties.items():
           cls.compile_global_permissions(global_permissions, element, prop, values)
-      permissions_decisions = global_permissions
-    return permissions_decisions
+      permissions = global_permissions
+    return permissions
   
   @classmethod
   def run(cls, context, skip_user_roles=False, strict=False):
