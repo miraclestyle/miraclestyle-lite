@@ -204,7 +204,7 @@ def _check_field(context, field, properties):  # Not sure if 'properties' cause 
   
   """
   if context.rule.entity:
-    # This arangement allows us to call parent functions in the manner like this: writable(context, ('field1', 'field2')).
+    # This arangement allows us to call parent functions in the manner like this: writable(context, ('field1', 'field2')). @todo Does it!?
     if not isinstance(properties, (tuple, list)):
       properties = (properties, )
     results = []
@@ -387,17 +387,15 @@ class Engine:
       action_permissions[action_key] = {'executable': []}
   
   @classmethod
-  def prepare_fields(cls, field_permissions, fields):
+  def prepare_fields(cls, field_permissions, fields):  # @todo Check if this version of the function is correct?
     for field_key, field in fields.items():
+      if field_key not in field_permissions:
+        field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
       if _is_structured_field(field):
-        if field_key not in field_permissions:
-          field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)  # @todo If child property has a field of the same name as parent property, what happens to it?
         cls.prepare_fields(field_permissions[field_key], model_fields)
-      else:
-        field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
   
   @classmethod
   def prepare(cls, context):
