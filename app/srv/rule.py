@@ -414,7 +414,7 @@ class Engine:
   def decide(cls, permissions, strict, parent_key=None, parent_permissions=None):
     for key, value in permissions.items():
       if isinstance(value, dict):
-        cls.decide(value, strict, key, permissions)
+        cls.decide(permissions[key], strict, key, permissions)
       else:
         if isinstance(value, list) and len(value):
           if (strict):
@@ -432,37 +432,36 @@ class Engine:
             permissions[key] = parent_permissions[key]
   
   @classmethod
-  def override_local_permissions(cls, global_permissions, local_permissions, element, prop, values):
-    if isinstance(values, dict):
-      for _prop, _values in values.items():
-        cls.override_local_permissions(global_permissions[element], local_permissions[element], prop, _prop, _values)
-    else:
-      if element in global_permissions:
-        if prop in global_permissions[element]:
-          gp_values = global_permissions[element][prop]
-          if gp_values is not None and gp_values != values:
-            local_permissions[element][prop] = gp_values
-      if local_permissions[element][prop] is None:
-        local_permissions[element][prop] = False
+  def override_local_permissions(cls, global_permissions, local_permissions):
+    for key, value in local_permissions.items():
+      if isinstance(value, dict):
+        cls.override_local_permissions(global_permissions[key], local_permissions[key])
+      else:
+        if key in global_permissions:
+          gp_value = global_permissions[key]
+          if gp_value is not None and gp_value != value:
+            local_permissions[key] = gp_value
+        if local_permissions[key] is None:
+          local_permissions[key] = False
   
   @classmethod
-  def complement_local_permissions(cls, local_permissions, element, prop, values):
-    if isinstance(values, dict):
-      for _prop, _values in values.items():
-        cls.complement_local_permissions(local_permissions[element], prop, _prop, _values)
-    else:
-      if prop not in local_permissions[element]:
-        local_permissions[element][prop] = values
+  def complement_local_permissions(cls, global_permissions, local_permissions):
+    for key, value in global_permissions.items():
+      if isinstance(value, dict):
+        cls.complement_local_permissions(global_permissions[key], local_permissions[key])
+      else:
+        if key not in local_permissions:
+          local_permissions[key] = value
   
   @classmethod
-  def compile_global_permissions(cls, global_permissions, element, prop, values):
-    if isinstance(values, dict):
-      for _prop, _values in values.items():
-        cls.compile_global_permissions(global_permissions[element], prop, _prop, _values)
-    else:
-      if values is None:
-        values = False
-      global_permissions[element][prop] = values
+  def compile_global_permissions(cls, global_permissions):
+    for key, value in global_permissions.items():
+      if isinstance(value, dict):
+        cls.compile_global_permissions(global_permissions[key])
+      else:
+        if value is None:
+          value = False
+          global_permissions[key] = values
   
   @classmethod
   def compile(cls, local_permissions, global_permissions, strict):
@@ -471,20 +470,13 @@ class Engine:
     if local_permissions:
       cls.decide(local_permissions, strict)
       # Iterate over local permissions, and override them with the global permissions.
-      for element, properties in local_permissions.items():
-        for prop, values in properties.items():
-          cls.override_local_permissions(global_permissions, local_permissions, element, prop, values)
+      cls.override_local_permissions(global_permissions, local_permissions)
       # Make sure that global permissions are always present.
-      for element, properties in global_permissions.items():
-        if element not in local_permissions:
-          for prop, values in properties.items():
-            cls.complement_local_permissions(local_permissions, element, prop, values)
+      cls.complement_local_permissions(global_permissions, local_permissions)
       permissions = local_permissions
     # Otherwise just process global permissions.
     else:
-      for element, properties in global_permissions.items():
-        for prop, values in properties.items():
-          cls.compile_global_permissions(global_permissions, element, prop, values)
+      cls.compile_global_permissions(global_permissions)
       permissions = global_permissions
     return permissions
   
