@@ -184,9 +184,8 @@ def _parse_field(values, field):
   
   """
   field_path = field.split('.')
-  is_dict = isinstance(values, dict)
   for path in field_path:
-    if is_dict:
+    if isinstance(values, dict):
       try:
         values = values[path]
       except KeyError as e:
