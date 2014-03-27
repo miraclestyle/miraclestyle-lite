@@ -411,7 +411,7 @@ class Engine:
     cls.prepare_fields(entity._field_permissions, fields)
   
   @classmethod
-  def decide(cls, permissions, strict, parent_key=None, parent_permissions=None):
+  def decide(cls, permissions, strict, parent_key=None, parent_permissions=None):  # @todo Perhaps parent_key is not required!
     for key, value in permissions.items():
       if isinstance(value, dict):
         cls.decide(permissions[key], strict, key, permissions)
@@ -435,7 +435,7 @@ class Engine:
   def override_local_permissions(cls, global_permissions, local_permissions):
     for key, value in local_permissions.items():
       if isinstance(value, dict):
-        cls.override_local_permissions(global_permissions[key], local_permissions[key])
+        cls.override_local_permissions(global_permissions[key], local_permissions[key])  # global_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
       else:
         if key in global_permissions:
           gp_value = global_permissions[key]
@@ -448,7 +448,7 @@ class Engine:
   def complement_local_permissions(cls, global_permissions, local_permissions):
     for key, value in global_permissions.items():
       if isinstance(value, dict):
-        cls.complement_local_permissions(global_permissions[key], local_permissions[key])
+        cls.complement_local_permissions(global_permissions[key], local_permissions[key])  # local_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
       else:
         if key not in local_permissions:
           local_permissions[key] = value
