@@ -178,21 +178,22 @@ def _is_structured_field(field):
   """
   return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
 
-def _parse_field(values, field):
-  """Digs through the path for the "values" provided.
-  It is assumed that "values" is either dictionary or object from which value can be obtained using __getattr__.
+def _parse_field(values, field_path):
+  """Returns part of the 'values' that coresponds to the ending node of the given field path.
+  'field_path' is a string that takes dot notation form ('foo.bar.far').
+  It is assumed that 'values' is a structure that contains mixture of objects and dictionaries along the given path.
   
   """
-  field_path = field.split('.')
-  for path in field_path:
+  fields = field_path.split('.')
+  for field in fields:
     if isinstance(values, dict):
       try:
-        values = values[path]
+        values = values[field]
       except KeyError as e:
         return None
     else:
       try:
-        values = getattr(values, path)
+        values = getattr(values, field)
       except ValueError as e:
         return None
   return values
