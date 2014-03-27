@@ -198,17 +198,17 @@ def _parse_field(values, field):
         return None
   return values
 
-def _check_field(context, field, properties):  # Not sure if 'properties' cause confusion, 'property' in this case is propetry of the field itself!
+def _check_field(context, fields, prop):  # Not sure if 'prop' cause confusion, 'property' in this case is propetry of the field itself!
   """Internal helper to check if the field for provided rule context is
   either writable or invisible.
   
   """
   if context.rule.entity:
-    # This arangement allows us to call parent functions in the manner like this: writable(context, ('field1', 'field2')). @todo Does it!?
-    if not isinstance(properties, (tuple, list)):
-      properties = (properties, )
+    # This arangement allows us to call parent functions in the manner like this: writable(context, ('field1', 'field2')).
+    if not isinstance(fields, (tuple, list)):
+      fields = (fields, )
     results = []
-    for prop in properties:
+    for field in fields:
       result = _parse_field(context.rule.entity._field_permissions, field)
       results.append(result[prop])
     return all(results)
@@ -394,7 +394,7 @@ class Engine:
       if _is_structured_field(field):
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
-          model_fields.pop(field._code_name)  # @todo If child property has a field of the same name as parent property, what happens to it?
+          model_fields.pop(field._code_name)  # @todo Test this behaviour!
         cls.prepare_fields(field_permissions[field_key], model_fields)
   
   @classmethod
