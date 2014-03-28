@@ -450,7 +450,7 @@ class Engine:
       else:
         if value is None:
           value = False
-          global_permissions[key] = values
+        global_permissions[key] = value
   
   @classmethod
   def compile(cls, local_permissions, global_permissions, strict):
