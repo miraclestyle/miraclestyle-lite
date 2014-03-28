@@ -231,6 +231,10 @@ def executable(context):
     return False
 
 def _write_helper(permissions, entity, field_key, field, field_value):
+  """If the field is writable, ignore substructure permissions.
+  Otherwize go one level down and check again.
+  
+  """
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
       setattr(entity, field_key, field_value)
