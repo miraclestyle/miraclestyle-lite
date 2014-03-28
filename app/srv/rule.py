@@ -230,36 +230,28 @@ def executable(context):
   else:
     return False
 
-def _write_helper(entity, values, field_keys, fields):
-  permissions = _parse_field(entity._field_permissions, '.'.join(field_keys))
-  field_key = field_keys[-1]
-  field = fields[-1]
-  parent_field_key = field_keys[-2]
-  parent_field = fields[-2]
-  if permissions and permissions['writable']:
-    if field._repeated:
-      parent_field_values = _parse_field(entity, '.'.join(field_keys[:-2]))
-      new_values = _parse_field(values, '.'.join(field_keys[:-2]))
-      for i, parent_field_value in enumerate(parent_field_values):
-        new_value = getattr(new_values[i], field_key)
-        setattr(parent_field_value, field_key, new_value)
-    else:
-      parent_field_value = _parse_field(entity, '.'.join(field_keys[:-2]))
-      new_value = _parse_field(values, '.'.join(field_keys[:-1]))
-      setattr(parent_field_value, field_key, new_value)
+def _write_helper(permissions, entity, field_key, field, field_value):
+  if (field_key in permissions) and (permissions[field_key]['writable']):
+    try:
+      setattr(entity, field_key, field_value)
+    except ndb.ComputedPropertyError:
+      pass
   else:
     if _is_structured_field(field):
+      child_entity = getattr(entity, field_key)
       for child_field_key, child_field in field.get_model_fields().items():
-        field_keys.append(child_field_key)
-        fields.append(child_field)
-        _write_helper(entity, values, field_keys, fields)
+        if field._repeated:
+          for i, child_entity_item in enumerate(child_entity):
+            _write_helper(permissions[field_key], child_entity_item, child_field_key, child_field, getattr(field_value[i], child_field_key))
+        else:
+          _write_helper(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
 
 def write(entity, values):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
-    field_keys = [field_key]
-    fields = [field]
-    _write_helper(entity, values, field_keys, fields)
+    if field_key in values:
+      field_value = values.get(field_key)
+      _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
 def _read_helper(field_permissions, entity, field_key, field):
   if _is_structured_field(field):
