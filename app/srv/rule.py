@@ -231,7 +231,7 @@ def executable(context):
     return False
 
 def _write_helper(permissions, entity, field_key, field, field_value):
-  """If the field is writable, ignore substructure permissions.
+  """If the field is writable, ignore substructure permissions and override field fith new values.
   Otherwise go one level down and check again.
   
   """
@@ -262,6 +262,10 @@ def write(entity, values):
       _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
 def _read_helper(permissions, entity, field_key, field):
+  """If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
+  Otherwise go one level down and check again.
+  
+  """
   if (not field_key in permissions) or (not permissions[field_key]['visible']):
     entity.remove_output(field_key)
   else:
