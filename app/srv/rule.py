@@ -404,7 +404,7 @@ class Engine:
     for key, value in permissions.items():
       if isinstance(value, dict):
         cycle += 1
-        cls.decide(permissions[key], strict, key, permissions)
+        cls.decide(permissions[key], strict, cycle, permissions)
       else:
         if isinstance(value, list) and len(value):
           if (strict):
