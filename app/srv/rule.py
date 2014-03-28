@@ -232,7 +232,7 @@ def executable(context):
 
 def _write_helper(permissions, entity, field_key, field, field_value):
   """If the field is writable, ignore substructure permissions.
-  Otherwize go one level down and check again.
+  Otherwise go one level down and check again.
   
   """
   if (field_key in permissions) and (permissions[field_key]['writable']):
@@ -246,7 +246,11 @@ def _write_helper(permissions, entity, field_key, field, field_value):
       for child_field_key, child_field in field.get_model_fields().items():
         if field._repeated:
           for i, child_entity_item in enumerate(child_entity):
-            _write_helper(permissions[field_key], child_entity_item, child_field_key, child_field, getattr(field_value[i], child_field_key))
+            try:
+              child_field_value = getattr(field_value[i], child_field_key)
+              _write_helper(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+            except IndexError as e:
+              pass
         else:
           _write_helper(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
 
@@ -257,26 +261,26 @@ def write(entity, values):
       field_value = values.get(field_key)
       _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
-def _read_helper(field_permissions, entity, field_key, field):
-  if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
-      entity.remove_output(field_key)
+def _read_helper(permissions, entity, field_key, field):
+  if (not field_key in permissions) or (not permissions[field_key]['visible']):
+    entity.remove_output(field_key)
   else:
     if _is_structured_field(field):
-      values = getattr(entity, field_key)
+      child_entity = getattr(entity, field_key)
       if field._repeated:
-        if values is not None: # we'll see how this behves for def write as well, because none is sometimes here when they are expando properties in the game
-          for value in values:
-            sub_fields = value.get_fields()
-            sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
-            for sub_field_key, sub_field in sub_fields.items():
-              _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
+        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+          for child_entity_item in child_entity:
+            child_fields = child_entity_item.get_fields()
+            child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
+            for child_field_key, child_field in child_fields.items():
+              _read_helper(permissions[field_key], child_entity_item, child_field_key, child_field)
       else:
-        value = getattr(entity, field_key)
-        if value is not None: # we'll see how this behves for def write as well, because none is sometimes here when they are expando properties in the game
-          sub_fields = value.get_fields()
-          sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
-          for sub_field_key, sub_field in sub_fields.items():
-            _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
+        child_entity = getattr(entity, field_key)
+        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+          child_fields = child_entity.get_fields()
+          child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
+          for child_field_key, child_field in child_fields.items():
+            _read_helper(permissions[field_key], child_entity, child_field_key, child_field)
 
 def read(entity):
   entity_fields = entity.get_fields()
