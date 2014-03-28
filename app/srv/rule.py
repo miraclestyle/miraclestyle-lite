@@ -405,7 +405,7 @@ class Engine:
       if isinstance(value, dict):
         if parent_permissions:
           root = False
-        cls.decide(permissions[key], strict, cycle, permissions)
+        cls.decide(permissions[key], strict, root, permissions)
       else:
         if isinstance(value, list) and len(value):
           if (strict):
