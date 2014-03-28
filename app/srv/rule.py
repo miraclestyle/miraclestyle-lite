@@ -230,47 +230,36 @@ def executable(context):
   else:
     return False
 
-def _write_helper(field_permissions, field_key, field, field_value, parent_value=None, parent=None, position=None):
-  if _is_structured_field(field):
-    if position is not None:
-      try:
-        sub_entity = getattr(parent_value[position], field_key)
-      except IndexError as e:
-        sub_entity = parent._modelclass()
-        parent_value.append(sub_entity)
-    else:
-      sub_entity = getattr(parent_value, field_key)
+def _write_helper(entity, values, field_keys, fields):
+  permissions = _parse_field(entity._field_permissions, '.'.join(field_keys))
+  field_key = field_keys[-1]
+  field = fields[-1]
+  parent_field_key = field_keys[-2]
+  parent_field = fields[-2]
+  if permissions and permissions['writable']:
     if field._repeated:
-      for i, value in enumerate(field_value):
-        for sub_field_key, sub_field in field.get_model_fields().items():
-          sub_field_value = getattr(value, sub_field_key)
-          _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, field, i)
-      return
+      parent_field_values = _parse_field(entity, '.'.join(field_keys[:-2]))
+      new_values = _parse_field(values, '.'.join(field_keys[:-2]))
+      for i, parent_field_value in enumerate(parent_field_values):
+        new_value = getattr(new_values[i], field_key)
+        setattr(parent_field_value, field_key, new_value)
     else:
-      for sub_field_key, sub_field in field.get_model_fields().items():
-        sub_field_value = getattr(sub_entity, sub_field_key)
-        _write_helper(field_permissions[field_key], sub_field_key, sub_field, sub_field_value, sub_entity, field, i)
+      parent_field_value = _parse_field(entity, '.'.join(field_keys[:-2]))
+      new_value = _parse_field(values, '.'.join(field_keys[:-1]))
+      setattr(parent_field_value, field_key, new_value)
   else:
-    if (field_key in field_permissions) and (field_permissions[field_key]['writable']):
-      if position is not None and isinstance(parent_value, list):
-         try:
-           sub_entity = parent_value[position]
-         except IndexError as e:
-           sub_entity = parent._modelclass()
-           parent_value.append(sub_entity)
-         setattr(sub_entity, field_key, field_value)
-      else:
-        try:
-          setattr(parent_value, field_key, field_value)
-        except ndb.ComputedPropertyError:
-          pass
+    if _is_structured_field(field):
+      for child_field_key, child_field in field.get_model_fields().items():
+        field_keys.append(child_field_key)
+        fields.append(child_field)
+        _write_helper(entity, values, field_keys, fields)
 
 def write(entity, values):
   entity_fields = entity.get_fields()
-  for field_key, field_value in values.items():
-    if field_key in entity_fields:
-      field = entity_fields.get(field_key)
-      _write_helper(entity._field_permissions, field_key, field, field_value, entity)
+  for field_key, field in entity_fields.items():
+    field_keys = [field_key]
+    fields = [field]
+    _write_helper(entity, values, field_keys, fields)
 
 def _read_helper(field_permissions, entity, field_key, field):
   if _is_structured_field(field):
