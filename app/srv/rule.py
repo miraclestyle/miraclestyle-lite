@@ -258,30 +258,30 @@ def write(entity, values):
       _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
 def _read_helper(field_permissions, entity, field_key, field):
-  if _is_structured_field(field):
-    values = getattr(entity, field_key)
-    if field._repeated and isinstance(values, list):
-      for value in values:
-        sub_fields = value.get_fields()
-        sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
-        for sub_field_key, sub_field in sub_fields.items():
-          _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
-    else:
-      value = getattr(entity, field_key)
-      if value is not None:
-        sub_fields = value.get_fields()
-        sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
-        for sub_field_key, sub_field in sub_fields.items():
-          _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
-  else:
-    if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
+  if (not field_key in field_permissions) or (not field_permissions[field_key]['visible']):
       entity.remove_output(field_key)
+  else:
+    if _is_structured_field(field):
+      values = getattr(entity, field_key)
+      if field._repeated:
+        if values is not None: # we'll see how this behves for def write as well, because none is sometimes here when they are expando properties in the game
+          for value in values:
+            sub_fields = value.get_fields()
+            sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
+            for sub_field_key, sub_field in sub_fields.items():
+              _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
+      else:
+        value = getattr(entity, field_key)
+        if value is not None: # we'll see how this behves for def write as well, because none is sometimes here when they are expando properties in the game
+          sub_fields = value.get_fields()
+          sub_fields.update(dict([(p._code_name, p) for _, p in value._properties.items()]))
+          for sub_field_key, sub_field in sub_fields.items():
+            _read_helper(field_permissions[field_key], value, sub_field_key, sub_field)
 
 def read(entity):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
     _read_helper(entity._field_permissions, entity, field_key, field)
-  return entity  # @todo Why this return?
 
 
 class Context():
