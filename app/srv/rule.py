@@ -400,9 +400,10 @@ class Engine:
     cls.prepare_fields(entity._field_permissions, fields)
   
   @classmethod
-  def decide(cls, permissions, strict, parent_key=None, parent_permissions=None):  # @todo Perhaps parent_key is not required!
+  def decide(cls, permissions, strict, cycle=0, parent_permissions=None):  # @todo Perhaps parent_key is not required!
     for key, value in permissions.items():
       if isinstance(value, dict):
+        cycle += 1
         cls.decide(permissions[key], strict, key, permissions)
       else:
         if isinstance(value, list) and len(value):
@@ -417,7 +418,7 @@ class Engine:
             permissions[key] = False
         else:
           permissions[key] = None
-          if parent_key and not len(value):
+          if cycle > 1 and not len(value):
             permissions[key] = parent_permissions[key]
   
   @classmethod
