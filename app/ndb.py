@@ -440,6 +440,36 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass
 
 
+def _structured_property_field_format(fields, value):
+    
+    for val_key, val in value.items():
+      prop = fields.get(val_key)
+      if prop:
+        if hasattr(prop, 'format'):
+          value[val_key] = prop.format(val)
+      else:
+        del value[val_key]
+  
+  
+def _structured_property_format(prop, value):
+  
+  value = _property_value(prop, value)
+  out = []
+  if not prop._repeated:
+     value = [value]
+  fields = prop.get_model_fields()
+  for val in value:
+    _structured_property_field_format(fields, val)
+    out.append(prop._modelclass(**val))
+  value = out  
+  if not prop._repeated:
+     try:
+       value = out[0]
+     except IndexError as e:
+       value = None
+  return value
+
+
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def __init__(self, *args, **kwargs):
@@ -460,6 +490,9 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def get_model_fields(self):
     return self._modelclass.get_fields()
+  
+  def format(self, value):
+    return _structured_property_format(self, value)
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
@@ -482,6 +515,9 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
   def get_model_fields(self):
     return self._modelclass.get_fields()
+  
+  def format(self, value):
+    return _structured_property_format(self, value)
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -495,6 +531,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def format(self, value):
+    value = _property_value(self, value)
     if isinstance(value, basestring):
       return json.loads(value)
     else:
@@ -544,6 +581,7 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 class SuperKeyProperty(_BaseProperty, KeyProperty):
   
   def format(self, value):
+    value = _property_value(self, value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
@@ -631,10 +669,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     return value
 
 
-class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
-  
-  @classmethod
-  def _format_value(cls, prop, value):
+def _structured_image_format(prop, value):
     """This function is used for structured and also for local property,
     because its formatting logic is identical
     
@@ -677,15 +712,17 @@ class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
         return None
     else:
       return models
-  
+
+class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
+ 
   def format(self, value):
-    return self._format_value(self, value)
+    return _structured_image_format(self, value)
 
 
 class SuperStructuredImageProperty(SuperStructuredProperty):
   
   def format(self, value):
-    return SuperLocalStructuredImageProperty._format_value(self, value)
+    return _structured_image_format(self, value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
@@ -719,7 +756,7 @@ class SuperSearchProperty(SuperJsonProperty):
       filters = {
         'field' : {
           'operators' : ['==', '>', '<', '>=', '<=', 'contains'], # possible operators
-          'value' : ['str', 'list'], # possible values,
+          'value' : [SuperStringProperty(required=True), SuperStringProperty(repeated=True)], # possible value types, you can even specify which one is required.
         }
       }
       
@@ -761,6 +798,25 @@ class SuperSearchProperty(SuperJsonProperty):
           } 
         ],
       }
+      
+      and in programming area you would get
+      
+      
+     context.output['search'] = {
+        'filters' : [
+          {
+            'field' : 'name',
+            'operator' : '==',
+            'value' : 'Test',
+          }
+        ],
+        'order_by' : [
+          {
+            'field' : 'name',
+            'operator' : 'asc',
+          } 
+        ],
+      }
     
     """
     filters = kwargs.pop('filters', {})
@@ -777,17 +833,6 @@ class SuperSearchProperty(SuperJsonProperty):
     out['order_by'] = self._order_by
     out['indexes'] = self._indexes
   
-  @classmethod
-  def translate(cls, str_type):
-    if str_type == 'str':
-      return str
-    if str_type == 'list':
-      return list
-    if str_type == 'long':
-      return long
-    if str_type == 'dict':
-      return dict
-  
   def format(self, value):
     value = super(SuperSearchProperty, self).format(value)
     search = {'filters': value.get('filters'),
@@ -799,14 +844,24 @@ class SuperSearchProperty(SuperJsonProperty):
       if not _filter:
         raise PropertyError('field_not_in_filter_list')
       assert config.get('operator') in _filter['operators']
-      assert isinstance(config.get('value'), self.translate(_filter['value']))
+      attempts = len(_filter['value'])
+      fails = 0
+      for filter_prop in _filter['value']:
+         try:
+           new_value = filter_prop.format(config.get('value')) # format the value based on the property type
+           config['value'] = new_value
+           break
+         except Exception as e:
+           fails += 1 # try find at least one proper value by property type definitions
+      if fails == attempts: # if none found
+         raise e # re-raise last exception
       for_composite_filter.append(key)
     for_composite_order_by = []
     for config in search['order_by']:
       key = config.get('field')
       _order_by = self._order_by.get(key)
       if not _order_by:
-        raise PropertyError('field_not_in_orer_by_list')
+        raise PropertyError('field_not_in_order_by_list')
       assert config.get('operator') in _order_by['operators']
       for_composite_order_by.append(key)
       for_composite_order_by.append(config.get('operator'))
