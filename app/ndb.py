@@ -33,7 +33,7 @@ class PropertyError(Exception):
   pass
 
 
-def _validate_prop(value, prop):
+def _validate_prop(prop, value):
   """This helper function will raise exception based on ndb property specifications
   (max_size, required, choices).
   
@@ -56,12 +56,80 @@ def _property_value(prop, value):
       value = [value]
     out = []
     for v in value:
-      _validate_prop(v, prop)
+      _validate_prop(prop, v)
       out.append(v)
     return out
   else:
-    _validate_prop(value, prop)
+    _validate_prop(prop, value)
     return value
+
+def _structured_property_field_format(fields, values):
+  for value_key, value in values.items():
+    field = fields.get(value_key)
+    if field:
+      if hasattr(field, 'format'):
+        values[value_key] = field.format(value)
+    else:
+      del values[value_key]
+
+def _structured_property_format(prop, value):
+  value = _property_value(prop, value)
+  out = []
+  if not prop._repeated:
+    value = [value]
+  fields = prop.get_model_fields()
+  for v in value:
+    _structured_property_field_format(fields, v)  # Not sure if this function's code should be embeded here?
+    out.append(prop._modelclass(**v))
+  value = out
+  if not prop._repeated:
+    try:
+      value = out[0]
+    except IndexError as e:
+      value = None
+  return value
+
+def _structured_image_property_format(prop, value):
+  """This function is used for structured and also for local property,
+  because its formatting logic is identical
+  
+  """
+  value = _property_value(prop, value)
+  if not prop._repeated:
+    blobs = [value]
+  else:
+    blobs = value
+  models = []
+  for blob in blobs:
+    # These will throw errors if the 'blob' is not cgi.FileStorage.
+    file_info = blobstore.parse_file_info(blob)
+    blob_info = blobstore.parse_blob_info(blob)
+    meta_required = ('image/jpeg', 'image/jpg', 'image/png')
+    if file_info.content_type not in meta_required:
+      raise PropertyError('invalid_image_type')
+    gs_object_name = file_info.gs_object_name
+    cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
+    # This will throw an error if the file does not exist in cloudstorage.
+    image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
+    # Will throw error if the file is not an image, or its corrupted.
+    load_image = images.Image(image_data=image_data)
+    # Closes the pipeline.
+    cloudstorage_file.close()
+    # _modelclass (SuperLocalStructuredImageProperty(ModelClass)) must have
+    # 'width', 'height', 'size', and 'image' properties (see @app.srv.blob.Image as an example).
+    models.append(prop._modelclass(**{'width': load_image.width,
+                                      'height': load_image.height,
+                                      'size': file_info.size,
+                                      'content_type': file_info.content_type,
+                                      'image': blob_info.key()}))
+    del image_data, load_image  # Free memory?
+  if not prop._repeated:
+    if len(models):
+      return models[0]
+    else:
+      return None
+  else:
+    return models
 
 def make_complete_name(entity, name_property, parent_property=None, separator=None):
   if separator is None:
@@ -239,7 +307,7 @@ class _BaseModel(object):
     try:
       return super(_BaseModel, self).__getattr__(name)
     except AttributeError as e:
-      #  here is expected attribute error, not Exception - this causes fixes some internal python problems
+      # Here is expected Attribute error, not Exception. This fixes some internal python problems.
       raise AttributeError('No attribute "%s" found in instance of "%s"' % (name, self.__class__.__name__))
   
   def __setattr__(self, name, value):
@@ -438,36 +506,6 @@ class BaseProperty(_BaseProperty, Property):
 
 class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass
-
-
-def _structured_property_field_format(fields, value):
-    
-    for val_key, val in value.items():
-      prop = fields.get(val_key)
-      if prop:
-        if hasattr(prop, 'format'):
-          value[val_key] = prop.format(val)
-      else:
-        del value[val_key]
-  
-  
-def _structured_property_format(prop, value):
-  
-  value = _property_value(prop, value)
-  out = []
-  if not prop._repeated:
-     value = [value]
-  fields = prop.get_model_fields()
-  for val in value:
-    _structured_property_field_format(fields, val)
-    out.append(prop._modelclass(**val))
-  value = out  
-  if not prop._repeated:
-     try:
-       value = out[0]
-     except IndexError as e:
-       value = None
-  return value
 
 
 class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
@@ -669,60 +707,16 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     return value
 
 
-def _structured_image_format(prop, value):
-    """This function is used for structured and also for local property,
-    because its formatting logic is identical
-    
-    """
-    value = _property_value(prop, value)
-    if not prop._repeated:
-      blobs = [value]
-    else:
-      blobs = value
-    
-    models = []
-    for blob in blobs:
-      # These will throw errors if the 'blob' is not cgi.FileStorage.
-      file_info = blobstore.parse_file_info(blob)
-      blob_info = blobstore.parse_blob_info(blob)
-      meta_required = ('image/jpeg', 'image/jpg', 'image/png')
-      if file_info.content_type not in meta_required:
-        raise PropertyError('invalid_image_type')
-      gs_object_name = file_info.gs_object_name
-      cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
-      # This will throw an error if the file does not exist in cloudstorage.
-      image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-      # Will throw error if the file is not an image, or its corrupted.
-      load_image = images.Image(image_data=image_data)
-      # Closes the pipeline.
-      cloudstorage_file.close()
-      # _modelclass (SuperLocalStructuredImageProperty(ModelClass)) must have
-      # 'width', 'height', 'size', and 'image' properties (see @app.srv.blob.Image as an example).
-      models.append(prop._modelclass(**{'width': load_image.width,
-                                        'height': load_image.height,
-                                        'size': file_info.size,
-                                        'content_type': file_info.content_type,
-                                        'image': blob_info.key()}))
-      del image_data, load_image  # Free memory?
-    
-    if not prop._repeated:
-      if len(models):
-        return models[0]
-      else:
-        return None
-    else:
-      return models
-
 class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
  
   def format(self, value):
-    return _structured_image_format(self, value)
+    return _structured_image_property_format(self, value)
 
 
 class SuperStructuredImageProperty(SuperStructuredProperty):
   
   def format(self, value):
-    return _structured_image_format(self, value)
+    return _structured_image_property_format(self, value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
@@ -847,14 +841,14 @@ class SuperSearchProperty(SuperJsonProperty):
       attempts = len(_filter['value'])
       fails = 0
       for filter_prop in _filter['value']:
-         try:
-           new_value = filter_prop.format(config.get('value')) # format the value based on the property type
-           config['value'] = new_value
-           break
-         except Exception as e:
-           fails += 1 # try find at least one proper value by property type definitions
-      if fails == attempts: # if none found
-         raise e # re-raise last exception
+        try:
+          new_value = filter_prop.format(config.get('value'))  # Format the value based on the property type.
+          config['value'] = new_value
+          break
+        except Exception as e:
+          fails += 1  # Try to find at least one proper value by property type definitions.
+      if fails == attempts:  # If none found.
+        raise e  # Re-raise last exception.
       for_composite_filter.append(key)
     for_composite_order_by = []
     for config in search['order_by']:
