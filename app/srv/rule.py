@@ -357,7 +357,6 @@ class FieldPermission(Permission):
 
 class Role(ndb.BaseExpando):
   
-  # root (namespace Domain)
   # feature proposition (though it should create overhead due to the required drilldown process!)
   # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
   # complete_name = ndb.SuperTextProperty('2')
@@ -736,8 +735,6 @@ class DomainUser(ndb.BaseModel):
   
   _kind = 8
   
-  # root (namespace Domain) - id = str(user_key.id())
-  # composite index: ancestor:no - name
   name = ndb.SuperStringProperty('1', required=True)
   roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since taht can pose security issue!!
   state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
