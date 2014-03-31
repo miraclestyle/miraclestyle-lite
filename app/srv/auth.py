@@ -128,7 +128,7 @@ class User(ndb.BaseExpando):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'read': event.Action(id='0-6',arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
+    'read': event.Action(id='0-6', arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
     'search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
     }
   
