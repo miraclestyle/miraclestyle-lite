@@ -197,6 +197,8 @@ class CountrySubdivision(ndb.BaseModel):
 
 class Location(ndb.BaseExpando):
   
+  _kind = 68
+  
   # Local structured property
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
   country = ndb.SuperStringProperty('2', required=True, indexed=False)

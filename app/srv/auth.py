@@ -31,11 +31,15 @@ class Context():
 
 class Session(ndb.BaseModel):
   
+  _kind = 70
+  
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
   session_id = ndb.SuperStringProperty('2', required=True, indexed=False)
 
 
 class Identity(ndb.BaseModel):
+  
+  _kind = 64
   
   identity = ndb.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
   email = ndb.SuperStringProperty('2', required=True)

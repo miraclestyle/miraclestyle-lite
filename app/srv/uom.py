@@ -126,6 +126,8 @@ class Unit(ndb.BaseExpando):
 
 class UOM(ndb.BaseExpando):
   
+  _kind = 72
+  
   # Local structured property
   measurement = ndb.SuperStringProperty('1', required=True, indexed=False)
   name = ndb.SuperStringProperty('2', required=True, indexed=False)

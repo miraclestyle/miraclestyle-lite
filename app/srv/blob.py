@@ -14,6 +14,8 @@ from app import ndb, memcache
 
 class Image(ndb.BaseModel):
   
+  _kind = 69
+  
   # Base class / Structured class
   image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)
   content_type = ndb.SuperStringProperty('3', required=True, indexed=False)

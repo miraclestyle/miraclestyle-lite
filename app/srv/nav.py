@@ -13,6 +13,8 @@ from app.srv import rule, event, log
 
 class Filter(ndb.BaseExpando):
   
+  _kind = 65
+  
   name = ndb.SuperStringProperty('1', required=True)
   kind = ndb.SuperStringProperty('2', required=True)
   query = ndb.SuperJsonProperty('3', required=True, default={})

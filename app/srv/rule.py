@@ -357,6 +357,8 @@ class FieldPermission(Permission):
 
 class Role(ndb.BaseExpando):
   
+  _kind = 66
+  
   # feature proposition (though it should create overhead due to the required drilldown process!)
   # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
   # complete_name = ndb.SuperTextProperty('2')
@@ -520,7 +522,8 @@ class Engine:
 
 
 class GlobalRole(Role):
-  pass
+  
+  _kind = 67
 
 
 class DomainRole(Role):

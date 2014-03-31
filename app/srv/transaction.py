@@ -91,6 +91,9 @@ class Plugin(ndb.BasePolyExpando):
 
 # done!
 class CategoryBalance(ndb.BaseExpando):
+  
+  _kind = 71
+  
   # LocalStructuredProperty model
   # ovaj model dozvoljava da se radi feedback trending per month per year
   # mozda bi se mogla povecati granulacija per week, tako da imamo oko 52 instance per year, ali mislim da je to nepotrebno!
