@@ -385,7 +385,7 @@ class User(ndb.BaseExpando):
     #query.order(getattr(cls, order_by['field']))...
     
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
+    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
@@ -646,7 +646,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       raise rule.ActionDenied(context)
     query = cls.query().order(-cls.created)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
+    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     

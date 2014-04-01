@@ -681,7 +681,7 @@ class DomainRole(Role):
       raise ActionDenied(context)
     query = cls.query(namespace=domain.key_namespace).order(cls.name)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
+    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
@@ -999,7 +999,7 @@ class DomainUser(ndb.BaseModel):
       raise ActionDenied(context)
     query = cls.query(namespace=domain.key_namespace).order(cls.name)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
+    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
