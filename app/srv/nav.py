@@ -216,7 +216,7 @@ class Widget(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     query = cls.query(namespace=domain_key.urlsafe()).order(cls.sequence)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.DOMAIN_ADMIN_PER_PAGE, start_cursor=cursor)
+    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     for entity in entities:  # @todo Can we async this?
