@@ -133,7 +133,12 @@ class User(ndb.BaseExpando):
         }
       ),
     'read': event.Action(id='0-6', arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
-    'search': event.Action(id='0-7', arguments={'next_cursor': ndb.SuperStringProperty()})
+    'search': event.Action(
+      id='0-7',
+      arguments={
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      )
     }
   
   @property
@@ -569,7 +574,12 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'search': event.Action(id='6-10', arguments={'next_cursor': ndb.SuperStringProperty()})
+    'search': event.Action(
+      id='6-10',
+      arguments={
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      )
     }
   
   @property
