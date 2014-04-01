@@ -90,7 +90,7 @@ class Record(ndb.BaseExpando):
   def get_records(cls, entity, urlsafe_cursor):
     from app.srv import rule
     
-    items_per_page = settings.RECORDS_PER_PAGE
+    items_per_page = settings.RECORDS_PAGE
     cursor = Cursor(urlsafe=urlsafe_cursor)
     query = cls.query(ancestor=entity.key).order(-cls.logged)
     entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
