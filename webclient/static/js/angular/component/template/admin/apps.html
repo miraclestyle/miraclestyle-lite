@@ -1,4 +1,4 @@
-<h1 class="fieldset with-button">Apps</h1>
+
 <table class="table">
 			<thead>
 				<tr>
@@ -12,7 +12,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="app in apps">
+				<tr ng-repeat="app in search.entities">
 					<td>{{app.id}}</td>
 					<td>{{app.name}}</td>
 					<td>{{app.created|date:DATE_FULL}}</td>
@@ -20,7 +20,7 @@
 					<td>{{app.state}}</td>
 					<td>{{app._primary_contact_email}}</td>
 					<td>
-						<button type="button" busy ng-click="manage(app)" class="button">
+						<button type="button" busy ng-click="update(app)" class="button">
 							Edit
 						</button>
 					</td>

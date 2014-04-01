@@ -1,0 +1,79 @@
+<form ng-submit="search.doSearch()">
+<h1 class="fieldset">Search</h1>
+<div class="form-control">
+	<label class="form-label">Kind</label>
+	<div class="form-input">
+		<select ng-change="search.changeKind()" name="search_kind" ng-required="true" ui-select2 ng-model="search.kind" data-placeholder="Select kind to search">
+			    <option></option>
+			    <option ng-repeat="(kind_key, kind) in FRIENDLY_KIND_NAMES" value="{{kind_key}}">{{kind}}</option>
+		</select>
+	</div>
+</div>
+
+
+<div ng-show="search.kind != null" class="form-control">
+	<label class="form-label">Filters</label>
+	<div class="form-input">
+		 <table class="table2">
+		 	<tbody>
+		 		
+		 		<tr ng-repeat="search_filter in search.send.filters">
+		 			<td class="c25 cpr10">
+		 				<select name="search_filter_filed" ng-required="true" ng-change="search.changeField()" ui-select2 ng-model="search_filter.field" data-placeholder="Select field to search">
+							    <option></option>
+							    <option ng-repeat="(field_key, field) in search.filters" value="{{field_key}}">{{field_key}}</option>
+						</select>
+		 			</td>
+		 			<td class="c25 cpl10">
+		 				<select name="search_filter_op" ng-required="true" ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" data-placeholder="Select operator for field">
+							    <option></option>
+							    <option ng-repeat="op in search.filters[search_filter.field].operators" value="{{op}}">{{op}}</option>
+						</select>
+		 			</td>
+		 			<td class="c25 cpl10">
+		 				<input name="search_filter_value" ng-required="true" class="text-input" type="text" ng-model="search_filter.value" />
+		 			</td>
+		 			<td class="c25 cpl10">
+		 				<button type="button" class="button" style="display:inline-block;width: auto;padding: 5px 20px;" ng-click="search.removeFilter(search_filter)">Remove</button>
+		 			</td>
+		 		</tr>
+		 		
+		 	</tbody>
+		 </table>
+		 <div>
+		 	<button ng-click="search.newFilter()" type="button" class="button">Add Filter</button>
+		 </div>
+	</div>
+</div>
+
+<div ng-show="search.kind != null" class="form-control">
+	<label class="form-label">Order by</label>
+	<div class="form-input">
+		<select name="search_order_by" ng-change="search.changeOrderBy()" ng-required="true" ui-select2 ng-model="search.send.order_by.field" data-placeholder="Select field to order by">
+			    <option></option>
+			    <option ng-repeat="(order_by_key, order_by) in search.order_by" value="{{order_by_key}}">{{order_by_key}}</option>
+		</select>
+	</div>
+</div>
+
+
+<div ng-show="search.kind != null && search.send.order_by.field != null" class="form-control">
+	<label class="form-label">Direction</label>
+	<div class="form-input">
+		<select name="search_order_by_dir" ng-change="search.changeDirection()" ng-required="true" ui-select2 ng-model="search.send.order_by.operator" data-placeholder="Select direction">
+			    <option></option>
+			    <option ng-repeat="op in search.order_by[search.send.order_by.field].operators" value="{{op}}">{{op}}</option>
+		</select>
+	</div>
+</div>
+
+
+
+<div class="form-control">
+	<label class="form-label"></label>
+	<div class="form-input">
+		<button class="button block" type="submit">Search</button>
+	</div>
+</div>
+ 
+</form>

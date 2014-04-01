@@ -141,7 +141,7 @@ class DomainSetup(Setup):
            for friendly_action_key, action_instance in obj._actions.items():
                actions.append(action_instance.key.urlsafe())
            permissions.append(rule.ActionPermission(kind=obj.get_kind(), 
-                                                        action=actions,
+                                                        actions=actions,
                                                         executable=True,
                                                         condition='True'))
                

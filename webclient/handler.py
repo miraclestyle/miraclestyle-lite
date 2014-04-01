@@ -337,5 +337,5 @@ class AngularSegments(Segments, Angular):
 
 class AngularBlank(Angular):
   
-  def respond(self):
+  def respond(self, *args, **kwargs):
       pass

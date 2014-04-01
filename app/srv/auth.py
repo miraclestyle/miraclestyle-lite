@@ -90,7 +90,7 @@ class User(ndb.BaseExpando):
       rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
       rule.FieldPermission('0', 'identities', True, True, "True"),  # User can change identities.
       # Expose these fields by default.
-      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True, "True"),
+      rule.FieldPermission('0', ['created', 'updated', 'state', '_primary_email'], False, True, "True"),
       rule.FieldPermission('0', '_records', True, True, "True"),
       rule.FieldPermission('0', '_records.note', False, False, "not context.auth.user._root_admin"),
       rule.FieldPermission('0', '_records.note', True, True, "context.auth.user._root_admin")
@@ -136,6 +136,41 @@ class User(ndb.BaseExpando):
     'search': event.Action(
       id='0-7',
       arguments={
+        'search' : ndb.SuperSearchProperty(
+            filters={
+             'emails' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              }, 
+             'state' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              },        
+            },
+            indexes=[{
+             'filter' : ['emails'],
+             'order_by' : [['emails', ['asc', 'desc']], 
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            },
+            {
+             'filter' : ['state'],
+             'order_by' : [['emails', ['asc', 'desc']],
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            }],
+            order_by={
+              'emails' : {
+                'operators' : ['asc', 'desc'],
+              },
+              'created' : {
+                'operators' : ['asc', 'desc'],
+              },
+              'updated' : {
+                'operators' : ['asc', 'desc'],
+              }
+            },
+         ),
         'next_cursor': ndb.SuperStringProperty()
         }
       )
@@ -337,6 +372,18 @@ class User(ndb.BaseExpando):
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     query = cls.query().order(-cls.created)
+    search = context.input.get('search')
+    
+    filters = search.get('filters')
+    for _filter in filters:
+       field = getattr(cls, _filter['field'])
+       op = _filter['operator']
+       value = _filter['value']
+       if op == '==':
+          query.filter(field == value)
+          
+    #query.order(getattr(cls, order_by['field']))...
+    
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(10, start_cursor=cursor)  # @todo UNIFY PAGING CONFIG ACROSS ALL QUERIES!!!!!!!!!!!!!!
     if next_cursor:

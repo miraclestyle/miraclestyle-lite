@@ -37,7 +37,7 @@ MainApp.config(['$stateProvider',
       })
       .state('app_view_search', {
       	url: '/app/:domain_key/search/:kind/:query',
-        templateUrl: logic_template('app/view_search.html'),
+        templateUrl: logic_template('app/search.html'),
         controller: 'AppSearch',
         resolve : {
         	menu : resolve_menu,
@@ -56,30 +56,20 @@ MainApp.config(['$stateProvider',
         	}]
         }
       })
-      .state('admin_apps', {
-      	url: '/admin/apps',
-        templateUrl: logic_template('admin/apps.html'),
-        controller: 'AdminApps',
+      .state('admin_search', {
+      	url: '/admin/search/:kind/:query',
+        templateUrl: logic_template('admin/search.html'),
+        controller: 'AppSearch',
         resolve : {
-        	apps : ['App', function (App) {
-        		
-        		return App.sudo_search().then(function (output) {
-						return output.data;
-					});
-        		 
-        	}]
-        }
-      })
-      .state('admin_users', {
-      	url: '/admin/users',
-        templateUrl: logic_template('admin/users.html'),
-        controller: 'AdminUsers',
-        resolve : {
-        	users : ['Account', function (Account) {
-        		
-        		return Account.sudo_search().then(function (output) {
-						return output.data;
-					});
+        	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
+        	  
+        		  var query = JSON.parse($stateParams['query']);
+        
+        		  if (!angular.isObject(query)) query = {};
+    
+			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
+							  return output.data;
+						 });
         	}]
         }
       });

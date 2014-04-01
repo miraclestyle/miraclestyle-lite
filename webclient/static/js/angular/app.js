@@ -605,7 +605,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     }
 ])
 .run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
-     
+    
+    $rootScope.ADMIN_KINDS = {
+    	'0' : 'Users',
+    	'6' : 'Apps',
+    }; 
    
     $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_user = current_user;
@@ -614,6 +618,69 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     $rootScope.logic_template = logic_template;
     $rootScope.DATE_FULL = "yyyy-MM-dd HH:mm:ss Z";
     $rootScope.JSON = JSON;
+    $rootScope.search = {
+    	'kind' : null,
+    	'filters' : {},
+    	'order_by' : {},
+    	'indexes' : [],
+    	'resetFilters' : function ()
+    	{
+    		this.send.filters = [];
+    		this.send.order_by = {};
+    	},
+    	'changeKind' : function ()
+    	{
+    		this.resetFilters();
+    		
+    		var kindinfo = KINDS.get(this.kind);
+    		if (kindinfo)
+    		{
+    			var search_argument = kindinfo.actions['search']['arguments']['search'];
+    			
+    			this.filters = search_argument['filters'];
+    			this.order_by = search_argument['order_by'];
+    			this.indexes = search_argument['indexes'];
+    		}
+    		
+    	},
+    	'removeFilter' : function(filter)
+    	{
+    		this.send.filters.remove(filter);
+    	},
+    	'makeComposites' : function ()
+    	{
+    		var fields = [];
+ 
+    		angular.forEach(this.filters, function (value) {
+    			fields.push(value.field);
+    		});
+    		
+    		return fields;
+    	},
+    	'newFilter' : function ()
+    	{
+    		var fields = this.makeComposites();
+    		var order_by = this.send.order_by;
+     
+    		angular.forEach(this.indexes, function (value) {
+    			 
+    		});
+    		
+    		this.send.filters.push({
+    			'field' : '',
+    			'operator' : '',
+    			'value' : '',
+    		});
+    	},
+    	'doSearch' : function ()
+    	{
+    		 
+    	},
+    	'send' : {
+    		'filters' : [],
+    		'order_by' : {},
+    	}, 
+    };
     
     $rootScope.$on('$stateChangeStart',
 		function(event, toState, toParams, fromState, fromParams){

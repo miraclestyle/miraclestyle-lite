@@ -1,24 +1,71 @@
-MainApp.controller('AdminUsers', ['$scope', 'users', 'Account', 'Title', function ($scope, users, Account, Title) {
-	
-	Title.set(['Admin', 'Users']);
-	
-	$scope.users = users.entities;
-	
-	$scope.manage = function (user)
-	{
-		Account.update(user);
-	};
-	
-}])
-.controller('AdminApps', ['$scope', 'apps', 'App', 'Title', function ($scope, apps, App, Title) {
-	
-	Title.set(['Admin', 'Apps']);
-	
-	$scope.apps = apps.entities;
-	
-	$scope.manage = function (app)
-	{
-		App.update(app);
-	};
-	
-}]);
+ADMIN_SEARCH_KIND_CONFIG = {
+    '0': {
+    	'title' : 'Users',
+    	'service' : 'Account',
+    	'templateUrl' : logic_template('admin/users.html'),
+    },
+   '6': {
+    	'title' : 'Domains',
+    	'service' : 'App',
+    	'templateUrl' : logic_template('admin/apps.html'),
+    },
+ 
+    'default': {
+    	'title' : 'No data specified for this kind',
+    	'add_new' : 'N/A',
+    	'service' : '',
+    	'fields' : []
+    },
+};
+MainApp.controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector', '$state',
+        function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector, $state) {
+        	 
+            angular.forEach(search.entities, function (value) {
+                value.rule = RuleEngine.factory(value);
+            });
+
+            var kind = $stateParams['kind'];
+            var config = ADMIN_SEARCH_KIND_CONFIG[kind];
+            
+            if (!$rootScope.search.kind)
+            {
+            	$rootScope.search.kind = kind;
+            	$rootScope.search.changeKind();
+            }
+             
+            $rootScope.search.doSearch = function ()
+            {
+            	$state.go('admin_search', {
+	                'kind': this.kind,
+	                'query': JSON.stringify({
+	                	'search' : this.send,
+	                })
+	            });
+            };
+ 
+            if (!config)
+            {
+            	config = ADMIN_SEARCH_KIND_CONFIG['default'];
+            	var service = undefined;
+            }
+            else
+            {
+            	var service = $injector.get(config['service']);
+            }
+
+            $scope.search = search;
+            $scope.fields = config['fields'];
+            $scope.title = config['title'];
+            $scope.templateUrl = config['templateUrl'];
+ 
+            $scope.removeItem = function (e) {
+            	 $scope.search.entities.remove(e);
+            };
+ 
+            $scope.update = function (entity) {
+				service.update(entity, null, $scope);
+            };
+    
+
+        }
+]);

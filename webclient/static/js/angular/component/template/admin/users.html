@@ -1,4 +1,4 @@
-<h1 class="fieldset with-button">Users</h1>
+
 <table class="table">
 			<thead>
 				<tr>
@@ -11,14 +11,14 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="usr in users">
+				<tr ng-repeat="usr in search.entities">
 					<td>{{usr.id}}</td>
 					<td>{{usr.created|date:DATE_FULL}}</td>
 					<td>{{usr.updated|date:DATE_FULL}}</td>
 					<td>{{usr.state}}</td>
 					<td>{{usr._primary_email}}</td>
 					<td>
-						<button type="button" busy ng-click="manage(usr)" class="button">
+						<button type="button" busy ng-click="update(usr)" class="button">
 							Edit
 						</button>
 					</td>

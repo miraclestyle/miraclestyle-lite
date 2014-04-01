@@ -77,10 +77,12 @@
 	  		</div>
 	  		
 	        <div ng-show="current_user._root_admin">
+	        	<div ng-include="logic_template('nav/search_form.html')"></div>
 	  			<h1 class="fieldset">Administration</h1>
 	  			<ul class="menu">
-	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_users">Users</button></li>
-	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="admin_apps">Apps</button></li>
+	  		   		 <li ng-repeat="(kind_key, kind) in ADMIN_KINDS"><button type="button" ng-click="toggleMainMenu(1)"
+		  		    		    ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
+		  		    		    ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
 	  			</ul>
 	  		</div>
 	  		 
@@ -88,6 +90,9 @@
   		
   		
   		<div ng-show="nav.menu" class="menu-inner">
+  			
+  		    <div ng-include="logic_template('nav/search_form.html')"></div>
+  			
   			<div ng-repeat="menu_item in nav.menu">
 	  			<h1 ng-bind="menu_item.name" class="fieldset"></h1>
 		  		<ul class="menu">
