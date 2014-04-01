@@ -279,20 +279,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
     ])
     .controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector',
         function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector) {
-        	 
+     
             angular.forEach(search.entities, function (value) {
                 value.rule = RuleEngine.factory(value);
             });
 
             var kind = $stateParams['kind'];
             var config = SEARCH_KIND_CONFIG[kind];
-            
-            if (!$rootScope.search.kind)
-            {
-            	$rootScope.search.kind = kind;
-            	$rootScope.search.changeKind();
-            }
-             
+  
             $rootScope.search.doSearch = function ()
             {
             	$state.go('app_view_search', {
@@ -340,6 +334,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
   					 
 				}, $scope);
             };
+            
+            
 
         }
     ])

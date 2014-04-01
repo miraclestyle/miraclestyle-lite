@@ -137,6 +137,7 @@ class User(ndb.BaseExpando):
       id='0-7',
       arguments={
         'search' : ndb.SuperSearchProperty(
+            default={"filters":[],"order_by":{"field":"created","operator":"desc"}},
             filters={
              'emails' : {
                 'operators' : ['==', '!='],
@@ -155,6 +156,12 @@ class User(ndb.BaseExpando):
             },
             {
              'filter' : ['state'],
+             'order_by' : [['emails', ['asc', 'desc']],
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            },
+            {
+             'filter' : [],
              'order_by' : [['emails', ['asc', 'desc']],
                            ['created', ['asc', 'desc']], 
                            ['updated', ['asc', 'desc']]],
@@ -371,18 +378,29 @@ class User(ndb.BaseExpando):
     rule.Engine.run(context, True)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    query = cls.query().order(-cls.created)
-    search = context.input.get('search')
+    query = cls.query()
     
-    filters = search.get('filters')
-    for _filter in filters:
-       field = getattr(cls, _filter['field'])
-       op = _filter['operator']
-       value = _filter['value']
-       if op == '==':
-          query.filter(field == value)
-          
-    #query.order(getattr(cls, order_by['field']))...
+    ## it is possible that this will need to be placed in some helper search function
+    search = context.input.get('search')
+    if search:
+      filters = search.get('filters')
+      order_by = search.get('order_by')
+      for _filter in filters:
+         field = getattr(cls, _filter['field'])
+         op = _filter['operator']
+         value = _filter['value']
+         if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this algo needs improvements
+            query = query.filter(field == value)
+            
+      order_by_field = getattr(cls, order_by['field'])
+      asc = order_by['operator'] == 'asc'
+      if asc:
+        query = query.order(order_by_field)
+      else:
+        query = query.order(-order_by_field)
+        
+    else:
+      query = query.order(-cls.created)
     
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)

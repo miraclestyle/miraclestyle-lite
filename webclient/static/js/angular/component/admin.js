@@ -9,7 +9,6 @@ ADMIN_SEARCH_KIND_CONFIG = {
     	'service' : 'App',
     	'templateUrl' : logic_template('admin/apps.html'),
     },
- 
     'default': {
     	'title' : 'No data specified for this kind',
     	'add_new' : 'N/A',
@@ -17,32 +16,16 @@ ADMIN_SEARCH_KIND_CONFIG = {
     	'fields' : []
     },
 };
-MainApp.controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector', '$state',
+MainApp.controller('AdminSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector', '$state',
         function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector, $state) {
-        	 
+        
             angular.forEach(search.entities, function (value) {
                 value.rule = RuleEngine.factory(value);
             });
 
             var kind = $stateParams['kind'];
             var config = ADMIN_SEARCH_KIND_CONFIG[kind];
-            
-            if (!$rootScope.search.kind)
-            {
-            	$rootScope.search.kind = kind;
-            	$rootScope.search.changeKind();
-            }
-             
-            $rootScope.search.doSearch = function ()
-            {
-            	$state.go('admin_search', {
-	                'kind': this.kind,
-	                'query': JSON.stringify({
-	                	'search' : this.send,
-	                })
-	            });
-            };
- 
+   
             if (!config)
             {
             	config = ADMIN_SEARCH_KIND_CONFIG['default'];

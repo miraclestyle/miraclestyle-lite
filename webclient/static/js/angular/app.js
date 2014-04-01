@@ -620,6 +620,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     $rootScope.JSON = JSON;
     $rootScope.search = {
     	'kind' : null,
+    	'hide' : false,
     	'filters' : {},
     	'order_by' : {},
     	'indexes' : [],
@@ -630,16 +631,32 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	},
     	'changeKind' : function ()
     	{
-    		this.resetFilters();
-    		
+    	 
     		var kindinfo = KINDS.get(this.kind);
     		if (kindinfo)
     		{
-    			var search_argument = kindinfo.actions['search']['arguments']['search'];
+    			var search_argument = null;
     			
-    			this.filters = search_argument['filters'];
-    			this.order_by = search_argument['order_by'];
-    			this.indexes = search_argument['indexes'];
+    			try
+    			{
+    				search_argument = kindinfo.actions['search']['arguments']['search'];	
+    			}
+    			catch(e){}
+    			
+    			if (!search_argument)
+    			{
+    				this.hide = true;
+    				search_argument = {};
+    			}
+    			else
+    			{
+    				this.hide = false;
+    			}
+    			
+    			this.filters = search_argument['filters'] || {};
+    			this.order_by = search_argument['order_by'] || {};
+    			this.indexes = search_argument['indexes'] || [];
+    		 
     		}
     		
     	},
@@ -672,9 +689,57 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			'value' : '',
     		});
     	},
-    	'doSearch' : function ()
+    	'setSearch' : function (kind, search)
     	{
     		 
+    		if (kind == undefined || kind == null)
+    		{
+    			this.hide = true;
+    			return;
+    			
+    		}
+    		if (this.kind != kind)
+        	{
+        	 	this.kind = kind;
+        	 	this.changeKind();
+        	}
+    		
+    		var kindinfo = KINDS.get(this.kind);
+    		if (kindinfo)
+    		{
+    			var search_argument = null;
+    			
+    			try
+    			{
+    				search_argument = kindinfo.actions['search']['arguments']['search'];	
+    			}
+    			catch(e){}
+    			
+    			if (search_argument)
+    			{
+    				if (search == undefined && search_argument['default'])
+		    		{
+		    			this.send = search_argument['default'];
+		    		}
+    			}
+    			
+	    			
+    	   }
+    		 
+    	},
+    	'doSearch' : function ()
+            {
+            	$state.go('admin_search', {
+	                'kind': this.kind,
+	                'query': JSON.stringify({
+	                	'search' : this.send,
+	                })
+	            });
+         },
+    	'submitSearch' : function ()
+    	{
+    		 $rootScope.toggleMainMenu(1);
+    		 this.doSearch();
     	},
     	'send' : {
     		'filters' : [],

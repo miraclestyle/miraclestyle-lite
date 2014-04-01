@@ -54,13 +54,16 @@ class JSONEncoderHTML(json.JSONEncoder):
         if isinstance(o, ndb.Key):
            return o.urlsafe()
         
-        if hasattr(o, 'get_output') and isinstance(o, ndb.Model):
-           return o.get_output()
+        if hasattr(o, 'get_output'):
+           try:
+             return o.get_output()
+           except TypeError:
+             pass
          
         if hasattr(o, 'get_meta'):
            try:
             return o.get_meta()
-           except TypeError as e:
+           except TypeError:
             pass
          
         if hasattr(o, '__str__'):

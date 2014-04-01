@@ -41,31 +41,35 @@ MainApp.config(['$stateProvider',
         controller: 'AppSearch',
         resolve : {
         	menu : resolve_menu,
-        	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
-        	 
-        		  
+        	search : ['Endpoint', '$stateParams', '$rootScope', function (Endpoint, $stateParams, $rootScope) {
+         
         		  var query = JSON.parse($stateParams['query']);
         
         		  if (!angular.isObject(query)) query = {};
         		  
         		  query['domain'] = $stateParams['domain_key'];
-        		  
+     			  
+     			  $rootScope.search.setSearch($stateParams['kind'], query['search']);
+  
 			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
 							  return output.data;
-						 });
+				  });
+ 
         	}]
         }
       })
       .state('admin_search', {
       	url: '/admin/search/:kind/:query',
         templateUrl: logic_template('admin/search.html'),
-        controller: 'AppSearch',
+        controller: 'AdminSearch',
         resolve : {
-        	search : ['Endpoint', '$stateParams', function (Endpoint, $stateParams) {
+        	search : ['Endpoint', '$stateParams', '$rootScope', function (Endpoint, $stateParams, $rootScope) {
         	  
         		  var query = JSON.parse($stateParams['query']);
         
         		  if (!angular.isObject(query)) query = {};
+        	 	   
+        		  $rootScope.search.setSearch($stateParams['kind'], query['search']);
     
 			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
 							  return output.data;
