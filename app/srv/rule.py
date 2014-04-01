@@ -573,7 +573,8 @@ class DomainRole(Role):
     'search': event.Action(
       id='60-2',
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'next_cursor': ndb.SuperStringProperty()
         }
       ),
     'read': event.Action(id='60-4', arguments={'key': ndb.SuperKeyProperty(kind='60', required=True)}),
@@ -795,7 +796,8 @@ class DomainUser(ndb.BaseModel):
     'search': event.Action(
       id='8-6',
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6')
+        'domain': ndb.SuperKeyProperty(kind='6'),
+        'next_cursor': ndb.SuperStringProperty()
         }
       ),
     'prepare': event.Action(
