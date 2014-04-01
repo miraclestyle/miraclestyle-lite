@@ -796,7 +796,7 @@ class DomainUser(ndb.BaseModel):
     'search': event.Action(
       id='8-6',
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6'),
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
