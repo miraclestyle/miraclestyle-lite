@@ -3,6 +3,10 @@
 Created on Apr 2, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+
+THIS IS BRUTE 'HACK' THAT BRAKES ESTABLISHED ARCHITECTURAL PATTERN!
+ALTHOUGH IT RESEMBLES TO A COMPLEMENTARY SERVICE, IN FACT IT ISN'T,
+AS IT CREATES LOGAICAL DEPENDENCY OF MODEL HOSTED FUNCTIONS!
 '''
 
 from google.appengine.datastore.datastore_query import Cursor
