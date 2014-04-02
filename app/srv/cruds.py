@@ -29,7 +29,9 @@ class Engine():
     else:
       entity = model()
        
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
+      
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -44,6 +46,7 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
+        context.notify.entity = entity
         notify.Engine.run(context)
     
     transaction()
@@ -54,7 +57,8 @@ class Engine():
     
     entity_key = context.input.get('key')
     entity = entity_key.get()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -68,6 +72,7 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
+        context.notify.entity = entity
         notify.Engine.run(context)
     
     transaction()
@@ -78,7 +83,8 @@ class Engine():
     
     entity_key = context.input.get('key')
     entity = entity_key.get()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -93,7 +99,8 @@ class Engine():
       entity = model(namespace=domain.key_namespace)
     else:
       entity = model()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -105,7 +112,8 @@ class Engine():
     
     entity_key = context.input.get('key')
     entity = entity_key.get()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -118,6 +126,7 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
+        context.notify.entity = entity
         notify.Engine.run(context)
     
     transaction()
@@ -128,7 +137,8 @@ class Engine():
     entity_key = context.input.get('key')
     next_cursor = context.input.get('next_cursor')
     entity = entity_key.get()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -146,7 +156,8 @@ class Engine():
      entity = model(namespace=domain.key_namespace)
     else:
      entity = model()
-    context.rule.entity = entity
+    if not context.rule.entity:
+      context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
@@ -179,7 +190,7 @@ class Engine():
       next_cursor = next_cursor.urlsafe()
       
     if context.cruds.search_callback:
-       context.cruds.search_callback(entities)
+       entities = context.cruds.search_callback(entities)
        
     for entity in entities:  # @todo Can we async this?
       context.rule.entity = entity

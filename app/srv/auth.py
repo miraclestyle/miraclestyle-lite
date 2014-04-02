@@ -14,7 +14,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, notify, setup, blob, callback
+from app.srv import event, rule, log, notify, setup, blob, callback, cruds
 
 
 class OAuth2Error(Exception):
@@ -320,9 +320,7 @@ class User(ndb.BaseExpando):
         entity = entity_key.get()
       context.rule.entity = entity
       context.rule.skip_user_roles = True
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
+ 
       identities = copy.deepcopy(entity.identities)
       for identity in identities:
         if primary_email:
@@ -333,92 +331,26 @@ class User(ndb.BaseExpando):
         if disassociate:
           if identity.identity in disassociate:
             identity.associated = False
-      rule.write(entity, {'identities' : identities})
-      entity.put()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-    return context
+      
+      context.cruds.values = {'identities' : identities}
+      cruds.Engine.update(cls, context)
   
   @classmethod
   def read_records(cls, context):
-    entity_key = context.input.get('key')
-    next_cursor = context.input.get('next_cursor')
-    entity = entity_key.get()
-    context.rule.entity = entity
     context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    entity._records = entities
-    rule.read(entity)
-    context.output['entity'] = entity
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    cruds.Engine.read_records(cls, context)
   
   @classmethod
   def read(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
     context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    rule.read(entity)
-    context.output['entity'] = entity
-    return context
+    cruds.Engine.read(cls, context)
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
     context.rule.entity = context.auth.user
     context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    query = cls.query()
+    cruds.Engine.search(cls, context)
     
-    ## it is possible that this will need to be placed in some helper search function
-    search = context.input.get('search')
-    if search:
-      filters = search.get('filters')
-      order_by = search.get('order_by')
-      for _filter in filters:
-         field = getattr(cls, _filter['field'])
-         op = _filter['operator']
-         value = _filter['value']
-         if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this algo needs improvements
-            query = query.filter(field == value)
-            
-      order_by_field = getattr(cls, order_by['field'])
-      asc = order_by['operator'] == 'asc'
-      if asc:
-        query = query.order(order_by_field)
-      else:
-        query = query.order(-order_by_field)
-        
-    else:
-      query = query.order(-cls.created)
-    
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    for entity in entities:  # @todo Can we async this?
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      rule.read(entity)
-    context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
   
   @classmethod
   def apps(cls, context):  # @todo This function has to undergo rewrite.
@@ -666,18 +598,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
-    entity = cls()
-    context.rule.entity = entity
     context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    query = cls.query().order(-cls.created)
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    
+ 
     @ndb.tasklet
     def async(entity):
       user = yield entity.primary_contact.get_async()
@@ -689,18 +611,14 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       entities = yield map(async, entities)
       raise ndb.Return(entities)
     
-    entities = helper(entities).get_result()
-    for entity in entities:  # @todo Can we async this?
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      rule.read(entity)
-    context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    def mapper(entities):
+      return helper(entities).get_result()
+    
+    context.cruds.search_callback = mapper
+    cruds.Engine.search(cls, context)
   
   @classmethod
-  def create(cls, context):
+  def create(cls, context): # create for domain is special and does not have a need for cruds?
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -724,23 +642,17 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def prepare(cls, context):
     entity = cls(state='active', primary_contact=context.auth.user.key)
     context.rule.entity = entity
     context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    # @todo Not sure if we should put here rule.read? - well we are outputing an empty cls() really dont see the need to put .read into prepare actions
-    context.output['entity'] = entity
+    cruds.Engine.prepare(cls, context)
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
-    return context
   
   @classmethod
-  def read(cls, context):
+  def read(cls, context): # domains read is unique no need for cruds?
     entity_key = context.input.get('key')
     entity = entity_key.get()
     primary_contact = entity.primary_contact.get_async()
@@ -756,44 +668,15 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def read_records(cls, context):
-    entity_key = context.input.get('key')
-    next_cursor = context.input.get('next_cursor')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    entity._records = entities
-    rule.read(entity)
-    context.output['entity'] = entity
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    cruds.Engine.read_records(cls, context)
   
   @classmethod
   def update(cls, context):
     
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
-      rule.write(entity, {'name': context.input.get('name'),
-                          'primary_contact': context.input.get('primary_contact')})  # @todo What about logo?
-      entity.put()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
+    context.cruds.values = {'name': context.input.get('name'),
+                            'primary_contact': context.input.get('primary_contact')} # @todo logo, we'll put it later
     
-    transaction()
-    return context
+    cruds.Engine.update(cls, context)
   
   @classmethod
   def suspend(cls, context):
