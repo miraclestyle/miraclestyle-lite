@@ -296,6 +296,8 @@ class Context():
   
   def __init__(self):
     self.entity = None
+    self.skip_user_roles = False
+    self.strict = False
 
 
 class Permission():
@@ -477,11 +479,13 @@ class Engine:
     return permissions
   
   @classmethod
-  def run(cls, context, skip_user_roles=False, strict=False):
+  def run(cls, context):
     """This method generates permissions situation for the context.rule.entity object,
     at the time of execution.
     
     """
+    skip_user_roles = context.rule.skip_user_roles
+    strict = context.rule.strict
     if context.rule.entity:
       cls.prepare(context)
       local_action_permissions = {}

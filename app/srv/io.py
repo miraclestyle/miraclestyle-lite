@@ -23,7 +23,7 @@ class InputError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, notify  # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, notify, cruds  # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -32,6 +32,7 @@ class Context():
     self.rule = rule.Context()
     self.log = log.Context()
     self.notify = notify.Context()
+    self.cruds = cruds.Context()
   
   def error(self, key, value):
     if 'errors' not in self.output:

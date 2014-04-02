@@ -7,55 +7,71 @@ Created on Apr 2, 2014
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
-from app.srv import rule, log
+from app.srv import rule, log, notify
+
+class Context():
+  
+  def __init__(self):
+    self.values = {}
+    self.domain = None
+    self.notify = False
+    self.search_callback = None
+    
 
 class Engine():
   
   @classmethod
-  def _complete_save(cls, entity, context, create):
+  def create(cls, model, context):
+    
+    if context.cruds.domain:
+      domain = context.cruds.domain.get()
+      entity = model(namespace=domain.key_namespace)
+    else:
+      entity = model()
+       
     context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    values = {}
-    fields = entity.get_fields()
-    for field_key in fields:
-      values[field_key] = context.input.get(field_key)
-    if create:
-      entity.populate(**values)  # @todo We do not have field level write control here (known issue with required fields)!
-    else:
-      rule.write(entity, values)
-    entity.put()
-    context.log.entities.append((entity, ))
-    log.Engine.run(context)
-    rule.read(entity)
-    context.output['entity'] = entity
-  
-  @classmethod
-  def create(cls, model, context):
     
     @ndb.transactional(xg=True)
     def transaction():
-      domain_key = context.input.get('domain')
-      if domain_key:
-       domain = domain_key.get()
-       entity = model(namespace=domain.key_namespace)
-      else:
-       entity = model()
-      cls._complete_save(entity, context, True)
+    
+      entity.populate(**context.cruds.values)
+      entity.put()
+      context.log.entities.append((entity, ))
+      log.Engine.run(context)
+      rule.read(entity)
+      context.output['entity'] = entity
+      if context.cruds.notify:
+        notify.Engine.run(context)
     
     transaction()
+  
   
   @classmethod
   def update(cls, model, context):
     
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+         
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      cls._complete_save(entity, context, False)
+      rule.write(entity, context.cruds.values)
+      entity.put()
+      context.log.entities.append((entity, ))
+      log.Engine.run(context)
+      rule.read(entity)
+      context.output['entity'] = entity
+      if context.cruds.notify:
+        notify.Engine.run(context)
     
     transaction()
+ 
  
   @classmethod
   def read(cls, model, context):
@@ -69,20 +85,19 @@ class Engine():
     rule.read(entity)
     context.output['entity'] = entity
   
+  
   @classmethod
   def prepare(cls, model, context):
-    domain_key = context.input.get('domain')
-    if domain_key:
-     domain = domain_key.get()
-     entity = model(namespace=domain.key_namespace)
+    if context.cruds.domain:
+      domain = context.cruds.domain.get()
+      entity = model(namespace=domain.key_namespace)
     else:
-     entity = model()
+      entity = model()
     context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     context.output['entity'] = entity
-    return context
   
   
   @classmethod
@@ -102,6 +117,8 @@ class Engine():
       log.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
+      if context.cruds.notify:
+        notify.Engine.run(context)
     
     transaction()
     
@@ -124,9 +141,8 @@ class Engine():
  
   @classmethod
   def search(cls, model, context):
-    domain_key = context.input.get('domain')
-    if domain_key:
-     domain = domain_key.get()
+    if context.cruds.domain:
+     domain = context.cruds.domain.get()
      entity = model(namespace=domain.key_namespace)
     else:
      entity = model()
@@ -134,8 +150,8 @@ class Engine():
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
+    
     query = model.query()
- 
     search = context.input.get('search')
     if search:
       filters = search.get('filters')
@@ -161,6 +177,10 @@ class Engine():
     entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
+      
+    if context.cruds.search_callback:
+       context.cruds.search_callback(entities)
+       
     for entity in entities:  # @todo Can we async this?
       context.rule.entity = entity
       rule.Engine.run(context)
