@@ -1,3 +1,43 @@
+"""
+Logic Fragemntation Introspective
+
+Logic fragemntation aims to improve code reusability and therefore reduce code base.
+The main problem of this technique is that code readability is severely impaired!
+Second problem arrises since the original architecture convention "Model defines everything" is impossbile to retain!
+In current situation there are two posible aproaches (that are most efficient) to deal with fragemntation.
+
+
+First approach is to define aditional (helper/complementary) independent services that can handle parts of the logic, 
+and call them from inside the model functions (the same way, other services, such as rule, log, callback, etc, are hadled).
+This approach is easy to implement, and retains current pattern, where models define their own functions (trying to convey "Model defines everything"). 
+These hosted functions retain partial logic, and call external services as needed. This affects architecture in such way that 
+as fragmentation scales so does the logic decentralization (logic is not placed in one place where it can be easily readed), 
+and thus impairs code readability. 
+
+
+Second aproach is to imeplemnt scalable pipeline model. This approach is more dificult to implement than first one,
+and brakes the current pattern by hosting logic outside model definitions, ("Model defines everything except logic"). 
+In this scenario logic is tightly contained and controled in one place, outside model definitions space. 
+Decupling logic from model definitions, would allow logic reuse from multiple models, and give freedom to logic scaling. 
+This affects architecture in such way logic is by default decentralised and fragmentation scaling doesn't affect the pattern however, 
+code readability remains impaired.
+
+Second aproach changes:
+
+app/ndb.py would require get_pipes, or simmilar function so that model pipelines can be obtained.
+app/srv/io.py changes in get_action, realtime_run and possibly other functions, and implement get_pipeline. 
+app/srv/event.py should implement Pipe (or Plugin) class, from transaction.py.
+app/pipes (or app/plugins) directory implements individual pipes, and all of the logic from models gets moved here, example:
+/app/pipes/read.py (read.py implements Pipe/Plugin class with run() function inside of it).
+
+each model implements '_pipelines' (or '_plugins') dictionary where instantiates pipes, example:
+
+_pipelines = [read.Pipe(kind=6, subscriptions=[6-5]), create.Pipe(kind=6, subscriptions=[6-3])]
+
+each model removes hosted logic functions.
+
+"""
+
 # omoguciti da se u jednoj domeni trasakciona definicija konfigurise sa pluginovima koji mogu raditi notify na http tako da se moze raditi centralizacija
 # user inputa sa vise domena na jednu, a pre svega u implementaciji notify engine-a napraviti da pored templeta za slanje ima i template-e za primanje http postova
 # ovo je koncept sa transakcionim definicijama, a moglo bi se i resavati na journal definicijama, u zavisnosti kako odlucimo da resavamo cross entry processing.
