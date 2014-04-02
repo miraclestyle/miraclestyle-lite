@@ -12,6 +12,7 @@ encoding//app/settings.py=utf-8
 encoding//app/srv/auth.py=utf-8
 encoding//app/srv/blob.py=utf-8
 encoding//app/srv/callback.py=utf-8
+encoding//app/srv/cruds.py=utf-8
 encoding//app/srv/event.py=utf-8
 encoding//app/srv/io.py=utf-8
 encoding//app/srv/location.py=utf-8

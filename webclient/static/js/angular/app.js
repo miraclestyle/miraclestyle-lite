@@ -716,10 +716,14 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			catch(e){}
     			
     			if (search_argument)
-    			{
+				{
     				if (search == undefined && search_argument['default'])
 		    		{
 		    			this.send = search_argument['default'];
+		    		}
+		    		else if (search)
+		    		{
+		    			this.send = search;
 		    		}
     			}
     			
