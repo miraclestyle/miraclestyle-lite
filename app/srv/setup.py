@@ -329,8 +329,8 @@ class Configuration(ndb.BaseExpando):
   def cron_install(cls, context):
     
     context.rule.entity = cls()
-    
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     
     if not rule.executable(context):
        raise rule.ActionDenied(context)
@@ -350,8 +350,8 @@ class Configuration(ndb.BaseExpando):
     entity = entity_key.get()
     
     context.rule.entity = entity
-    
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     
     if not rule.executable(context):
        raise rule.ActionDenied(context)

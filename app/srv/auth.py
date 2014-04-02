@@ -285,7 +285,8 @@ class User(ndb.BaseExpando):
       note = context.input.get('note')
       entity = entity_key.get()
       context.rule.entity = entity
-      rule.Engine.run(context, True)
+      context.rule.skip_user_roles = True
+      rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       values = {'state': state}
@@ -318,7 +319,8 @@ class User(ndb.BaseExpando):
       if entity_key != entity.key:
         entity = entity_key.get()
       context.rule.entity = entity
-      rule.Engine.run(context, True)
+      context.rule.skip_user_roles = True
+      rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       identities = copy.deepcopy(entity.identities)
@@ -349,7 +351,8 @@ class User(ndb.BaseExpando):
     next_cursor = context.input.get('next_cursor')
     entity = entity_key.get()
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
@@ -365,7 +368,8 @@ class User(ndb.BaseExpando):
     entity_key = context.input.get('key')
     entity = entity_key.get()
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     rule.read(entity)
@@ -375,7 +379,8 @@ class User(ndb.BaseExpando):
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
     context.rule.entity = context.auth.user
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     query = cls.query()
@@ -418,7 +423,8 @@ class User(ndb.BaseExpando):
   @classmethod
   def apps(cls, context):  # @todo This function has to undergo rewrite.
     context.rule.entity = context.auth.user
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     entities = []
@@ -444,7 +450,8 @@ class User(ndb.BaseExpando):
   def logout(cls, context):  # @todo Transaction 'outbound' code presence!
     entity = cls.current_user()
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     
@@ -471,7 +478,8 @@ class User(ndb.BaseExpando):
     current_user = cls.current_user()
     context.rule.entity = current_user
     context.auth.user = current_user
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
@@ -501,7 +509,8 @@ class User(ndb.BaseExpando):
         if user:
           context.rule.entity = user
           context.auth.user = user
-          rule.Engine.run(context, True)
+          context.rule.skip_user_roles = True
+          rule.Engine.run(context)
           if not rule.executable(context):
             raise rule.ActionDenied(context)
         
@@ -659,7 +668,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   def search(cls, context):  # @todo Implement search input property!
     entity = cls()
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     query = cls.query().order(-cls.created)
@@ -696,7 +706,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     def transaction():
       entity = cls(state='active', primary_contact=context.auth.user.key)
       context.rule.entity = entity
-      rule.Engine.run(context, True)
+      context.rule.skip_user_roles = True
+      rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
       config_input = context.input.copy()
@@ -719,7 +730,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   def prepare(cls, context):
     entity = cls(state='active', primary_contact=context.auth.user.key)
     context.rule.entity = entity
-    rule.Engine.run(context, True)
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
     # @todo Not sure if we should put here rule.read? - well we are outputing an empty cls() really dont see the need to put .read into prepare actions
