@@ -484,13 +484,14 @@ class _BaseProperty(object):
     choices = self._choices
     if choices:
       choices = list(self._choices)
-    return {'verbose_name': getattr(self, '_verbose_name'),
-            'required': self._required,
-            'max_size': self._max_size,
-            'choices':  choices,
-            'default': self._default,
-            'repeated': self._repeated,
-            'type': self.__class__.__name__}
+    dic = {'verbose_name': getattr(self, '_verbose_name'),
+           'required': self._required,
+           'max_size': self._max_size,
+           'choices':  choices,
+           'default': self._default,
+           'repeated': self._repeated,
+           'type': self.__class__.__name__}
+    return dic
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
@@ -522,9 +523,9 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
-    response = super(SuperLocalStructuredProperty, self).get_meta()
-    response['model'] = self._modelclass.get_fields()
-    return response
+    dic = super(SuperLocalStructuredProperty, self).get_meta()
+    dic['model'] = self._modelclass.get_fields()
+    return dic
   
   def get_model_fields(self):
     return self._modelclass.get_fields()
@@ -547,9 +548,9 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
-    response = super(SuperStructuredProperty, self).get_meta()
-    response['model'] = self._modelclass.get_fields()
-    return response
+    dic = super(SuperStructuredProperty, self).get_meta()
+    dic['model'] = self._modelclass.get_fields()
+    return dic
   
   def get_model_fields(self):
     return self._modelclass.get_fields()
@@ -822,12 +823,11 @@ class SuperSearchProperty(SuperJsonProperty):
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
-    out = super(SuperSearchProperty, self).get_meta()
-    out['filters'] = self._filters
-    out['order_by'] = self._order_by
-    out['indexes'] = self._indexes
-    
-    return out
+    dic = super(SuperSearchProperty, self).get_meta()
+    dic['filters'] = self._filters
+    dic['order_by'] = self._order_by
+    dic['indexes'] = self._indexes
+    return dic
   
   def format(self, value):
     value = super(SuperSearchProperty, self).format(value)
@@ -859,7 +859,7 @@ class SuperSearchProperty(SuperJsonProperty):
         composite_filter = True
       order_by = index.get('order_by')
       for order_by_config in order_by:
-          if order_by_config[0] == for_composite_order_by[0] and for_composite_order_by[1] in order_by_config[1]:
-             composite_order_by = True
+        if order_by_config[0] == for_composite_order_by[0] and for_composite_order_by[1] in order_by_config[1]:
+          composite_order_by = True
     assert composite_filter is True and composite_order_by is True
     return search
