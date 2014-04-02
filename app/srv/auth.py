@@ -310,30 +310,28 @@ class User(ndb.BaseExpando):
   @classmethod
   def update(cls, context):
     
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity_key = context.input.get('key')
-      primary_email = context.input.get('primary_email')
-      disassociate = context.input.get('disassociate')
-      entity = cls.current_user()
-      if entity_key != entity.key:
-        entity = entity_key.get()
-      context.rule.entity = entity
-      context.rule.skip_user_roles = True
- 
-      identities = copy.deepcopy(entity.identities)
-      for identity in identities:
-        if primary_email:
-          identity.primary = False
-          if identity.email == primary_email:
-            identity.primary = True
-        identity.associated = True
-        if disassociate:
-          if identity.identity in disassociate:
-            identity.associated = False
-      
-      context.cruds.values = {'identities' : identities}
-      cruds.Engine.update(cls, context)
+     entity_key = context.input.get('key')
+     primary_email = context.input.get('primary_email')
+     disassociate = context.input.get('disassociate')
+     entity = cls.current_user()
+     if entity_key != entity.key:
+       entity = entity_key.get()
+     context.rule.entity = entity
+     context.rule.skip_user_roles = True
+
+     identities = copy.deepcopy(entity.identities)
+     for identity in identities:
+       if primary_email:
+         identity.primary = False
+         if identity.email == primary_email:
+           identity.primary = True
+       identity.associated = True
+       if disassociate:
+         if identity.identity in disassociate:
+           identity.associated = False
+     
+     context.cruds.values = {'identities' : identities}
+     cruds.Engine.update(cls, context)
   
   @classmethod
   def read_records(cls, context):
