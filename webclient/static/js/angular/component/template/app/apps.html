@@ -13,16 +13,16 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="app in apps">
-					<td>{{app.domain.name}}</td>
-					<td>{{app.domain.state}}</td>
+					<td>{{app.name}}</td>
+					<td>{{app.state}}</td>
 
 					<td>
 			 
-							<button ng-show="app.user.state == 'accepted' && app.user.rule.action.remove.executable" busy ng-click="removeFromApp(app)" class="button" type="button">
+							<button ng-show="app._domain_user.state == 'accepted' && app._domain_user.rule.action.remove.executable" busy ng-click="removeFromApp(app)" class="button" type="button">
 									Remove
 							</button>
 							
-							<span ng-show="app.user.state != 'accepted'">
+							<span ng-show="app._domain_user.state != 'accepted'">
 								<button busy ng-click="acceptApp(app)" class="button" type="button">
 									Accept
 								</button>
@@ -32,16 +32,16 @@
 							</span>
 					 
 						
-						<span ng-show="!app.user.rule.action.remove.executable">Owner</span>
+						<span ng-show="!app._domain_user.rule.action.remove.executable">Owner</span>
 						
 					</td>
 					
 					<td>
-						<button ui-sref="app_view({domain_key : app.domain.key})" ng-show="app.user.state == 'accepted'" class="button" type="button">
+						<button ui-sref="app_view({domain_key : app.key})" ng-show="app._domain_user.state == 'accepted'" class="button" type="button">
 							Launch
 						</button>
-						<button ng-show="app.domain.rule.action.update.executable || app.domain.rule.action.sudo.executable || app.domain.rule.action.log_message.executable || app.domain.rule.action.activate.executable || app.domain.rule.action.suspend.executable"
-						        busy ng-click="updateApp(app.domain)" class="button">
+						<button ng-show="app.rule.action.update.executable || app.rule.action.sudo.executable || app.rule.action.log_message.executable || app.rule.action.activate.executable || app.rule.action.suspend.executable"
+						        busy ng-click="updateApp(app)" class="button">
 							Edit
 						</button>
 					</td>

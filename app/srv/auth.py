@@ -64,13 +64,10 @@ class User(ndb.BaseExpando):
   
   _expando_fields = {}
   
-  _virtual_fields = {  # @todo We should strongly respect what virtual fields are, and try to find other way to supply required values that do not represent user data! Can we overide get_output() and include functional values there?
+  _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
-    '_csrf': ndb.SuperComputedProperty(lambda self: self.csrf()),  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
-    '_is_guest': ndb.SuperComputedProperty(lambda self: self.is_guest()),
-    '_root_admin': ndb.SuperComputedProperty(lambda self: self.root_admin()),
     }
   
   _global_role = rule.GlobalRole(
@@ -123,7 +120,7 @@ class User(ndb.BaseExpando):
         }
       ),
     'logout': event.Action(id='0-3', arguments={'csrf': ndb.SuperStringProperty(required=True)}),
-    'apps': event.Action(id='0-4'),
+    'read_domains': event.Action(id='0-4'),
     'read_records': event.Action(
       id='0-5',
       arguments={
@@ -182,6 +179,18 @@ class User(ndb.BaseExpando):
       )
     }
   
+  
+  def get_output(self):
+    dic = super(User, self).get_output()
+    dic.update({
+     '_csrf': self._csrf,  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
+     '_is_guest': self._is_guest,
+     '_root_admin': self._root_admin
+    })
+    
+    return dic
+   
+   
   @property
   def _is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
@@ -189,7 +198,8 @@ class User(ndb.BaseExpando):
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
   
-  def root_admin(self):
+  @property
+  def _root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
   
   def primary_email(self):
@@ -200,13 +210,15 @@ class User(ndb.BaseExpando):
         return identity.email
     return identity.email
   
-  def csrf(self):
+  @property
+  def _csrf(self):
     session = self.current_user_session()
     if not session:
       return None
     return hashlib.md5(session.session_id).hexdigest()
   
-  def is_guest(self):
+  @property
+  def _is_guest(self):
     return self.key == None
   
   @classmethod
@@ -346,7 +358,7 @@ class User(ndb.BaseExpando):
     cruds.Engine.read(context)
   
   @classmethod
-  def search(cls, context):  # @todo Implement search input property!
+  def search(cls, context):
     context.rule.entity = context.auth.user
     context.rule.skip_user_roles = True
     context.cruds.model = cls
@@ -354,7 +366,7 @@ class User(ndb.BaseExpando):
     
   
   @classmethod
-  def apps(cls, context):  # @todo This function has to undergo rewrite.
+  def read_domains(cls, context):
     context.rule.entity = context.auth.user
     context.rule.skip_user_roles = True
     rule.Engine.run(context)
@@ -362,25 +374,37 @@ class User(ndb.BaseExpando):
       raise rule.ActionDenied(context)
     entities = []
     if context.auth.user.domains:
-      domains = ndb.get_multi(context.auth.user.domains)
-      for domain in domains:
-        if domain:
+      entities = ndb.get_multi(context.auth.user.domains)
+      context.rule.skip_user_roles = False
+       
+      @ndb.tasklet
+      def async(entity):
+        if entity:
           # Rule engine run on domain.
-          context.rule.entity = domain
+          context.rule.entity = entity
           rule.Engine.run(context)
-          domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
-          domain_user = domain_user_key.get()  # These gets have to be done in async!
+          domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=entity.key_namespace)
+          domain_user = yield domain_user_key.get_async()
           # Rule engine run on domain user as well.
           context.rule.entity = domain_user
           rule.Engine.run(context)
-          entities.append({'domain': domain, 'user': domain_user})
-    
-    context.output['entity'] = context.auth.user
+          entity._domain_user = domain_user
+          entity.add_output('_domain_user')
+ 
+        raise ndb.Return(entity)
+      
+      @ndb.tasklet
+      def helper(entities):
+        entities = yield map(async, entities)
+        raise ndb.Return(entities)
+      
+      entities = helper(entities).get_result()
+ 
     context.output['entities'] = entities
     return context
   
   @classmethod
-  def logout(cls, context):  # @todo Transaction 'outbound' code presence!
+  def logout(cls, context):
     entity = cls.current_user()
     context.rule.entity = entity
     context.rule.skip_user_roles = True
@@ -393,7 +417,7 @@ class User(ndb.BaseExpando):
       if not entity._csrf == context.input.get('csrf'):  # We will see what will be done about this, because CSRF protection must be done globally.
         raise rule.ActionDenied(context)
       if entity.sessions:
-        entity.sessions = []  # @todo Not sure if rule.write is needed here (this is logout)?
+        entity.sessions = []
       entity.put()
       context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
       log.Engine.run(context)
@@ -404,7 +428,7 @@ class User(ndb.BaseExpando):
     return context
   
   @classmethod
-  def login(cls, context):  # @todo Transaction 'outbound' code presence!
+  def login(cls, context):
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -472,9 +496,12 @@ class User(ndb.BaseExpando):
           context.auth.user = entity
           context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
           log.Engine.run(context)
+          context.rule.entity = entity
+          rule.Engine.run(context)
+          rule.read(entity)
           # rule.read(entity) in order to apply rule.read here the entity aka user must undergo rule.engine.run
           context.output.update({'entity': entity,
-                                 'authorization_code': entity.generate_authorization_code(session)})  # @todo Apply rule.read() prior returning entity?
+                                 'authorization_code': entity.generate_authorization_code(session)})
         
         transaction(user)
     return context
@@ -640,7 +667,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     return self
   
   @classmethod
-  def search(cls, context):  # @todo Implement search input property!
+  def search(cls, context):
     
     context.rule.skip_user_roles = True
  
@@ -720,8 +747,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   @classmethod
   def update(cls, context):
     
-    context.cruds.values = {'name': context.input.get('name'),
-                            'primary_contact': context.input.get('primary_contact')} # @todo logo, we'll put it later
+    context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')} # @todo logo, we'll put it later
     context.cruds.model = cls
     cruds.Engine.update(cls, context)
   

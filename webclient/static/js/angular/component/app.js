@@ -52,7 +52,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
         return {
             search: function (args, config) {
-                return Endpoint.post('apps', '0', args, config);
+                return Endpoint.post('read_domains', '0', args, config);
             },
             sudo_search: function (args, config) {
                 return Endpoint.post('sudo_search', '6', args, config);
@@ -347,8 +347,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             apps = apps.entities;
 
             angular.forEach(apps, function (app, key) {
-                app.domain.rule = RuleEngine.factory(app.domain); // compile rule engine for each domain in the list
-                app.user.rule = RuleEngine.factory(app.user); // compile rule engine for each domain user in the list
+                app.rule = RuleEngine.factory(app); // compile rule engine for each domain in the list
+                app._domain_user.rule = RuleEngine.factory(app._domain_user); // compile rule engine for each domain user in the list
             });
 
             $scope.apps = apps;
@@ -365,8 +365,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.acceptApp = function (app)
             {
- 
-            	 AppUser.accept(app.user.key, function (data) {
+            	 AppUser.accept(app._domain_user.key, function (data) {
             	 	if (data['entity'])
             	 	{
             	 		update(app.user, data['entity']);
@@ -380,7 +379,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.declineApp = function (app)
             {
-            	AppUser.decline(app.user.key, function (data) {
+            	AppUser.decline(app._domain_user.key, function (data) {
             	 
             		if (data['entity'])
             		{
@@ -393,7 +392,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.removeFromApp = function (app)
             {
             	
-            	AppUser.remove(app.user.key, function (data) {
+            	AppUser.remove(app._domain_user.key, function (data) {
             		if (data['entity'])
             		{
             			 apps.remove(app);
