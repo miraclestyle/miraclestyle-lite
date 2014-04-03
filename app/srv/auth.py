@@ -133,7 +133,7 @@ class User(ndb.BaseExpando):
       id='0-7',
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters":[], "order_by":{"field":"created","operator":"desc"}},
+          default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
           filters={
             'emails': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
@@ -580,7 +580,7 @@ class Domain(ndb.BaseExpando):
       id='6-10',
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters":[], "order_by":{"field":"created","operator":"desc"}},
+          default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}, 
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
