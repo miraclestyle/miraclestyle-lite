@@ -702,6 +702,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         	{
         	 	this.kind = kind;
         	 	this.changeKind();
+        	 	this.resetFilters();
         	}
     		
     		var kindinfo = KINDS.get(this.kind);

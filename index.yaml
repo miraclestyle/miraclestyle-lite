@@ -42,3 +42,25 @@ indexes:
   properties:
   - name: "3"
   - name: "1"
+
+- kind: "62"
+  properties:
+  - name: "3"
+  - name: "2"
+
+- kind: "62"
+  properties:
+  - name: "3"
+  - name: "2"
+    direction: desc
+    
+- kind: "62"
+  properties:
+  - name: "3"
+  - name: "1"
+    direction: desc
+  
+- kind: "62"
+  properties:
+  - name: "3"
+  - name: "1"

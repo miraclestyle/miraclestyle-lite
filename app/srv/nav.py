@@ -4,11 +4,8 @@ Created on Feb 24, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-from google.appengine.datastore.datastore_query import Cursor
-
-from app import ndb, settings
-from app.srv import rule, event, log
+from app import ndb
+from app.srv import rule, event, log, cruds
 
 
 class Filter(ndb.BaseExpando):
@@ -57,6 +54,40 @@ class Widget(ndb.BaseExpando):
       id='62-1',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "sequence", "operator": "asc"}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'role' : {'operators' : ['==', '!='], 'type' : ndb.SuperKeyProperty(kind='60'),},
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+          },
+          indexes=[
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]},
+            {'filter': ['active'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]},
+            {'filter': ['role'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]},
+                    
+            {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]},
+            {'filter': ['role', 'active'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]},    
+                      
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['sequence', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']},
+            'sequence' : {'operators': ['asc', 'desc']},
+            }
+          ),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
@@ -106,11 +137,7 @@ class Widget(ndb.BaseExpando):
     return self.key_id_str.startswith('admin_')
   
   @classmethod
-  def complete_save(cls, entity, context, create):
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
+  def complete_save(cls, entity, context):
     role_key = context.input.get('role')
     role = role_key.get()
     if role.key_namespace != entity.key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?
@@ -119,131 +146,63 @@ class Widget(ndb.BaseExpando):
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
       filters.append(Filter(**input_filter))
-    values = {'name': context.input.get('name'),
-              'sequence': context.input.get('sequence'),
-              'active': context.input.get('active'),
-              'role': role_key,
-              'search_form': context.input.get('search_form'),
-              'filters': filters}
-    if create:
-      entity.populate(**values)  # @todo We do not have field level write control here (known issue with required fields)!
-    else:
-      rule.write(entity, values)
-    entity.put()
-    context.log.entities.append((entity, ))
-    log.Engine.run(context)
-    rule.read(entity)
-    context.output['entity'] = entity
+    return {'name': context.input.get('name'),
+            'sequence': context.input.get('sequence'),
+            'active': context.input.get('active'),
+            'role': role_key,
+            'search_form': context.input.get('search_form'),
+            'filters': filters}
   
   @classmethod
   def create(cls, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      domain_key = context.input.get('domain')
-      domain = domain_key.get()
-      entity = cls(namespace=domain.key_namespace)
-      cls.complete_save(entity, context, True)
-    
-    transaction()
-    return context
+    domain_key = context.input.get('domain')
+    entity = cls(namespace=domain_key.urlsafe())
+    values = cls.complete_save(entity, context)
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    context.cruds.values = values
+    cruds.Engine.create(context)
   
   @classmethod
   def update(cls, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      cls.complete_save(entity, context, False)
-    
-    transaction()
-    return context
+    entity_key = context.input.get('entity_key')
+    entity = entity_key.get()
+    values = cls.complete_save(entity, context)
+    context.cruds.model = cls
+    context.cruds.values = values
+    cruds.Engine.update(context)
   
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    entity = cls(namespace=domain.key_namespace)
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    context.output['entity'] = entity
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    cruds.Engine.prepare(context)
+    entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
-    return context
   
   @classmethod
   def read(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    rule.read(entity)
-    context.output['entity'] = entity
+    context.cruds.model = cls
+    cruds.Engine.read(context)
+    entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
-    return context
   
   @classmethod
-  def delete(cls, context):  # @todo Transaction 'outbound' code presence!
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity.key.delete()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-    return context
+  def delete(cls, context):
+    context.cruds.model = cls
+    cruds.Engine.delete(context)
   
   @classmethod
-  def search(cls, context):  # @todo Implement search input property!
-    domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    context.rule.entity = cls(namespace=domain.key_namespace)
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    query = cls.query(namespace=domain_key.urlsafe()).order(cls.sequence)
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    for entity in entities:  # @todo Can we async this?
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      rule.read(entity)
-    context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+  def search(cls, context):
+    context.cruds.model = cls
+    context.cruds.domain_key = context.input.get('domain')
+    cruds.Engine.search(context)
   
   @classmethod
   def read_records(cls, context):
-    entity_key = context.input.get('key')
-    next_cursor = context.input.get('next_cursor')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    entity._records = entities
-    rule.read(entity)
-    context.output['entity'] = entity
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    context.cruds.model = cls
+    cruds.Engine.read_records(context)
   
   @classmethod
   def build_menu(cls, context):

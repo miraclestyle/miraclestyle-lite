@@ -698,7 +698,7 @@ class Domain(ndb.BaseExpando):
   def update(cls, context):
     context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')}  # @todo Logo will be implemented later.
     context.cruds.model = cls
-    cruds.Engine.update(cls, context)
+    cruds.Engine.update(context)
   
   @classmethod
   def suspend(cls, context):

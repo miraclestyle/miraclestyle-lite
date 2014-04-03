@@ -906,13 +906,13 @@ class DomainUser(ndb.BaseModel):
   @classmethod
   def update(cls, context):
     input_roles = ndb.get_multi(context.input.get('roles'))
-    domain_key = context.input.get('domain')
+    entity_key = context.input.get('domain')
+    entity = entity_key.get()
     roles = []
     # Avoid rogue roles.
     for role in input_roles:
-      if role.key.namespace() == domain_key.urlsafe():
+      if role.key.namespace() == entity.key_namespace:
         roles.append(role.key)
-    context.cruds.domain_key = domain_key
     context.cruds.model = cls
     context.cruds.values = {'name': context.input.get('name'), 'roles': roles}
     cruds.Engine.update(context)
