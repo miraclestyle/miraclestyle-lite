@@ -319,7 +319,7 @@ class ActionPermission(Permission):
     if not isinstance(actions, (tuple, list)):
       actions = [actions]
     self.kind = kind  # Entity kind identifier (entity._kind).
-    self.actions = actions  # List of action urlsafe keys. @todo This has been renamed from 'action' to 'actions'!
+    self.actions = actions  # List of action urlsafe keys.
     self.executable = executable
     self.condition = condition
   
@@ -339,7 +339,7 @@ class FieldPermission(Permission):
     if not isinstance(fields, (tuple, list)):
       fields = [fields]
     self.kind = kind  # Entity kind identifier (entity._kind).
-    self.fields = fields  # List of field code names from ndb property (field._code_name). @todo This has been renamed from 'field' to 'fields'!
+    self.fields = fields  # List of field code names from ndb property (field._code_name).
     self.writable = writable
     self.visible = visible
     self.condition = condition
@@ -384,7 +384,7 @@ class Engine:
       action_permissions[action_key] = {'executable': []}
   
   @classmethod
-  def prepare_fields(cls, field_permissions, fields):  # @todo Check if this version of the function is correct?
+  def prepare_fields(cls, field_permissions, fields):
     for field_key, field in fields.items():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
@@ -408,7 +408,7 @@ class Engine:
     cls.prepare_fields(entity._field_permissions, fields)
   
   @classmethod
-  def decide(cls, permissions, strict, root=True, parent_permissions=None):  # @todo Perhaps parent_key is not required!
+  def decide(cls, permissions, strict, root=True, parent_permissions=None):
     for key, value in permissions.items():
       if isinstance(value, dict):
         if parent_permissions:
