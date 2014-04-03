@@ -67,7 +67,7 @@ class User(ndb.BaseExpando):
   _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True),
+    '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True)
     }
   
   _global_role = rule.GlobalRole(
@@ -132,65 +132,44 @@ class User(ndb.BaseExpando):
     'search': event.Action(
       id='0-7',
       arguments={
-        'search' : ndb.SuperSearchProperty(
-            default={"filters":[],"order_by":{"field":"created","operator":"desc"}},
-            filters={
-             'emails' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              }, 
-             'state' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              },        
+        'search': ndb.SuperSearchProperty(
+          default={"filters":[], "order_by":{"field":"created","operator":"desc"}},
+          filters={
+            'emails': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
-            indexes=[{
-             'filter' : ['emails'],
-             'order_by' : [['emails', ['asc', 'desc']], 
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
-            },
-            {
-             'filter' : ['state'],
-             'order_by' : [['emails', ['asc', 'desc']],
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
-            },
-            {
-             'filter' : [],
-             'order_by' : [['emails', ['asc', 'desc']],
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
-            }],
-            order_by={
-              'emails' : {
-                'operators' : ['asc', 'desc'],
-              },
-              'created' : {
-                'operators' : ['asc', 'desc'],
-              },
-              'updated' : {
-                'operators' : ['asc', 'desc'],
-              }
-            },
-         ),
+          indexes=[
+            {'filter': ['emails'],
+             'order_by': [['emails', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': ['state'],
+             'order_by': [['emails', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': [],
+             'order_by': [['emails', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'emails': {'operators': ['asc', 'desc']},
+            'created': {'operators': ['asc', 'desc']},
+            'updated': {'operators': ['asc', 'desc']}
+            }
+          ),
         'next_cursor': ndb.SuperStringProperty()
         }
       )
     }
   
-  
   def get_output(self):
     dic = super(User, self).get_output()
-    dic.update({
-     '_csrf': self._csrf,  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
-     '_is_guest': self._is_guest,
-     '_root_admin': self._root_admin
-    })
-    
+    dic.update({'_csrf': self._csrf,  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
+                '_is_guest': self._is_guest,
+                '_root_admin': self._root_admin})
     return dic
-   
-   
+  
   @property
   def _is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
@@ -271,11 +250,9 @@ class User(ndb.BaseExpando):
     try:
       user_key, session_id = auth_code.split('|')
     except:
-      # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
-      return
+      return  # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
     if not session_id:
-      # Fail silently if the session id is not found in the split sequence.
-      return
+      return  # Fail silently if the session id is not found in the split sequence.
     user = ndb.Key(urlsafe=user_key).get()
     if user:
       session = user.session_by_id(session_id)
@@ -288,24 +265,25 @@ class User(ndb.BaseExpando):
     i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
     
     """
+    entity_key = context.input.get('key')
+    state = context.input.get('state')
+    message = context.input.get('message')
+    note = context.input.get('note')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    context.rule.skip_user_roles = True
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
+    
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      state = context.input.get('state')
-      message = context.input.get('message')
-      note = context.input.get('note')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      context.rule.skip_user_roles = True
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
       values = {'state': state}
       if rule.writable(context, 'state') and state == 'suspended':
-        values['sessions'] = []  # Delete sessions. @done If state field is writable and is being changed to 'suspended', then we can respect this statement!!
+        values['sessions'] = []  # Delete sessions.
       rule.write(entity, values)
       entity.put()
-      values = {'message': message, 'note': note}  # This is somewhat confusing due to the fact that action argument 'message' is required, and if field 'message' should implement field permissions...
+      values = {'message': message, 'note': note}  # This is confusing due to the fact that action argument 'message' is required, and if field 'message' should implement field permissions...
       if not rule.writable(context, '_records.note'):
         values.pop('note')
       context.log.entities.append((entity, values))
@@ -320,30 +298,27 @@ class User(ndb.BaseExpando):
   
   @classmethod
   def update(cls, context):
-    
-     entity_key = context.input.get('key')
-     primary_email = context.input.get('primary_email')
-     disassociate = context.input.get('disassociate')
-     entity = cls.current_user()
-     if entity_key != entity.key:
-       entity = entity_key.get()
-     context.rule.entity = entity
-     context.rule.skip_user_roles = True
-
-     identities = copy.deepcopy(entity.identities)
-     for identity in identities:
-       if primary_email:
-         identity.primary = False
-         if identity.email == primary_email:
-           identity.primary = True
-       identity.associated = True
-       if disassociate:
-         if identity.identity in disassociate:
-           identity.associated = False
-           
-     context.cruds.model = cls
-     context.cruds.values = {'identities' : identities}
-     cruds.Engine.update(context)
+    entity_key = context.input.get('key')
+    primary_email = context.input.get('primary_email')
+    disassociate = context.input.get('disassociate')
+    entity = cls.current_user()
+    if entity_key != entity.key:
+      entity = entity_key.get()
+    context.rule.entity = entity
+    context.rule.skip_user_roles = True
+    identities = copy.deepcopy(entity.identities)
+    for identity in identities:
+      if primary_email:
+        identity.primary = False
+        if identity.email == primary_email:
+          identity.primary = True
+      identity.associated = True
+      if disassociate:
+        if identity.identity in disassociate:
+          identity.associated = False
+    context.cruds.model = cls
+    context.cruds.values = {'identities': identities}
+    cruds.Engine.update(context)
   
   @classmethod
   def read_records(cls, context):
@@ -363,7 +338,6 @@ class User(ndb.BaseExpando):
     context.rule.skip_user_roles = True
     context.cruds.model = cls
     cruds.Engine.search(context)
-    
   
   @classmethod
   def read_domains(cls, context):
@@ -376,7 +350,7 @@ class User(ndb.BaseExpando):
     if context.auth.user.domains:
       entities = ndb.get_multi(context.auth.user.domains)
       context.rule.skip_user_roles = False
-       
+      
       @ndb.tasklet
       def async(entity):
         if entity:
@@ -390,7 +364,6 @@ class User(ndb.BaseExpando):
           rule.Engine.run(context)
           entity._domain_user = domain_user
           entity.add_output('_domain_user')
- 
         raise ndb.Return(entity)
       
       @ndb.tasklet
@@ -399,7 +372,6 @@ class User(ndb.BaseExpando):
         raise ndb.Return(entities)
       
       entities = helper(entities).get_result()
- 
     context.output['entities'] = entities
     return context
   
@@ -499,7 +471,6 @@ class User(ndb.BaseExpando):
           context.rule.entity = entity
           rule.Engine.run(context)
           rule.read(entity)
-          # rule.read(entity) in order to apply rule.read here the entity aka user must undergo rule.engine.run
           context.output.update({'entity': entity,
                                  'authorization_code': entity.generate_authorization_code(session)})
         
@@ -507,7 +478,7 @@ class User(ndb.BaseExpando):
     return context
 
 
-class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumping business module!
+class Domain(ndb.BaseExpando):
   
   _kind = 6
   
@@ -547,7 +518,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
       rule.FieldPermission('6', '_records.note', False, False, "not context.auth.user._root_admin"),
-      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin"),
+      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin")
       ]
     )
   
@@ -611,48 +582,32 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     'search': event.Action(
       id='6-10',
       arguments={
-        'search' : ndb.SuperSearchProperty(
-            default={"filters":[],"order_by":{"field":"created","operator":"desc"}},
-            filters={
-             'name' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              }, 
-             'state' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              },        
+        'search': ndb.SuperSearchProperty(
+          default={"filters":[], "order_by":{"field":"created","operator":"desc"}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}, 
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
-            indexes=[{
-             'filter' : ['name'],
-             'order_by' : [['name', ['asc', 'desc']], 
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
+          indexes=[
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']], 
+                          ['created', ['asc', 'desc']], 
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': ['state'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']], 
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']], 
+                          ['updated', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators' : ['asc', 'desc']},
+            'created': {'operators' : ['asc', 'desc']},
+            'updated': {'operators' : ['asc', 'desc']}
             },
-            {
-             'filter' : ['state'],
-             'order_by' : [['name', ['asc', 'desc']],
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
-            },
-            {
-             'filter' : [],
-             'order_by' : [['name', ['asc', 'desc']],
-                           ['created', ['asc', 'desc']], 
-                           ['updated', ['asc', 'desc']]],
-            }],
-            order_by={
-              'name' : {
-                'operators' : ['asc', 'desc'],
-              },
-              'created' : {
-                'operators' : ['asc', 'desc'],
-              },
-              'updated' : {
-                'operators' : ['asc', 'desc'],
-              }
-            },
-         ),
+          ),
         'next_cursor': ndb.SuperStringProperty()
         }
       )
@@ -668,9 +623,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def search(cls, context):
-    
     context.rule.skip_user_roles = True
- 
+    
     @ndb.tasklet
     def async(entity):
       user = yield entity.primary_contact.get_async()
@@ -690,7 +644,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     cruds.Engine.search(context)
   
   @classmethod
-  def create(cls, context): # create for domain is special and does not have a need for cruds?
+  def create(cls, context):
     
     @ndb.transactional(xg=True)
     def transaction():
@@ -725,7 +679,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
   
   @classmethod
-  def read(cls, context): # domains read is unique no need for cruds?
+  def read(cls, context):
     entity_key = context.input.get('key')
     entity = entity_key.get()
     primary_contact = entity.primary_contact.get_async()
@@ -746,26 +700,25 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def update(cls, context):
-    
-    context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')} # @todo logo, we'll put it later
+    context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')}  # @todo Logo will be implemented later.
     context.cruds.model = cls
     cruds.Engine.update(cls, context)
   
   @classmethod
   def suspend(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
       rule.write(entity, {'state': 'suspended'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @done Handle permissions externally - no need here because it only accepts message as param.
+      context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -777,19 +730,19 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def activate(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
       rule.write(entity, {'state': 'active'})
       entity.put()
       rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))  # @done Handle permissions externally. - no need here because it only accepts message as param.
+      context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
       context.notify.entity = entity
       notify.Engine.run(context)
@@ -801,15 +754,15 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def sudo(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
       rule.write(entity, {'state': context.input.get('state')})
       entity.put()
       rule.Engine.run(context)
@@ -828,15 +781,15 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def log_message(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    rule.Engine.run(context)
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
       entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
       values = {'message': context.input.get('message'), 'note': context.input.get('note')}
       if not rule.writable(context, '_records.note'):
