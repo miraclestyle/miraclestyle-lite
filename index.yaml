@@ -26,3 +26,8 @@ indexes:
   properties:
   - name: "4"
   - name: "1"
+
+- kind: "6"
+  properties:
+  - name: "3"
+  - name: "1"

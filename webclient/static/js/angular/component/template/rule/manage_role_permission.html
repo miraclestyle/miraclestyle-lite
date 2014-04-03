@@ -30,7 +30,7 @@
 		<div class="form-control">
 		<label class="form-label">Action</label>
 		<div class="form-input">
-			<select name="kind" multiple="true" ng-required="permission.type == 'ActionPermission'" ui-select2 ng-model="permission.action" data-placeholder="Select a action">
+			<select name="kind" multiple="true" ng-required="permission.type == 'ActionPermission'" ui-select2 ng-model="permission.actions" data-placeholder="Select a action">
  
 				    <option ng-repeat="(action_key, action) in actions" value="{{action_key}}">{{action}}</option>
 			</select>
@@ -51,8 +51,7 @@
 		<div class="form-control">
 		<label class="form-label">Field</label>
 		<div class="form-input">
-			<select name="fields" multiple="true" ng-required="permission.type == 'FieldPermission'" ui-select2 ng-model="permission.field" data-placeholder="Select a field">
-		 
+			<select name="fields" multiple="true" ng-required="permission.type == 'FieldPermission'" ui-select2 ng-model="permission.fields" data-placeholder="Select a field">
 				    <option ng-repeat="(field_key, field) in fields" value="{{field_key}}">{{field}}</option>
 			</select>
 		</div>

@@ -13,23 +13,31 @@ IT WAS CREATED TO TEMPORARY REMEDY CODE REDUNDANCY ISSUE!
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
-from app.srv import rule, log, notify
+from app.srv import log, notify
+
+def get_rule(): 
+  # hack for circular behaviour
+  from app.srv import rule
+  return rule
 
 
 class Context():
   
   def __init__(self):
-    self.model = None  # Can we put model here, instead of passing it as argument in methods!?
+    self.model = None
     self.values = {}
     self.domain_key = None
     self.notify = False
-    self.search_callback = None
+    self.search_entities_callback = None
+    self.search_filter_callback = None
 
 
 class Engine():
   
   @classmethod
-  def create(cls, model, context):
+  def create(cls, context):
+    rule = get_rule()
+    model = context.cruds.model
     if context.cruds.domain_key:
       domain = context.cruds.domain_key.get()
       entity = model(namespace=domain.key_namespace)
@@ -56,7 +64,8 @@ class Engine():
     transaction()
   
   @classmethod
-  def update(cls, model, context):
+  def update(cls, context):
+    rule = get_rule()
     entity_key = context.input.get('key')
     entity = entity_key.get()
     if not context.rule.entity:
@@ -80,7 +89,8 @@ class Engine():
     transaction()
   
   @classmethod
-  def read(cls, model, context):
+  def read(cls, context):
+    rule = get_rule()
     entity_key = context.input.get('key')
     entity = entity_key.get()
     if not context.rule.entity:
@@ -92,7 +102,9 @@ class Engine():
     context.output['entity'] = entity
   
   @classmethod
-  def prepare(cls, model, context):
+  def prepare(cls, context):
+    rule = get_rule()
+    model = context.cruds.model
     if context.cruds.domain_key:
       domain = context.cruds.domain_key.get()
       entity = model(namespace=domain.key_namespace)
@@ -106,7 +118,8 @@ class Engine():
     context.output['entity'] = entity
   
   @classmethod
-  def delete(cls, model, context):
+  def delete(cls, context):
+    rule = get_rule()
     entity_key = context.input.get('key')
     entity = entity_key.get()
     if not context.rule.entity:
@@ -129,7 +142,8 @@ class Engine():
     transaction()
   
   @classmethod
-  def read_records(cls, model, context):
+  def read_records(cls, context):
+    rule = get_rule()
     entity_key = context.input.get('key')
     next_cursor = context.input.get('next_cursor')
     entity = entity_key.get()
@@ -146,7 +160,9 @@ class Engine():
     context.output['more'] = more
   
   @classmethod
-  def search(cls, model, context):
+  def search(cls, context):
+    rule = get_rule()
+    model = context.cruds.model
     if context.cruds.domain_key:
       domain = context.cruds.domain_key.get()
       entity = model(namespace=domain.key_namespace)
@@ -162,27 +178,41 @@ class Engine():
     if search:
       filters = search.get('filters')
       order_by = search.get('order_by')
+      args = []
       for _filter in filters:
         field = getattr(model, _filter['field'])
         op = _filter['operator']
         value = _filter['value']
         if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this algo needs improvements
-          query = query.filter(field == value)
+          args.append(field == value)
+        elif op == '!=':
+          args.append(field != value)
+        elif op == '>':
+          args.append(field > value)
+        elif op == '<':
+          args.append(field < value)
+        elif op == '>=':
+          args.append(field >= value)
+        elif op == 'IN':
+          args.append(field.IN(value))
+      query = query.filter(*args)  
       order_by_field = getattr(model, order_by['field'])
       asc = order_by['operator'] == 'asc'
       if asc:
         query = query.order(order_by_field)
       else:
         query = query.order(-order_by_field)
-    else:
-      query = query.order(-model.created)
+    
+    if context.cruds.search_filter_callback:
+       query = context.cruds.search_filter_callback(query) # callback for query filter
+       
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
-    if context.cruds.search_callback:
-      entities = context.cruds.search_callback(entities)
-    for entity in entities:  # @todo Can we async this?
+    if context.cruds.search_entities_callback:
+      entities = context.cruds.search_entities_callback(entities) # callback for entities, make changes before .read
+    for entity in entities:
       context.rule.entity = entity
       rule.Engine.run(context)
       rule.read(entity)

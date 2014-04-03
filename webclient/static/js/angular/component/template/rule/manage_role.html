@@ -39,8 +39,8 @@
 						<tr ng-repeat="perm in entity.permissions">
 							<td>{{FRIENDLY_KIND_NAMES[perm.kind]}}</td>
 							<td>
-								<span ng-show="perm.field != null">{{perm.field|join:', '}}</span>
-								<span ng-show="perm.action != null">{{perm|permissionResolveActionName|join:', '}}</span>
+								<span ng-show="perm.fields != null">{{perm.fields|join:', '}}</span>
+								<span ng-show="perm.actions != null">{{perm|permissionResolveActionName|join:', '}}</span>
 							</td>
 							<td>
 								<span ng-show="perm.executable != null">Executable: {{perm.executable}}</span>

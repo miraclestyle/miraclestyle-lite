@@ -10,7 +10,6 @@ import os
 import copy
 
 from google.appengine.api import blobstore
-from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
@@ -329,25 +328,29 @@ class User(ndb.BaseExpando):
        if disassociate:
          if identity.identity in disassociate:
            identity.associated = False
-     
+           
+     context.cruds.model = cls
      context.cruds.values = {'identities' : identities}
-     cruds.Engine.update(cls, context)
+     cruds.Engine.update(context)
   
   @classmethod
   def read_records(cls, context):
     context.rule.skip_user_roles = True
-    cruds.Engine.read_records(cls, context)
+    context.cruds.model = cls
+    cruds.Engine.read_records(context)
   
   @classmethod
   def read(cls, context):
     context.rule.skip_user_roles = True
-    cruds.Engine.read(cls, context)
+    context.cruds.model = cls
+    cruds.Engine.read(context)
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
     context.rule.entity = context.auth.user
     context.rule.skip_user_roles = True
-    cruds.Engine.search(cls, context)
+    context.cruds.model = cls
+    cruds.Engine.search(context)
     
   
   @classmethod
@@ -517,7 +520,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
       rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
       # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
       rule.FieldPermission('6', '_records.note', False, False, "not context.auth.user._root_admin"),
-      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin")
+      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin"),
       ]
     )
   
@@ -581,6 +584,48 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     'search': event.Action(
       id='6-10',
       arguments={
+        'search' : ndb.SuperSearchProperty(
+            default={"filters":[],"order_by":{"field":"created","operator":"desc"}},
+            filters={
+             'name' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              }, 
+             'state' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              },        
+            },
+            indexes=[{
+             'filter' : ['name'],
+             'order_by' : [['name', ['asc', 'desc']], 
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            },
+            {
+             'filter' : ['state'],
+             'order_by' : [['name', ['asc', 'desc']],
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            },
+            {
+             'filter' : [],
+             'order_by' : [['name', ['asc', 'desc']],
+                           ['created', ['asc', 'desc']], 
+                           ['updated', ['asc', 'desc']]],
+            }],
+            order_by={
+              'name' : {
+                'operators' : ['asc', 'desc'],
+              },
+              'created' : {
+                'operators' : ['asc', 'desc'],
+              },
+              'updated' : {
+                'operators' : ['asc', 'desc'],
+              }
+            },
+         ),
         'next_cursor': ndb.SuperStringProperty()
         }
       )
@@ -596,6 +641,7 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
+    
     context.rule.skip_user_roles = True
  
     @ndb.tasklet
@@ -612,8 +658,9 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     def mapper(entities):
       return helper(entities).get_result()
     
-    context.cruds.search_callback = mapper
-    cruds.Engine.search(cls, context)
+    context.cruds.search_entities_callback = mapper
+    context.cruds.model = cls
+    cruds.Engine.search(context)
   
   @classmethod
   def create(cls, context): # create for domain is special and does not have a need for cruds?
@@ -646,7 +693,8 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
     entity = cls(state='active', primary_contact=context.auth.user.key)
     context.rule.entity = entity
     context.rule.skip_user_roles = True
-    cruds.Engine.prepare(cls, context)
+    context.cruds.model = cls
+    cruds.Engine.prepare(context)
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
   
   @classmethod
@@ -666,14 +714,15 @@ class Domain(ndb.BaseExpando):  # @done implement logo here, since we are dumpin
   
   @classmethod
   def read_records(cls, context):
-    cruds.Engine.read_records(cls, context)
+    context.cruds.model = cls
+    cruds.Engine.read_records(context)
   
   @classmethod
   def update(cls, context):
     
     context.cruds.values = {'name': context.input.get('name'),
                             'primary_contact': context.input.get('primary_contact')} # @todo logo, we'll put it later
-    
+    context.cruds.model = cls
     cruds.Engine.update(cls, context)
   
   @classmethod
