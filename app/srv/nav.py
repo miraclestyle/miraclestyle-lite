@@ -4,6 +4,7 @@ Created on Feb 24, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from app import ndb
 from app.srv import rule, event, log, cruds
 
@@ -58,9 +59,9 @@ class Widget(ndb.BaseExpando):
           default={"filters": [], "order_by": {"field": "sequence", "operator": "asc"}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'role' : {'operators' : ['==', '!='], 'type' : ndb.SuperKeyProperty(kind='60'),},
+            'role': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='60')},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
-          },
+            },
           indexes=[
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']],
@@ -71,21 +72,19 @@ class Widget(ndb.BaseExpando):
             {'filter': ['role'],
              'order_by': [['name', ['asc', 'desc']],
                           ['sequence', ['asc', 'desc']]]},
-                    
             {'filter': ['name', 'active'],
              'order_by': [['name', ['asc', 'desc']],
                           ['sequence', ['asc', 'desc']]]},
             {'filter': ['role', 'active'],
              'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},    
-                      
+                          ['sequence', ['asc', 'desc']]]},
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']],
                           ['sequence', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']},
-            'sequence' : {'operators': ['asc', 'desc']},
+            'sequence': {'operators': ['asc', 'desc']}
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
@@ -146,12 +145,13 @@ class Widget(ndb.BaseExpando):
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
       filters.append(Filter(**input_filter))
-    return {'name': context.input.get('name'),
-            'sequence': context.input.get('sequence'),
-            'active': context.input.get('active'),
-            'role': role_key,
-            'search_form': context.input.get('search_form'),
-            'filters': filters}
+    values = {'name': context.input.get('name'),
+              'sequence': context.input.get('sequence'),
+              'active': context.input.get('active'),
+              'role': role_key,
+              'search_form': context.input.get('search_form'),
+              'filters': filters}
+    return values
   
   @classmethod
   def create(cls, context):
@@ -220,7 +220,6 @@ class Widget(ndb.BaseExpando):
                           namespace=domain.key_namespace).order(cls.sequence).fetch()
       context.output['menu'] = widgets
       context.output['domain'] = domain
-    return context
   
   @classmethod
   def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!?
