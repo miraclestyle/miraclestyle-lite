@@ -294,7 +294,6 @@ class User(ndb.BaseExpando):
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def update(cls, context):
@@ -373,7 +372,6 @@ class User(ndb.BaseExpando):
       
       entities = helper(entities).get_result()
     context.output['entities'] = entities
-    return context
   
   @classmethod
   def logout(cls, context):
@@ -397,7 +395,6 @@ class User(ndb.BaseExpando):
       context.output['entity'] = entity.current_user()
     
     transaction()
-    return context
   
   @classmethod
   def login(cls, context):
@@ -475,7 +472,6 @@ class User(ndb.BaseExpando):
                                  'authorization_code': entity.generate_authorization_code(session)})
         
         transaction(user)
-    return context
 
 
 class Domain(ndb.BaseExpando):
@@ -691,7 +687,6 @@ class Domain(ndb.BaseExpando):
     entity._primary_contact_email = primary_contact._primary_email
     rule.read(entity)
     context.output['entity'] = entity
-    return context
   
   @classmethod
   def read_records(cls, context):
@@ -726,7 +721,6 @@ class Domain(ndb.BaseExpando):
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def activate(cls, context):
@@ -750,7 +744,6 @@ class Domain(ndb.BaseExpando):
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def sudo(cls, context):
@@ -777,7 +770,6 @@ class Domain(ndb.BaseExpando):
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def log_message(cls, context):
@@ -802,4 +794,3 @@ class Domain(ndb.BaseExpando):
       context.output['entity'] = entity
     
     transaction()
-    return context
