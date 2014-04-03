@@ -13,7 +13,6 @@ from google.appengine.api import mail
 from google.appengine.api import taskqueue
 
 from app import ndb, settings
-from app.srv import rule
 from app.lib.safe_eval import safe_eval
  
 __SYSTEM_TEMPLATES = []
@@ -96,7 +95,7 @@ class MailNotify(Template):
  
   def run(self, entity, user):
     
-    from app.srv import auth # circular avoid, this will be avoided by placing these templates in app.etc.setup
+    from app.srv import auth, rule # circular avoid, this will be avoided by placing these templates in app.etc.setup
     
     values = {'user' : user, 'entity' : entity}
     

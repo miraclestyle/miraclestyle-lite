@@ -59,6 +59,7 @@
   	</div>
   	<div style="display:none;" id="main-menu">
   		<div ng-show="!nav.menu" class="menu-inner">
+  			<div ng-show="current_user._root_admin" ng-include="logic_template('nav/search_form.html')"></div>
 	  		<h1 class="fieldset">Account</h1>
 	  		<ul ng-show="!current_user._is_guest" class="menu">
 	  		    <li><button type="button" class="button block" ng-click="manageAccount()">Manage</button></li>
@@ -77,7 +78,7 @@
 	  		</div>
 	  		
 	        <div ng-show="current_user._root_admin">
-	        	<div ng-include="logic_template('nav/search_form.html')"></div>
+	        	
 	  			<h1 class="fieldset">Administration</h1>
 	  			<ul class="menu">
 	  		   		 <li ng-repeat="(kind_key, kind) in ADMIN_KINDS"><button type="button" ng-click="toggleMainMenu(1)"

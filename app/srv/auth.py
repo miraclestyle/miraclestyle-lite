@@ -636,7 +636,7 @@ class Domain(ndb.BaseExpando):
       entities = yield map(async, entities)
       raise ndb.Return(entities)
     
-    def mapper(entities):
+    def mapper(context, entities):
       return helper(entities).get_result()
     
     context.cruds.search_entities_callback = mapper

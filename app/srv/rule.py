@@ -11,7 +11,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, util, settings
 from app.lib.safe_eval import safe_eval
-from app.srv import event, log, callback
+from app.srv import event, log, callback, cruds
 
 
 """
@@ -578,6 +578,40 @@ class DomainRole(Role):
       id='60-2',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'search' : ndb.SuperSearchProperty(
+            default={"filters":[],"order_by":{"field":"name","operator":"asc"}},
+            filters={
+             'name' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              }, 
+             'active' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperBooleanProperty(),
+              },        
+            },
+            indexes=[{
+             'filter' : ['name'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+            'filter' : ['active'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+             'filter' : ['name', 'active'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+             'filter' : [],
+             'order_by' : [['name', ['asc', 'desc']],],
+            }],
+            order_by={
+              'name' : {
+                'operators' : ['asc', 'desc'],
+              },
+            },
+         ),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
@@ -599,30 +633,11 @@ class DomainRole(Role):
   
   @classmethod
   def delete(cls, context):  # @todo Transaction 'outbound' code presence!
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity.key.delete()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-    return context
+    context.cruds.model = cls
+    cruds.Engine.delete(context)
   
   @classmethod
-  def complete_save(cls, entity, context, create):
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
+  def complete_save(cls, context):
     input_permissions = context.input.get('permissions')
     permissions = []
     for permission in input_permissions:
@@ -640,112 +655,59 @@ class DomainRole(Role):
     values = {'name': context.input.get('name'),
               'active': context.input.get('active'),
               'permissions': permissions}
-    if create:
-      entity.populate(**values)  # @todo We do not have field level write control here (known issue with required fields)!
-    else:
-      write(entity, values)
-    entity.put()
-    context.log.entities.append((entity, ))
-    log.Engine.run(context)
-    read(entity)
-    context.output['entity'] = entity
+    return values
   
   @classmethod
   def create(cls, context):
     
-    @ndb.transactional(xg=True)
-    def transaction():
-      domain_key = context.input.get('domain')
-      domain = domain_key.get()
-      entity = cls(namespace=domain.key_namespace)
-      cls.complete_save(entity, context, True)
+    values = cls.complete_save(context)
     
-    transaction()
-    return context
+    context.cruds.domain_key = context.input.get('domain')
+    context.cruds.model = cls
+    context.cruds.values = values
+    cruds.Engine.create(context)
   
   @classmethod
   def update(cls, context):
     
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      cls.complete_save(entity, context, False)
-    
-    transaction()
-    return context
+    values = cls.complete_save(context)
+    context.cruds.model = cls
+    context.cruds.values = values
+    cruds.Engine.update(context)
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
-    domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    context.rule.entity = cls(namespace=domain.key_namespace)
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    query = cls.query(namespace=domain.key_namespace).order(cls.name)
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    for entity in entities:  # @todo Can we async this?
-      context.rule.entity = entity
-      Engine.run(context)
-      read(entity)
-    context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    context.cruds.model = cls
+    context.cruds.domain_key = context.input.get('domain')
+    cruds.Engine.search(context)
   
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    entity = cls(namespace=domain.key_namespace)
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    context.output['entity'] = entity
-    return context
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    cruds.Engine.prepare(context)
   
   @classmethod
   def read(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    read(entity)
-    context.output['entity'] = entity
-    return context
+    context.cruds.model = cls
+    cruds.Engine.read(context)
   
   @classmethod
   def read_records(cls, context):
-    entity_key = context.input.get('key')
-    next_cursor = context.input.get('next_cursor')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    entity._records = entities
-    read(entity)
-    context.output['entity'] = entity
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    context.cruds.model = cls
+    cruds.Engine.read_records(context)
 
-
+# maybe we should follow the pattern here for everything, with these helper variables, to maybe increase maintanability of the code? this is just a proposition
+# see 706 line and 771 for reference
+_domain_user_state_choices = ['invited', 'accepted']
 class DomainUser(ndb.BaseModel):
   
   _kind = 8
   
   name = ndb.SuperStringProperty('1', required=True)
   roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since taht can pose security issue!!
-  state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
+  state = ndb.SuperStringProperty('3', required=True, choices=_domain_user_state_choices)
   
   _default_indexed = False
   
@@ -801,6 +763,40 @@ class DomainUser(ndb.BaseModel):
       id='8-6',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'search' : ndb.SuperSearchProperty(
+            default={"filters":[],"order_by":{"field":"name","operator":"asc"}},
+            filters={
+             'name' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(),
+              }, 
+             'state' : {
+                'operators' : ['==', '!='],
+                'type' : ndb.SuperStringProperty(choices=_domain_user_state_choices),
+              },        
+            },
+            indexes=[{
+             'filter' : ['name'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+            'filter' : ['state'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+             'filter' : ['name', 'state'],
+             'order_by' : [['name', ['asc', 'desc']],],
+            },
+            {
+             'filter' : [],
+             'order_by' : [['name', ['asc', 'desc']],],
+            }],
+            order_by={
+              'name' : {
+                'operators' : ['asc', 'desc'],
+              },
+            },
+         ),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
@@ -844,13 +840,10 @@ class DomainUser(ndb.BaseModel):
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    entity = cls(namespace=domain.key_namespace)
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    context.output['entity'] = entity
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    cruds.Engine.prepare(context)
+    entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
     return context
   
@@ -899,7 +892,7 @@ class DomainUser(ndb.BaseModel):
     return context
   
   @classmethod
-  def remove(cls, context):  # @todo Transaction 'outbound' code presence!
+  def remove(cls, context):
     from app.srv import auth
     entity_key = context.input.get('key')
     entity = entity_key.get()
@@ -954,84 +947,35 @@ class DomainUser(ndb.BaseModel):
   @classmethod
   def update(cls, context):  # @todo Transaction 'outbound' code presence!
     input_roles = ndb.get_multi(context.input.get('roles'))
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      Engine.run(context)
-      if not executable(context):
-        raise ActionDenied(context)
-      roles = []
+    domain_key = context.input.get('domain')
+    roles = []
       # Avoid rogue roles.
-      for role in input_roles:
-        if role.key.namespace() == entity.key_namespace:
+    for role in input_roles:
+      if role.key.namespace() == domain_key.urlsafe():
           roles.append(role.key)
-      values = {'name': context.input.get('name'),
-                'roles': roles}
-      write(entity, values)
-      entity.put()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-    return context
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    context.cruds.values = {'name': context.input.get('name'), 'roles': roles}
+    cruds.Engine.update(context)
   
   @classmethod
   def read(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    read(entity)
-    context.output['entity'] = entity
+    context.cruds.model = cls
+    cruds.Engine.read(context)
+    entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
-    return context
   
   @classmethod
   def search(cls, context):  # @todo Implement search input property!
-    domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    context.rule.entity = cls(namespace=domain.key_namespace)
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    query = cls.query(namespace=domain.key_namespace).order(cls.name)
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    for entity in entities:  # @todo Can we async this?
-      context.rule.entity = entity
-      Engine.run(context)
-      read(entity)
-    context.output['entities'] = entities
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
+    context.cruds.model = cls
+    context.cruds.domain_key = context.input.get('domain')
+    cruds.Engine.search(context)
   
   @classmethod
   def read_records(cls, context):
-    entity_key = context.input.get('key')
-    next_cursor = context.input.get('next_cursor')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    entities, next_cursor, more = log.Record.get_records(entity, next_cursor)
-    entity._records = entities
-    read(entity)
-    context.output['entity'] = entity
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
-    return context
-  
+    context.cruds.model = cls
+    cruds.Engine.read_records(context)
+    
   @classmethod
-  def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!?
+  def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!? - we could but the search limits results?
     return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()

@@ -277,8 +277,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
         }
     ])
-    .controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector',
-        function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector) {
+    .controller('AppSearch', ['$scope', 'Title', 'Endpoint', '$stateParams', '$rootScope', 'RuleEngine', 'search', '$injector', '$state',
+        function ($scope, Title, Endpoint, $stateParams, $rootScope, RuleEngine, search, $injector, $state) {
      
             angular.forEach(search.entities, function (value) {
                 value.rule = RuleEngine.factory(value);
@@ -368,11 +368,11 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	 AppUser.accept(app._domain_user.key, function (data) {
             	 	if (data['entity'])
             	 	{
-            	 		update(app.user, data['entity']);
-            	 		update(app.domain, data['domain']);
-            	 		
-            	 		app.user.rule.update(data['entity']);
-            	 		app.domain.rule.update(data['domain']);
+            	 		update(app, data['domain']);
+            	 		update(app._domain_user, data['entity']);
+            	 		 
+            	 		app.rule.update(data['domain']);
+            	 		app._domain_user.rule.update(data['entity']);
             	 	}
             	 });
             };

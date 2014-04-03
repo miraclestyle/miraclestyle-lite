@@ -163,9 +163,11 @@ class Engine():
   def search(cls, context):
     rule = get_rule()
     model = context.cruds.model
+    namespace = None
     if context.cruds.domain_key:
       domain = context.cruds.domain_key.get()
       entity = model(namespace=domain.key_namespace)
+      namespace = entity.key_namespace
     else:
       entity = model()
     if not context.rule.entity:
@@ -173,7 +175,7 @@ class Engine():
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    query = model.query()
+    query = model.query(namespace=namespace)
     search = context.input.get('search')
     if search:
       filters = search.get('filters')
@@ -204,14 +206,14 @@ class Engine():
         query = query.order(-order_by_field)
     
     if context.cruds.search_filter_callback:
-       query = context.cruds.search_filter_callback(query) # callback for query filter
+       query = context.cruds.search_filter_callback(context, query) # callback for query filter
        
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
     entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     if context.cruds.search_entities_callback:
-      entities = context.cruds.search_entities_callback(entities) # callback for entities, make changes before .read
+      entities = context.cruds.search_entities_callback(context, entities) # callback for entities, make changes before .read
     for entity in entities:
       context.rule.entity = entity
       rule.Engine.run(context)

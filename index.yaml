@@ -31,3 +31,14 @@ indexes:
   properties:
   - name: "3"
   - name: "1"
+  
+- kind: "8"
+  properties:
+  - name: "3"
+  - name: "1"
+    direction: desc
+    
+- kind: "8"
+  properties:
+  - name: "3"
+  - name: "1"
