@@ -579,40 +579,26 @@ class DomainRole(Role):
       id='60-2',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search' : ndb.SuperSearchProperty(
-            default={"filters":[],"order_by":{"field":"name","operator":"asc"}},
-            filters={
-             'name' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              }, 
-             'active' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperBooleanProperty(),
-              },        
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
             },
-            indexes=[{
-             'filter' : ['name'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-            'filter' : ['active'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-             'filter' : ['name', 'active'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-             'filter' : [],
-             'order_by' : [['name', ['asc', 'desc']],],
-            }],
-            order_by={
-              'name' : {
-                'operators' : ['asc', 'desc'],
-              },
-            },
-         ),
+          indexes=[
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
@@ -633,7 +619,7 @@ class DomainRole(Role):
     }
   
   @classmethod
-  def delete(cls, context):  # @todo Transaction 'outbound' code presence!
+  def delete(cls, context):
     context.cruds.model = cls
     cruds.Engine.delete(context)
   
@@ -660,9 +646,7 @@ class DomainRole(Role):
   
   @classmethod
   def create(cls, context):
-    
     values = cls.complete_save(context)
-    
     context.cruds.domain_key = context.input.get('domain')
     context.cruds.model = cls
     context.cruds.values = values
@@ -670,14 +654,13 @@ class DomainRole(Role):
   
   @classmethod
   def update(cls, context):
-    
     values = cls.complete_save(context)
     context.cruds.model = cls
     context.cruds.values = values
     cruds.Engine.update(context)
   
   @classmethod
-  def search(cls, context):  # @todo Implement search input property!
+  def search(cls, context):
     context.cruds.model = cls
     context.cruds.domain_key = context.input.get('domain')
     cruds.Engine.search(context)
@@ -699,16 +682,14 @@ class DomainRole(Role):
     context.cruds.model = cls
     cruds.Engine.read_records(context)
 
-# maybe we should follow the pattern here for everything, with these helper variables, to maybe increase maintanability of the code? this is just a proposition
-# see 706 line and 771 for reference
-_domain_user_state_choices = ['invited', 'accepted']
+
 class DomainUser(ndb.BaseModel):
   
   _kind = 8
   
   name = ndb.SuperStringProperty('1', required=True)
   roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since taht can pose security issue!!
-  state = ndb.SuperStringProperty('3', required=True, choices=_domain_user_state_choices)
+  state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
   
   _default_indexed = False
   
@@ -764,40 +745,26 @@ class DomainUser(ndb.BaseModel):
       id='8-6',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search' : ndb.SuperSearchProperty(
-            default={"filters":[],"order_by":{"field":"name","operator":"asc"}},
-            filters={
-             'name' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(),
-              }, 
-             'state' : {
-                'operators' : ['==', '!='],
-                'type' : ndb.SuperStringProperty(choices=_domain_user_state_choices),
-              },        
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])},        
             },
-            indexes=[{
-             'filter' : ['name'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-            'filter' : ['state'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-             'filter' : ['name', 'state'],
-             'order_by' : [['name', ['asc', 'desc']],],
-            },
-            {
-             'filter' : [],
-             'order_by' : [['name', ['asc', 'desc']],],
-            }],
-            order_by={
-              'name' : {
-                'operators' : ['asc', 'desc'],
-              },
-            },
-         ),
+          indexes=[
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['state'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['name', 'state'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
@@ -818,16 +785,16 @@ class DomainUser(ndb.BaseModel):
   
   @classmethod
   def clean_roles(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    Engine.run(context, True)
+    if not executable(context):
+      raise ActionDenied(context)
+    roles = ndb.get_multi(entity.roles)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      Engine.run(context, True)
-      if not executable(context):
-        raise ActionDenied(context)
-      roles = ndb.get_multi(entity.roles)
       for i, role in enumerate(roles):
         if role is None:
           entity.roles.pop(i)
@@ -836,7 +803,6 @@ class DomainUser(ndb.BaseModel):
       log.Engine.run(context)
     
     transaction()
-    return context
   
   @classmethod
   def prepare(cls, context):
@@ -846,14 +812,10 @@ class DomainUser(ndb.BaseModel):
     cruds.Engine.prepare(context)
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
-    return context
   
   @classmethod
-  def invite(cls, context):  # @todo Transaction 'outbound' code presence!
+  def invite(cls, context):
     from app.srv import auth
-    # Operating on too many entity groups.
-    # All datastore operations in a transaction must operate on entities in the same entity group.
-    # This includes querying for entities by ancestor, retrieving entities by key, updating entities, and deleting entities.
     email = context.input.get('email')
     user = auth.User.query(auth.User.emails == email).get()
     if not user:
@@ -890,7 +852,6 @@ class DomainUser(ndb.BaseModel):
         raise DomainUserError('not_active')
     
     transaction()
-    return context
   
   @classmethod
   def remove(cls, context):
@@ -915,19 +876,18 @@ class DomainUser(ndb.BaseModel):
       context.output['entity'] = entity
     
     transaction()
-    return context
   
   @classmethod
   def accept(cls, context):
+    entity_key = context.input.get('key')
+    entity = entity_key.get()
+    context.rule.entity = entity
+    Engine.run(context)
+    if not executable(context):
+      raise ActionDenied(context)
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity_key = context.input.get('key')
-      entity = entity_key.get()
-      context.rule.entity = entity
-      Engine.run(context)
-      if not executable(context):
-        raise ActionDenied(context)
       entity.state = 'accepted'
       entity.put()
       context.log.entities.append((entity, ))
@@ -942,17 +902,16 @@ class DomainUser(ndb.BaseModel):
       context.output['domain'] = domain
     
     transaction()
-    return context
   
   @classmethod
-  def update(cls, context):  # @todo Transaction 'outbound' code presence!
+  def update(cls, context):
     input_roles = ndb.get_multi(context.input.get('roles'))
     domain_key = context.input.get('domain')
     roles = []
-      # Avoid rogue roles.
+    # Avoid rogue roles.
     for role in input_roles:
       if role.key.namespace() == domain_key.urlsafe():
-          roles.append(role.key)
+        roles.append(role.key)
     context.cruds.domain_key = domain_key
     context.cruds.model = cls
     context.cruds.values = {'name': context.input.get('name'), 'roles': roles}
@@ -966,7 +925,7 @@ class DomainUser(ndb.BaseModel):
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
   
   @classmethod
-  def search(cls, context):  # @todo Implement search input property!
+  def search(cls, context):
     context.cruds.model = cls
     context.cruds.domain_key = context.input.get('domain')
     cruds.Engine.search(context)
@@ -975,7 +934,7 @@ class DomainUser(ndb.BaseModel):
   def read_records(cls, context):
     context.cruds.model = cls
     cruds.Engine.read_records(context)
-    
+  
   @classmethod
   def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!? - we could but the search limits results?
     return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()
