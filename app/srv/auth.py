@@ -600,9 +600,9 @@ class Domain(ndb.BaseExpando):
                           ['updated', ['asc', 'desc']]]}
             ],
           order_by={
-            'name': {'operators' : ['asc', 'desc']},
-            'created': {'operators' : ['asc', 'desc']},
-            'updated': {'operators' : ['asc', 'desc']}
+            'name': {'operators': ['asc', 'desc']},
+            'created': {'operators': ['asc', 'desc']},
+            'updated': {'operators': ['asc', 'desc']}
             },
           ),
         'next_cursor': ndb.SuperStringProperty()
