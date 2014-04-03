@@ -353,14 +353,10 @@ class User(ndb.BaseExpando):
       @ndb.tasklet
       def async(entity):
         if entity:
-          # Rule engine run on domain.
-          context.rule.entity = entity
-          rule.Engine.run(context)
+          # Rule engine cannot run in tasklets because the context.rule.entity gets in wrong places for some reason... which
+          # also causes rule engine to not work properly with _action_permissions, this i could not debug because it is impossible to determine what is going on in iterator
           domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=entity.key_namespace)
           domain_user = yield domain_user_key.get_async()
-          # Rule engine run on domain user as well.
-          context.rule.entity = domain_user
-          rule.Engine.run(context)
           entity._domain_user = domain_user
           entity.add_output('_domain_user')
         raise ndb.Return(entity)
@@ -371,6 +367,12 @@ class User(ndb.BaseExpando):
         raise ndb.Return(entities)
       
       entities = helper(entities).get_result()
+      for entity in entities:
+        context.rule.entity = entity
+        rule.Engine.run(context)
+        context.rule.entity = entity._domain_user
+        rule.Engine.run(context)
+        
     context.output['entities'] = entities
   
   @classmethod

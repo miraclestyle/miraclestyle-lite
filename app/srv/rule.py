@@ -5,6 +5,7 @@ Created on Dec 20, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import time
 import collections
 
 from google.appengine.datastore.datastore_query import Cursor
@@ -933,7 +934,6 @@ class DomainUser(ndb.BaseModel):
       log.Engine.run(context)
       Engine.run(context)
       domain = entity.namespace_entity
-      entity.key.delete(use_datastore=False)
       context.rule.entity = domain
       Engine.run(context)
       read(entity)
