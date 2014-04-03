@@ -372,7 +372,6 @@ class User(ndb.BaseExpando):
         rule.Engine.run(context)
         context.rule.entity = entity._domain_user
         rule.Engine.run(context)
-        
     context.output['entities'] = entities
   
   @classmethod
