@@ -37,13 +37,16 @@
 					</td>
 					
 					<td>
-						<button ui-sref="app_view({domain_key : app.key})" ng-show="app._domain_user.state == 'accepted'" class="button" type="button">
-							Launch
-						</button>
+						
 						<button ng-show="app.rule.action.update.executable || app.rule.action.sudo.executable || app.rule.action.log_message.executable || app.rule.action.activate.executable || app.rule.action.suspend.executable"
 						        busy ng-click="updateApp(app)" class="button">
 							Edit
 						</button>
+						
+						<button ui-sref="app_view({domain_key : app.key})" ng-show="app._domain_user.state == 'accepted'" class="button" type="button">
+							Launch
+						</button>
+						
 					</td>
 				</tr>
 			</tbody>

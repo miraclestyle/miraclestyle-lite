@@ -1,7 +1,7 @@
 SEARCH_KIND_CONFIG = {
     '62': {
     	'title' : 'Widgets',
-    	'add_new' : 'Add New',
+    	'add_new' : 'New Widget',
     	'service' : 'Nav',
     	'fields' : [{
 			        'label': 'Name',
@@ -14,7 +14,7 @@ SEARCH_KIND_CONFIG = {
     },
    '60': {
     	'title' : 'Roles',
-    	'add_new' : 'Add New',
+    	'add_new' : 'New Role',
     	'service' : 'AppRole',
     	'fields' : [{
 			        'label': 'Name',
@@ -27,7 +27,7 @@ SEARCH_KIND_CONFIG = {
     },
    '8': {
     	'title' : 'Users',
-    	'add_new' : 'Invite New',
+    	'add_new' : 'New User',
     	'service' : 'AppUser',
     	'fields' : [{
 			        'label': 'Name',

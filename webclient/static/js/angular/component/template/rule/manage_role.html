@@ -2,7 +2,10 @@
 <div scroll-end="save" class="modal-body scrollable">
 <div class="modal-body-inner">
   
-  	
+ <h2 class="fieldset">
+	 <span class="fieldset-text">General</span>
+ </h2>
+		 	
     <div class="form-control">
 		<label class="form-label">Name</label>
 		<div class="form-input">
@@ -22,15 +25,15 @@
 	</div>
 	
 	
-	<h1 class="fieldset with-button">
+	<h2 class="fieldset with-button">
 			<span class="fieldset-text">Permissions</span>
 			<span ng-show="rule.field.permissions.writable && rule.action.update.executable" class="fieldset-button"><a class="button" busy ng-click="addPermission()">Add Permission</a></span>
-		</h1>
+		</h2>
 		<table class="table">
 					<thead>
 						<tr>
-							<th>Kind</th>
-							<th>Type</th>
+							<th>Model</th>
+							<th>Action/Field</th>
 							<th>Rule</th>
 							<th ng-show="rule.action.update.executable"></th>
 						</tr>

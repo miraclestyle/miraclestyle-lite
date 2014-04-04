@@ -2,6 +2,9 @@
 <div scroll-end="save" class="modal-body scrollable">
 <div class="modal-body-inner">
   
+  <h2 class="fieldset">
+	 <span class="fieldset-text">General</span>
+  </h2>
   	
     <div class="form-control">
 		<label class="form-label">Name</label>
@@ -13,7 +16,7 @@
 	</div>
 	 
     <div class="form-control">
-		<label class="form-label">Role</label>
+		<label class="form-label">Roles</label>
 		<div class="form-input">
 			<select name="role" ng-required="rule.input[action].role.required" ng-disabled="!rule.field.role.writable" ui-select2 ng-model="entity.role" data-placeholder="Select a role">
 				    <option value=""></option>
@@ -52,15 +55,15 @@
 	</div>
 	
 	
-	<h1 class="fieldset with-button">
+	<h2 class="fieldset with-button">
 			<span class="fieldset-text">Filters</span>
 			<span ng-show="rule.field.filters.writable" class="fieldset-button"><a class="button" busy ng-click="addFilter()">Add Filter</a></span>
-		</h1>
+		</h2>
 		<table class="table">
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Kind</th>
+							<th>Model</th>
 							<th>Query</th>
 							<th></th>
 						</tr>
@@ -71,8 +74,8 @@
 							<td>{{FRIENDLY_KIND_NAMES[filter.kind]}}</td>
 							<td>{{filter.query}}</td>
 							<td>
+								<button ng-click="removeFilter(filter)" type="button" class="button">Remove</button>
 								<button ng-click="editFilter(filter)" type="button" class="button">Edit</button>
-								<button ng-click="removeFilter(filter)" type="button" class="button">Delete</button>
 							</td>
 						</tr>
 					</tbody>

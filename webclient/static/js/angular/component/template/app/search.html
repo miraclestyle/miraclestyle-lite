@@ -16,15 +16,22 @@
 					</td>
 	 
 					<td>
+						<button type="button" ng-show="entity.rule.action.delete.executable"
+						        busy ng-click="remove(entity)" class="button">
+							Delete
+						</button>
+						
+						<button type="button" ng-show="entity.rule.action.remove.executable && entity.kind == 8"
+						        busy ng-click="remove(entity)" class="button">
+							Remove
+						</button>
+						
 						<button type="button" ng-show="entity.rule.action.read.executable"
 						        busy ng-click="update(entity)" class="button">
 							Edit
 						</button>
 						
-						<button type="button" ng-show="entity.rule.action.delete.executable"
-						        busy ng-click="remove(entity)" class="button">
-							Delete
-						</button>
+						
 					</td>
 				</tr>
 			</tbody>

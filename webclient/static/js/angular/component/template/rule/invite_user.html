@@ -1,7 +1,10 @@
 <form ng-submit="save()">
 <div scroll-end="save" class="modal-body scrollable">
 <div class="modal-body-inner">
-	
+  <h2 class="fieldset">
+	 <span class="fieldset-text">General</span>
+  </h2>
+  
 	<div class="form-control">
 		<label class="form-label">Name</label>
 		<div class="form-input">
@@ -22,7 +25,7 @@
 	</div>
 	 
     <div class="form-control">
-		<label class="form-label">Role</label>
+		<label class="form-label">Roles</label>
 		<div class="form-input">
 			<select multiple="true" name="role" ng-required="rule.input[action].roles.required" ui-select2 ng-model="entity.roles" data-placeholder="Select roles for this user">
 				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>

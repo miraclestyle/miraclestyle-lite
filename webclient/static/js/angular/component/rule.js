@@ -57,12 +57,12 @@ MainApp.filter('permissionResolveActionName', function() {
                 });
                 
             },
-            remove : function (entity_key, complete)
+            remove : function (entity, complete)
             {
                
                Confirm.sure(function () {
         			Endpoint.post('remove', '8', {
-        				'key' : entity_key,
+        				'key' : entity['key'],
         			}).success(complete);
         		});
          
@@ -78,7 +78,7 @@ MainApp.filter('permissionResolveActionName', function() {
 				        'remove' : function ()
 				    	 {
 				    	 	var scope = this;
-				    	 	that.remove(entity.key, function (data) {
+				    	 	that.remove(entity, function (data) {
 				    	 		if (data['entity'])
 				    	 		{
 				    	 			$parentScope.removeItem(scope.live_entity);

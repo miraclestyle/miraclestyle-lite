@@ -906,7 +906,7 @@ class DomainUser(ndb.BaseModel):
   @classmethod
   def update(cls, context):
     input_roles = ndb.get_multi(context.input.get('roles'))
-    entity_key = context.input.get('domain')
+    entity_key = context.input.get('key')
     entity = entity_key.get()
     roles = []
     # Avoid rogue roles.
