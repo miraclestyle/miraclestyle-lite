@@ -139,25 +139,11 @@ class Engine:
     return context
   
   @classmethod
-  def taskqueue_run(cls, input):
+  def run(cls, input):
     action = cls.get_action(input)
     if action:
       context = cls.realtime_run(action, input)
       return context.output
-    else:
-      output = {'errors': {'invalid_action': input.get('action_key')}}
-      return output
-  
-  @classmethod
-  def run(cls, input):
-    action = cls.get_action(input)
-    if action:
-      if action.realtime:
-        context = cls.realtime_run(action, input)
-        return context.output
-      else:
-        taskqueue.add(queue_name='io', url='/task/io_engine_run', params=input)
-        return None  # Perhaps, here we should return a signal that task queue is running the task.
     else:
       output = {'errors': {'invalid_action': input.get('action_key')}}
       return output
