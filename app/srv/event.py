@@ -33,7 +33,6 @@ class Action(ndb.BaseExpando):
   active = ndb.SuperBooleanProperty('3', default=True)
   service = ndb.SuperStringProperty('4') # Service name, such as log, notify, transaction, etc.
   operation = ndb.SuperStringProperty('5') # Operation name, that is being called inside a service, such as, read, write, etc.
-  realtime = ndb.SuperBooleanProperty('6', default=True) # If False, action will be added in task queue for later execution.
   
   @classmethod
   def get_local_action(cls, action_key):
