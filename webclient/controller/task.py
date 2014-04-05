@@ -28,7 +28,7 @@ class IOEngineRun(handler.Base):
          util.logger('Begin IOEngineRun execute')
          
          input = self.get_input()
-         io.Engine.taskqueue_run(input)
+         io.Engine.run(input)
          
          util.logger('End IOEngineRun execute')
          
