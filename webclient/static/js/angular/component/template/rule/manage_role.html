@@ -51,8 +51,8 @@
 								<span ng-show="perm.visible != null">Visible: {{perm.visible}}</span>
 							</td>
 							<td ng-show="rule.action.update.executable">
+								<button ng-click="removePermission(perm)" type="button" class="button">Remove</button>
 								<button ng-click="editPermission(perm)" type="button" class="button">Edit</button>
-								<button ng-click="removePermission(perm)" type="button" class="button">Delete</button>
 							</td>
 						</tr>
 					</tbody>

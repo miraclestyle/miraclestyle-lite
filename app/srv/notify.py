@@ -9,11 +9,11 @@ import json
 
 from jinja2.sandbox import SandboxedEnvironment
 
-from google.appengine.api import mail
-from google.appengine.api import taskqueue
+from google.appengine.api import mail, urlfetch
 
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
+from app.srv import callback
  
 __SYSTEM_TEMPLATES = []
 
@@ -58,6 +58,22 @@ class Template(ndb.BasePoly):
                           cls.action == action_key,
                           namespace=entity.key_namespace).fetch()
     return templates
+  
+  @classmethod
+  def initiate(cls, context):
+    
+    entity_key = context.input.get('entity_key')
+    user_key = context.input.get('user_key')
+    
+    action_key = context.action
+    entity, user = ndb.get_multi(entity_key, user_key)
+    
+    templates = cls.get_local_templates(entity, action_key)
+    if templates:
+      for template in templates:
+         template.run(entity, user, context)
+    
+    callback.Engine.run(context)
  
   
 class CustomNotify(Template):
@@ -69,20 +85,24 @@ class CustomNotify(Template):
   message_recievers = ndb.SuperPickleProperty('7') # this is a function that will be called to retrieve all relevant information regarding the recievers
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
-  outlet = ndb.SuperStringProperty('10', required=True, default='mail')
+  outlet = ndb.SuperStringProperty('10', required=True, default='58')
  
-  def run(self, entity, user):
+  def run(self, entity, user, context):
     
       template_values = {'entity' : entity}
       
-      return {
-              'recipients' : self.message_recievers(entity, user),
-              'sender' :  self.message_sender,
-              'body' : render_template(self.message_body, template_values),
-              'subject' : render_template(self.message_subject, template_values),
-              'outlet' : self.outlet,
-             }
-
+      data = {
+        'action_key' : 'send',
+        'action_model' : self.outlet,
+        'recipient' : self.message_recievers(entity, user),
+        'sender' :  self.message_sender,
+        'body' : render_template(self.message_body, template_values),
+        'subject' : render_template(self.message_subject, template_values),
+      }
+      
+      context.callbacks.payloads.append(data)
+      
+       
 class MailNotify(Template):
   
   _kind = 58
@@ -92,12 +112,20 @@ class MailNotify(Template):
   message_reciever = ndb.SuperKeyProperty('7', kind='60', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+  
+  @classmethod
+  def send(cls, context):
+    
+    input = context.input
+    
+    mail.send_mail(input['sender'], input['recipient'],
+                      input['subject'], input['body'])
  
-  def run(self, entity, user):
+  def run(self, entity, user, context):
     
     from app.srv import auth, rule # circular avoid, this will be avoided by placing these templates in app.etc.setup
     
-    values = {'user' : user, 'entity' : entity}
+    values = {'entity' : entity, 'user' : user}
     
     if safe_eval(self.condition, values):
       
@@ -114,13 +142,27 @@ class MailNotify(Template):
       
       template_values = {'entity' : entity}
       
-      return {
-              'recipients' : [user._primary_email for user in users],
-              'sender' : domain_sender_user._primary_email,
-              'body' : render_template(self.message_body, template_values),
-              'subject' : render_template(self.message_subject, template_values),
-              'outlet' : 'mail',
-             }
+      data = {
+        'action_key' : 'send',
+        'action_model' : '58',
+        'recipient' : [user._primary_email for user in users],
+        'sender' : domain_sender_user._primary_email,
+        'body' : render_template(self.message_body, template_values),
+        'subject' : render_template(self.message_subject, template_values),
+      }
+      
+      how_many_recipients = int(math.ceil(len(data['recipient']) / settings.OUTLET_RECIPIENTS_PER_TASK))
+      copy_outlet_command = data.copy()
+      del copy_outlet_command['recipient']
+             
+      for i in range(0, how_many_recipients+1):
+               
+       new_recipient_list = data['recipient'][settings.OUTLET_RECIPIENTS_PER_TASK*i:settings.OUTLET_RECIPIENTS_PER_TASK*(i+1)]
+       
+       if new_recipient_list:
+         new_outlet_command = copy_outlet_command.copy()
+         new_outlet_command['recipient'] = new_recipient_list
+         context.callbacks.payloads.append(new_outlet_command)
        
        
 class HttpNotify(Template):
@@ -132,12 +174,16 @@ class HttpNotify(Template):
   message_reciever = ndb.SuperStringProperty('7', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+  
+  @classmethod
+  def send(cls, context):
+    urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), 'POST')
  
-  def run(self, entity, user):
+  def run(self, entity, user, context):
     
-    from app.srv import auth # circular avoid, this will be avoided by placing these templates in app.etc.setup
+    from app.srv import auth
     
-    values = {'user' : user, 'entity' : entity}
+    values = {'entity' : entity, 'user' : user}
     
     if safe_eval(self.condition, values):
  
@@ -146,126 +192,13 @@ class HttpNotify(Template):
  
       template_values = {'entity' : entity}
       
-      return {
-              'recipients' : [self.message_reciever], # must be a list to comply to Engine._templates
-              'sender' : domain_sender_user._primary_email,
-              'body' : render_template(self.message_body, template_values),
-              'subject' : render_template(self.message_subject, template_values),
-              'entity_key' : entity.key.urlsafe(),
-              'outlet' : 'http_notify',
-             }
- 
-    
-class Engine:
-
-  @classmethod
-  def execute_http_notify(cls, outlet_command):
-      pass 
-  
-  @classmethod
-  def execute_mail(cls, outlet_command):
-      mail.send_mail(outlet_command['sender'], outlet_command['recipients'],
-                      outlet_command['subject'], outlet_command['body'])
-  
-  @classmethod
-  def send(cls, input):
-    
-    outlet_command = input.get('data')
-    
-    callback = getattr(cls, 'execute_%s' % outlet_command['outlet'])
-    
-    if callback:
-       callback(outlet_command)
-
-   
-  @classmethod
-  def _templates(cls, queue, tasks, entity, user, templates):
-    
-    outlet_commands = []
-    
-    for template in templates:
-        command = template.run(entity, user)
-        if command:
-           outlet_commands.append(command)
-    
-    total_outlet_commands = len(outlet_commands)
-    
-    if total_outlet_commands:      
-       commands_per_task = int(math.ceil(total_outlet_commands / settings.OUTLET_TEMPLATES_PER_TASK))
-       
-       for i in range(0, commands_per_task+1):
-         
-           cursored_outlet_commands = outlet_commands[settings.OUTLET_TEMPLATES_PER_TASK*i:settings.OUTLET_TEMPLATES_PER_TASK*(i+1)]
-            
-           for outlet_command in cursored_outlet_commands:
-             
-               how_many_recipients = int(math.ceil(len(outlet_command['recipients']) / settings.OUTLET_RECIPIENTS_PER_TASK))
-               
-               copy_outlet_command = outlet_command.copy()
-               
-               del copy_outlet_command['recipients']
-               
-               for _i in range(0, how_many_recipients+1):
-                 
-                 new_recipient_list = outlet_command['recipients'][settings.OUTLET_RECIPIENTS_PER_TASK*_i:settings.OUTLET_RECIPIENTS_PER_TASK*(_i+1)]
-                 
-                 if new_recipient_list:
-                   new_outlet_command = copy_outlet_command.copy()
-                   new_outlet_command['recipients'] = new_recipient_list
-                   
-                   payload = {'data' : new_outlet_command}
-    
-                   task = taskqueue.Task(url='/task/notify_send', payload=json.dumps(payload))
-                   tasks.append(task)
-             
-  
-  @classmethod
-  def prepare(cls, input):
-    
-    entity_key = ndb.Key(urlsafe=input.get('entity_key'))
-    entity = entity_key.get()
-    
-    action_key = ndb.Key(urlsafe=input.get('action_key'))
-   
-    user_key_str = input.get('user_key')
-    user = None
-    
-    if user_key_str:
-       user_key = ndb.Key(urlsafe=input.get('user_key'))
-       user = user_key.get()
-    
-    
-    queue = taskqueue.Queue(name='notify-send')
-    tasks = []
-    
-    # we are sending payload instead of "params", our server will parse that if it's formatted as json
-    templates = get_system_templates(action_key)
-    
-    cls._templates(queue, tasks, entity, user, templates)
-    
-    # instead of DomainTemplate it should run Template cuz its polymodel?
-    templates = Template.get_local_templates(entity, action_key)
-    
-    cls._templates(queue, tasks, entity, user, templates)
-    
-    if tasks:
-       queue.add(tasks)
-     
-     
-  @classmethod
-  def run(cls, context):
-    
-    if context.notify.transactional is None:
-       context.notify.transacitonal = ndb.in_transaction()
-    
-    params = {'action_key' : context.action.key.urlsafe(),
-              'entity_key' : context.notify.entity.key.urlsafe()}
-    
-    if context.auth.user.key:
-       params['user_key'] = context.auth.user.key.urlsafe()
-    
-    new_task = taskqueue.add(queue_name='notify', url='/task/notify_prepare',
-                             transactional=context.notify.transactional,
-                             params=params)
+      data = {
+        'action_key' : 'send',
+        'action_model' : '63',
+        'recipient' : self.message_reciever,
+        'sender' : domain_sender_user._primary_email,
+        'body' : render_template(self.message_body, template_values),
+        'subject' : render_template(self.message_subject, template_values),
+      }
       
-    return new_task
+      context.callbacks.payloads.append(data)
