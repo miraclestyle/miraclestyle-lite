@@ -13,7 +13,7 @@ IT WAS CREATED TO TEMPORARY REMEDY CODE REDUNDANCY ISSUE!
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
-from app.srv import log, notify
+from app.srv import log, callback
 
 def get_rule(): 
   # hack for circular behaviour
@@ -58,8 +58,11 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
-        context.notify.entity = entity
-        notify.Engine.run(context)
+        context.callback.payloads.append(('notify',
+                                          {'action_key': 'initiate',
+                                           'action_model': '61',
+                                           'entity_key': entity.key.urlsafe()}))
+        callback.Engine.run(context)
     
     transaction()
   
@@ -83,8 +86,11 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
-        context.notify.entity = entity
-        notify.Engine.run(context)
+        context.callback.payloads.append(('notify',
+                                          {'action_key': 'initiate',
+                                           'action_model': '61',
+                                           'entity_key': entity.key.urlsafe()}))
+        callback.Engine.run(context)
     
     transaction()
   
@@ -136,8 +142,11 @@ class Engine():
       rule.read(entity)
       context.output['entity'] = entity
       if context.cruds.notify:
-        context.notify.entity = entity
-        notify.Engine.run(context)
+        context.callback.payloads.append(('notify',
+                                          {'action_key': 'initiate',
+                                           'action_model': '61',
+                                           'entity_key': entity.key.urlsafe()}))
+        callback.Engine.run(context)
     
     transaction()
   
