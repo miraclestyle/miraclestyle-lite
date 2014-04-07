@@ -15,12 +15,6 @@ from app import ndb, settings
 from app.lib.safe_eval import safe_eval
 from app.srv import auth, callback, rule, event, cruds
 
-class Context():
-  
-  def __init__(self):
-    self.entity = None
-    self.transactional = None
-
 sandboxed_jinja = SandboxedEnvironment()    
     
 def render_template(template_as_string, values={}):

@@ -31,7 +31,6 @@ class Context():
     self.auth = auth.Context()
     self.rule = rule.Context()
     self.log = log.Context()
-    self.notify = notify.Context()
     self.cruds = cruds.Context()
   
   def error(self, key, value):
