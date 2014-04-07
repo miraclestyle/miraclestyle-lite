@@ -784,7 +784,7 @@ class DomainUser(ndb.BaseModel):
     }
   
   @classmethod
-  def clean_roles(cls, context):
+  def clean_roles(cls, context):  # @todo Do we need notifications here?
     entity_key = context.input.get('key')
     entity = entity_key.get()
     context.rule.entity = entity
@@ -834,7 +834,7 @@ class DomainUser(ndb.BaseModel):
     
     @ndb.transactional(xg=True)
     def transaction():
-      if user.state == 'active':
+      if user.state == 'active':  # @todo Why is this validation not implemented in global role?
         roles = []
         # Avoid rogue roles.
         for role in input_roles:
@@ -847,6 +847,11 @@ class DomainUser(ndb.BaseModel):
         context.log.entities.append((user, ))
         log.Engine.run(context)
         read(entity)
+        context.callback.payloads.append(('notify',
+                                          {'action_key': 'initiate',
+                                           'action_model': '61',
+                                           'entity_key': entity.key.urlsafe()}))
+        callback.Engine.run(context)
         context.output['entity'] = entity
       else:
         raise DomainUserError('not_active')
@@ -873,6 +878,11 @@ class DomainUser(ndb.BaseModel):
       context.log.entities.append((user, ))
       log.Engine.run(context)
       read(entity)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       context.output['entity'] = entity
     
     transaction()
@@ -898,6 +908,11 @@ class DomainUser(ndb.BaseModel):
       Engine.run(context)
       read(entity)
       read(domain)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       context.output['entity'] = entity
       context.output['domain'] = domain
     
