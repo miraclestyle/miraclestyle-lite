@@ -660,9 +660,9 @@ class Domain(ndb.BaseExpando):
       config_input['domain_primary_contact'] = context.auth.user.key
       config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
       config.put()
-      context.callback.inputs.append({'action_key': 'install',
+      context.callback.payloads.append(('callback', {'action_key': 'install',
                                       'action_model': '57',
-                                      'key': config.key.urlsafe()})
+                                      'key': config.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity

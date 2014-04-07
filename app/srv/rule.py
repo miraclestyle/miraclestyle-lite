@@ -4,13 +4,9 @@ Created on Dec 20, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-import time
 import collections
 
-from google.appengine.datastore.datastore_query import Cursor
-
-from app import ndb, util, settings
+from app import ndb
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback, cruds
 

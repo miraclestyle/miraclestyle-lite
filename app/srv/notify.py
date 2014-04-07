@@ -13,7 +13,7 @@ from google.appengine.api import mail, urlfetch
 
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
-from app.srv import auth, callback, rule, event, cruds
+from app.srv import auth, callback, rule, event, cruds, log
 
 sandboxed_jinja = SandboxedEnvironment()    
     
@@ -104,6 +104,10 @@ class MailNotify(Template):
   message_reciever = ndb.SuperKeyProperty('7', kind='60', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+  
+  _virtual_fields = {
+    '_records': log.SuperLocalStructuredRecordProperty('58', repeated=True)
+  }
    
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
@@ -288,6 +292,10 @@ class HttpNotify(Template):
   message_reciever = ndb.SuperStringProperty('7', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
+  
+  _virtual_fields = {
+    '_records': log.SuperLocalStructuredRecordProperty('63', repeated=True)
+    }
   
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles   
