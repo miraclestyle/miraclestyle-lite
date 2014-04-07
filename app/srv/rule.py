@@ -535,6 +535,14 @@ class DomainRole(Role):
     '_records': log.SuperLocalStructuredRecordProperty('60', repeated=True)
     }
   
+  # 0 create
+  # 1 delete
+  # 2 search
+  # 3 update
+  # 4 read
+  # 5 prepare
+  # 6 read records
+ 
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
@@ -693,6 +701,16 @@ class DomainUser(ndb.BaseModel):
     '_records': log.SuperLocalStructuredRecordProperty('8', repeated=True)
     }
   
+  # 0 invite
+  # 1 remove
+  # 2 accept
+  # 3 update
+  # 4 clean roles
+  # 5 read
+  # 6 search
+  # 7 prepare
+  # 8 read records
+ 
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
