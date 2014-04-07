@@ -13,7 +13,7 @@ from google.appengine.api import blobstore
 
 from app import ndb, settings, memcache, util
 from app.lib import oauth2
-from app.srv import event, rule, log, notify, setup, blob, callback, cruds
+from app.srv import event, rule, log, setup, blob, callback, cruds
 
 
 class OAuth2Error(Exception):
@@ -288,8 +288,11 @@ class User(ndb.BaseExpando):
         values.pop('note')
       context.log.entities.append((entity, values))
       log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
     
@@ -716,8 +719,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
     
@@ -739,8 +745,11 @@ class Domain(ndb.BaseExpando):
       rule.Engine.run(context)
       context.log.entities.append((entity, {'message': context.input.get('message')}))
       log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
     
@@ -765,8 +774,11 @@ class Domain(ndb.BaseExpando):
         values.pop('note')
       context.log.entities.append((entity, values))
       log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
     
@@ -789,8 +801,11 @@ class Domain(ndb.BaseExpando):
         values.pop('note')
       context.log.entities.append((entity, values))
       log.Engine.run(context)
-      context.notify.entity = entity
-      notify.Engine.run(context)
+      context.callback.payloads.append(('notify',
+                                        {'action_key': 'initiate',
+                                         'action_model': '61',
+                                         'entity_key': entity.key.urlsafe()}))
+      callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
     
