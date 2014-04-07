@@ -14,22 +14,6 @@ from google.appengine.api import mail, urlfetch
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
 from app.srv import callback
- 
-__SYSTEM_TEMPLATES = []
-
-def get_system_templates(action_key):
-  global __SYSTEM_TEMPLATES
-  templates = []
-  if action_key:
-    for template in __SYSTEM_TEMPLATES:
-      if action_key == template.action:
-         templates.append(template)
-  return templates
-
-def register_system_templates(*args):
-  global __SYSTEM_TEMPLATES
-  __SYSTEM_TEMPLATES.extend(args)
-
 
 class Context():
   
@@ -64,8 +48,8 @@ class Template(ndb.BasePoly):
     
     entity_key = context.input.get('entity_key')
     user_key = context.input.get('user_key')
-    
-    action_key = context.action
+    action_key = context.input.get('action')
+ 
     entity, user = ndb.get_multi(entity_key, user_key)
     
     templates = cls.get_local_templates(entity, action_key)
@@ -177,7 +161,7 @@ class HttpNotify(Template):
   
   @classmethod
   def send(cls, context):
-    urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), 'POST')
+    urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
  
   def run(self, entity, user, context):
     

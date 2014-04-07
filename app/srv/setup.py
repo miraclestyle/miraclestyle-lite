@@ -8,27 +8,8 @@ import time
 import datetime
 
 from app import ndb, util, settings
-from app.srv import event, log, notify, nav, rule
-
-# this method should perhaps be incorporated in DomainSetup class ?
-
-# it could, however this code then must be below DomainSetup class
-def create_domain_notify_message_recievers(entity, user):
-    primary_contact = entity.primary_contact.get()
-    return [primary_contact._primary_email]
-
-# this registration call should perhaps be incorporated in DomainSetup constructor ?
-
-# if we do that this function will be called every time the DomainSetup.__init__() is called, and that is alot 
-# because this should be called only once upon module import
-notify.register_system_templates(notify.CustomNotify(name='Send domain link after domain is completed',
-                                         action=event.Action.build_key('57-0'),
-                                         message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
-                                         message_sender=settings.NOTIFY_EMAIL,
-                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
-                                         message_recievers=create_domain_notify_message_recievers,
-                                         condition="entity.setup == 'setup_domain'"))
-
+from app.srv import event, log, notify, nav, rule, callback
+ 
 __SYSTEM_SETUPS = {}
 
 # example: get_system_setup('domain_setup')
@@ -82,6 +63,11 @@ class Setup():
    
    
 class DomainSetup(Setup):
+  
+  @classmethod
+  def create_domain_notify_message_recievers(cls, entity, user):
+          primary_contact = entity.primary_contact.get()
+          return [primary_contact._primary_email]
  
   def execute_init(self):
     
@@ -276,10 +262,17 @@ class DomainSetup(Setup):
        self.context.log.entities.append((user,))
        
        log.Engine.run(self.context)
+        
+       custom_notify = notify.CustomNotify(name='Send domain link after domain is completed',
+                                         action=event.Action.build_key('57-0'),
+                                         message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
+                                         message_sender=settings.NOTIFY_EMAIL,
+                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
+                                         message_recievers=self.create_domain_notify_message_recievers)
        
-       self.context.notify.entity = domain
+       custom_notify.run(domain, self.context.auth.user, self.context)
        
-       notify.Engine.run(self.context)
+       callback.Engine.run(self.context)
        
        self.config.state = 'completed'
        self.config.put()
