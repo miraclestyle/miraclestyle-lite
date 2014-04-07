@@ -13,7 +13,7 @@ from google.appengine.api import mail, urlfetch
 
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
-from app.srv import callback, rule, event, cruds
+from app.srv import auth, callback, rule, event, cruds
 
 class Context():
   
@@ -113,6 +113,7 @@ class MailNotify(Template):
    
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
+      # missing rule action permissions here
       rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), True, "context.auth.user._is_taskqueue"),                             
    ])  
   
@@ -243,9 +244,7 @@ class MailNotify(Template):
                       input['subject'], input['body'])
  
   def run(self, entity, user, context):
-    
-    from app.srv import auth, rule # circular avoid, this will be avoided by placing these templates in app.etc.setup
-    
+ 
     values = {'entity' : entity, 'user' : user}
     
     if safe_eval(self.condition, values):
@@ -297,7 +296,8 @@ class HttpNotify(Template):
   message_body = ndb.SuperTextProperty('9', required=True) # non compiled version of message body
   
   _global_role = rule.GlobalRole(permissions=[
-      # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
+      # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles   
+      # missing rule action permissions here 
       rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), True, "context.auth.user._is_taskqueue"),                              
    ])  
   
@@ -424,9 +424,7 @@ class HttpNotify(Template):
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
  
   def run(self, entity, user, context):
-    
-    from app.srv import auth
-    
+ 
     values = {'entity' : entity, 'user' : user}
     
     if safe_eval(self.condition, values):
