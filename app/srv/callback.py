@@ -23,7 +23,7 @@ class Engine:
   
   @classmethod
   def run(cls, context):
-    tasks = {}
+    queues = {}
     url = '/task/io_engine_run'
     if context.callback.transactional is None:
       context.callback.transactional = ndb.in_transaction()
@@ -32,15 +32,17 @@ class Engine:
     if len(context.callback.payloads):
       for payload in context.callback.payloads:
         queue_name, data = payload
+        data.update({'caller_user': context.auth.user.key.urlsafe(),
+                     'caller_action': context.action.key.urlsafe()})
         try:
           kwargs = payload[2]
         except IndexError as e:
           kwargs = {}
-        if queue_name not in tasks:
-          tasks[queue_name] = []
-        tasks[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data), **kwargs))
-    if len(tasks):
-      for queue_name, tasks in tasks.items():
+        if queue_name not in queues:
+          queues[queue_name] = []
+        queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data), **kwargs))
+    if len(queues):
+      for queue_name, tasks in queues.items():
         queue = taskqueue.Queue(name=queue_name)
         queue.add(tasks, transactional=context.callback.transactional)
     context.callback.payloads = []
