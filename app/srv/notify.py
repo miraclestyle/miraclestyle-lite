@@ -108,7 +108,15 @@ class MailNotify(Template):
   _virtual_fields = {
     '_records': log.SuperLocalStructuredRecordProperty('58', repeated=True)
   }
-   
+  # 0 send
+  # 1 create
+  # 2 update
+  # 3 delete
+  # 4 search
+  # 5 read
+  # 6 prepare
+  # 7 read records 
+  
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
       # missing rule action permissions here
@@ -296,6 +304,15 @@ class HttpNotify(Template):
   _virtual_fields = {
     '_records': log.SuperLocalStructuredRecordProperty('63', repeated=True)
     }
+  
+  # 0 send
+  # 1 create
+  # 2 update
+  # 3 delete
+  # 4 search
+  # 5 read
+  # 6 prepare
+  # 7 read records 
   
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles   

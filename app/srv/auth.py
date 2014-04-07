@@ -69,7 +69,15 @@ class User(ndb.BaseExpando):
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True)
     }
-  
+  # 0 login
+  # 1 update
+  # 2 sudo
+  # 3 logout
+  # 4 read_domains
+  # 5 read records
+  # 6 read
+  # 7 search
+ 
   _global_role = rule.GlobalRole(
     permissions=[
       rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True,
@@ -499,6 +507,17 @@ class Domain(ndb.BaseExpando):
     '_primary_contact_email': ndb.SuperStringProperty(),
     '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True)
     }
+  
+  # 0 create
+  # 1 suspend
+  # 2 activate
+  # 3 sudo
+  # 4 log message
+  # 6  update
+  # 7 read
+  # 8 prepare
+  # 9 read records
+  # 10 search
   
   _global_role = rule.GlobalRole(
     permissions=[

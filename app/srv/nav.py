@@ -33,6 +33,15 @@ class Widget(ndb.BaseExpando):
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True)
     }
   
+  # 0 build menu
+  # 1 search
+  # 2 create
+  # 3 read
+  # 4 update
+  # 5 delete
+  # 6 prepare
+  # 7 read records
+  
   _global_role = rule.GlobalRole(
     permissions=[
       rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), True, "not context.auth.user._is_guest"),
