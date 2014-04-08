@@ -69,6 +69,7 @@ class User(ndb.BaseExpando):
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True)
     }
+  
   # 0 login
   # 1 update
   # 2 sudo
@@ -513,7 +514,7 @@ class Domain(ndb.BaseExpando):
   # 2 activate
   # 3 sudo
   # 4 log message
-  # 6  update
+  # 6 update
   # 7 read
   # 8 prepare
   # 9 read records
