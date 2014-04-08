@@ -381,9 +381,9 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
   @classmethod
   def _get_kind(cls):
     """Override.
-
     Make sure that the kind returned is the root class of the
     polymorphic hierarchy.
+    
     """
     bases = cls._get_hierarchy()
     if not bases:
@@ -633,11 +633,11 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
-  """ 
-    This property is used on models to reference ndb.Key property.
-    Its format function will convert urlsafe string into a ndb.Key and check if the key
-    exists in the datastore. If the key does not exist, it will throw an error.
-    If you do not want the key exists feature look at SuperVirtualKeyProperty()
+  """This property is used on models to reference ndb.Key property.
+  Its format function will convert urlsafe string into a ndb.Key and check if the key
+  exists in the datastore. If the key does not exist, it will throw an error.
+  If key existence feature isn't required, SuperVirtualKeyProperty() can be used in exchange.
+  
   """
   def format(self, value):
     value = _property_value(self, value)
@@ -663,16 +663,14 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       return returns[0]
     else:
       return returns
-    
-    
+
+
 class SuperVirtualKeyProperty(SuperKeyProperty):
-    
-  """
-    This property is exact as SuperKeyProperty except its format function is not making any calls
-    to the datastore to check the existence of the provided urlsafe key. It will simply format the 
-    provided urlsafe key into a ndb.Key
-  """
+  """This property is exact as SuperKeyProperty, except its format function is not making any calls
+  to the datastore to check the existence of the provided urlsafe key. It will simply format the
+  provided urlsafe key into a ndb.Key.
   
+  """
   def format(self, value):
     value = _property_value(self, value)
     if self._repeated:
@@ -687,11 +685,11 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
     for k in returns:
       if self._kind and k.kind() != self._kind:
         raise PropertyError('invalid_kind')
- 
+    
     if single:
       return returns[0]
     else:
-      return returns  
+      return returns
 
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
