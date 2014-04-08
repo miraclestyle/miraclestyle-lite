@@ -380,11 +380,26 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
   
   @classmethod
   def _get_kind(cls):
-    if hasattr(cls, '_kind'):
-      if cls._kind < 0:
-        raise TypeError('Invalid _kind %s, for %s.' % (cls._kind, cls.__name__))
-      return str(cls._kind)
-    return cls.__name__
+    """Override.
+
+    Make sure that the kind returned is the root class of the
+    polymorphic hierarchy.
+    """
+    bases = cls._get_hierarchy()
+    if not bases:
+      # We have to jump through some hoops to call the superclass'
+      # _get_kind() method.  First, this is called by the metaclass
+      # before the PolyModel name is defined, so it can't use
+      # super(PolyModel, cls)._get_kind().  Second, we can't just call
+      # Model._get_kind() because that always returns 'Model'.  Hence
+      # the 'im_func' hack.
+      return Model._get_kind.im_func(cls)
+    else:
+      return bases[0]._class_name()
+  
+  @classmethod
+  def get_kind(cls):
+    return cls._class_name()
   
   @classmethod
   def _class_name(cls):
@@ -618,7 +633,12 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
-  
+  """ 
+    This property is used on models to reference ndb.Key property.
+    Its format function will convert urlsafe string into a ndb.Key and check if the key
+    exists in the datastore. If the key does not exist, it will throw an error.
+    If you do not want the key exists feature look at SuperVirtualKeyProperty()
+  """
   def format(self, value):
     value = _property_value(self, value)
     if self._repeated:
@@ -643,6 +663,35 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       return returns[0]
     else:
       return returns
+    
+    
+class SuperVirtualKeyProperty(SuperKeyProperty):
+    
+  """
+    This property is exact as SuperKeyProperty except its format function is not making any calls
+    to the datastore to check the existence of the provided urlsafe key. It will simply format the 
+    provided urlsafe key into a ndb.Key
+  """
+  
+  def format(self, value):
+    value = _property_value(self, value)
+    if self._repeated:
+      if not isinstance(value, (tuple, list)):
+        value = [value]
+      returns = [Key(urlsafe=v) for v in value]
+      single = False
+    else:
+      returns = [Key(urlsafe=value)]
+      single = True
+    
+    for k in returns:
+      if self._kind and k.kind() != self._kind:
+        raise PropertyError('invalid_kind')
+ 
+    if single:
+      return returns[0]
+    else:
+      return returns  
 
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):

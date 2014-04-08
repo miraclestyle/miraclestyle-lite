@@ -25,10 +25,11 @@ def render_template(template_as_string, values={}):
 class Template(ndb.BasePoly):
   
   _kind = 61
- 
-  action = ndb.SuperKeyProperty('1', kind='56', required=True) # action to which it subscribes
-  condition = ndb.SuperStringProperty('2', required=True) # condition which has to be satisfied in order for template to generate message instance
-  active = ndb.SuperBooleanProperty('3', required=True, default=True) # usefull for turnig it on/of
+  
+  name = ndb.SuperStringProperty('1', required=True)
+  action = ndb.SuperKeyProperty('2', kind='56', required=True) # action to which it subscribes
+  condition = ndb.SuperStringProperty('3', required=True) # condition which has to be satisfied in order for template to generate message instance
+  active = ndb.SuperBooleanProperty('4', required=True, default=True) # usefull for turnig it on/of
   
   _global_role = rule.GlobalRole(permissions=[
       # is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles    
@@ -40,8 +41,47 @@ class Template(ndb.BasePoly):
                                   arguments={
                                     'entity_key' : ndb.SuperKeyProperty(required=True),
                                     'caller_user' : ndb.SuperKeyProperty(required=True, kind='0'),
-                                    'caller_action' : ndb.SuperStringProperty(required=True),
+                                    'caller_action' : ndb.SuperVirtualKeyProperty(required=True),
                                 }),
+     'search': event.Action(
+             id='61-1',
+             arguments={
+              'domain': ndb.SuperKeyProperty(kind='6', required=True),
+              'search': ndb.SuperSearchProperty(
+                default={"filters": [], "order_by": {"field": "name", "operator": "asc"}}, # i dont know what to user for default order.. we only have action and active
+                filters={
+                  'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+                  'action': {'operators': ['==', '!='], 'type': ndb.SuperVirtualKeyProperty(kind='56')},
+                  'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()},
+                },
+                indexes=[
+                  {'filter': ['name'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  {'filter': ['action'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  {'filter': ['active'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  {'filter': ['action', 'active'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  {'filter': ['name', 'active'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  {'filter': ['action', 'name', 'active'],
+                   'order_by': [['name', ['asc', 'desc']]]},
+                  ],
+                order_by={
+                  'name': {'operators': ['asc', 'desc']}
+                  }
+                ),
+              'next_cursor': ndb.SuperStringProperty()
+              }
+            ),
+           'prepare': event.Action(
+              id='61-2',
+              arguments={
+                'domain': ndb.SuperKeyProperty(kind='6', required=True)
+              }
+            ),
+
    }
  
   @classmethod
@@ -56,7 +96,7 @@ class Template(ndb.BasePoly):
     
     entity_key = context.input.get('entity_key')
     user_key = context.input.get('caller_user')
-    action_key = ndb.Key(urlsafe=context.input.get('caller_action'))
+    action_key = context.input.get('caller_action')
  
     entity, user = ndb.get_multi(entity_key, user_key)
     
@@ -66,8 +106,20 @@ class Template(ndb.BasePoly):
          template.run(entity, user, context)
     
     callback.Engine.run(context)
- 
+    
+  @classmethod
+  def search(cls, context):
+    context.cruds.model = cls
+    context.cruds.domain_key = context.input.get('domain')
+    cruds.Engine.search(context)
   
+  @classmethod
+  def prepare(cls, context):
+    domain_key = context.input.get('domain')
+    context.cruds.domain_key = domain_key
+    context.cruds.model = cls
+    cruds.Engine.prepare(context)
+
 class CustomNotify(Template):
   
   _kind = 59
@@ -92,14 +144,13 @@ class CustomNotify(Template):
         'subject' : render_template(self.message_subject, template_values),
       }
       
-      context.callbacks.payloads.append(('notify', data))
+      context.callback.payloads.append(('notify', data))
       
        
 class MailNotify(Template):
   
   _kind = 58
-  
-  name = ndb.SuperStringProperty('5', required=True) # description for template editors
+ 
   message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender
   message_reciever = ndb.SuperKeyProperty('7', kind='60', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
@@ -126,7 +177,7 @@ class MailNotify(Template):
   _actions = {
      'send' : event.Action(id='58-0',
                                   arguments={
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
+                                    'recipient' : ndb.SuperStringProperty(repeated=True),
                                     'sender' : ndb.SuperStringProperty(required=True),
                                     'subject' : ndb.SuperTextProperty(required=True),
                                     'body' : ndb.SuperTextProperty(required=True)
@@ -134,44 +185,36 @@ class MailNotify(Template):
      'create' : event.Action(id='58-1',
                                   arguments={
                                     'domain' : ndb.SuperKeyProperty(kind='6', required=True),
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
-                                    'sender' : ndb.SuperStringProperty(required=True),
-                                    'subject' : ndb.SuperTextProperty(required=True),
-                                    'body' : ndb.SuperTextProperty(required=True)
+                                    
+                                    'name' : ndb.SuperStringProperty(required=True),
+                                    'action' : ndb.SuperVirtualKeyProperty(required=True, kind='56'),
+                                    'condition' : ndb.SuperTextProperty(required=True),
+                                    'active' : ndb.SuperBooleanProperty(),
+                                    
+                                    'message_reciever' : ndb.SuperKeyProperty(required=True, kind='60'),
+                                    'message_sender' : ndb.SuperKeyProperty(required=True, kind='8'),
+                                    'message_subject' : ndb.SuperTextProperty(required=True),
+                                    'message_body' : ndb.SuperTextProperty(required=True)
                                 }),
      'update' : event.Action(id='58-2',
                                   arguments={
-                                    'key' : ndb.SuperKeyProperty(required=True, kind='58'),
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
-                                    'sender' : ndb.SuperStringProperty(required=True),
-                                    'subject' : ndb.SuperTextProperty(required=True),
-                                    'body' : ndb.SuperTextProperty(required=True)
+                                    'key' : ndb.SuperKeyProperty(required=True, kind='61'),
+                                    
+                                    'name' : ndb.SuperStringProperty(required=True),
+                                    'action' : ndb.SuperVirtualKeyProperty(required=True, kind='56'),
+                                    'condition' : ndb.SuperTextProperty(required=True),
+                                    'active' : ndb.SuperBooleanProperty(),
+                                    
+                                    'message_reciever' : ndb.SuperKeyProperty(required=True, kind='60'),
+                                    'message_sender' : ndb.SuperKeyProperty(required=True, kind='8'),
+                                    'message_subject' : ndb.SuperTextProperty(required=True),
+                                    'message_body' : ndb.SuperTextProperty(required=True)
                                 }),
      'delete' : event.Action(id='58-3',
                                   arguments={
-                                    'key' : ndb.SuperKeyProperty(required=True, kind='58')
+                                    'key' : ndb.SuperKeyProperty(required=True, kind='61')
                                 }),
-     'search': event.Action(
-       id='58-4',
-       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
-            }
-          ),
-        'next_cursor': ndb.SuperStringProperty()
-        }
-      ),
-     'read': event.Action(id='58-5', arguments={'key': ndb.SuperKeyProperty(kind='58', required=True)}),
+     'read': event.Action(id='58-5', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
      'prepare': event.Action(
         id='58-6',
         arguments={
@@ -181,7 +224,7 @@ class MailNotify(Template):
      'read_records': event.Action(
         id='58-7',
         arguments={
-          'key': ndb.SuperKeyProperty(kind='58', required=True),
+          'key': ndb.SuperKeyProperty(kind='61', required=True),
           'next_cursor': ndb.SuperStringProperty()
         }
       )
@@ -196,11 +239,15 @@ class MailNotify(Template):
   def complete_save(cls, context):
  
     values = {'name': context.input.get('name'),
+              'action' : context.input.get('action'),
+              'condition' : context.input.get('condition'),
+              'active' : context.input.get('active'),
               'message_sender': context.input.get('message_sender'),
               'message_subject': context.input.get('message_subject'),
               'message_reciever': context.input.get('message_reciever'),
               'message_body': context.input.get('message_body'),
               }
+ 
     return values
   
   @classmethod
@@ -217,24 +264,26 @@ class MailNotify(Template):
     context.cruds.model = cls
     context.cruds.values = values
     cruds.Engine.update(context)
-  
-  @classmethod
-  def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
-    cruds.Engine.search(context)
-  
+ 
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
     context.cruds.domain_key = domain_key
     context.cruds.model = cls
     cruds.Engine.prepare(context)
+    
+    # this is temp cuz we will implement ajax widgets for this
+    context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
+    context.output['roles'] = rule.DomainRole.query(namespace=context.output['entity'].key_namespace).fetch()
   
   @classmethod
   def read(cls, context):
     context.cruds.model = cls
     cruds.Engine.read(context)
+    
+    # this is temp cuz we will implement ajax widgets for this
+    context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
+    context.output['roles'] = rule.DomainRole.query(namespace=context.output['entity'].key_namespace).fetch()
   
   @classmethod
   def read_records(cls, context):
@@ -288,14 +337,13 @@ class MailNotify(Template):
        if new_recipient_list:
          new_outlet_command = copy_outlet_command.copy()
          new_outlet_command['recipient'] = new_recipient_list
-         context.callbacks.payloads.append(('notify', new_outlet_command))
+         context.callback.payloads.append(('notify', new_outlet_command))
        
        
 class HttpNotify(Template):
   
   _kind = 63
-  
-  name = ndb.SuperStringProperty('5', required=True) # description for template editors
+ 
   message_sender = ndb.SuperKeyProperty('6', kind='8', required=True) # domain user who will be impersonated as the message sender
   message_reciever = ndb.SuperStringProperty('7', required=True) # DomainRole.key
   message_subject = ndb.SuperStringProperty('8', required=True) # non compiled version of message subject
@@ -323,7 +371,7 @@ class HttpNotify(Template):
   _actions = {
      'send' : event.Action(id='63-0',
                                   arguments={
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
+                                    'recipient' : ndb.SuperStringProperty(repeated=True),
                                     'sender' : ndb.SuperStringProperty(required=True),
                                     'subject' : ndb.SuperTextProperty(required=True),
                                     'body' : ndb.SuperTextProperty(required=True)
@@ -331,44 +379,37 @@ class HttpNotify(Template):
      'create' : event.Action(id='63-1',
                                   arguments={
                                     'domain' : ndb.SuperKeyProperty(kind='6', required=True),
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
-                                    'sender' : ndb.SuperStringProperty(required=True),
-                                    'subject' : ndb.SuperTextProperty(required=True),
-                                    'body' : ndb.SuperTextProperty(required=True)
+                                    
+                                    'name' : ndb.SuperStringProperty(required=True),
+                                    'action' : ndb.SuperVirtualKeyProperty(required=True, kind='56'),
+                                    'condition' : ndb.SuperTextProperty(required=True),
+                                    'active' : ndb.SuperBooleanProperty(),
+                                    
+                                    'message_reciever' : ndb.SuperStringProperty(repeated=True),
+                                    'message_sender' : ndb.SuperKeyProperty(required=True, kind='8'),
+                                    'message_subject' : ndb.SuperTextProperty(required=True),
+                                    'message_body' : ndb.SuperTextProperty(required=True)
                                 }),
      'update' : event.Action(id='63-2',
                                   arguments={
-                                    'key' : ndb.SuperKeyProperty(required=True, kind='63'),
-                                    'recipient' : ndb.SuperStringProperty(required=True, repeated=True),
-                                    'sender' : ndb.SuperStringProperty(required=True),
-                                    'subject' : ndb.SuperTextProperty(required=True),
-                                    'body' : ndb.SuperTextProperty(required=True)
+                                    'key' : ndb.SuperKeyProperty(required=True, kind='61'),
+                                    
+                                    'name' : ndb.SuperStringProperty(required=True),
+                                    'action' : ndb.SuperVirtualKeyProperty(required=True, kind='56'),
+                                    'condition' : ndb.SuperTextProperty(required=True),
+                                    'active' : ndb.SuperBooleanProperty(),
+                                    
+                                    'message_reciever' : ndb.SuperStringProperty(repeated=True),
+                                    'message_sender' : ndb.SuperKeyProperty(required=True, kind='8'),
+                                    'message_subject' : ndb.SuperTextProperty(required=True),
+                                    'message_body' : ndb.SuperTextProperty(required=True)
                                 }),
      'delete' : event.Action(id='63-3',
                                   arguments={
-                                    'key' : ndb.SuperKeyProperty(required=True, kind='63')
+                                    'key' : ndb.SuperKeyProperty(required=True, kind='61')
                                 }),
-     'search': event.Action(
-       id='63-4',
-       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
-            }
-          ),
-        'next_cursor': ndb.SuperStringProperty()
-        }
-      ),
-     'read': event.Action(id='63-5', arguments={'key': ndb.SuperKeyProperty(kind='63', required=True)}),
+ 
+     'read': event.Action(id='63-5', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
      'prepare': event.Action(
         id='63-6',
         arguments={
@@ -378,7 +419,7 @@ class HttpNotify(Template):
      'read_records': event.Action(
         id='63-7',
         arguments={
-          'key': ndb.SuperKeyProperty(kind='63', required=True),
+          'key': ndb.SuperKeyProperty(kind='61', required=True),
           'next_cursor': ndb.SuperStringProperty()
         }
       )
@@ -393,6 +434,9 @@ class HttpNotify(Template):
   def complete_save(cls, context):
  
     values = {'name': context.input.get('name'),
+              'action' : context.input.get('action'),
+              'condition' : context.input.get('condition'),
+              'active' : context.input.get('active'),
               'message_sender': context.input.get('message_sender'),
               'message_subject': context.input.get('message_subject'),
               'message_reciever': context.input.get('message_reciever'),
@@ -414,24 +458,26 @@ class HttpNotify(Template):
     context.cruds.model = cls
     context.cruds.values = values
     cruds.Engine.update(context)
-  
-  @classmethod
-  def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
-    cruds.Engine.search(context)
-  
+ 
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
     context.cruds.domain_key = domain_key
     context.cruds.model = cls
     cruds.Engine.prepare(context)
+    
+    # this is temp cuz we will implement ajax widgets for this
+    context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
+    context.output['roles'] = rule.DomainRole.query(namespace=context.output['entity'].key_namespace).fetch()
   
   @classmethod
   def read(cls, context):
     context.cruds.model = cls
     cruds.Engine.read(context)
+    
+    # this is temp cuz we will implement ajax widgets for this
+    context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
+    context.output['roles'] = rule.DomainRole.query(namespace=context.output['entity'].key_namespace).fetch()
   
   @classmethod
   def read_records(cls, context):
@@ -462,4 +508,4 @@ class HttpNotify(Template):
         'subject' : render_template(self.message_subject, template_values),
       }
       
-      context.callbacks.payloads.append(('notify', data))
+      context.callback.payloads.append(('notify', data))

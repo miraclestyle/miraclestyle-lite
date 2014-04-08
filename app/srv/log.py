@@ -188,7 +188,10 @@ class Record(ndb.BaseExpando):
     for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       self._properties[prop._name] = prop
-      prop._set_value(self, value)
+      try:
+        prop._set_value(self, value)
+      except TypeError as e:
+        setattr(self, prop._code_name, value)
       self.add_output(prop._code_name)  # Convinience.
     return self
 

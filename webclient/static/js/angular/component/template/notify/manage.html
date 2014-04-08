@@ -1,0 +1,142 @@
+<form ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  <h2 class="fieldset">
+	 <span class="fieldset-text">General</span>
+  </h2>
+  
+  <div class="form-control" ng-show="action == 'create'">
+ 
+  	<label class="form-label">Outlet</label>
+		<div class="form-input">
+			<select ng-change="changeKind()" name="outlet" ng-required="true" ui-select2 ng-model="options.kind" data-placeholder="Select an outlet">
+				    <option value=""></option>
+				    <option ng-repeat="mode in modes" value="{{mode.kind}}">{{mode.name}}</option>
+			</select>
+	    </div>
+  </div>
+   
+  <div ng-show="options.kind != 61">
+  
+  <div class="form-control">
+		<label class="form-label">Action</label>
+		<div class="form-input">
+			<select name="action" ng-required="rule.input[action].action.required" ng-disabled="!rule.field.action.writable" ui-select2 ng-model="entity.action" data-placeholder="Select an action">
+				    <option value=""></option>
+				    <option ng-repeat="(action_key, action_name) in actions" value="{{action_key}}">{{action_name}}</option>
+			</select>
+		</div>
+	</div>
+   
+  <div ng-show="options.kind == 58 || options.kind == 59">
+  	    <div class="form-control">
+			<label class="form-label">Name</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <input ng-disabled="!rule.field.name.writable" name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+				</div>
+			</div>
+		</div>
+		<div class="form-control">
+			<label class="form-label">Message Sender</label>
+			<div class="form-input">
+				<select name="message_sender" ng-required="rule.input[action].message_sender.required" ng-disabled="!rule.field.message_sender.writable" ui-select2 ng-model="entity.message_sender" data-placeholder="Select a user">
+					    <option value=""></option>
+					    <option ng-repeat="sender in users" value="{{sender.key}}">{{sender.name}}</option>
+				</select>
+			</div>
+		</div>
+  </div>
+  
+  <div ng-show="options.kind == 58">
+	<div class="form-control">
+		<label class="form-label">Message Reciever</label>
+		<div class="form-input">
+			<select name="message_reciever" ng-required="rule.input[action].message_reciever.required" ng-disabled="!rule.field.message_reciever.writable" ui-select2 ng-model="entity.message_reciever" data-placeholder="Select a role">
+				    <option value=""></option>
+				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>
+			</select>
+		</div>
+	</div>
+  </div>
+   
+  <div ng-show="options.kind == 59">
+  
+	<div class="form-control">
+		<label class="form-label">Message Reciever</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.message_reciever.writable" 
+				 		name="message_reciever" 
+				 		ng-required="rule.input[action].message_reciever.required" 
+				 		class="text-input" type="text" ng-model="entity.message_reciever" />
+			</div>
+		</div>
+	</div>
+  </div>
+  
+  
+  <div class="form-control">
+		<label class="form-label">Subject</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input ng-disabled="!rule.field.message_subject.writable" 
+				 		name="subject" 
+				 		ng-required="rule.input[action].message_subject.required" 
+				 		class="text-input" type="text" ng-model="entity.message_subject" />
+			</div>
+		</div>
+	</div>
+  
+  <div class="form-control">
+		<label class="form-label">Body</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea ng-disabled="!rule.field.message_body.writable"  name="body" ng-required="rule.input[action].message_body.required" class="text-input" ng-model="entity.message_body"></textarea>
+			</div>
+		</div>
+	</div>
+	
+	
+  <div class="form-control">
+		<label class="form-label">Condition</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea name="condition" ng-disabled="!rule.field.condition.writable"  ng-required="rule.input[action].condition.required" class="text-input" ng-model="entity.condition"></textarea>
+			</div>
+		</div>
+	</div>	
+  
+  <div class="form-control">
+		<label class="form-label">Active</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.active.writable" class="button" type="button" ng-model="entity.active"></button>
+			</div>
+		</div>
+	</div>
+  	
+  	</div>
+  	
+	<div ng-show="rule.action.read_records.executable && history" class="form-control">
+		<div ng-include="logic_template('misc/logs.html')"></div>
+	</div>	 
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button  ng-show="rule.action[action].executable" busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

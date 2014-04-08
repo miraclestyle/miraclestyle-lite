@@ -1,4 +1,17 @@
 SEARCH_KIND_CONFIG = {
+	'61': {
+    	'title' : 'Templates',
+    	'add_new' : 'New Template',
+    	'service' : 'Notify',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'Active',
+				    'key': 'active'
+				    }]
+    },
     '62': {
     	'title' : 'Widgets',
     	'add_new' : 'New Widget',

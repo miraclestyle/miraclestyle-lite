@@ -8,7 +8,7 @@ import time
 import datetime
 
 from app import ndb, util, settings
-from app.srv import event, log, notify, nav, rule, callback
+from app.srv import event, log, nav, rule, callback
  
 __SYSTEM_SETUPS = {}
 
@@ -114,10 +114,10 @@ class DomainSetup(Setup):
      
      # from all objects specified here, the ActionPermission will be built. So the role we are creating
      # will have all action permissions - taken `_actions` per model
-     from app.srv import auth, nav
+     from app.srv import auth, nav, notify
      from app.domain import business, marketing, product
 
-     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget,
+     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget, notify.Template, notify.MailNotify, notify.HttpNotify,
                 marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                        product.Content, product.Instance, product.Template, product.Variant]
      
@@ -262,6 +262,8 @@ class DomainSetup(Setup):
        self.context.log.entities.append((user,))
        
        log.Engine.run(self.context)
+       
+       from app.srv import notify
         
        custom_notify = notify.CustomNotify(name='Send domain link after domain is completed',
                                          action=event.Action.build_key('57-0'),

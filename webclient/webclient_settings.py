@@ -31,6 +31,7 @@ ANGULAR_COMPONENTS = ['home',
                       'app',
                       'nav',
                       'rule',
+                      'notify',
                       # this goes last
                       'admin',
                       ]
