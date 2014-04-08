@@ -27,7 +27,7 @@ class Context():
     self.model = None
     self.values = {}
     self.domain_key = None
-    self.notify = False
+    self.notify = True
     self.search_entities_callback = None
     self.search_filter_callback = None
 
