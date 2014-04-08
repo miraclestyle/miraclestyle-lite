@@ -542,7 +542,7 @@ class DomainRole(Role):
   # 4 read
   # 5 prepare
   # 6 read records
- 
+  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
@@ -710,7 +710,7 @@ class DomainUser(ndb.BaseModel):
   # 6 search
   # 7 prepare
   # 8 read records
- 
+  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
