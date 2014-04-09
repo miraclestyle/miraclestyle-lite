@@ -202,8 +202,7 @@ class _BaseModel(object):
         self._output.remove(name)
   
   def get_output(self):
-    """
-    This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
+    """This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -223,8 +222,7 @@ class _BaseModel(object):
   
   @classmethod
   def get_meta(cls):
-    """
-    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -491,8 +489,7 @@ class _BaseProperty(object):
   _max_size = None
   
   def get_meta(self):
-    """
-    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -533,8 +530,7 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
-    """
-    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
@@ -558,8 +554,7 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     super(SuperStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
-    """
-    This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
