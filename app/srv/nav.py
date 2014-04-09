@@ -33,23 +33,26 @@ class Widget(ndb.BaseExpando):
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True)
     }
   
-  # 0 build menu
-  # 1 search
-  # 2 create
-  # 3 read
-  # 4 update
-  # 5 delete
-  # 6 prepare
-  # 7 read records
-  
   _global_role = rule.GlobalRole(
     permissions=[
-      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), True, "not context.auth.user._is_guest"),
-      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False, "context.rule.entity._is_admin"),
-      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), True, "not context.rule.entity._is_admin"),
-      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user._root_admin'),
-      rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user._root_admin')
+      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-1').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-2').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-3').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-4').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-6').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
+                           "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system")
       ]
     )
   
@@ -141,8 +144,8 @@ class Widget(ndb.BaseExpando):
     }
   
   @property
-  def _is_admin(self):
-    return self.key_id_str.startswith('admin_')
+  def _is_system(self):
+    return self.key_id_str.startswith('system_')
   
   @classmethod
   def complete_save(cls, entity, context):
