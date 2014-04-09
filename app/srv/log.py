@@ -71,7 +71,7 @@ class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
 class Record(ndb.BaseExpando):
   
   _kind = 5
-  # Letters for field aliases are provided in order not to conflict with logged object fields, and alow scaling!
+  # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = ndb.SuperDateTimeProperty('l', auto_now_add=True)
   agent = ndb.SuperKeyProperty('u', kind='0', required=True)
   action = ndb.SuperKeyProperty('a', kind='56', required=True)
@@ -182,7 +182,6 @@ class Record(ndb.BaseExpando):
         self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
     return super(Record, self)._get_property_for(p, indexed, depth)
   
-  # Log entity's each property
   def log_entity(self, entity):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
