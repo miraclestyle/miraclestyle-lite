@@ -179,12 +179,12 @@ class Record(ndb.BaseExpando):
       if prop:
         self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden!
         self._properties[next] = prop
-        self.add_output(prop._code_name)  # Besides rule engine this must be here as well.
+        self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
     return super(Record, self)._get_property_for(p, indexed, depth)
   
   # Log entity's each property
   def log_entity(self, entity):
-    self._clone_properties()  # Clone properties, because if we dont, the Record._properties will be overriden.
+    self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       self._properties[prop._name] = prop
@@ -192,7 +192,7 @@ class Record(ndb.BaseExpando):
         prop._set_value(self, value)
       except TypeError as e:
         setattr(self, prop._code_name, value)
-      self.add_output(prop._code_name)  # Convinience.
+      self.add_output(prop._code_name)
     return self
 
 
@@ -201,7 +201,7 @@ class Engine:
   @classmethod
   def run(cls, context):
     """We always run log engine from within a transaction, 
-    because it is a helper service, not independent service!
+    because it is a helper service, not an independent service!
     
     """
     if len(context.log.entities):
