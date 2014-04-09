@@ -536,33 +536,38 @@ class DomainRole(Role):
     '_records': log.SuperLocalStructuredRecordProperty('60', repeated=True)
     }
   
-  # 0 create
-  # 1 delete
-  # 2 search
-  # 3 update
-  # 4 read
-  # 5 prepare
-  # 6 read records
-  
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
-      ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False, "context.rule.entity.key_id_str == 'admin'"),
-      ActionPermission('60', event.Action.build_key('60-3').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
-      ActionPermission('60', event.Action.build_key('60-1').urlsafe(), True, "not context.rule.entity.key_id_str == 'admin'"),
-      ActionPermission('60', event.Action.build_key('60-6').urlsafe(), True, "context.auth.user._root_admin"),
-      FieldPermission('60', '_records.note', False, False, "not context.auth.user._root_admin"),
-      FieldPermission('60', '_records.note', True, True, "context.auth.user._root_admin")
+      ActionPermission('60', event.Action.build_key('60-0').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('60', event.Action.build_key('60-1').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity.key_id_str == 'admin'"),
+      ActionPermission('60', event.Action.build_key('60-2').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('60', event.Action.build_key('60-3').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity.key_id_str == 'admin'"),
+      ActionPermission('60', event.Action.build_key('60-4').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity.key_id_str == 'admin'"),
+      ActionPermission('60', event.Action.build_key('60-5').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('60', event.Action.build_key('60-6').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
+                      "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity.key_id_str == 'admin'"),
+      FieldPermission('60', ['name', 'active', 'permissions', '_records'], None, False,
+                      "not context.rule.entity.namespace_entity.state == 'active'")
       ]
     )
   
   _actions = {
-    'create': event.Action(
+    'prepare': event.Action(
       id='60-0',
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        }
+      ),
+    'create': event.Action(
+      id='60-1',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
@@ -570,6 +575,7 @@ class DomainRole(Role):
         'active': ndb.SuperBooleanProperty(default=True)
         }
       ),
+    'read': event.Action(id='60-2', arguments={'key': ndb.SuperKeyProperty(kind='60', required=True)}),
     'update': event.Action(
       id='60-3',
       arguments={
@@ -579,9 +585,9 @@ class DomainRole(Role):
         'active': ndb.SuperBooleanProperty(default=True)
         }
       ),
-    'delete': event.Action(id='60-1', arguments={'key': ndb.SuperKeyProperty(kind='60', required=True)}),
+    'delete': event.Action(id='60-4', arguments={'key': ndb.SuperKeyProperty(kind='60', required=True)}),
     'search': event.Action(
-      id='60-2',
+      id='60-5',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
@@ -605,13 +611,6 @@ class DomainRole(Role):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
-      ),
-    'read': event.Action(id='60-4', arguments={'key': ndb.SuperKeyProperty(kind='60', required=True)}),
-    'prepare': event.Action(
-      id='60-5',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
     'read_records': event.Action(
@@ -702,41 +701,48 @@ class DomainUser(ndb.BaseModel):
     '_records': log.SuperLocalStructuredRecordProperty('8', repeated=True)
     }
   
-  # 0 invite
-  # 1 remove
-  # 2 accept
-  # 3 update
-  # 4 clean roles
-  # 5 read
-  # 6 search
-  # 7 prepare
-  # 8 read records
-  
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('8', event.Action.build_key('8-1').urlsafe(), True,
-                       "(context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.auth.user.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+      ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
       ActionPermission('8', event.Action.build_key('8-1').urlsafe(), False,
-                       "(context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
-      FieldPermission('8', 'roles', False, True, "(context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
-      ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False, 
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('8', event.Action.build_key('8-2').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str"),
+      ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True,
+                       "(context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str) and not (context.rule.entity.key_id_str == context.rule.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+      ActionPermission('8', event.Action.build_key('8-5').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('8', event.Action.build_key('8-6').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active'"),
+      ActionPermission('8', event.Action.build_key('8-7').urlsafe(), False,
                        "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
-      ActionPermission('8', event.Action.build_key('8-2').urlsafe(), True,
-                       "context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'invited' and context.auth.user.key_id_str == context.rule.entity.key_id_str"),
-      ActionPermission('8', event.Action.build_key('8-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      ActionPermission('8', event.Action.build_key('8-4').urlsafe(), True, "context.auth.user._is_taskqueue"),
-      ActionPermission('8', event.Action.build_key('8-4').urlsafe(), False, "not context.auth.user._is_taskqueue"),
-      ActionPermission('8', event.Action.build_key('8-8').urlsafe(), True, "context.auth.user._root_admin"),
-      FieldPermission('8', '_records.note', False, False, 'not context.auth.user._root_admin'),
-      FieldPermission('8', '_records.note', True, True, 'context.auth.user._root_admin')
+      ActionPermission('8', event.Action.build_key('8-7').urlsafe(), True,
+                       "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str != context.rule.entity.key_id_str and context.rule.entity.state == 'invited'"),
+      ActionPermission('8', event.Action.build_key('8-8').urlsafe(), False,
+                       "not context.rule.entity.namespace_entity.state == 'active' or not context.auth.user._is_taskqueue"),
+      ActionPermission('8', event.Action.build_key('8-8').urlsafe(), True,
+                       "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue"),
+      FieldPermission('8', ['name', 'roles', 'state', '_records'], False, False,
+                      "not context.rule.entity.namespace_entity.state == 'active'"),
+      FieldPermission('8', ['state'], False, None,
+                      "context.rule.entity.namespace_entity.state == 'active'")  # @todo Not sure how to handle state field permissions (though actions seem to not respect field permissions)?
       ]
     )
   
   _actions = {
-    'invite': event.Action(
+    'prepare': event.Action(
       id='8-0',
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6')
+        }
+      ),
+    'invite': event.Action(
+      id='8-1',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6'),
         'name': ndb.SuperStringProperty(required=True),
@@ -744,8 +750,7 @@ class DomainUser(ndb.BaseModel):
         'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
         }
       ),
-    'remove': event.Action(id='8-1', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
-    'accept': event.Action(id='8-2', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
+    'read': event.Action(id='8-2', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
     'update': event.Action(
       id='8-3',
       arguments={
@@ -754,17 +759,16 @@ class DomainUser(ndb.BaseModel):
         'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
         }
       ),
-    'clean_roles': event.Action(id='8-4', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
-    'read': event.Action(id='8-5', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
+    'remove': event.Action(id='8-4', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
     'search': event.Action(
-      id='8-6',
+      id='8-5',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])},        
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])},
             },
           indexes=[
             {'filter': ['name'],
@@ -783,19 +787,15 @@ class DomainUser(ndb.BaseModel):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'prepare': event.Action(
-      id='8-7',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6')
-        }
-      ),
     'read_records': event.Action(
-      id='8-8',
+      id='8-6',
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
-      )
+      ),
+    'accept': event.Action(id='8-7', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)}),
+    'clean_roles': event.Action(id='8-8', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)})
     }
   
   @classmethod

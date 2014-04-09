@@ -33,35 +33,66 @@ class Widget(ndb.BaseExpando):
     '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True)
     }
   
-  # 0 build menu
-  # 1 search
-  # 2 create
-  # 3 read
-  # 4 update
-  # 5 delete
-  # 6 prepare
-  # 7 read records
-  
   _global_role = rule.GlobalRole(
     permissions=[
-      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), True, "not context.auth.user._is_guest"),
-      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False, "context.rule.entity._is_admin"),
-      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), True, "not context.rule.entity._is_admin"),
-      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.FieldPermission('62', '_records.note', False, False, 'not context.auth.user._root_admin'),
-      rule.FieldPermission('62', '_records.note', True, True, 'context.auth.user._root_admin')
+      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-1').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-2').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-3').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-4').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-6').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
+                           "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
+                           "not context.rule.entity.namespace_entity.state == 'active'")
       ]
     )
   
   _actions = {
-    'build_menu': event.Action(
+    'prepare': event.Action(
       id='62-0',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'search': event.Action(
+    'create': event.Action(
       id='62-1',
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'name': ndb.SuperStringProperty(required=True),
+        'sequence': ndb.SuperIntegerProperty(required=True),
+        'active': ndb.SuperBooleanProperty(default=True),
+        'role': ndb.SuperKeyProperty(kind='60', required=True),
+        'search_form': ndb.SuperBooleanProperty(default=True),
+        'filters': ndb.SuperJsonProperty()
+        }
+      ),
+    'read': event.Action(id='62-2', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
+    'update': event.Action(
+      id='62-3',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='62', required=True),
+        'name': ndb.SuperStringProperty(required=True),
+        'sequence': ndb.SuperIntegerProperty(required=True),
+        'active': ndb.SuperBooleanProperty(default=True),
+        'role': ndb.SuperKeyProperty(kind='60', required=True),
+        'search_form': ndb.SuperBooleanProperty(default=True),
+        'filters': ndb.SuperJsonProperty()
+        }
+      ),
+    'delete': event.Action(id='62-4', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
+    'search': event.Action(
+      id='62-5',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
@@ -99,50 +130,24 @@ class Widget(ndb.BaseExpando):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'create': event.Action(
-      id='62-2',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'sequence': ndb.SuperIntegerProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True),
-        'role': ndb.SuperKeyProperty(kind='60', required=True),
-        'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperJsonProperty()
-        }
-      ),
-    'read': event.Action(id='62-3', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'update': event.Action(
-      id='62-4',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='62', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'sequence': ndb.SuperIntegerProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True),
-        'role': ndb.SuperKeyProperty(kind='60', required=True),
-        'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperJsonProperty()
-        }
-      ),
-    'delete': event.Action(id='62-5', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'prepare': event.Action(
-      id='62-6',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
-        }
-      ),
     'read_records': event.Action(
-      id='62-7',
+      id='62-6',
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
+    'build_menu': event.Action(
+      id='62-7',
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        }
+      )
     }
   
   @property
-  def _is_admin(self):
-    return self.key_id_str.startswith('admin_')
+  def _is_system(self):
+    return self.key_id_str.startswith('system_')
   
   @classmethod
   def complete_save(cls, entity, context):
