@@ -231,5 +231,5 @@ class Widget(ndb.BaseExpando):
       context.output['domain'] = domain
   
   @classmethod
-  def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!?
+  def selection_roles_helper(cls, namespace):  # @todo This method will die, and ajax DomainRole.search() will be used instead!?
     return rule.DomainRole.query(rule.DomainRole.active == True, namespace=namespace).fetch()
