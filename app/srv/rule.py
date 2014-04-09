@@ -701,16 +701,6 @@ class DomainUser(ndb.BaseModel):
     '_records': log.SuperLocalStructuredRecordProperty('8', repeated=True)
     }
   
-  # 0 prepare
-  # 1 invite
-  # 2 read
-  # 3 update
-  # 4 remove
-  # 5 search
-  # 6 read records
-  # 7 accept
-  # 8 clean roles
-  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('8', event.Action.build_key('8-0').urlsafe(), False,
