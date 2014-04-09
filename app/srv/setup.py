@@ -114,9 +114,8 @@ class DomainSetup(Setup):
      
      # from all objects specified here, the ActionPermission will be built. So the role we are creating
      # will have all action permissions - taken `_actions` per model
-     from app.srv import auth, nav, notify
-     from app.domain import business, marketing, product
-
+     from app.srv import auth, nav, notify, business, marketing, product
+ 
      objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget, notify.Template, notify.MailNotify, notify.HttpNotify,
                 marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                        product.Content, product.Instance, product.Template, product.Variant]

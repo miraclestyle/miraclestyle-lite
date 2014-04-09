@@ -46,6 +46,8 @@ RECIPIENTS_PER_TASK = 50
 # records
 RECORDS_PAGE = 10
 SEARCH_PAGE = 10
+
+CATALOG_IMAGES_PER_PAGE = 10
  
 _http = 'http://'
 

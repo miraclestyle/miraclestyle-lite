@@ -54,6 +54,10 @@ class Manager():
     return memcache.temp_memory_get(cls._UNUSED_BLOB_KEY, [])
   
   @classmethod
+  def unused_blobs(cls, blob_keys):
+    return cls.field_storage_unused_blobs(blob_keys)
+  
+  @classmethod
   def used_blobs(cls, blob_keys):
     unused_blob_keys = cls.get_unused_blobs()
     if not isinstance(blob_keys, (list, tuple)):
