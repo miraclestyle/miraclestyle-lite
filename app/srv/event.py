@@ -25,11 +25,8 @@ class Action(ndb.BaseExpando):
   
   _kind = 56
   
-  # root (namespace Domain)
-  # key.id() = <user supplied value> ?
-  
   name = ndb.SuperStringProperty('1', required=True)
-  arguments = ndb.SuperPickleProperty('2', default={}) # This is dictionary.
+  arguments = ndb.SuperPickleProperty('2', default={})
   active = ndb.SuperBooleanProperty('3', default=True)
   service = ndb.SuperStringProperty('4')  # Service name, such as log, notify, transaction, etc. @todo Probably to be removed!
   operation = ndb.SuperStringProperty('5')  # Operation name, that is being called inside a service, such as, read, write, etc.
