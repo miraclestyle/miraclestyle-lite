@@ -31,8 +31,8 @@ class Action(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True)
   arguments = ndb.SuperPickleProperty('2', default={}) # This is dictionary.
   active = ndb.SuperBooleanProperty('3', default=True)
-  service = ndb.SuperStringProperty('4') # Service name, such as log, notify, transaction, etc.
-  operation = ndb.SuperStringProperty('5') # Operation name, that is being called inside a service, such as, read, write, etc.
+  service = ndb.SuperStringProperty('4')  # Service name, such as log, notify, transaction, etc. @todo Probably to be removed!
+  operation = ndb.SuperStringProperty('5')  # Operation name, that is being called inside a service, such as, read, write, etc.
   
   @classmethod
   def get_local_action(cls, action_key):
