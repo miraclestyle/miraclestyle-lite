@@ -4,6 +4,7 @@ Created on Dec 20, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import collections
 
 from app import ndb
@@ -965,5 +966,5 @@ class DomainUser(ndb.BaseModel):
     cruds.Engine.read_records(context)
   
   @classmethod
-  def selection_roles_helper(cls, namespace):  # @todo Perhaps kill this method in favor of DomainRole.search()!? - we could but the search limits results?
+  def selection_roles_helper(cls, namespace):  # @todo This method will die, ajax DomainRole.search() will be used instead!
     return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()
