@@ -100,7 +100,7 @@ class Template(ndb.BasePoly):
     entity_key = context.input.get('entity_key')
     user_key = context.input.get('caller_user')
     action_key = context.input.get('caller_action')
-    entity, user = ndb.get_multi(entity_key, user_key)
+    entity, user = ndb.get_multi([entity_key, user_key])
     templates = cls.get_local_templates(entity, action_key)
     if templates:
       for template in templates:
@@ -290,13 +290,11 @@ class MailNotify(Template):
   def run(self, context, user, entity):
     values = {'entity': entity, 'user': user}
     if safe_eval(self.condition, values):
-      domain_users = rule.DomainUser.query(rule.DomainUser.roles.IN(self.message_reciever),
+      domain_users = rule.DomainUser.query(rule.DomainUser.roles == self.message_reciever,
                                            namespace=self.message_reciever.namespace()).fetch()
-      recievers_async = ndb.get_multi_async([auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
+      recievers = ndb.get_multi([auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
       sender_key = auth.User.build_key(long(self.message_sender.id()))
-      sender_async = sender_key.get_async()
-      recievers = recievers_async.get_result()
-      sender = sender_async.get_result()
+      sender = sender_key.get()
       template_values = {'entity': entity}
       data = {'action_key': 'send',
               'action_model': '58',
@@ -468,7 +466,7 @@ class HttpNotify(Template):
       data = {'action_key': 'send',
               'action_model': '63',
               'recipient': self.message_reciever,
-              'sender': domain_sender_user._primary_email,
+              'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values)}
       context.callback.payloads.append(('notify', data))

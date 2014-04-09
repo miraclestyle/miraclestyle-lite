@@ -32,8 +32,10 @@ class Engine:
     if len(context.callback.payloads):
       for payload in context.callback.payloads:
         queue_name, data = payload
-        data.update({'caller_user': context.auth.user.key.urlsafe(),
-                     'caller_action': context.action.key.urlsafe()})
+        if context.auth.user.key:
+           data['caller_user'] = context.auth.user.key.urlsafe()        
+        data['caller_action'] = context.action.key.urlsafe()
+
         try:
           kwargs = payload[2]
         except IndexError as e:
