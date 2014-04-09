@@ -188,7 +188,7 @@ class MailNotify(Template):
     'send': event.Action(
       id='58-0',
       arguments={
-        'recipient': ndb.SuperStringProperty(repeated=True),
+        'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
         'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
         'body': ndb.SuperTextProperty(required=True)
@@ -252,7 +252,7 @@ class MailNotify(Template):
               'active': context.input.get('active'),
               'message_sender': context.input.get('message_sender'),
               'message_subject': context.input.get('message_subject'),
-              'message_reciever': context.input.get('message_reciever'),
+              'message_reciever': context.input.get('message_reciever'),  # @todo In nav.py we do "if role.key_namespace != entity.key_namespace:". Shall we do the same with this variable?
               'message_body': context.input.get('message_body')}
     return values
   
@@ -367,7 +367,7 @@ class HttpNotify(Template):
     'send': event.Action(
       id='63-0',
       arguments={
-        'recipient': ndb.SuperStringProperty(repeated=True),
+        'recipient': ndb.SuperStringProperty(required=True),
         'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
         'body': ndb.SuperTextProperty(required=True)
@@ -381,7 +381,7 @@ class HttpNotify(Template):
         'action': ndb.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': ndb.SuperTextProperty(required=True),
         'active': ndb.SuperBooleanProperty(),
-        'message_reciever': ndb.SuperStringProperty(repeated=True),
+        'message_reciever': ndb.SuperStringProperty(required=True),
         'message_sender': ndb.SuperKeyProperty(required=True, kind='8'),
         'message_subject': ndb.SuperTextProperty(required=True),
         'message_body': ndb.SuperTextProperty(required=True)
@@ -395,7 +395,7 @@ class HttpNotify(Template):
         'action': ndb.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': ndb.SuperTextProperty(required=True),
         'active': ndb.SuperBooleanProperty(),
-        'message_reciever': ndb.SuperStringProperty(repeated=True),
+        'message_reciever': ndb.SuperStringProperty(required=True),
         'message_sender': ndb.SuperKeyProperty(required=True, kind='8'),
         'message_subject': ndb.SuperTextProperty(required=True),
         'message_body': ndb.SuperTextProperty(required=True)
