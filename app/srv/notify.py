@@ -40,21 +40,19 @@ class Template(ndb.BasePoly):
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('61', event.Action.build_key('61-2').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-2').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue"),
       rule.FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
-                           "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), True,
-                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+                           "not context.rule.entity.namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
   _actions = {
-    'initiate': event.Action(
+    'prepare': event.Action(
       id='61-0',
       arguments={
-        'entity_key': ndb.SuperKeyProperty(required=True),
-        'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
-        'caller_action' : ndb.SuperVirtualKeyProperty(required=True)
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
     'search': event.Action(
@@ -89,10 +87,12 @@ class Template(ndb.BasePoly):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'prepare': event.Action(
+    'initiate': event.Action(
       id='61-2',
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'entity_key': ndb.SuperKeyProperty(required=True),
+        'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
+        'caller_action' : ndb.SuperVirtualKeyProperty(required=True)
         }
       )
     }
@@ -169,29 +169,26 @@ class MailNotify(Template):
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('58', event.Action.build_key('58-3').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-4').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('58', event.Action.build_key('58-5').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('58', event.Action.build_key('58-6').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-7').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-6').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue"),
       rule.FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
                                   'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                           "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), True,
-                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+                           "not context.rule.entity.namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
   _actions = {
-    'send': event.Action(
+    'prepare': event.Action(
       id='58-0',
       arguments={
-        'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
-        'sender': ndb.SuperStringProperty(required=True),
-        'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True)
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
     'create': event.Action(
@@ -208,8 +205,9 @@ class MailNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
+    'read': event.Action(id='58-2', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
     'update': event.Action(
-      id='58-2',
+      id='58-3',
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='61'),
         'name': ndb.SuperStringProperty(required=True),
@@ -222,19 +220,21 @@ class MailNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'delete': event.Action(id='58-3', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
-    'read': event.Action(id='58-5', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
-    'prepare': event.Action(
-      id='58-6',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
-        }
-      ),
+    'delete': event.Action(id='58-4', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
     'read_records': event.Action(
-      id='58-7',
+      id='58-5',
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
         'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'send': event.Action(
+      id='58-6',
+      arguments={
+        'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
+        'sender': ndb.SuperStringProperty(required=True),
+        'subject': ndb.SuperTextProperty(required=True),
+        'body': ndb.SuperTextProperty(required=True)
         }
       )
     }
@@ -348,29 +348,26 @@ class HttpNotify(Template):
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('63', event.Action.build_key('63-3').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-4').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('63', event.Action.build_key('63-5').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('63', event.Action.build_key('63-6').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-7').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-6').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue"),
       rule.FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
                                   'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                           "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), True,
-                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+                           "not context.rule.entity.namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
   _actions = {
-    'send': event.Action(
+    'prepare': event.Action(
       id='63-0',
       arguments={
-        'recipient': ndb.SuperStringProperty(required=True),
-        'sender': ndb.SuperStringProperty(required=True),
-        'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True)
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
     'create': event.Action(
@@ -387,8 +384,9 @@ class HttpNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
+    'read': event.Action(id='63-2', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
     'update': event.Action(
-      id='63-2',
+      id='63-3',
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='61'),
         'name': ndb.SuperStringProperty(required=True),
@@ -401,19 +399,21 @@ class HttpNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'delete': event.Action(id='63-3', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
-    'read': event.Action(id='63-5', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
-    'prepare': event.Action(
-      id='63-6',
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
-        }
-      ),
+    'delete': event.Action(id='63-4', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
     'read_records': event.Action(
-      id='63-7',
+      id='63-5',
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
         'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'send': event.Action(
+      id='63-6',
+      arguments={
+        'recipient': ndb.SuperStringProperty(required=True),
+        'sender': ndb.SuperStringProperty(required=True),
+        'subject': ndb.SuperTextProperty(required=True),
+        'body': ndb.SuperTextProperty(required=True)
         }
       )
     }
