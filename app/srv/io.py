@@ -39,7 +39,7 @@ class Context():
     if key not in self.output['errors']:
       self.output['errors'][key] = []
     self.output['errors'][key].append(value)
-    return self # Do we need this line?
+    return self  # @todo Do we need this line?
 
 
 class Engine:
