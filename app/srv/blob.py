@@ -25,7 +25,6 @@ class Image(ndb.BaseModel):
 
 
 class Manager():
-  
   """This class handles deletions of blobs through the application.
   This solution is required because ndb does not support some of the blobstore query functions.
   
