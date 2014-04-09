@@ -34,8 +34,13 @@ class Template(ndb.BasePoly):
   
   _global_role = rule.GlobalRole(
     permissions=[
-      # Is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles.
-      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), True, "context.auth.user._is_taskqueue")
+      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -89,19 +94,14 @@ class Template(ndb.BasePoly):
     }
   
   @classmethod
-  def get_local_templates(cls, entity, action_key):
-    templates = cls.query(cls.active == True,
-                          cls.action == action_key,
-                          namespace=entity.key_namespace).fetch()
-    return templates
-  
-  @classmethod
-  def initiate(cls, context):
+  def initiate(cls, context):  # @todo Where is rule engine implementation?
     entity_key = context.input.get('entity_key')
     user_key = context.input.get('caller_user')
     action_key = context.input.get('caller_action')
     entity, user = ndb.get_multi([entity_key, user_key])
-    templates = cls.get_local_templates(entity, action_key)
+    templates = cls.query(cls.active == True,
+                          cls.action == action_key,
+                          namespace=entity.key_namespace).fetch()
     if templates:
       for template in templates:
         template.run(context, user, entity)
@@ -155,20 +155,20 @@ class MailNotify(Template):
     '_records': log.SuperLocalStructuredRecordProperty('58', repeated=True)
     }
   
-  # 0 send
-  # 1 create
-  # 2 update
-  # 3 delete
-  # 4 search
-  # 5 read
-  # 6 prepare
-  # 7 read records
-  
   _global_role = rule.GlobalRole(
     permissions=[
-      # Is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles.
-      # Missing rule action permissions here.
-      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), True, "context.auth.user._is_taskqueue")
+      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-5').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-6').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-7').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender', 'message_reciever', 'message_subject', 'message_body',
+                                  '_records'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -283,7 +283,7 @@ class MailNotify(Template):
     cruds.Engine.read_records(context)
   
   @classmethod
-  def send(cls, context):
+  def send(cls, context):  # @todo Where is rule engine implementation?
     mail.send_mail(context.input['sender'], context.input['recipient'],
                    context.input['subject'], context.input['body'])
   
@@ -326,20 +326,20 @@ class HttpNotify(Template):
     '_records': log.SuperLocalStructuredRecordProperty('63', repeated=True)
     }
   
-  # 0 send
-  # 1 create
-  # 2 update
-  # 3 delete
-  # 4 search
-  # 5 read
-  # 6 prepare
-  # 7 read records 
-  
   _global_role = rule.GlobalRole(
     permissions=[
-      # Is guest check is not needed on other actions because it requires a loaded domain which then will be checked with roles.
-      # Missing rule action permissions here.
-      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), True, "context.auth.user._is_taskqueue")
+      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-5').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-6').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-7').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender', 'message_reciever', 'message_subject', 'message_body',
+                                  '_records'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), True,
+                            "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
+      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -454,7 +454,7 @@ class HttpNotify(Template):
     cruds.Engine.read_records(context)
   
   @classmethod
-  def send(cls, context):
+  def send(cls, context):  # @todo Where is rule engine implementation?
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
   
   def run(self, context, user, entity):
