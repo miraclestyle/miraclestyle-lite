@@ -146,4 +146,3 @@ class Engine:
     else:
       output = {'errors': {'invalid_action': input.get('action_key')}}
       return output
-
