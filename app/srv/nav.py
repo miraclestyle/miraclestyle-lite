@@ -51,8 +51,10 @@ class Widget(ndb.BaseExpando):
                             "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), False,
                             "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
-                           "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system")
+      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
+                           "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
+      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
+                           "not context.rule.entity.namespace_entity.state == 'active'")
       ]
     )
   
