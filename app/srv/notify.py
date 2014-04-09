@@ -34,10 +34,14 @@ class Template(ndb.BasePoly):
   
   _global_role = rule.GlobalRole(
     permissions=[
-      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('61', event.Action.build_key('61-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('61', event.Action.build_key('61-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-1').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('61', event.Action.build_key('61-2').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
+                           "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('61', event.Action.build_key('61-0').urlsafe(), True,
                             "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
       # @todo Field permissions should be reviewed!
@@ -157,15 +161,23 @@ class MailNotify(Template):
   
   _global_role = rule.GlobalRole(
     permissions=[
-      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-5').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-6').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('58', event.Action.build_key('58-7').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender', 'message_reciever', 'message_subject', 'message_body',
-                                  '_records'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-1').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-2').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-3').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-5').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-6').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('58', event.Action.build_key('58-7').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
+                                  'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
+                           "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('58', event.Action.build_key('58-0').urlsafe(), True,
                             "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
       # @todo Field permissions should be reviewed!
@@ -328,15 +340,23 @@ class HttpNotify(Template):
   
   _global_role = rule.GlobalRole(
     permissions=[
-      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-1').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-2').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-3').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-5').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-6').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('63', event.Action.build_key('63-7').urlsafe(), False, "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender', 'message_reciever', 'message_subject', 'message_body',
-                                  '_records'], False, False, "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-1').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-2').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-3').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-5').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-6').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.ActionPermission('63', event.Action.build_key('63-7').urlsafe(), False,
+                            "not context.rule.entity.namespace_entity.state == 'active'"),
+      rule.FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
+                                  'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
+                           "not context.rule.entity.namespace_entity.state == 'active'"),
       rule.ActionPermission('63', event.Action.build_key('63-0').urlsafe(), True,
                             "context.rule.entity.namespace_entity.state == 'active' and context.auth.user._is_taskqueue")
       # @todo Field permissions should be reviewed!
