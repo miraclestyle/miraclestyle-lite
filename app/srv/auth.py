@@ -300,7 +300,7 @@ class User(ndb.BaseExpando):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
@@ -742,7 +742,7 @@ class Domain(ndb.BaseExpando):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
@@ -768,7 +768,7 @@ class Domain(ndb.BaseExpando):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
@@ -797,7 +797,7 @@ class Domain(ndb.BaseExpando):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
@@ -824,7 +824,7 @@ class Domain(ndb.BaseExpando):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       rule.read(entity)
       context.output['entity'] = entity
