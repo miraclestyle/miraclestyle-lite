@@ -39,8 +39,7 @@ MainApp.controller('AdminSearch', ['$scope', 'Title', 'Endpoint', '$stateParams'
             $scope.search = search;
             $scope.fields = config['fields'];
             $scope.title = config['title'];
-            $scope.templateUrl = config['templateUrl'];
- 
+  
             $scope.removeItem = function (e) {
             	 $scope.search.entities.remove(e);
             };

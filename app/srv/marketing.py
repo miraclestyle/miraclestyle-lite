@@ -10,6 +10,7 @@ from app import ndb, settings
 from app.srv import blob, event, rule, log, callback, cruds
 
 from google.appengine.ext import blobstore
+from google.appengine.api import images
 
 # this is LocalStructuredProperty and is repeated per catalog image.
 # properties to remain in this class are: 
@@ -34,6 +35,12 @@ class CatalogImage(blob.Image):
     pricetags = ndb.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
     
     # this model is working on multiple images at once because they are always like grid....
+    
+    def get_output(self):
+      
+      dic = super(CatalogImage, self).get_output()
+      dic['_image_240'] = images.get_serving_url(self.image, 240)
+      return dic
   
   
 class Catalog(ndb.BaseExpando):
@@ -58,8 +65,8 @@ class Catalog(ndb.BaseExpando):
     # rank coefficient based on store feedback
      
     _expando_fields = {
-       'cover' :  ndb.SuperKeyProperty('7', kind='36', required=True),# blob ce se implementirati na GCS
-       'cost' : ndb.SuperDecimalProperty('8', required=True)
+       'cover' :  ndb.SuperKeyProperty('7', kind='36'),# blob ce se implementirati na GCS
+       'cost' : ndb.SuperDecimalProperty('8')
     }
     
     _virtual_fields = {
@@ -84,6 +91,8 @@ class Catalog(ndb.BaseExpando):
                               arguments={
                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True),        
                                  'name' : ndb.SuperStringProperty(required=True),
+                                 'publish_date' : ndb.SuperDateTimeProperty(required=True),
+                                 'discontinue_date' : ndb.SuperDateTimeProperty(required=True),
                               }
                              ),
        'lock' : event.Action(id='35-1',
@@ -134,6 +143,8 @@ class Catalog(ndb.BaseExpando):
                                  'key'  : ndb.SuperKeyProperty(kind='35', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  '_images' : ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+                                 'publish_date' : ndb.SuperDateTimeProperty(required=True),
+                                 'discontinue_date' : ndb.SuperDateTimeProperty(required=True),
                               }
                              ),
        'upload_images' : event.Action(id='35-8',
@@ -160,13 +171,46 @@ class Catalog(ndb.BaseExpando):
                                   'domain' : ndb.SuperKeyProperty(kind='6', required=True)
                               }
         ),  
+                
+      'search': event.Action(
+        id='35-12',
+        arguments={
+          'domain': ndb.SuperKeyProperty(kind='6', required=True),
+          'search': ndb.SuperSearchProperty(
+            default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
+            filters={
+              'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+              'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+              },
+            indexes=[
+              {'filter': [],
+               'order_by': [['name', ['asc', 'desc']], ['created', ['asc', 'desc']], ['updated', ['asc', 'desc']]]},
+              {'filter': ['name'],
+               'order_by': [['name', ['asc', 'desc']], ['created', ['asc', 'desc']], ['updated', ['asc', 'desc']]]},
+              {'filter': ['state'],
+               'order_by': [['name', ['asc', 'desc']], ['created', ['asc', 'desc']], ['updated', ['asc', 'desc']]]},
+              {'filter': ['name', 'state'],
+               'order_by': [['name', ['asc', 'desc']], ['created', ['asc', 'desc']], ['updated', ['asc', 'desc']]]},
+              ],
+            order_by={
+              'name': {'operators': ['asc', 'desc']},
+              'created': {'operators': ['asc', 'desc']},
+              'update': {'operators': ['asc', 'desc']},
+              }
+            ),
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
     }  
+    
+    def get_images(self):
+      self._images = CatalogImage.query(ancestor=self.key).order(CatalogImage.sequence).fetch()
   
     @classmethod
     def create(cls, context):
       
       domain_key = context.input.get('domain')
-      entity = cls(namespace=domain_key.urlsafe())
+      entity = cls(namespace=domain_key.urlsafe(), state='unpublished')
       
       context.rule.entity = entity
       rule.Engine.run(context)
@@ -198,6 +242,7 @@ class Catalog(ndb.BaseExpando):
        name = context.input.get('name')
        _images = context.input.get('_images')
        entity = entity_key.get()
+       entity.get_images()
        
        context.rule.entity = entity
        rule.Engine.run(context)
@@ -207,18 +252,18 @@ class Catalog(ndb.BaseExpando):
  
        @ndb.transactional(xg=True)
        def transaction():
-          
-          current_images = CatalogImage.query(ancestor=entity.key).fetch()
-          
-          copy_current_images = copy.copy(current_images)
-          
-          entity._images = current_images
-          
+           
+          copy_current_images = copy.copy(entity._images)
+     
           values = {
            'name' : name,
            '_images' : _images
           }
+      
           rule.write(entity, values)
+        
+          if len(entity._images):
+             entity.cover = entity._images[0].key
           entity.put()
           
           delete_catalog_keys = []
@@ -386,8 +431,16 @@ class Catalog(ndb.BaseExpando):
     @classmethod
     def upload_images(cls, context):
       
-      upload_url = context.input.get('upload_url')
       images = context.input.get('images')
+      upload_url = context.input.get('upload_url')
+ 
+      if upload_url:
+         context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+         return # exit here no need to continue
+      else:
+         if not images: # if no images were saved, do nothing...
+           return
+          
       entity_key = context.input.get('key')
       entity = entity_key.get()
    
@@ -396,16 +449,11 @@ class Catalog(ndb.BaseExpando):
         
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-            
-      if upload_url:
-         context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
-         return # exit here no need to continue
-      else:
-         if not images: # if no images were saved, do nothing...
-           return
+      
+      entity.get_images()
 
-      i = cls.query(ancestor=entity_key).count() # get last sequence
-   
+      i = len(entity._images) # get last sequence
+
       for image in images:
           i += 1
           image.set_key(str(i), parent=entity.key)
@@ -462,9 +510,7 @@ class Catalog(ndb.BaseExpando):
           
       """
       
-      images = CatalogImage.query(parent=entity_key).fetch(CatalogImage.sequence)
-          
-      entity._images = images
+      entity.get_images()
       
       rule.read(entity)
       context.output['entity'] = entity
@@ -474,3 +520,11 @@ class Catalog(ndb.BaseExpando):
     def read_records(cls, context):
       context.cruds.model = cls
       cruds.Engine.read_records(context)
+      
+      
+    @classmethod
+    def search(cls, context):
+      context.cruds.model = cls
+      context.cruds.domain_key = context.input.get('domain')
+      cruds.Engine.search(context)
+    

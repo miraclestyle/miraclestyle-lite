@@ -38,6 +38,23 @@ SEARCH_KIND_CONFIG = {
 				    'key': 'active'
 				    }]
     },
+    '35': {
+    	'title' : 'Catalogs',
+    	'add_new' : 'New Catalog',
+    	'service' : 'Catalog',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'State',
+				    'key': 'state',
+				    },
+				    {
+			        'label': 'Created',
+				    'key': 'created',
+				    }]
+    },
    '8': {
     	'title' : 'Users',
     	'add_new' : 'New User',

@@ -1,0 +1,64 @@
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="manage_catalog">
+	
+<input type="hidden" name="action_key" value="upload_images" />
+<input type="hidden" name="action_model" value="35" />
+<input type="hidden" name="key" value="{{entity.key}}" />
+	
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+ 
+<div accordion>
+   <div is-open="menu.isOpen" accordion-group heading="General">
+  
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+	</div>
+	
+	</div>
+	
+	<div ng-show="action != 'create'" accordion-group heading="Products">
+		<div class="form-control clearfix">
+		  <div class="pull-right">
+		  <button ng-click="addProducts()" type="button" class="button">Add Products</button>	
+		  <div class="button fake-button">
+		  	 <span>Add Files</span>
+		  	 <input class="upload" name="images" multiple ng-change="addFiles($event)" type="file" ng-model="entity._supplied_filename" />
+		  </div>
+		  </div>
+		  
+		</div>
+		
+		<div class="clearfix">
+		<div ng-repeat="catalog_image in entity._images" class="catalog-image">
+			<img ng-src="{{catalog_image._image_240}}" />
+		</div>
+		</div>
+	</div>
+	
+	<div ng-show="action != 'create'" accordion-group heading="Embed">
+		 
+	</div>
+	 
+</div>
+ 
+</div>
+</div>
+
+
+<div class="modal-footer">
+     
+	<button type="button" ng-click="save()" ng-show="rule.action.update || (rule.action.create && action == 'create')" ng-disabled="!manage_catalog.$valid || $isUploading" busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

@@ -23,7 +23,9 @@ ANGULAR_MODULES = ['router',
                    'modal', 
                    'select2',
                    'busy', 
-                   'checklist'
+                   'checklist',
+                   'position',
+                   'datepicker',
                   ]
 
 ANGULAR_COMPONENTS = ['home',
@@ -32,6 +34,7 @@ ANGULAR_COMPONENTS = ['home',
                       'nav',
                       'rule',
                       'notify',
+                      'catalog',
                       # this goes last
                       'admin',
                       ]

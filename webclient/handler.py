@@ -180,7 +180,13 @@ class Base(webapp2.RequestHandler):
           dicts = json.loads(self.request.body)
         except:
           dicts = {}
-        dicts.update(self.request.params)
+        newparams = {}
+        for param_key in self.request.params.keys():
+          value = self.request.params.getall(param_key)
+          if len(value) == 1:
+             value = value[0]
+          newparams[param_key] = value
+        dicts.update(newparams)
         return dicts
   
   

@@ -64,3 +64,8 @@ indexes:
   properties:
   - name: "3"
   - name: "1"
+  
+- kind: "36"
+  ancestor: yes
+  properties:
+  - name: "7"

@@ -153,3 +153,10 @@ strong, b
   padding-top:14px;
   padding-bottom:14px;
 }
+
+.catalog-image
+{
+	float:left;
+	margin-right:10px;
+	margin-bottom:10px;
+}

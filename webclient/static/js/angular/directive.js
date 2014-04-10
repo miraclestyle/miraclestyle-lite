@@ -52,7 +52,28 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 	    	});
 	    }
 	  };
-}]).directive('toggle', function() {
+}])
+.directive('submitOnChange', ['$parse', function ($parse) {
+ 
+	return {
+		
+		
+        link: function(scope, element, attrs, controller) {
+        	
+        	var callback = $parse(attrs.submitOnChange);
+        	
+        	element.bind('change', function () {
+        		
+        		scope.$apply(function() {
+     
+			        callback(scope, {'form' : $(element).parents('form:first')});
+			    });
+			    
+        	});
+        }
+    };
+}])
+.directive('toggle', function() {
     return {
         scope: {
             ngModel: '='

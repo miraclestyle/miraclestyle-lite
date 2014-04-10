@@ -8,6 +8,9 @@ angular.module('app.ui',
 	   'app.ui.accordion',
 	   'app.ui.modal',
 	   'app.ui.select2',
+	   'app.ui.position',
+	   'app.ui.datepicker',
+	   
 	  ]
 );
 

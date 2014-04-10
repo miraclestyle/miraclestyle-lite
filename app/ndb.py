@@ -79,8 +79,14 @@ def _structured_property_format(prop, value):
     value = [value]
   fields = prop.get_model_fields()
   for v in value:
+    vkey = None
+    if v.get('key'):
+      vkey = Key(urlsafe=v.get('key'))
     _structured_property_field_format(fields, v)  # Not sure if this function's code should be embeded here?
-    out.append(prop._modelclass(**v))
+    entity = prop._modelclass(**v)
+    if vkey:
+       entity._key = vkey
+    out.append(entity)
   value = out
   if not prop._repeated:
     try:
@@ -95,6 +101,7 @@ def _structured_image_property_format(prop, value):
   
   """
   value = _property_value(prop, value)
+  
   if not prop._repeated:
     blobs = [value]
   else:
@@ -574,7 +581,11 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
-  pass
+  
+  def format(self, value):
+    value = _property_value(self, value)
+    
+    return value
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
@@ -705,13 +716,19 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
       values = []
       for v in value:
         # This alone will raise error if the upload is malformed.
-        blob = blobstore.parse_blob_info(v)
-        values.append(blob.key())
+        try:
+          blob = blobstore.parse_blob_info(v).key()
+        except:
+          blob = blobstore.BlobKey(v)
+        values.append(blob)
       return values
     else:
       # This alone will raise error if the upload is malformed.
-      blob = blobstore.parse_blob_info(value)
-      return blob.key()
+      try:
+        blob = blobstore.BlobKey(value)
+      except:
+        blob = blobstore.parse_blob_info(value).key()
+      return blob
 
 
 class SuperRawProperty(SuperStringProperty):
@@ -727,11 +744,21 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     value = _property_value(self, value)
     if not self._repeated:
       blobs = [value]
-      value = blobstore.parse_blob_info(value).key()
+      try:
+        value = blobstore.parse_blob_info(value).key()
+      except:
+        return blobstore.BlobKey(value)
     else:
       blobs = value
-      value = [blobstore.parse_blob_info(val).key() for val in value]
-    
+      value_ = []
+      for val in value:
+        try:
+          value_.append(blobstore.parse_blob_info(val).key())
+        except:
+          blobs.remove(val)
+          value_.append(blobstore.BlobInfo(val))
+      value = value_
+           
     for blob in blobs:
       info = blobstore.parse_file_info(blob)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')

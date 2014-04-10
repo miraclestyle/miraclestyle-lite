@@ -37,7 +37,22 @@ MainApp.config(['$stateProvider',
       })
       .state('app_view_search', {
       	url: '/app/:domain_key/search/:kind/:query',
-        templateUrl: logic_template('app/search.html'),
+        templateUrl: function (stateParams) {
+        	
+        	var defaults = logic_template('app/search.html');
+        	
+        	if (stateParams['kind'] != undefined)
+        	{
+        		var config = SEARCH_KIND_CONFIG[stateParams['kind']];
+	        	if (config && config['templateUrl'])
+	        	{
+	        		defaults = config['templateUrl'];
+	        	}
+	        	
+        	}
+  
+        	return defaults;
+        },
         controller: 'AppSearch',
         resolve : {
         	menu : resolve_menu,
@@ -60,7 +75,22 @@ MainApp.config(['$stateProvider',
       })
       .state('admin_search', {
       	url: '/admin/search/:kind/:query',
-        templateUrl: logic_template('admin/search.html'),
+        templateUrl: function (stateParams) {
+        	
+        	var defaults = logic_template('admin/search.html');
+        	
+        	if (stateParams['kind'] != undefined)
+        	{
+        		var config = ADMIN_SEARCH_KIND_CONFIG[stateParams['kind']];
+	        	if (config && config['templateUrl'])
+	        	{
+	        		defaults = config['templateUrl'];
+	        	}
+        	}
+        	
+        	
+        	return defaults;
+        },
         controller: 'AdminSearch',
         resolve : {
         	search : ['Endpoint', '$stateParams', '$rootScope', function (Endpoint, $stateParams, $rootScope) {
