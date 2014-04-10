@@ -90,7 +90,7 @@ class Template(ndb.BasePoly):
     'initiate': event.Action(
       id='61-2',
       arguments={
-        'entity_key': ndb.SuperKeyProperty(required=True),
+        'caller_entity': ndb.SuperKeyProperty(required=True),
         'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
         'caller_action' : ndb.SuperVirtualKeyProperty(required=True)
         }
@@ -98,17 +98,22 @@ class Template(ndb.BasePoly):
     }
   
   @classmethod
-  def initiate(cls, context):  # @todo Where is rule engine implementation?
-    entity_key = context.input.get('entity_key')
-    user_key = context.input.get('caller_user')
-    action_key = context.input.get('caller_action')
-    entity, user = ndb.get_multi([entity_key, user_key])
+  def initiate(cls, context):
+    caller_entity_key = context.input.get('caller_entity')
+    caller_user_key = context.input.get('caller_user')
+    caller_action_key = context.input.get('caller_action')
+    caller_entity, caller_user = ndb.get_multi([caller_entity_key, caller_user_key])
+    entity = cls(namespace=caller_entity.key_namespace)
+    context.rule.entity = entity
+    rule.Engine.run(context)  # @todo If user is taskqueue (as is expected to be) how do we handle it here?
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     templates = cls.query(cls.active == True,
-                          cls.action == action_key,
-                          namespace=entity.key_namespace).fetch()
+                          cls.action == caller_action_key,
+                          namespace=caller_entity.key_namespace).fetch()
     if templates:
       for template in templates:
-        template.run(context, user, entity)
+        template.run(context, caller_user, caller_entity)
     callback.Engine.run(context)
   
   @classmethod
@@ -142,8 +147,9 @@ class CustomNotify(Template):
             'recipient': self.message_recievers(entity, user),
             'sender':  self.message_sender,
             'body': render_template(self.message_body, template_values),
-            'subject': render_template(self.message_subject, template_values)}
-    context.callback.payloads.append(('notify', data))
+            'subject': render_template(self.message_subject, template_values),
+            'caller_entity': entity.key.urlsafe()}
+    context.callback.payloads.append(('send', data))
 
 
 class MailNotify(Template):
@@ -234,7 +240,8 @@ class MailNotify(Template):
         'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
         'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True)
+        'body': ndb.SuperTextProperty(required=True),
+        'caller_entity': ndb.SuperKeyProperty(required=True)
         }
       )
     }
@@ -295,7 +302,14 @@ class MailNotify(Template):
     cruds.Engine.read_records(context)
   
   @classmethod
-  def send(cls, context):  # @todo Where is rule engine implementation?
+  def send(cls, context):
+    caller_entity_key = context.input.get('caller_entity')
+    caller_entity = caller_entity_key.get()
+    entity = cls(namespace=caller_entity.key_namespace)
+    context.rule.entity = entity
+    rule.Engine.run(context)  # @todo If user is taskqueue (as is expected to be) how do we handle it here?
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     mail.send_mail(context.input['sender'], context.input['recipient'],
                    context.input['subject'], context.input['body'])
   
@@ -313,7 +327,8 @@ class MailNotify(Template):
               'recipient': [reciever._primary_email for reciever in recievers],
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
-              'subject': render_template(self.message_subject, template_values)}
+              'subject': render_template(self.message_subject, template_values),
+              'caller_entity': entity.key.urlsafe()}
       recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
       data_copy = data.copy()
       del data_copy['recipient']
@@ -322,7 +337,7 @@ class MailNotify(Template):
         if recipients:
           new_data = data_copy.copy()
           new_data['recipient'] = recipients
-          context.callback.payloads.append(('notify', new_data))
+          context.callback.payloads.append(('send', new_data))
 
 
 class HttpNotify(Template):
@@ -413,7 +428,8 @@ class HttpNotify(Template):
         'recipient': ndb.SuperStringProperty(required=True),
         'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True)
+        'body': ndb.SuperTextProperty(required=True),
+        'caller_entity': ndb.SuperKeyProperty(required=True)
         }
       )
     }
@@ -474,7 +490,14 @@ class HttpNotify(Template):
     cruds.Engine.read_records(context)
   
   @classmethod
-  def send(cls, context):  # @todo Where is rule engine implementation?
+  def send(cls, context):
+    caller_entity_key = context.input.get('caller_entity')
+    caller_entity = caller_entity_key.get()
+    entity = cls(namespace=caller_entity.key_namespace)
+    context.rule.entity = entity
+    rule.Engine.run(context)  # @todo If user is taskqueue (as is expected to be) how do we handle it here?
+    if not rule.executable(context):
+      raise rule.ActionDenied(context)
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
   
   def run(self, context, user, entity):
@@ -488,5 +511,6 @@ class HttpNotify(Template):
               'recipient': self.message_reciever,
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
-              'subject': render_template(self.message_subject, template_values)}
-      context.callback.payloads.append(('notify', data))
+              'subject': render_template(self.message_subject, template_values),
+              'caller_entity': entity.key.urlsafe()}
+      context.callback.payloads.append(('send', data))
