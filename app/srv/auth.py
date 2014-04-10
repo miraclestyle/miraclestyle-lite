@@ -70,35 +70,34 @@ class User(ndb.BaseExpando):
     '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True)
     }
   
-  # 0 login
-  # 1 update
-  # 2 sudo
-  # 3 logout
-  # 4 read_domains
-  # 5 read records
-  # 6 read
-  # 7 search
- 
   _global_role = rule.GlobalRole(
     permissions=[
       rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True,
                             "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
-      rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True,
-                            "context.rule.entity.key == context.auth.user.key and not context.rule.entity._is_guest"),
-      rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), False, "not context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "not context.rule.entity._is_guest"),
-      rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "not context.rule.entity._is_guest"),
-      rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True,
+                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
       rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True,
+                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
+      rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True,
+                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
+      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True,
+                           "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
+      rule.FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
+                           "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
+      # User is unit of administration, hence root admins need control over it!
+      # Root admins can always: read user; search for users (exclusively); 
+      # read users history (exclusively); perform sudo operations (exclusively).
+      rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True,
                             "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
-      rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.FieldPermission('0', 'identities', True, True, "True"),  # User can change identities.
-      # Expose these fields by default.
-      rule.FieldPermission('0', ['created', 'updated', 'state', '_primary_email'], False, True, "True"),
-      rule.FieldPermission('0', '_records', True, True, "True"),
-      rule.FieldPermission('0', '_records.note', False, False, "not context.auth.user._root_admin"),
-      rule.FieldPermission('0', '_records.note', True, True, "context.auth.user._root_admin")
+      rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), False, "not context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), False, "not context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user._root_admin"),
+      rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), False, "not context.auth.user._root_admin"),
+      rule.FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
+                                 'ip_address', '_primary_email', '_records'], False, True, "context.auth.user._root_admin")
+      # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
       ]
     )
   
@@ -111,35 +110,17 @@ class User(ndb.BaseExpando):
         'error': ndb.SuperStringProperty()
         }
       ),
+    'read': event.Action(id='0-1', arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
     'update': event.Action(
-      id='0-1',
+      id='0-2',
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'primary_email': ndb.SuperStringProperty(),
         'disassociate': ndb.SuperStringProperty()
         }
       ),
-    'sudo': event.Action(
-      id='0-2',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
-        'message': ndb.SuperStringProperty(required=True),
-        'note': ndb.SuperStringProperty()
-        }
-      ),
-    'logout': event.Action(id='0-3', arguments={'csrf': ndb.SuperStringProperty(required=True)}),
-    'read_domains': event.Action(id='0-4'),
-    'read_records': event.Action(
-      id='0-5',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'next_cursor': ndb.SuperStringProperty()
-        }
-      ),
-    'read': event.Action(id='0-6', arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
     'search': event.Action(
-      id='0-7',
+      id='0-3',
       arguments={
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
@@ -169,7 +150,25 @@ class User(ndb.BaseExpando):
           ),
         'next_cursor': ndb.SuperStringProperty()
         }
-      )
+      ),
+    'read_records': event.Action(
+      id='0-4',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'sudo': event.Action(
+      id='0-5',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
+        'message': ndb.SuperStringProperty(required=True),
+        'note': ndb.SuperStringProperty()
+        }
+      ),
+    'logout': event.Action(id='0-6', arguments={'csrf': ndb.SuperStringProperty(required=True)}),
+    'read_domains': event.Action(id='0-7')
     }
   
   def get_output(self):
@@ -509,98 +508,69 @@ class Domain(ndb.BaseExpando):
     '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True)
     }
   
-  # 0 create
-  # 1 suspend
-  # 2 activate
-  # 3 sudo
-  # 4 log message
-  # 6 update
-  # 7 read
-  # 8 prepare
-  # 9 read records
-  # 10 search
-  
   _global_role = rule.GlobalRole(
     permissions=[
-      # is_guest check is not needed on other actions because it requires a loaded domain which will be evaluated with roles.
-      rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True, "not context.auth.user._is_guest"),
-      rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), False,
+      rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True,
+                            "not context.auth.user._is_guest"),
+      rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), True,
+                            "not context.auth.user._is_guest"),
+      rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False,
+                            "context.rule.entity.state != 'active'"),
+      rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False,
+                            "context.rule.entity.state != 'active'"),
+      rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), False,
                             "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
-      rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False, "not context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False, "not context.rule.entity.state == 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True, "not context.auth.user._is_guest"),
-      rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-10').urlsafe(), False, "not context.auth.user._root_admin"),
-      # All fields that are returned by get_fields() have writable and visible set to true upon domain creation.
-      rule.FieldPermission('6', '_records.note', False, False, "not context.auth.user._root_admin"),
-      rule.FieldPermission('6', '_records.note', False, True, "context.auth.user._root_admin")
+      rule.FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
+                           "context.rule.entity.state != 'active'"),
+      rule.FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
+      # Domain is unit of administration, hence root admins need control over it!
+      # Root admins can always: read domain; search for domains (exclusively); 
+      # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
+      rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), True,
+                            "context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), True,
+                            "context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False,
+                            "not context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True,
+                            "context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True,
+                            "context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), False,
+                            "not context.auth.user._root_admin"),
+      rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True,
+                            "context.auth.user._root_admin"),
+      rule.FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
+                                 '_primary_contact_email'], False, True, "context.auth.user._root_admin"),
+      rule.FieldPermission('6', ['_records.note'], True, True,
+                           "context.auth.user._root_admin"),
+      rule.FieldPermission('6', ['_records.note'], False, False,
+                           "not context.auth.user._root_admin")
+      # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
       ]
     )
   
   _actions = {
+    'prepare': event.Action(id='6-0', arguments={'upload_url': ndb.SuperStringProperty(required=True)}),
     'create': event.Action(
-      id='6-0',
+      id='6-1',
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
         'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True)
         }
       ),
+    'read': event.Action(id='6-2', arguments={'key': ndb.SuperKeyProperty(kind='6', required=True)}),
     'update': event.Action(
-      id='6-6',
+      id='6-3',
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
         }
       ),
-    'suspend': event.Action(
-      id='6-1',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True)
-        }
-      ),
-    'activate': event.Action(
-      id='6-2',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True)
-        }
-      ),
-    'sudo': event.Action(
-      id='6-3',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty()
-        }
-      ),
-    'log_message': event.Action(
-      id='6-4',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty()
-        }
-      ),
-    'read': event.Action(id='6-7', arguments={'key': ndb.SuperKeyProperty(kind='6', required=True)}),
-    'prepare': event.Action(id='6-8', arguments={'upload_url': ndb.SuperStringProperty(required=True)}),
-    'read_records': event.Action(
-      id='6-9',
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'next_cursor': ndb.SuperStringProperty()
-        }
-      ),
     'search': event.Action(
-      id='6-10',
+      id='6-4',
       arguments={
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
@@ -629,6 +599,44 @@ class Domain(ndb.BaseExpando):
             },
           ),
         'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'read_records': event.Action(
+      id='6-5',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        }
+      ),
+    'suspend': event.Action(
+      id='6-6',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        }
+      ),
+    'activate': event.Action(
+      id='6-7',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        }
+      ),
+    'sudo': event.Action(
+      id='6-8',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty()
+        }
+      ),
+    'log_message': event.Action(
+      id='6-9',
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty()
         }
       )
     }
