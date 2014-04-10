@@ -271,7 +271,7 @@ class DomainSetup(Setup):
                                          message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                          message_recievers=self.create_domain_notify_message_recievers)
        
-       custom_notify.run(domain, self.context.auth.user, self.context)
+       custom_notify.run(self.context, self.context.auth.user, domain)
        
        callback.Engine.run(self.context)
        
