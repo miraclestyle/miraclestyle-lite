@@ -79,14 +79,14 @@ def _structured_property_format(prop, value):
     value = [value]
   fields = prop.get_model_fields()
   for v in value:
-    vkey = None
+    v_key = None
     if v.get('key'):
-      vkey = Key(urlsafe=v.get('key'))
+      v_key = Key(urlsafe=v.get('key'))
     _structured_property_field_format(fields, v)  # Not sure if this function's code should be embeded here?
     entity = prop._modelclass(**v)
-    if vkey:
-       entity._key = vkey
-    out.append(entity)
+    if v_key:
+      entity._key = v_key
+      out.append(entity)
   value = out
   if not prop._repeated:
     try:
@@ -101,7 +101,6 @@ def _structured_image_property_format(prop, value):
   
   """
   value = _property_value(prop, value)
-  
   if not prop._repeated:
     blobs = [value]
   else:
@@ -584,7 +583,6 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def format(self, value):
     value = _property_value(self, value)
-    
     return value
 
 
@@ -758,7 +756,7 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
           blobs.remove(val)
           value_.append(blobstore.BlobInfo(val))
       value = value_
-           
+    
     for blob in blobs:
       info = blobstore.parse_file_info(blob)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')
