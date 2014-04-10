@@ -865,7 +865,7 @@ class DomainUser(ndb.BaseModel):
         context.callback.payloads.append(('notify',
                                           {'action_key': 'initiate',
                                            'action_model': '61',
-                                           'entity_key': entity.key.urlsafe()}))
+                                           'caller_entity': entity.key.urlsafe()}))
         callback.Engine.run(context)
         context.output['entity'] = entity
       else:
@@ -896,7 +896,7 @@ class DomainUser(ndb.BaseModel):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       context.output['entity'] = entity
     
@@ -926,7 +926,7 @@ class DomainUser(ndb.BaseModel):
       context.callback.payloads.append(('notify',
                                         {'action_key': 'initiate',
                                          'action_model': '61',
-                                         'entity_key': entity.key.urlsafe()}))
+                                         'caller_entity': entity.key.urlsafe()}))
       callback.Engine.run(context)
       context.output['entity'] = entity
       context.output['domain'] = domain
