@@ -23,7 +23,7 @@ class InputError(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, notify, cruds  # We do imports here to avoid import collision!
+    from app.srv import callback, auth, log, rule, cruds  # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.action = None
@@ -47,7 +47,7 @@ class Engine:
   @classmethod
   def get_schema(cls):
     from app import domain, etc, opt
-    from app.srv import auth, blob, callback, event, log, nav, notify, rule, setup
+    from app.srv import auth, blob, callback, event, log, nav, rule, setup
     kinds = ndb.Model._kind_map
     return kinds
   
