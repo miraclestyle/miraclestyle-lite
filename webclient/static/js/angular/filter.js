@@ -84,6 +84,36 @@ MainApp.filter('bool', function () {
     return out;
   };
 })
+.filter('output', ['dateFilter', '$rootScope', function (dateFilter, $rootScope) {
+	
+  return function (obj, key, args) {
+  	
+  	var input = obj[key];
+    
+    if (obj['kind'])
+    {
+    	
+    	var objinfo = KINDS.get(obj['kind']);
+    	
+    	var ttype = objinfo['fields'][key];
+    	
+    	if (ttype)
+    	{
+    		if (ttype['type'] == 'SuperDateTimeProperty')
+    		{
+    			var date = new Date(input);
+    			
+    			return dateFilter(date, $rootScope.DATE_FULL);
+    		}
+    	}
+    	
+    }
+  
+    return input;
+    
+  };
+  
+}])
 .filter('property', function () {
   return function (array, property) {
     var newArray = [];

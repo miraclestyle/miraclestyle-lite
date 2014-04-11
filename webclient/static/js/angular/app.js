@@ -1,5 +1,3 @@
-handle_data_types({'entity' : current_user});
-handle_data_types({'entity' : initdata});
 
 angular.module('app.ui',
 	  [
@@ -19,8 +17,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
   function($httpProvider, $locationProvider) {
   	 
      $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-     $httpProvider.defaults.transformResponse.push(handle_data_types);
- 
+  
      $locationProvider.hashPrefix('!');
      
 	 $locationProvider.html5Mode(true);
@@ -453,6 +450,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	};
 
         return {
+        	update_entity : function ($scope, data)
+        	{
+        		update($scope.entity, $scope.live_entity, data['entity']);
+        	 
+        		$scope.rule.update(data['entity']);
+        		
+        		if ('rule' in $scope.live_entity)
+        		{
+        			$scope.live_entity.rule.update(data['entity']);
+        		}
+        		
+        		if ('rule' in $scope.entity)
+        		{
+        			$scope.entity.rule.update(data['entity']);
+        		}
+        	},
             create: function (options) {
             
                 return this.manage(true, options);
@@ -564,8 +577,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 Endpoint.post(action, options['kind'], $scope.entity)
                                 .success(function (data) {
 
-                                        update(entity, $scope.entity, data['entity']);
-                                        $scope.rule.update(data['entity']);
+                                        that.update_entity($scope, data);
                                         
                                         $scope.resolve_complete(entity);
                                         

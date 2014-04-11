@@ -16,7 +16,7 @@
 					</td>
 				</tr>
 				<tr ng-repeat="log in logs">
-					<td>{{log.logged|date:DATE_FULL}}</td>
+					<td>{{log|output:'logged'}}</td>
 					<td>{{log._agent}}</td>
 					<td>{{log._action}}</td>
 				</tr>

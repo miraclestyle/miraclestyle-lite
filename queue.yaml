@@ -12,10 +12,10 @@ queue:
   #   task_retry_limit: 7
   #   task_age_limit: 2d
   #target:
- 
-- name: notify-send
+
+- name: send
   rate: 20/s
-  
+
 - name: io
   rate: 20/s
   

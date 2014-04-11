@@ -158,5 +158,18 @@ strong, b
 {
 	float:left;
 	margin-right:10px;
-	margin-bottom:10px;
+	margin-bottom:20px;
+}
+
+.catalog-image .img
+{
+	
+	display: block;
+	margin-bottom: 10px;
+	max-width:240px;
+	height:auto;
+}
+.text-muted
+{
+	color:gray;
 }

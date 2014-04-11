@@ -7,8 +7,8 @@
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
  
-<div accordion>
-   <div is-open="menu.isOpen" accordion-group heading="General">
+<div ng-init="isOpen=true" accordion>
+   <div is-open="isOpen" accordion-group heading="General">
   
     <div class="form-control">
 		<label class="form-label">Name</label>
@@ -17,6 +17,29 @@
 				 <input name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
 			</div>
 		</div>
+		
+		
+		<label class="form-label">Publish Date</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input datepicker-options="datepickOptions" 
+				 		datepicker-popup="{{DATE_FULL}}" name="publish_date" 
+				 		ng-required="rule.input[action].publish_date.required" 
+				 		class="text-input" type="text" ng-model="entity.publish_date" />
+			</div>
+		</div>
+		
+		
+		<label class="form-label">Discontinue Date</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input datepicker-options="datepickOptions" 
+				 		datepicker-popup="{{DATE_FULL}}" name="discontinue_date"
+				 	    ng-required="rule.input[action].discontinue_date.required" 
+				 	    class="text-input" type="text" ng-model="entity.discontinue_date" />
+			</div>
+		</div>
+		
 	</div>
 	
 	</div>
@@ -26,16 +49,19 @@
 		  <div class="pull-right">
 		  <button ng-click="addProducts()" type="button" class="button">Add Products</button>	
 		  <div class="button fake-button">
-		  	 <span>Add Files</span>
-		  	 <input class="upload" name="images" multiple ng-change="addFiles($event)" type="file" ng-model="entity._supplied_filename" />
+		  	 <span>Add Images</span>
+		  	 <input class="upload" name="images" multiple ng-change="addFiles()" type="file" ng-model="entity._supplied_filename" />
 		  </div>
 		  </div>
 		  
 		</div>
 		
+		<div ng-show="$isUploading">Images are uploading... please wait...</div>
+		
 		<div class="clearfix">
 		<div ng-repeat="catalog_image in entity._images" class="catalog-image">
-			<img ng-src="{{catalog_image._image_240}}" />
+			<img class="img" ng-src="{{catalog_image._image_240}}" />
+			<button type="button" class="button" ng-click="removeCatalogImage(catalog_image)">Remove</button>
 		</div>
 		</div>
 	</div>
@@ -51,7 +77,19 @@
 
 
 <div class="modal-footer">
-     
+    
+    <button ng-disabled="$isUploading" type="button" ng-click="publish()" ng-show="rule.action.publish && (action == 'update')" busy class="button">
+		Publish
+	</button>
+	
+	<button ng-disabled="$isUploading" type="button" ng-click="discontinue()" ng-show="rule.action.discontinue && (action == 'update')" busy class="button">
+		Discontinue
+	</button>
+	
+	<button ng-disabled="$isUploading" type="button" ng-click="lock()" ng-show="rule.action.lock && (action == 'update')" busy class="button">
+		Lock
+	</button>
+	 
 	<button type="button" ng-click="save()" ng-show="rule.action.update || (rule.action.create && action == 'create')" ng-disabled="!manage_catalog.$valid || $isUploading" busy class="button">
 		Save
 	</button>

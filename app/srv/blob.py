@@ -55,10 +55,12 @@ class Manager():
   
   @classmethod
   def unused_blobs(cls, blob_keys):
+    """Marks a key or a list of keys for deletation"""
     return cls.field_storage_unused_blobs(blob_keys)
   
   @classmethod
   def used_blobs(cls, blob_keys):
+    """Marks a key or a list of keys to not be deleted"""
     unused_blob_keys = cls.get_unused_blobs()
     if not isinstance(blob_keys, (list, tuple)):
       blob_keys = [blob_keys]
@@ -69,6 +71,7 @@ class Manager():
   
   @classmethod
   def field_storage_used_blobs(cls, field_storages):
+    """Internal helper for structured properties that handle uploads"""
     unused_blob_keys = cls.get_unused_blobs()
     blob_keys = cls.parse_blob_keys(field_storages)
     for blob_key in blob_keys:
@@ -77,12 +80,14 @@ class Manager():
   
   @classmethod
   def field_storage_unused_blobs(cls, field_storages):
+    """Internal helper for structured properties that handle uploads"""
     unused_blob_keys = cls.get_unused_blobs()
     unused_blob_keys.extend(cls.parse_blob_keys(field_storages))
     memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, unused_blob_keys)
   
   @classmethod
   def delete_unused_blobs(cls):
+    """This functon must be always called last in the application execution."""
     unused_blob_keys = cls.get_unused_blobs()
     if len(unused_blob_keys):
       blobstore.delete(unused_blob_keys)

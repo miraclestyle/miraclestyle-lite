@@ -229,7 +229,7 @@ class Catalog(ndb.BaseExpando):
         context.callback.payloads.append(('notify',
                                             {'action_key': 'initiate',
                                              'action_model': '61',
-                                             'entity_key': entity.key.urlsafe()}))
+                                             'caller_entity': entity.key.urlsafe()}))
         callback.Engine.run(context)
       
       transaction()
@@ -286,7 +286,9 @@ class Catalog(ndb.BaseExpando):
           
           if len(delete_catalog_keys):
             ndb.delete_multi(delete_catalog_keys)
-               # blob manager will delete the images
+            # blob manager will delete the images..
+            # we could use the taskqueue to delete the files, but there is a problem regarding errors that occurr prior to
+            # calling the actuall callback that will delete the unused blobs  
             blob.Manager.unused_blobs(delete_catalog_image_keys)
                  
           context.log.entities.append((entity, ))
@@ -296,7 +298,7 @@ class Catalog(ndb.BaseExpando):
           context.callback.payloads.append(('notify',
                                               {'action_key': 'initiate',
                                                'action_model': '61',
-                                               'entity_key': entity.key.urlsafe()}))
+                                               'caller_entity': entity.key.urlsafe()}))
           callback.Engine.run(context)
          
        transaction()
@@ -324,7 +326,7 @@ class Catalog(ndb.BaseExpando):
           context.callback.payloads.append(('notify',
                                             {'action_key': 'initiate',
                                              'action_model': '61',
-                                             'entity_key': entity.key.urlsafe()}))
+                                             'caller_entity': entity.key.urlsafe()}))
           callback.Engine.run(context)
           rule.read(entity)
           context.output['entity'] = entity
@@ -354,7 +356,7 @@ class Catalog(ndb.BaseExpando):
           context.callback.payloads.append(('notify',
                                             {'action_key': 'initiate',
                                              'action_model': '61',
-                                             'entity_key': entity.key.urlsafe()}))
+                                             'caller_entity': entity.key.urlsafe()}))
           callback.Engine.run(context)
           rule.read(entity)
           context.output['entity'] = entity
@@ -387,7 +389,7 @@ class Catalog(ndb.BaseExpando):
           context.callback.payloads.append(('notify',
                                             {'action_key': 'initiate',
                                              'action_model': '61',
-                                             'entity_key': entity.key.urlsafe()}))
+                                             'caller_entity': entity.key.urlsafe()}))
           callback.Engine.run(context)
           rule.read(entity)
           context.output['entity'] = entity
@@ -415,7 +417,7 @@ class Catalog(ndb.BaseExpando):
         context.callback.payloads.append(('notify',
                                           {'action_key': 'initiate',
                                            'action_model': '61',
-                                           'entity_key': entity.key.urlsafe()}))
+                                           'caller_entity': entity.key.urlsafe()}))
         callback.Engine.run(context)
         rule.read(entity)
         context.output['entity'] = entity

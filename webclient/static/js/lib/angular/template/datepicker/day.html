@@ -1,9 +1,13 @@
 <table>
   <thead>
     <tr>
-      <th><button type="button" class="btn btn-default btn-sm pull-left" ng-click="move(-1)"><i class="glyphicon glyphicon-chevron-left"></i></button></th>
-      <th colspan="{{5 + showWeeks}}"><button type="button" class="btn btn-default btn-sm btn-block" ng-click="toggleMode()"><strong>{{title}}</strong></button></th>
-      <th><button type="button" class="btn btn-default btn-sm pull-right" ng-click="move(1)"><i class="glyphicon glyphicon-chevron-right"></i></button></th>
+      <th><button type="button" class="button button-sm2  button-block pull-left" ng-click="move(-1)">
+      	   ←
+          </button></th>
+      <th colspan="{{5 + showWeeks}}"><button type="button" class="button btn-sm2 button-block" ng-click="toggleMode()"><strong>{{title}}</strong></button></th>
+      <th><button type="button" class="button button-sm2 button-block pull-right" ng-click="move(1)">
+      	  →
+     	 </button></th>
     </tr>
     <tr>
       <th ng-show="showWeeks" class="text-center"></th>
@@ -14,7 +18,7 @@
     <tr ng-repeat="row in rows track by $index">
       <td ng-show="showWeeks" class="text-center"><small><em>{{ weekNumbers[$index] }}</em></small></td>
       <td ng-repeat="dt in row track by dt.date" class="text-center">
-        <button type="button" style="width:100%;" class="btn btn-default btn-sm" ng-class="{'btn-info': dt.selected}" ng-click="select(dt.date)" ng-disabled="dt.disabled"><span ng-class="{'text-muted': dt.secondary, 'text-info': dt.current}">{{dt.label}}</span></button>
+        <button type="button" style="width:100%;" class="button button-sm" ng-class="{'button-active': dt.selected}" ng-click="select(dt.date)" ng-disabled="dt.disabled"><span ng-class="{'text-muted': dt.secondary, 'text-info': dt.current}">{{dt.label}}</span></button>
       </td>
     </tr>
   </tbody>

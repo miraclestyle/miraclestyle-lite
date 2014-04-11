@@ -1,10 +1,14 @@
-MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',
 
-    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+    function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
+    	
+    	
+    	var kind = '35';
     	  
         var scope = {
-        	 'menu' : {
-        	 	'isOpen' : true,
+        	 'datepickOptions' : {
+        	 	'showWeeks' : false,
+        	 	
         	 },
         	 'form_info' : {
         	 	'action' : Endpoint.url
@@ -13,11 +17,54 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 {
         	 	update(this.entity, data['entity']);
         	 },
-        	 'addFiles' : function ($event)
+        	 'removeCatalogImage' : function (catalog_image)
+        	 {
+        	 	this.entity._images.remove(catalog_image);
+        	 },
+        	 'publish' : function ()
+        	 {
+        	 	 var that = this;
+        	 	 
+        	 	 Confirm.sure(function () {
+        	 	 	Endpoint.post('publish', kind, that.entity).success(function (data)
+	        	 	{
+	        	 	    EntityEditor.update_entity(that, data);	
+	        	 	});
+        	 	 });
+        	 	
+        	 },
+        	 'discontinue' : function ()
+        	 {
+        	 	 var that = this;
+        	 	 
+        	 	 Confirm.sure(function () {
+        	 	 	Endpoint.post('discontinue', kind, that.entity).success(function (data)
+	        	 	{
+	        	 	    EntityEditor.update_entity(that, data);	
+	        	 	});
+        	 	 });
+        	 	
+        	 },
+        	 
+        	 
+             'lock' : function ()
+        	 {
+        	 	 var that = this;
+        	 	 
+        	 	 Confirm.sure(function () {
+        	 	 	Endpoint.post('lock', kind, that.entity).success(function (data)
+	        	 	{
+	        	 	    EntityEditor.update_entity(that, data);	
+	        	 	});
+        	 	 });
+        	 	
+        	 },
+        	 
+        	 'addFiles' : function ()
         	 {
         	 	  var that = this;
-      
-        	 	  Endpoint.post('upload_images', '35', {'upload_url' : Endpoint.url}).success(function (data) {
+         
+        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url}).success(function (data) {
         	 	  	   that.form_info.action = data.upload_url;
         	 	  	   
         	 	  	   $('form[name="manage_catalog"]').attr('action', that.form_info.action).trigger('submit'); // hack
@@ -29,10 +76,9 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         return {
  
             create: function (domain_key, complete) {
-             
-            	  
+              
                return EntityEditor.create({
-                	 'kind' : '35',
+                	 'kind' : kind,
                 	 'entity' : {},
                 	 'scope' : scope,
                 	 'handle' : function (data)
@@ -48,10 +94,9 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 
             },
             remove : function (entity, complete)
-            {
-               
+            { 
                return EntityEditor.remove({
-               	  'kind' : '35',
+               	  'kind' : kind,
                	  'entity' : entity,
                	  'complete' : complete,
                });
@@ -61,7 +106,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             {
              
                 return EntityEditor.update({
-                	 'kind' : '35',
+                	 'kind' : kind,
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)

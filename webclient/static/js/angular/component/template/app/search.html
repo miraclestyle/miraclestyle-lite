@@ -12,7 +12,7 @@
 			<tbody>
 				<tr ng-repeat="entity in search.entities">
 					<td ng-repeat="field in fields">
-						 {{entity[field.key]}}
+						 {{entity|output:field.key}}
 					</td>
 	 
 					<td class="text-right">

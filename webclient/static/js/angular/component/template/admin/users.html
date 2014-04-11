@@ -15,8 +15,8 @@
 			<tbody>
 				<tr ng-repeat="usr in search.entities">
 					<td>{{usr.id}}</td>
-					<td>{{usr.created|date:DATE_FULL}}</td>
-					<td>{{usr.updated|date:DATE_FULL}}</td>
+					<td>{{usr|output:'created'}}</td>
+					<td>{{usr|output:'updated'}}</td>
 					<td>{{usr.state}}</td>
 					<td>{{usr._primary_email}}</td>
 					<td>

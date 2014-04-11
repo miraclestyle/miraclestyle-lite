@@ -17,8 +17,8 @@
 				<tr ng-repeat="app in search.entities">
 					<td>{{app.id}}</td>
 					<td>{{app.name}}</td>
-					<td>{{app.created|date:DATE_FULL}}</td>
-					<td>{{app.updated|date:DATE_FULL}}</td>
+					<td>{{app|output:'created'}}</td>
+					<td>{{app|output:'updated'}}</td>
 					<td>{{app.state}}</td>
 					<td>{{app._primary_contact_email}}</td>
 					<td>

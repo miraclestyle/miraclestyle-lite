@@ -10,7 +10,8 @@ TEMPLATE_CACHE = 0
 
 SESSION_USER_KEY = 'usr'
 
-ANGULAR_MODULES = ['router', 
+ANGULAR_MODULES = ['underscore',
+                   'router', 
                    'ngStorage', 
                    'ngUpload',
                    'ngAnimate',
@@ -26,6 +27,7 @@ ANGULAR_MODULES = ['router',
                    'checklist',
                    'position',
                    'datepicker',
+                   
                   ]
 
 ANGULAR_COMPONENTS = ['home',

@@ -22,9 +22,8 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
          	{
          		var that = this;
          		Endpoint.post('prepare', this.options['kind'], this.entity).success(function (data) {
-         			update(that.entity, data.entity);
-         			update(that.live_entity, data.entity);
-         			that.rule.update(data.entity);
+         			
+         			EntityEditor.update_entity(that, data);
          			
          			that.roles = data.roles;
 			        that.users = data.users;

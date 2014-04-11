@@ -1,5 +1,14 @@
+KINDS._friendlyActionName = {};
 KINDS.friendlyActionName = function(kind, action_key)
 {
+	/*
+	var match = kind + '.' + action_key;
+	
+	if (match in this._friendlyActionName)
+	{
+		return this._friendlyActionName[match];
+	}*/
+	
 	var info = this.get(kind);
 	var actions = info['actions'];
 	var ra = null;
@@ -16,10 +25,22 @@ KINDS.friendlyActionName = function(kind, action_key)
 		}
 	}
 	
+	/*
+	this._friendlyActionName[match] = ra;
+	*/
 	return ra;
 };
+
+//KINDS._get = {};
 KINDS.get = function (kind_id)
 {
+   /*
+   if (kind_id in this._get)
+   {
+ 
+   	  return this._get[kind_id];
+   }*/
+	
    var kind = this.info[kind_id];
    var fields = {};
    
@@ -30,10 +51,14 @@ KINDS.get = function (kind_id)
    		}
    });
    
-   return {
+   var data = {
    	  'actions' : kind['_actions'],
    	  'fields' : fields,
    };
+   /*
+   this._get[kind_id] = data;
+   */
+   return data;
 };
 
 FRIENDLY_KIND_NAMES = {
@@ -102,61 +127,6 @@ var use_init = function (key, fun)
 	
 };
 
-var handle_data_types = function (response)
-{
- 
-  	 	var formatter = {'created' : Date, 'updated' : Date, 'logged' : Date};
-  	 	 
-  	 	var do_format = function (entity) {
-  	 				
-			if (angular.isObject(entity))
-			{
-				var _recursive = function (entity) {
-					
-					angular.forEach(entity, function (value, key) {
-						if (key in formatter)
-						{
-							if (angular.isObject(value))
-							{
-								_recursive(value);
-							}
-							else
-							{
-								entity[key] = new formatter[key](value);
-							}
-							
-							
-						}
-					 
-					});
-				
-				};
-				
-				_recursive(entity);
-			}
-			
-  	 	};
-  	 	// this is probably just temporary because we will need more robust transformer
-  	 	if (angular.isObject(response))
-  	 	{
- 
-  	 		if ('entities' in response)
-  	 		{ 
-  	 			angular.forEach(response.entities, do_format);
- 
-  	 		}
-  	 		
-  	 		if ('entity' in response)
-  	 		{ 
-  	 			do_format(response.entity);
- 
-  	 		}
-  	 		 
-  	 	}
-  	 	 
-  	 	return response;
-};
-
 function ui_template(file)
 {
 	return '/webclient/static/js/lib/angular/template/' + file;
@@ -169,6 +139,10 @@ function logic_template(file)
 function update()
 { 
  
+    /**
+     * Updates a dict(s) based on last argument provided in argument list
+     */
+    
 	var objects = [];
 	angular.forEach(arguments, function (value) {
 		objects.push(value);
@@ -205,6 +179,28 @@ Array.prototype.remove = function (val)
   	this.splice(index,1);  
   	
   	return this;
+};
+
+Array.prototype.contains = function (value, all)
+{
+	if (angular.isArray(value))
+	{
+		var matches = [];
+		
+		angular.forEach(value, function (v) {
+			matches.push((this.indexOf(value) > -1));
+		});
+		
+		if (all)
+		{
+			return _.all(matches);
+		}
+		else
+		{
+			return _.some(matches);
+		}
+	}
+	return this.indexOf(value) > -1;
 };
 
 
