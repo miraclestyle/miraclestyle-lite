@@ -8,6 +8,7 @@ angular.module('app.ui',
 	   'app.ui.select2',
 	   'app.ui.position',
 	   'app.ui.datepicker',
+	   'app.ui.sortable',
 	   
 	  ]
 );

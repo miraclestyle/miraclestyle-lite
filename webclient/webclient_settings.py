@@ -27,7 +27,7 @@ ANGULAR_MODULES = ['underscore',
                    'checklist',
                    'position',
                    'datepicker',
-                   
+                   'sortable',
                   ]
 
 ANGULAR_COMPONENTS = ['home',
@@ -41,6 +41,9 @@ ANGULAR_COMPONENTS = ['home',
                       'admin',
                       ]
 
-JQUERY_PLUGINS = ['select2/select2']
+JQUERY_PLUGINS = ['ui', 
+                  'ui-sortable',
+                  'select2/select2'
+                 ]
 
 WEBAPP2_EXTRAS = {}

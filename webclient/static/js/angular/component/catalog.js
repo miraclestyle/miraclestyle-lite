@@ -10,6 +10,12 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 	'showWeeks' : false,
         	 	
         	 },
+        	 'sortableOptions' : {
+        	 	'update' : function (e, u)
+        	 	 {
+        	 	 	console.log(e, u);
+        	 	 }
+        	 },
         	 'form_info' : {
         	 	'action' : Endpoint.url
         	 },
