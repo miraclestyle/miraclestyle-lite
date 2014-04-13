@@ -159,6 +159,8 @@ strong, b
 	float:left;
 	margin-right:10px;
 	margin-bottom:20px;
+	width:240px;
+	height:auto;
 }
 
 .catalog-image .img
@@ -172,4 +174,28 @@ strong, b
 .text-muted
 {
 	color:gray;
+}
+
+.catalog-image-placeholder
+{
+	border:1px dashed #CCC;
+	background:#FAFAFA;
+}
+
+[ui-sortable] > *
+{
+	cursor:move;
+}
+
+.timepicker
+{
+	width:60%;
+}
+
+.timepicker tr td
+{
+	width:auto;
+	padding-right:10px;
+	min-width:none;
+	max-width:none;
 }

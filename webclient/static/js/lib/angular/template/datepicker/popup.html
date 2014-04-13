@@ -1,5 +1,11 @@
 <ul class="dropdown-menu datepicker-dropdown" ng-style="{display: (isOpen && 'block') || 'none', top: position.top+'px', left: position.left+'px'}">
 	<li ng-transclude></li>
+ 	<li>
+ 		<br />
+ 		<div class="form-control timepicker">
+			 <input ng-change="changeTime()" placeholder="Time, example: 22:15:59" name="hour" ng-model="times.str" class="text-input" type="text" />
+		</div>
+ 	</li>
 	<li ng-if="showButtonBar" style="padding:10px 9px 2px">
 		<span class="btn-group">
 			<button type="button" class="button button-sm button-info" ng-click="select('today')">{{ getText('current') }}</button>

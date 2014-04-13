@@ -10,12 +10,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 	'showWeeks' : false,
         	 	
         	 },
-        	 'sortableOptions' : {
-        	 	'update' : function (e, u)
-        	 	 {
-        	 	 	console.log(e, u);
-        	 	 }
-        	 },
+ 
         	 'form_info' : {
         	 	'action' : Endpoint.url
         	 },
@@ -117,6 +112,21 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
+			         	
+			         	var that = this;
+			         	
+			         	this.sortableOptions = {
+			        	 	'forcePlaceholderSize' : true,
+			        	 	'placeholder' : 'catalog-image catalog-image-placeholder',
+			        	 	'stop' : function (e, u)
+			        	 	 {
+			        	 	 	 
+			        	 	 	 angular.forEach(that.entity._images, function (value, i) {
+			        	 	 	 	 value.sequence = i;
+			        	 	 	 });
+			        	 	  
+			        	 	 }
+			        	};
  						 
 			         },
                 	 'complete' : complete,

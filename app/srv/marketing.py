@@ -220,7 +220,11 @@ class Catalog(ndb.BaseExpando):
       @ndb.transactional(xg=True)
       def transaction():
         # population values here...
-        rule.write(entity, {'name' : context.input.get('name')})
+        rule.write(entity, {
+                    'name' : context.input.get('name'), 
+                    'discontinue_date' : context.input.get('discontinue_date'),
+                    'publish_date' : context.input.get('publish_date'),
+                  })
         entity.put()
         context.log.entities.append((entity, ))
         log.Engine.run(context)
@@ -254,9 +258,13 @@ class Catalog(ndb.BaseExpando):
        def transaction():
            
           copy_current_images = copy.copy(entity._images)
+          
+          print context.input
      
           values = {
            'name' : name,
+           'discontinue_date' : context.input.get('discontinue_date'),
+           'publish_date' : context.input.get('publish_date'),
            '_images' : _images
           }
       

@@ -7,6 +7,7 @@ Created on Jul 9, 2013
 
 import decimal
 import cgi
+import datetime
 import importlib
 import json
 
@@ -583,7 +584,21 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def format(self, value):
     value = _property_value(self, value)
-    return value
+    single = False
+    if not self._repeated:
+      value = [value]
+      single = True
+    out = []
+    for val in value:
+       out.append(datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ'))
+    
+    if single:
+      try:
+        return out[0]
+      except IndexError as e:
+        return None
+    else:
+      return out
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
