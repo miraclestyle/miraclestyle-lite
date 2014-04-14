@@ -69,8 +69,16 @@
 	<div ng-show="action != 'create'" accordion-group heading="Embed">
 		 
 	</div>
+	
+	
 	 
 </div>
+
+
+<div ng-show="rule.action.read_records.executable" class="form-control">
+  <div ng-include="logic_template('misc/logs.html')"></div>
+</div>
+	
  
 </div>
 </div>

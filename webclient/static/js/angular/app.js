@@ -32,6 +32,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  
 		this.action = {};
 		this.input = {};
+		
+		this.toJSON = function()
+		{
+			return {};
+		};
   
 		this._action_permission_translate = function (action_name)
 		{

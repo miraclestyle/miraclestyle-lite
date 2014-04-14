@@ -326,13 +326,13 @@ function ($compile, $parse, $document, $position, dateFilter, datepickerPopupCon
       var dateFormat,
           closeOnDateSelection = angular.isDefined(attrs.closeOnDateSelection) ? scope.$parent.$eval(attrs.closeOnDateSelection) : datepickerPopupConfig.closeOnDateSelection,
           appendToBody = angular.isDefined(attrs.datepickerAppendToBody) ? scope.$parent.$eval(attrs.datepickerAppendToBody) : datepickerPopupConfig.appendToBody;
-
+	
       scope.showButtonBar = angular.isDefined(attrs.showButtonBar) ? scope.$parent.$eval(attrs.showButtonBar) : datepickerPopupConfig.showButtonBar;
 
       scope.getText = function( key ) {
         return scope[key + 'Text'] || datepickerPopupConfig[key + 'Text'];
       };
-
+ 
       attrs.$observe('datepickerPopup', function(value) {
           dateFormat = value || datepickerPopupConfig.datepickerPopup;
           ngModel.$render();

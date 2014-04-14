@@ -14,6 +14,8 @@ import os
 
 APPDIR = os.path.dirname(os.path.abspath(__file__))
 
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ' # this format is used for input and output
+
 # This is for key-based encryption we can change before we go into production
 # - however changing this, automatically corrupts data (keys) and renders them unusable and undecryptable
 SALT = u'salt'

@@ -18,7 +18,7 @@ from google.appengine.api import images
 
 import cloudstorage
 
-from app import util
+from app import util, settings
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -590,7 +590,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       single = True
     out = []
     for val in value:
-       out.append(datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ'))
+       out.append(datetime.datetime.strptime(val, settings.DATETIME_FORMAT))
     
     if single:
       try:

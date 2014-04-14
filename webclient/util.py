@@ -9,7 +9,7 @@ import os
 import json
 import datetime
 
-from app import ndb
+from app import ndb, settings
 from webclient import webclient_settings
 
 JINJA_FILTERS = {}
@@ -49,7 +49,7 @@ class JSONEncoderHTML(json.JSONEncoder):
     def default(self, o):
         
         if isinstance(o, datetime.datetime):
-           return o.isoformat()
+           return o.strftime(settings.DATETIME_FORMAT)
         
         if isinstance(o, ndb.Key):
            return o.urlsafe()
