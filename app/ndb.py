@@ -590,8 +590,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       single = True
     out = []
     for val in value:
-       out.append(datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ'))
-    
+      out.append(datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ'))
     if single:
       try:
         return out[0]
