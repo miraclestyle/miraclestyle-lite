@@ -45,6 +45,20 @@ class Journal(ndb.BaseExpando):
   def set_entry_global_role(self, entry):
     if hasattr(self, '_entry_global_role') and entry:
       entry._global_role = self._entry_global_role
+  
+  def _instance_actions(self):
+    journal_actions = Action.query(Action.active == True,
+                                   ancestor=self.key).fetch()
+    actions = {}
+    for action in journal_actions:
+      actions[action.key.urlsafe()] = action
+    return actions
+  
+  def _instance_plugins(self, action_key):
+    plugins = Plugin.query(Plugin.active == True,
+                           Plugin.subscriptions == action_key,
+                           ancestor=self.key).order(Plugin.sequence).fetch()
+    return plugins
 
 
 class CategoryBalance(ndb.BaseExpando):
