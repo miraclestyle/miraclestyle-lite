@@ -14,6 +14,44 @@ from app.lib.safe_eval import safe_eval
  
 class PluginValidationError(Exception):
   pass
+
+class Write(transaction.Plugin):
+  
+  def run(self, journal, context):
+    
+    @ndb.transactional(xg=True)
+    def transaction():
+        group = context.transaction.group
+        if not group:
+           group = Group(namespace=context.auth.domain.key.urlsafe()) # ?
+           group.put()
+        
+        group_key = group.key # - put main key
+        for key, entry in context.transaction.entities.items():
+            entry.set_key(parent=group_key) # parent key for entry
+            entry_key = entry.put()
+            
+            """
+             notice the `_` before `lines` that is because 
+             if you set it without underscore it will be considered as new property in expando
+             so all operations should use the following paradigm:
+             entry._lines = []
+             entry._lines.append(Line(...))
+             etc..
+            """
+            lines = []
+            
+            for line in entry._lines:
+                line.journal = entry.journal
+                line.company = entry.company
+                line.state = entry.state
+                line.date = entry.date
+                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
+                lines.append(line)
+            
+            ndb.put_multi(lines)
+            
+    transaction()
   
 class Location:
   
