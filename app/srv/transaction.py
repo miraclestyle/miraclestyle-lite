@@ -71,23 +71,6 @@ class Journal(ndb.BaseExpando):
          
       return journals
 
-class Plugin(ndb.BasePolyExpando):
-  
-  _kind = 52
-  
-  # ancestor Journal (namespace Domain)
-  # composite index: ancestor:yes - sequence
-  sequence = ndb.SuperIntegerProperty('1', required=True)
-  active = ndb.SuperBooleanProperty('2', default=True)
-  subscriptions = ndb.SuperKeyProperty('3', kind='56', repeated=True)
- 
-  @classmethod
-  def get_local_plugins(cls, journal, context):
-      plugins = cls.query( 
-                          cls.active == True, 
-                          cls.subscriptions == context.action.key,
-                          ancestor=journal.key).order(cls.sequence).fetch()
-      return plugins
 
 # done!
 class CategoryBalance(ndb.BaseExpando):
