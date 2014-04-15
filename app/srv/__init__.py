@@ -1,2 +1,2 @@
 # import all subpackages
-import blob, io, log, auth, event, location, plugins, rule, transaction, uom, notify, callback, setup, nav, marketing, business, product
+import blob, io, log, auth, event, location, rule, uom, notify, callback, setup, nav, marketing, business, product

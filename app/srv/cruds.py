@@ -168,7 +168,9 @@ class Engine():
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    query = model.query(namespace=entity.key_namespace)
+    if hasattr(entity, 'key_namespace'):
+      namespace = entity.key_namespace
+    query = model.query(namespace=namespace)
     search = context.input.get('search')
     if search:
       filters = search.get('filters')

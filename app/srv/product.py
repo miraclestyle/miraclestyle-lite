@@ -93,7 +93,7 @@ class Category(ndb.BaseModel):
                                      event.Action.build_key('17-5').urlsafe(),
                                      event.Action.build_key('17-6').urlsafe(),
                                      event.Action.build_key('17-7').urlsafe(),
-                                     event.Action.build_key('17-8').urlsafe(),], True, 'True'),
+                                     event.Action.build_key('17-8').urlsafe(),], True, 'context.auth.user._root_admin'),
         rule.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True, 'True')
     ]) 
 
@@ -180,6 +180,7 @@ class Category(ndb.BaseModel):
     def create(cls, context):
       values = cls.complete_save(context)
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = cls()
       context.cruds.values = values
       cruds.Engine.create(context)
@@ -188,6 +189,7 @@ class Category(ndb.BaseModel):
     def update(cls, context):
       values = cls.complete_save(context)
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = context.input.get('key').get()
       context.cruds.values = values
       cruds.Engine.update(context)
@@ -195,30 +197,35 @@ class Category(ndb.BaseModel):
     @classmethod
     def delete(cls, context):
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = context.input.get('key').get()
       cruds.Engine.delete(context)
     
     @classmethod
     def search(cls, context):
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = cls()
       cruds.Engine.search(context)
     
     @classmethod
     def read(cls, context):
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = context.input.get('key').get()
       cruds.Engine.read(context)
       
     @classmethod
     def read_records(cls, context):
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = context.input.get('key').get()
       cruds.Engine.read_records(context)
     
     @classmethod
     def prepare(cls, context):
       context.rule.skip_user_roles = True
+      context.cruds.notify = False
       context.cruds.entity = cls()
       cruds.Engine.prepare(context)
       
