@@ -55,7 +55,7 @@ class Catalog(ndb.BaseExpando):
     discontinue_date = ndb.SuperDateTimeProperty('3')# +30 days
     updated = ndb.SuperDateTimeProperty('4', auto_now=True)
     created = ndb.SuperDateTimeProperty('5', auto_now_add=True)
-    state = ndb.SuperStringProperty('6', required=True)
+    state = ndb.SuperStringProperty('6', default='unpublished', required=True)
  
     # Expando
     # cover = blobstore.BlobKeyProperty('8', required=True)# blob ce se implementirati na GCS
@@ -132,12 +132,7 @@ class Catalog(ndb.BaseExpando):
                                   'key'  : ndb.SuperKeyProperty(kind='35', required=True),
                               }
                              ),  
-                
-       'search' : event.Action(id='35-6',
-                              arguments={
-                                  'domain' : ndb.SuperKeyProperty(kind='6', required=True)
-                              }
-                          ),  
+ 
        'update' : event.Action(id='35-7',
                               arguments={
                                  'key'  : ndb.SuperKeyProperty(kind='35', required=True),
@@ -158,12 +153,12 @@ class Catalog(ndb.BaseExpando):
        'read' : event.Action(id='35-9',
                               arguments={
                                   'key'  : ndb.SuperKeyProperty(kind='35', required=True),
-                                  'next' : ndb.SuperIntegerProperty(default=0)
                               }
         ),  
        'read_records' : event.Action(id='35-10',
                               arguments={
                                   'key'  : ndb.SuperKeyProperty(kind='35', required=True),
+                                  'next_cursor': ndb.SuperStringProperty()
                               }
         ),
        'prepare' : event.Action(id='35-11',
@@ -208,37 +203,12 @@ class Catalog(ndb.BaseExpando):
   
     @classmethod
     def create(cls, context):
-      
-      domain_key = context.input.get('domain')
-      entity = cls(namespace=domain_key.urlsafe(), state='unpublished')
-      
-      context.rule.entity = entity
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
-      
-      @ndb.transactional(xg=True)
-      def transaction():
-        # population values here...
-        rule.write(entity, {
-                    'name' : context.input.get('name'), 
-                    'discontinue_date' : context.input.get('discontinue_date'),
-                    'publish_date' : context.input.get('publish_date'),
-                  })
-        entity.put()
-        context.log.entities.append((entity, ))
-        log.Engine.run(context)
-        rule.read(entity)
-        context.output['entity'] = entity
-        context.callback.payloads.append(('notify',
-                                            {'action_key': 'initiate',
-                                             'action_model': '61',
-                                             'caller_entity': entity.key.urlsafe()}))
-        callback.Engine.run(context)
-      
-      transaction()
  
-  
+      context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
+      context.cruds.values = context.input
+      cruds.Engine.create(context)
+    
+    
     @classmethod
     def update(cls, context):
       
@@ -258,9 +228,7 @@ class Catalog(ndb.BaseExpando):
        def transaction():
            
           copy_current_images = copy.copy(entity._images)
-          
-          print context.input
-     
+ 
           values = {
            'name' : name,
            'discontinue_date' : context.input.get('discontinue_date'),
@@ -495,17 +463,14 @@ class Catalog(ndb.BaseExpando):
     @classmethod
     def prepare(cls, context):
       domain_key = context.input.get('domain')
-      context.cruds.domain_key = domain_key
-      context.cruds.model = cls
+      context.cruds.entity = cls(namespace=domain_key.urlsafe())
       cruds.Engine.prepare(context)
  
     @classmethod
     def read(cls, context):
       entity_key = context.input.get('key')
-      next = context.input.get('next')
       entity = entity_key.get()
-      if not context.rule.entity:
-        context.rule.entity = entity
+      context.rule.entity = entity
       rule.Engine.run(context)
       if not rule.executable(context):
         raise rule.ActionDenied(context)
@@ -528,13 +493,13 @@ class Catalog(ndb.BaseExpando):
  
     @classmethod
     def read_records(cls, context):
-      context.cruds.model = cls
+      context.cruds.entity = context.input.get('key').get()
       cruds.Engine.read_records(context)
       
       
     @classmethod
     def search(cls, context):
-      context.cruds.model = cls
-      context.cruds.domain_key = context.input.get('domain')
+      domain_key = context.input.get('domain')
+      context.cruds.entity = cls(namespace=domain_key.urlsafe())
       cruds.Engine.search(context)
     

@@ -624,7 +624,7 @@ class DomainRole(Role):
   
   @classmethod
   def delete(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
   
   @classmethod
@@ -651,39 +651,35 @@ class DomainRole(Role):
   @classmethod
   def create(cls, context):
     values = cls.complete_save(context)
-    context.cruds.domain_key = context.input.get('domain')
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     context.cruds.values = values
     cruds.Engine.create(context)
   
   @classmethod
   def update(cls, context):
     values = cls.complete_save(context)
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     context.cruds.values = values
     cruds.Engine.update(context)
   
   @classmethod
   def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.search(context)
   
   @classmethod
   def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.prepare(context)
   
   @classmethod
   def read(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
 
 
@@ -821,9 +817,7 @@ class DomainUser(ndb.BaseModel):
   
   @classmethod
   def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.prepare(context)
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
@@ -943,26 +937,25 @@ class DomainUser(ndb.BaseModel):
     for role in input_roles:
       if role.key.namespace() == entity.key_namespace:
         roles.append(role.key)
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     context.cruds.values = {'name': context.input.get('name'), 'roles': roles}
     cruds.Engine.update(context)
   
   @classmethod
   def read(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
   
   @classmethod
   def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.search(context)
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod

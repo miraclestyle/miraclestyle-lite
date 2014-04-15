@@ -118,15 +118,12 @@ class Template(ndb.BasePoly):
   
   @classmethod
   def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.search(context)
   
   @classmethod
   def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.prepare(context)
 
 
@@ -248,7 +245,7 @@ class MailNotify(Template):
   
   @classmethod
   def delete(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
   
   @classmethod
@@ -266,23 +263,20 @@ class MailNotify(Template):
   @classmethod
   def create(cls, context):
     values = cls.complete_save(context)
-    context.cruds.domain_key = context.input.get('domain')
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     context.cruds.values = values
     cruds.Engine.create(context)
   
   @classmethod
   def update(cls, context):
     values = cls.complete_save(context)
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     context.cruds.values = values
     cruds.Engine.update(context)
   
   @classmethod
   def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.prepare(context)
     # @ todo This is temporary because we will implement ajax widgets for this.
     context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
@@ -290,7 +284,7 @@ class MailNotify(Template):
   
   @classmethod
   def read(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
     # @ todo This is temporary because we will implement ajax widgets for this.
     context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
@@ -298,7 +292,7 @@ class MailNotify(Template):
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod
@@ -436,7 +430,7 @@ class HttpNotify(Template):
   
   @classmethod
   def delete(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
   
   @classmethod
@@ -454,23 +448,20 @@ class HttpNotify(Template):
   @classmethod
   def create(cls, context):
     values = cls.complete_save(context)
-    context.cruds.domain_key = context.input.get('domain')
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     context.cruds.values = values
     cruds.Engine.create(context)
   
   @classmethod
   def update(cls, context):
     values = cls.complete_save(context)
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     context.cruds.values = values
     cruds.Engine.update(context)
   
   @classmethod
   def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.prepare(context)
     # @ todo This is temporary because we will implement ajax widgets for this.
     context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
@@ -478,7 +469,7 @@ class HttpNotify(Template):
   
   @classmethod
   def read(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
     # @ todo This is temporary because we will implement ajax widgets for this.
     context.output['users'] = rule.DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
@@ -486,7 +477,7 @@ class HttpNotify(Template):
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod

@@ -326,27 +326,27 @@ class User(ndb.BaseExpando):
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
-    context.cruds.model = cls
+    context.cruds.entity = entity
     context.cruds.values = {'identities': identities}
     cruds.Engine.update(context)
   
   @classmethod
   def read_records(cls, context):
     context.rule.skip_user_roles = True
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod
   def read(cls, context):
     context.rule.skip_user_roles = True
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
   
   @classmethod
   def search(cls, context):
     context.rule.entity = context.auth.user
     context.rule.skip_user_roles = True
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.search(context)
   
   @classmethod
@@ -668,7 +668,7 @@ class Domain(ndb.BaseExpando):
       return helper(entities).get_result()
     
     context.cruds.search_entities_callback = mapper
-    context.cruds.model = cls
+    context.cruds.entity = cls()
     cruds.Engine.search(context)
   
   @classmethod
@@ -702,7 +702,7 @@ class Domain(ndb.BaseExpando):
     entity = cls(state='active', primary_contact=context.auth.user.key)
     context.rule.entity = entity
     context.rule.skip_user_roles = True
-    context.cruds.model = cls
+    context.cruds.entity = entity
     cruds.Engine.prepare(context)
     context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
   
@@ -722,13 +722,13 @@ class Domain(ndb.BaseExpando):
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod
   def update(cls, context):
     context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')}  # @todo Logo will be implemented later.
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.update(context)
   
   @classmethod

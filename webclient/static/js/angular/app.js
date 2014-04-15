@@ -458,10 +458,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         return {
         	update_entity : function ($scope, data)
         	{
-        		update($scope.entity, $scope.live_entity, data['entity']);
-        	 
-        		$scope.rule.update(data['entity']);
+        		update($scope.entity, data['entity']);
         		
+        		if ('live_entity' in $scope)
+        		{
+        			update($scope.live_entity, data['entity']);
+        		}
+        		
+        		if ('entity' in $scope)
+        		{
+        			update($scope.entity, data['entity']);
+        		}
+        	    
+        	    if ('rule' in $scope)
+        	    {
+        	    	$scope.rule.update(data['entity']);
+        	    }
+        		 
         		if ('rule' in $scope.live_entity)
         		{
         			$scope.live_entity.rule.update(data['entity']);

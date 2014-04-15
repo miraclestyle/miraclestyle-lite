@@ -8,9 +8,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         var scope = {
         	 'datepickOptions' : {
         	 	'showWeeks' : false,
-        	 	
         	 },
- 
         	 'form_info' : {
         	 	'action' : Endpoint.url
         	 },
@@ -22,45 +20,6 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 {
         	 	this.entity._images.remove(catalog_image);
         	 },
-        	 'publish' : function ()
-        	 {
-        	 	 var that = this;
-        	 	 
-        	 	 Confirm.sure(function () {
-        	 	 	Endpoint.post('publish', kind, that.entity).success(function (data)
-	        	 	{
-	        	 	    EntityEditor.update_entity(that, data);	
-	        	 	});
-        	 	 });
-        	 	
-        	 },
-        	 'discontinue' : function ()
-        	 {
-        	 	 var that = this;
-        	 	 
-        	 	 Confirm.sure(function () {
-        	 	 	Endpoint.post('discontinue', kind, that.entity).success(function (data)
-	        	 	{
-	        	 	    EntityEditor.update_entity(that, data);	
-	        	 	});
-        	 	 });
-        	 	
-        	 },
-        	 
-        	 
-             'lock' : function ()
-        	 {
-        	 	 var that = this;
-        	 	 
-        	 	 Confirm.sure(function () {
-        	 	 	Endpoint.post('lock', kind, that.entity).success(function (data)
-	        	 	{
-	        	 	    EntityEditor.update_entity(that, data);	
-	        	 	});
-        	 	 });
-        	 	
-        	 },
-        	 
         	 'addFiles' : function ()
         	 {
         	 	  var that = this;
@@ -111,10 +70,62 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
-			         {
-			         	
+			         { 
 			         	var that = this;
-			         	
+			         	 
+                        this._do_user_admin = function (entity, action) {
+
+                            var handle = function () {
+
+                                var modalInstance = $modal.open({
+                                    templateUrl: logic_template('catalog/user_admin.html'),
+                                    windowClass: 'modal-medium',
+                                    controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+
+                                        $scope.rule = that.rule;
+                                        $scope.action = action;
+                                        $scope.log = {
+                                            'message': '',
+                                            'key': that.entity['key'],
+                                        };
+
+                                        $scope.save = function () {
+
+                                            Endpoint.post(action, that.entity['kind'], $scope.log)
+                                                .success(function (data) {
+                                                	 
+                                                	EntityEditor.update_entity(that, data);
+                                          
+                                                    $scope.cancel();
+
+                                                });
+
+                                        };
+
+                                        $scope.cancel = function () {
+                                            $modalInstance.dismiss();
+                                        };
+                                    }
+                                });
+
+                            };
+
+                            handle();
+
+                        };
+
+                        this.publish = function () {
+                            this._do_user_admin(this.entity, 'publish');
+                        };
+
+                        this.discontinue = function () {
+                            this._do_user_admin(this.entity, 'discontinue');
+                        };
+                        
+                        this.lock = function () {
+                            this._do_user_admin(this.entity, 'lock');
+                        };
+			         	 
 			         	this.sortableOptions = {
 			        	 	'forcePlaceholderSize' : true,
 			        	 	'placeholder' : 'catalog-image catalog-image-placeholder',

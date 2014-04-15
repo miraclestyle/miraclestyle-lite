@@ -28,6 +28,7 @@ ANGULAR_MODULES = ['underscore',
                    'position',
                    'datepicker',
                    'sortable',
+                   'ngDragDrop',
                   ]
 
 ANGULAR_COMPONENTS = ['home',
@@ -43,7 +44,9 @@ ANGULAR_COMPONENTS = ['home',
 
 JQUERY_PLUGINS = ['ui', 
                   'ui-sortable',
-                  'select2/select2'
+                  'ui-draggable',
+                  'ui-droppable',
+                  'select2/select2',
                  ]
 
 WEBAPP2_EXTRAS = {}

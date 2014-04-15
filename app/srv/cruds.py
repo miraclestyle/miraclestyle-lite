@@ -24,9 +24,8 @@ def get_rule():
 class Context():
   
   def __init__(self):
-    self.model = None
+    self.entity = None
     self.values = {}
-    self.domain_key = None
     self.notify = True
     self.search_entities_callback = None
     self.search_filter_callback = None
@@ -37,12 +36,7 @@ class Engine():
   @classmethod
   def create(cls, context):
     rule = get_rule()
-    model = context.cruds.model
-    if context.cruds.domain_key:
-      domain = context.cruds.domain_key.get()
-      entity = model(namespace=domain.key_namespace)
-    else:
-      entity = model()
+    entity = context.cruds.entity
     if not context.rule.entity:
       context.rule.entity = entity
     rule.Engine.run(context)
@@ -51,7 +45,7 @@ class Engine():
     
     @ndb.transactional(xg=True)
     def transaction():
-      entity.populate(**context.cruds.values)
+      rule.write(entity, context.cruds.values)
       entity.put()
       context.log.entities.append((entity, ))
       log.Engine.run(context)
@@ -110,12 +104,7 @@ class Engine():
   @classmethod
   def prepare(cls, context):
     rule = get_rule()
-    model = context.cruds.model
-    if context.cruds.domain_key:
-      domain = context.cruds.domain_key.get()
-      entity = model(namespace=domain.key_namespace)
-    else:
-      entity = model()
+    entity = context.cruds.entity
     if not context.rule.entity:
       context.rule.entity = entity
     rule.Engine.run(context)
@@ -171,20 +160,15 @@ class Engine():
   @classmethod
   def search(cls, context):
     rule = get_rule()
-    model = context.cruds.model
     namespace = None
-    if context.cruds.domain_key:
-      domain = context.cruds.domain_key.get()
-      entity = model(namespace=domain.key_namespace)
-      namespace = entity.key_namespace
-    else:
-      entity = model()
+    entity = context.cruds.entity
+    model = entity.__class__
     if not context.rule.entity:
       context.rule.entity = entity
     rule.Engine.run(context)
     if not rule.executable(context):
       raise rule.ActionDenied(context)
-    query = model.query(namespace=namespace)
+    query = model.query(namespace=entity.key_namespace)
     search = context.input.get('search')
     if search:
       filters = search.get('filters')

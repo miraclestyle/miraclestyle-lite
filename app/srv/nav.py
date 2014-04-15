@@ -172,8 +172,7 @@ class Widget(ndb.BaseExpando):
     domain_key = context.input.get('domain')
     entity = cls(namespace=domain_key.urlsafe())
     values = cls.complete_save(entity, context)
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=domain_key.urlsafe())
     context.cruds.values = values
     cruds.Engine.create(context)
   
@@ -182,40 +181,39 @@ class Widget(ndb.BaseExpando):
     entity_key = context.input.get('entity_key')
     entity = entity_key.get()
     values = cls.complete_save(entity, context)
-    context.cruds.model = cls
+    context.cruds.entity = entity
     context.cruds.values = values
     cruds.Engine.update(context)
   
   @classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
-    context.cruds.domain_key = domain_key
-    context.cruds.model = cls
+    context.cruds.entity = cls(namespace=domain_key.urlsafe())
     cruds.Engine.prepare(context)
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
   
   @classmethod
   def read(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
   
   @classmethod
   def delete(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
   
   @classmethod
   def search(cls, context):
-    context.cruds.model = cls
-    context.cruds.domain_key = context.input.get('domain')
+    context.cruds.entity = cls
+    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
     cruds.Engine.search(context)
   
   @classmethod
   def read_records(cls, context):
-    context.cruds.model = cls
+    context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)
   
   @classmethod
