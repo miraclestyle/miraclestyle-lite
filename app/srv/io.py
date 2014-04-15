@@ -76,14 +76,17 @@ class Engine:
   @classmethod
   def get_action(cls, context, input):  # @todo Possible changes here, if we optimize action architecutre!
     action_key = input.get('action_key')
-    if hasattr(context.model, '_actions'):
+    if hasattr(context.model, '_instance_actions') and callable(context.model._instance_actions):
+      try:
+        actions = context.model._instance_actions()
+        if action_key in actions:
+          context.action = ndb.Key(urlsafe=action_key).get()
+      except:
+        pass
+    elif hasattr(context.model, '_actions'):
       actions = getattr(context.model, '_actions')
       if action_key in actions:
         context.action = actions[action_key]
-    elif hasattr(context.model, 'get_actions'):
-      actions = context.model.get_actions()
-      if action_key in actions:
-        context.action = ndb.Key(urlsafe=action_key).get()
     if not context.action:
       raise InvalidAction(action_key)
   
@@ -119,10 +122,19 @@ class Engine:
     if execute and callable(execute):
       execute(context)
     else:
-      plugins = context.model.get_plugins(context.action.key)
-      if len(plugins):
-        for plugin in plugins:
-          plugin.run(context)
+      if hasattr(context.model, '_instance_plugins') and callable(context.model._instance_plugins):
+        try:
+          plugins = context.model._instance_plugins(context.action.key)
+          if len(plugins):
+            for plugin in plugins:
+              plugin.run(context)
+        except:
+          pass
+      elif hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
+        plugins = context.model.get_plugins(context.action.key)
+        if len(plugins):
+          for plugin in plugins:
+            plugin.run(context)
   
   @classmethod
   def run(cls, input):
