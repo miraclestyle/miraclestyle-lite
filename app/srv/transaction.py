@@ -2,94 +2,51 @@
 '''
 Created on Dec 17, 2013
 
-@author:  Edis Sehalic (edis.sehalic@gmail.com)
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import collections
 
 from app import ndb
 from app.srv import uom
- 
- 
+
+
 class Context:
   
   def __init__(self, **kwargs):
- 
-      self.group = None
-      self.entities = collections.OrderedDict()
-    
-      
+    self.group = None
+    self.entities = collections.OrderedDict()
+
+
 class Journal(ndb.BaseExpando):
   
   _kind = 49
   
   # root (namespace Domain)
   # key.id() = prefix_<user supplied value>
-  # key.id() = company.id() + '-' + <user supplied value>
-  # key.id defines constraint of unique journal code (<user supplied value> part of the key.id) per company
-  # instead of active prop, there will be state prop, that can handle: draft, active, decommissioned states 
+  # key.id defines constraint of unique journal code (<user supplied value> part of the key.id) per domain.
+  # @todo sequencing counter is missing, and has to be determined how to solve that!
   
   name = ndb.SuperStringProperty('1', required=True)
-  company = ndb.SuperKeyProperty('3', kind='44', required=True)
-  sequence = ndb.SuperIntegerProperty('4', required=True)
-  active = ndb.SuperBooleanProperty('5', default=True)
-  subscriptions = ndb.SuperKeyProperty('6', kind='56', repeated=True)
+  state = ndb.SuperStringProperty('2', required=True, choices=['draft', 'active', 'decommissioned'])
+  entry_fields = ndb.SuperPickleProperty('3', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('4', required=True, compressed=False)
+  plugin_categories = ndb.SuperStringProperty('5', repeated=True)  # @todo Not sure if we will need this?
   
-  entry_fields = ndb.SuperPickleProperty('7', required=True, compressed=False)
-  line_fields = ndb.SuperPickleProperty('8', required=True, compressed=False)
-  plugin_categories = ndb.SuperStringProperty('9', repeated=True)
-   
-  # sequencing counter....
+  def get_kind(self):  # @todo Do we need this?
+    return 'j_%s' % self.key.id()
+  
+  def get_key(self, *args, **kwargs):
+    if not self.key:
+      return self.set_key(*args, **kwargs)
+    else:
+      return self.key
   
   def set_entry_global_role(self, entry):
     if hasattr(self, '_entry_global_role') and entry:
-       entry._global_role = self._entry_global_role
-  
-  def get_key(self, *args, **kwargs):
-      if not self.key:
-         return self.set_key(*args, **kwargs)
-      else:
-         return self.key
-  
-  def get_kind(self):
-      return 'j_%s' % self.journal.key.id()
-  
-  def run(self, context):
-    plugins = Plugin.get_local_plugins(self, context)
-    for category in self.plugin_categories:
-      for plugin in plugins:
-        if category == plugin.__class__.__name__:
-            plugin.run(self, context)
-             
-    context.rule.entity = None
-  
-  @classmethod
-  def get_local_journals(cls, context):
-       
-      journals = cls.query(cls.active == True, 
-                           cls.company == context.input.get('company'), 
-                           cls.subscriptions == context.action.key).order(cls.sequence).fetch()
-         
-      return journals
+      entry._global_role = self._entry_global_role
 
-class Plugin(ndb.BasePolyExpando):
-  
-  _kind = 52
-  
-  # ancestor Journal (namespace Domain)
-  # composite index: ancestor:yes - sequence
-  sequence = ndb.SuperIntegerProperty('1', required=True)
-  active = ndb.SuperBooleanProperty('2', default=True)
-  subscriptions = ndb.SuperKeyProperty('3', kind='56', repeated=True)
- 
-  @classmethod
-  def get_local_plugins(cls, journal, context):
-      plugins = cls.query( 
-                          cls.active == True, 
-                          cls.subscriptions == context.action.key,
-                          ancestor=journal.key).order(cls.sequence).fetch()
-      return plugins
 
-# done!
 class CategoryBalance(ndb.BaseExpando):
   
   _kind = 71
@@ -109,115 +66,96 @@ class CategoryBalance(ndb.BaseExpando):
 
 
 class Category(ndb.BaseExpando):
-    
+  
   _kind = 47
-
+  
   # root (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
   # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
   # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
-  # composite index: 
-  # ancestor:no - active,name;
-  # ancestor:no - active,code;
-  # ancestor:no - active,company,name; ?
-  # ancestor:no - active,company,code; ?
   parent_record = ndb.SuperKeyProperty('1', kind='47', required=True)
   name = ndb.SuperStringProperty('2', required=True)
   code = ndb.SuperStringProperty('3', required=True)
-  active = ndb.SuperBooleanProperty('4', default=True)
-  company = ndb.SuperKeyProperty('5', kind='44', required=True) # -------- company will be removed -----------------
-  complete_name = ndb.SuperTextProperty('6', required=True)# da je ovo indexable bilo bi idealno za projection query
-  # Expando
-  # description = ndb.TextProperty('7', required=True)# soft limit 16kb
-  # balances = ndb.LocalStructuredProperty(CategoryBalance, '8', repeated=True)# soft limit 120x
+  active = ndb.SuperBooleanProperty('4', required=True, default=True)
+  complete_name = ndb.SuperTextProperty('5', required=True)
   
   _expando_fields = {
-     'description' : ndb.SuperTextProperty('7'),
-     'balances' : ndb.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)  
-  }
+    'description': ndb.SuperTextProperty('6'),
+    'balances': ndb.SuperLocalStructuredProperty(CategoryBalance, '7', repeated=True)
+    }
+
 
 class Group(ndb.BaseExpando):
   
-  _kind = 48  
- 
+  _kind = 48
+  
   # root (namespace Domain)
-  # verovatno cemo ostaviti da bude expando za svaki slucaj!
-  
-  
+
+
 class Entry(ndb.BaseExpando):
-    
+  
   _kind = 50
   
   # ancestor Group (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
   # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
-  # composite index: 
-  # ancestor:no - journal,company,state,date:desc;
-  # ancestor:no - journal,company,state,created:desc;
-  # ancestor:no - journal,company,state,updated:desc;
-  # ancestor:no - journal,company,state,party,date:desc; ?
-  # ancestor:no - journal,company,state,party,created:desc; ?
-  # ancestor:no - journal,company,state,party,updated:desc; ?
-  name = ndb.SuperStringProperty('1', required=True)
-  journal = ndb.SuperKeyProperty('2', kind=Journal, required=True)
-  company = ndb.SuperKeyProperty('3', kind='44', required=True)
-  state = ndb.SuperStringProperty('4', required=True)
-  date = ndb.SuperDateTimeProperty('5', required=True)# updated on specific state or manually
-  created = ndb.SuperDateTimeProperty('6', auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('7', auto_now=True)
-  # Expando
-  # 
-  # party = ndb.KeyProperty('8') mozda ovaj field vratimo u Model ukoliko query sa expando ne bude zadovoljavao performanse
-  # expando indexi se programski ukljucuju ili gase po potrebi
- 
-  def get_actions(self):
-      journal = self.journal.get()
-      get_actions = ndb.get_multi(journal.subscriptions)
-      actions = {}
-      for action in get_actions:
-         actions[action.key.urlsafe()] = action
-         
-      return actions
-          
+  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
+  journal = ndb.SuperKeyProperty('3', kind=Journal, required=True)
+  name = ndb.SuperStringProperty('4', required=True)
+  state = ndb.SuperStringProperty('5', required=True)
+  date = ndb.SuperDateTimeProperty('6', required=True)
+  
+  _virtual_fields = {
+    '_lines': ndb.SuperLocalStructuredProperty(Line, repeated=True)
+    }
   
   def get_kind(self):
-      return 'e_%s' % self.journal.key.id()
-    
-  def get_fields(self):
-    
-      fields = super(Entry, self).get_fields()
-      journal = self.journal.get()
- 
-      line_fields = {}
-      entry_fields = {}
-      super_line_fields = {}
- 
-      for prop_key,prop in Line._properties.items():
-          super_line_fields[prop._code_name] = prop
-          
-      if hasattr(Line, 'get_expando_fields'):
-         expandos = Line.get_expando_fields()
-         if expandos: 
-             for expando_prop_key,expando_prop in expandos.items():
-                 super_line_fields[expando_prop._code_name] = expando_prop
-       
-       
-      for entry_field_key, entry_field in journal.entry_fields.items():
-          entry_fields['e_%s' % entry_field_key] = entry_field
-          
-      for line_field_key, line_field in journal.line_fields.items():
-          line_fields['l_%s' % line_field_key] = line_field
-      
-      fields.update(entry_fields)
-      fields.update(line_fields)
-      fields.update(super_line_fields)
-      
-      return fields
-                    
+    return 'e_%s' % self.journal.id()
   
+  def get_actions(self):
+    journal_actions = Action.query(Action.active == True,
+                                   ancestor=self.journal).fetch()
+    actions = {}
+    for action in journal_actions:
+      actions[action.key.urlsafe()] = action
+    return actions
+  
+  def get_fields(self):
+    fields = super(Entry, self).get_fields()
+    journal = self.journal.get()
+    line_fields = {}
+    expando_entry_fields = {}
+    expando_line_fields = {}
+    for prop_key, prop in Line._properties.items():
+      line_fields[prop._code_name] = prop
+    if hasattr(Line, 'get_expando_fields'):
+      expando_fields = Line.get_expando_fields()
+      if expando_fields:
+        for expando_prop_key, expando_prop in expando_fields.items():
+          line_fields[expando_prop._code_name] = expando_prop
+    for entry_field_key, entry_field in journal.entry_fields.items():
+      expando_entry_fields['e_%s' % entry_field_key] = entry_field
+    for line_field_key, line_field in journal.line_fields.items():
+      expando_line_fields['l_%s' % line_field_key] = line_field
+    fields.update(line_fields)
+    fields.update(expando_entry_fields)
+    fields.update(expando_line_fields)
+    return fields
+  
+  @property
+  def _actions(self):
+    journal_actions = Action.query(Action.active == True,
+                                   ancestor=self.journal).fetch()
+    actions = {}
+    for action in journal_actions:
+      actions[action.key.urlsafe()] = action
+    return actions
+
+
 class Line(ndb.BaseExpando):
   
-  _kind = 51  
+  _kind = 51
   
   # ancestor Entry (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
@@ -226,97 +164,35 @@ class Line(ndb.BaseExpando):
   # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
   # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
   # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
-  # composite index: 
-  # ancestor:yes - sequence;
-  # ancestor:no - journal, company, state, categories, uom, date
-  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True) # delete
-  company = ndb.SuperKeyProperty('2', kind='44', required=True) # delete
-  state = ndb.SuperIntegerProperty('3', required=True) # delete
-  date = ndb.SuperDateTimeProperty('4', required=True)# delete
-  sequence = ndb.SuperIntegerProperty('5', required=True)
-  categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True) # ? mozda staviti samo jednu kategoriju i onda u expando prosirivati
-  debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)# debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)# credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  journal = ndb.SuperKeyProperty('1', kind=Journal, required=True)  # delete
+  company = ndb.SuperKeyProperty('2', kind='44', required=True)  # delete
+  state = ndb.SuperIntegerProperty('3', required=True)  # delete
+  date = ndb.SuperDateTimeProperty('4', required=True)  # delete
+  sequence = ndb.SuperIntegerProperty('5', required=True)  # @todo Can we sequence Line.id()?
+  categories = ndb.SuperKeyProperty('6', kind=Category, repeated=True)
+  debit = ndb.SuperDecimalProperty('7', required=True, indexed=False)  # debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = ndb.SuperDecimalProperty('8', required=True, indexed=False)  # credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
   uom = ndb.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
   # Expando
   # neki upiti na Line zahtevaju "join" sa Entry poljima
   # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
   
-  def get_actions(self):
-      journal = self.journal.get() # key.parent()
-      get_actions = ndb.get_multi(journal.subscriptions)
-      actions = {}
-      for action in get_actions:
-         actions[action.key.urlsafe()] = action
-         
-      return actions
-
-  def get_kind(self):
-      return 'l_%s' % self.journal.key.id() # key.parent()
+  def get_kind(self):  # @todo Do we need this?
+    return 'l_%s' % self.parent_entity.journal.id()
   
-  def get_fields(self):
-    
-      fields = super(Line, self).get_fields()
-      journal = self.journal.get() # this will be retrieved from key.parent() cuz we will delete `journal`
-      line_fields = {}
-      
-      for line_field_key, line_field in journal.line_fields.items():
-          line_fields['l_%s' % line_field_key] = line_field
-      
-      fields.update(line_fields)
-      return fields
-   
-class Engine:
- 
-  @classmethod
-  def run(cls, context):
-    journals = Journal.get_local_journals(context)
-        
-    for journal in journals:
-      journal.run(context)
-                
-        
-    # `operation` param in context.action determines which callback of the `transaction.Engine` class will be called
-    call = getattr(cls, context.action.operation)
-        
-    call(context)
- 
-  @classmethod
-  def write(cls, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-        group = context.transaction.group
-        if not group:
-           group = Group(namespace=context.auth.domain.key.urlsafe()) # ?
-           group.put()
-        
-        group_key = group.key # - put main key
-        for key, entry in context.transaction.entities.items():
-            entry.set_key(parent=group_key) # parent key for entry
-            entry_key = entry.put()
-            
-            """
-             notice the `_` before `lines` that is because 
-             if you set it without underscore it will be considered as new property in expando
-             so all operations should use the following paradigm:
-             entry._lines = []
-             entry._lines.append(Line(...))
-             etc..
-            """
-            lines = []
-            
-            for line in entry._lines:
-                line.journal = entry.journal
-                line.company = entry.company
-                line.state = entry.state
-                line.date = entry.date
-                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
-                lines.append(line)
-            
-            ndb.put_multi(lines)
-            
-    transaction()
-     
-            
+  def get_actions(self):  # @todo Do we need this?
+    journal_actions = Action.query(Action.active == True,
+                                   ancestor=self.parent_entity.journal).fetch()
+    actions = {}
+    for action in journal_actions:
+      actions[action.key.urlsafe()] = action
+    return actions
   
+  def get_fields(self):  # @todo Do we need this?
+    fields = super(Line, self).get_fields()
+    journal = self.parent_entity.journal.get()
+    expando_line_fields = {}
+    for line_field_key, line_field in journal.line_fields.items():
+      expando_line_fields['l_%s' % line_field_key] = line_field
+    fields.update(expando_line_fields)
+    return fields
