@@ -20,12 +20,25 @@ class InputError(Exception):
     self.message = input_error
 
 
+class InvalidAction(Exception):
+  
+  def __init__(self, action_key):
+    self.message = {'invalid_action': action_key}
+
+
+class InvalidModel(Exception):
+  
+  def __init__(self, model_key):
+    self.message = {'invalid_model': model_key}
+
+
 class Context():
   
   def __init__(self):
     from app.srv import callback, auth, log, rule, cruds  # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
+    self.model = None
     self.action = None
     self.callback = callback.Context()
     self.auth = auth.Context()
@@ -52,44 +65,44 @@ class Engine:
     return kinds
   
   @classmethod
-  def get_action(cls, input):
-    action_model = input.get('action_model')
-    action_key = input.get('action_key')
-    
-    if action_model:
-      action_model = ndb.Model._kind_map.get(action_model)
-      if action_model and hasattr(action_model, '_actions'):
-        actions = getattr(action_model, '_actions')
-        if action_key in actions:
-          return actions[action_key]
-      return None
-    
-    action = event.get_system_action(action_key)
-    if not action:
-      action = event.Action.get_local_action(action_key)
-    return action
+  def get_model(cls, context, input):  # @todo Possible changes here, if we optimize model architecutre!
+    model_key = input.get('action_model')
+    context.model = ndb.Model._kind_map.get(model_key)
+    if not context.model:
+      context.model = ndb.Key(urlsafe=model_key).get()
+    if not context.model:
+      raise InvalidModel(model_key)
   
   @classmethod
-  def process(cls, context, input):
-    
+  def get_action(cls, context, input):  # @todo Possible changes here, if we optimize action architecutre!
+    action_key = input.get('action_key')
+    if hasattr(context.model, '_actions'):
+      actions = getattr(context.model, '_actions')
+      if action_key in actions:
+        context.action = actions[action_key]
+    elif hasattr(context.model, 'get_actions'):
+      actions = context.model.get_actions()
+      if action_key in actions:
+        context.action = ndb.Key(urlsafe=action_key).get()
+    if not context.action:
+      raise InvalidAction(action_key)
+  
+  @classmethod
+  def process_action_input(cls, context, input):
     input_error = {}
-    
     for key, argument in context.action.arguments.items():
       value = input.get(key)
-      
       if argument and hasattr(argument, 'format'):
         if value is None:
           continue  # If value is not set at all, shall we always consider it none?
         try:
           value = argument.format(value)
-          
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
             argument._validator(argument, value)
-          
           context.input[key] = value
         except ndb.PropertyError as e:
           if e.message not in input_error:
-            input_error[e.message] = []  # If the e.message is not set, set it otherwise KeyError.
+            input_error[e.message] = []
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
         except Exception as e:
           # If this is not defined it throws an error.
@@ -97,25 +110,28 @@ class Engine:
             input_error['non_property_error'] = []
           input_error['non_property_error'].append(key)  # Or perhaps, 'non_specific_error', or something simmilar.
           util.logger(e, 'exception')
-    
     if len(input_error):
       raise InputError(input_error)
   
   @classmethod
-  def realtime_run(cls, action, input):
+  def execute_action(cls, context, input):  # @todo Possible changes here, if we optimize model and action architecutre!
+    execute = getattr(context.model, input.get('action_key'))
+    if execute and callable(execute):
+      execute(context)
+    else:
+      plugins = context.model.get_plugins(context.action.key)
+      if len(plugins):
+        for plugin in plugins:
+          plugin.run(context)
+  
+  @classmethod
+  def run(cls, input):
     context = Context()
-    context.action = action
-    
     try:
-      cls.process(context, input)
-      if 'action_model' in input and 'action_key' in input:
-        action_model = ndb.Model._kind_map.get(input.get('action_model'))
-        execute = getattr(action_model, input.get('action_key'))
-        if execute and callable(execute):
-          execute(context)
-      else:
-        service = importlib.import_module('app.srv.%s' % context.action.service)
-        service.Engine.run(context)
+      cls.get_model(context, input)
+      cls.get_action(context, input)
+      cls.process_action_input(context, input)
+      cls.execute_action(context, input)
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
@@ -123,26 +139,12 @@ class Engine:
         for key, value in e.message.items():
           context.error(key, value)
           throw = False
-      
       if isinstance(e, datastore_errors.Timeout):
         context.error('transaction', 'timeout')
         throw = False
-      
       if isinstance(e, datastore_errors.TransactionFailedError):
         context.error('transaction', 'failed')
         throw = False
-      
       if throw:
         raise  # Here we raise all other unhandled exceptions!
-    
-    return context
-  
-  @classmethod
-  def run(cls, input):
-    action = cls.get_action(input)
-    if action:
-      context = cls.realtime_run(action, input)
-      return context.output
-    else:
-      output = {'errors': {'invalid_action': input.get('action_key')}}
-      return output
+    return context.output
