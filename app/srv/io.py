@@ -45,7 +45,7 @@ class Context():
     self.rule = rule.Context()
     self.log = log.Context()
     self.cruds = cruds.Context()
- 
+  
   def error(self, key, value):
     if 'errors' not in self.output:
       self.output['errors'] = {}
