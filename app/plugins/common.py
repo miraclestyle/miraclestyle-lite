@@ -32,13 +32,18 @@ class Read(event.Plugin):
 class Write(event.Plugin):
   
   log = ndb.SuperBooleanProperty('4', required=True, default=True)
-  notify = ndb.SuperBooleanProperty('5', required=True, default=True)
+  log_arguments = ndb.SuperStringProperty('5', repeated=True, indexed=False)
+  notify = ndb.SuperBooleanProperty('6', required=True, default=True)
   
   @ndb.transactional(xg=True)
   def run(self, context):
     context.entity.put()
     if self.log:
-      context.log.entities.append((entity, ))
+      arguments = {}
+      if len(self.log_arguments):
+        for argument in self.log_arguments:
+          arguments[argument] = context.input.get(argument)
+      context.log.entities.append((entity, arguments))  # @todo How do we enforce rule restrictions here?
       log.Engine.run(context)
     if self.notify:
       context.callback.payloads.append(('notify',
