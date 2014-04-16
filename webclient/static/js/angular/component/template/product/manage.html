@@ -1,0 +1,172 @@
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="manage_catalog">
+	
+<input type="hidden" name="action_key" value="upload_images" />
+<input type="hidden" name="action_model" value="38" />
+<input type="hidden" name="key" value="{{entity.key}}" />
+	
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+ 
+<div ng-init="isOpen=true" accordion>
+   <div is-open="isOpen" accordion-group heading="General">
+  
+    <div class="form-control">
+    	
+    	<label class="form-label">Category</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+    	
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+		
+		<label class="form-label">Default Unit of Measure</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+		
+		<label class="form-label">Unit Price</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="unit_price" 
+				 		ng-required="rule.input[action].unit_price.required"
+				 	    class="text-input" type="text" ng-model="entity.unit_price" />
+			</div>
+		</div>
+		
+		<label class="form-label">Description</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" />
+			</div>
+		</div>
+		
+		<label class="form-label">Weight</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" /> kg
+			</div>
+		</div>
+		
+		<label class="form-label">Volume</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].name.required"
+				 	    class="text-input" type="text" ng-model="entity.name" /> m3
+			</div>
+		</div>
+		
+		<label class="form-label"></label>
+		<div class="form-input">
+			<div class="form-text">
+				  Multivariant
+			</div>
+		</div>
+		
+		<label class="form-label">Code</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input[action].code.required"
+				 	    class="text-input" type="text" ng-model="entity.code" />
+			</div>
+		</div>
+		
+		<label class="form-label"></label>
+		<div class="form-input">
+			<div class="form-text">
+				 Active
+			</div>
+		</div>
+		 
+		
+	</div>
+	
+	</div>
+	
+	<div ng-show="update_mode" accordion-group heading="Variants">
+		 
+	</div>
+	 
+	<div ng-show="update_mode" accordion-group heading="Images">
+		<div class="form-control clearfix">
+		  <div class="pull-right">
+		  <div class="button fake-button">
+		  	 <span>Add Images</span>
+		  	 <input class="upload" name="images" multiple ng-change="addFiles()" type="file" ng-model="entity._supplied_filename" />
+		  </div>
+		  </div>
+		  
+		</div>
+		
+		<div ng-show="$isUploading">Images are uploading... please wait...</div>
+		
+		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
+			<div ng-repeat="image in entity._images" class="catalog-image">
+				<img class="img" ng-src="{{image._image_240}}" />
+				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
+			</div>
+		</div>
+	</div>
+	
+	<div ng-show="update_mode" accordion-group heading="Contents">
+		 
+	</div>
+	
+	<div ng-show="update_mode" accordion-group heading="Product Instances">
+		 
+	</div>
+	
+	
+	 
+</div>
+
+
+<div ng-show="rule.action.read_records.executable && action == 'update'" class="form-control">
+  <div ng-include="logic_template('misc/logs.html')"></div>
+</div>
+	
+ 
+</div>
+</div>
+
+
+<div class="modal-footer">
+ 
+    <button ng-disabled="$isUploading" type="button" 
+    		ng-click="remove()" ng-show="update_mode" busy class="button">
+		Remove
+	</button>
+ 
+	<button type="button" ng-click="save()" 
+			ng-show="rule.action.update || (rule.action.create && action == 'create')" 
+			ng-disabled="!manage_product.$valid || $isUploading" busy class="button">
+		Save
+	</button>
+	
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

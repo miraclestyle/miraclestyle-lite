@@ -40,6 +40,7 @@ class CatalogImage(blob.Image):
       
       dic = super(CatalogImage, self).get_output()
       dic['_image_240'] = images.get_serving_url(self.image, 240)
+      dic['_image_600'] = images.get_serving_url(self.image, 600)
       return dic
   
   

@@ -1,0 +1,56 @@
+<form ng-submit="save()" name="manage_products">
+	
+<div class="modal-body scrollable">
+
+
+<div class="clearfix">
+	<div class="pull-left t60 overflow-x">
+		<div class="overflow-master">
+			<ol>
+			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
+			     data-drop="true" ng-model='catalog_image.pricetags' data-jqyoui-options="{accept: '.new-pricetag'}" 
+			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}">
+				 <img catalog-slider class="img" ng-src="{{catalog_image._image_600}}" />
+				 <div ng-style="{top: pricetag.position_top + 'px', left : pricetag.position_left + 'px'}"
+				      ng-model="image.pricetags" data-jqyoui-options="{containment : 'parent'}" 
+				      jqyoui-draggable="{index: {{$index}}, onStop : 'onStop(pricetag)'}" 
+				 	  data-drag="true" class="button pricetag" ng-repeat="pricetag in catalog_image.pricetags track by $index">
+				 	<a ng-click="detailProduct(pricetag)" href="javascript:;">{{pricetag.name}}</a>
+				 </div>
+		     </li>
+		    </ol>
+	    </div>
+	</div>
+	
+	<div class="pull-right t40">
+		<div class="modal-body-inner">
+			
+		  <div>
+		  	<button type="button" class="button" ng-click="addProduct()">Add Product</button>
+		  </div>
+	 
+		  <ul ng-init="products = [{'name' : 'Test'}]">
+            <li class="new-pricetag" ng-repeat='product in products' data-drag="true" 
+                data-jqyoui-options="{revert: 'invalid', scope2:'new-pricetag', helper: 'clone'}" 
+                ng-model="products" ng-show="product.name" jqyoui-draggable="{index: {{$index}}, placeholder: 'keep'}">
+                <div class="just-text">{{product.name}}</div>
+                <div class="button pricetag">{{product.name}}</div>
+            </li>
+          </ul>
+	 
+	    <button type="button" ng-click="save()" 
+				ng-show="rule.action.update" busy class="button">
+			Save
+		</button>
+		<button type="button" class="button" ng-click="cancel()">
+			Cancel
+		</button>
+		</div>
+	</div>
+</div>
+   
+
+</div>
+
+ 
+</form>

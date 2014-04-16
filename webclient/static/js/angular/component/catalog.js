@@ -1,6 +1,6 @@
-MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',
+MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', 'Product', '$modal', 'Confirm',
 
-    function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
+    function ($rootScope, Endpoint, EntityEditor, Title, Product, $modal, Confirm) {
     	
     	
     	var kind = '35';
@@ -14,11 +14,11 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 },
         	 'completed' : function (data)
         	 {
-        	 	update(this.entity, data['entity']);
+        	 	EntityEditor.update_entity(this, data['entity']);
         	 },
-        	 'removeCatalogImage' : function (catalog_image)
+        	 'removeImage' : function (image)
         	 {
-        	 	this.entity._images.remove(catalog_image);
+        	 	this.entity._images.remove(image);
         	 },
         	 'addFiles' : function ()
         	 {
@@ -72,6 +72,67 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         { 
 			         	var that = this;
+			         	
+			         	this.addProducts = function ()
+			         	{
+			         		var handle = function () {
+
+                                var modalInstance = $modal.open({
+                                    templateUrl: logic_template('catalog/products.html'),
+                                    //windowClass: 'modal-medium',
+                                    controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                    	
+                                    	$scope.products = [];
+
+                                        $scope.rule = that.rule;
+                                        $scope.entity = that.entity;
+                                        $scope.onDrop = function (event, ui, catalog_image)
+                                        {
+                                        	 var pricetags = catalog_image.pricetags;
+                                        	 var pricetag = pricetags[pricetags.length-1];
+                                        	  
+                                        	 pricetag['position_top'] = ui.position.top;
+                                        	 pricetag['position_left'] = ui.position.left;
+                                        	  
+                                        };
+                                        
+                                        $scope.onStop = function (event, ui, pricetag)
+                                        {
+                                        	 pricetag['position_top'] = ui.position.top;
+                                        	 pricetag['position_left'] = ui.position.left;
+                                        };
+                                        
+                                        $scope.addProduct = function ()
+                                        {
+                                        	 Product.create(that.entity['key'], function (data) {
+                                        	 	  
+                                        	 });
+                                        };
+                                     
+                                        $scope.save = function () {
+
+                                            Endpoint.post('update', that.entity['kind'], $scope.entity)
+                                                .success(function (data) {
+                                                	 
+                                                	EntityEditor.update_entity(that, data);
+                                          
+                                                    $scope.cancel();
+
+                                                });
+
+                                        };
+
+                                        $scope.cancel = function () {
+                                            $modalInstance.dismiss();
+                                        };
+                                    }
+                                });
+
+                            };
+                            
+                            handle();
+ 
+			         	};
 			         	 
                         this._do_user_admin = function (entity, action) {
 

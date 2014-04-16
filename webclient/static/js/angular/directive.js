@@ -72,7 +72,60 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
         	});
         }
     };
-}])
+}]).directive('onFinishRender', function ($timeout) {
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            if (scope.$last === true) {
+                $timeout(function () {
+                    scope.$emit('ngRepeatFinished');
+                });
+            }
+        }
+    };
+})
+.directive('catalogSlider', function ($timeout) {
+    return {
+        restrict: 'A',
+        priority : -515,
+        link: function (scope, element, attr) {
+    	    
+           if (scope.$last === true) {
+           	
+           	    var resize = function ()
+           	    {
+           	    	 var that = $(element);
+				     
+				     var h = that.parents('.modal-body').height();
+				     
+				     var master = that.parents('.overflow-master:first');
+				     
+				     var w = 0;
+	 
+				     master.find('.catalog-image-scroll').each(function () {
+				     	$(this).height(h);
+				     	w += $(this).width();
+				     });
+				     
+				     if (w)
+				     master.width(w);
+           	    };
+           	
+                $timeout(function () {
+ 
+			        resize();
+	            });
+	            
+	            $(window).resize(resize);
+	            
+	            scope.$on('$destroy', function () {
+	            	$(window).unbind('resize', resize);
+	            });
+	          
+            }	
+        }
+    };
+})
 .directive('toggle', function() {
     return {
         scope: {

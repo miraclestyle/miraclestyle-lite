@@ -37,15 +37,13 @@ ANGULAR_COMPONENTS = ['home',
                       'nav',
                       'rule',
                       'notify',
+                      'product',
                       'catalog',
                       # this goes last
                       'admin',
                       ]
 
-JQUERY_PLUGINS = ['ui', 
-                  'ui-sortable',
-                  'ui-draggable',
-                  'ui-droppable',
+JQUERY_PLUGINS = [
                   'select2/select2',
                  ]
 

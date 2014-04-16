@@ -59,9 +59,9 @@
 		<div ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
-			<div ng-repeat="catalog_image in entity._images" class="catalog-image">
-				<img class="img" ng-src="{{catalog_image._image_240}}" />
-				<button type="button" class="button" ng-click="removeCatalogImage(catalog_image)">Remove</button>
+			<div ng-repeat="image in entity._images" class="image-image">
+				<img class="img" ng-src="{{image._image_240}}" />
+				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
 	</div>
