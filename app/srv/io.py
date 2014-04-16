@@ -83,7 +83,7 @@ class Engine:
           context.action = ndb.Key(urlsafe=action_key).get()
       except:
         pass
-    elif hasattr(context.model, '_actions'):
+    if not context.action and hasattr(context.model, '_actions'):
       actions = getattr(context.model, '_actions')
       if action_key in actions:
         context.action = actions[action_key]
