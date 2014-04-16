@@ -90,6 +90,9 @@ class FieldAutoUpdate(event.Plugin):
 
 class Search(event.Plugin):
   
+  search_filter_callback = ndb.SuperStringProperty('4', required=True, indexed=False)
+  search_entities_callback = ndb.SuperStringProperty('5', required=True, indexed=False)
+  
   def run(self, context):
     if context.entity.key:
       namespace = context.entity.key_namespace
