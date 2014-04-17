@@ -102,3 +102,16 @@
 	overflow-x:auto;
 	overflow-y:hidden;
 }
+
+.corner-right
+{
+	position:absolute;
+	right:10px;
+	bottom:10px;
+}
+
+
+body .mb15
+{
+	margin-bottom:15px;
+}

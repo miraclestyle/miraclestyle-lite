@@ -239,7 +239,7 @@ class Template(ndb.BaseExpando):
     product_category = ndb.SuperKeyProperty('1', kind='17', required=True, indexed=False)
     name = ndb.SuperStringProperty('2', required=True)
     description = ndb.SuperTextProperty('3', required=True)# soft limit 64kb
-    product_uom = ndb.SuperKeyProperty('4', kind=uom.Unit, required=True, indexed=False)
+    product_uom = ndb.SuperKeyProperty('4', kind='19', required=True, indexed=False)
     unit_price = ndb.SuperDecimalProperty('5', required=True)
     availability = ndb.SuperIntegerProperty('6', required=True, indexed=False)# ukljuciti index ako bude trebao za projection query
     code = ndb.SuperStringProperty('7', required=True)
@@ -255,9 +255,11 @@ class Template(ndb.BaseExpando):
     _default_indexed = False
     
     _expando_fields = {
-      'weight' : ndb.SuperPickleProperty('8'),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-      'volume' : ndb.SuperPickleProperty('9'),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
-      'low_stock_quantity' : ndb.SuperDecimalProperty('10', default='0.00'),# notify store manager when qty drops below X quantity
+      'weight' : ndb.SuperDecimalProperty('8'),
+      'weight_uom' : ndb.SuperKeyProperty('9', kind='19'),
+      'volume' : ndb.SuperDecimalProperty('10'),
+      'volume_uom' : ndb.SuperKeyProperty('11', kind='19'),
+      'low_stock_quantity' : ndb.SuperDecimalProperty('12', default='0.00'),# notify store manager when qty drops below X quantity
      }
     
     _virtual_fields = {
@@ -283,12 +285,15 @@ class Template(ndb.BaseExpando):
                                  'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'description' : ndb.SuperTextProperty(required=True),# soft limit 64kb
-                                 'product_uom' : ndb.SuperKeyProperty(kind=uom.Unit, required=True),
+                                 'product_uom' : ndb.SuperKeyProperty(kind='19', required=True),
                                  'unit_price' : ndb.SuperDecimalProperty(required=True),
                                  'availability' : ndb.SuperIntegerProperty(required=True),#
+                                 'code' : ndb.SuperStringProperty(required=True),
                                   
-                                 'weight' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-                                 'volume' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
+                                 'weight' : ndb.SuperDecimalProperty(required=True),
+                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume' : ndb.SuperDecimalProperty(required=True),
+                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
                                  'low_stock_quantity' : ndb.SuperDecimalProperty(default='0.00'),# notify store manager when qty drops below X quantity
                   
                                  'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
@@ -306,12 +311,15 @@ class Template(ndb.BaseExpando):
                                  'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'description' : ndb.SuperTextProperty(required=True),# soft limit 64kb
-                                 'product_uom' : ndb.SuperKeyProperty(kind=uom.Unit, required=True),
+                                 'product_uom' : ndb.SuperKeyProperty(kind='19', required=True),
                                  'unit_price' : ndb.SuperDecimalProperty(required=True),
                                  'availability' : ndb.SuperIntegerProperty(required=True),#
+                                 'code' : ndb.SuperStringProperty(required=True),
                              
-                                 'weight' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-                                 'volume' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
+                                 'weight' : ndb.SuperDecimalProperty(required=True),
+                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume' : ndb.SuperDecimalProperty(required=True),
+                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
                                  'low_stock_quantity' : ndb.SuperDecimalProperty(default='0.00'),# notify store manager when qty drops below X quantity
                     
                                  'key' : ndb.SuperKeyProperty(kind='38', required=True)
@@ -372,7 +380,7 @@ class Template(ndb.BaseExpando):
         ),
        'prepare' : event.Action(id='38-8',
                               arguments={
-                                  'catalog' : ndb.SuperKeyProperty(kind='38', required=True)
+                                  'catalog' : ndb.SuperKeyProperty(kind='35', required=True)
                               }
         ),  
        'duplicate' : event.Action(id='38-9',
@@ -388,33 +396,53 @@ class Template(ndb.BaseExpando):
       return model.build_key(self.key_id_str, parent=self.key)
     
     def get_single_entities(self):
-      """Gets all storage entities for the product template. Returns list in order [Contents, Images, Variants]"""
-      return ndb.get_multi([self._single_entity_key(model) for model in [Contents, Images, Variants]])
-    
-    def populate_single_entities(self):
-      """Single-handedly retrieves all storage entities and populates the virtual fields along with it""" 
-      
-      contents, images, variants = self.get_single_entities()
+      """Gets all storage entities for the product template and sets corresponding virual fields for them.
+         Returns list in order [Contents, Images, Variants]"""
+      contents, images, variants = ndb.get_multi([self._single_entity_key(model) for model in [Contents, Images, Variants]])
       
       if contents:
         self._contents = contents.contents
-        
       if images:
         self._images = images.images
-        
       if variants:
         self._variants = variants.variants
-        
+      
+      return contents, images, variants
+    
+    def create_single_entities(self):
+      return ndb.put_multi([model(id=self.key_id_str, parent=self.key) for model in [Contents, Images, Variants]])
         
     @classmethod
     def create(cls, context):
       
       catalog_key = context.input.get('catalog')
       catalog = catalog_key.get()
+ 
+      entity = cls(parent=catalog.key)
+      if not context.rule.entity:
+        context.rule.entity = entity
+      rule.Engine.run(context)
+      if not rule.executable(context):
+        raise rule.ActionDenied(context)
       
-      context.cruds.entity = cls(namespace=catalog.key_namespace)
-      context.cruds.values = context.input
-      cruds.Engine.create(context)
+      @ndb.transactional(xg=True)
+      def transaction():
+        rule.write(entity, context.input)
+        entity.put()
+        entity.create_single_entities()
+        
+        context.log.entities.append((entity, ))
+        log.Engine.run(context)
+        rule.read(entity)
+        context.output['entity'] = entity
+        if context.cruds.notify:
+          context.callback.payloads.append(('notify',
+                                            {'action_key': 'initiate',
+                                             'action_model': '61',
+                                             'caller_entity': entity.key.urlsafe()}))
+          callback.Engine.run(context)
+      
+      transaction()
  
 
     @classmethod
@@ -433,9 +461,7 @@ class Template(ndb.BaseExpando):
        if not rule.executable(context):
          raise rule.ActionDenied(context)   
        
-       entity.populate_single_entities() # retrieve from storage
-       
-       contents, images, variants = entity.get_single_entities()
+       contents, images, variants = entity.get_single_entities() # retrieve from storage
  
        @ndb.transactional(xg=True)
        def transaction():
@@ -491,7 +517,7 @@ class Template(ndb.BaseExpando):
       if not rule.executable(context):
         raise rule.ActionDenied(context)
    
-      entity.populate_single_entities()
+      entity.get_single_entities()
       
       rule.read(entity)
       context.output['entity'] = entity
@@ -534,9 +560,7 @@ class Template(ndb.BaseExpando):
         
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
-      entity.populate_single_entities()
-      
+ 
       contents, images, variants = entity.get_single_entities()
 
       i = len(entity._images) # get last sequence
@@ -576,7 +600,7 @@ class Template(ndb.BaseExpando):
        entity_key = context.input.get('key')
        entity = entity_key.get()
       
-       entity.populate_single_entities()
+       entity.get_single_entities()
       
        context.rule.entity = entity
        rule.Engine.run(context)
@@ -653,8 +677,10 @@ class Instance(ndb.BaseExpando):
       'description'  : ndb.SuperTextProperty('3', required=True), # soft limit 64kb
       'unit_price' : ndb.SuperDecimalProperty('4', required=True),
       'low_stock_quantity' : ndb.SuperDecimalProperty('5', default='0.00'), # notify store manager when qty drops below X quantity
-      'weight' : ndb.SuperStringProperty('6'), # prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-      'volume' : ndb.SuperStringProperty('7'), # prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
+      'weight' : ndb.SuperDecimalProperty('6'),
+      'weight_uom' : ndb.SuperKeyProperty('7', kind='19'),
+      'volume' : ndb.SuperDecimalProperty('8'),
+      'volume_uom' : ndb.SuperKeyProperty('9', kind='19'),
      }
      
     _global_role = rule.GlobalRole(permissions=[
@@ -668,17 +694,19 @@ class Instance(ndb.BaseExpando):
                               arguments={
                      
                                  'code' : ndb.SuperStringProperty(required=True),
-                                 'availability' : ndb.SuperIntegerProperty(),#
-                                 'description' : ndb.SuperTextProperty(),# soft limit 64kb
-                                 'unit_price' : ndb.SuperDecimalProperty(),
+                                 'availability' : ndb.SuperIntegerProperty(required=True),#
+                                 'description' : ndb.SuperTextProperty(required=True),# soft limit 64kb
+                                 'unit_price' : ndb.SuperDecimalProperty(required=True),
                                  
                                  '_contents' : ndb.SuperLocalStructuredProperty(Content, repeated=True),# soft limit 100x
                                  '_variants' : ndb.SuperLocalStructuredProperty(Variant, repeated=True),# soft limit 100x
                                  '_images' : ndb.SuperLocalStructuredProperty(Image, repeated=True),# soft limit 100x
                                  
-                                 'weight' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.2[kg] - gde je [kg] jediniva mere, ili sta vec odlucimo
-                                 'volume' : ndb.SuperStringProperty(),# prekompajlirana vrednost, napr: 0.03[m3] - gde je [m3] jediniva mere, ili sta vec odlucimo
-                            
+                                 'weight' : ndb.SuperDecimalProperty(required=True),
+                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume' : ndb.SuperDecimalProperty(required=True),
+                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 
                                  'key' : ndb.SuperKeyProperty(kind='39', required=True)
                               }
       ),
@@ -726,11 +754,10 @@ class Instance(ndb.BaseExpando):
     }
     
     def delete(self):
-      self.populate_single_entities()
+      self.get_single_entities()
       blob.Manager.unused_blobs([img.image for img in self._images])
       self.key.delete()
-      
-    
+       
     @classmethod
     def md5_variation_combination(cls, codes):
         codes = list(codes)
@@ -741,23 +768,22 @@ class Instance(ndb.BaseExpando):
       return model.build_key(self.key_id_str, parent=self.key)
     
     def get_single_entities(self):
-      """Gets all storage entities for the product template. Returns list in order [Contents, Images, Variants]"""
-      return ndb.get_multi([self._single_entity_key(model) for model in [Contents, Images, Variants]])
-    
-    def populate_single_entities(self):
-      """Single-handedly retrieves all storage entities and populates the virtual fields along with it""" 
-      
-      contents, images, variants = self.get_single_entities()
+      """Gets all storage entities for the product template and sets corresponding virual fields for them.
+         Returns list in order [Contents, Images, Variants]"""
+      contents, images, variants = ndb.get_multi([self._single_entity_key(model) for model in [Contents, Images, Variants]])
       
       if contents:
         self._contents = contents.contents
-        
       if images:
         self._images = images.images
-        
       if variants:
         self._variants = variants.variants
-        
+      
+      return contents, images, variants
+    
+    def create_single_entities(self):
+      return ndb.put_multi([model(id=self.key_id_str, parent=self.key) for model in [Contents, Images, Variants]])
+  
     @classmethod
     def upload_images(cls, context):
       
@@ -779,9 +805,7 @@ class Instance(ndb.BaseExpando):
         
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
-      entity.populate_single_entities()
-      
+   
       contents, images, variants = entity.get_single_entities()
 
       i = len(entity._images) # get last sequence
@@ -827,9 +851,7 @@ class Instance(ndb.BaseExpando):
         
        if not rule.executable(context):
          raise rule.ActionDenied(context)   
-       
-       entity.populate_single_entities() # retrieve from storage
-       
+ 
        contents, images, variants = entity.get_single_entities()
  
        @ndb.transactional(xg=True)
@@ -886,7 +908,7 @@ class Instance(ndb.BaseExpando):
       if not rule.executable(context):
         raise rule.ActionDenied(context)
    
-      entity.populate_single_entities()
+      entity.get_single_entities()
       
       rule.read(entity)
       context.output['entity'] = entity

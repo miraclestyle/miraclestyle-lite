@@ -9,108 +9,197 @@
  
 <div ng-init="isOpen=true" accordion>
    <div is-open="isOpen" accordion-group heading="General">
-  
-    <div class="form-control">
+   
+    	<div class="form-control">
     	
     	<label class="form-label">Category</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" />
+				<select name="product_category" ng-required="rule.input[action].product_category.required"
+					    ng-disabled="!rule.field.product_category.writable" ui-select2 
+					    ng-model="entity.product_category" data-placeholder="Select a product category">
+				    <option value=""></option>
+				    <option ng-repeat="category in categories" value="{{category.key}}">{{category.name}}</option>
+				</select>
 			</div>
 		</div>
-    	
+		</div>
+		
+		
+    	<div class="form-control">
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="name" 
 				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" />
+				 	    class="text-input" type="text" ng-model="entity.name"
+				 	    ng-disabled="!rule.field.name.writable" />
 			</div>
 		</div>
+		</div>
 		
+		<div class="form-control">
 		<label class="form-label">Default Unit of Measure</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" />
+				 <select name="product_uom" ng-required="rule.input[action].product_uom.required"
+					    ng-disabled="!rule.field.product_uom.writable" ui-select2 
+					    ng-model="entity.product_uom" data-placeholder="Select a product unit of measure">
+				    <option value=""></option>
+				    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+				 </select>
 			</div>
 		</div>
+		</div>
 		
+		<div class="form-control">
 		<label class="form-label">Unit Price</label>
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="unit_price" 
 				 		ng-required="rule.input[action].unit_price.required"
-				 	    class="text-input" type="text" ng-model="entity.unit_price" />
+				 	    class="text-input" type="number" ng-model="entity.unit_price"
+				 	    ng-disabled="!rule.field.unit_price.writable" />
 			</div>
 		</div>
+		</div>
 		
+		<div class="form-control">
 		<label class="form-label">Description</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" />
+				 <textarea ng-required="rule.input[action].description.required"
+				 		   class="text-input text-textarea" ng-model="entity.description" name="description"
+				 		   ng-disabled="!rule.field.description.writable"></textarea>
 			</div>
 		</div>
+		</div>
 		
+		<div class="form-control">
 		<label class="form-label">Weight</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" /> kg
+				<table class="table2">
+				 	<tbody>
+				 		<tr>
+				 			<td class="t60 cpr10"><input name="weight" 
+											 		ng-required="rule.input[action].weight.required"
+											 	    class="text-input" type="text" ng-model="entity.weight"
+											 	    ng-disabled="!rule.field.weight.writable" /></td>
+				 			<td class="t40 cpl10">
+				 				 <select name="weight_uom" ng-required="rule.input[action].weight_uom.required"
+									    ng-disabled="!rule.field.weight_uom.writable" ui-select2 
+									    ng-model="entity.weight_uom" data-placeholder="Select a weight unit of measure">
+								    <option value=""></option>
+								    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+								 </select>
+				 			</td>
+				 		</tr>
+				 	</tbody>
+				 </table>
 			</div>
 		</div>
+		</div>
 		
+		<div class="form-control">
 		<label class="form-label">Volume</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name" /> m3
+				 <table class="table2">
+				 	<tbody>
+				 		<tr>
+				 			<td class="t60 cpr10"><input name="volume" 
+											 		ng-required="rule.input[action].volume.required"
+											 	    class="text-input" type="text" ng-model="entity.volume"
+											 	    ng-disabled="!rule.field.volume.writable" /></td>
+				 			<td class="t40 cpl10">
+				 				 <select name="product_uom" ng-required="rule.input[action].volume_uom.required"
+									    ng-disabled="!rule.field.product_uom.writable" ui-select2 
+									    ng-model="entity.volume_uom" data-placeholder="Select a volume unit of measure">
+								    <option value=""></option>
+								    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+								 </select>
+				 			</td>
+				 		</tr>
+				 	</tbody>
+				 </table>
 			</div>
 		</div>
-		
-		<label class="form-label"></label>
-		<div class="form-input">
-			<div class="form-text">
-				  Multivariant
-			</div>
 		</div>
-		
+  
+		<div class="form-control">
 		<label class="form-label">Code</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" 
+				 <input name="code" 
 				 		ng-required="rule.input[action].code.required"
-				 	    class="text-input" type="text" ng-model="entity.code" />
+				 	    class="text-input" type="text" ng-model="entity.code"
+				 	    ng-disabled="!rule.field.code.writable" />
 			</div>
 		</div>
+		</div>
 		
-		<label class="form-label"></label>
+		<div class="form-control">
+		<label class="form-label">Availability</label>
 		<div class="form-input">
 			<div class="form-text">
-				 Active
+			   <input name="availability" 
+				 		ng-required="rule.input[action].availability.required"
+				 	    class="text-input" type="number" ng-model="entity.availability"
+				 	    ng-disabled="!rule.field.availability.writable" />
 			</div>
 		</div>
-		 
+		</div>
+		
+		<div class="form-control">
+		<label class="form-label">Low stock quantity</label>
+		<div class="form-input">
+			<div class="form-text">
+			   <input name="low_stock_quantity" 
+				 		ng-required="rule.input[action].low_stock_quantity.required"
+				 	    class="text-input" type="number" ng-model="entity.low_stock_quantity"
+				 	    ng-disabled="!rule.field.low_stock_quantity.writable" />
+			</div>
+		</div>
+		</div>
+		
 		
 	</div>
-	
-	</div>
-	
-	<div ng-show="update_mode" accordion-group heading="Variants">
+ 
+	<div accordion-group heading="Variants">
+		
+		<div class="clearfix">
+			<div class="pull-right">
+				<button ng-show="rule.field._variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
+			</div>
+		</div>
+		
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="variant in entity._variants">
+					<td>{{variant.name}}</td>
+					<td>
+						<span ng-show="rule.field._variants.writable">
+						<button type="button" ng-click="removeVariant(variant)" class="button">Remove</button>
+						<button type="button" ng-click="manageVariant(variant)" class="button">Edit</button>
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 		 
 	</div>
 	 
 	<div ng-show="update_mode" accordion-group heading="Images">
-		<div class="form-control clearfix">
+		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
-		  <div class="button fake-button">
+		  <div ng-show="rule.field._images.writable" class="button fake-button">
 		  	 <span>Add Images</span>
 		  	 <input class="upload" name="images" multiple ng-change="addFiles()" type="file" ng-model="entity._supplied_filename" />
 		  </div>
@@ -123,12 +212,38 @@
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
 			<div ng-repeat="image in entity._images" class="catalog-image">
 				<img class="img" ng-src="{{image._image_240}}" />
-				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
+				<button ng-show="rule.field._images.writable" type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
 	</div>
 	
 	<div ng-show="update_mode" accordion-group heading="Contents">
+		
+		 <div class="clearfix">
+			<div class="pull-right">
+				<button ng-show="rule.field._contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+			</div>
+		</div>
+		
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="content in entity._contents">
+					<td>{{content.name}}</td>
+					<td>
+						<span ng-show="rule.field._contents.writable">
+						<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
+						<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 		 
 	</div>
 	

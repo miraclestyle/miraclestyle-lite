@@ -14,7 +14,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 },
         	 'completed' : function (data)
         	 {
-        	 	EntityEditor.update_entity(this, data['entity']);
+        	 	EntityEditor.update_entity(this, data);
         	 },
         	 'removeImage' : function (image)
         	 {
@@ -90,9 +90,12 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                                         {
                                         	 var pricetags = catalog_image.pricetags;
                                         	 var pricetag = pricetags[pricetags.length-1];
+                                        	 
+                                        	 var posi = $(event.target).offset();
+                                        	 var posi2 = ui.offset;
                                         	  
-                                        	 pricetag['position_top'] = ui.position.top;
-                                        	 pricetag['position_left'] = ui.position.left;
+                                        	 pricetag['position_top'] = posi2.top - posi.top;
+                                        	 pricetag['position_left'] = posi2.left - posi.left;
                                         	  
                                         };
                                         

@@ -9,7 +9,8 @@
 			<ol>
 			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
 			     data-drop="true" ng-model='catalog_image.pricetags' data-jqyoui-options="{accept: '.new-pricetag'}" 
-			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}">
+			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}"
+			     data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
 				 <img catalog-slider class="img" ng-src="{{catalog_image._image_600}}" />
 				 <div ng-style="{top: pricetag.position_top + 'px', left : pricetag.position_left + 'px'}"
 				      ng-model="image.pricetags" data-jqyoui-options="{containment : 'parent'}" 
@@ -25,7 +26,7 @@
 	<div class="pull-right t40">
 		<div class="modal-body-inner">
 			
-		  <div>
+		  <div class="text-right">
 		  	<button type="button" class="button" ng-click="addProduct()">Add Product</button>
 		  </div>
 	 
@@ -38,13 +39,15 @@
             </li>
           </ul>
 	 
-	    <button type="button" ng-click="save()" 
+	   	 <div class="corner-right">
+	   	 	 <button type="button" ng-click="save()" 
 				ng-show="rule.action.update" busy class="button">
-			Save
-		</button>
-		<button type="button" class="button" ng-click="cancel()">
-			Cancel
-		</button>
+				Save
+			</button>
+			<button type="button" class="button" ng-click="cancel()">
+				Cancel
+			</button>
+	   	 </div>
 		</div>
 	</div>
 </div>

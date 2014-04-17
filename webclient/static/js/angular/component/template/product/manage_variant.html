@@ -1,0 +1,90 @@
+<form>
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	<h2 class="fieldset">
+		 <span class="fieldset-text">General</span>
+	 </h2>
+  
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" ng-required="true" class="text-input" type="text" ng-model="variant.name" />
+			</div>
+		</div>
+	</div>
+	  
+    <div class="form-control">
+		<label class="form-label">Description</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea name="description" ng-required="true" class="text-input" ng-model="variant.description"></textarea>
+			</div>
+		</div>
+	</div>
+	
+	
+	<div class="form-control">
+		<label class="form-label">Allow custom value</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-model="variant.allow_custom_value" type="button" class="button"></button>
+			</div>
+		</div>
+	</div>
+	<!--
+	<div ng-hide="variant.allow_custom_value">
+	<h2 class="fieldset with-button">
+			<span class="fieldset-text">Options</span>
+			<span class="fieldset-button"><button type="button" class="button" ng-click="manageOption()">Add Option</button></span>
+		</h2>
+		<table class="table">
+					<thead>
+						<tr>
+							<th>Option</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="option in variant.options track by $index">
+						 
+							<td><input class="text-input" type="text" ng-model="variant.options[$index]" /></td>
+							<td>
+								<button ng-click="removeOption(option)" type="button" class="button">Remove</button>
+								 
+							</td>
+						</tr>
+					</tbody>
+		</table>
+		
+	</div>-->
+	
+	
+	<div class="form-control">
+		<label class="form-label">Options</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea name="options" ng-model="variant._options"
+				 		   ng-required="true" class="text-input"></textarea>
+			</div>
+		</div>
+	</div>
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button type="button" ng-click="save()" class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

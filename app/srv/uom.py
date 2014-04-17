@@ -154,3 +154,4 @@ class UOM(ndb.BaseExpando):
                      'positive_separate_by_space' : ndb.SuperBooleanProperty('19', default=True),
                      'negative_separate_by_space' : ndb.SuperBooleanProperty('20', default=True),
                      }
+

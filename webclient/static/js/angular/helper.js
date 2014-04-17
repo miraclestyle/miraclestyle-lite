@@ -227,3 +227,28 @@ Array.prototype.compare = function (array) {
     }
     return true;
 };
+
+var new_width_by_height = function (original_width, original_height, new_height)
+{
+	original_width = parseInt(original_width);
+	original_height = parseInt(original_height);
+	new_height = parseInt(new_height);
+  
+    var ratio = new_height / original_height; // get ratio for scaling image
+    var new_width = (original_width * ratio);
+ 
+    return (new_width);
+ 
+};
+
+var new_height_by_width = function (original_width, original_height, new_width)
+{
+	original_width = parseInt(original_width);
+	original_height = parseInt(original_height);
+	new_width = parseInt(new_width);
+	
+    var ratio = new_width / original_width; // get ratio for scaling image
+    var new_height = (original_height * ratio);
+    
+    return (new_height);
+};

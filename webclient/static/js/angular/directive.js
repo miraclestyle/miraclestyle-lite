@@ -103,12 +103,18 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 				     var w = 0;
 	 
 				     master.find('.catalog-image-scroll').each(function () {
-				     	$(this).height(h);
-				     	w += $(this).width();
+				     	var img = $(this).find('.img');
+				     	img.height(h);
+				     	var cw = $(this).data('width'), ch = $(this).data('height');
+				     	
+				     	var neww = new_width_by_height(cw, ch, h);
+				     	
+				     	img.width(neww);
+				     	
+				     	w += neww;
 				     });
-				     
-				     if (w)
-				     master.width(w);
+				 
+				     master.width(Math.ceil(w));
            	    };
            	
                 $timeout(function () {

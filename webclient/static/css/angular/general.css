@@ -226,7 +226,10 @@ strong, b
 .catalog-image-scroll .img
 {
 	height:100%;
+	display:block;
+	width:auto;
 }
+
 
 .overflow-master ol {padding:0px;margin:0px;list-style:none;}
 

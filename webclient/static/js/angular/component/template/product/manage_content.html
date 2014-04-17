@@ -1,0 +1,43 @@
+<form>
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	<h2 class="fieldset">
+		 <span class="fieldset-text">General</span>
+	 </h2>
+  
+    <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" ng-required="true" class="text-input" type="text" ng-model="content.name" />
+			</div>
+		</div>
+	</div>
+	  
+    <div class="form-control">
+		<label class="form-label">Content</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <textarea name="content" ng-required="true" class="text-input" ng-model="content.content"></textarea>
+			</div>
+		</div>
+	</div>
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button type="button" ng-click="save()" class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>
