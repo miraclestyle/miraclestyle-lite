@@ -8,12 +8,13 @@ Created on Apr 15, 2014
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
-from app.srv import event, log, callback
+from app.srv import event, callback
+from.app.plugins import log, callback
 
 
 class Prepare(event.Plugin):
   
-  domain_model = ndb.SuperBooleanProperty('4', required=True, default=True)
+  domain_model = ndb.SuperBooleanProperty('4', required=True, indexed=False, default=True)
   
   def run(self, context):
     if self.domain_model:
@@ -31,45 +32,20 @@ class Read(event.Plugin):
 
 class Write(event.Plugin):
   
-  log = ndb.SuperBooleanProperty('4', required=True, default=True)
-  log_arguments = ndb.SuperStringProperty('5', repeated=True, indexed=False)
-  notify = ndb.SuperBooleanProperty('6', required=True, default=True)
-  
   @ndb.transactional(xg=True)
   def run(self, context):
     context.entity.put()
-    if self.log:
-      arguments = {}
-      if len(self.log_arguments):
-        for argument in self.log_arguments:
-          arguments[argument] = context.input.get(argument)
-      context.log.entities.append((entity, arguments))  # @todo How do we enforce rule restrictions here?
-      log.Engine.run(context)
-    if self.notify:
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': context.entity.key.urlsafe()}))
-      callback.Engine.run(context)
+    log.write(context)
+    callback.execute(context)
 
 
 class Delete(event.Plugin):
   
-  log = ndb.SuperBooleanProperty('4', required=True, default=True)
-  notify = ndb.SuperBooleanProperty('5', required=True, default=True)
-  
   @ndb.transactional(xg=True)
   def run(self, context):
     context.entity.key.delete()
-    if self.log:
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-    if self.notify:
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': context.entity.key.urlsafe()}))
-      callback.Engine.run(context)
+    log.write(context)
+    callback.execute(context)
 
 
 class Output(event.Plugin):
@@ -86,7 +62,7 @@ class Field(ndb.BaseModel):
 
 class FieldAutoUpdate(event.Plugin):
   
-  fields = ndb.SuperLocalStructuredProperty(Field, '4', repeated=True)
+  fields = ndb.SuperLocalStructuredProperty(Field, '4', repeated=True, indexed=False)
   
   def run(self, context):
     for field in self.fields:
