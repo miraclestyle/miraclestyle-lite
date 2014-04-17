@@ -27,8 +27,8 @@ def _is_structured_field(field):
 
 class Prepare(event.Plugin):
   
-  skip_user_roles = ndb.SuperBooleanProperty('4', required=True, default=True)
-  strict = ndb.SuperBooleanProperty('5', required=True, default=True)
+  skip_user_roles = ndb.SuperBooleanProperty('4', required=True, indexed=False, default=True)
+  strict = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
   
   def run(self, context):
     """This method generates permissions situation for the context.entity object,
