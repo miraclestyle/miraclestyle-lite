@@ -5,6 +5,7 @@ encoding//app/memcache.py=utf-8
 encoding//app/ndb.py=utf-8
 encoding//app/opt/buyer.py=utf-8
 encoding//app/opt/misc.py=utf-8
+encoding//app/plugins/common.py=utf-8
 encoding//app/settings.py=utf-8
 encoding//app/srv/auth.py=utf-8
 encoding//app/srv/blob.py=utf-8
