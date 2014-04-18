@@ -64,6 +64,8 @@
 				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
+		
+		<div ng-show="entity.more_images"><button type="button" ng-click="getImages()" busy class="button">Load more images</button></div>
 	</div>
 	
 	<div ng-show="action != 'create'" accordion-group heading="Embed">

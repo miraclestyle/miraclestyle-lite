@@ -49,7 +49,7 @@ def _validate_prop(prop, value):
       raise PropertyError('not_in_specified_choices')
 
 def _property_value(prop, value):
-  if value is None and not prop._required:
+  if value is None:
     if prop._default is not None:
       value = prop._default
   if prop._repeated:

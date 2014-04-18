@@ -228,6 +228,11 @@ Array.prototype.compare = function (array) {
     return true;
 };
 
+Array.prototype.extend = function (other_array) {
+    var that = this;
+    angular.forEach(other_array, function(v) {that.push(v);});
+};
+
 var new_width_by_height = function (original_width, original_height, new_height)
 {
 	original_width = parseInt(original_width);

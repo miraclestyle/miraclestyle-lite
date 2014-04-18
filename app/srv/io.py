@@ -87,11 +87,17 @@ class Engine:
   def process_action_input(cls, context, input):
     input_error = {}
     for key, argument in context.action.arguments.items():
-      value = input.get(key)
+      value_provided = key in input
+      if not value_provided and argument._default is not None:
+        # this must be here because the default value will be ignored, see line 99
+        value_provided = True
+        value = argument._default
+      else:
+        value = input.get(key)
       if argument and hasattr(argument, 'format'):
-        if value is None:
-          continue  # If value is not set at all, shall we always consider it none?
         try:
+          if not value_provided and not argument._required:
+            continue # skip the .format only if the value was not provided, and if the argument is not required
           value = argument.format(value)
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
             argument._validator(argument, value)

@@ -14,17 +14,28 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 },
         	 'completed' : function (data)
         	 {
-        	 	EntityEditor.update_entity(this, data);
+        	 	this.entity._images.extend(data['entity']['_images']);
+        	 	this.entity.start_images = this.entity._images.length;
         	 },
         	 'removeImage' : function (image)
         	 {
         	 	this.entity._images.remove(image);
         	 },
+        	 'getImages': function ()
+        	 {
+        	 	var that = this;
+        	 	that.entity.start_images = that.entity._images.length;
+        	 	
+        	 	Endpoint.post('read', kind, that.entity).success(function (data) {
+        	 		that.entity._images.extend(data['entity']['_images']);
+        	 		that.entity.more_images = data['more_images'];
+        	 	});
+        	 },
         	 'addFiles' : function ()
         	 {
         	 	  var that = this;
          
-        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url}).success(function (data) {
+        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url, 'key' : that.entity.key}).success(function (data) {
         	 	  	   that.form_info.action = data.upload_url;
         	 	  	   
         	 	  	   $('form[name="manage_catalog"]').attr('action', that.form_info.action).trigger('submit'); // hack
@@ -72,6 +83,8 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         { 
 			         	var that = this;
+			         	
+			         	this.entity.more_images = data['more_images'];
 			         	
 			         	this.addProducts = function ()
 			         	{
@@ -192,13 +205,13 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 			         	 
 			         	this.sortableOptions = {
 			        	 	'forcePlaceholderSize' : true,
-			        	 	'placeholder' : 'catalog-image catalog-image-placeholder',
+			        	 	'placeholder' : 'image-image image-image-placeholder',
 			        	 	'stop' : function (e, u)
 			        	 	 {
 			        	 	 	 
-			        	 	 	 angular.forEach(that.entity._images, function (value, i) {
-			        	 	 	 	 value.sequence = i;
-			        	 	 	 });
+			        	 	 	/* angular.forEach(that.entity._images, function (value, i) {
+			        	 	 	 	 value.key = that.live_entity._images[i]['key'];
+			        	 	 	 });*/
 			        	 	  
 			        	 	 }
 			        	};

@@ -31,7 +31,6 @@ class CatalogImage(blob.Image):
     _kind = 36
     # id = sequence, so we can construct keys and use get_multy for fetching image sets, instead of ancestor query
     # this will require delete/put on every update to image sequence, so it has to be evaluated further
-    sequence = ndb.SuperIntegerProperty('7', required=True)
     pricetags = ndb.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
     
     # this model is working on multiple images at once because they are always like grid....
@@ -141,6 +140,8 @@ class Catalog(ndb.BaseExpando):
                                  '_images' : ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
                                  'publish_date' : ndb.SuperDateTimeProperty(required=True),
                                  'discontinue_date' : ndb.SuperDateTimeProperty(required=True),
+                                 
+                                 'start_images' : ndb.SuperIntegerProperty(default=0),
                               }
                              ),
        'upload_images' : event.Action(id='35-8',
@@ -154,6 +155,7 @@ class Catalog(ndb.BaseExpando):
        'read' : event.Action(id='35-9',
                               arguments={
                                   'key'  : ndb.SuperKeyProperty(kind='35', required=True),
+                                  'start_images' : ndb.SuperIntegerProperty(default=0),
                               }
         ),  
        'read_records' : event.Action(id='35-10',
@@ -199,8 +201,19 @@ class Catalog(ndb.BaseExpando):
       ),
     }  
     
-    def get_images(self):
-      self._images = CatalogImage.query(ancestor=self.key).order(CatalogImage.sequence).fetch()
+    def get_images(self, start):
+      images = ndb.get_multi([CatalogImage.build_key(str(i), parent=self.key) for i in range(start, start+10)])
+      found = len(images)
+      more = True
+      use = []
+      for i,image in enumerate(images):
+        if image != None:
+          use.append(image)
+        elif i == (found-1):
+          more = False
+ 
+      self._images = use
+      return more
   
     @classmethod
     def create(cls, context):
@@ -216,19 +229,23 @@ class Catalog(ndb.BaseExpando):
        entity_key = context.input.get('key')
        name = context.input.get('name')
        _images = context.input.get('_images')
+       
+       start = context.input.get('start_images')
+ 
        entity = entity_key.get()
-       entity.get_images()
+       context.output['more_images'] = entity.get_images(start)
        
        context.rule.entity = entity
        rule.Engine.run(context)
          
        if not rule.executable(context):
-         raise rule.ActionDenied(context)      
+         raise rule.ActionDenied(context)
+ 
  
        @ndb.transactional(xg=True)
        def transaction():
            
-          copy_current_images = copy.copy(entity._images)
+          copy_current_images = copy.deepcopy(entity._images)
  
           values = {
            'name' : name,
@@ -238,7 +255,14 @@ class Catalog(ndb.BaseExpando):
           }
       
           rule.write(entity, values)
-        
+          
+          do_not_delete = []
+           
+          if entity._images:
+             for i,image in enumerate(entity._images):
+               image.set_key(str(i), parent=entity.key)
+               do_not_delete.append(image.key)
+              
           if len(entity._images):
              entity.cover = entity._images[0].key
           entity.put()
@@ -249,24 +273,20 @@ class Catalog(ndb.BaseExpando):
           
           for copy_current_image in copy_current_images:
              if copy_current_image.key not in possible_keys:
-                delete_catalog_keys.append(copy_current_image.key)
+                if copy_current_image.key not in do_not_delete:
+                   delete_catalog_keys.append(copy_current_image.key)
                 delete_catalog_image_keys.append(copy_current_image.image)
-          
-          if entity._images:
-             ndb.put_multi(entity._images)
-          else:
-             delete_catalog_images = entity._images
-             
-             for delete_catalog_image in delete_catalog_images:
-               delete_catalog_keys.append(delete_catalog_image.key)
-               delete_catalog_image_keys.append(delete_catalog_image.image)
-          
+           
           if len(delete_catalog_keys):
             ndb.delete_multi(delete_catalog_keys)
             # blob manager will delete the images..
             # we could use the taskqueue to delete the files, but there is a problem regarding errors that occurr prior to
             # calling the actuall callback that will delete the unused blobs  
             blob.Manager.unused_blobs(delete_catalog_image_keys)
+            
+            
+          ndb.put_multi(entity._images)
+        
                  
           context.log.entities.append((entity, ))
           log.Engine.run(context)
@@ -412,6 +432,8 @@ class Catalog(ndb.BaseExpando):
       
       images = context.input.get('images')
       upload_url = context.input.get('upload_url')
+      
+      print context.input
  
       if upload_url:
          context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
@@ -428,16 +450,13 @@ class Catalog(ndb.BaseExpando):
         
       if not rule.executable(context):
         raise rule.ActionDenied(context)
-      
-      entity.get_images()
-
-      i = len(entity._images) # get last sequence
+ 
+      i = CatalogImage.query(ancestor=entity.key).count() # get last sequence
 
       for image in images:
           i += 1
           image.set_key(str(i), parent=entity.key)
-          image.sequence = i
-      
+  
       @ndb.transactional(xg=True)
       def transaction():
         
@@ -486,7 +505,9 @@ class Catalog(ndb.BaseExpando):
           
       """
       
-      entity.get_images()
+      start = context.input.get('start_images')
+ 
+      context.output['more_images'] = entity.get_images(start)
       
       rule.read(entity)
       context.output['entity'] = entity
