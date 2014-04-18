@@ -17,33 +17,55 @@ class Prepare(event.Plugin):
   domain_model = ndb.SuperBooleanProperty('4', required=True, indexed=False, default=True)
   
   def run(self, context):
+    if not context.entities:
+      context.entities = {}
     if self.domain_model:
-      context.entity = context.model(namespace=context.domain.key_namespace)
+      context.entities[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
     else:
-      context.entity = context.model()
+      context.entities[context.model.get_kind()] = context.model()
 
 
 class Read(event.Plugin):
   
   def run(self, context):
     entity_key = context.input.get('key')
-    context.entity = entity_key.get()
+    context.entities[context.model.get_kind()] = entity_key.get()
 
 
 class Write(event.Plugin):
   
+  write_entities = ndb.SuperStringProperty('4', repeated=True, indexed=False)
+  
   @ndb.transactional(xg=True)
   def run(self, context):
-    context.entity.put()
+    entities = []
+    if len(self.write_entities):
+      for kind_id in self.write_entities:
+        if kind_id in context.entities:
+          entities.append(context.entities[kind_id])
+    else:
+      for kind_id, entity in context.entities.items():
+        entities.append(entity)
+    ndb.put_multi(entities)
     log.write(context)
     callback.execute(context)
 
 
 class Delete(event.Plugin):
   
+  delete_entities = ndb.SuperStringProperty('4', repeated=True, indexed=False)
+  
   @ndb.transactional(xg=True)
   def run(self, context):
-    context.entity.key.delete()
+    entities = []
+    if len(self.delete_entities):
+      for kind_id in self.delete_entities:
+        if kind_id in context.entities:
+          entities.append(context.entities[kind_id])
+    else:
+      for kind_id, entity in context.entities.items():
+        entities.append(entity)
+    ndb.delete_multi(entities)
     log.write(context)
     callback.execute(context)
 
@@ -51,7 +73,7 @@ class Delete(event.Plugin):
 class Output(event.Plugin):
   
   def run(self, context):
-    context.output['entity'] = context.entity
+    context.output['entity'] = context.entities[context.model.get_kind()]
 
 
 class Field(ndb.BaseModel):
