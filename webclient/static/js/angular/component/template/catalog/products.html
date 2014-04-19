@@ -4,7 +4,7 @@
 
 
 <div class="clearfix">
-	<div class="pull-left t60 overflow-x">
+	<div catalog-slider-load-more class="pull-left t60 overflow-x">
 		<div class="overflow-master">
 			<ol>
 			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
@@ -12,12 +12,14 @@
 			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}"
 			     data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
 				 <img catalog-slider class="img" ng-src="{{catalog_image._image_600}}" />
+				 
 				 <div ng-style="{top: pricetag.position_top + 'px', left : pricetag.position_left + 'px'}"
 				      ng-model="image.pricetags" data-jqyoui-options="{containment : 'parent'}" 
 				      jqyoui-draggable="{index: {{$index}}, onStop : 'onStop(pricetag)'}" 
 				 	  data-drag="true" class="button pricetag" ng-repeat="pricetag in catalog_image.pricetags track by $index">
-				 	<a ng-click="detailProduct(pricetag)" href="javascript:;">{{pricetag.name}}</a>
+				 	<a href="javascript:;">{{pricetag.value}}</a>
 				 </div>
+				 
 		     </li>
 		    </ol>
 	    </div>
@@ -30,12 +32,12 @@
 		  	<button type="button" class="button" ng-click="addProduct()">Add Product</button>
 		  </div>
 	 
-		  <ul ng-init="products = [{'name' : 'Test'}]">
-            <li class="new-pricetag" ng-repeat='product in products' data-drag="true" 
+		  <ul>
+            <li class="new-pricetag" ng-repeat='product in products track by $index' data-drag="true" 
                 data-jqyoui-options="{revert: 'invalid', scope2:'new-pricetag', helper: 'clone'}" 
                 ng-model="products" ng-show="product.name" jqyoui-draggable="{index: {{$index}}, placeholder: 'keep'}">
-                <div class="just-text">{{product.name}}</div>
-                <div class="button pricetag">{{product.name}}</div>
+                <div class="just-text"><a ng-click="updateProduct(product)" href="javascript:;">{{product.name}}</a></div>
+                <div class="button pricetag">{{product.unit_price}}</div>
             </li>
           </ul>
 	 

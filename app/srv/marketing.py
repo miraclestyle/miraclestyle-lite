@@ -201,8 +201,12 @@ class Catalog(ndb.BaseExpando):
       ),
     }  
     
-    def get_images(self, start):
-      images = ndb.get_multi([CatalogImage.build_key(str(i), parent=self.key) for i in range(start, start+10)])
+    def get_images(self, start=0, full=None, per_page=10):
+      start = start
+      end = start+per_page+1 # always ask for 1 more, thats how we can determine better if there's any left
+      if full:
+        start = 0
+      images = ndb.get_multi([CatalogImage.build_key(str(i), parent=self.key) for i in range(start, end)])
       found = len(images)
       more = True
       use = []
@@ -210,8 +214,9 @@ class Catalog(ndb.BaseExpando):
         if image != None:
           use.append(image)
         elif i == (found-1):
-          more = False
- 
+          more = False # if the last item was None, then there isnt any items matching the sequence
+      if more:
+        use.pop(len(use)-1) # if there is more, then just remove the last item in the results because we want only 10
       self._images = use
       return more
   
@@ -229,11 +234,11 @@ class Catalog(ndb.BaseExpando):
        entity_key = context.input.get('key')
        name = context.input.get('name')
        _images = context.input.get('_images')
-       
+        
        start = context.input.get('start_images')
  
        entity = entity_key.get()
-       context.output['more_images'] = entity.get_images(start)
+       context.output['more_images'] = entity.get_images(start, True)
        
        context.rule.entity = entity
        rule.Engine.run(context)
@@ -253,7 +258,7 @@ class Catalog(ndb.BaseExpando):
            'publish_date' : context.input.get('publish_date'),
            '_images' : _images
           }
-      
+ 
           rule.write(entity, values)
           
           do_not_delete = []
@@ -270,7 +275,7 @@ class Catalog(ndb.BaseExpando):
           delete_catalog_keys = []
           delete_catalog_image_keys = []
           possible_keys = [catalog_image.key for catalog_image in entity._images]
-          
+      
           for copy_current_image in copy_current_images:
              if copy_current_image.key not in possible_keys:
                 if copy_current_image.key not in do_not_delete:
@@ -282,9 +287,9 @@ class Catalog(ndb.BaseExpando):
             # blob manager will delete the images..
             # we could use the taskqueue to delete the files, but there is a problem regarding errors that occurr prior to
             # calling the actuall callback that will delete the unused blobs  
+          if len(delete_catalog_image_keys):
             blob.Manager.unused_blobs(delete_catalog_image_keys)
-            
-            
+ 
           ndb.put_multi(entity._images)
         
                  
@@ -432,8 +437,6 @@ class Catalog(ndb.BaseExpando):
       
       images = context.input.get('images')
       upload_url = context.input.get('upload_url')
-      
-      print context.input
  
       if upload_url:
          context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
@@ -452,11 +455,11 @@ class Catalog(ndb.BaseExpando):
         raise rule.ActionDenied(context)
  
       i = CatalogImage.query(ancestor=entity.key).count() # get last sequence
-
-      for image in images:
-          i += 1
-          image.set_key(str(i), parent=entity.key)
   
+      for image in images:
+          image.set_key(str(i), parent=entity.key)
+          i += 1
+           
       @ndb.transactional(xg=True)
       def transaction():
         

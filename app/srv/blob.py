@@ -90,5 +90,6 @@ class Manager():
     """This functon must be always called last in the application execution."""
     unused_blob_keys = cls.get_unused_blobs()
     if len(unused_blob_keys):
+      print 'deleted blobs: ', len(unused_blob_keys)
       blobstore.delete(unused_blob_keys)
       memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, [])

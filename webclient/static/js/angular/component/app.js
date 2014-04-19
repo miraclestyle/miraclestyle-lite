@@ -12,6 +12,23 @@ SEARCH_KIND_CONFIG = {
 				    'key': 'active'
 				    }]
     },
+    '38': {
+    	'title' : 'Product Templates',
+    	'add_new' : 'New Product Template',
+    	'service' : 'Product',
+    	'fields' : [{
+			        'label': 'Name',
+			        'key': 'name'
+		  		    }, 
+		  		    {
+			        'label': 'Description',
+				    'key': 'description',
+				    },
+				    {
+			        'label': 'Code',
+				    'key': 'code',
+				    }]
+    },
     '62': {
     	'title' : 'Widgets',
     	'add_new' : 'New Widget',

@@ -1,4 +1,4 @@
-<form action="{{form_info.action}}" ng-upload="completed(content)" name="manage_catalog">
+<form ng-submit="save()" action="{{form_info.action}}" ng-upload="completed(content)" name="manage_product">
 	
 <input type="hidden" name="action_key" value="upload_images" />
 <input type="hidden" name="action_model" value="38" />
@@ -19,7 +19,7 @@
 					    ng-disabled="!rule.field.product_category.writable" ui-select2 
 					    ng-model="entity.product_category" data-placeholder="Select a product category">
 				    <option value=""></option>
-				    <option ng-repeat="category in categories" value="{{category.key}}">{{category.name}}</option>
+				    <option ng-repeat="category in categories" value="{{category.key}}">{{category.complete_name}}</option>
 				</select>
 			</div>
 		</div>
@@ -46,7 +46,7 @@
 					    ng-disabled="!rule.field.product_uom.writable" ui-select2 
 					    ng-model="entity.product_uom" data-placeholder="Select a product unit of measure">
 				    <option value=""></option>
-				    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+				    <option ng-repeat="unit in units" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
 				 </select>
 			</div>
 		</div>
@@ -58,7 +58,7 @@
 			<div class="form-text">
 				 <input name="unit_price" 
 				 		ng-required="rule.input[action].unit_price.required"
-				 	    class="text-input" type="number" ng-model="entity.unit_price"
+				 	    class="text-input" type="text" ng-model="entity.unit_price"
 				 	    ng-disabled="!rule.field.unit_price.writable" />
 			</div>
 		</div>
@@ -79,7 +79,7 @@
 		<label class="form-label">Weight</label>
 		<div class="form-input">
 			<div class="form-text">
-				<table class="table2">
+				<table class="table3">
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="weight" 
@@ -91,7 +91,7 @@
 									    ng-disabled="!rule.field.weight_uom.writable" ui-select2 
 									    ng-model="entity.weight_uom" data-placeholder="Select a weight unit of measure">
 								    <option value=""></option>
-								    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+								    <option ng-repeat="unit in units" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
 								 </select>
 				 			</td>
 				 		</tr>
@@ -105,7 +105,7 @@
 		<label class="form-label">Volume</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <table class="table2">
+				 <table class="table3">
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="volume" 
@@ -117,7 +117,7 @@
 									    ng-disabled="!rule.field.product_uom.writable" ui-select2 
 									    ng-model="entity.volume_uom" data-placeholder="Select a volume unit of measure">
 								    <option value=""></option>
-								    <option ng-repeat="product_uom in product_uoms" value="{{product_uom.key}}">{{product_uom.name}}</option>
+								    <option ng-repeat="unit in units" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
 								 </select>
 				 			</td>
 				 		</tr>
@@ -145,7 +145,7 @@
 			<div class="form-text">
 			   <input name="availability" 
 				 		ng-required="rule.input[action].availability.required"
-				 	    class="text-input" type="number" ng-model="entity.availability"
+				 	    class="text-input" type="text" ng-model="entity.availability"
 				 	    ng-disabled="!rule.field.availability.writable" />
 			</div>
 		</div>
@@ -157,7 +157,7 @@
 			<div class="form-text">
 			   <input name="low_stock_quantity" 
 				 		ng-required="rule.input[action].low_stock_quantity.required"
-				 	    class="text-input" type="number" ng-model="entity.low_stock_quantity"
+				 	    class="text-input" type="text" ng-model="entity.low_stock_quantity"
 				 	    ng-disabled="!rule.field.low_stock_quantity.writable" />
 			</div>
 		</div>
@@ -166,7 +166,7 @@
 		
 	</div>
  
-	<div accordion-group heading="Variants">
+	<div ng-show="entity.id" accordion-group heading="Variants">
 		
 		<div class="clearfix">
 			<div class="pull-right">
@@ -196,7 +196,7 @@
 		 
 	</div>
 	 
-	<div ng-show="update_mode" accordion-group heading="Images">
+	<div ng-show="entity.id" accordion-group heading="Images">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
 		  <div ng-show="rule.field._images.writable" class="button fake-button">
@@ -217,7 +217,7 @@
 		</div>
 	</div>
 	
-	<div ng-show="update_mode" accordion-group heading="Contents">
+	<div ng-show="entity.id" accordion-group heading="Contents">
 		
 		 <div class="clearfix">
 			<div class="pull-right">
@@ -247,7 +247,7 @@
 		 
 	</div>
 	
-	<div ng-show="update_mode" accordion-group heading="Product Instances">
+	<div ng-show="entity.id" accordion-group heading="Product Instances">
 		 
 	</div>
 	
@@ -272,7 +272,7 @@
 		Remove
 	</button>
  
-	<button type="button" ng-click="save()" 
+	<button type="submit"
 			ng-show="rule.action.update || (rule.action.create && action == 'create')" 
 			ng-disabled="!manage_product.$valid || $isUploading" busy class="button">
 		Save

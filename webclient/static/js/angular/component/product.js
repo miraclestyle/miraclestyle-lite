@@ -6,6 +6,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
     	var kind = '38';
     	  
         var scope = {
+        	 'form_info' : {'action' : Endpoint.url},
         	  
         	 'completed' : function (data)
         	 {
@@ -103,7 +104,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 {
         	 	  var that = this;
          
-        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url}).success(function (data) {
+        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url, 'key' : that.entity.key}).success(function (data) {
         	 	  	   that.form_info.action = data.upload_url;
         	 	  	   
         	 	  	   $('form[name="manage_product"]').attr('action', that.form_info.action).trigger('submit'); // hack
@@ -117,12 +118,14 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             create: function (catalog_key, complete) {
               
                return EntityEditor.create({
+               		 'close' : false,
                 	 'kind' : kind,
                 	 'entity' : {},
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
 			            this.categories = data['categories'];
+			            this.units = data['units'];
 			            this.entity['catalog'] = catalog_key;
 			         },
                 	 'complete' : complete,
@@ -143,6 +146,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         {
 			            this.categories = data['categories'];
+			            this.units = data['units'];
 			            
 			            this.update_mode = true;
 			         },

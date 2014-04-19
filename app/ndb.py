@@ -87,7 +87,7 @@ def _structured_property_format(prop, value):
     entity = prop._modelclass(**v)
     if v_key:
       entity._key = v_key
-      out.append(entity)
+    out.append(entity)
   value = out
   if not prop._repeated:
     try:

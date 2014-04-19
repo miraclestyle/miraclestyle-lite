@@ -31,6 +31,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 		that.entity.more_images = data['more_images'];
         	 	});
         	 },
+        	
         	 'addFiles' : function ()
         	 {
         	 	  var that = this;
@@ -52,6 +53,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'kind' : kind,
                 	 'entity' : {},
                 	 'scope' : scope,
+                	 'close' : false,
                 	 'handle' : function (data)
 			         {
 			            this.entity['domain'] = domain_key;
@@ -83,19 +85,26 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         { 
 			         	var that = this;
-			         	
+			    
 			         	this.entity.more_images = data['more_images'];
 			         	
 			         	this.addProducts = function ()
 			         	{
-			         		var handle = function () {
+			         		var handle = function (data) {
 
                                 var modalInstance = $modal.open({
                                     templateUrl: logic_template('catalog/products.html'),
                                     //windowClass: 'modal-medium',
                                     controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
                                     	
-                                    	$scope.products = [];
+                                    	$scope.products = data['entities'];
+                                    	
+                                    	$scope.updateProduct = function (product)
+							        	 {
+							        	 	Product.update(product, function (product_updated) {
+							        	 		update(product, product_updated);
+							        	 	});
+							        	 };
 
                                         $scope.rule = that.rule;
                                         $scope.entity = that.entity;
@@ -106,9 +115,19 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                                         	 
                                         	 var posi = $(event.target).offset();
                                         	 var posi2 = ui.offset;
+                                        	 
+                                        	 if ('key' in pricetag)
+                                        	 {
+                                        	 	pricetag['_key'] = pricetag['key'];
+                                        	 	
+                                        	 	delete pricetag['key'];
+                                        	 }
                                         	  
                                         	 pricetag['position_top'] = posi2.top - posi.top;
                                         	 pricetag['position_left'] = posi2.left - posi.left;
+                                        	 pricetag['product_template'] = pricetag['_key'];
+                                        	 pricetag['value'] = pricetag['unit_price'];
+                                        	 
                                         	  
                                         };
                                         
@@ -120,21 +139,23 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                                         
                                         $scope.addProduct = function ()
                                         {
-                                        	 Product.create(that.entity['key'], function (data) {
-                                        	 	  
+                                        	 Product.create(that.entity['key'], function (new_entity) {
+                                        	 	  $scope.products.push(new_entity);
                                         	 });
                                         };
                                      
                                         $scope.save = function () {
 
-                                            Endpoint.post('update', that.entity['kind'], $scope.entity)
+                                            /*Endpoint.post('update', that.entity['kind'], $scope.entity)
                                                 .success(function (data) {
                                                 	 
                                                 	EntityEditor.update_entity(that, data);
                                           
                                                     $scope.cancel();
 
-                                                });
+                                                });*/
+                                               
+                                             $scope.cancel();
 
                                         };
 
@@ -146,7 +167,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 
                             };
                             
-                            handle();
+                            Endpoint.post('search', '38', {'catalog' : that.entity['key']}).success(handle);
  
 			         	};
 			         	 
@@ -207,11 +228,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 			        	 	'forcePlaceholderSize' : true,
 			        	 	'placeholder' : 'image-image image-image-placeholder',
 			        	 	'stop' : function (e, u)
-			        	 	 {
-			        	 	 	 
-			        	 	 	/* angular.forEach(that.entity._images, function (value, i) {
-			        	 	 	 	 value.key = that.live_entity._images[i]['key'];
-			        	 	 	 });*/
+			        	 	 { 
 			        	 	  
 			        	 	 }
 			        	};

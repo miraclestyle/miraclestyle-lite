@@ -6,13 +6,33 @@ Created on Oct 20, 2013
 '''
 import itertools
 import hashlib
+import collections
 import copy
+import json
+import os
  
 from app import ndb, settings
-from app.srv import event, uom, blob, rule, log, callback, cruds
+from app.srv import event, blob, rule, log, callback, cruds, uom
 
 from google.appengine.ext import blobstore
- 
+
+__SYSTEM_CATEGORIES = collections.OrderedDict() # ordered dict remembers the order of remembered categories
+
+def search_categories(query=None, limit=400):
+  ## missing search logic
+  items = get_category().values()
+  return items[:limit]
+
+def get_category(category_key=None):
+  global __SYSTEM_CATEGORIES
+  if category_key == None:
+    return __SYSTEM_CATEGORIES
+  return __SYSTEM_CATEGORIES.get(category_key.urlsafe())
+   
+def register_categories(*categories):
+  global __SYSTEM_CATEGORIES
+  for category in categories:
+    __SYSTEM_CATEGORIES[category.key.urlsafe()] = category
 
 # this model will either serve as LocalStructuredProperty of Template/Instance, or will fan-out as single child entity
 # of Template, packed with multiple contents
@@ -83,7 +103,8 @@ class Category(ndb.BaseModel):
     name = ndb.SuperStringProperty('2', required=True)
     complete_name = ndb.SuperTextProperty('3')# da je ovo indexable bilo bi idealno za projection query
     state = ndb.SuperStringProperty('4', default='active', required=True) # @todo status => state ? better ? for convention ? or just active = boolean 
-    
+    """
+    This code will not be used for now
     _global_role = rule.GlobalRole(permissions=[
         rule.ActionPermission('17', [event.Action.build_key('17-0').urlsafe(),
                                      event.Action.build_key('17-1').urlsafe(),
@@ -228,7 +249,7 @@ class Category(ndb.BaseModel):
       context.cruds.notify = False
       context.cruds.entity = cls()
       cruds.Engine.prepare(context)
-      
+  """
 
 class Template(ndb.BaseExpando):
     
@@ -282,18 +303,18 @@ class Template(ndb.BaseExpando):
        'create' : event.Action(id='38-0',
                               arguments={
                              
-                                 'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
+                                 'product_category' : ndb.SuperVirtualKeyProperty(kind='17', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'description' : ndb.SuperTextProperty(required=True),# soft limit 64kb
-                                 'product_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'product_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'unit_price' : ndb.SuperDecimalProperty(required=True),
                                  'availability' : ndb.SuperIntegerProperty(required=True),#
                                  'code' : ndb.SuperStringProperty(required=True),
                                   
                                  'weight' : ndb.SuperDecimalProperty(required=True),
-                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'weight_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'volume' : ndb.SuperDecimalProperty(required=True),
-                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'low_stock_quantity' : ndb.SuperDecimalProperty(default='0.00'),# notify store manager when qty drops below X quantity
                   
                                  'catalog' : ndb.SuperKeyProperty(kind='35', required=True),
@@ -308,18 +329,18 @@ class Template(ndb.BaseExpando):
                                  '_contents' : ndb.SuperLocalStructuredProperty(Content, repeated=True),# soft limit 100x
                                  '_images' : ndb.SuperLocalStructuredProperty(Image, repeated=True),# soft limit 100x
                                        
-                                 'product_category' : ndb.SuperKeyProperty(kind='17', required=True),
+                                 'product_category' : ndb.SuperVirtualKeyProperty(kind='17', required=True),
                                  'name' : ndb.SuperStringProperty(required=True),
                                  'description' : ndb.SuperTextProperty(required=True),# soft limit 64kb
-                                 'product_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'product_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'unit_price' : ndb.SuperDecimalProperty(required=True),
                                  'availability' : ndb.SuperIntegerProperty(required=True),#
                                  'code' : ndb.SuperStringProperty(required=True),
                              
                                  'weight' : ndb.SuperDecimalProperty(required=True),
-                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'weight_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'volume' : ndb.SuperDecimalProperty(required=True),
-                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'low_stock_quantity' : ndb.SuperDecimalProperty(default='0.00'),# notify store manager when qty drops below X quantity
                     
                                  'key' : ndb.SuperKeyProperty(kind='38', required=True)
@@ -329,12 +350,12 @@ class Template(ndb.BaseExpando):
        'search' : event.Action(
         id='38-3',
         arguments={
-          'catalog': ndb.SuperKeyProperty(kind='38', required=True),
+          'catalog': ndb.SuperKeyProperty(kind='35', required=True),
           'search': ndb.SuperSearchProperty(
             default={"filters": [], "order_by": {"field": "name", "operator": "desc"}},
             filters={
               'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-              'product_category': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='17')},
+              'product_category': {'operators': ['==', '!='], 'type': ndb.SuperVirtualKeyProperty(kind='17')},
               },
             indexes=[
               {'filter': [],
@@ -400,11 +421,11 @@ class Template(ndb.BaseExpando):
          Returns list in order [Contents, Images, Variants]"""
       contents, images, variants = ndb.get_multi([self._single_entity_key(model) for model in [Contents, Images, Variants]])
       
-      if contents:
+      if contents and contents.contents:
         self._contents = contents.contents
-      if images:
+      if images and images.images:
         self._images = images.images
-      if variants:
+      if variants and variants.variants:
         self._variants = variants.variants
       
       return contents, images, variants
@@ -521,7 +542,8 @@ class Template(ndb.BaseExpando):
       
       rule.read(entity)
       context.output['entity'] = entity
-      context.output['categories'] = Category.query().fetch()
+      context.output['categories'] = search_categories()
+      context.output['units'] = uom.search_units()
       
       
     @classmethod
@@ -536,7 +558,8 @@ class Template(ndb.BaseExpando):
       context.cruds.entity = cls(parent=catalog_key)
       cruds.Engine.prepare(context)
       
-      context.output['categories'] = Category.query().fetch()
+      context.output['categories'] = search_categories()
+      context.output['units'] = uom.search_units()
  
  
     @classmethod
@@ -703,9 +726,9 @@ class Instance(ndb.BaseExpando):
                                  '_images' : ndb.SuperLocalStructuredProperty(Image, repeated=True),# soft limit 100x
                                  
                                  'weight' : ndb.SuperDecimalProperty(required=True),
-                                 'weight_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'weight_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  'volume' : ndb.SuperDecimalProperty(required=True),
-                                 'volume_uom' : ndb.SuperKeyProperty(kind='19', required=True),
+                                 'volume_uom' : ndb.SuperVirtualKeyProperty(kind='19', required=True),
                                  
                                  'key' : ndb.SuperKeyProperty(kind='39', required=True)
                               }
@@ -912,10 +935,63 @@ class Instance(ndb.BaseExpando):
       
       rule.read(entity)
       context.output['entity'] = entity
-      context.output['categories'] = Category.query().fetch()
+      context.output['categories'] = search_categories()
+      context.output['units'] = uom.search_units()
       
       
     @classmethod
     def read_records(cls, context):
       context.cruds.entity = context.input.get('key').get()
       cruds.Engine.read_records(context)
+       
+def build_categories():
+  # this code builds leaf categories for selection with complete names, 3.8k of them
+  root_path = os.path.abspath('.')
+  data = []
+  with file(os.path.join(root_path, 'google_taxonomy.txt')) as f:
+    for line in f:
+      if not line.startswith('#'):
+        data.append(line.replace("\n", ''))
+      
+  write_data = []
+  sep = ' > '
+  parent = None
+  dig = 0
+  for ii,item in enumerate(data):
+    new_cat = {}
+    current = item.split(sep)
+    try:
+      next = data[ii+1].split(sep)
+    except IndexError as e:
+      next = current
+    if len(next) == len(current):
+       current_total = len(current)-1
+       last = current[current_total]
+       parent = current[current_total-1]
+       new_cat['id'] = hashlib.md5(last).hexdigest()
+       new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
+       new_cat['name'] = last
+       new_cat['complete_name'] = " / ".join(current[:current_total+1])
+       new_cat['state'] = 'active'
+       write_data.append(new_cat)
+    """    
+    This old code builds entire list of categories, 5.8k of them
+    for i,s in enumerate(cats):
+      if s:
+        new_cat['id'] = hashlib.md5(s).hexdigest()
+        parent = None
+        if i != 0:
+          try:
+            parent = Category.build_key(hashlib.md5(cats[i-1]).hexdigest())
+          except IndexError as e:
+            pass
+        new_cat['parent_record'] = parent
+        new_cat['name'] = s
+        new_cat['complete_name'] = " / ".join(cats[:i+1])
+        new_cat['state'] = 'active'
+    __write_data.append(new_cat)
+    """
+  return write_data
+
+register_categories(*(Category(**d) for d in build_categories()))
+      

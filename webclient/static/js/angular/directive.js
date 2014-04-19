@@ -84,6 +84,27 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
         }
     };
 })
+.directive('catalogSliderLoadMore', function () {
+	return {
+		restrict: 'A',
+		link : function (scope, element, attr)
+		{
+			var scroll = function ()
+			{
+				var current_scroll = $(this).children(':first').innerWidth()-$(this).scrollLeft();
+				
+				// this does not work cuz of fucking scrollLeft() bug OR WHATEVER it is - it just plainly does not return the current scroll left properly
+			};
+			
+			$(element).bind('scroll', scroll);
+			
+			scope.$on('$destroy', function () {
+	            	$(element).unbind('scroll', scroll);
+	        });
+			
+		}
+	};
+})
 .directive('catalogSlider', function ($timeout) {
     return {
         restrict: 'A',
@@ -118,7 +139,6 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
            	    };
            	
                 $timeout(function () {
- 
 			        resize();
 	            });
 	            

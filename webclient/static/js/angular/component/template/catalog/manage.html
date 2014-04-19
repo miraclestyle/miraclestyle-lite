@@ -44,7 +44,7 @@
 	
 	</div>
 	
-	<div ng-show="action != 'create'" accordion-group heading="Products">
+	<div ng-show="entity.id" accordion-group heading="Products">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
 		  <button ng-click="addProducts()" type="button" class="button">Add Products</button>	
@@ -68,11 +68,10 @@
 		<div ng-show="entity.more_images"><button type="button" ng-click="getImages()" busy class="button">Load more images</button></div>
 	</div>
 	
-	<div ng-show="action != 'create'" accordion-group heading="Embed">
+	<div ng-show="entity.id" accordion-group heading="Embed">
 		 
 	</div>
-	
-	
+	 
 	 
 </div>
 
