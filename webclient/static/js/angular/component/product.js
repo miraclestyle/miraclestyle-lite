@@ -66,12 +66,12 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
                             $scope.variant = angular.copy(variant ? variant : {});
-                            
-                            if ($scope.variant && 'options' in $scope.variant)
+          
+                            if ($scope.variant && ('options' in $scope.variant))
                             {
-                            	$scope._options = $scope.variant.options.join("\n");
+                            	$scope.variant._options = $scope.variant.options.join("\n");
                             }
-                      
+                   
                             var new_variant = variant ? false : true;
                    
                             $scope.save = function () {

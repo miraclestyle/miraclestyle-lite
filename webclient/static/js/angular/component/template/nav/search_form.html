@@ -17,7 +17,7 @@
 		 <table class="table2">
 		 	<tbody>
 		 		
-		 		<tr ng-repeat="search_filter in search.send.filters">
+		 		<tr ng-repeat="search_filter in search.send.filters track by $index">
 		 			<td class="c25 cpr10">
 		 				<select name="search_filter_filed" ng-required="true" ng-change="search.changeField()" ui-select2 ng-model="search_filter.field" data-placeholder="Select field to search">
 							    <option></option>
@@ -27,7 +27,7 @@
 		 			<td class="c25 cpl10">
 		 				<select name="search_filter_op" ng-required="true" ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" data-placeholder="Select operator for field">
 							    <option></option>
-							    <option ng-repeat="op in search.filters[search_filter.field].operators" value="{{op}}">{{op}}</option>
+							    <option ng-repeat="op in search.filters[search_filter.field].operators track by $index" value="{{op}}">{{op}}</option>
 						</select>
 		 			</td>
 		 			<td class="c25 cpl10">
@@ -62,7 +62,7 @@
 	<div class="form-input">
 		<select name="search_order_by_dir" ng-change="search.changeDirection()" ng-required="true" ui-select2 ng-model="search.send.order_by.operator" data-placeholder="Select direction">
 			    <option></option>
-			    <option ng-repeat="op in search.order_by[search.send.order_by.field].operators" value="{{op}}">{{op}}</option>
+			    <option ng-repeat="op in search.order_by[search.send.order_by.field].operators track by $index" value="{{op}}">{{op}}</option>
 		</select>
 	</div>
 </div>

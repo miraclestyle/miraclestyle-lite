@@ -575,16 +575,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             $scope.entity = angular.copy(entity);
                             $scope.action = action;
                             $scope.action2 = action2;
-                            
-                            if (!create)
-                            {
-                            	$scope.history = {
+                        
+                            $scope.history = {
 	                            	'kind' : entity['kind'],
 	                            	'args' : {
 	                            		'key' : entity['key'],
 	                            	}
-	                            };
-                            }
+	                        };
                             
                             
                             $scope.resolve_handle = options['handle'];
@@ -604,6 +601,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                         {
                                         	$scope.cancel();
                                         } 
+                                        
+                                        action = 'update';
+                					    action2 = 'read';
                                          
                                 });
                             };

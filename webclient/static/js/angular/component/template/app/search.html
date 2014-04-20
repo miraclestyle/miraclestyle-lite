@@ -5,13 +5,13 @@
 <table class="table">
 			<thead>
 				<tr>
-					<th ng-repeat="field in fields">{{field.label}}</th>
+					<th ng-repeat="field in fields track by $index">{{field.label}}</th>
 					<th></th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="entity in search.entities">
-					<td ng-repeat="field in fields">
+				<tr ng-repeat="entity in search.entities track by $index">
+					<td ng-repeat="field in fields track by $index">
 						 {{entity|output:field.key}}
 					</td>
 	 

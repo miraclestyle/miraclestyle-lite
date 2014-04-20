@@ -6,13 +6,13 @@
 	 <span class="fieldset-text">General</span>
   </h2>
   
-  <div class="form-control" ng-show="action == 'create'">
+  <div class="form-control" ng-show="!entity.id">
  
   	<label class="form-label">Outlet</label>
 		<div class="form-input">
 			<select ng-change="changeKind()" name="outlet" ng-required="true" ui-select2 ng-model="options.kind" data-placeholder="Select an outlet">
 				    <option value=""></option>
-				    <option ng-repeat="mode in modes" value="{{mode.kind}}">{{mode.name}}</option>
+				    <option ng-repeat="mode in modes track by $index" value="{{mode.kind}}">{{mode.name}}</option>
 			</select>
 	    </div>
   </div>
@@ -43,7 +43,7 @@
 			<div class="form-input">
 				<select name="message_sender" ng-required="rule.input[action].message_sender.required" ng-disabled="!rule.field.message_sender.writable" ui-select2 ng-model="entity.message_sender" data-placeholder="Select a user">
 					    <option value=""></option>
-					    <option ng-repeat="sender in users" value="{{sender.key}}">{{sender.name}}</option>
+					    <option ng-repeat="sender in users track by $index" value="{{sender.key}}">{{sender.name}}</option>
 				</select>
 			</div>
 		</div>
@@ -55,7 +55,7 @@
 		<div class="form-input">
 			<select name="message_reciever" ng-required="rule.input[action].message_reciever.required" ng-disabled="!rule.field.message_reciever.writable" ui-select2 ng-model="entity.message_reciever" data-placeholder="Select a role">
 				    <option value=""></option>
-				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>
+				    <option ng-repeat="role in roles track by $index" value="{{role.key}}">{{role.name}}</option>
 			</select>
 		</div>
 	</div>

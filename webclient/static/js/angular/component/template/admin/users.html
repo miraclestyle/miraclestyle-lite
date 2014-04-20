@@ -13,7 +13,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="usr in search.entities">
+				<tr ng-repeat="usr in search.entities track by $index">
 					<td>{{usr.id}}</td>
 					<td>{{usr|output:'created'}}</td>
 					<td>{{usr|output:'updated'}}</td>

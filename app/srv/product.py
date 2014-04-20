@@ -10,6 +10,8 @@ import collections
 import copy
 import json
 import os
+
+from google.appengine.api import images as imageapi
  
 from app import ndb, settings
 from app.srv import event, blob, rule, log, callback, cruds, uom
@@ -33,6 +35,21 @@ def register_categories(*categories):
   global __SYSTEM_CATEGORIES
   for category in categories:
     __SYSTEM_CATEGORIES[category.key.urlsafe()] = category
+    
+    
+##### instead of using virtaulkey properties + validator for Category and Units, 
+##### perhaps we should use custom property that will check their existance accordingly?
+#### currently this function and property is unused until decided what should be used
+def _validate_category(prop, value):
+  return get_category(value)
+
+class CategoryKeyProperty(ndb.SuperVirtualKeyProperty):
+  
+  def format(self):
+    res = super(CategoryKeyProperty, self).format()
+    if not get_category(res):
+      raise ndb.PropertyError('invalid_category')
+  
 
 # this model will either serve as LocalStructuredProperty of Template/Instance, or will fan-out as single child entity
 # of Template, packed with multiple contents
@@ -66,27 +83,36 @@ class Variant(ndb.BaseModel):
 class Image(blob.Image):
   
   _kind = 76
+  
+  
+  def get_output(self):
+    
+    dic = super(Image, self).get_output()
+    dic['_image_240'] = imageapi.get_serving_url(self.image, 240)
+    dic['_image_600'] = imageapi.get_serving_url(self.image, 600)
+    return dic
+  
 
 
 class Images(ndb.BaseModel):
   
   _kind = 73
   
-  images = ndb.SuperLocalStructuredProperty(Image, '1')
+  images = ndb.SuperLocalStructuredProperty(Image, '1', repeated=True)
 
 
 class Variants(ndb.BaseModel):
   
   _kind = 74
   
-  variants = ndb.SuperLocalStructuredProperty(Variant, '1')
+  variants = ndb.SuperLocalStructuredProperty(Variant, '1', repeated=True)
 
 
 class Contents(ndb.BaseModel):
   
   _kind = 75
   
-  contents = ndb.SuperLocalStructuredProperty(Content, '1')
+  contents = ndb.SuperLocalStructuredProperty(Content, '1', repeated=True)
 
 # done!
 class Category(ndb.BaseModel):
@@ -105,6 +131,7 @@ class Category(ndb.BaseModel):
     state = ndb.SuperStringProperty('4', default='active', required=True) # @todo status => state ? better ? for convention ? or just active = boolean 
     """
     This code will not be used for now
+    ---------------
     _global_role = rule.GlobalRole(permissions=[
         rule.ActionPermission('17', [event.Action.build_key('17-0').urlsafe(),
                                      event.Action.build_key('17-1').urlsafe(),
@@ -594,7 +621,8 @@ class Template(ndb.BaseExpando):
       
       @ndb.transactional(xg=True)
       def transaction():
-          
+          if not images.images:
+            images.images = []
           images.images.extend(upload_images)
           images.put()
           

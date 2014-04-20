@@ -20,7 +20,7 @@
 		<div class="form-input">
 			<select name="role" ng-required="rule.input[action].role.required" ng-disabled="!rule.field.role.writable" ui-select2 ng-model="entity.role" data-placeholder="Select a role">
 				    <option value=""></option>
-				    <option ng-repeat="role in roles" value="{{role.key}}">{{role.name}}</option>
+				    <option ng-repeat="role in roles track by $index" value="{{role.key}}">{{role.name}}</option>
 			</select>
 		</div>
 	</div>

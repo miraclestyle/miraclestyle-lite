@@ -76,7 +76,7 @@
 </div>
 
 
-<div ng-show="rule.action.read_records.executable && action == 'update'" class="form-control">
+<div ng-show="rule.action.read_records.executable && entity.id" class="form-control">
   <div ng-include="logic_template('misc/logs.html')"></div>
 </div>
 	
@@ -88,22 +88,22 @@
 <div class="modal-footer">
  
     <button ng-disabled="$isUploading" type="button" 
-    		ng-click="publish()" ng-show="rule.action.publish && (action == 'update')" busy class="button">
+    		ng-click="publish()" ng-show="rule.action.publish && entity.id" busy class="button">
 		Publish
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button" 
-			ng-click="discontinue()" ng-show="rule.action.discontinue && (action == 'update')" busy class="button">
+			ng-click="discontinue()" ng-show="rule.action.discontinue && entity.id" busy class="button">
 		Discontinue
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button"
-		    ng-click="lock()" ng-show="rule.action.lock && (action == 'update')" busy class="button">
+		    ng-click="lock()" ng-show="rule.action.lock && entity.id" busy class="button">
 		Lock
 	</button>
 	 
 	<button type="button" ng-click="save()" 
-			ng-show="rule.action.update || (rule.action.create && action == 'create')" 
+			ng-show="rule.action.update || rule.action.create" 
 			ng-disabled="!manage_catalog.$valid || $isUploading" busy class="button">
 		Save
 	</button>

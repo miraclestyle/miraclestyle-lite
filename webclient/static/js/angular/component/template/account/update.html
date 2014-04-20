@@ -37,7 +37,7 @@
 		<div class="form-input">
 			<select ng-disabled="!rule.field.identities.writable" ui-select2 ng-model="entity._primary_email" data-placeholder="Select your primary e-mail">
 				    <option value=""></option>
-				    <option ng-repeat="ident in entity.identities" value="{{ident.email}}">{{ident.email}}</option>
+				    <option ng-repeat="ident in entity.identities track by $index" value="{{ident.email}}">{{ident.email}}</option>
 			</select>
 		</div>
 	</div>
@@ -46,7 +46,7 @@
 	
 	<div class="form-control">
 		
-		<div ng-repeat="ident in entity.identities" class="form-control">
+		<div ng-repeat="ident in entity.identities track by $index" class="form-control">
 			<label class="form-label">{{identiy_info(ident.identity)}}</label>
 			<div class="form-input">
 				 <button type="button" ng-disabled="!rule.field.identities.writable" class="button" ng-click="disAssociate(ident.identity)">

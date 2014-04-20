@@ -90,6 +90,14 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
   return (value).quantize(places, rounding=rounding)
 
 
+class UomKeyProperty(ndb.SuperVirtualKeyProperty):
+  
+  def format(self):
+    res = super(UomKeyProperty, self).format()
+    if not get_system_unit(res):
+      raise ndb.PropertyError('invalid_uom')
+
+
 class Measurement(ndb.BaseModel):
   
   _kind = 18
