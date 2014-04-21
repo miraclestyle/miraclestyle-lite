@@ -158,6 +158,7 @@ class Search(event.Plugin):
     entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
+    context.entities = entities
     # @todo Perfectly all of the output should be handeled on one place. Output lines below should be removed when output is optimized.
     context.output['next_cursor'] = next_cursor
     context.output['more'] = more
