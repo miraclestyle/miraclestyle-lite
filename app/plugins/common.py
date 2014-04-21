@@ -5,6 +5,8 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import copy
+
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
@@ -22,6 +24,12 @@ def select_entities(context, entities):
     entities.append(context.entities[context.model.get_kind()])
   return entities
 
+def set_context(context):
+  if not context.entities:
+    context.entities = {}
+  if not context.values:
+    context.values = {}
+
 
 class Prepare(event.Plugin):
   
@@ -29,18 +37,19 @@ class Prepare(event.Plugin):
   domain_model = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
   
   def run(self, context):
-    if not context.entities:
-      context.entities = {}
+    set_context(context)
     if self.kind_id != None:
       if self.domain_model:
         context.entities[self.kind_id] = context.model(namespace=context.domain.key_namespace)
       else:
         context.entities[self.kind_id] = context.model()
+      context.values[self.kind_id] = copy.deepcopy(context.entities[self.kind_id])
     else:
       if self.domain_model:
         context.entities[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
       else:
         context.entities[context.model.get_kind()] = context.model()
+      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class Read(event.Plugin):
@@ -48,11 +57,14 @@ class Read(event.Plugin):
   kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
   
   def run(self, context):
+    set_context(context)
     entity_key = context.input.get('key')
     if self.kind_id != None:
       context.entities[self.kind_id] = entity_key.get()
+      context.values[self.kind_id] = copy.deepcopy(context.entities[self.kind_id])
     else:
       context.entities[context.model.get_kind()] = entity_key.get()
+      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class Write(event.Plugin):
@@ -96,7 +108,7 @@ class Field(ndb.BaseModel):
   value = ndb.SuperStringProperty('2', required=True, indexed=False)
 
 
-class FieldAutoUpdate(event.Plugin):
+class FieldAutoUpdate(event.Plugin):  # @todo Needs improvements for structured properties.
   
   kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
   fields = ndb.SuperLocalStructuredProperty(Field, '5', repeated=True, indexed=False)
@@ -113,7 +125,7 @@ class FieldAutoUpdate(event.Plugin):
 class Search(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
-  search = ndb.SuperSearchProperty('5', required=False, indexed=False)  # @todo Transform this field to include optional query parameters to include in query.
+  search = ndb.SuperJsonProperty('5', required=False, indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
   
   def run(self, context):
     namespace = None
