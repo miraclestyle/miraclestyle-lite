@@ -85,8 +85,6 @@ def read(entity):
   for field_key, field in entity_fields.items():
     _read_helper(entity._field_permissions, entity, field_key, field)
 
-# From Engine class #
-
 def reset_actions(action_permissions, actions):
   for action_key in actions:
     action_permissions[action_key] = {'executable': []}
