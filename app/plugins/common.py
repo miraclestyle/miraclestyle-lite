@@ -30,6 +30,52 @@ def set_context(context):
   if not context.values:
     context.values = {}
 
+def prepare_attr(entity, field_path):
+  fields = field_path.split('.')
+  last_field = fields[-1]
+  drill = fields[:-1]
+  i = -1
+  while not last_field:
+    i = i - 1
+    last_field = fields[i]
+    drill = fields[:i]
+  for field in drill:
+    if field:
+      if isinstance(entity, dict):
+        try:
+          entity = entity[field]
+        except KeyError as e:
+          return None
+      elif isinstance(entity, list):
+        try:
+          entity = entity[int(field)]
+        except KeyError as e:
+          return None
+      else:
+        try:
+          entity = getattr(entity, field)
+        except ValueError as e:
+          return None
+  return (entity, last_field)
+
+def set_attr(entity, field_path, value):
+  entity, last_field = prepare_attr(entity, field_path)
+  if isinstance(entity, dict):
+    entity[last_field] = value
+  elif isinstance(entity, list):
+    entity.insert(int(last_field), value)
+  else:
+    setattr(entity, last_field, value)
+
+def get_attr(entity, field_path):
+  entity, last_field = prepare_attr(entity, field_path)
+  if isinstance(entity, dict):
+    return entity.get(last_field)
+  elif isinstance(entity, list):
+    return entity[int(last_field)]
+  else:
+    return getattr(entity, last_field)
+
 
 class Prepare(event.Plugin):
   
@@ -91,35 +137,32 @@ class Delete(event.Plugin):
     callback.execute(context)
 
 
-class Output(event.Plugin):
-  
-  kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
-  
-  def run(self, context):
-    if self.kind_id != None:
-      context.output['entity'] = context.entities[self.kind_id]
-    else:
-      context.output['entity'] = context.entities[context.model.get_kind()]
-
-
 class Field(ndb.BaseModel):
   
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
   value = ndb.SuperStringProperty('2', required=True, indexed=False)
 
 
-class FieldAutoUpdate(event.Plugin):  # @todo Needs improvements for structured properties.
+class Output(event.Plugin):  # @todo Not sure if this plugin should have it's own (fields) structured property!
+  
+  fields = ndb.SuperLocalStructuredProperty(Field, '4', repeated=True, indexed=False)
+  
+  def run(self, context):
+    for field in self.fields:
+      context.output[field.value] = get_attr(context, field.name)
+
+
+class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, field.name, field.value)!
   
   kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
   fields = ndb.SuperLocalStructuredProperty(Field, '5', repeated=True, indexed=False)
   
   def run(self, context):
-    if self.kind_id != None:
-      for field in self.fields:
-        setattr(context.values[self.kind_id], field.name, field.value)
-    else:
-      for field in self.fields:
-        setattr(context.values[context.model.get_kind()], field.name, field.value)
+    for field in self.fields:
+      if self.kind_id != None:
+        set_attr(context.values[self.kind_id], field.name, field.value)
+      else:
+        set_attr(context.values[context.model.get_kind()], field.name, field.value)
 
 
 class Search(event.Plugin):
@@ -159,7 +202,7 @@ class Search(event.Plugin):
           args.append(field >= value)
         elif op == 'IN':
           args.append(field.IN(value))
-      query = query.filter(*args)  
+      query = query.filter(*args)
       order_by_field = getattr(model, order_by['field'])
       asc = order_by['operator'] == 'asc'
       if asc:
