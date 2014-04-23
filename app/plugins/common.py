@@ -149,7 +149,7 @@ class Output(event.Plugin):  # @todo Not sure if this plugin should have it's ow
   
   def run(self, context):
     for field in self.fields:
-      context.output[field.value] = get_attr(context, field.name)
+      context.output[field.name] = get_attr(context, field.value)
 
 
 class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, field.name, field.value)!
