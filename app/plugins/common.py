@@ -217,5 +217,3 @@ class Search(event.Plugin):
     context.entities = entities
     context.next_cursor = next_cursor
     context.more = more
-
- 
