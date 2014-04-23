@@ -7,6 +7,8 @@ Created on Feb 24, 2014
 
 from app import ndb
 from app.srv import rule, event, log, cruds
+from app.plugins import common
+from app.plugins import rule as p_rule
 
 
 class Filter(ndb.BaseExpando):
@@ -145,6 +147,11 @@ class Widget(ndb.BaseExpando):
       )
     }
   
+  _plugins = [common.Prepare(subscriptions=[event.Action.build_key('62-0').urlsafe()], domain_model=True),
+              p_rule.Prepare(subscriptions=[event.Action.build_key('62-0').urlsafe()], skip_user_roles=False, strict=False),
+              p_rule.Exec(subscriptions=[event.Action.build_key('62-0').urlsafe()]),
+              common.Output(subscriptions=[event.Action.build_key('62-0').urlsafe()], fields=[common.Field(name='entity', value='entities.62')])]
+  
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
@@ -185,13 +192,13 @@ class Widget(ndb.BaseExpando):
     context.cruds.values = values
     cruds.Engine.update(context)
   
-  @classmethod
+  """@classmethod
   def prepare(cls, context):
     domain_key = context.input.get('domain')
     context.cruds.entity = cls(namespace=domain_key.urlsafe())
     cruds.Engine.prepare(context)
     entity = context.output['entity']
-    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
+    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
   
   @classmethod
   def read(cls, context):
