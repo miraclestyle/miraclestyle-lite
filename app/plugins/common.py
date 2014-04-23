@@ -30,6 +30,9 @@ def set_context(context):
   if not context.values:
     context.values = {}
   context.user = context.auth.user  # @todo This line is temporary!
+  domain_key = context.input.get('domain')  # @todo This line is temporary!
+  if domain_key:  # @todo This line is temporary!
+    context.domain = domain_key.get()  # @todo This line is temporary!
 
 def prepare_attr(entity, field_path):
   fields = field_path.split('.')
