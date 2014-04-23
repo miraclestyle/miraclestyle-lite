@@ -12,48 +12,40 @@ from google.appengine.api import taskqueue
 from app import ndb
 
 
-def execute(context):
+def execute(context, payloads, transactional=None):
   queues = {}
   url = '/task/io_engine_run'
-  if context.callback.transactional is None:
-    context.callback.transactional = ndb.in_transaction()
-  if context.callback.transactional:
-    context.callback.payloads = context.callback.payloads[:5]
-  if len(context.callback.payloads):
-    for payload in context.callback.payloads:
-      queue_name, data = payload
-      if data['caller_entity'].key:
-        data['caller_entity'] = data['caller_entity'].key.urlsafe()
+  if not isinstance(payloads, (list, tuple)):
+    payloads = [payloads]
+  if transactional is None:
+    transactional = ndb.in_transaction()
+  if transactional:
+    payloads = payloads[:5]
+  if len(payloads):
+    for payload in payloads:
+      data = {}
       if context.user.key:
         data['caller_user'] = context.user.key.urlsafe()
       data['caller_action'] = context.action.key.urlsafe()
-      try:
-        kwargs = payload[2]
-      except IndexError as e:
-        kwargs = {}
-      if queue_name not in queues:
-        queues[queue_name] = []
-      queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data), **kwargs))
+      data['action_model'] = payload.action_model
+      data['action_key'] = payload.action_key
+      kwargs = payload.kwargs
+      if payload.queue not in queues:
+        queues[payload.queue] = []
+      queues[payload.queue].append(taskqueue.Task(url=url, payload=json.dumps(data), **kwargs))
   if len(queues):
     for queue_name, tasks in queues.items():
       queue = taskqueue.Queue(name=queue_name)
-      queue.add(tasks, transactional=context.callback.transactional)
-  context.callback.payloads = []
+      queue.add(tasks, transactional=transactional)
 
 
-class Prepare(event.Plugin):
+class Payload(event.Plugin):  # @todo Properties need optimization!
   
-  queue_name = ndb.SuperStringProperty('4', required=True, indexed=False)
-  transactional = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
-  action_key = ndb.SuperStringProperty('6', required=True, indexed=False)
-  action_model = ndb.SuperStringProperty('7', required=True, indexed=False)
+  transactional = ndb.SuperBooleanProperty('4', indexed=False, required=True, default=True)
+  queue = ndb.SuperStringProperty('5', indexed=False, required=True)
+  action_model = ndb.SuperStringProperty('6', indexed=False, required=True)
+  action_key = ndb.SuperStringProperty('7', indexed=False, required=True)
+  kwargs = ndb.SuperPickleProperty('8', indexed=False, required=True, default={}, compressed=False)
   
   def run(self, context):
-    if not context.callback.payloads:
-      context.callback.payloads = []
-    context.callback.transactional = self.transactional
-    if context.entity:
-      context.callback.payloads.append((self.queue_name,
-                                        {'action_key': self.action_key,
-                                         'action_model': self.action_model,
-                                         'caller_entity': context.entity}))
+    execute(context, self, self.transactional)
