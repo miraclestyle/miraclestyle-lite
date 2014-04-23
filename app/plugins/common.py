@@ -29,6 +29,7 @@ def set_context(context):
     context.entities = {}
   if not context.values:
     context.values = {}
+  context.user = context.auth.user  # @todo This line is temporary!
 
 def prepare_attr(entity, field_path):
   fields = field_path.split('.')
@@ -79,8 +80,8 @@ def get_attr(entity, field_path):
 
 class Prepare(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
-  domain_model = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
+  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
+  domain_model = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=True)
   
   def run(self, context):
     set_context(context)
@@ -100,7 +101,7 @@ class Prepare(event.Plugin):
 
 class Read(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
+  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
   
   def run(self, context):
     set_context(context)
@@ -115,7 +116,7 @@ class Read(event.Plugin):
 
 class Write(event.Plugin):
   
-  write_entities = ndb.SuperStringProperty('4', repeated=True, indexed=False)
+  write_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
   
   @ndb.transactional(xg=True)
   def run(self, context):
@@ -127,7 +128,7 @@ class Write(event.Plugin):
 
 class Delete(event.Plugin):
   
-  delete_entities = ndb.SuperStringProperty('4', repeated=True, indexed=False)
+  delete_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
   
   @ndb.transactional(xg=True)
   def run(self, context):
@@ -139,13 +140,13 @@ class Delete(event.Plugin):
 
 class Field(ndb.BaseModel):
   
-  name = ndb.SuperStringProperty('1', required=True, indexed=False)
-  value = ndb.SuperStringProperty('2', required=True, indexed=False)
+  name = ndb.SuperStringProperty('1', indexed=False, required=True)
+  value = ndb.SuperStringProperty('2', indexed=False, required=True)
 
 
 class Output(event.Plugin):  # @todo Not sure if this plugin should have it's own (fields) structured property!
   
-  fields = ndb.SuperLocalStructuredProperty(Field, '4', repeated=True, indexed=False)
+  fields = ndb.SuperLocalStructuredProperty(Field, '4', indexed=False, repeated=True)
   
   def run(self, context):
     for field in self.fields:
@@ -154,8 +155,8 @@ class Output(event.Plugin):  # @todo Not sure if this plugin should have it's ow
 
 class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, field.name, field.value)!
   
-  kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
-  fields = ndb.SuperLocalStructuredProperty(Field, '5', repeated=True, indexed=False)
+  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
+  fields = ndb.SuperLocalStructuredProperty(Field, '5', indexed=False, repeated=True)
   
   def run(self, context):
     for field in self.fields:
@@ -167,8 +168,8 @@ class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, 
 
 class Search(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', required=False, indexed=False)
-  search = ndb.SuperJsonProperty('5', required=False, indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
+  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
+  search = ndb.SuperJsonProperty('5', indexed=False, required=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
   
   def run(self, context):
     namespace = None
