@@ -20,7 +20,7 @@ from google.appengine.ext import blobstore
 
 __SYSTEM_CATEGORIES = collections.OrderedDict() # ordered dict remembers the order of remembered categories
 
-def search_categories(query=None, limit=400):
+def search_categories(query=None, limit=100):
   ## missing search logic
   items = get_category().values()
   return items[:limit]

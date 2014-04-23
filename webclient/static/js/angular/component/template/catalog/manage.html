@@ -1,10 +1,10 @@
-<form action="{{form_info.action}}" ng-upload="completed(content)" name="manage_catalog">
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
 <input type="hidden" name="action_key" value="upload_images" />
 <input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="key" value="{{entity.key}}" />
 	
-<div class="modal-body scrollable">
+<div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
  
 <div ng-init="isOpen=true" accordion>
@@ -18,7 +18,9 @@
 			</div>
 		</div>
 		
-		
+	</div>
+	
+	 <div class="form-control">
 		<label class="form-label">Publish Date</label>
 		<div class="form-input">
 			<div class="form-text">
@@ -29,7 +31,9 @@
 			</div>
 		</div>
 		
+		</div>
 		
+		 <div class="form-control">
 		<label class="form-label">Discontinue Date</label>
 		<div class="form-input">
 			<div class="form-text">
@@ -39,24 +43,25 @@
 				 	    class="text-input" type="text" ng-model="entity.discontinue_date" />
 			</div>
 		</div>
+		</div>
 		
 	</div>
 	
-	</div>
+ 
 	
 	<div ng-show="entity.id" accordion-group heading="Products">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
-		  <button ng-click="addProducts()" type="button" class="button">Add Products</button>	
+		  <button n-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
 		  <div class="button fake-button">
 		  	 <span>Add Images</span>
-		  	 <input class="upload" name="images" multiple ng-change="addFiles()" type="file" ng-model="entity._supplied_filename" />
+		  	 <input class="upload" name="images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
 		  </div>
 		  </div>
 		  
 		</div>
 		
-		<div ng-show="$isUploading">Images are uploading... please wait...</div>
+		<div class="text-right" ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
 			<div ng-repeat="image in entity._images" class="image-image">
@@ -69,7 +74,7 @@
 	</div>
 	
 	<div ng-show="entity.id" accordion-group heading="Embed">
-		 
+		 ....
 	</div>
 	 
 	 
@@ -104,7 +109,7 @@
 	 
 	<button type="button" ng-click="save()" 
 			ng-show="rule.action.update || rule.action.create" 
-			ng-disabled="!manage_catalog.$valid || $isUploading" busy class="button">
+			ng-disabled="container.main.$invalid || $isUploading" busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

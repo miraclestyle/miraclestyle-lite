@@ -131,6 +131,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 				     	var neww = new_width_by_height(cw, ch, h);
 				     	
 				     	img.width(neww);
+				     	$(this).width(neww);
 				     	
 				     	w += neww;
 				     });
@@ -152,6 +153,40 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
         }
     };
 })
+.directive('uploadOnSelect', ['Endpoint', function (Endpoint) {
+	return {
+		link : function (scope, element, attrs)
+		{
+			var change = function () {
+				
+				var that = $(this);
+				var form = that.parents('[ng-form]:first');
+				if (!form.length)
+				{
+					form = that.parents('form:first');
+				}
+				var options = resolve_defaults({
+					'kind' : scope.entity.kind,
+					'action' : 'upload_images',
+					'args' : {
+						'key' : scope.entity.key,
+					},
+				}, scope.$eval(attrs.uploadOnSelect));
+			 
+				Endpoint.post(options['action'], options['kind'], angular.extend({'upload_url' : Endpoint.url}, options['args'])).success(function (data) {
+	        	 	form.attr('action', data.upload_url).trigger('submit');
+	            });
+            
+            };
+           
+			$(element).on('change', change);
+			
+			scope.$on('$destroy', function () {
+				$(element).off('change', change);
+			});
+		}
+	};
+}])
 .directive('toggle', function() {
     return {
         scope: {

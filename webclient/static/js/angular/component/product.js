@@ -7,10 +7,9 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
     	  
         var scope = {
         	 'form_info' : {'action' : Endpoint.url},
-        	  
         	 'completed' : function (data)
         	 {
-        	 	EntityEditor.update_entity(this, data);
+        	 	this.entity._images = data['entity']['_images'];
         	 },
             'removeImage' : function (image)
         	 {
@@ -100,17 +99,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     });
         	 	
         	  },
-        	 'addFiles' : function ()
-        	 {
-        	 	  var that = this;
-         
-        	 	  Endpoint.post('upload_images', kind, {'upload_url' : Endpoint.url, 'key' : that.entity.key}).success(function (data) {
-        	 	  	   that.form_info.action = data.upload_url;
-        	 	  	   
-        	 	  	   $('form[name="manage_product"]').attr('action', that.form_info.action).trigger('submit'); // hack
-        	 	  	  
-        	 	  });
-        	 }
+      
     	};
     	
         return {

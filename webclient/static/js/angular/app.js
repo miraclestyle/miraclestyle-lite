@@ -146,7 +146,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	 	
     	 };
     	 
-    	 options =  resolve_defaults(defaults, options);
+    	 options = resolve_defaults(defaults, options);
   
     	 var modalInstance = $modal.open(options);
     	  
@@ -439,7 +439,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     		'kind' : '',
     	};
     	
-    	var resolveOptions = function (options)
+    	var resolve_options = function (options)
     	{
     		options = resolve_defaults(defaults, options);
     		
@@ -493,7 +493,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
             remove : function (options)
             {
              
-             	options = resolveOptions(options);
+             	options = resolve_options(options);
              	var action = 'delete';
              	
              	if (options['action']) action = options['action'];
@@ -539,7 +539,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
             },
             manage: function (create, options) {
             	
-            	options = resolveOptions(options);
+            	options = resolve_options(options);
             	
                 var that = this;
                  
@@ -563,12 +563,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                     var modalInstance = $modal.open({
                         templateUrl: options['templateUrl'],
                         controller: function ($scope, $modalInstance, RuleEngine) {
+                  
+                        	var _resolve_options = function(opts)
+                        	{
+                        	 
+	                            $scope.resolve_handle = opts['handle'];
+	                            $scope.resolve_complete = opts['complete'];
+	                            $scope.resolve_cancel = opts['cancel'];
+	                            $scope.options = update($scope.options, opts);
+                        	};
                         	
                         	var entity = options['entity'];
                         	
                         	update(entity, data['entity']);
                         	
                         	$scope.options = options;
+                        	$scope.container = {};
                         	 
  							$scope.rule = RuleEngine.factory(data['entity']);
  							$scope.live_entity = entity;
@@ -582,16 +592,42 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            		'key' : entity['key'],
 	                            	}
 	                        };
+	                        
+	                        
+	                        _resolve_options(options);
                             
-                            
-                            $scope.resolve_handle = options['handle'];
-                            $scope.resolve_complete = options['complete'];
-                            $scope.resolve_cancel = options['cancel'];
-                              
                             $scope.save = function () {
  
                                 Endpoint.post(action, options['kind'], $scope.entity)
                                 .success(function (data) {
+                                	 
+                                        $scope.action = action = 'update';
+                					    $scope.action2 = action2 = 'read';
+                                	
+                                		if (data['errors'])
+                                		{
+                                			console.log($scope.container);
+                                			angular.forEach(data['errors'], function (fields, type) {
+                                		 
+                                				if (type == 'required' || type == 'non_property_error')
+                                				{
+                                					if (('container' in $scope)
+                                					     && ('main' in $scope.container))
+                                					{
+                                						angular.forEach(fields, function (field) {
+                                							if (field in $scope.container.main)
+                                							{
+                                								$scope.container.main[field].$setValidity(type, true);
+                                							}
+                                							
+                                						});
+                                					}
+                                					
+                                				}
+                                			});
+                                			 
+                                			return false;
+                                		}
 
                                         that.update_entity($scope, data);
                                         
@@ -600,10 +636,14 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                         if (options['close'])
                                         {
                                         	$scope.cancel();
-                                        } 
+                                        }
                                         
-                                        action = 'update';
-                					    action2 = 'read';
+                                        if (options['options_after_update'])
+                                        {
+                                        	_resolve_options(options['options_after_update']);
+                                        	$scope.resolve_handle(data);
+                                        }
+                                        
                                          
                                 });
                             };

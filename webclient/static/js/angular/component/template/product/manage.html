@@ -1,10 +1,10 @@
-<form ng-submit="save()" action="{{form_info.action}}" ng-upload="completed(content)" name="manage_product">
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
 <input type="hidden" name="action_key" value="upload_images" />
 <input type="hidden" name="action_model" value="38" />
 <input type="hidden" name="key" value="{{entity.key}}" />
 	
-<div class="modal-body scrollable">
+<div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
  
 <div ng-init="isOpen=true" accordion>
@@ -201,7 +201,7 @@
 		  <div class="pull-right">
 		  <div ng-show="rule.field._images.writable" class="button fake-button">
 		  	 <span>Add Images</span>
-		  	 <input class="upload" name="images" multiple ng-change="addFiles()" type="file" ng-model="entity._supplied_filename" />
+		  	 <input class="upload" name="images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
 		  </div>
 		  </div>
 		  
@@ -259,10 +259,10 @@
 <div ng-show="rule.action.read_records.executable && entity.id" class="form-control">
   <div ng-include="logic_template('misc/logs.html')"></div>
 </div>
-	
  
 </div>
 </div>
+
 
 
 <div class="modal-footer">
@@ -272,11 +272,13 @@
 		Remove
 	</button>
  
-	<button type="submit"
+	<button type="button"
+			ng-click="save()" 
 			ng-show="rule.action.update || rule.action.create" 
-			ng-disabled="!manage_product.$valid || $isUploading" busy class="button">
+			ng-disabled="container.main.$invalid || $isUploading" busy class="button">
 		Save
 	</button>
+	<!-- ng-disabled="" does not work well with busy directive -->
 	
 	<button type="button" class="button" ng-click="cancel()">
 		Cancel
