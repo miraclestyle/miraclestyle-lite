@@ -197,7 +197,7 @@ def prepare(context, skip_user_roles, strict):
     local_field_permissions = {}
     if not skip_user_roles:
       if not context.user._is_guest:
-        domain_user_key = DomainUser.build_key(context.user.key_id_str, namespace=context.entity.key_namespace)
+        domain_user_key = ndb.Key(8, context.user.key_id_str, namespace=context.entity.key_namespace)
         domain_user = domain_user_key.get()
         clean_roles = False
         if domain_user and domain_user.state == 'accepted':
