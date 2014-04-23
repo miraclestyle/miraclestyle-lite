@@ -210,9 +210,11 @@ def prepare(context, skip_user_roles, strict):
                 role.run(context)
           if clean_roles:
             payload = callback.Payload(queue='callback',
-                                       action_model='8',
-                                       action_key='clean_roles',
-                                       kwargs={'key': domain_user.key.urlsafe()})
+                                       internal_fields={'action_model': '8',
+                                                        'action_key': 'clean_roles',
+                                                        'caller_user': context.user.key.urlsafe(),
+                                                        'caller_action': context.action.key.urlsafe(),
+                                                        'key': domain_user.key.urlsafe()})
             callback.execute(context, payload)
         # Copy generated entity permissions to separate dictionary.
         local_action_permissions = context.entity._action_permissions.copy()
