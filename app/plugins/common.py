@@ -10,7 +10,7 @@ import copy
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
-from app.srv import event, callback
+from app.srv import event
 from.app.plugins import log, callback
 
 
@@ -214,6 +214,5 @@ class Search(event.Plugin):
     if next_cursor:
       next_cursor = next_cursor.urlsafe()
     context.entities = entities
-    # @todo Perfectly all of the output should be handeled on one place. Output lines below should be removed when output is optimized.
-    context.output['next_cursor'] = next_cursor
-    context.output['more'] = more
+    context.next_cursor = next_cursor
+    context.more = more
