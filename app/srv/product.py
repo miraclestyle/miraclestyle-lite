@@ -20,18 +20,18 @@ from google.appengine.ext import blobstore
 
 __SYSTEM_CATEGORIES = collections.OrderedDict() # ordered dict remembers the order of remembered categories
 
-def search_categories(query=None, limit=100):
+def search_system_categories(query=None, limit=100):
   ## missing search logic
-  items = get_category().values()
+  items = get_system_category().values()
   return items[:limit]
 
-def get_category(category_key=None):
+def get_system_category(category_key=None):
   global __SYSTEM_CATEGORIES
   if category_key == None:
     return __SYSTEM_CATEGORIES
   return __SYSTEM_CATEGORIES.get(category_key.urlsafe())
    
-def register_categories(*categories):
+def register_system_categories(*categories):
   global __SYSTEM_CATEGORIES
   for category in categories:
     __SYSTEM_CATEGORIES[category.key.urlsafe()] = category
@@ -41,13 +41,13 @@ def register_categories(*categories):
 ##### perhaps we should use custom property that will check their existance accordingly?
 #### currently this function and property is unused until decided what should be used
 def _validate_category(prop, value):
-  return get_category(value)
+  return get_system_category(value)
 
 class CategoryKeyProperty(ndb.SuperVirtualKeyProperty):
   
   def format(self):
     res = super(CategoryKeyProperty, self).format()
-    if not get_category(res):
+    if not get_system_category(res):
       raise ndb.PropertyError('invalid_category')
   
 
@@ -569,7 +569,7 @@ class Template(ndb.BaseExpando):
       
       rule.read(entity)
       context.output['entity'] = entity
-      context.output['categories'] = search_categories()
+      context.output['categories'] = search_system_categories()
       context.output['units'] = uom.search_units()
       
       
@@ -585,7 +585,7 @@ class Template(ndb.BaseExpando):
       context.cruds.entity = cls(parent=catalog_key)
       cruds.Engine.prepare(context)
       
-      context.output['categories'] = search_categories()
+      context.output['categories'] = search_system_categories()
       context.output['units'] = uom.search_units()
  
  
@@ -963,7 +963,7 @@ class Instance(ndb.BaseExpando):
       
       rule.read(entity)
       context.output['entity'] = entity
-      context.output['categories'] = search_categories()
+      context.output['categories'] = search_system_categories()
       context.output['units'] = uom.search_units()
       
       
@@ -1021,5 +1021,5 @@ def build_categories():
     """
   return write_data
 
-register_categories(*(Category(**d) for d in build_categories()))
+register_system_categories(*(Category(**d) for d in build_categories()))
       
