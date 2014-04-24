@@ -17,11 +17,13 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 class Payload(event.Plugin):
   
   queue = ndb.SuperStringProperty('5', indexed=False, required=True)
-  payload_data = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  static_data = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  dynamic_data = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
   
   def run(self, context):
     data = {}
-    for key, value in self.payload_data.items():
+    data.update(self.static_data)
+    for key, value in self.dynamic_data.items():
       data[key] = get_attr(context, value)
     context.callback_payloads.append((self.queue, data))
 
