@@ -7,6 +7,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
     	  
         var scope = {
         	 'form_info' : {'action' : Endpoint.url},
+        	
         	 'completed' : function (data)
         	 {
         	 	this.entity._images = data['entity']['_images'];

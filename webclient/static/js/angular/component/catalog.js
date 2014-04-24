@@ -22,14 +22,26 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 	this.entity._images.remove(image);
         	 },
         	 'getImages': function ()
-        	 {
+        	 {	
         	 	var that = this;
+        	 	
+        	 	if (that.entity.more_images && !that.entity.loading_new)
+        	 	{
+        	 
+        	 	
         	 	that.entity.start_images = that.entity._images.length;
         	 	
-        	 	Endpoint.post('read', kind, that.entity).success(function (data) {
+        	 	that.entity.loading_new = true;
+        	 	
+        	 	Endpoint.post('read', kind, that.entity).then(function (response) {
+        	 		var data = response.data;
         	 		that.entity._images.extend(data['entity']['_images']);
         	 		that.entity.more_images = data['more_images'];
+        	 		that.entity.loading_new = false;
         	 	});
+        	 	
+        	 			
+        	 	}
         	 },
       
     	};
@@ -64,6 +76,25 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             $scope.rule = that.rule;
                             $scope.live_entity = that.entity;
                             $scope.entity = angular.copy(that.entity);
+                            
+                            $scope.getImages = function ()
+				            {
+				        	 	if ($scope.entity.more_images && !$scope.entity.loading_new)
+				        	 	{ 
+					        	 	$scope.entity.start_images = $scope.entity._images.length;
+					        	 	
+					        	 	$scope.entity.loading_new = true;
+					        	 	
+					        	 	Endpoint.post('read', $scope.entity.kind, $scope.entity).then(function (response) {
+					        	 		var data = response.data;
+					        	 		$scope.entity._images.extend(data['entity']['_images']);
+					        	 		$scope.entity.more_images = data['more_images'];
+					        	 		$scope.entity.loading_new = false;
+					        	 	});
+				        	 	 
+				        	 	}
+				        	};
+                            
                             $scope.onDrop = function (event, ui, catalog_image)
                             {
                             	 var pricetags = catalog_image.pricetags;
@@ -79,8 +110,22 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             	 	delete pricetag['key'];
                             	 }
                             	  
-                            	 pricetag['position_top'] = posi2.top - posi.top;
-                            	 pricetag['position_left'] = posi2.left - posi.left;
+                            	 pricetag['_position_top'] = posi2.top - posi.top;
+                            	 pricetag['_position_left'] = posi2.left - posi.left;
+                            	 
+                            	 var sizes = calculate_pricetag_position
+                            	 (
+                            	 	pricetag['_position_top'],
+                            	 	pricetag['_position_left'],
+                            	 	$(event.target).width(),
+                            	 	$(event.target).height(),
+                            	 	catalog_image.width,
+                            	 	catalog_image.height
+                            	 ); // reverse the position perspective
+                      
+                            	 pricetag['position_top'] = sizes[0];
+                            	 pricetag['position_left'] = sizes[1];
+                            	 
                             	 pricetag['product_template'] = pricetag['_key'];
                             	 pricetag['value'] = pricetag['unit_price'];
                             	 
@@ -89,8 +134,23 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             
                             $scope.onStop = function (event, ui, pricetag)
                             {
-                            	 pricetag['position_top'] = ui.position.top;
-                            	 pricetag['position_left'] = ui.position.left;
+                            	 pricetag['_position_top'] = ui.position.top;
+                            	 pricetag['_position_left'] = ui.position.left;
+                            	 
+                            	 var target = $(event.target).parents('.catalog-image-scroll:first');
+                            	  
+                            	 var sizes = calculate_pricetag_position
+                            	 (
+                            	 	pricetag['_position_top'],
+                            	 	pricetag['_position_left'],
+                            	 	target.width(),
+                            	 	target.height(),
+                            	 	target.data('width'),
+                            	 	target.data('height')
+                            	 ); // reverse the position perspective
+                             
+                            	 pricetag['position_top'] = sizes[0];
+                            	 pricetag['position_left'] = sizes[1];
                             };
                             
                             $scope.addProduct = function ()

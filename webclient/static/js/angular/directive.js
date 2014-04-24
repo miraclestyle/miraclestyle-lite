@@ -105,6 +105,83 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 		}
 	};
 })
+.directive('catalogPricetagPosition', function ($timeout) {
+	return {
+		priority : -513,
+		link : function (scope, element, attr)
+		{
+				  /*  
+				  ihp - Initial Horizontal Price Tag Position 
+				  ivp - Initial Vertical Price Tag Position 
+				  iiw - Initial Image Width  
+				  iih - Initial Image Height  
+				  
+				  ciw - Current Image Width  
+				  cih - Current Image Height  
+				  chp - Current Horizontal Price Tag Position  
+				  cvp - Current Vertical Price Tag Position  
+				  */
+				 
+			var resize = function ()
+			{
+				var pa = $(element).parents('.catalog-image-scroll:first');
+				
+				var sizes = calculate_pricetag_position
+				(
+					scope.pricetag.position_top,
+					scope.pricetag.position_left,
+					scope.$parent.catalog_image.width,
+					scope.$parent.catalog_image.height,
+					pa.width(),
+					pa.height()
+				);
+	 
+				scope.pricetag._position_top = sizes[0];
+				scope.pricetag._position_left = sizes[1];
+				
+				$(element).css({
+					top : scope.pricetag._position_top,
+					left : scope.pricetag._position_left,
+				}); // reposition the perspective based on the db results
+			};
+			
+			$timeout(resize);
+			  
+			$(window).on('resize', resize);
+			
+			scope.$on('$destroy', function () {
+				$(window).off('resize', resize);
+			});
+		}
+	};
+})
+.directive('loadInfiniteCatalogImages', function () {
+	return {
+		link : function (scope, element, attr)
+		{
+			var scroll = function ()
+			{
+				var left = $(element).scrollLeft(), el = $(element).get(0);
+			
+				var maxscroll = el.scrollWidth - el.clientWidth;
+				
+				var sense = maxscroll - left;
+				
+				if (sense < 200)
+				{
+					scope.getImages();
+				}
+			};
+			
+			$(element).on('scroll', scroll);
+			
+			scope.$on('$destroy', function () {
+				$(element).off('scroll', scroll);
+			});
+			
+		}
+	};
+})
 .directive('catalogSlider', function ($timeout) {
     return {
         restrict: 'A',
@@ -112,7 +189,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
         link: function (scope, element, attr) {
     	    
            if (scope.$last === true) {
-           	
+           	 
            	    var resize = function ()
            	    {
            	    	 var that = $(element);
@@ -134,6 +211,8 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 				     	$(this).width(neww);
 				     	
 				     	w += neww;
+				      
+				     	
 				     });
 				 
 				     master.width(Math.ceil(w));

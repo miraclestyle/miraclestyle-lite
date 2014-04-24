@@ -257,3 +257,26 @@ var new_height_by_width = function (original_width, original_height, new_width)
     
     return (new_height);
 };
+
+
+	
+var calculate_pricetag_position = function(ihp, ivp, iiw, iih, ciw, cih){
+ 
+ 
+	  /*  
+	  ihp - Initial Horizontal Price Tag Position 
+	  ivp - Initial Vertical Price Tag Position 
+	  iiw - Initial Image Width  
+	  iih - Initial Image Height  
+	  
+	  ciw - Current Image Width  
+	  cih - Current Image Height  
+	  chp - Current Horizontal Price Tag Position  
+	  cvp - Current Vertical Price Tag Position  
+	  */
+	 
+	  var chp = (ihp/iiw)*ciw;
+	  var cvp = (ivp/iih)*cih;
+	  return [chp, cvp];
+};
+	 

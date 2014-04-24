@@ -4,7 +4,7 @@
 
 
 <div class="clearfix">
-	<div catalog-slider-load-more class="pull-left t60 overflow-x">
+	<div load-infinite-catalog-images class="pull-left t60 overflow-x">
 		<div class="overflow-master">
 			<ol>
 			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
@@ -13,10 +13,12 @@
 			     data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
 				 <img catalog-slider class="img" ng-src="{{catalog_image._image_600}}" />
 				 
-				 <div ng-style="{top: pricetag.position_top + 'px', left : pricetag.position_left + 'px'}"
+				 <div ng-style="{top: pricetag._position_top + 'px', left : pricetag._position_left + 'px'}"
 				      ng-model="image.pricetags" data-jqyoui-options="{containment : 'parent'}" 
 				      jqyoui-draggable="{index: {{$index}}, onStop : 'onStop(pricetag)'}" 
-				 	  data-drag="true" class="button pricetag" ng-repeat="pricetag in catalog_image.pricetags track by $index">
+				 	  data-drag="true" class="button pricetag"
+				 	  catalog-pricetag-position
+				 	  ng-repeat="pricetag in catalog_image.pricetags track by $index">
 				 	<a href="javascript:;">{{pricetag.value}}</a>
 				 </div>
 				 

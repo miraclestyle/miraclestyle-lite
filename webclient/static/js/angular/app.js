@@ -606,7 +606,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 	
                                 		if (data['errors'])
                                 		{
-                                			console.log($scope.container);
+    
                                 			angular.forEach(data['errors'], function (fields, type) {
                                 		 
                                 				if (type == 'required' || type == 'non_property_error')
