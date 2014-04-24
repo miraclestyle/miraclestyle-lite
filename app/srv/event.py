@@ -22,6 +22,6 @@ class Plugin(ndb.BasePolyExpando):
   _kind = 52
   
   sequence = ndb.SuperIntegerProperty('1', required=True)
-  subscriptions = ndb.SuperKeyProperty('2', kind='56', required=False, repeated=True)
+  subscriptions = ndb.SuperKeyProperty('2', kind='56', repeated=True)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
   transactional = ndb.SuperBooleanProperty('4', required=True, default=False, indexed=False)
