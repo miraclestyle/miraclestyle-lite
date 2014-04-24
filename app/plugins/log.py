@@ -20,7 +20,7 @@ class Entity(event.Plugin):
   dynamic_arguments = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
   
   def run(self, context):
-    if context.entities:
+    if len(context.entities):
       if isinstance(context.entities, dict):
         arguments = {}
         arguments.update(self.static_arguments)
