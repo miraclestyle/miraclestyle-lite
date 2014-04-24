@@ -9,7 +9,7 @@ import json
 
 from google.appengine.api import taskqueue
 
-from app import ndb
+from app import ndb, settings
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
