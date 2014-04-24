@@ -117,7 +117,7 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):  # @todo Possible changes here, if we optimize model and action architecutre!
-    execute = getattr(context.model, input.get('action_key'))
+    execute = getattr(context.model, input.get('action_key'), None)
     if execute and callable(execute):
       execute(context)
     else:
@@ -127,8 +127,8 @@ class Engine:
           if len(plugins):
             for plugin in plugins:
               plugin.run(context)
-        except:
-          pass
+        except Exception as e:
+          raise
   
   @classmethod
   def run(cls, input):

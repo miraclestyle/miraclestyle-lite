@@ -11,7 +11,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
 from app.srv import event
-from.app.plugins import log, callback
+from app.plugins import log, callback
 
 
 def select_entities(context, entities):
@@ -25,9 +25,9 @@ def select_entities(context, entities):
   return entities
 
 def set_context(context):
-  if not context.entities:
+  if not hasattr(context, 'entities'):
     context.entities = {}
-  if not context.values:
+  if not hasattr(context, 'values'):
     context.values = {}
   context.user = context.auth.user  # @todo This line is temporary!
   domain_key = context.input.get('domain')  # @todo This line is temporary!
@@ -97,9 +97,10 @@ class Prepare(event.Plugin):
     else:
       if self.domain_model:
         context.entities[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
+        context.values[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
       else:
         context.entities[context.model.get_kind()] = context.model()
-      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+        context.values[context.model.get_kind()] = context.model()
 
 
 class Read(event.Plugin):

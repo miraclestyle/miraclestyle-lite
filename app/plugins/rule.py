@@ -9,7 +9,7 @@ import collections
 
 from app import ndb, settings
 from app.srv import event
-from.app.plugins import log, callback
+from app.plugins import log, callback
 
 
 class ActionDenied(Exception):
@@ -186,7 +186,7 @@ def prepare(context, skip_user_roles, strict):
   """
   if context.entity:
     reset(context.entity)
-    if hasattr(context.entity, '_global_role') and isinstance(context.entity._global_role, GlobalRole):
+    if hasattr(context.entity, '_global_role') and context.entity._global_role.get_kind() == '67':
       context.entity._global_role.run(context)
     # Copy generated entity permissions to separate dictionary.
     global_action_permissions = context.entity._action_permissions.copy()
@@ -197,7 +197,7 @@ def prepare(context, skip_user_roles, strict):
     local_field_permissions = {}
     if not skip_user_roles:
       if not context.user._is_guest:
-        domain_user_key = ndb.Key(8, context.user.key_id_str, namespace=context.entity.key_namespace)
+        domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.entity.key_namespace)
         domain_user = domain_user_key.get()
         clean_roles = False
         if domain_user and domain_user.state == 'accepted':

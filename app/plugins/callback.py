@@ -10,7 +10,7 @@ import json
 from google.appengine.api import taskqueue
 
 from app import ndb
-
+from app.srv import event
 
 def prepare_attr(entity, field_path):
   fields = field_path.split('.')

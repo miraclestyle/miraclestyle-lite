@@ -8,6 +8,8 @@ Created on Apr 17, 2014
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
+from app.srv import event
+from app.srv.log import Record
 
 
 def write(context):

@@ -147,10 +147,10 @@ class Widget(ndb.BaseExpando):
       )
     }
   
-  _plugins = [common.Prepare(subscriptions=[event.Action.build_key('62-0').urlsafe()], domain_model=True),
-              p_rule.Prepare(subscriptions=[event.Action.build_key('62-0').urlsafe()], skip_user_roles=False, strict=False),
-              p_rule.Exec(subscriptions=[event.Action.build_key('62-0').urlsafe()]),
-              common.Output(subscriptions=[event.Action.build_key('62-0').urlsafe()], fields=[common.Field(name='entity', value='entities.62')])]
+  _plugins = [common.Prepare(subscriptions=[event.Action.build_key('62-0')], domain_model=True),
+              p_rule.Prepare(subscriptions=[event.Action.build_key('62-0')], skip_user_roles=False, strict=False),
+              p_rule.Exec(subscriptions=[event.Action.build_key('62-0')]),
+              common.Output(subscriptions=[event.Action.build_key('62-0')], fields=[common.Field(name='entity', value='entities.62')])]
   
   @property
   def _is_system(self):
