@@ -9,53 +9,62 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
 from app.srv import event
+from app.lib.attribute_manipulator import set_attr, get_attr
 from app.srv.log import Record
 
 
-def write(context):
-  """We always call log.write() from within a transaction, 
-  because it is a helper function, not an independent function!
+class Entity(event.Plugin):
   
-  """
-  if len(context.log.entities):
-    records = []
-    for config in context.log.entities:
-      entity = config[0]
-      try:
-        kwargs = config[1]
-      except:
-        kwargs = None
-      if not kwargs:
-        kwargs = {}
-      log_entity = kwargs.pop('log_entity', True)
-      record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
-      if log_entity is True:
-        log_entity = entity
-      if log_entity:
-        record.log_entity(log_entity)
-      records.append(record)
-    
-    if len(records):
-      recorded = ndb.put_multi(records)
-    context.log.entities = []
+  log_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  static_arguments = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  dynamic_arguments = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if context.entities:
+      if isinstance(context.entities, dict):
+        arguments = {}
+        arguments.update(self.static_arguments)
+        for key, value in self.dynamic_arguments.items():
+          arguments[key] = get_attr(context, value)
+        if len(self.log_entities):
+          for kind_id in self.log_entities:
+            if kind_id in context.entities:
+              context.log_entities.append((context.entities[kind_id], arguments))
+        else:
+          context.log_entities.append((context.entities[context.model.get_kind()], arguments))
 
 
 class Write(event.Plugin):
   
-  log_entity = ndb.SuperBooleanProperty('4', required=True, indexed=False, default=True)
-  arguments = ndb.SuperStringProperty('5', repeated=True, indexed=False)
+  static_arguments = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
+  dynamic_arguments = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not context.log.entities:
-      context.log.entities = []
-    if context.entity:
-      arguments = {}
-      if self.log_entity:
-        arguments['log_entity'] = True
-      else:
-        arguments['log_entity'] = False
-      if len(self.arguments):
-        for argument in self.arguments:
-          if context.entity._field_permissions['_records'][argument]['writable']:
-            arguments[argument] = context.input.get(argument)
-      context.log.entities.append((context.entity, arguments))
+    records = []
+    if len(context.log_entities):
+      for config in context.log_entities:
+        arguments = {}
+        kwargs = {}
+        arguments.update(self.static_arguments)
+        for key, value in self.dynamic_arguments.items():
+          arguments[key] = get_attr(context, value)
+        entity = config[0]
+        try:
+          entity_arguments = config[1]
+        except:
+          entity_arguments = {}
+        arguments.update(entity_arguments)
+        log_entity = arguments.pop('log_entity', True)
+        if len(arguments):
+          for key, value in arguments.items():
+            if entity._field_permissions['_records'][key]['writable']:
+              kwargs[key] = value
+        record = Record(parent=entity.key, agent=context.user.key, action=context.action.key, **kwargs)
+        if log_entity is True:
+          log_entity = entity
+        if log_entity:
+          record.log_entity(log_entity)
+        records.append(record)
+    if len(records):
+      recorded = ndb.put_multi(records)
+    context.log_entities = []
