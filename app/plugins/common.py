@@ -11,13 +11,13 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings
 from app.srv import event
-from app.plugins import log, callback
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-def select_entities(context, entities):
+def select_entities(context, selection):
   entities = []
-  if len(entities):
-    for kind_id in entities:
+  if len(selection):
+    for kind_id in selection:
       if kind_id in context.entities:
         entities.append(context.entities[kind_id])
   else:
@@ -29,71 +29,29 @@ def set_context(context):
     context.entities = {}
   if not hasattr(context, 'values'):
     context.values = {}
-  context.user = context.auth.user  # @todo This line is temporary!
-  domain_key = context.input.get('domain')  # @todo This line is temporary!
-  if domain_key:  # @todo This line is temporary!
-    context.domain = domain_key.get()  # @todo This line is temporary!
-
-def prepare_attr(entity, field_path):
-  fields = field_path.split('.')
-  last_field = fields[-1]
-  drill = fields[:-1]
-  i = -1
-  while not last_field:
-    i = i - 1
-    last_field = fields[i]
-    drill = fields[:i]
-  for field in drill:
-    if field:
-      if isinstance(entity, dict):
-        try:
-          entity = entity[field]
-        except KeyError as e:
-          return None
-      elif isinstance(entity, list):
-        try:
-          entity = entity[int(field)]
-        except KeyError as e:
-          return None
-      else:
-        try:
-          entity = getattr(entity, field)
-        except ValueError as e:
-          return None
-  return (entity, last_field)
-
-def set_attr(entity, field_path, value):
-  entity, last_field = prepare_attr(entity, field_path)
-  if isinstance(entity, dict):
-    entity[last_field] = value
-  elif isinstance(entity, list):
-    entity.insert(int(last_field), value)
-  else:
-    setattr(entity, last_field, value)
-
-def get_attr(entity, field_path):
-  entity, last_field = prepare_attr(entity, field_path)
-  if isinstance(entity, dict):
-    return entity.get(last_field)
-  elif isinstance(entity, list):
-    return entity[int(last_field)]
-  else:
-    return getattr(entity, last_field)
+  # @todo Following lines are temporary!
+  context.user = context.auth.user
+  domain_key = context.input.get('domain')
+  if domain_key:
+    context.domain = domain_key.get()
+  if not hasattr(context, 'callback_payloads'):
+    context.callback_payloads = []
 
 
 class Prepare(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
-  domain_model = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=True)
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  domain_model = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
   
   def run(self, context):
     set_context(context)
     if self.kind_id != None:
       if self.domain_model:
         context.entities[self.kind_id] = context.model(namespace=context.domain.key_namespace)
+        context.values[self.kind_id] = context.model(namespace=context.domain.key_namespace)
       else:
         context.entities[self.kind_id] = context.model()
-      context.values[self.kind_id] = copy.deepcopy(context.entities[self.kind_id])
+        context.values[self.kind_id] = context.model()
     else:
       if self.domain_model:
         context.entities[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
@@ -105,7 +63,7 @@ class Prepare(event.Plugin):
 
 class Read(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
   
   def run(self, context):
     set_context(context)
@@ -120,60 +78,48 @@ class Read(event.Plugin):
 
 class Write(event.Plugin):
   
-  write_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
+  write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
-  @ndb.transactional(xg=True)
   def run(self, context):
     entities = select_entities(context, self.write_entities)
     ndb.put_multi(entities)
-    log.write(context)
-    callback.execute(context)
 
 
 class Delete(event.Plugin):
   
-  delete_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
+  delete_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
-  @ndb.transactional(xg=True)
   def run(self, context):
     entities = select_entities(context, self.delete_entities)
     ndb.delete_multi(entities)
-    log.write(context)
-    callback.execute(context)
 
 
-class Field(ndb.BaseModel):
+class Output(event.Plugin):
   
-  name = ndb.SuperStringProperty('1', indexed=False, required=True)
-  value = ndb.SuperStringProperty('2', indexed=False, required=True)
-
-
-class Output(event.Plugin):  # @todo Not sure if this plugin should have it's own (fields) structured property!
-  
-  fields = ndb.SuperLocalStructuredProperty(Field, '4', indexed=False, repeated=True)
+  output_data = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
   
   def run(self, context):
-    for field in self.fields:
-      context.output[field.name] = get_attr(context, field.value)
+    for key, value in self.output_data.items():
+      context.output[key] = get_attr(context, value)
 
 
-class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, field.name, field.value)!
+class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, key, value)!
   
-  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
-  fields = ndb.SuperLocalStructuredProperty(Field, '5', indexed=False, repeated=True)
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  fields = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
   
   def run(self, context):
-    for field in self.fields:
+    for key, value in self.fields.items():
       if self.kind_id != None:
-        set_attr(context.values[self.kind_id], field.name, field.value)
+        set_attr(context.values[self.kind_id], key, value)
       else:
-        set_attr(context.values[context.model.get_kind()], field.name, field.value)
+        set_attr(context.values[context.model.get_kind()], key, value)
 
 
 class Search(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
-  search = ndb.SuperJsonProperty('5', indexed=False, required=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  search = ndb.SuperJsonProperty('6', indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
   
   def run(self, context):
     namespace = None
