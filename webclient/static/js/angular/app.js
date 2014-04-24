@@ -600,7 +600,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  
                                 Endpoint.post(action, options['kind'], $scope.entity)
                                 .success(function (data) {
-                                	 
+                                	
+                                	 	var initial_action = action;
+                                	 	var initial_action2 = action2;
+                                	 	
                                         $scope.action = action = 'update';
                 					    $scope.action2 = action2 = 'read';
                                 	
@@ -631,7 +634,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
                                         that.update_entity($scope, data);
                                         
-                                        $scope.resolve_complete(entity);
+                                        $scope.resolve_complete(entity, initial_action);
                                         
                                         if (options['close'])
                                         {

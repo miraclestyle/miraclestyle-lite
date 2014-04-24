@@ -27,8 +27,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 	
         	 	if (that.entity.more_images && !that.entity.loading_new)
         	 	{
-        	 
-        	 	
+        	  
         	 	that.entity.start_images = that.entity._images.length;
         	 	
         	 	that.entity.loading_new = true;
@@ -85,7 +84,7 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 					        	 	
 					        	 	$scope.entity.loading_new = true;
 					        	 	
-					        	 	Endpoint.post('read', $scope.entity.kind, $scope.entity).then(function (response) {
+					        	 	Endpoint.post('read', kind, $scope.entity).then(function (response) {
 					        	 		var data = response.data;
 					        	 		$scope.entity._images.extend(data['entity']['_images']);
 					        	 		$scope.entity.more_images = data['more_images'];
@@ -99,8 +98,9 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             {
                             	 var pricetags = catalog_image.pricetags;
                             	 var pricetag = pricetags[pricetags.length-1];
+                            	 var target_drop = $(event.target);
                             	 
-                            	 var posi = $(event.target).offset();
+                            	 var posi = target_drop.offset();
                             	 var posi2 = ui.offset;
                             	 
                             	 if ('key' in pricetag)
@@ -117,8 +117,8 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             	 (
                             	 	pricetag['_position_top'],
                             	 	pricetag['_position_left'],
-                            	 	$(event.target).width(),
-                            	 	$(event.target).height(),
+                            	 	target_drop.width(),
+                            	 	target_drop.height(),
                             	 	catalog_image.width,
                             	 	catalog_image.height
                             	 ); // reverse the position perspective
@@ -128,7 +128,6 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             	 
                             	 pricetag['product_template'] = pricetag['_key'];
                             	 pricetag['value'] = pricetag['unit_price'];
-                            	 
                             	  
                             };
                             
@@ -155,8 +154,9 @@ MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                             
                             $scope.addProduct = function ()
                             {
-                            	 Product.create(that.entity['key'], function (new_entity) {
-                            	 	  if (this.action == 'create')
+                            	 Product.create(that.entity['key'], function (new_entity, action) {
+                            	 	 
+                            	 	  if (action == 'create')
                             	 	  {
                             	 	  	 $scope.products.push(new_entity);
                             	 	  }
