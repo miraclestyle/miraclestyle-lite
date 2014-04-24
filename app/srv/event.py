@@ -13,8 +13,8 @@ class Action(ndb.BaseExpando):
   _kind = 56
   
   name = ndb.SuperStringProperty('1', required=True)
-  arguments = ndb.SuperPickleProperty('2', default={})
-  active = ndb.SuperBooleanProperty('3', default=True)
+  arguments = ndb.SuperPickleProperty('2', required=True, default={})
+  active = ndb.SuperBooleanProperty('3', required=True, default=True)
 
 
 class Plugin(ndb.BasePolyExpando):
@@ -24,3 +24,4 @@ class Plugin(ndb.BasePolyExpando):
   sequence = ndb.SuperIntegerProperty('1', required=True)
   subscriptions = ndb.SuperKeyProperty('2', kind='56', repeated=True)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
+  transactional = ndb.SuperBooleanProperty('4', required=True, default=False, indexed=False)

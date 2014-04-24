@@ -116,7 +116,14 @@ class Engine:
       raise InputError(input_error)
   
   @classmethod
-  def execute_action(cls, context, input):  # @todo Possible changes here, if we optimize model and action architecutre!
+  def execute_action(cls, context, input):  # @todo Optimization required!
+    @ndb.transactional(xg=True)
+    def transaction(plugins):
+      for plugin in plugins:
+        plugin.run(context)
+    def non_transaction(plugins):
+      for plugin in plugins:
+        plugin.run(context)
     execute = getattr(context.model, input.get('action_key'), None)
     if execute and callable(execute):
       execute(context)
@@ -124,9 +131,26 @@ class Engine:
       if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
         try:
           plugins = context.model.get_plugins(context.action.key)
+          pre_transactional_plugins = []
+          transactional_plugins = []
+          post_transactional_plugins = []
+          pre_transactional = True
           if len(plugins):
             for plugin in plugins:
-              plugin.run(context)
+              if plugin.transactional:
+                transactional_plugins.append(plugin)
+                pre_transactional = False
+              else:
+                if pre_transactional:
+                  pre_transactional_plugins.append(plugin)
+                else:
+                  post_transactional_plugins.append(plugin)
+          if len(pre_transactional_plugins):
+            non_transaction(pre_transactional_plugins)
+          if len(transactional_plugins):
+            transaction(transactional_plugins)
+          if len(post_transactional_plugins):
+            non_transaction(post_transactional_plugins)
         except Exception as e:
           raise
   

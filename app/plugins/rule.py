@@ -9,7 +9,6 @@ import collections
 
 from app import ndb, settings
 from app.srv import event
-from app.plugins import log, callback
 
 
 class ActionDenied(Exception):
@@ -209,13 +208,10 @@ def prepare(context, skip_user_roles, strict):
               if role.active:
                 role.run(context)
           if clean_roles:
-            payload = callback.Payload(queue='callback',
-                                       internal_fields={'action_model': '8',
-                                                        'action_key': 'clean_roles',
-                                                        'caller_user': context.user.key.urlsafe(),
-                                                        'caller_action': context.action.key.urlsafe(),
-                                                        'key': domain_user.key.urlsafe()})
-            callback.execute(context, payload)
+            data = {'action_model': '8',
+                    'action_key': 'clean_roles',
+                    'key': domain_user.key.urlsafe()}
+            context.callback_payloads.append(('callback', data))
         # Copy generated entity permissions to separate dictionary.
         local_action_permissions = context.entity._action_permissions.copy()
         local_field_permissions = context.entity._field_permissions.copy()
@@ -229,9 +225,9 @@ def prepare(context, skip_user_roles, strict):
 
 class Prepare(event.Plugin):
   
-  prepare_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
-  skip_user_roles = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=True)
-  strict = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  prepare_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  skip_user_roles = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  strict = ndb.SuperBooleanProperty('7', indexed=False, required=True, default=True)
   
   def run(self, context):
     if context.entities:
@@ -255,7 +251,7 @@ class Prepare(event.Plugin):
 
 class Read(event.Plugin):
   
-  read_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
+  read_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
     if context.entities:
@@ -273,7 +269,7 @@ class Read(event.Plugin):
 
 class Write(event.Plugin):
   
-  write_entities = ndb.SuperStringProperty('4', indexed=False, repeated=True)
+  write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
     if context.entities:
@@ -291,7 +287,7 @@ class Write(event.Plugin):
 
 class Exec(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('4', indexed=False, required=False)
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
   
   def run(self, context):
     if context.entities:

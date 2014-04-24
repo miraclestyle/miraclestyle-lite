@@ -346,6 +346,10 @@ class _BaseModel(object):
     return self.key.id()
   
   @property
+  def key_urlsafe(self):
+    return self.key.urlsafe()
+  
+  @property
   def key_id_str(self):
     return str(self.key_id)
   
