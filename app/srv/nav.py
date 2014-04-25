@@ -186,6 +186,13 @@ class Widget(ndb.BaseExpando):
     common.Search(
       subscriptions=[event.Action.build_key('62-5')]
       ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('62-5')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
     plugin_rule.Read(
       subscriptions=[
         event.Action.build_key('62-5'),
