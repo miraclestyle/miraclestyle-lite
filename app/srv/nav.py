@@ -10,6 +10,7 @@ from app.srv import rule, event, log, cruds
 from app.plugins import common
 from app.plugins import rule as plugin_rule
 from app.plugins import log as plugin_log
+from app.plugins import callback as plugin_callback
 
 
 class Filter(ndb.BaseExpando):
@@ -159,7 +160,8 @@ class Widget(ndb.BaseExpando):
     common.Read(
       subscriptions=[
         event.Action.build_key('62-6'),
-        event.Action.build_key('62-2')
+        event.Action.build_key('62-2'),
+        event.Action.build_key('62-4')
         ]
       ),
     plugin_rule.Prepare(
@@ -167,7 +169,8 @@ class Widget(ndb.BaseExpando):
         event.Action.build_key('62-0'),
         event.Action.build_key('62-6'),
         event.Action.build_key('62-5'),
-        event.Action.build_key('62-2')
+        event.Action.build_key('62-2'),
+        event.Action.build_key('62-4')
         ],
       skip_user_roles=False,
       strict=False
@@ -177,8 +180,42 @@ class Widget(ndb.BaseExpando):
         event.Action.build_key('62-0'),
         event.Action.build_key('62-6'),
         event.Action.build_key('62-5'),
-        event.Action.build_key('62-2')
+        event.Action.build_key('62-2'),
+        event.Action.build_key('62-4')
         ]
+      ),
+    common.Delete(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True
+      ),
+    plugin_log.Entity(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True
+      ),
+    plugin_log.Write(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True
+      ),
+    plugin_rule.Read(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True
+      ),
+    common.Output(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True,
+      output_data={'entity': 'entities.62'}
+      ),
+    plugin_callback.Payload(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}
+      ),
+    plugin_callback.Exec(
+      subscriptions=[event.Action.build_key('62-4')],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     plugin_log.Read(
       subscriptions=[event.Action.build_key('62-6')]
@@ -271,10 +308,10 @@ class Widget(ndb.BaseExpando):
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
   
-  @classmethod
+  """@classmethod
   def delete(cls, context):
     context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.delete(context)
+    cruds.Engine.delete(context)"""
   
   """@classmethod
   def search(cls, context):
