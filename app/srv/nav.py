@@ -6,11 +6,12 @@ Created on Feb 24, 2014
 '''
 
 from app import ndb
-from app.srv import rule, event, log, cruds
+#from app.srv import rule, event, log, cruds
 from app.plugins import common
 from app.plugins import rule as plugin_rule
 from app.plugins import log as plugin_log
 from app.plugins import callback as plugin_callback
+from app.plugins import nav
 
 
 class Filter(ndb.BaseExpando):
@@ -153,24 +154,30 @@ class Widget(ndb.BaseExpando):
     common.Prepare(
       subscriptions=[
         event.Action.build_key('62-0'),
-        event.Action.build_key('62-5')
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-7')
         ],
       domain_model=True
       ),
     common.Read(
       subscriptions=[
-        event.Action.build_key('62-6'),
         event.Action.build_key('62-2'),
-        event.Action.build_key('62-4')
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4'),
+        event.Action.build_key('62-6')
         ]
       ),
     plugin_rule.Prepare(
       subscriptions=[
         event.Action.build_key('62-0'),
-        event.Action.build_key('62-6'),
-        event.Action.build_key('62-5'),
+        event.Action.build_key('62-1'),
         event.Action.build_key('62-2'),
-        event.Action.build_key('62-4')
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-7')
         ],
       skip_user_roles=False,
       strict=False
@@ -178,50 +185,108 @@ class Widget(ndb.BaseExpando):
     plugin_rule.Exec(
       subscriptions=[
         event.Action.build_key('62-0'),
-        event.Action.build_key('62-6'),
-        event.Action.build_key('62-5'),
+        event.Action.build_key('62-1'),
         event.Action.build_key('62-2'),
-        event.Action.build_key('62-4')
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-7')
         ]
       ),
+    nav.SetValue(
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3')
+        ]
+      ),
+    nav.BuildMenu(
+      subscriptions=[
+        event.Action.build_key('62-7')
+        ]
+      ),
+    plugin_rule.Write(
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3')
+        ],
+      transactional=True
+      ),
     common.Delete(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-4')
+        ],
       transactional=True
       ),
     plugin_log.Entity(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True
       ),
     plugin_log.Write(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True
       ),
     plugin_rule.Read(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True
       ),
     common.Output(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True,
       output_data={'entity': 'entities.62'}
       ),
     plugin_callback.Payload(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True,
       queue = 'notify',
       static_data = {'action_key': 'initiate', 'action_model': '61'},
       dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}
       ),
     plugin_callback.Exec(
-      subscriptions=[event.Action.build_key('62-4')],
+      subscriptions=[
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4')
+        ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     plugin_log.Read(
-      subscriptions=[event.Action.build_key('62-6')]
+      subscriptions=[
+        event.Action.build_key('62-6')
+        ]
       ),
     common.Search(
-      subscriptions=[event.Action.build_key('62-5')]
+      subscriptions=[
+        event.Action.build_key('62-5')
+        ]
       ),
     plugin_rule.Prepare(
       subscriptions=[
@@ -232,8 +297,8 @@ class Widget(ndb.BaseExpando):
       ),
     plugin_rule.Read(
       subscriptions=[
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-2')
+        event.Action.build_key('62-2'),
+        event.Action.build_key('62-5')
         ]
       ),
     common.Output(
@@ -244,12 +309,22 @@ class Widget(ndb.BaseExpando):
       output_data={'entity': 'entities.62'}
       ),
     common.Output(
-      subscriptions=[event.Action.build_key('62-6')],
+      subscriptions=[
+        event.Action.build_key('62-5')
+        ],
+      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('62-6')
+        ],
       output_data={'entity': 'entities.62', 'next_cursor': 'next_cursor', 'more': 'more'}
       ),
     common.Output(
-      subscriptions=[event.Action.build_key('62-5')],
-      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      subscriptions=[
+        event.Action.build_key('62-7')
+        ],
+      output_data={'menu': 'widgets', 'domain': 'domain'}
       )
     ]
   
@@ -257,7 +332,7 @@ class Widget(ndb.BaseExpando):
   def _is_system(self):
     return self.key_id_str.startswith('system_')
   
-  @classmethod
+  """@classmethod
   def complete_save(cls, entity, context):
     role_key = context.input.get('role')
     role = role_key.get()
@@ -273,25 +348,25 @@ class Widget(ndb.BaseExpando):
               'role': role_key,
               'search_form': context.input.get('search_form'),
               'filters': filters}
-    return values
+    return values"""
   
-  @classmethod
+  """@classmethod
   def create(cls, context):
     domain_key = context.input.get('domain')
     entity = cls(namespace=domain_key.urlsafe())
     values = cls.complete_save(entity, context)
     context.cruds.entity = cls(namespace=domain_key.urlsafe())
     context.cruds.values = values
-    cruds.Engine.create(context)
+    cruds.Engine.create(context)"""
   
-  @classmethod
+  """@classmethod
   def update(cls, context):
     entity_key = context.input.get('entity_key')
     entity = entity_key.get()
     values = cls.complete_save(entity, context)
     context.cruds.entity = entity
     context.cruds.values = values
-    cruds.Engine.update(context)
+    cruds.Engine.update(context)"""
   
   """@classmethod
   def prepare(cls, context):
@@ -324,7 +399,7 @@ class Widget(ndb.BaseExpando):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read_records(context)"""
   
-  @classmethod
+  """@classmethod
   def build_menu(cls, context):
     domain_key = context.input.get('domain')
     domain = domain_key.get()
@@ -339,7 +414,7 @@ class Widget(ndb.BaseExpando):
                           cls.role.IN(domain_user.roles),
                           namespace=domain.key_namespace).order(cls.sequence).fetch()
       context.output['menu'] = widgets
-      context.output['domain'] = domain
+      context.output['domain'] = domain"""
   
   @classmethod
   def selection_roles_helper(cls, namespace):  # @todo This method will die, and ajax DomainRole.search() will be used instead!?
