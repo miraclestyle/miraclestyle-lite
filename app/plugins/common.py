@@ -78,6 +78,19 @@ class Read(event.Plugin):
       context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
+class SetValue(event.Plugin):
+  
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  fields = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    for key, value in self.fields.items():
+      if self.kind_id != None:
+        set_attr(context.values[self.kind_id], key, context.input.get(value))
+      else:
+        set_attr(context.values[context.model.get_kind()], key, context.input.get(value))
+
+
 class Write(event.Plugin):
   
   write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
