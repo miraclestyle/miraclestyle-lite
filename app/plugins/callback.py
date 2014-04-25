@@ -32,8 +32,8 @@ class Exec(event.Plugin):
   
   static_data = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
   dynamic_data = ndb.SuperJsonProperty('6', indexed=False, required=True,
-                                       default={'caller_user': 'context.user.key_urlsafe',
-                                                'caller_action': 'context.action.key_urlsafe'})
+                                       default={'caller_user': 'user.key_urlsafe',
+                                                'caller_action': 'action.key_urlsafe'})
   
   def run(self, context):
     queues = {}
