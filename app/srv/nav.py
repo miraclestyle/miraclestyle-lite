@@ -8,7 +8,8 @@ Created on Feb 24, 2014
 from app import ndb
 from app.srv import rule, event, log, cruds
 from app.plugins import common
-from app.plugins import rule as p_rule
+from app.plugins import rule as plugin_rule
+from app.plugins import log as plugin_log
 
 
 class Filter(ndb.BaseExpando):
@@ -147,10 +148,66 @@ class Widget(ndb.BaseExpando):
       )
     }
   
-  _plugins = [common.Prepare(subscriptions=[event.Action.build_key('62-0')], domain_model=True),
-              p_rule.Prepare(subscriptions=[event.Action.build_key('62-0')], skip_user_roles=False, strict=False),
-              p_rule.Exec(subscriptions=[event.Action.build_key('62-0')]),
-              common.Output(subscriptions=[event.Action.build_key('62-0')], fields=[common.Field(name='entity', value='entities.62')])]
+  _plugins = [
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-5')
+        ],
+      domain_model=True
+      ),
+    common.Read(
+      subscriptions=[
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-2')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-2')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-2')
+        ]
+      ),
+    plugin_log.Read(
+      subscriptions=[event.Action.build_key('62-6')]
+      ),
+    common.Search(
+      subscriptions=[event.Action.build_key('62-5')]
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-2')
+        ]
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-2')
+        ],
+      output_data={'entity': 'entities.62'}
+      ),
+    common.Output(
+      subscriptions=[event.Action.build_key('62-6')],
+      output_data={'entity': 'entities.62', 'next_cursor': 'next_cursor', 'more': 'more'}
+      ),
+    common.Output(
+      subscriptions=[event.Action.build_key('62-5')],
+      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      )
+    ]
   
   @property
   def _is_system(self):
@@ -200,28 +257,28 @@ class Widget(ndb.BaseExpando):
     entity = context.output['entity']
     context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
   
-  @classmethod
+  """@classmethod
   def read(cls, context):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.read(context)
     entity = context.output['entity']
-    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)
+    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
   
   @classmethod
   def delete(cls, context):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
   
-  @classmethod
+  """@classmethod
   def search(cls, context):
     context.cruds.entity = cls
     context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
-    cruds.Engine.search(context)
+    cruds.Engine.search(context)"""
   
-  @classmethod
+  """@classmethod
   def read_records(cls, context):
     context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read_records(context)
+    cruds.Engine.read_records(context)"""
   
   @classmethod
   def build_menu(cls, context):

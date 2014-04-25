@@ -254,7 +254,7 @@ class Read(event.Plugin):
   read_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
-    if context.entities:
+    if len(context.entities):
       if isinstance(context.entities, dict):
         if len(self.read_entities):
           for kind_id in self.read_entities:
@@ -272,7 +272,7 @@ class Write(event.Plugin):
   write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
-    if context.entities:
+    if len(context.entities):
       if isinstance(context.entities, dict):
         if len(self.write_entities):
           for kind_id in self.write_entities:
@@ -290,7 +290,7 @@ class Exec(event.Plugin):
   kind_id = ndb.SuperStringProperty('5', indexed=False)
   
   def run(self, context):
-    if context.entities:
+    if len(context.entities):
       if isinstance(context.entities, dict):
         if self.kind_id != None:
           if not context.entities[self.kind_id]._action_permissions[context.action.key.urlsafe()]['executable']:

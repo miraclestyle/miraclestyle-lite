@@ -36,6 +36,8 @@ def set_context(context):
     context.domain = domain_key.get()
   if not hasattr(context, 'callback_payloads'):
     context.callback_payloads = []
+  if not hasattr(context, 'log_entities'):
+    context.log_entities = []
 
 
 class Prepare(event.Plugin):
