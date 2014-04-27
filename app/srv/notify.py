@@ -141,8 +141,7 @@ class Template(ndb.BasePoly):
       subscriptions=[
         event.Action.build_key('61-2')
         ],
-      transactional=True,
-      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}  #???
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     common.Search(
       subscriptions=[
