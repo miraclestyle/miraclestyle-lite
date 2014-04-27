@@ -298,7 +298,8 @@ class Widget(ndb.BaseExpando):
     plugin_rule.Read(
       subscriptions=[
         event.Action.build_key('62-2'),
-        event.Action.build_key('62-5')
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-6')
         ]
       ),
     common.Output(
