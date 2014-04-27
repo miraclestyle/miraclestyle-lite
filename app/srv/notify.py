@@ -15,6 +15,12 @@ from google.appengine.api import mail, urlfetch
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
 from app.srv import auth, callback, rule, event, cruds, log
+from app.plugins import common
+from app.plugins import rule as plugin_rule
+from app.plugins import log as plugin_log
+from app.plugins import callback as plugin_callback
+from app.plugins import notify
+
 
 sandboxed_jinja = SandboxedEnvironment()
 
@@ -97,7 +103,79 @@ class Template(ndb.BasePoly):
       )
     }
   
-  @classmethod
+  _plugins = [
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('61-0'),
+        event.Action.build_key('61-1')
+        ],
+      domain_model=True
+      ),
+    notify.Prepare(
+      subscriptions=[
+        event.Action.build_key('61-2')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('61-0'),
+        event.Action.build_key('61-1'),
+        event.Action.build_key('61-2')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('61-0'),
+        event.Action.build_key('61-1'),
+        event.Action.build_key('61-2')
+        ]
+      ),
+    notify.Initiate(
+      subscriptions=[
+        event.Action.build_key('61-2')
+        ]
+      ),
+    plugin_callback.Exec(
+      subscriptions=[
+        event.Action.build_key('61-2')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}  #???
+      ),
+    common.Search(
+      subscriptions=[
+        event.Action.build_key('61-1')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('61-1')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('61-1')
+        ]
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('61-0')
+        ],
+      output_data={'entity': 'entities.61'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('61-1')
+        ],
+      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      )
+    ]
+  
+  """@classmethod
   def initiate(cls, context):
     caller_entity_key = context.input.get('caller_entity')
     caller_user_key = context.input.get('caller_user')
@@ -124,7 +202,7 @@ class Template(ndb.BasePoly):
   @classmethod
   def prepare(cls, context):
     context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
-    cruds.Engine.prepare(context)
+    cruds.Engine.prepare(context)"""
 
 
 class CustomNotify(Template):
@@ -137,16 +215,27 @@ class CustomNotify(Template):
   message_body = ndb.SuperTextProperty('8', required=True)
   outlet = ndb.SuperStringProperty('9', required=True, default='58')
   
-  def run(self, context, user, entity):
+  """def run(self, context, user, entity):
     template_values = {'entity' : entity}
     data = {'action_key': 'send',
             'action_model': self.outlet,
             'recipient': self.message_recievers(entity, user),
-            'sender':  self.message_sender,
+            'sender': self.message_sender,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': entity.key.urlsafe()}
-    context.callback.payloads.append(('send', data))
+    context.callback.payloads.append(('send', data))"""
+  
+  def run(self, context):
+    template_values = {'entity' : context.caller_entity}
+    data = {'action_key': 'send',
+            'action_model': self.outlet,
+            'recipient': self.message_recievers(context.caller_entity, context.caller_user),
+            'sender': self.message_sender,
+            'body': render_template(self.message_body, template_values),
+            'subject': render_template(self.message_subject, template_values),
+            'caller_entity': context.caller_entity.key.urlsafe()}
+    context.callback_payloads.append(('send', data))
 
 
 class MailNotify(Template):
@@ -243,7 +332,172 @@ class MailNotify(Template):
       )
     }
   
-  @classmethod
+  _plugins = [
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('58-0'),
+        event.Action.build_key('58-1')
+        ],
+      domain_model=True
+      ),
+    notify.Prepare(
+      subscriptions=[
+        event.Action.build_key('58-6')
+        ]
+      ),
+    common.Read(
+      subscriptions=[
+        event.Action.build_key('58-2'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4'),
+        event.Action.build_key('58-5')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('58-0'),
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-2'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4'),
+        event.Action.build_key('58-5'),
+        event.Action.build_key('58-6')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('58-0'),
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-2'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4'),
+        event.Action.build_key('58-5'),
+        event.Action.build_key('58-6')
+        ]
+      ),
+    notify.MailSend(
+      subscriptions=[
+        event.Action.build_key('58-6')
+        ]
+      ),
+    common.SetValue(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3')
+        ],
+      fields={
+        'name': 'name',
+        'action': 'action',
+        'condition': 'condition',
+        'active': 'active',
+        'message_sender': 'message_sender',
+        'message_subject': 'message_subject',
+        'message_reciever': 'message_reciever',
+        'message_body': 'message_body'
+        }
+      ),
+    plugin_rule.Write(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3')
+        ],
+      transactional=True
+      ),
+    common.Delete(
+      subscriptions=[
+        event.Action.build_key('58-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Entity(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Write(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True,
+      output_data={'entity': 'entities.58'}
+      ),
+    plugin_callback.Payload(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.58.key_urlsafe'}
+      ),
+    plugin_callback.Exec(
+      subscriptions=[
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    plugin_log.Read(
+      subscriptions=[
+        event.Action.build_key('58-5')
+        ]
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('58-2'),
+        event.Action.build_key('58-5')
+        ]
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('58-0'),
+        event.Action.build_key('58-2')
+        ],
+      output_data={'entity': 'entities.58'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('58-5')
+        ],
+      output_data={'entity': 'entities.58', 'next_cursor': 'next_cursor', 'more': 'more'}
+      )
+    ]
+  
+  """@classmethod
   def delete(cls, context):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
@@ -331,7 +585,33 @@ class MailNotify(Template):
         if recipients:
           new_data = data_copy.copy()
           new_data['recipient'] = recipients
-          context.callback.payloads.append(('send', new_data))
+          context.callback.payloads.append(('send', new_data))"""
+  
+  def run(self, context):
+    values = {'entity': context.caller_entity, 'user': context.caller_user}
+    if safe_eval(self.condition, values):
+      domain_users = rule.DomainUser.query(rule.DomainUser.roles == self.message_reciever,
+                                           namespace=self.message_reciever.namespace()).fetch()
+      recievers = ndb.get_multi([auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
+      sender_key = auth.User.build_key(long(self.message_sender.id()))
+      sender = sender_key.get()
+      template_values = {'entity': context.caller_entity}
+      data = {'action_key': 'send',
+              'action_model': '58',
+              'recipient': [reciever._primary_email for reciever in recievers],
+              'sender': sender._primary_email,
+              'body': render_template(self.message_body, template_values),
+              'subject': render_template(self.message_subject, template_values),
+              'caller_entity': context.caller_entity.key.urlsafe()}
+      recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
+      data_copy = data.copy()
+      del data_copy['recipient']
+      for i in range(0, recipients_per_task+1):
+        recipients = data['recipient'][settings.RECIPIENTS_PER_TASK*i:settings.RECIPIENTS_PER_TASK*(i+1)]
+        if recipients:
+          new_data = data_copy.copy()
+          new_data['recipient'] = recipients
+          context.callback_payloads.append(('send', new_data))
 
 
 class HttpNotify(Template):
@@ -428,7 +708,172 @@ class HttpNotify(Template):
       )
     }
   
-  @classmethod
+  _plugins = [
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('63-0'),
+        event.Action.build_key('63-1')
+        ],
+      domain_model=True
+      ),
+    notify.Prepare(
+      subscriptions=[
+        event.Action.build_key('63-6')
+        ]
+      ),
+    common.Read(
+      subscriptions=[
+        event.Action.build_key('63-2'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4'),
+        event.Action.build_key('63-5')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('63-0'),
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-2'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4'),
+        event.Action.build_key('63-5'),
+        event.Action.build_key('63-6')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('63-0'),
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-2'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4'),
+        event.Action.build_key('63-5'),
+        event.Action.build_key('63-6')
+        ]
+      ),
+    notify.HttpSend(
+      subscriptions=[
+        event.Action.build_key('63-6')
+        ]
+      ),
+    common.SetValue(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3')
+        ],
+      fields={
+        'name': 'name',
+        'action': 'action',
+        'condition': 'condition',
+        'active': 'active',
+        'message_sender': 'message_sender',
+        'message_subject': 'message_subject',
+        'message_reciever': 'message_reciever',
+        'message_body': 'message_body'
+        }
+      ),
+    plugin_rule.Write(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3')
+        ],
+      transactional=True
+      ),
+    common.Delete(
+      subscriptions=[
+        event.Action.build_key('63-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Entity(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Write(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True,
+      output_data={'entity': 'entities.63'}
+      ),
+    plugin_callback.Payload(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.63.key_urlsafe'}
+      ),
+    plugin_callback.Exec(
+      subscriptions=[
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    plugin_log.Read(
+      subscriptions=[
+        event.Action.build_key('63-5')
+        ]
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('63-2'),
+        event.Action.build_key('63-5')
+        ]
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('63-0'),
+        event.Action.build_key('63-2')
+        ],
+      output_data={'entity': 'entities.63'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('63-5')
+        ],
+      output_data={'entity': 'entities.63', 'next_cursor': 'next_cursor', 'more': 'more'}
+      )
+    ]
+  
+  """@classmethod
   def delete(cls, context):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
@@ -504,4 +949,19 @@ class HttpNotify(Template):
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values),
               'caller_entity': entity.key.urlsafe()}
-      context.callback.payloads.append(('send', data))
+      context.callback.payloads.append(('send', data))"""
+  
+  def run(self, context):
+    values = {'entity': context.caller_entity, 'user': context.caller_user}
+    if safe_eval(self.condition, values):
+      sender_key = auth.User.build_key(long(self.message_sender.id()))
+      sender = sender_key.get()
+      template_values = {'entity': context.caller_entity}
+      data = {'action_key': 'send',
+              'action_model': '63',
+              'recipient': self.message_reciever,
+              'sender': sender._primary_email,
+              'body': render_template(self.message_body, template_values),
+              'subject': render_template(self.message_subject, template_values),
+              'caller_entity': context.caller_entity.key.urlsafe()}
+      context.callback_payloads.append(('send', data))
