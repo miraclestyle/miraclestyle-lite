@@ -67,25 +67,33 @@ class Prepare(event.Plugin):
 
 class Read(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  read_entities = ndb.SuperJsonProperty('5', indexed=False, default={})
   
   def run(self, context):
-    entity_key = context.input.get('key')
-    if self.kind_id != None:
-      context.entities[self.kind_id] = entity_key.get()
-      context.values[self.kind_id] = copy.deepcopy(context.entities[self.kind_id])
+    if len(self.read_entities):
+      for key, value in self.read_entities.items():
+        entity_key = context.input.get(value)
+        context.entities[key] = entity_key.get()
+        context.values[key] = copy.deepcopy(context.entities[key])
     else:
+      entity_key = context.input.get('key')
       context.entities[context.model.get_kind()] = entity_key.get()
       context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
-class SetValue(event.Plugin):
+class Set(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  fields = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  static_values = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  dynamic_values = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
   
   def run(self, context):
-    for key, value in self.fields.items():
+    for key, value in self.static_values.items():
+      if self.kind_id != None:
+        set_attr(context.values[self.kind_id], key, value)
+      else:
+        set_attr(context.values[context.model.get_kind()], key, value)
+    for key, value in self.dynamic_values.items():
       if self.kind_id != None:
         set_attr(context.values[self.kind_id], key, context.input.get(value))
       else:
@@ -117,19 +125,6 @@ class Output(event.Plugin):
   def run(self, context):
     for key, value in self.output_data.items():
       context.output[key] = get_attr(context, value)
-
-
-class FieldAutoUpdate(event.Plugin):  # @todo This could be made more abstract, like: set_attr(context, key, value)!
-  
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  fields = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    for key, value in self.fields.items():
-      if self.kind_id != None:
-        set_attr(context.values[self.kind_id], key, value)
-      else:
-        set_attr(context.values[context.model.get_kind()], key, value)
 
 
 class Search(event.Plugin):
