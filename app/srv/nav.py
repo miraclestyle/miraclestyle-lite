@@ -212,7 +212,7 @@ class Widget(ndb.BaseExpando):
         event.Action.build_key('62-7')
         ]
       ),
-    nav.SetValue(
+    nav.Set(
       subscriptions=[
         event.Action.build_key('62-1'),
         event.Action.build_key('62-3')
