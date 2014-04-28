@@ -104,6 +104,13 @@ class Template(ndb.BasePoly):
     }
   
   _plugins = [
+    common.SetContext(
+      subscriptions=[
+        event.Action.build_key('61-0'),
+        event.Action.build_key('61-1'),
+        event.Action.build_key('61-2')
+        ]
+      ),
     common.Prepare(
       subscriptions=[
         event.Action.build_key('61-0'),
@@ -332,6 +339,17 @@ class MailNotify(Template):
     }
   
   _plugins = [
+    common.SetContext(
+      subscriptions=[
+        event.Action.build_key('58-0'),
+        event.Action.build_key('58-1'),
+        event.Action.build_key('58-2'),
+        event.Action.build_key('58-3'),
+        event.Action.build_key('58-4'),
+        event.Action.build_key('58-5'),
+        event.Action.build_key('58-6')
+        ]
+      ),
     common.Prepare(
       subscriptions=[
         event.Action.build_key('58-0'),
@@ -708,6 +726,17 @@ class HttpNotify(Template):
     }
   
   _plugins = [
+    common.SetContext(
+      subscriptions=[
+        event.Action.build_key('63-0'),
+        event.Action.build_key('63-1'),
+        event.Action.build_key('63-2'),
+        event.Action.build_key('63-3'),
+        event.Action.build_key('63-4'),
+        event.Action.build_key('63-5'),
+        event.Action.build_key('63-6')
+        ]
+      ),
     common.Prepare(
       subscriptions=[
         event.Action.build_key('63-0'),
