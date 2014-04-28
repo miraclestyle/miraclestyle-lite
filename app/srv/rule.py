@@ -626,6 +626,17 @@ class DomainRole(Role):
     }
   
   _plugins = [
+    common.Context(
+      subscriptions=[
+        event.Action.build_key('60-0'),
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-2'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4'),
+        event.Action.build_key('60-5'),
+        event.Action.build_key('60-6')
+        ]
+      ),
     common.Prepare(
       subscriptions=[
         event.Action.build_key('60-0'),
@@ -666,7 +677,7 @@ class DomainRole(Role):
         event.Action.build_key('60-6')
         ]
       ),
-    plugin_rule.SetValue(
+    plugin_rule.DomainRoleSet(
       subscriptions=[
         event.Action.build_key('60-1'),
         event.Action.build_key('60-3')
