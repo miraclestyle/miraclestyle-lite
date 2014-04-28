@@ -302,3 +302,25 @@ class Exec(event.Plugin):
         raise ActionDenied(context)
     else:
       raise ActionDenied(context)
+
+
+class SetValue(event.Plugin):
+  
+  def run(self, context):
+    input_permissions = context.input.get('permissions')
+    permissions = []
+    for permission in input_permissions:
+      if permission.get('type') == 'FieldPermission':
+        permissions.append(FieldPermission(permission.get('kind'),
+                                           permission.get('fields'),
+                                           permission.get('writable'),
+                                           permission.get('visible'),
+                                           permission.get('condition')))
+      elif permission.get('type') == 'ActionPermission':
+        permissions.append(ActionPermission(permission.get('kind'),
+                                            permission.get('actions'),
+                                            permission.get('executable'),
+                                            permission.get('condition')))
+    context.values['60'].name = context.input.get('name')
+    context.values['60'].active = context.input.get('active')
+    context.values['60'].permissions = permissions
