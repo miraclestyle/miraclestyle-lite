@@ -6,12 +6,13 @@ Created on Apr 15, 2014
 '''
 
 from app import ndb, settings
-from app.srv import event
+from app.srv import event, rule
 
 
 class SetValue(event.Plugin):
   
   def run(self, context):
+    from app.srv.nav import Filter
     role_key = context.input.get('role')
     role = role_key.get()
     if role.key_namespace != context.entities['62'].key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?

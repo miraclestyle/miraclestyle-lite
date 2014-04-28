@@ -7,7 +7,7 @@ Created on Feb 24, 2014
 
 from app import ndb
 #from app.srv import rule, event, log, cruds
-from app.srv import event, rule
+from app.srv import event, rule, log
 from app.plugins import common
 from app.plugins import rule as plugin_rule
 from app.plugins import log as plugin_log
