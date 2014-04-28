@@ -24,20 +24,23 @@ def select_entities(context, selection):
     entities.append(context.entities[context.model.get_kind()])
   return entities
 
-def set_context(context):
-  if not hasattr(context, 'entities'):
-    context.entities = {}
-  if not hasattr(context, 'values'):
-    context.values = {}
-  # @todo Following lines are temporary!
-  context.user = context.auth.user
-  domain_key = context.input.get('domain')
-  if domain_key:
-    context.domain = domain_key.get()
-  if not hasattr(context, 'callback_payloads'):
-    context.callback_payloads = []
-  if not hasattr(context, 'log_entities'):
-    context.log_entities = []
+
+class SetContext(event.Plugin):
+  
+  def run(self, context):
+    if not hasattr(context, 'entities'):
+      context.entities = {}
+    if not hasattr(context, 'values'):
+      context.values = {}
+    # @todo Following lines are temporary!
+    context.user = context.auth.user
+    domain_key = context.input.get('domain')
+    if domain_key:
+      context.domain = domain_key.get()
+    if not hasattr(context, 'callback_payloads'):
+      context.callback_payloads = []
+    if not hasattr(context, 'log_entities'):
+      context.log_entities = []
 
 
 class Prepare(event.Plugin):
@@ -46,7 +49,6 @@ class Prepare(event.Plugin):
   domain_model = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
   
   def run(self, context):
-    set_context(context)
     if self.kind_id != None:
       if self.domain_model:
         context.entities[self.kind_id] = context.model(namespace=context.domain.key_namespace)
@@ -68,7 +70,6 @@ class Read(event.Plugin):
   kind_id = ndb.SuperStringProperty('5', indexed=False)
   
   def run(self, context):
-    set_context(context)
     entity_key = context.input.get('key')
     if self.kind_id != None:
       context.entities[self.kind_id] = entity_key.get()
