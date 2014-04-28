@@ -151,6 +151,18 @@ class Widget(ndb.BaseExpando):
     }
   
   _plugins = [
+    common.SetContext(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-1'),
+        event.Action.build_key('62-2'),
+        event.Action.build_key('62-3'),
+        event.Action.build_key('62-4'),
+        event.Action.build_key('62-5'),
+        event.Action.build_key('62-6'),
+        event.Action.build_key('62-7')
+        ]
+      ),
     common.Prepare(
       subscriptions=[
         event.Action.build_key('62-0'),
