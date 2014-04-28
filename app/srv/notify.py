@@ -104,7 +104,7 @@ class Template(ndb.BasePoly):
     }
   
   _plugins = [
-    common.SetContext(
+    common.Context(
       subscriptions=[
         event.Action.build_key('61-0'),
         event.Action.build_key('61-1'),
@@ -339,7 +339,7 @@ class MailNotify(Template):
     }
   
   _plugins = [
-    common.SetContext(
+    common.Context(
       subscriptions=[
         event.Action.build_key('58-0'),
         event.Action.build_key('58-1'),
@@ -399,12 +399,12 @@ class MailNotify(Template):
         event.Action.build_key('58-6')
         ]
       ),
-    common.SetValue(
+    common.Set(
       subscriptions=[
         event.Action.build_key('58-1'),
         event.Action.build_key('58-3')
         ],
-      fields={
+      dynamic_values={
         'name': 'name',
         'action': 'action',
         'condition': 'condition',
@@ -726,7 +726,7 @@ class HttpNotify(Template):
     }
   
   _plugins = [
-    common.SetContext(
+    common.Context(
       subscriptions=[
         event.Action.build_key('63-0'),
         event.Action.build_key('63-1'),
@@ -786,12 +786,12 @@ class HttpNotify(Template):
         event.Action.build_key('63-6')
         ]
       ),
-    common.SetValue(
+    common.Set(
       subscriptions=[
         event.Action.build_key('63-1'),
         event.Action.build_key('63-3')
         ],
-      fields={
+      dynamic_values={
         'name': 'name',
         'action': 'action',
         'condition': 'condition',
