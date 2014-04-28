@@ -6,8 +6,7 @@ Created on Feb 24, 2014
 '''
 
 from app import ndb
-#from app.srv import rule, event, log, cruds
-from app.srv import event, rule
+from app.srv import rule, event, log, cruds
 from app.plugins import common
 from app.plugins import rule as plugin_rule
 from app.plugins import log as plugin_log
@@ -167,6 +166,12 @@ class Widget(ndb.BaseExpando):
         event.Action.build_key('62-3'),
         event.Action.build_key('62-4'),
         event.Action.build_key('62-6')
+        ]
+      ),
+    nav.SelectRoles(
+      subscriptions=[
+        event.Action.build_key('62-0'),
+        event.Action.build_key('62-2')
         ]
       ),
     plugin_rule.Prepare(
@@ -417,7 +422,3 @@ class Widget(ndb.BaseExpando):
                           namespace=domain.key_namespace).order(cls.sequence).fetch()
       context.output['menu'] = widgets
       context.output['domain'] = domain"""
-  
-  @classmethod
-  def selection_roles_helper(cls, namespace):  # @todo This method will die, and ajax DomainRole.search() will be used instead!?
-    return rule.DomainRole.query(rule.DomainRole.active == True, namespace=namespace).fetch()
