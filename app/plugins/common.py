@@ -25,7 +25,7 @@ def select_entities(context, selection):
   return entities
 
 
-class SetContext(event.Plugin):
+class Context(event.Plugin):
   
   def run(self, context):
     if not hasattr(context, 'entities'):
