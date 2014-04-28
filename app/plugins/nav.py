@@ -6,13 +6,16 @@ Created on Apr 15, 2014
 '''
 
 from app import ndb, settings
-from app.srv import event, rule
+from app.srv import event
+from app.srv import rule
 
 
 class SetValue(event.Plugin):
   
   def run(self, context):
+    
     from app.srv.nav import Filter
+    
     role_key = context.input.get('role')
     role = role_key.get()
     if role.key_namespace != context.entities['62'].key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?
@@ -40,3 +43,9 @@ class BuildMenu(event.Plugin):
                             model.role.IN(domain_user.roles),
                             namespace=context.domain.key_namespace).order(model.sequence).fetch()
       context.widgets = widgets
+
+
+class SelectRoles(event.Plugin):
+  
+  def run(self, context):
+    context.output['roles'] = rule.DomainRole.query(rule.DomainRole.active == True, namespace=context.entities['62'].key_namespace).fetch()
