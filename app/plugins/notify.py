@@ -58,7 +58,7 @@ class Initiate(event.Plugin):
     context.caller_user = caller_user_key.get()
     templates = context.model.query(context.model.active == True,
                                     context.model.action == caller_action_key,
-                                    namespace=caller_entity.key_namespace).fetch()
+                                    namespace=context.caller_entity.key_namespace).fetch()
     if templates:
       for template in templates:
         template.run(context)

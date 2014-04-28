@@ -51,8 +51,8 @@ def _write_helper(permissions, entity, field_key, field, field_value):
 def write(entity, values):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
-    if field_key in values:
-      field_value = values.get(field_key)
+    if hasattr(values, field_key):
+      field_value = getattr(values, field_key)
       _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
 def _read_helper(permissions, entity, field_key, field):
