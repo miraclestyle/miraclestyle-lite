@@ -10,7 +10,10 @@ import collections
 from app import ndb
 from app.lib.safe_eval import safe_eval
 from app.srv import event, log, callback, cruds
-
+from app.plugins import common
+from app.plugins import rule as plugin_rule
+from app.plugins import log as plugin_log
+from app.plugins import callback as plugin_callback
 
 """
 This file is used to control input, and output trough the application Model actions.
@@ -622,7 +625,172 @@ class DomainRole(Role):
       )
     }
   
-  @classmethod
+  _plugins = [
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('60-0'),
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-5')
+        ],
+      domain_model=True
+      ),
+    common.Read(
+      subscriptions=[
+        event.Action.build_key('60-2'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4'),
+        event.Action.build_key('60-6')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('60-0'),
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-2'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4'),
+        event.Action.build_key('60-5'),
+        event.Action.build_key('60-6')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('60-0'),
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-2'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4'),
+        event.Action.build_key('60-5'),
+        event.Action.build_key('60-6')
+        ]
+      ),
+    plugin_rule.SetValue(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3')
+        ]
+      ),
+    plugin_rule.Write(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3')
+        ],
+      transactional=True
+      ),
+    common.Delete(
+      subscriptions=[
+        event.Action.build_key('60-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Entity(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Write(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True,
+      output_data={'entity': 'entities.60'}
+      ),
+    plugin_callback.Payload(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}
+      ),
+    plugin_callback.Exec(
+      subscriptions=[
+        event.Action.build_key('60-1'),
+        event.Action.build_key('60-3'),
+        event.Action.build_key('60-4')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    plugin_log.Read(
+      subscriptions=[
+        event.Action.build_key('60-6')
+        ]
+      ),
+    common.Search(
+      subscriptions=[
+        event.Action.build_key('60-5')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('60-5')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('60-2'),
+        event.Action.build_key('60-5'),
+        event.Action.build_key('60-6')
+        ]
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('60-0'),
+        event.Action.build_key('60-2')
+        ],
+      output_data={'entity': 'entities.60'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('60-5')
+        ],
+      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      ),
+    common.Output(
+      subscriptions=[
+        event.Action.build_key('60-6')
+        ],
+      output_data={'entity': 'entities.60', 'next_cursor': 'next_cursor', 'more': 'more'}
+      )
+    ]
+  
+  """@classmethod
   def delete(cls, context):
     context.cruds.entity = context.input.get('key').get()
     cruds.Engine.delete(context)
@@ -680,7 +848,7 @@ class DomainRole(Role):
   @classmethod
   def read_records(cls, context):
     context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read_records(context)
+    cruds.Engine.read_records(context)"""
 
 
 class DomainUser(ndb.BaseModel):
