@@ -998,19 +998,10 @@ class DomainUser(ndb.BaseModel):
       subscriptions=[
         event.Action.build_key('8-2'),
         event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
         event.Action.build_key('8-6'),
         event.Action.build_key('8-7'),
         event.Action.build_key('8-8')
-        ]
-      ),
-    plugin_rule.DomainUserUpdate(
-      subscriptions=[
-        event.Action.build_key('8-3')
-        ]
-      ),
-    plugin_rule.DomainUserRemove(
-      subscriptions=[
-        event.Action.build_key('8-4')
         ]
       ),
     plugin_rule.DomainUserInvite(
@@ -1044,6 +1035,16 @@ class DomainUser(ndb.BaseModel):
         event.Action.build_key('8-6'),
         event.Action.build_key('8-7'),
         event.Action.build_key('8-8')
+        ]
+      ),
+    plugin_rule.DomainUserUpdate(
+      subscriptions=[
+        event.Action.build_key('8-3')
+        ]
+      ),
+    plugin_rule.DomainUserRemove(
+      subscriptions=[
+        event.Action.build_key('8-4')
         ]
       ),
     common.Set(
