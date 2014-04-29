@@ -314,6 +314,7 @@ class Exec(event.Plugin):
 class DomainRoleSet(event.Plugin):
   
   def run(self, context):
+    from app.srv.rule import FieldPermission, ActionPermission
     input_permissions = context.input.get('permissions')
     permissions = []
     for permission in input_permissions:
