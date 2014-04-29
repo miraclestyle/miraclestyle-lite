@@ -973,7 +973,265 @@ class DomainUser(ndb.BaseModel):
     'clean_roles': event.Action(id='8-8', arguments={'key': ndb.SuperKeyProperty(kind='8', required=True)})
     }
   
-  @classmethod
+  _plugins = [
+    common.Context(
+      subscriptions=[
+        event.Action.build_key('8-0'),#prepare
+        event.Action.build_key('8-1'),#invite
+        event.Action.build_key('8-2'),#read
+        event.Action.build_key('8-3'),#update
+        event.Action.build_key('8-4'),#remove
+        event.Action.build_key('8-5'),#search
+        event.Action.build_key('8-6'),#read_records
+        event.Action.build_key('8-7'),#accept
+        event.Action.build_key('8-8')#clean_roles
+        ]
+      ),
+    common.Prepare(
+      subscriptions=[
+        event.Action.build_key('8-0'),
+        event.Action.build_key('8-5')
+        ],
+      domain_model=True
+      ),
+    common.Read(
+      subscriptions=[
+        event.Action.build_key('8-2'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-6'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ]
+      ),
+    plugin_rule.DomainUserUpdate(
+      subscriptions=[
+        event.Action.build_key('8-3')
+        ]
+      ),
+    plugin_rule.DomainUserRemove(
+      subscriptions=[
+        event.Action.build_key('8-4')
+        ]
+      ),
+    plugin_rule.DomainUserInvite(
+      subscriptions=[
+        event.Action.build_key('8-1')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('8-0'),
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-2'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
+        event.Action.build_key('8-5'),
+        event.Action.build_key('8-6'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Exec(
+      subscriptions=[
+        event.Action.build_key('8-0'),
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-2'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
+        event.Action.build_key('8-5'),
+        event.Action.build_key('8-6'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ]
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      static_values={'values.8.state': 'accepted'}
+      ),
+    plugin_rule.DomainUserCleanRoles(
+      subscriptions=[
+        event.Action.build_key('8-8')
+        ]
+      ),
+    plugin_rule.Write(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('8-1')
+        ],
+      transactional=True,
+      write_entities=['8', '0']
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        event.Action.build_key('8-4')
+        ],
+      transactional=True,
+      write_entities=['0']
+      ),
+    common.Delete(
+      subscriptions=[
+        event.Action.build_key('8-4')
+        ],
+      transactional=True
+      ),
+    plugin_log.Entity(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-4')
+        ],
+      transactional=True,
+      log_entities=['8', '0']
+      ),
+    plugin_log.Entity(
+      subscriptions=[
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ],
+      transactional=True
+      ),
+    plugin_log.Write(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
+        event.Action.build_key('8-7'),
+        event.Action.build_key('8-8')
+        ],
+      transactional=True
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      dynamic_values={'entities.6': 'entities.8.namespace_entity'}
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4')
+        ],
+      transactional=True
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      read_entities=['8', '6']
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4')
+        ],
+      transactional=True,
+      dynamic_values={'output.entity': 'entities.8'}
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}
+      ),
+    plugin_callback.Payload(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}
+      ),
+    plugin_callback.Exec(
+      subscriptions=[
+        event.Action.build_key('8-1'),
+        event.Action.build_key('8-3'),
+        event.Action.build_key('8-4'),
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    plugin_log.Read(
+      subscriptions=[
+        event.Action.build_key('8-6')
+        ]
+      ),
+    common.Search(
+      subscriptions=[
+        event.Action.build_key('8-5')
+        ]
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('8-5')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    plugin_rule.Read(
+      subscriptions=[
+        event.Action.build_key('8-2'),
+        event.Action.build_key('8-5'),
+        event.Action.build_key('8-6')
+        ]
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-0'),
+        event.Action.build_key('8-2')
+        ],
+      dynamic_values={'output.entity': 'entities.8'}
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-5')
+        ],
+      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-6')
+        ],
+      dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
+      ),
+    plugin_rule.SelectRoles(
+      subscriptions=[
+        event.Action.build_key('8-0'),
+        event.Action.build_key('8-2')
+        ]
+      )
+    ]
+  
+  """@classmethod
   def clean_roles(cls, context):  # @todo Do we need notifications here?
     entity_key = context.input.get('key')
     entity = entity_key.get()
@@ -1139,4 +1397,4 @@ class DomainUser(ndb.BaseModel):
   
   @classmethod
   def selection_roles_helper(cls, namespace):  # @todo This method will die, ajax DomainRole.search() will be used instead!
-    return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()
+    return DomainRole.query(DomainRole.active == True, namespace=namespace).fetch()"""
