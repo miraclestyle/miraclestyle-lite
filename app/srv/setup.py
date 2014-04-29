@@ -154,17 +154,17 @@ class DomainSetup(Setup):
       namespace = domain_key.urlsafe()
       role_key = input.get('role_key')
  
-      to_put = [nav.Widget(id='admin_marketing', 
+      to_put = [nav.Widget(id='system_marketing', 
                            namespace=namespace,
                            name='Marketing',
                            role=role_key,
                            filters=[nav.Filter(name='Catalog', kind='35')]),
-                 nav.Widget(id='admin_business',
+                 nav.Widget(id='system_business',
                             namespace=namespace, 
                             name='Business', 
                             role=role_key,
                             filters=[nav.Filter(name='Companies', kind='44')]),
-                 nav.Widget(id='admin_security', 
+                 nav.Widget(id='system_security', 
                             namespace=namespace,
                             name='Security',
                             role=role_key,
@@ -200,12 +200,12 @@ class DomainSetup(Setup):
       role_key = input.get('role_key')
       sequence = input.get('sequence')
  
-      to_put = [nav.Widget(id='admin_app_users',
+      to_put = [nav.Widget(id='system_app_users',
                             namespace=namespace,
                             name='App Users',
                             role=role_key,
                             filters=[nav.Filter(name='Users', kind='8')]),
-               nav.Widget(id='admin_notifications', 
+               nav.Widget(id='system_notifications', 
                             namespace=namespace,
                             name='Notifications',
                             role=role_key,

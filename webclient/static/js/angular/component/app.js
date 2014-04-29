@@ -440,7 +440,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.removeFromApp = function (app)
             {
             	
-            	AppUser.remove(app._domain_user.key, function (data) {
+            	AppUser.remove(app._domain_user, function (data) {
             		if (data['entity'])
             		{
             			 apps.remove(app);
