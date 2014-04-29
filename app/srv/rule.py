@@ -1233,7 +1233,7 @@ class DomainUser(ndb.BaseModel):
       subscriptions=[
         event.Action.build_key('8-6')
         ],
-      dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
+      dynamic_values={'output.entity': 'entities.8', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
     plugin_rule.SelectRoles(
       subscriptions=[
