@@ -727,14 +727,14 @@ class DomainRole(Role):
         ],
       transactional=True
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('60-1'),
         event.Action.build_key('60-3'),
         event.Action.build_key('60-4')
         ],
       transactional=True,
-      output_data={'entity': 'entities.60'}
+      dynamic_values={'output.entity': 'entities.60'}
       ),
     plugin_callback.Payload(
       subscriptions=[
@@ -780,24 +780,24 @@ class DomainRole(Role):
         event.Action.build_key('60-6')
         ]
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('60-0'),
         event.Action.build_key('60-2')
         ],
-      output_data={'entity': 'entities.60'}
+      dynamic_values={'output.entity': 'entities.60'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('60-5')
         ],
-      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('60-6')
         ],
-      output_data={'entity': 'entities.60', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entity': 'entities.60', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
