@@ -333,28 +333,6 @@ class DomainRoleSet(event.Plugin):
     context.values['60'].permissions = permissions
 
 
-class DomainUserUpdate(event.Plugin):
-  
-  def run(self, context):
-    input_roles = ndb.get_multi(context.input.get('roles'))
-    roles = []
-    # Avoid rogue roles.
-    for role in input_roles:
-      if role.key.namespace() == context.entities['8'].key_namespace:
-        roles.append(role.key)
-    context.values['8'].name = context.input.get('name')
-    context.values['8'].roles = roles
-
-
-class DomainUserCleanRoles(event.Plugin):
-  
-  def run(self, context):
-    roles = ndb.get_multi(context.entities['8'].roles)
-    for i, role in enumerate(roles):
-      if role is None:
-        context.entities['8'].roles.pop(i)
-
-
 class DomainUserInvite(event.Plugin):
   
   def run(self, context):
@@ -380,16 +358,35 @@ class DomainUserInvite(event.Plugin):
     context.entities['0'] = user
 
 
+class DomainUserUpdate(event.Plugin):
+  
+  def run(self, context):
+    input_roles = ndb.get_multi(context.input.get('roles'))
+    roles = []
+    # Avoid rogue roles.
+    for role in input_roles:
+      if role.key.namespace() == context.entities['8'].key_namespace:
+        roles.append(role.key)
+    context.values['8'].name = context.input.get('name')
+    context.values['8'].roles = roles
+
+
 class DomainUserRemove(event.Plugin):
   
   def run(self, context):
     from app.srv import auth
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    user = auth.User.build_key(long(entity.key.id())).get()
-    user.domains.remove(ndb.Key(urlsafe=entity.key_namespace))
-    context.entities['8'] = entity
+    user = auth.User.build_key(long(context.entities['8'].key.id())).get()
+    user.domains.remove(ndb.Key(urlsafe=context.entities['8'].key_namespace))
     context.entities['0'] = user
+
+
+class DomainUserCleanRoles(event.Plugin):
+  
+  def run(self, context):
+    roles = ndb.get_multi(context.entities['8'].roles)
+    for i, role in enumerate(roles):
+      if role is None:
+        context.values['8'].roles.pop(i)
 
 
 class SelectRoles(event.Plugin):
