@@ -333,10 +333,17 @@ class DomainRoleSet(event.Plugin):
     context.values['60'].permissions = permissions
 
 
-class DomainUserSet(event.Plugin):
+class DomainUserUpdate(event.Plugin):
   
   def run(self, context):
-    
+    input_roles = ndb.get_multi(context.input.get('roles'))
+    roles = []
+    # Avoid rogue roles.
+    for role in input_roles:
+      if role.key.namespace() == context.entities['8'].key_namespace:
+        roles.append(role.key)
+    context.values['8'].name = context.input.get('name')
+    context.values['8'].roles = roles
 
 
 class DomainUserCleanRoles(event.Plugin):
@@ -358,7 +365,7 @@ class DomainUserInvite(event.Plugin):
       raise DomainUserError('not_found')
     if user.state != 'active':
       raise DomainUserError('not_active')
-    already_invited = cls.build_key(user.key_id_str, namespace=context.domain.key_namespace).get()
+    already_invited = context.model.build_key(user.key_id_str, namespace=context.domain.key_namespace).get()
     if already_invited:
       raise DomainUserError('already_invited')
     context.entities['8'] = context.model(id=user.key_id_str, namespace=context.domain.key_namespace)
@@ -383,55 +390,6 @@ class DomainUserRemove(event.Plugin):
     user.domains.remove(ndb.Key(urlsafe=entity.key_namespace))
     context.entities['8'] = entity
     context.entities['0'] = user
-
-
-class DomainUserAccept(event.Plugin):
-  
-  def run(self, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    Engine.run(context)
-    if not executable(context):
-      raise ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity.state = 'accepted'
-      entity.put()
-      context.log.entities.append((entity, ))
-      log.Engine.run(context)
-      Engine.run(context)
-      domain = entity.namespace_entity
-      context.rule.entity = domain
-      Engine.run(context)
-      read(entity)
-      read(domain)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      context.output['entity'] = entity
-      context.output['domain'] = domain
-    
-    transaction()
-
-
-class DomainUserUpdate(event.Plugin):
-  
-  def run(self, context):
-    input_roles = ndb.get_multi(context.input.get('roles'))
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    roles = []
-    # Avoid rogue roles.
-    for role in input_roles:
-      if role.key.namespace() == entity.key_namespace:
-        roles.append(role.key)
-    context.cruds.entity = context.input.get('key').get()
-    context.cruds.values = {'name': context.input.get('name'), 'roles': roles}
-    cruds.Engine.update(context)
 
 
 class SelectRoles(event.Plugin):
