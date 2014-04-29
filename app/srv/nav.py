@@ -267,14 +267,14 @@ class Widget(ndb.BaseExpando):
         ],
       transactional=True
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('62-1'),
         event.Action.build_key('62-3'),
         event.Action.build_key('62-4')
         ],
       transactional=True,
-      output_data={'entity': 'entities.62'}
+      dynamic_values={'output.entity': 'entities.62'}
       ),
     plugin_callback.Payload(
       subscriptions=[
@@ -320,30 +320,30 @@ class Widget(ndb.BaseExpando):
         event.Action.build_key('62-6')
         ]
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('62-0'),
         event.Action.build_key('62-2')
         ],
-      output_data={'entity': 'entities.62'}
+      dynamic_values={'output.entity': 'entities.62'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('62-5')
         ],
-      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('62-6')
         ],
-      output_data={'entity': 'entities.62', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('62-7')
         ],
-      output_data={'menu': 'widgets', 'domain': 'domain'}
+      dynamic_values={'output.menu': 'widgets', 'output.domain': 'domain'}
       )
     ]
   
