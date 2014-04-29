@@ -907,7 +907,7 @@ class DomainUser(ndb.BaseModel):
       FieldPermission('8', ['state'], False, None,
                       "context.rule.entity.namespace_entity.state == 'active'"),
       FieldPermission('8', ['state'], True, None,
-                      "context.values['8'].state == 'active' and context.action.key_id_str == '8-1'")  # @todo Not sure how to handle state field permissions (though actions seem to not respect field permissions)?
+                      "(context.action.key_id_str == '8-1' and context.values['8'].state == 'invited') or (context.action.key_id_str == '8-7' and context.values['8'].state == 'accepted')")  # @todo Not sure how to handle state field permissions (though actions seem to not respect field permissions)?
       ]
     )
   
