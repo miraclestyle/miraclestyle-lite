@@ -83,21 +83,14 @@ class Read(event.Plugin):
 
 class Set(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  static_values = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
-  dynamic_values = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
+  static_values = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
+  dynamic_values = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
   
   def run(self, context):
     for key, value in self.static_values.items():
-      if self.kind_id != None:
-        set_attr(context.values[self.kind_id], key, value)
-      else:
-        set_attr(context.values[context.model.get_kind()], key, value)
+      set_attr(context, key, value)
     for key, value in self.dynamic_values.items():
-      if self.kind_id != None:
-        set_attr(context.values[self.kind_id], key, context.input.get(value))
-      else:
-        set_attr(context.values[context.model.get_kind()], key, context.input.get(value))
+      set_attr(context, key, get_attr(context, value))
 
 
 class Write(event.Plugin):
@@ -116,15 +109,6 @@ class Delete(event.Plugin):
   def run(self, context):
     entities = select_entities(context, self.delete_entities)
     ndb.delete_multi(entities)
-
-
-class Output(event.Plugin):
-  
-  output_data = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    for key, value in self.output_data.items():
-      context.output[key] = get_attr(context, value)
 
 
 class Search(event.Plugin):
