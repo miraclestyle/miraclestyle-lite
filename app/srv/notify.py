@@ -167,17 +167,17 @@ class Template(ndb.BasePoly):
         event.Action.build_key('61-1')
         ]
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('61-0')
         ],
-      output_data={'entity': 'entities.61'}
+      dynamic_values={'output.entity': 'entities.61'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('61-1')
         ],
-      output_data={'entities': 'entities', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
@@ -405,14 +405,14 @@ class MailNotify(Template):
         event.Action.build_key('58-3')
         ],
       dynamic_values={
-        'name': 'name',
-        'action': 'action',
-        'condition': 'condition',
-        'active': 'active',
-        'message_sender': 'message_sender',
-        'message_subject': 'message_subject',
-        'message_reciever': 'message_reciever',
-        'message_body': 'message_body'
+        'values.58.name': 'input.name',
+        'values.58.action': 'input.action',
+        'values.58.condition': 'input.condition',
+        'values.58.active': 'input.active',
+        'values.58.message_sender': 'input.message_sender',
+        'values.58.message_subject': 'input.message_subject',
+        'values.58.message_reciever': 'input.message_reciever',
+        'values.58.message_body': 'input.message_body'
         }
       ),
     plugin_rule.Write(
@@ -459,14 +459,14 @@ class MailNotify(Template):
         ],
       transactional=True
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('58-1'),
         event.Action.build_key('58-3'),
         event.Action.build_key('58-4')
         ],
       transactional=True,
-      output_data={'entity': 'entities.58'}
+      dynamic_values={'output.entity': 'entities.58'}
       ),
     plugin_callback.Payload(
       subscriptions=[
@@ -499,18 +499,18 @@ class MailNotify(Template):
         event.Action.build_key('58-5')
         ]
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('58-0'),
         event.Action.build_key('58-2')
         ],
-      output_data={'entity': 'entities.58'}
+      dynamic_values={'output.entity': 'entities.58'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('58-5')
         ],
-      output_data={'entity': 'entities.58', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entity': 'entities.58', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
@@ -792,14 +792,14 @@ class HttpNotify(Template):
         event.Action.build_key('63-3')
         ],
       dynamic_values={
-        'name': 'name',
-        'action': 'action',
-        'condition': 'condition',
-        'active': 'active',
-        'message_sender': 'message_sender',
-        'message_subject': 'message_subject',
-        'message_reciever': 'message_reciever',
-        'message_body': 'message_body'
+        'values.63.name': 'input.name',
+        'values.63.action': 'input.action',
+        'values.63.condition': 'input.condition',
+        'values.63.active': 'input.active',
+        'values.63.message_sender': 'input.message_sender',
+        'values.63.message_subject': 'input.message_subject',
+        'values.63.message_reciever': 'input.message_reciever',
+        'values.63.message_body': 'input.message_body'
         }
       ),
     plugin_rule.Write(
@@ -846,14 +846,14 @@ class HttpNotify(Template):
         ],
       transactional=True
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('63-1'),
         event.Action.build_key('63-3'),
         event.Action.build_key('63-4')
         ],
       transactional=True,
-      output_data={'entity': 'entities.63'}
+      dynamic_values={'output.entity': 'entities.63'}
       ),
     plugin_callback.Payload(
       subscriptions=[
@@ -886,18 +886,18 @@ class HttpNotify(Template):
         event.Action.build_key('63-5')
         ]
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('63-0'),
         event.Action.build_key('63-2')
         ],
-      output_data={'entity': 'entities.63'}
+      dynamic_values={'output.entity': 'entities.63'}
       ),
-    common.Output(
+    common.Set(
       subscriptions=[
         event.Action.build_key('63-5')
         ],
-      output_data={'entity': 'entities.63', 'next_cursor': 'next_cursor', 'more': 'more'}
+      dynamic_values={'output.entity': 'entities.63', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
