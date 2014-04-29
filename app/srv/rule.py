@@ -897,7 +897,7 @@ class DomainUser(ndb.BaseModel):
       ActionPermission('8', event.Action.build_key('8-7').urlsafe(), False,
                        "not context.rule.entity.namespace_entity.state == 'active' or context.auth.user.key_id_str != context.rule.entity.key_id_str"),
       ActionPermission('8', event.Action.build_key('8-7').urlsafe(), True,
-                       "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str != context.rule.entity.key_id_str and context.rule.entity.state == 'invited'"),
+                       "context.rule.entity.namespace_entity.state == 'active' and context.auth.user.key_id_str == context.rule.entity.key_id_str and context.rule.entity.state == 'invited'"),
       ActionPermission('8', event.Action.build_key('8-8').urlsafe(), False,
                        "not context.rule.entity.namespace_entity.state == 'active' or not context.auth.user._is_taskqueue"),
       ActionPermission('8', event.Action.build_key('8-8').urlsafe(), True,
@@ -1137,6 +1137,15 @@ class DomainUser(ndb.BaseModel):
         event.Action.build_key('8-4')
         ],
       transactional=True
+      ),
+    plugin_rule.Prepare(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      transactional=True,
+      prepare_entities=['6'],
+      skip_user_roles=False,
+      strict=False
       ),
     plugin_rule.Read(
       subscriptions=[
