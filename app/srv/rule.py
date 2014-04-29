@@ -1011,6 +1011,27 @@ class DomainUser(ndb.BaseModel):
         event.Action.build_key('8-1')
         ]
       ),
+    plugin_rule.DomainUserUpdate(
+      subscriptions=[
+        event.Action.build_key('8-3')
+        ]
+      ),
+    plugin_rule.DomainUserRemove(
+      subscriptions=[
+        event.Action.build_key('8-4')
+        ]
+      ),
+    common.Set(
+      subscriptions=[
+        event.Action.build_key('8-7')
+        ],
+      static_values={'values.8.state': 'accepted'}
+      ),
+    plugin_rule.DomainUserCleanRoles(
+      subscriptions=[
+        event.Action.build_key('8-8')
+        ]
+      ),
     plugin_rule.Prepare(
       subscriptions=[
         event.Action.build_key('8-0'),
@@ -1036,27 +1057,6 @@ class DomainUser(ndb.BaseModel):
         event.Action.build_key('8-5'),
         event.Action.build_key('8-6'),
         event.Action.build_key('8-7'),
-        event.Action.build_key('8-8')
-        ]
-      ),
-    plugin_rule.DomainUserUpdate(
-      subscriptions=[
-        event.Action.build_key('8-3')
-        ]
-      ),
-    plugin_rule.DomainUserRemove(
-      subscriptions=[
-        event.Action.build_key('8-4')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        event.Action.build_key('8-7')
-        ],
-      static_values={'values.8.state': 'accepted'}
-      ),
-    plugin_rule.DomainUserCleanRoles(
-      subscriptions=[
         event.Action.build_key('8-8')
         ]
       ),
