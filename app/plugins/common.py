@@ -98,7 +98,13 @@ class Write(event.Plugin):
   write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
-    entities = select_entities(context, self.write_entities)
+    entities = []
+    if len(self.write_entities):
+      for kind_id in self.write_entities:
+        if kind_id in context.entities:
+          entities.append(context.entities[kind_id])
+    else:
+      entities.append(context.entities[context.model.get_kind()])
     ndb.put_multi(entities)
 
 
@@ -107,8 +113,14 @@ class Delete(event.Plugin):
   delete_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
   
   def run(self, context):
-    entities = select_entities(context, self.delete_entities)
-    ndb.delete_multi([entity.key for entity in entities])
+    keys = []
+    if len(self.delete_entities):
+      for kind_id in self.delete_entities:
+        if kind_id in context.entities:
+          keys.append(context.entities[kind_id].key)
+    else:
+      keys.append(context.entities[context.model.get_kind()].key)
+    ndb.delete_multi(keys)
 
 
 class Search(event.Plugin):
