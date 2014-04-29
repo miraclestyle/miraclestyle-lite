@@ -62,8 +62,8 @@ class Read(event.Plugin):
     if len(context.entities):
       if isinstance(context.entities, dict):
         if self.kind_id != None:
-          entities, next_cursor, more = get_records(context.entities[kind_id], context.input.get('next_cursor'))
-          context.entities[kind_id]._records = entities
+          entities, next_cursor, more = get_records(context.entities[self.kind_id], context.input.get('next_cursor'))
+          context.entities[self.kind_id]._records = entities
           context.next_cursor = next_cursor
           context.more = more
         else:
