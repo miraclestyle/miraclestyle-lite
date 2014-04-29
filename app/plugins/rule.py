@@ -9,7 +9,6 @@ import collections
 
 from app import ndb, settings
 from app.srv import event
-from app.srv import rule
 
 
 class DomainUserError(Exception):
@@ -393,4 +392,5 @@ class DomainUserCleanRoles(event.Plugin):
 class SelectRoles(event.Plugin):
   
   def run(self, context):
+    from app.srv import rule
     context.output['roles'] = rule.DomainRole.query(rule.DomainRole.active == True, namespace=context.entities['8'].key_namespace).fetch()

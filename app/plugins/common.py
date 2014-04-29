@@ -108,7 +108,7 @@ class Delete(event.Plugin):
   
   def run(self, context):
     entities = select_entities(context, self.delete_entities)
-    ndb.delete_multi(entities)
+    ndb.delete_multi([entity.key for entity in entities])
 
 
 class Search(event.Plugin):
