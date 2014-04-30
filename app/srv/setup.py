@@ -24,7 +24,7 @@ class Configuration(ndb.BaseExpando):
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
   configuration_input = ndb.SuperPickleProperty('3', required=True, compressed=False)
   setup = ndb.SuperStringProperty('4', required=True, indexed=False)
-  state = ndb.SuperStringProperty('5', required=True, indexed=False)
+  state = ndb.SuperStringProperty('5', required=True)
   next_operation = ndb.SuperStringProperty('6', indexed=False)
   next_operation_input = ndb.SuperPickleProperty('7', indexed=False)
   
