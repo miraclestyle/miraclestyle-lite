@@ -213,8 +213,8 @@ class DomainSetup(Setup):
                                         message_sender=settings.NOTIFY_EMAIL,
                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                         message_recievers=self.create_domain_notify_message_recievers)
-    context.caller_entity = domain
-    context.caller_user = self.context.auth.user
+    self.context.caller_entity = domain
+    self.context.caller_user = self.context.auth.user
     custom_notify.run(self.context)
     # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     self.context.callback_exec.run(self.context)
