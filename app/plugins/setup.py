@@ -213,6 +213,9 @@ class DomainSetup(Setup):
     self.config.put()
 
 
+register_system_setup(('setup_domain', DomainSetup))
+
+
 class Install(event.Plugin):
   
   def run(self, context):
