@@ -14,17 +14,6 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-def select_entities(context, selection):
-  entities = []
-  if len(selection):
-    for kind_id in selection:
-      if kind_id in context.entities:
-        entities.append(context.entities[kind_id])
-  else:
-    entities.append(context.entities[context.model.get_kind()])
-  return entities
-
-
 class Context(event.Plugin):
   
   def run(self, context):
