@@ -38,38 +38,38 @@ class Widget(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('62', Action.build_key('62-0').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('62', Action.build_key('62-1').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
-      ActionPermission('62', Action.build_key('62-2').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('62', Action.build_key('62-3').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
-      ActionPermission('62', Action.build_key('62-4').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
-      ActionPermission('62', Action.build_key('62-5').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('62', Action.build_key('62-6').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('62', Action.build_key('62-7').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62', 'prepare').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62', 'create').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+      ActionPermission('62', Action.build_key('62', 'read').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62', 'update').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+      ActionPermission('62', Action.build_key('62', 'delete').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+      ActionPermission('62', Action.build_key('62', 'search').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62', 'read_records').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62', 'build_menu').urlsafe(), False,
+                       "not context.entities['62'].namespace_entity.state == 'active'"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+                      "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                      "not context.entity.namespace_entity.state == 'active'")
+                      "not context.entities['62'].namespace_entity.state == 'active'")
       ]
     )
   
-  _actions = {
-    'prepare': Action(
-      id='62-0',
+  _actions = [
+    Action(
+      key=Action.build_key('62', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'create': Action(
-      id='62-1',
+    Action(
+      key=Action.build_key('62', 'create'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
@@ -80,9 +80,14 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         }
       ),
-    'read': Action(id='62-2', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'update': Action(
-      id='62-3',
+    Action(
+      key=Action.build_key('62', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='62', required=True)
+        }
+      ),
+    Action(
+      key=Action.build_key('62', 'update'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True),
         'name': ndb.SuperStringProperty(required=True),
@@ -93,9 +98,14 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         }
       ),
-    'delete': Action(id='62-4', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'search': Action(
-      id='62-5',
+    Action(
+      key=Action.build_key('62', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='62', required=True)
+        }
+      ),
+    Action(
+      key=Action.build_key('62', 'search'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
@@ -133,152 +143,146 @@ class Widget(ndb.BaseExpando):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'read_records': Action(
-      id='62-6',
+    Action(
+      key=Action.build_key('62', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'build_menu': Action(
-      id='62-7',
+    Action(
+      key=Action.build_key('62', 'build_menu'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       )
-    }
+    ]
   
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('62-0'),
-        Action.build_key('62-1'),
-        Action.build_key('62-2'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4'),
-        Action.build_key('62-5'),
-        Action.build_key('62-6'),
-        Action.build_key('62-7')
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'read'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete'),
+        Action.build_key('62', 'search'),
+        Action.build_key('62', 'read_records'),
+        Action.build_key('62', 'build_menu')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        Action.build_key('62-0'),
-        Action.build_key('62-1'),
-        Action.build_key('62-5'),
-        Action.build_key('62-7')
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'search'),
+        Action.build_key('62', 'build_menu')
         ],
       domain_model=True
       ),
     common.Read(
       subscriptions=[
-        Action.build_key('62-2'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4'),
-        Action.build_key('62-6')
-        ]
-      ),
-    nav.SelectRoles(
-      subscriptions=[
-        .Action.build_key('62-0'),
-        .Action.build_key('62-2')
+        Action.build_key('62', 'read'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete'),
+        Action.build_key('62', 'read_records')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('62-0'),
-        Action.build_key('62-1'),
-        Action.build_key('62-2'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4'),
-        Action.build_key('62-5'),
-        Action.build_key('62-6'),
-        Action.build_key('62-7')
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'read'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete'),
+        Action.build_key('62', 'search'),
+        Action.build_key('62', 'read_records'),
+        Action.build_key('62', 'build_menu')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Exec(
       subscriptions=[
-        Action.build_key('62-0'),
-        Action.build_key('62-1'),
-        Action.build_key('62-2'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4'),
-        Action.build_key('62-5'),
-        Action.build_key('62-6'),
-        Action.build_key('62-7')
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'read'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete'),
+        Action.build_key('62', 'search'),
+        Action.build_key('62', 'read_records'),
+        Action.build_key('62', 'build_menu')
         ]
       ),
     nav.Set(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update')
         ]
       ),
     nav.BuildMenu(
       subscriptions=[
-        Action.build_key('62-7')
+        Action.build_key('62', 'build_menu')
         ]
       ),
     rule.Write(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update')
         ],
       transactional=True
       ),
     common.Write(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update')
         ],
       transactional=True
       ),
     common.Delete(
       subscriptions=[
-        Action.build_key('62-4')
+        Action.build_key('62', 'delete')
         ],
       transactional=True
       ),
     log.Entity(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True
       ),
     log.Write(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True,
       dynamic_values={'output.entity': 'entities.62'}
       ),
     callback.Payload(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True,
       queue = 'notify',
@@ -287,61 +291,67 @@ class Widget(ndb.BaseExpando):
       ),
     callback.Exec(
       subscriptions=[
-        Action.build_key('62-1'),
-        Action.build_key('62-3'),
-        Action.build_key('62-4')
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update'),
+        Action.build_key('62', 'delete')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     log.Read(
       subscriptions=[
-        Action.build_key('62-6')
+        Action.build_key('62', 'read_records')
         ]
       ),
     common.Search(
       subscriptions=[
-        .Action.build_key('62-5')
+        Action.build_key('62', 'search')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('62-5')
+        Action.build_key('62', 'search')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('62-2'),
-        Action.build_key('62-5'),
-        Action.build_key('62-6')
+        Action.build_key('62', 'read'),
+        Action.build_key('62', 'search'),
+        Action.build_key('62', 'read_records')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('62-0'),
-        Action.build_key('62-2')
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'read')
         ],
       dynamic_values={'output.entity': 'entities.62'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('62-5')
+        Action.build_key('62', 'search')
         ],
       dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('62-6')
+        Action.build_key('62', 'read_records')
         ],
       dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('62-7')
+        Action.build_key('62', 'build_menu')
         ],
       dynamic_values={'output.menu': 'widgets', 'output.domain': 'domain'}
+      ),
+    nav.SelectRoles(
+      subscriptions=[
+        Action.build_key('62', 'prepare'),
+        Action.build_key('62', 'read')
+        ]
       )
     ]
   
