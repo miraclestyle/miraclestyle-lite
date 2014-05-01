@@ -241,16 +241,13 @@ class Prepare(event.Plugin):
         if len(self.prepare_entities):
           for kind_id in self.prepare_entities:
             if kind_id in context.entities:
-              context.rule.entity = context.entities[kind_id]  # @todo This line is temporary!
               context.entity = context.entities[kind_id]
               prepare(context, self.skip_user_roles, self.strict)
         else:
-          context.rule.entity = context.entities[context.model.get_kind()]  # @todo This line is temporary!
           context.entity = context.entities[context.model.get_kind()]
           prepare(context, self.skip_user_roles, self.strict)
       elif isinstance(context.entities, list):
         for entity in context.entities:
-          context.rule.entity = entity  # @todo This line is temporary!
           context.entity = entity
           prepare(context, self.skip_user_roles, self.strict)
 
