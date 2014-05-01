@@ -11,7 +11,6 @@ from google.appengine.api import taskqueue
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, util
-from app.srv import event
 
 
 class InputError(Exception):
@@ -35,16 +34,11 @@ class InvalidModel(Exception):
 class Context():
   
   def __init__(self):
-    from app.srv import callback, auth, log, rule, cruds  # We do imports here to avoid import collision!
     self.input = {}
     self.output = {}
     self.model = None
     self.action = None
-    self.callback = callback.Context()
-    self.auth = auth.Context()
-    self.rule = rule.Context()
-    self.log = log.Context()
-    self.cruds = cruds.Context()
+    # @todo Perhaps here we should put also self.user and retreave current session user?
   
   def error(self, key, value):
     if 'errors' not in self.output:
@@ -74,10 +68,12 @@ class Engine:
       raise InvalidModel(model_key)
   
   @classmethod
-  def get_action(cls, context, input):  # @todo Possible changes here, if we optimize action architecutre!
-    action_key = input.get('action_key')
-    if hasattr(context.model, '_actions'):
-      actions = getattr(context.model, '_actions')
+  def get_action(cls, context, input):
+    action_id = input.get('action_key')
+    model_kind = context.model.get_kind()
+    if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
+      actions = context.model.get_actions()
+      action_key = ndb.Key(model_kind, 'action', '56', action_id).urlsafe()
       if action_key in actions:
         context.action = actions[action_key]
     if not context.action:
@@ -116,43 +112,35 @@ class Engine:
       raise InputError(input_error)
   
   @classmethod
-  def execute_action(cls, context, input):  # @todo Optimization required!
-    @ndb.transactional(xg=True)
-    def transaction(plugins):
+  def execute_action(cls, context, input):
+    def execute_plugins(plugins):
       for plugin in plugins:
         plugin.run(context)
-    def non_transaction(plugins):
-      for plugin in plugins:
-        plugin.run(context)
-    execute = getattr(context.model, input.get('action_key'), None)
-    if execute and callable(execute):
-      execute(context)
-    else:
-      if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
-        try:
-          plugins = context.model.get_plugins(context.action.key)
-          pre_transactional_plugins = []
-          transactional_plugins = []
-          post_transactional_plugins = []
-          pre_transactional = True
-          if len(plugins):
-            for plugin in plugins:
-              if plugin.transactional:
-                transactional_plugins.append(plugin)
-                pre_transactional = False
+    if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
+      try:
+        plugins = context.model.get_plugins(context.action.key)
+        pre_transactional_plugins = []
+        transactional_plugins = []
+        post_transactional_plugins = []
+        pre_transactional = True
+        if len(plugins):
+          for plugin in plugins:
+            if plugin.transactional:
+              transactional_plugins.append(plugin)
+              pre_transactional = False
+            else:
+              if pre_transactional:
+                pre_transactional_plugins.append(plugin)
               else:
-                if pre_transactional:
-                  pre_transactional_plugins.append(plugin)
-                else:
-                  post_transactional_plugins.append(plugin)
-          if len(pre_transactional_plugins):
-            non_transaction(pre_transactional_plugins)
-          if len(transactional_plugins):
-            transaction(transactional_plugins)
-          if len(post_transactional_plugins):
-            non_transaction(post_transactional_plugins)
-        except Exception as e:
-          raise
+                post_transactional_plugins.append(plugin)
+        if len(pre_transactional_plugins):
+          execute_plugins(pre_transactional_plugins)
+        if len(transactional_plugins):
+          ndb.transaction(lambda: execute_plugins(transactional_plugins), xg=True)
+        if len(post_transactional_plugins):
+          execute_plugins(post_transactional_plugins)
+      except Exception as e:
+        raise
   
   @classmethod
   def run(cls, input):
