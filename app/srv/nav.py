@@ -5,13 +5,11 @@ Created on Feb 24, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb
-from app.srv import rule, event, log, cruds
-from app.plugins import common
-from app.plugins import rule as plugin_rule
-from app.plugins import log as plugin_log
-from app.plugins import callback as plugin_callback
-from app.plugins import nav
+from app import ndb, settings
+from app.srv.event import Action
+from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
+from app.srv import log as ndb_log
+from app.plugins import common, rule, log, callback, nav
 
 
 class Filter(ndb.BaseExpando):
@@ -35,42 +33,42 @@ class Widget(ndb.BaseExpando):
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _virtual_fields = {
-    '_records': log.SuperLocalStructuredRecordProperty('62', repeated=True)
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('62', repeated=True)
     }
   
-  _global_role = rule.GlobalRole(
+  _global_role = GlobalRole(
     permissions=[
-      rule.ActionPermission('62', event.Action.build_key('62-0').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('62', event.Action.build_key('62-1').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
-      rule.ActionPermission('62', event.Action.build_key('62-2').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('62', event.Action.build_key('62-3').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
-      rule.ActionPermission('62', event.Action.build_key('62-4').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
-      rule.ActionPermission('62', event.Action.build_key('62-5').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('62', event.Action.build_key('62-6').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.ActionPermission('62', event.Action.build_key('62-7').urlsafe(), False,
-                            "not context.rule.entity.namespace_entity.state == 'active'"),
-      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                           "not context.rule.entity.namespace_entity.state == 'active' or context.rule.entity._is_system"),
-      rule.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                           "not context.rule.entity.namespace_entity.state == 'active'")
+      ActionPermission('62', Action.build_key('62-0').urlsafe(), False,
+                       "not context.entity.namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62-1').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+      ActionPermission('62', Action.build_key('62-2').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62-3').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+      ActionPermission('62', Action.build_key('62-4').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+      ActionPermission('62', Action.build_key('62-5').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62-6').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active'"),
+      ActionPermission('62', Action.build_key('62-7').urlsafe(), False,
+                            "not context.entity.namespace_entity.state == 'active'"),
+      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
+                           "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
+                           "not context.entity.namespace_entity.state == 'active'")
       ]
     )
   
   _actions = {
-    'prepare': event.Action(
+    'prepare': Action(
       id='62-0',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'create': event.Action(
+    'create': Action(
       id='62-1',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
@@ -82,8 +80,8 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         }
       ),
-    'read': event.Action(id='62-2', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'update': event.Action(
+    'read': Action(id='62-2', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
+    'update': Action(
       id='62-3',
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True),
@@ -95,8 +93,8 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         }
       ),
-    'delete': event.Action(id='62-4', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
-    'search': event.Action(
+    'delete': Action(id='62-4', arguments={'key': ndb.SuperKeyProperty(kind='62', required=True)}),
+    'search': Action(
       id='62-5',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
@@ -135,14 +133,14 @@ class Widget(ndb.BaseExpando):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'read_records': event.Action(
+    'read_records': Action(
       id='62-6',
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'build_menu': event.Action(
+    'build_menu': Action(
       id='62-7',
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
@@ -153,195 +151,195 @@ class Widget(ndb.BaseExpando):
   _plugins = [
     common.Context(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-2'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4'),
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-6'),
-        event.Action.build_key('62-7')
+        Action.build_key('62-0'),
+        Action.build_key('62-1'),
+        Action.build_key('62-2'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4'),
+        Action.build_key('62-5'),
+        Action.build_key('62-6'),
+        Action.build_key('62-7')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-7')
+        Action.build_key('62-0'),
+        Action.build_key('62-1'),
+        Action.build_key('62-5'),
+        Action.build_key('62-7')
         ],
       domain_model=True
       ),
     common.Read(
       subscriptions=[
-        event.Action.build_key('62-2'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4'),
-        event.Action.build_key('62-6')
+        Action.build_key('62-2'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4'),
+        Action.build_key('62-6')
         ]
       ),
     nav.SelectRoles(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-2')
+        .Action.build_key('62-0'),
+        .Action.build_key('62-2')
         ]
       ),
-    plugin_rule.Prepare(
+    rule.Prepare(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-2'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4'),
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-6'),
-        event.Action.build_key('62-7')
+        Action.build_key('62-0'),
+        Action.build_key('62-1'),
+        Action.build_key('62-2'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4'),
+        Action.build_key('62-5'),
+        Action.build_key('62-6'),
+        Action.build_key('62-7')
         ],
       skip_user_roles=False,
       strict=False
       ),
-    plugin_rule.Exec(
+    rule.Exec(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-2'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4'),
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-6'),
-        event.Action.build_key('62-7')
+        Action.build_key('62-0'),
+        Action.build_key('62-1'),
+        Action.build_key('62-2'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4'),
+        Action.build_key('62-5'),
+        Action.build_key('62-6'),
+        Action.build_key('62-7')
         ]
       ),
     nav.Set(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3')
+        Action.build_key('62-1'),
+        Action.build_key('62-3')
         ]
       ),
     nav.BuildMenu(
       subscriptions=[
-        event.Action.build_key('62-7')
+        Action.build_key('62-7')
         ]
       ),
-    plugin_rule.Write(
+    rule.Write(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3')
+        Action.build_key('62-1'),
+        Action.build_key('62-3')
         ],
       transactional=True
       ),
     common.Write(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3')
+        Action.build_key('62-1'),
+        Action.build_key('62-3')
         ],
       transactional=True
       ),
     common.Delete(
       subscriptions=[
-        event.Action.build_key('62-4')
+        Action.build_key('62-4')
         ],
       transactional=True
       ),
-    plugin_log.Entity(
+    log.Entity(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True
       ),
-    plugin_log.Write(
+    log.Write(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True
       ),
-    plugin_rule.Read(
+    rule.Read(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True
       ),
     common.Set(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True,
       dynamic_values={'output.entity': 'entities.62'}
       ),
-    plugin_callback.Payload(
+    callback.Payload(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True,
       queue = 'notify',
       static_data = {'action_key': 'initiate', 'action_model': '61'},
       dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}
       ),
-    plugin_callback.Exec(
+    callback.Exec(
       subscriptions=[
-        event.Action.build_key('62-1'),
-        event.Action.build_key('62-3'),
-        event.Action.build_key('62-4')
+        Action.build_key('62-1'),
+        Action.build_key('62-3'),
+        Action.build_key('62-4')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
-    plugin_log.Read(
+    log.Read(
       subscriptions=[
-        event.Action.build_key('62-6')
+        Action.build_key('62-6')
         ]
       ),
     common.Search(
       subscriptions=[
-        event.Action.build_key('62-5')
+        .Action.build_key('62-5')
         ]
       ),
-    plugin_rule.Prepare(
+    rule.Prepare(
       subscriptions=[
-        event.Action.build_key('62-5')
+        Action.build_key('62-5')
         ],
       skip_user_roles=False,
       strict=False
       ),
-    plugin_rule.Read(
+    rule.Read(
       subscriptions=[
-        event.Action.build_key('62-2'),
-        event.Action.build_key('62-5'),
-        event.Action.build_key('62-6')
+        Action.build_key('62-2'),
+        Action.build_key('62-5'),
+        Action.build_key('62-6')
         ]
       ),
     common.Set(
       subscriptions=[
-        event.Action.build_key('62-0'),
-        event.Action.build_key('62-2')
+        Action.build_key('62-0'),
+        Action.build_key('62-2')
         ],
       dynamic_values={'output.entity': 'entities.62'}
       ),
     common.Set(
       subscriptions=[
-        event.Action.build_key('62-5')
+        Action.build_key('62-5')
         ],
       dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
     common.Set(
       subscriptions=[
-        event.Action.build_key('62-6')
+        Action.build_key('62-6')
         ],
       dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
     common.Set(
       subscriptions=[
-        event.Action.build_key('62-7')
+        Action.build_key('62-7')
         ],
       dynamic_values={'output.menu': 'widgets', 'output.domain': 'domain'}
       )
@@ -350,87 +348,3 @@ class Widget(ndb.BaseExpando):
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
-  
-  """@classmethod
-  def complete_save(cls, entity, context):
-    role_key = context.input.get('role')
-    role = role_key.get()
-    if role.key_namespace != entity.key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?
-      raise rule.ActionDenied(context)
-    filters = []
-    input_filters = context.input.get('filters')
-    for input_filter in input_filters:
-      filters.append(Filter(**input_filter))
-    values = {'name': context.input.get('name'),
-              'sequence': context.input.get('sequence'),
-              'active': context.input.get('active'),
-              'role': role_key,
-              'search_form': context.input.get('search_form'),
-              'filters': filters}
-    return values"""
-  
-  """@classmethod
-  def create(cls, context):
-    domain_key = context.input.get('domain')
-    entity = cls(namespace=domain_key.urlsafe())
-    values = cls.complete_save(entity, context)
-    context.cruds.entity = cls(namespace=domain_key.urlsafe())
-    context.cruds.values = values
-    cruds.Engine.create(context)"""
-  
-  """@classmethod
-  def update(cls, context):
-    entity_key = context.input.get('entity_key')
-    entity = entity_key.get()
-    values = cls.complete_save(entity, context)
-    context.cruds.entity = entity
-    context.cruds.values = values
-    cruds.Engine.update(context)"""
-  
-  """@classmethod
-  def prepare(cls, context):
-    domain_key = context.input.get('domain')
-    context.cruds.entity = cls(namespace=domain_key.urlsafe())
-    cruds.Engine.prepare(context)
-    entity = context.output['entity']
-    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
-  
-  """@classmethod
-  def read(cls, context):
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read(context)
-    entity = context.output['entity']
-    context.output['roles'] = cls.selection_roles_helper(entity.key_namespace)"""
-  
-  """@classmethod
-  def delete(cls, context):
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.delete(context)"""
-  
-  """@classmethod
-  def search(cls, context):
-    context.cruds.entity = cls
-    context.cruds.entity = cls(namespace=context.input.get('domain').urlsafe())
-    cruds.Engine.search(context)"""
-  
-  """@classmethod
-  def read_records(cls, context):
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read_records(context)"""
-  
-  """@classmethod
-  def build_menu(cls, context):
-    domain_key = context.input.get('domain')
-    domain = domain_key.get()
-    context.rule.entity = cls(namespace=domain.key_namespace)
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=domain.key.urlsafe())
-    domain_user = domain_user_key.get()
-    if domain_user:
-      widgets = cls.query(cls.active == True,
-                          cls.role.IN(domain_user.roles),
-                          namespace=domain.key_namespace).order(cls.sequence).fetch()
-      context.output['menu'] = widgets
-      context.output['domain'] = domain"""
