@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 '''
-Created on Feb 17, 2014
+Created on Apr 30, 2014
 
-@author:  Edis Sehalic (edis.sehalic@gmail.com)
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-import time
-import datetime
 
 from app import ndb, settings
 from app.srv.event import Action
