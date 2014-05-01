@@ -25,20 +25,20 @@ class Configuration(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('57', Action.build_key('57-0').urlsafe(), True, "context.user._is_taskqueue"),
-      ActionPermission('57', Action.build_key('57-1').urlsafe(), True, "context.user._is_taskqueue")
+      ActionPermission('57', Action.build_key('57', 'install').urlsafe(), True, "context.user._is_taskqueue"),
+      ActionPermission('57', Action.build_key('57', 'cron_install').urlsafe(), True, "context.user._is_taskqueue")
       ]
     )
   
   _actions = {
-    'install': Action(
-      id='57-0',
+    Action(
+      key=Action.build_key('57', 'install'),
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='57')
         }
       ),
-    'cron_install': Action(
-      id='57-1',
+    Action(
+      key=Action.build_key('57', 'cron_install'),
       arguments={}
       )
     }
@@ -46,43 +46,43 @@ class Configuration(ndb.BaseExpando):
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('57-0'),
-        Action.build_key('57-1')
+        Action.build_key('57', 'install'),
+        Action.build_key('57', 'cron_install')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        Action.build_key('57-1')
+        Action.build_key('57', 'cron_install')
         ],
       domain_model=False
       ),
     common.Read(
       subscriptions=[
-        Action.build_key('57-0')
+        Action.build_key('57', 'install')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('57-0'),
-        Action.build_key('57-1')
+        Action.build_key('57', 'install'),
+        Action.build_key('57', 'cron_install')
         ],
       skip_user_roles=True,
       strict=False
       ),
     rule.Exec(
       subscriptions=[
-        Action.build_key('57-0'),
-        Action.build_key('57-1')
+        Action.build_key('57', 'install'),
+        Action.build_key('57', 'cron_install')
         ]
       ),
     setup.Install(
       subscriptions=[
-        Action.build_key('57-0')
+        Action.build_key('57', 'install')
         ]
       ),
     setup.CronInstall(
       subscriptions=[
-        Action.build_key('57-1')
+        Action.build_key('57', 'cron_install')
         ]
       )
     ]
