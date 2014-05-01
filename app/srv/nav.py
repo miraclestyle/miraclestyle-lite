@@ -41,23 +41,23 @@ class Widget(ndb.BaseExpando):
       ActionPermission('62', Action.build_key('62-0').urlsafe(), False,
                        "not context.entity.namespace_entity.state == 'active'"),
       ActionPermission('62', Action.build_key('62-1').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62-2').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active'"),
+                       "not context.entity.namespace_entity.state == 'active'"),
       ActionPermission('62', Action.build_key('62-3').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62-4').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+                       "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62-5').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active'"),
+                       "not context.entity.namespace_entity.state == 'active'"),
       ActionPermission('62', Action.build_key('62-6').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active'"),
+                       "not context.entity.namespace_entity.state == 'active'"),
       ActionPermission('62', Action.build_key('62-7').urlsafe(), False,
-                            "not context.entity.namespace_entity.state == 'active'"),
+                       "not context.entity.namespace_entity.state == 'active'"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                           "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
+                      "not context.entity.namespace_entity.state == 'active' or context.entity._is_system"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                           "not context.entity.namespace_entity.state == 'active'")
+                      "not context.entity.namespace_entity.state == 'active'")
       ]
     )
   
