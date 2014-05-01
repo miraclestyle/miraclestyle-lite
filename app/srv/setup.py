@@ -30,7 +30,7 @@ class Configuration(ndb.BaseExpando):
       ]
     )
   
-  _actions = {
+  _actions = [
     Action(
       key=Action.build_key('57', 'install'),
       arguments={
@@ -41,7 +41,7 @@ class Configuration(ndb.BaseExpando):
       key=Action.build_key('57', 'cron_install'),
       arguments={}
       )
-    }
+    ]
   
   _plugins = [
     common.Context(
