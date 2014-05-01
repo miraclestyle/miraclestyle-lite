@@ -61,8 +61,8 @@ class ActionPermission(Permission):
   
   def run(self, role, context):
     for action in self.actions:
-      if (self.kind == context.entity.get_kind()) and (action in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
-        context.entity._action_permissions[action]['executable'].append(self.executable)
+      if (self.kind in context.entities) and (action in context.entities[self.kind].get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
+        context.entities[self.kind]._action_permissions[action]['executable'].append(self.executable)
 
 
 class FieldPermission(Permission):
@@ -82,12 +82,13 @@ class FieldPermission(Permission):
   
   def run(self, role, context):
     for field in self.fields:
-      parsed_field = _parse_field(context.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
-      if (self.kind == context.entity.get_kind()) and parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
-        if (self.writable != None):
-          parsed_field['writable'].append(self.writable)
-        if (self.visible != None):
-          parsed_field['visible'].append(self.visible)
+      if (self.kind in context.entities):
+        parsed_field = _parse_field(context.entities[self.kind]._field_permissions, field)  # Retrieves field value from foo.bar.far
+        if parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
+          if (self.writable != None):
+            parsed_field['writable'].append(self.writable)
+          if (self.visible != None):
+            parsed_field['visible'].append(self.visible)
 
 
 class Role(ndb.BaseExpando):
