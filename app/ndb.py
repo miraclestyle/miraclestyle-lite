@@ -272,8 +272,8 @@ class _BaseModel(object):
   @classmethod
   def get_actions(cls):
     actions = {}
-    class_actions = getattr(cls, '_actions', {})
-    for key, action in class_actions.items():
+    class_actions = getattr(cls, '_actions', [])
+    for action in class_actions:
       actions[action.key.urlsafe()] = action
     return actions
   
