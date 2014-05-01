@@ -15,6 +15,10 @@ class Action(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True)
   arguments = ndb.SuperPickleProperty('2', required=True, default={})
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
+  
+  @classmethod
+  def build_key(cls, kind, action_id):
+    return ndb.Key(kind, 'action', cls._get_kind(), action_id))
 
 
 class Plugin(ndb.BasePolyExpando):
