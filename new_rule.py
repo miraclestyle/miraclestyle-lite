@@ -486,7 +486,7 @@ class DomainUser(ndb.BaseModel):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'read_records': event.Action(
+    'read_records': Action(
       id='8-6',
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True),
