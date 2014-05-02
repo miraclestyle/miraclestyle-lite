@@ -36,29 +36,29 @@ class Template(ndb.BasePoly):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('61', Action.build_key('61-0').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('61', Action.build_key('61-1').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('61', Action.build_key('61-2').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('61', Action.build_key('61-2').urlsafe(), True,
-                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
+      ActionPermission('61', Action.build_key('61', 'prepare').urlsafe(), False,
+                       "not context.entities['61'].namespace_entity.state == 'active'"),
+      ActionPermission('61', Action.build_key('61', 'search').urlsafe(), False,
+                       "not context.entities['61'].namespace_entity.state == 'active'"),
+      ActionPermission('61', Action.build_key('61', 'initiate').urlsafe(), False,
+                       "not context.entities['61'].namespace_entity.state == 'active'"),
+      ActionPermission('61', Action.build_key('61', 'initiate').urlsafe(), True,
+                       "context.entities['61'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
-                      "not context.entity.namespace_entity.state == 'active'")
+                      "not context.entities['61'].namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
-  _actions = {
-    'prepare': Action(
-      id='61-0',
+  _actions = [
+    Action(
+      key=Action.build_key('61', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'search': Action(
-      id='61-1',
+    Action(
+      key=Action.build_key('61', 'search'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
@@ -89,89 +89,89 @@ class Template(ndb.BasePoly):
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'initiate': Action(
-      id='61-2',
+    Action(
+      key=Action.build_key('61', 'initiate'),
       arguments={
         'caller_entity': ndb.SuperKeyProperty(required=True),
         'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
         'caller_action' : ndb.SuperVirtualKeyProperty(required=True)
         }
       )
-    }
+    ]
   
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('61-0'),
-        Action.build_key('61-1'),
-        Action.build_key('61-2')
+        Action.build_key('61', 'prepare'),
+        Action.build_key('61', 'search'),
+        Action.build_key('61', 'initiate')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        Action.build_key('61-0'),
-        Action.build_key('61-1')
+        Action.build_key('61', 'prepare'),
+        Action.build_key('61', 'search')
         ],
       domain_model=True
       ),
     notify.Prepare(
       subscriptions=[
-        Action.build_key('61-2')
+        Action.build_key('61', 'initiate')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('61-0'),
-        Action.build_key('61-1'),
-        Action.build_key('61-2')
+        Action.build_key('61', 'prepare'),
+        Action.build_key('61', 'search'),
+        Action.build_key('61', 'initiate')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Exec(
       subscriptions=[
-        Action.build_key('61-0'),
-        Action.build_key('61-1'),
-        Action.build_key('61-2')
+        Action.build_key('61', 'prepare'),
+        Action.build_key('61', 'search'),
+        Action.build_key('61', 'initiate')
         ]
       ),
     notify.Initiate(
       subscriptions=[
-        Action.build_key('61-2')
+        Action.build_key('61', 'initiate')
         ]
       ),
     callback.Exec(
       subscriptions=[
-        Action.build_key('61-2')
+        Action.build_key('61', 'initiate')
         ],
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     common.Search(
       subscriptions=[
-        Action.build_key('61-1')
+        Action.build_key('61', 'search')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('61-1')
+        Action.build_key('61', 'search')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('61-1')
+        Action.build_key('61', 'search')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('61-0')
+        Action.build_key('61', 'prepare')
         ],
       dynamic_values={'output.entity': 'entities.61'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('61-1')
+        Action.build_key('61', 'search')
         ],
       dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
@@ -189,14 +189,14 @@ class CustomNotify(Template):
   outlet = ndb.SuperStringProperty('9', required=True, default='58')
   
   def run(self, context):
-    template_values = {'entity' : context.caller_entity}
+    template_values = {'entity' : context.entities['caller_entity']}
     data = {'action_key': 'send',
             'action_model': self.outlet,
-            'recipient': self.message_recievers(context.caller_entity, context.caller_user),
+            'recipient': self.message_recievers(context.entities['caller_entity'], context.entities['caller_user']),
             'sender': self.message_sender,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
-            'caller_entity': context.caller_entity.key.urlsafe()}
+            'caller_entity': context.entities['caller_entity'].key.urlsafe()}
     context.callback_payloads.append(('send', data))
 
 
@@ -215,38 +215,38 @@ class MailNotify(Template):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('58', Action.build_key('58-0').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-1').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-2').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-3').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-4').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-5').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-6').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('58', Action.build_key('58-6').urlsafe(), True,
-                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
+      ActionPermission('58', Action.build_key('58', 'prepare').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'create').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'read').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'update').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'delete').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'read_records').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'send').urlsafe(), False,
+                       "not context.entities['58'].namespace_entity.state == 'active'"),
+      ActionPermission('58', Action.build_key('58', 'send').urlsafe(), True,
+                       "context.entities['58'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                      "not context.entity.namespace_entity.state == 'active'")
+                      "not context.entities['58'].namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
-  _actions = {
-    'prepare': Action(
-      id='58-0',
+  _actions = [
+    Action(
+      key=Action.build_key('58', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'create': Action(
-      id='58-1',
+    Action(
+      key=Action.build_key('58', 'create'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
@@ -259,9 +259,14 @@ class MailNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'read': Action(id='58-2', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
-    'update': Action(
-      id='58-3',
+    Action(
+      key=Action.build_key('58', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='61', required=True)
+        }
+      ),
+    Action(
+      key=Action.build_key('58', 'update'),
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='61'),
         'name': ndb.SuperStringProperty(required=True),
@@ -274,16 +279,21 @@ class MailNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'delete': Action(id='58-4', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
-    'read_records': Action(
-      id='58-5',
+    Action(
+      key=Action.build_key('58', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(required=True, kind='61')
+        }
+      ),
+    Action(
+      key=Action.build_key('58', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'send': Action(
-      id='58-6',
+    Action(
+      key=Action.build_key('58', 'send'),
       arguments={
         'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
         'sender': ndb.SuperStringProperty(required=True),
@@ -292,73 +302,73 @@ class MailNotify(Template):
         'caller_entity': ndb.SuperKeyProperty(required=True)
         }
       )
-    }
+    ]
   
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('58-0'),
-        Action.build_key('58-1'),
-        Action.build_key('58-2'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4'),
-        Action.build_key('58-5'),
-        Action.build_key('58-6')
+        Action.build_key('58', 'prepare'),
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'read'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete'),
+        Action.build_key('58', 'read_records'),
+        Action.build_key('58', 'send')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        Action.build_key('58-0'),
-        Action.build_key('58-1')
+        Action.build_key('58', 'prepare'),
+        Action.build_key('58', 'create')
         ],
       domain_model=True
       ),
     notify.Prepare(
       subscriptions=[
-        Action.build_key('58-6')
+        Action.build_key('58', 'send')
         ]
       ),
     common.Read(
       subscriptions=[
-        Action.build_key('58-2'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4'),
-        Action.build_key('58-5')
+        Action.build_key('58', 'read'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete'),
+        Action.build_key('58', 'read_records')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('58-0'),
-        Action.build_key('58-1'),
-        Action.build_key('58-2'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4'),
-        Action.build_key('58-5'),
-        Action.build_key('58-6')
+        Action.build_key('58', 'prepare'),
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'read'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete'),
+        Action.build_key('58', 'read_records'),
+        Action.build_key('58', 'send')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Exec(
       subscriptions=[
-        Action.build_key('58-0'),
-        Action.build_key('58-1'),
-        Action.build_key('58-2'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4'),
-        Action.build_key('58-5'),
-        Action.build_key('58-6')
+        Action.build_key('58', 'prepare'),
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'read'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete'),
+        Action.build_key('58', 'read_records'),
+        Action.build_key('58', 'send')
         ]
       ),
     notify.MailSend(
       subscriptions=[
-        Action.build_key('58-6')
+        Action.build_key('58', 'send')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update')
         ],
       dynamic_values={
         'values.58.name': 'input.name',
@@ -373,62 +383,62 @@ class MailNotify(Template):
       ),
     rule.Write(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update')
         ],
       transactional=True
       ),
     common.Write(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update')
         ],
       transactional=True
       ),
     common.Delete(
       subscriptions=[
-        Action.build_key('58-4')
+        Action.build_key('58', 'delete')
         ],
       transactional=True
       ),
     log.Entity(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True
       ),
     log.Write(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True,
       dynamic_values={'output.entity': 'entities.58'}
       ),
     callback.Payload(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True,
       queue = 'notify',
@@ -437,55 +447,55 @@ class MailNotify(Template):
       ),
     callback.Exec(
       subscriptions=[
-        Action.build_key('58-1'),
-        Action.build_key('58-3'),
-        Action.build_key('58-4')
+        Action.build_key('58', 'create'),
+        Action.build_key('58', 'update'),
+        Action.build_key('58', 'delete')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     log.Read(
       subscriptions=[
-        Action.build_key('58-5')
+        Action.build_key('58', 'read_records')
         ]
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('58-2'),
-        Action.build_key('58-5')
+        Action.build_key('58', 'read'),
+        Action.build_key('58', 'read_records')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('58-0'),
-        Action.build_key('58-2')
+        Action.build_key('58', 'prepare'),
+        Action.build_key('58', 'read')
         ],
       dynamic_values={'output.entity': 'entities.58'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('58-5')
+        Action.build_key('58', 'read_records')
         ],
       dynamic_values={'output.entity': 'entities.58', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
   def run(self, context):
-    values = {'entity': context.caller_entity, 'user': context.caller_user}
+    values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
     if safe_eval(self.condition, values):
       domain_users = rule.DomainUser.query(rule.DomainUser.roles == self.message_reciever,
                                            namespace=self.message_reciever.namespace()).fetch()
       recievers = ndb.get_multi([ndb_auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
       sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
       sender = sender_key.get()
-      template_values = {'entity': context.caller_entity}
+      template_values = {'entity': context.entities['caller_entity']}
       data = {'action_key': 'send',
               'action_model': '58',
               'recipient': [reciever._primary_email for reciever in recievers],
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.caller_entity.key.urlsafe()}
+              'caller_entity': context.entities['caller_entity'].key.urlsafe()}
       recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
       data_copy = data.copy()
       del data_copy['recipient']
@@ -512,38 +522,38 @@ class HttpNotify(Template):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('63', Action.build_key('63-0').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-1').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-2').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-3').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-4').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-5').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-6').urlsafe(), False,
-                       "not context.entity.namespace_entity.state == 'active'"),
-      ActionPermission('63', Action.build_key('63-6').urlsafe(), True,
-                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
+      ActionPermission('63', Action.build_key('63', 'prepare').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'create').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'read').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'update').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'delete').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'read_records').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'send').urlsafe(), False,
+                       "not context.entities['63'].namespace_entity.state == 'active'"),
+      ActionPermission('63', Action.build_key('63', 'send').urlsafe(), True,
+                       "context.entities['63'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                      "not context.entity.namespace_entity.state == 'active'")
+                      "not context.entities['63'].namespace_entity.state == 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
   
-  _actions = {
-    'prepare': Action(
-      id='63-0',
+  _actions = [
+    Action(
+      key=Action.build_key('63', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         }
       ),
-    'create': Action(
-      id='63-1',
+    Action(
+      key=Action.build_key('63', 'create'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
@@ -556,9 +566,14 @@ class HttpNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'read': Action(id='63-2', arguments={'key': ndb.SuperKeyProperty(kind='61', required=True)}),
-    'update': Action(
-      id='63-3',
+    Action(
+      key=Action.build_key('63', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='61', required=True)
+        }
+      ),
+    Action(
+      key=Action.build_key('63', 'update'),
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='61'),
         'name': ndb.SuperStringProperty(required=True),
@@ -571,16 +586,21 @@ class HttpNotify(Template):
         'message_body': ndb.SuperTextProperty(required=True)
         }
       ),
-    'delete': Action(id='63-4', arguments={'key': ndb.SuperKeyProperty(required=True, kind='61')}),
-    'read_records': Action(
-      id='63-5',
+    Action(
+      key=Action.build_key('63', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(required=True, kind='61')
+        }
+      ),
+    Action(
+      key=Action.build_key('63', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
         'next_cursor': ndb.SuperStringProperty()
         }
       ),
-    'send': Action(
-      id='63-6',
+    Action(
+      key=Action.build_key('63', 'send'),
       arguments={
         'recipient': ndb.SuperStringProperty(required=True),
         'sender': ndb.SuperStringProperty(required=True),
@@ -589,73 +609,73 @@ class HttpNotify(Template):
         'caller_entity': ndb.SuperKeyProperty(required=True)
         }
       )
-    }
+    ]
   
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('63-0'),
-        Action.build_key('63-1'),
-        Action.build_key('63-2'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4'),
-        Action.build_key('63-5'),
-        Action.build_key('63-6')
+        Action.build_key('63', 'prepare'),
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'read'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete'),
+        Action.build_key('63', 'read_records'),
+        Action.build_key('63', 'send')
         ]
       ),
     common.Prepare(
       subscriptions=[
-        Action.build_key('63-0'),
-        Action.build_key('63-1')
+        Action.build_key('63', 'prepare'),
+        Action.build_key('63', 'create')
         ],
       domain_model=True
       ),
     notify.Prepare(
       subscriptions=[
-        Action.build_key('63-6')
+        Action.build_key('63', 'send')
         ]
       ),
     common.Read(
       subscriptions=[
-        Action.build_key('63-2'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4'),
-        Action.build_key('63-5')
+        Action.build_key('63', 'read'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete'),
+        Action.build_key('63', 'read_records')
         ]
       ),
     rule.Prepare(
       subscriptions=[
-        Action.build_key('63-0'),
-        Action.build_key('63-1'),
-        Action.build_key('63-2'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4'),
-        Action.build_key('63-5'),
-        Action.build_key('63-6')
+        Action.build_key('63', 'prepare'),
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'read'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete'),
+        Action.build_key('63', 'read_records'),
+        Action.build_key('63', 'send')
         ],
       skip_user_roles=False,
       strict=False
       ),
     rule.Exec(
       subscriptions=[
-        Action.build_key('63-0'),
-        Action.build_key('63-1'),
-        Action.build_key('63-2'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4'),
-        Action.build_key('63-5'),
-        Action.build_key('63-6')
+        Action.build_key('63', 'prepare'),
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'read'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete'),
+        Action.build_key('63', 'read_records'),
+        Action.build_key('63', 'send')
         ]
       ),
     notify.HttpSend(
       subscriptions=[
-        Action.build_key('63-6')
+        Action.build_key('63', 'send')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update')
         ],
       dynamic_values={
         'values.63.name': 'input.name',
@@ -670,62 +690,62 @@ class HttpNotify(Template):
       ),
     rule.Write(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update')
         ],
       transactional=True
       ),
     common.Write(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update')
         ],
       transactional=True
       ),
     common.Delete(
       subscriptions=[
-        Action.build_key('63-4')
+        Action.build_key('63', 'delete')
         ],
       transactional=True
       ),
     log.Entity(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True
       ),
     log.Write(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True,
       dynamic_values={'output.entity': 'entities.63'}
       ),
     callback.Payload(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True,
       queue = 'notify',
@@ -734,50 +754,50 @@ class HttpNotify(Template):
       ),
     callback.Exec(
       subscriptions=[
-        Action.build_key('63-1'),
-        Action.build_key('63-3'),
-        Action.build_key('63-4')
+        Action.build_key('63', 'create'),
+        Action.build_key('63', 'update'),
+        Action.build_key('63', 'delete')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
       ),
     log.Read(
       subscriptions=[
-        Action.build_key('63-5')
+        Action.build_key('63', 'read_records')
         ]
       ),
     rule.Read(
       subscriptions=[
-        Action.build_key('63-2'),
-        Action.build_key('63-5')
+        Action.build_key('63', 'read'),
+        Action.build_key('63', 'read_records')
         ]
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('63-0'),
-        Action.build_key('63-2')
+        Action.build_key('63', 'prepare'),
+        Action.build_key('63', 'read')
         ],
       dynamic_values={'output.entity': 'entities.63'}
       ),
     common.Set(
       subscriptions=[
-        Action.build_key('63-5')
+        Action.build_key('63', 'read_records')
         ],
       dynamic_values={'output.entity': 'entities.63', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
   
   def run(self, context):
-    values = {'entity': context.caller_entity, 'user': context.caller_user}
+    values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
     if safe_eval(self.condition, values):
       sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
       sender = sender_key.get()
-      template_values = {'entity': context.caller_entity}
+      template_values = {'entity': context.entities['caller_entity']}
       data = {'action_key': 'send',
               'action_model': '63',
               'recipient': self.message_reciever,
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.caller_entity.key.urlsafe()}
+              'caller_entity': context.entities['caller_entity'].key.urlsafe()}
       context.callback_payloads.append(('send', data))
