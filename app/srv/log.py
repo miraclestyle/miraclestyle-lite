@@ -5,15 +5,7 @@ Created on Dec 25, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from google.appengine.datastore.datastore_query import Cursor
-
 from app import ndb, settings
-
-
-class Context():
-  
-  def __init__(self):
-    self.entities = []
 
 
 """
@@ -86,49 +78,6 @@ class Record(ndb.BaseExpando):
     'note': ndb.SuperTextProperty('n')
     }
   
-  @classmethod
-  def get_records(cls, entity, urlsafe_cursor):
-    from app.srv import rule
-    
-    items_per_page = settings.RECORDS_PAGE
-    cursor = Cursor(urlsafe=urlsafe_cursor)
-    query = cls.query(ancestor=entity.key).order(-cls.logged)
-    entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
-    
-    @ndb.tasklet
-    def async(entity):
-      if entity.key_namespace:
-        domain_user_key = rule.DomainUser.build_key(str(entity.agent.id()), namespace=entity.key_namespace)
-        agent = yield domain_user_key.get_async()
-        agent = agent.name
-      else:
-        agent = yield entity.agent.get_async()
-        agent = agent._primary_email
-      entity._agent = agent
-      action_key_id = str(entity.action.id()).split('-')
-      if len(action_key_id) == 2:
-        kind_id, action_id = action_key_id
-        modelclass = entity._kind_map.get(kind_id)
-        if modelclass and hasattr(modelclass, '_actions'):
-          for action_key, action in modelclass._actions.items():
-            if entity.action == action.key:
-              entity._action = '%s.%s' % (modelclass.__name__, action_key)
-              break
-      else:
-        entity._action = entity.action.id()
-      raise ndb.Return(entity)
-    
-    @ndb.tasklet
-    def helper(entities):
-      results = yield map(async, entities)
-      raise ndb.Return(results)
-    
-    entities = helper(entities)
-    entities = [entity for entity in entities.get_result()]
-    return entities, next_cursor, more
-  
   def _if_properties_are_cloned(self):
     return not (self.__class__._properties is self._properties)
   
@@ -193,34 +142,3 @@ class Record(ndb.BaseExpando):
         setattr(self, prop._code_name, value)
       self.add_output(prop._code_name)
     return self
-
-
-class Engine:
-  
-  @classmethod
-  def run(cls, context):
-    """We always run log engine from within a transaction, 
-    because it is a helper service, not an independent service!
-    
-    """
-    if len(context.log.entities):
-      records = []
-      for config in context.log.entities:
-        entity = config[0]
-        try:
-          kwargs = config[1]
-        except:
-          kwargs = None
-        if not kwargs:
-          kwargs = {}
-        log_entity = kwargs.pop('log_entity', True)
-        record = Record(parent=entity.key, agent=context.auth.user.key, action=context.action.key, **kwargs)
-        if log_entity is True:
-          log_entity = entity
-        if log_entity:
-          record.log_entity(log_entity)
-        records.append(record)
-      
-      if len(records):
-        recorded = ndb.put_multi(records)
-        context.log.entities = []
