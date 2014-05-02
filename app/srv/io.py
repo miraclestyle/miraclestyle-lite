@@ -69,7 +69,7 @@ class Engine:
   
   @classmethod
   def get_action(cls, context, input):
-    action_id = input.get('action_key')
+    action_id = input.get('action_id')
     model_kind = context.model.get_kind()
     if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
       actions = context.model.get_actions()
