@@ -439,29 +439,38 @@ class Domain(ndb.BaseExpando):
         Action.build_key('6', 'prepare'),#kk
         Action.build_key('6', 'create'),
         Action.build_key('6', 'read'),#kk
-        Action.build_key('6', 'update'),
+        Action.build_key('6', 'update'),#kk
         Action.build_key('6', 'search'),#kk
         Action.build_key('6', 'read_records'),#kk
         Action.build_key('6', 'suspend'),#kk
         Action.build_key('6', 'activate'),#kk
         Action.build_key('6', 'sudo'),#kk
-        Action.build_key('6', 'log_message')
+        Action.build_key('6', 'log_message')#kk
         ]
       ),
     common.Prepare(
       subscriptions=[
         Action.build_key('6', 'prepare'),
+        Action.build_key('6', 'create'),
         Action.build_key('6', 'search')
         ]
       ),
     common.Read(
       subscriptions=[
         Action.build_key('6', 'read'),
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'read_records'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ]
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('6', 'update')
+        ],
+      dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact'}  # @todo Logo will be implemented later.
       ),
     common.Set(
       subscriptions=[
@@ -517,8 +526,15 @@ class Domain(ndb.BaseExpando):
         Action.build_key('6', 'log_message')
         ]
       ),
+    auth.DomainCreate(
+      subscriptions=[
+        Action.build_key('6', 'create')
+        ],
+      transactional=True
+      ),
     rule.Write(
       subscriptions=[
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
         Action.build_key('6', 'sudo')
@@ -527,9 +543,17 @@ class Domain(ndb.BaseExpando):
       ),
     common.Write(
       subscriptions=[
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
+        ],
+      transactional=True
+      ),
+    log.Entity(
+      subscriptions=[
+        Action.build_key('6', 'update')
         ],
       transactional=True
       ),
@@ -543,41 +567,61 @@ class Domain(ndb.BaseExpando):
       ),
     log.Entity(
       subscriptions=[
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True,
       dynamic_arguments={'message': 'input.message', 'note': 'input.note'}
       ),
     log.Write(
       subscriptions=[
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True
       ),
     rule.Read(
       subscriptions=[
+        Action.build_key('6', 'create'),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True
       ),
     common.Set(
       subscriptions=[
+        Action.build_key('6', 'create'),
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True,
       dynamic_values={'output.entity': 'entities.6'}
       ),
     callback.Payload(
       subscriptions=[
+        Action.build_key('6', 'create')
+        ],
+      transactional=True,
+      queue = 'callback',
+      static_data = {'action_key': 'install', 'action_model': '57'},
+      dynamic_data = {'key': 'entities.57.key_urlsafe'}
+      ),
+    callback.Payload(
+      subscriptions=[
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True,
       queue = 'notify',
@@ -586,9 +630,12 @@ class Domain(ndb.BaseExpando):
       ),
     callback.Exec(
       subscriptions=[
+        Action.build_key('6', 'create'),
+        Action.build_key('6', 'update'),
         Action.build_key('6', 'suspend'),
         Action.build_key('6', 'activate'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
@@ -603,12 +650,12 @@ class Domain(ndb.BaseExpando):
         Action.build_key('6', 'search')
         ]
       ),
-    auth.Search(
+    auth.DomainSearch(
       subscriptions=[
         Action.build_key('6', 'search')
         ]
       ),
-    auth.Read(
+    auth.DomainRead(
       subscriptions=[
         Action.build_key('6', 'read')
         ]
@@ -646,7 +693,7 @@ class Domain(ndb.BaseExpando):
         ],
       dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       ),
-    auth.Prepare(
+    auth.DomainPrepare(
       subscriptions=[
         Action.build_key('6', 'prepare')
         ]
