@@ -7,7 +7,8 @@ Created on Apr 15, 2014
 
 from app import ndb, settings
 from app.srv import event
-from app.srv import rule
+from app.srv.rule import DomainRole
+from app.plugins.rule import ActionDenied
 
 
 class Set(event.Plugin):
@@ -17,7 +18,7 @@ class Set(event.Plugin):
     role_key = context.input.get('role')
     role = role_key.get()
     if role.key_namespace != context.entities['62'].key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?
-      raise rule.ActionDenied(context)
+      raise ActionDenied(context)
     filters = []
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
@@ -46,4 +47,4 @@ class BuildMenu(event.Plugin):
 class SelectRoles(event.Plugin):
   
   def run(self, context):
-    context.output['roles'] = rule.DomainRole.query(rule.DomainRole.active == True, namespace=context.entities['62'].key_namespace).fetch()
+    context.output['roles'] = DomainRole.query(DomainRole.active == True, namespace=context.entities['62'].key_namespace).fetch()
