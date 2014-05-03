@@ -436,16 +436,16 @@ class Domain(ndb.BaseExpando):
   _plugins = [
     common.Context(
       subscriptions=[
-        Action.build_key('6', 'prepare'),#kk
+        Action.build_key('6', 'prepare'),
         Action.build_key('6', 'create'),
-        Action.build_key('6', 'read'),#kk
-        Action.build_key('6', 'update'),#kk
-        Action.build_key('6', 'search'),#kk
-        Action.build_key('6', 'read_records'),#kk
-        Action.build_key('6', 'suspend'),#kk
-        Action.build_key('6', 'activate'),#kk
-        Action.build_key('6', 'sudo'),#kk
-        Action.build_key('6', 'log_message')#kk
+        Action.build_key('6', 'read'),
+        Action.build_key('6', 'update'),
+        Action.build_key('6', 'search'),
+        Action.build_key('6', 'read_records'),
+        Action.build_key('6', 'suspend'),
+        Action.build_key('6', 'activate'),
+        Action.build_key('6', 'sudo'),
+        Action.build_key('6', 'log_message')
         ]
       ),
     common.Prepare(
