@@ -305,7 +305,7 @@ class User(ndb.BaseExpando):
     callback.Exec(
       subscriptions=[
         Action.build_key('0', 'update'),
-        Action.build_key('6', 'sudo')
+        Action.build_key('0', 'sudo')
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
