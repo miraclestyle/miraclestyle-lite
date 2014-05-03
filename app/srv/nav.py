@@ -39,25 +39,25 @@ class Widget(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('62', Action.build_key('62', 'prepare').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active'"),
+                       "context.entities['62'].namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'create').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system or context.entities['62'].key_namespace != context.values['62'].role.entity.key_namespace"),
       ActionPermission('62', Action.build_key('62', 'read').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active'"),
+                       "context.entities['62'].namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'update').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system or context.entities['62'].key_namespace != context.values['62'].role.entity.key_namespace"),
       ActionPermission('62', Action.build_key('62', 'delete').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system"),
       ActionPermission('62', Action.build_key('62', 'search').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active'"),
+                       "context.entities['62'].namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'read_records').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active'"),
+                       "context.entities['62'].namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'build_menu').urlsafe(), False,
-                       "not context.entities['62'].namespace_entity.state == 'active'"),
+                       "context.entities['62'].namespace_entity.state != 'active'"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      "not context.entities['62'].namespace_entity.state == 'active' or context.entities['62']._is_system"),
+                      "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                      "not context.entities['62'].namespace_entity.state == 'active'")
+                      "context.entities['62'].namespace_entity.state != 'active'")
       ]
     )
   
@@ -188,6 +188,12 @@ class Widget(ndb.BaseExpando):
         Action.build_key('62', 'read_records')
         ]
       ),
+    nav.Set(
+      subscriptions=[
+        Action.build_key('62', 'create'),
+        Action.build_key('62', 'update')
+        ]
+      ),
     rule.Prepare(
       subscriptions=[
         Action.build_key('62', 'prepare'),
@@ -212,12 +218,6 @@ class Widget(ndb.BaseExpando):
         Action.build_key('62', 'search'),
         Action.build_key('62', 'read_records'),
         Action.build_key('62', 'build_menu')
-        ]
-      ),
-    nav.Set(
-      subscriptions=[
-        Action.build_key('62', 'create'),
-        Action.build_key('62', 'update')
         ]
       ),
     nav.BuildMenu(
