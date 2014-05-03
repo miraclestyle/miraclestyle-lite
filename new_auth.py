@@ -171,6 +171,208 @@ class User(ndb.BaseExpando):
       )
     ]
   
+  """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
+    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    
+    """
+  _plugins = [
+    common.Context(
+      subscriptions=[
+        Action.build_key('0', 'read'),
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'search'),
+        Action.build_key('0', 'read_records'),
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'read_domains')
+        ]
+      ),
+    common.Prepare(
+      subscriptions=[
+        Action.build_key('0', 'search')
+        ]
+      ),
+    common.Read(
+      subscriptions=[
+        Action.build_key('0', 'read'),
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'read_records'),
+        Action.build_key('0', 'sudo')
+        ]
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'sudo')
+        ],
+      dynamic_values={'values.0.state': 'input.state'}
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'read_domains')
+        ],
+      dynamic_values={'entities.0': 'user'}
+      ),
+    auth.UserUpdate(
+      subscriptions=[
+        Action.build_key('0', 'update')
+        ]
+      ),
+    rule.Prepare(
+      subscriptions=[
+        Action.build_key('0', 'read'),
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'search'),
+        Action.build_key('0', 'read_records'),
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'read_domains')
+        ],
+      skip_user_roles=True,
+      strict=False
+      ),
+    rule.Exec(
+      subscriptions=[
+        Action.build_key('0', 'read'),
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'search'),
+        Action.build_key('0', 'read_records'),
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'read_domains')
+        ]
+      ),
+    auth.UserSudo(
+      subscriptions=[
+        Action.build_key('0', 'sudo')
+        ]
+      ),
+    rule.Write(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True
+      ),
+    common.Write(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True
+      ),
+    log.Entity(
+      subscriptions=[
+        Action.build_key('0', 'update')
+        ],
+      transactional=True
+      ),
+    log.Entity(
+      subscriptions=[
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True,
+      dynamic_arguments={'message': 'input.message', 'note': 'input.note'}
+      ),
+    log.Write(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True
+      ),
+    rule.Read(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True,
+      dynamic_values={'output.entity': 'entities.0'}
+      ),
+    callback.Payload(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('0', 'sudo')
+        ],
+      transactional=True,
+      queue = 'notify',
+      static_data = {'action_key': 'initiate', 'action_model': '61'},
+      dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}
+      ),
+    callback.Exec(
+      subscriptions=[
+        Action.build_key('0', 'update'),
+        Action.build_key('6', 'sudo')
+        ],
+      transactional=True,
+      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    log.Read(
+      subscriptions=[
+        Action.build_key('0', 'read_records')
+        ]
+      ),
+    common.Search(
+      subscriptions=[
+        Action.build_key('0', 'search')
+        ]
+      ),
+    auth.UserReadDomains(
+      subscriptions=[
+        Action.build_key('0', 'read_domains')
+        ]
+      ),
+    rule.Prepare(
+      subscriptions=[
+        Action.build_key('0', 'search')
+        ],
+      skip_user_roles=True,
+      strict=False
+      ),
+    rule.Prepare(
+      subscriptions=[
+        Action.build_key('0', 'read_domains')
+        ],
+      skip_user_roles=False,
+      strict=False
+      ),
+    rule.Read(
+      subscriptions=[
+        Action.build_key('0', 'read'),
+        Action.build_key('0', 'search'),
+        Action.build_key('0', 'read_records'),
+        Action.build_key('0', 'read_domains')
+        ]
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'read')
+        ],
+      dynamic_values={'output.entity': 'entities.0'}
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'search')
+        ],
+      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'read_records')
+        ],
+      dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'read_domains')
+        ],
+      dynamic_values={'output.entities': 'entities'}
+      ),
+    ]
+  
   def get_output(self):
     dic = super(User, self).get_output()
     dic.update({'_csrf': self._csrf,  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
