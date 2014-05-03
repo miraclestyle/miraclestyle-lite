@@ -8,17 +8,12 @@ Created on Apr 15, 2014
 from app import ndb, settings
 from app.srv import event
 from app.srv.rule import DomainRole
-from app.plugins.rule import ActionDenied
 
 
 class Set(event.Plugin):
   
   def run(self, context):
     from app.srv.nav import Filter
-    role_key = context.input.get('role')
-    role = role_key.get()
-    if role.key_namespace != context.entities['62'].key_namespace:  # Both, the role and the entity namespace must match. Perhaps, this could be done with rule engine?
-      raise ActionDenied(context)
     filters = []
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
@@ -26,7 +21,7 @@ class Set(event.Plugin):
     context.values['62'].name = context.input.get('name')
     context.values['62'].sequence = context.input.get('sequence')
     context.values['62'].active = context.input.get('active')
-    context.values['62'].role = role_key
+    context.values['62'].role = context.input.get('role')
     context.values['62'].search_form = context.input.get('search_form')
     context.values['62'].filters = filters
 
