@@ -14,7 +14,6 @@ from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, auth
 
 
-
 class Session(ndb.BaseModel):
   
   _kind = 70
@@ -64,7 +63,7 @@ class User(ndb.BaseExpando):
       ActionPermission('0', Action.build_key('0', 'update').urlsafe(), True,
                        "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
       ActionPermission('0', Action.build_key('0', 'logout').urlsafe(), True,
-                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key and context.entities['0']._csrf == context.input['csrf']"),
       ActionPermission('0', Action.build_key('0', 'read_domains').urlsafe(), True,
                        "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
@@ -183,6 +182,7 @@ class User(ndb.BaseExpando):
         Action.build_key('0', 'search'),
         Action.build_key('0', 'read_records'),
         Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout'),
         Action.build_key('0', 'read_domains')
         ]
       ),
@@ -207,9 +207,21 @@ class User(ndb.BaseExpando):
       ),
     common.Set(
       subscriptions=[
+        Action.build_key('0', 'logout'),
         Action.build_key('0', 'read_domains')
         ],
       dynamic_values={'entities.0': 'user'}
+      ),
+    common.Set(
+      subscriptions=[
+        Action.build_key('0', 'logout')
+        ],
+      static_values={'values.0.sessions': []}
+      ),
+    auth.UserLogout(
+      subscriptions=[
+        Action.build_key('0', 'logout')
+        ],
       ),
     auth.UserUpdate(
       subscriptions=[
@@ -223,6 +235,7 @@ class User(ndb.BaseExpando):
         Action.build_key('0', 'search'),
         Action.build_key('0', 'read_records'),
         Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout'),
         Action.build_key('0', 'read_domains')
         ],
       skip_user_roles=True,
@@ -235,6 +248,7 @@ class User(ndb.BaseExpando):
         Action.build_key('0', 'search'),
         Action.build_key('0', 'read_records'),
         Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout'),
         Action.build_key('0', 'read_domains')
         ]
       ),
@@ -246,14 +260,16 @@ class User(ndb.BaseExpando):
     rule.Write(
       subscriptions=[
         Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout')
         ],
       transactional=True
       ),
     common.Write(
       subscriptions=[
         Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout')
         ],
       transactional=True
       ),
@@ -270,10 +286,18 @@ class User(ndb.BaseExpando):
       transactional=True,
       dynamic_arguments={'message': 'input.message', 'note': 'input.note'}
       ),
+    log.Entity(
+      subscriptions=[
+        Action.build_key('0', 'logout')
+        ],
+      transactional=True,
+      dynamic_arguments={'ip_address': 'ip_address'}
+      ),
     log.Write(
       subscriptions=[
         Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
+        Action.build_key('0', 'sudo'),
+        Action.build_key('0', 'logout')
         ],
       transactional=True
       ),
@@ -309,6 +333,12 @@ class User(ndb.BaseExpando):
         ],
       transactional=True,
       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
+      ),
+    auth.UserLogoutOutput(
+      subscriptions=[
+        Action.build_key('0', 'logout')
+        ],
+      transactional=True
       ),
     log.Read(
       subscriptions=[
