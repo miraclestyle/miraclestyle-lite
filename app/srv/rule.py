@@ -151,7 +151,14 @@ class DomainRole(Role):
       key=Action.build_key('60', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.60'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'create'),
@@ -160,13 +167,39 @@ class DomainRole(Role):
         'name': ndb.SuperStringProperty(required=True),
         'permissions': ndb.SuperJsonProperty(required=True),
         'active': ndb.SuperBooleanProperty(default=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.DomainRoleSet(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.60'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'update'),
@@ -175,13 +208,47 @@ class DomainRole(Role):
         'name': ndb.SuperStringProperty(required=True),
         'permissions': ndb.SuperJsonProperty(required=True),
         'active': ndb.SuperBooleanProperty(default=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.DomainRoleSet(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'delete'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Delete(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'search'),
@@ -208,190 +275,33 @@ class DomainRole(Role):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('60', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
-      )
-    ]
-  
-  _plugins = [
-    common.Context(
-      subscriptions=[
-        Action.build_key('60', 'prepare'),
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'read'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete'),
-        Action.build_key('60', 'search'),
-        Action.build_key('60', 'read_records')
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.60', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
         ]
-      ),
-    common.Prepare(
-      subscriptions=[
-        Action.build_key('60', 'prepare'),
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'search')
-        ],
-      domain_model=True
-      ),
-    common.Read(
-      subscriptions=[
-        Action.build_key('60', 'read'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete'),
-        Action.build_key('60', 'read_records')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('60', 'prepare'),
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'read'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete'),
-        Action.build_key('60', 'search'),
-        Action.build_key('60', 'read_records')
-        ],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Exec(
-      subscriptions=[
-        Action.build_key('60', 'prepare'),
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'read'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete'),
-        Action.build_key('60', 'search'),
-        Action.build_key('60', 'read_records')
-        ]
-      ),
-    rule.DomainRoleSet(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update')
-        ]
-      ),
-    rule.Write(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update')
-        ],
-      transactional=True
-      ),
-    common.Write(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update')
-        ],
-      transactional=True
-      ),
-    common.Delete(
-      subscriptions=[
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True
-      ),
-    log.Write(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True,
-      dynamic_values={'output.entity': 'entities.60'}
-      ),
-    callback.Payload(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True,
-      queue = 'notify',
-      static_data = {'action_key': 'initiate', 'action_model': '61'},
-      dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}
-      ),
-    callback.Exec(
-      subscriptions=[
-        Action.build_key('60', 'create'),
-        Action.build_key('60', 'update'),
-        Action.build_key('60', 'delete')
-        ],
-      transactional=True,
-      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
-      ),
-    log.Read(
-      subscriptions=[
-        Action.build_key('60', 'read_records')
-        ]
-      ),
-    common.Search(
-      subscriptions=[
-        Action.build_key('60', 'search')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('60', 'search')
-        ],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('60', 'read'),
-        Action.build_key('60', 'search'),
-        Action.build_key('60', 'read_records')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('60', 'prepare'),
-        Action.build_key('60', 'read')
-        ],
-      dynamic_values={'output.entity': 'entities.60'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('60', 'search')
-        ],
-      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('60', 'read_records')
-        ],
-      dynamic_values={'output.entity': 'entities.60', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
       )
     ]
 
@@ -450,7 +360,15 @@ class DomainUser(ndb.BaseModel):
       key=Action.build_key('8', 'prepare'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6')
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.8'}),
+        rule.SelectRoles()
+        ]
       ),
     Action(
       key=Action.build_key('8', 'invite'),
@@ -459,13 +377,39 @@ class DomainUser(ndb.BaseModel):
         'name': ndb.SuperStringProperty(required=True),
         'email': ndb.SuperStringProperty(required=True),
         'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        rule.DomainUserInvite(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True, write_entities=['8', '0']),
+        log.Entity(transactional=True, log_entities=['8', '0']),
+        log.Write(transactional=True),
+        rule.Read(),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.8'}),
+        rule.SelectRoles()
+        ]
       ),
     Action(
       key=Action.build_key('8', 'update'),
@@ -473,13 +417,49 @@ class DomainUser(ndb.BaseModel):
         'key': ndb.SuperKeyProperty(kind='8', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.DomainUserUpdate(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'remove'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.DomainUserRemove(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Write(transactional=True, write_entities=['0']),
+        common.Delete(transactional=True),
+        log.Entity(transactional=True, log_entities=['8', '0']),
+        log.Write(transactional=True),
+        rule.Read(),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'search'),
@@ -506,293 +486,76 @@ class DomainUser(ndb.BaseModel):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.8', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'accept'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.8.state': 'accepted'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        common.Set(transactional=True,
+                   dynamic_values={'entities.6': 'entities.8.namespace_entity'}),
+        rule.Prepare(transactional=True, prepare_entities=['6'], skip_user_roles=False, strict=False),
+        rule.Read(transactional=True, read_entities=['8', '6']),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('8', 'clean_roles'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
-        }
-      )
-    ]
-  
-  _plugins = [
-    common.Context(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'read'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'search'),
-        Action.build_key('8', 'read_records'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ]
-      ),
-    common.Prepare(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'search')
-        ],
-      domain_model=True
-      ),
-    common.Read(
-      subscriptions=[
-        Action.build_key('8', 'read'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'read_records'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ]
-      ),
-    rule.DomainUserInvite(
-      subscriptions=[
-        Action.build_key('8', 'invite')
-        ]
-      ),
-    rule.DomainUserUpdate(
-      subscriptions=[
-        Action.build_key('8', 'update')
-        ]
-      ),
-    rule.DomainUserRemove(
-      subscriptions=[
-        Action.build_key('8', 'remove')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'accept')
-        ],
-      static_values={'values.8.state': 'accepted'}
-      ),
-    rule.DomainUserCleanRoles(
-      subscriptions=[
-        Action.build_key('8', 'clean_roles')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'read'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'search'),
-        Action.build_key('8', 'read_records'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Exec(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'read'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'search'),
-        Action.build_key('8', 'read_records'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ]
-      ),
-    rule.Write(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ],
-      transactional=True
-      ),
-    common.Write(
-      subscriptions=[
-        Action.build_key('8', 'invite')
-        ],
-      transactional=True,
-      write_entities=['8', '0']
-      ),
-    common.Write(
-      subscriptions=[
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ],
-      transactional=True
-      ),
-    common.Write(
-      subscriptions=[
-        Action.build_key('8', 'remove')
-        ],
-      transactional=True,
-      write_entities=['0']
-      ),
-    common.Delete(
-      subscriptions=[
-        Action.build_key('8', 'remove')
-        ],
-      transactional=True
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'remove')
-        ],
-      transactional=True,
-      log_entities=['8', '0']
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ],
-      transactional=True
-      ),
-    log.Write(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'accept'),
-        Action.build_key('8', 'clean_roles')
-        ],
-      transactional=True
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      dynamic_values={'entities.6': 'entities.8.namespace_entity'}
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove')
-        ],
-      transactional=True
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      prepare_entities=['6'],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      read_entities=['8', '6']
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove')
-        ],
-      transactional=True,
-      dynamic_values={'output.entity': 'entities.8'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}
-      ),
-    callback.Payload(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      queue = 'notify',
-      static_data = {'action_key': 'initiate', 'action_model': '61'},
-      dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}
-      ),
-    callback.Exec(
-      subscriptions=[
-        Action.build_key('8', 'invite'),
-        Action.build_key('8', 'update'),
-        Action.build_key('8', 'remove'),
-        Action.build_key('8', 'accept')
-        ],
-      transactional=True,
-      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
-      ),
-    log.Read(
-      subscriptions=[
-        Action.build_key('8', 'read_records')
-        ]
-      ),
-    common.Search(
-      subscriptions=[
-        Action.build_key('8', 'search')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('8', 'search')
-        ],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('8', 'read'),
-        Action.build_key('8', 'search'),
-        Action.build_key('8', 'read_records')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'read')
-        ],
-      dynamic_values={'output.entity': 'entities.8'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'search')
-        ],
-      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('8', 'read_records')
-        ],
-      dynamic_values={'output.entity': 'entities.8', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
-      ),
-    rule.SelectRoles(
-      subscriptions=[
-        Action.build_key('8', 'prepare'),
-        Action.build_key('8', 'read')
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.DomainUserCleanRoles(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True)
         ]
       )
     ]
