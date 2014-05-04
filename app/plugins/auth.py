@@ -5,6 +5,8 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import os
+
 from google.appengine.api import blobstore
 
 from app import ndb, settings
@@ -12,6 +14,19 @@ from app.srv import event
 from app.srv.setup import Configuration
 from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
+
+
+class UserLogout(event.Plugin):
+  
+  def run(self, context):
+    context.ip_address = os.environ['REMOTE_ADDR']
+
+
+class UserLogoutOutput(event.Plugin):
+  
+  def run(self, context):
+    context.entities['0'].set_current_user(None, None)
+    context.output['entity'] = context.entities['0'].current_user()
 
 
 class UserReadDomains(event.Plugin):
