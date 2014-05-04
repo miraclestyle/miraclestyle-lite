@@ -100,7 +100,15 @@ class User(ndb.BaseExpando):
       key=Action.build_key('0', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.0'})
+        ]
       ),
     Action(
       key=Action.build_key('0', 'update'),
