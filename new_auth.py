@@ -94,7 +94,8 @@ class User(ndb.BaseExpando):
         'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
         'code': ndb.SuperStringProperty(),
         'error': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[]
       ),
     Action(
       key=Action.build_key('0', 'read'),
@@ -116,7 +117,24 @@ class User(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'primary_email': ndb.SuperStringProperty(),
         'disassociate': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        auth.UserUpdate(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('0', 'search'),
@@ -148,15 +166,38 @@ class User(ndb.BaseExpando):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('0', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
+    """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
+    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    
+    """
     Action(
       key=Action.build_key('0', 'sudo'),
       arguments={
@@ -164,24 +205,61 @@ class User(ndb.BaseExpando):
         'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
         'message': ndb.SuperStringProperty(required=True),
         'note': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.0.state': 'input.state'}),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserSudo(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('0', 'logout'),
       arguments={
         'csrf': ndb.SuperStringProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Set(static_values={'values.0.sessions': []}, dynamic_values={'entities.0': 'user'}),
+        auth.UserLogout(),
+        rule.Prepare(skip_user_roles=True,  strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
+        log.Write(transactional=True),
+        auth.UserLogoutOutput(transactional=True)
+        ]
       ),
     Action(
       key=Action.build_key('0', 'read_domains'),
-      arguments={}
+      arguments={},
+      _plugins=[
+        common.Context(),
+        common.Set(dynamic_values={'entities.0': 'user'}),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserReadDomains(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities'})
+        ]
       )
     ]
   
-  """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
-    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
-    
-    """
+  
   _plugins = [
     common.Context(
       subscriptions=[
