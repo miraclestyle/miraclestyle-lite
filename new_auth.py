@@ -97,7 +97,19 @@ class User(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        
+        auth.UserLoginPrepare(),
+        auth.UserIPAddress(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserLoginOAuth(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserLoginUpdate(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
+        log.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
+        rule.Read(transactional=True),
+        auth.UserLoginOutput(transactional=True)
         ]
       ),
     Action(
@@ -323,34 +335,11 @@ class User(ndb.BaseExpando):
   def current_user_session(cls):
     return memcache.temp_memory_get('_current_user_session')
   
-  def generate_authorization_code(self, session):
-    return '%s|%s' % (self.key.urlsafe(), session.session_id)
-  
-  def generate_session_id(self):
-    session_ids = [session.session_id for session in self.sessions]
-    while True:
-      random_string = hashlib.md5(util.random_chars(30)).hexdigest()
-      if random_string not in session_ids:
-        break
-    return random_string
-  
-  def new_session(self):
-    session_id = self.generate_session_id()
-    session = Session(session_id=session_id)
-    self.sessions.append(session)
-    return session
-  
   def session_by_id(self, session_id):
     for session in self.sessions:
       if session.session_id == session_id:
         return session
     return None
-  
-  def has_identity(self, identity_id):
-    for identity in self.identities:
-      if identity.identity == identity_id:
-        return identity
-    return False
   
   @classmethod
   def login_from_authorization_code(cls, auth_code):
