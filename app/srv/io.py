@@ -118,7 +118,7 @@ class Engine:
         plugin.run(context)
     if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
       try:
-        plugins = context.model.get_plugins(context.action.key)
+        plugins = context.model.get_plugins(context.action)
         pre_transactional_plugins = []
         transactional_plugins = []
         post_transactional_plugins = []
