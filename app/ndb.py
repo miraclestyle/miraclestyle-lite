@@ -278,13 +278,8 @@ class _BaseModel(object):
     return actions
   
   @classmethod
-  def get_plugins(cls, action_key):  # @todo Not sure if this is optimal?
-    plugins = []
-    class_plugins = getattr(cls, '_plugins', [])
-    for plugin in class_plugins:
-      if action_key in plugin.subscriptions:
-        plugins.append(plugin)
-    return plugins
+  def get_plugins(cls, action):
+    return getattr(action, '_plugins', [])
   
   @classmethod
   def get_fields(cls):
