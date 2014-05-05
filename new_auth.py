@@ -173,7 +173,7 @@ class User(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Search(),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
         ]
@@ -257,236 +257,6 @@ class User(ndb.BaseExpando):
         common.Set(dynamic_values={'output.entities': 'entities'})
         ]
       )
-    ]
-  
-  
-  _plugins = [
-    common.Context(
-      subscriptions=[
-        Action.build_key('0', 'read'),
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'search'),
-        Action.build_key('0', 'read_records'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout'),
-        Action.build_key('0', 'read_domains')
-        ]
-      ),
-    common.Prepare(
-      subscriptions=[
-        Action.build_key('0', 'search')
-        ]
-      ),
-    common.Read(
-      subscriptions=[
-        Action.build_key('0', 'read'),
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'read_records'),
-        Action.build_key('0', 'sudo')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'sudo')
-        ],
-      dynamic_values={'values.0.state': 'input.state'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'logout'),
-        Action.build_key('0', 'read_domains')
-        ],
-      dynamic_values={'entities.0': 'user'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'logout')
-        ],
-      static_values={'values.0.sessions': []}
-      ),
-    auth.UserLogout(
-      subscriptions=[
-        Action.build_key('0', 'logout')
-        ],
-      ),
-    auth.UserUpdate(
-      subscriptions=[
-        Action.build_key('0', 'update')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('0', 'read'),
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'search'),
-        Action.build_key('0', 'read_records'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout'),
-        Action.build_key('0', 'read_domains')
-        ],
-      skip_user_roles=True,
-      strict=False
-      ),
-    rule.Exec(
-      subscriptions=[
-        Action.build_key('0', 'read'),
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'search'),
-        Action.build_key('0', 'read_records'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout'),
-        Action.build_key('0', 'read_domains')
-        ]
-      ),
-    auth.UserSudo(
-      subscriptions=[
-        Action.build_key('0', 'sudo')
-        ]
-      ),
-    rule.Write(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout')
-        ],
-      transactional=True
-      ),
-    common.Write(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout')
-        ],
-      transactional=True
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('0', 'update')
-        ],
-      transactional=True
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('0', 'sudo')
-        ],
-      transactional=True,
-      dynamic_arguments={'message': 'input.message', 'note': 'input.note'}
-      ),
-    log.Entity(
-      subscriptions=[
-        Action.build_key('0', 'logout')
-        ],
-      transactional=True,
-      dynamic_arguments={'ip_address': 'ip_address'}
-      ),
-    log.Write(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo'),
-        Action.build_key('0', 'logout')
-        ],
-      transactional=True
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
-        ],
-      transactional=True
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
-        ],
-      transactional=True,
-      dynamic_values={'output.entity': 'entities.0'}
-      ),
-    callback.Payload(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
-        ],
-      transactional=True,
-      queue = 'notify',
-      static_data = {'action_key': 'initiate', 'action_model': '61'},
-      dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}
-      ),
-    callback.Exec(
-      subscriptions=[
-        Action.build_key('0', 'update'),
-        Action.build_key('0', 'sudo')
-        ],
-      transactional=True,
-      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}
-      ),
-    auth.UserLogoutOutput(
-      subscriptions=[
-        Action.build_key('0', 'logout')
-        ],
-      transactional=True
-      ),
-    log.Read(
-      subscriptions=[
-        Action.build_key('0', 'read_records')
-        ]
-      ),
-    common.Search(
-      subscriptions=[
-        Action.build_key('0', 'search')
-        ]
-      ),
-    auth.UserReadDomains(
-      subscriptions=[
-        Action.build_key('0', 'read_domains')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('0', 'search')
-        ],
-      skip_user_roles=True,
-      strict=False
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('0', 'read_domains')
-        ],
-      skip_user_roles=False,
-      strict=False
-      ),
-    rule.Read(
-      subscriptions=[
-        Action.build_key('0', 'read'),
-        Action.build_key('0', 'search'),
-        Action.build_key('0', 'read_records'),
-        Action.build_key('0', 'read_domains')
-        ]
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'read')
-        ],
-      dynamic_values={'output.entity': 'entities.0'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'search')
-        ],
-      dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'read_records')
-        ],
-      dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'}
-      ),
-    common.Set(
-      subscriptions=[
-        Action.build_key('0', 'read_domains')
-        ],
-      dynamic_values={'output.entities': 'entities'}
-      ),
     ]
   
   def get_output(self):
@@ -655,7 +425,15 @@ class Domain(ndb.BaseExpando):
       key=Action.build_key('6', 'prepare'),
       arguments={
         'upload_url': ndb.SuperStringProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.6'}),
+        auth.DomainPrepare()
+        ]
       ),
     Action(
       key=Action.build_key('6', 'create'),
@@ -663,13 +441,36 @@ class Domain(ndb.BaseExpando):
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
         'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.DomainCreate(transactional=True),
+        rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'callback',
+                         static_data = {'action_key': 'install', 'action_model': '57'},
+                         dynamic_data = {'key': 'entities.57.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        auth.DomainRead(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.6'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'update'),
@@ -677,7 +478,25 @@ class Domain(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact'}),  # @todo Logo will be implemented later.
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'search'),
@@ -709,28 +528,84 @@ class Domain(ndb.BaseExpando):
             },
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Search(),
+        auth.DomainSearch(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'suspend'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.6.state': 'suspended'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'activate'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.6.state': 'active'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'sudo'),
@@ -739,7 +614,25 @@ class Domain(ndb.BaseExpando):
         'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.6.state': 'input.state'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('6', 'log_message'),
@@ -747,7 +640,23 @@ class Domain(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       )
     ]
   
