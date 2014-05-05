@@ -16,7 +16,12 @@ from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class UserLogout(event.Plugin):
+class UserLoginPrepare(event.Plugin):
+  
+  def run(self, context):
+    
+
+class UserIPAddress(event.Plugin):
   
   def run(self, context):
     context.ip_address = os.environ['REMOTE_ADDR']
@@ -34,7 +39,6 @@ class UserReadDomains(event.Plugin):
   def run(self, context):
     entities = []
     if context.user.domains:
-      entities = ndb.get_multi(context.user.domains)
       
       @ndb.tasklet
       def async(entity):
@@ -52,6 +56,7 @@ class UserReadDomains(event.Plugin):
         entities = yield map(async, entities)
         raise ndb.Return(entities)
       
+      entities = ndb.get_multi(context.user.domains)
       context.entities = helper(entities).get_result()
 
 
@@ -61,14 +66,14 @@ class UserUpdate(event.Plugin):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
     for identity in context.values['0'].identities:
+      if disassociate:
+        if identity.identity in disassociate:
+          identity.associated = False
       if primary_email:
         identity.primary = False
         if identity.email == primary_email:
           identity.primary = True
-      identity.associated = True
-      if disassociate:
-        if identity.identity in disassociate:
-          identity.associated = False
+          identity.associated = True
 
 
 class UserSudo(event.Plugin):
