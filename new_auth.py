@@ -231,11 +231,12 @@ class User(ndb.BaseExpando):
     Action(
       key=Action.build_key('0', 'logout'),
       arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
         'csrf': ndb.SuperStringProperty(required=True)
         },
       _plugins=[
         common.Context(),
-        common.Set(dynamic_values={'entities.0': 'user', 'values.0': 'user'}),
+        common.Read(),
         common.Set(static_values={'values.0.sessions': []}),
         auth.UserIPAddress(),
         rule.Prepare(skip_user_roles=True,  strict=False),
@@ -249,16 +250,22 @@ class User(ndb.BaseExpando):
       ),
     Action(
       key=Action.build_key('0', 'read_domains'),
-      arguments={},
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True)
+        },
       _plugins=[
         common.Context(),
-        common.Set(dynamic_values={'entities.0': 'user'}),
+        common.Read(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.UserReadDomains(),
-        rule.Prepare(skip_user_roles=False, strict=False),#??? Incorrect!
+        common.Set('entities': 'domains')
+        rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities'})
+        common.Set('entities': 'domain_users')
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.domains': 'domains', 'output.domain_users': 'domain_users'})
         ]
       )
     ]
@@ -575,6 +582,7 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
         log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
         log.Write(transactional=True),
         rule.Read(transactional=True),
@@ -600,6 +608,7 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
         log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
         log.Write(transactional=True),
         rule.Read(transactional=True),
@@ -627,6 +636,7 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
         log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
         log.Write(transactional=True),
         rule.Read(transactional=True),
