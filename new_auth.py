@@ -95,7 +95,10 @@ class User(ndb.BaseExpando):
         'code': ndb.SuperStringProperty(),
         'error': ndb.SuperStringProperty()
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        
+        ]
       ),
     Action(
       key=Action.build_key('0', 'read'),
@@ -232,8 +235,9 @@ class User(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Set(static_values={'values.0.sessions': []}, dynamic_values={'entities.0': 'user'}),
-        auth.UserLogout(),
+        common.Set(dynamic_values={'entities.0': 'user', 'values.0': 'user'}),
+        common.Set(static_values={'values.0.sessions': []}),
+        auth.UserIPAddress(),
         rule.Prepare(skip_user_roles=True,  strict=False),
         rule.Exec(),
         rule.Write(transactional=True),
@@ -252,7 +256,7 @@ class User(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.UserReadDomains(),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=False, strict=False),#??? Incorrect!
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities'})
         ]
