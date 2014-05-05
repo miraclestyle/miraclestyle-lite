@@ -10,7 +10,7 @@ import hashlib
 from app import ndb, settings, memcache, util
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log
+from app.srv import log as ndb_log, blob
 from app.plugins import common, rule, log, callback, auth
 
 
@@ -271,10 +271,10 @@ class User(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.UserReadDomains(),
-        common.Set('entities': 'domains')
+        common.Set(dynamic_values={'entities': 'domains'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set('entities': 'domain_users')
+        common.Set(dynamic_values={'entities': 'domain_users'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.domains': 'domains', 'output.domain_users': 'domain_users'})
