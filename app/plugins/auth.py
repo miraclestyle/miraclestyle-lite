@@ -9,18 +9,119 @@ import os
 
 from google.appengine.api import blobstore
 
-from app import ndb, settings
+from app import ndb, settings, memcache, util
 from app.srv import event
 from app.srv.setup import Configuration
 from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
+from app.lib import oauth2
 from app.plugins import rule as plugin_rule
+
+
+def new_session(entity):
+  from app.srv.auth import Session
+  session_ids = [session.session_id for session in entity.sessions]
+  while True:
+    session_id = hashlib.md5(util.random_chars(30)).hexdigest()
+    if session_id not in session_ids:
+      break
+  session = Session(session_id=session_id)
+  entity.sessions.append(session)
+  return session
+
+def has_identity(entity, identity_id):
+  for identity in entity.identities:
+    if identity.identity == identity_id:
+      return identity
+  return False
+
+
+class OAuth2Error(Exception):
+  
+  def __init__(self, error):
+    self.message = {'oauth2_error': error}
 
 
 class UserLoginPrepare(event.Plugin):
   
   def run(self, context):
-    
+    from app.srv.auth import User
+    context.entities['0'] = User.current_user()
+    context.user = User.current_user()
+
+
+class UserLoginOAuth(event.Plugin):
+  
+  def run(self, context):
+    from app.srv.auth import User
+    login_method = context.input.get('login_method')
+    error = context.input.get('error')
+    code = context.input.get('code')
+    oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
+    client = oauth2.Client(**oauth2_cfg)
+    context.output['authorization_url'] = client.get_authorization_code_uri()
+    urls = {}
+    for urls_login_method, cfg in settings.LOGIN_METHODS.items():
+      urls_oauth2_cfg = cfg['oauth2']
+      urls_client = oauth2.Client(**urls_oauth2_cfg)
+      urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
+    context.output['authorization_urls'] = urls
+    if error:
+      raise OAuth2Error('rejected_account_access')
+    if code:
+      client.get_token(code)
+      if not client.access_token:
+        raise OAuth2Error('failed_access_token')
+      userinfo = oauth2_cfg['userinfo']
+      info = client.resource_request(url=userinfo)
+      if info and 'email' in info:
+        identity = oauth2_cfg['type']
+        context.identity_id = '%s-%s' % (info['id'], identity)
+        context.email = info['email']
+        user = User.query(User.identities.identity == context.identity_id).get()
+        if not user:
+          user = User.query(User.emails == context.email).get()
+        if user:
+          context.entities['0'] = user
+          context.user = user
+
+
+class UserLoginUpdate(event.Plugin):
+  
+  def run(self, context):
+    from app.srv.auth import User, Identity
+    entity = context.entities['0']
+    if not entity or entity._is_guest:
+      entity = User()
+      entity.emails.append(context.email)
+      entity.identities.append(Identity(identity=context.identity_id, email=context.email, primary=True))
+      entity.state = 'active'
+      session = new_session(entity)
+      entity.put()
+    else:
+      if context.email not in entity.emails:
+        entity.emails.append(context.email)
+      used_identity = has_identity(entity, context.identity_id)
+      if not used_identity:
+        entity.append(Identity(identity=context.identity_id, email=context.email, primary=False))
+      else:
+        used_identity.associated = True
+        if used_identity.email != context.email:
+          used_identity.email = context.email
+      session = new_session(entity)
+      entity.put()
+    User.set_current_user(entity, session)
+    context.entities['0'] = entity
+    context.user = entity
+    context.session = session
+
+
+class UserLoginOutput(event.Plugin):
+  
+  def run(self, context):
+    context.output['entity'] = context.entities['0']
+    context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.session.session_id)
+
 
 class UserIPAddress(event.Plugin):
   
