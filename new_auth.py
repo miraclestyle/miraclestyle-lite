@@ -208,11 +208,11 @@ class User(ndb.BaseExpando):
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
         ]
+        
       ),
-    """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
-    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
-    
-    """
+    # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
+    # i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    # fix ----- quoted comments cannot be here, only in free space
     Action(
       key=Action.build_key('0', 'sudo'),
       arguments={

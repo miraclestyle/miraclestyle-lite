@@ -1,4 +1,132 @@
-MainApp.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', 'Product', '$modal', 'Confirm',
+MainApp
+.directive('catalogPricetagPosition', function ($timeout) {
+	return {
+		priority : -513,
+		link : function (scope, element, attr)
+		{
+				  /*  
+				  ihp - Initial Horizontal Price Tag Position 
+				  ivp - Initial Vertical Price Tag Position 
+				  iiw - Initial Image Width  
+				  iih - Initial Image Height  
+				  
+				  ciw - Current Image Width  
+				  cih - Current Image Height  
+				  chp - Current Horizontal Price Tag Position  
+				  cvp - Current Vertical Price Tag Position  
+				  */
+				 
+			var resize = function ()
+			{
+				var pa = $(element).parents('.catalog-image-scroll:first');
+				
+				var sizes = calculate_pricetag_position
+				(
+					scope.pricetag.position_top,
+					scope.pricetag.position_left,
+					scope.$parent.catalog_image.width,
+					scope.$parent.catalog_image.height,
+					pa.width(),
+					pa.height()
+				);
+	 
+				scope.pricetag._position_top = sizes[0];
+				scope.pricetag._position_left = sizes[1];
+				
+				$(element).css({
+					top : scope.pricetag._position_top,
+					left : scope.pricetag._position_left,
+				}); // reposition the perspective based on the db results
+			};
+			
+			$timeout(resize);
+			  
+			$(window).on('resize', resize);
+			
+			scope.$on('$destroy', function () {
+				$(window).off('resize', resize);
+			});
+		}
+	};
+})
+.directive('loadInfiniteCatalogImages', function () {
+	return {
+		link : function (scope, element, attr)
+		{
+			var scroll = function ()
+			{
+				var left = $(element).scrollLeft(), el = $(element).get(0);
+			
+				var maxscroll = el.scrollWidth - el.clientWidth;
+				
+				var sense = maxscroll - left;
+				
+				if (sense < 200)
+				{
+					scope.getImages();
+				}
+			};
+			
+			$(element).on('scroll', scroll);
+			
+			scope.$on('$destroy', function () {
+				$(element).off('scroll', scroll);
+			});
+			
+		}
+	};
+})
+.directive('catalogSlider', function ($timeout) {
+    return {
+        restrict: 'A',
+        priority : -515,
+        link: function (scope, element, attr) {
+    	    
+           if (scope.$last === true) {
+           	 
+           	    var resize = function ()
+           	    {
+           	    	 var that = $(element);
+				     
+				     var h = that.parents('.modal-body').height();
+				     
+				     var master = that.parents('.overflow-master:first');
+				     
+				     var w = 0;
+	 
+				     master.find('.catalog-image-scroll').each(function () {
+				     	var img = $(this).find('.img');
+				     	img.height(h);
+				     	var cw = $(this).data('width'), ch = $(this).data('height');
+				     	
+				     	var neww = new_width_by_height(cw, ch, h);
+				     	
+				     	img.width(neww);
+				     	$(this).width(neww);
+				     	
+				     	w += neww;
+				      
+				     	
+				     });
+				 
+				     master.width(Math.ceil(w));
+           	    };
+           	
+                $timeout(function () {
+			        resize();
+	            });
+	            
+	            $(window).resize(resize);
+	            
+	            scope.$on('$destroy', function () {
+	            	$(window).unbind('resize', resize);
+	            });
+	          
+            }	
+        }
+    };
+})
+.factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', 'Product', '$modal', 'Confirm',
 
     function ($rootScope, Endpoint, EntityEditor, Title, Product, $modal, Confirm) {
     	

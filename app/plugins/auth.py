@@ -6,11 +6,12 @@ Created on Apr 15, 2014
 '''
 
 import os
+import hashlib
 
 from google.appengine.api import blobstore
 
 from app import ndb, settings, memcache, util
-from app.srv import event
+from app.srv import event, blob
 from app.srv.setup import Configuration
 from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
