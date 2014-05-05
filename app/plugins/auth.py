@@ -14,6 +14,7 @@ from app.srv import event
 from app.srv.setup import Configuration
 from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
+from app.plugins import rule as plugin_rule
 
 
 class UserLoginPrepare(event.Plugin):
@@ -41,23 +42,21 @@ class UserReadDomains(event.Plugin):
     if context.user.domains:
       
       @ndb.tasklet
-      def async(entity):
-        if entity:
+      def async(domain):
+        if domain:
           # Rule engine cannot run in tasklets because the context.rule.entity gets in wrong places for some reason... which
           # also causes rule engine to not work properly with _action_permissions, this i could not debug because it is impossible to determine what is going on in iterator
-          domain_user_key = DomainUser.build_key(context.user.key_id_str, namespace=entity.key_namespace)
+          domain_user_key = DomainUser.build_key(context.user.key_id_str, namespace=domain.key_namespace)
           domain_user = yield domain_user_key.get_async()
-          entity._domain_user = domain_user
-          entity.add_output('_domain_user')
-        raise ndb.Return(entity)
+        raise ndb.Return(domain_user)
       
       @ndb.tasklet
-      def helper(entities):
-        entities = yield map(async, entities)
-        raise ndb.Return(entities)
+      def helper(domains):
+        domain_users = yield map(async, domains)
+        raise ndb.Return(domain_users)
       
-      entities = ndb.get_multi(context.user.domains)
-      context.entities = helper(entities).get_result()
+      context.domains = ndb.get_multi(context.user.domains)
+      context.domain_users = helper(context.domains).get_result()
 
 
 class UserUpdate(event.Plugin):
