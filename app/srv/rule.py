@@ -531,7 +531,7 @@ class DomainUser(ndb.BaseModel):
         log.Write(transactional=True),
         common.Set(transactional=True,
                    dynamic_values={'entities.6': 'entities.8.namespace_entity'}),
-        rule.Prepare(transactional=True, prepare_entities=['6'], skip_user_roles=False, strict=False),
+        rule.Prepare(transactional=True, prepare_entities=['8', '6'], skip_user_roles=False, strict=False),
         rule.Read(transactional=True, read_entities=['8', '6']),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
