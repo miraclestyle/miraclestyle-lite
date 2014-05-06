@@ -18,10 +18,10 @@ class Image(ndb.BaseModel):
   
   # Base class / Structured class
   image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)
-  content_type = ndb.SuperStringProperty('3', required=True, indexed=False)
-  size = ndb.SuperFloatProperty('4', required=True, indexed=False)
-  width = ndb.SuperIntegerProperty('5', required=True, indexed=False)
-  height = ndb.SuperIntegerProperty('6', required=True, indexed=False)
+  content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
+  size = ndb.SuperFloatProperty('3', required=True, indexed=False)
+  width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
+  height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
 
 
 class Manager():
