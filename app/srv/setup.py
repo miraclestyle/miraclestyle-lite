@@ -35,54 +35,24 @@ class Configuration(ndb.BaseExpando):
       key=Action.build_key('57', 'install'),
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='57')
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        plugin_setup.Install()
+        ]
       ),
     Action(
       key=Action.build_key('57', 'cron_install'),
-      arguments={}
-      )
-    ]
-  
-  _plugins = [
-    common.Context(
-      subscriptions=[
-        Action.build_key('57', 'install'),
-        Action.build_key('57', 'cron_install')
-        ]
-      ),
-    common.Prepare(
-      subscriptions=[
-        Action.build_key('57', 'cron_install')
-        ],
-      domain_model=False
-      ),
-    common.Read(
-      subscriptions=[
-        Action.build_key('57', 'install')
-        ]
-      ),
-    rule.Prepare(
-      subscriptions=[
-        Action.build_key('57', 'install'),
-        Action.build_key('57', 'cron_install')
-        ],
-      skip_user_roles=True,
-      strict=False
-      ),
-    rule.Exec(
-      subscriptions=[
-        Action.build_key('57', 'install'),
-        Action.build_key('57', 'cron_install')
-        ]
-      ),
-    plugin_setup.Install(
-      subscriptions=[
-        Action.build_key('57', 'install')
-        ]
-      ),
-    plugin_setup.CronInstall(
-      subscriptions=[
-        Action.build_key('57', 'cron_install')
+      arguments={},
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        plugin_setup.CronInstall()
         ]
       )
     ]
