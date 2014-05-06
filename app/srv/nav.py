@@ -41,11 +41,11 @@ class Widget(ndb.BaseExpando):
       ActionPermission('62', Action.build_key('62', 'prepare').urlsafe(), False,
                        "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'create').urlsafe(), False,
-                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system or (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62', 'read').urlsafe(), False,
                        "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'update').urlsafe(), False,
-                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system or (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62', 'delete').urlsafe(), False,
                        "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62', 'search').urlsafe(), False,
@@ -57,7 +57,9 @@ class Widget(ndb.BaseExpando):
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                      "context.entity.namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'"),
+      FieldPermission('62', ['role'], False, None,
+                      "(context.action.key_id_str == 'create' or context.action.key_id_str == 'update') and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)")
       ]
     )
   
