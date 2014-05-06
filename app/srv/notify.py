@@ -137,7 +137,7 @@ class CustomNotify(Template):
   
   def run(self, context):
     template_values = {'entity' : context.entities['caller_entity']}
-    data = {'action_key': 'send',
+    data = {'action_id': 'send',
             'action_model': self.outlet,
             'recipient': self.message_recievers(context.entities['caller_entity'], context.entities['caller_user']),
             'sender': self.message_sender,
@@ -232,7 +232,7 @@ class MailNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.58'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.58.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -285,7 +285,7 @@ class MailNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.58'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.58.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -307,7 +307,7 @@ class MailNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.58'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.58.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -358,7 +358,7 @@ class MailNotify(Template):
       sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
       sender = sender_key.get()
       template_values = {'entity': context.entities['caller_entity']}
-      data = {'action_key': 'send',
+      data = {'action_id': 'send',
               'action_model': '58',
               'recipient': [reciever._primary_email for reciever in recievers],
               'sender': sender._primary_email,
@@ -461,7 +461,7 @@ class HttpNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.63'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.63.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -514,7 +514,7 @@ class HttpNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.63'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.63.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -536,7 +536,7 @@ class HttpNotify(Template):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.63'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.63.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -583,7 +583,7 @@ class HttpNotify(Template):
       sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
       sender = sender_key.get()
       template_values = {'entity': context.entities['caller_entity']}
-      data = {'action_key': 'send',
+      data = {'action_id': 'send',
               'action_model': '63',
               'recipient': self.message_reciever,
               'sender': sender._primary_email,
