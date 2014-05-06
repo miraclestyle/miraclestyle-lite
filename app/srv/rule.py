@@ -351,7 +351,7 @@ class DomainUser(ndb.BaseModel):
       FieldPermission('8', ['state'], False, None,
                       "context.entity.namespace_entity.state == 'active'"),
       FieldPermission('8', ['state'], True, None,
-                      "(context.action.key_id_str == 'invite' and context.value.state == 'invited') or (context.action.key_id_str == 'accept' and context.value.state == 'accepted')")
+                      "(context.action.key_id_str == 'invite' and context.value and context.value.state == 'invited') or (context.action.key_id_str == 'accept' and context.value and context.value.state == 'accepted')")
       ]
     )
   

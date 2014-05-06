@@ -392,7 +392,7 @@ class Domain(ndb.BaseExpando):
                       "context.entity.state != 'active'"),
       FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
       FieldPermission('6', ['state'], True, None,
-                      "(context.action.key_id_str == 'activate' and context.value.state == 'active') or (context.action.key_id_str == 'suspend' and context.value.state == 'suspended')"),
+                      "(context.action.key_id_str == 'activate' and context.value and context.value.state == 'active') or (context.action.key_id_str == 'suspend' and context.value and context.value.state == 'suspended')"),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively); 
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
@@ -417,7 +417,7 @@ class Domain(ndb.BaseExpando):
       FieldPermission('6', ['_records.note'], False, False,
                       "not context.user._root_admin"),
       FieldPermission('6', ['state'], True, None,
-                      "(context.action.key_id_str == 'sudo') and context.user._root_admin and (context.value.state == 'active' or context.value.state == 'su_suspended')")
+                      "(context.action.key_id_str == 'sudo') and context.user._root_admin and context.value and (context.value.state == 'active' or context.value.state == 'su_suspended')")
       ]
     )
   
