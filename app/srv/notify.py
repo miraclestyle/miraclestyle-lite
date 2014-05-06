@@ -351,7 +351,8 @@ class MailNotify(Template):
   def run(self, context):
     values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
     if safe_eval(self.condition, values):
-      domain_users = rule.DomainUser.query(rule.DomainUser.roles == self.message_reciever,
+      from app.srv.rule import DomainUser
+      domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                            namespace=self.message_reciever.namespace()).fetch()
       recievers = ndb.get_multi([ndb_auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
       sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))

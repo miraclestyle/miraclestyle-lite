@@ -145,7 +145,7 @@ class User(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
         callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -234,7 +234,7 @@ class User(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
         callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -383,13 +383,13 @@ class Domain(ndb.BaseExpando):
       ActionPermission('6', Action.build_key('6', 'create').urlsafe(), True,
                        "not context.user._is_guest"),
       ActionPermission('6', Action.build_key('6', 'update').urlsafe(), False,
-                       "context.entities['6'].state != 'active'"),
+                       "context.entity.state != 'active'"),
       ActionPermission('6', Action.build_key('6', 'suspend').urlsafe(), False,
-                       "context.entities['6'].state != 'active'"),
+                       "context.entity.state != 'active'"),
       ActionPermission('6', Action.build_key('6', 'activate').urlsafe(), False,
-                       "context.entities['6'].state == 'active' or context.entities['6'].state == 'su_suspended'"),
+                       "context.entity.state == 'active' or context.entity.state == 'su_suspended'"),
       FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
-                      "context.entities['6'].state != 'active'"),
+                      "context.entity.state != 'active'"),
       FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively); 
@@ -426,7 +426,7 @@ class Domain(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(),
+        common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.6'}),
@@ -442,14 +442,14 @@ class Domain(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(),
+        common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.DomainCreate(transactional=True),
         rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'callback',
-                         static_data = {'action_key': 'install', 'action_model': '57'},
+                         static_data = {'action_id': 'install', 'action_model': '57'},
                          dynamic_data = {'key': 'entities.57.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -490,7 +490,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'key': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -529,7 +529,7 @@ class Domain(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(),
+        common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Search(),
@@ -575,7 +575,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'key': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -601,7 +601,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'key': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -629,7 +629,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'key': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -653,7 +653,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'key': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})

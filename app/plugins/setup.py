@@ -98,7 +98,7 @@ class DomainSetup(Setup):
     for obj in objects:
       if hasattr(obj, '_actions'):
         actions = []
-        for friendly_action_key, action_instance in obj._actions.items():
+        for action_instance in obj._actions:
           actions.append(action_instance.key.urlsafe())
         permissions.append(rule.ActionPermission(kind=obj.get_kind(),
                                                  actions=actions,
@@ -209,13 +209,13 @@ class DomainSetup(Setup):
     self.context.log_write.run(self.context)
     from app.srv import notify
     custom_notify = notify.CustomNotify(name='Send domain link after domain is completed',
-                                        action=event.Action.build_key('57-0'),
+                                        action=event.Action.build_key('57', 'install'),
                                         message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                         message_sender=settings.NOTIFY_EMAIL,
                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                         message_recievers=self.create_domain_notify_message_recievers)
-    self.context.caller_entity = domain
-    self.context.caller_user = self.context.user
+    self.context.entities['caller_entity'] = domain
+    self.context.entities['caller_user'] = self.context.user
     custom_notify.run(self.context)
     # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     self.context.callback_exec.run(self.context)

@@ -141,7 +141,8 @@ class UserLogoutOutput(event.Plugin):
 class UserReadDomains(event.Plugin):
   
   def run(self, context):
-    entities = []
+    context.domains = []
+    context.domain_users = []
     if context.user.domains:
       
       @ndb.tasklet

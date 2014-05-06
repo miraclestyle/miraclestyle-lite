@@ -242,7 +242,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
                                             $scope.save = function () {
 
-                                                Endpoint.post(action, 'srv.auth.Domain', $scope.log)
+                                                Endpoint.post(action, '6', $scope.log)
                                                     .success(function (data) {
 
                                                         update($parentScope.entity, entity, data['entity']);
@@ -391,15 +391,20 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
         function ($scope, App, AppUser, apps, Confirm, RuleEngine, Title) {
 
             Title.set('My Apps');
+            
+            var domains = apps.domains;
+            var domain_users = apps.domain_users;
 
-            apps = apps.entities;
+            var entities = [];
 
-            angular.forEach(apps, function (app, key) {
-                app.rule = RuleEngine.factory(app); // compile rule engine for each domain in the list
-                app._domain_user.rule = RuleEngine.factory(app._domain_user); // compile rule engine for each domain user in the list
+            angular.forEach(domains, function (domain, i) {
+            	domain.rule = RuleEngine.factory(domain);
+            	domain._domain_user = domain_users[i];
+            	domain._domain_user.rule = RuleEngine.factory(domain_users[i]);
+            	entities.push(domain);
             });
 
-            $scope.apps = apps;
+            $scope.apps = entities;
 
             $scope.toggleMainMenu(1);
        
@@ -431,7 +436,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	 
             		if (data['entity'])
             		{
-            		    apps.remove(app);
+            		    entities.remove(app);
   					 
             		}
             	});
@@ -443,8 +448,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	AppUser.remove(app._domain_user, function (data) {
             		if (data['entity'])
             		{
-            			 apps.remove(app);
-  						 
+            			 entities.remove(app);
             		}
             	});
             	

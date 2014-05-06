@@ -19,9 +19,9 @@ MainApp.config(['$stateProvider',
         templateUrl: logic_template('app/apps.html'),
         controller: 'AppList',
         resolve : {
-        	apps : ['App', function (App) {
+        	apps : ['App',  '$rootScope', function (App, $rootScope) {
         		
-				return App.search().then(function (output) {
+				return App.search({'key' : $rootScope.current_user.key}).then(function (output) {
 						return output.data;
 					});
         	}]
