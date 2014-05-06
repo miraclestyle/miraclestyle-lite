@@ -356,6 +356,7 @@ class DomainUserInvite(event.Plugin):
     context.values['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
     user.domains.append(context.domain.key)
     context.entities['0'] = user
+    context.values['0'] = user
 
 
 class DomainUserUpdate(event.Plugin):
