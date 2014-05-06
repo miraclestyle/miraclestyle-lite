@@ -37,15 +37,15 @@ class Template(ndb.BasePoly):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('61', Action.build_key('61', 'prepare').urlsafe(), False,
-                       "context.entities['61'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('61', Action.build_key('61', 'search').urlsafe(), False,
-                       "context.entities['61'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('61', Action.build_key('61', 'initiate').urlsafe(), False,
-                       "context.entities['61'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('61', Action.build_key('61', 'initiate').urlsafe(), True,
-                       "context.entities['61'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
+                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
-                      "context.entities['61'].namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
@@ -163,24 +163,24 @@ class MailNotify(Template):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('58', Action.build_key('58', 'prepare').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'create').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'read').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'update').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'delete').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'read_records').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'send').urlsafe(), False,
-                       "context.entities['58'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('58', Action.build_key('58', 'send').urlsafe(), True,
-                       "context.entities['58'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
+                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                      "context.entities['58'].namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
@@ -391,24 +391,24 @@ class HttpNotify(Template):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('63', Action.build_key('63', 'prepare').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'create').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'read').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'update').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'delete').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'read_records').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'send').urlsafe(), False,
-                       "context.entities['63'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('63', Action.build_key('63', 'send').urlsafe(), True,
-                       "context.entities['63'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
+                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
-                      "context.entities['63'].namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'")
       # @todo Field permissions should be reviewed!
       ]
     )
