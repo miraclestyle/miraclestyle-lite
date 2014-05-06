@@ -214,7 +214,7 @@ class DomainSetup(Setup):
                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                         message_recievers=self.create_domain_notify_message_recievers)
     self.context.caller_entity = domain
-    self.context.caller_user = self.context.auth.user
+    self.context.caller_user = self.context.user
     custom_notify.run(self.context)
     # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     self.context.callback_exec.run(self.context)
@@ -229,7 +229,6 @@ class Install(event.Plugin):
   
   def run(self, context):
     config = context.entities['57']
-    context.auth.user = config.parent_entity
     context.user = config.parent_entity
     SetupClass = get_system_setup(config.setup)
     setup = SetupClass(config, context)
@@ -242,7 +241,6 @@ class CronInstall(event.Plugin):
     time_difference = datetime.datetime.now()-datetime.timedelta(minutes=15)
     configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(50)
     for config in configurations:
-      context.auth.user = config.parent_entity
       context.user = config.parent_entity
       SetupClass = get_system_setup(config.setup)
       setup = SetupClass(config, context)
