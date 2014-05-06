@@ -39,25 +39,25 @@ class Widget(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('62', Action.build_key('62', 'prepare').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'create').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system or context.entities['62'].key_namespace != context.values['62'].role.entity.key_namespace"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system or context.entity.key_namespace != context.value.role.entity.key_namespace"),
       ActionPermission('62', Action.build_key('62', 'read').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'update').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system or context.entities['62'].key_namespace != context.values['62'].role.entity.key_namespace"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system or context.entity.key_namespace != context.value.role.entity.key_namespace"),
       ActionPermission('62', Action.build_key('62', 'delete').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       ActionPermission('62', Action.build_key('62', 'search').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'read_records').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('62', Action.build_key('62', 'build_menu').urlsafe(), False,
-                       "context.entities['62'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      "context.entities['62'].namespace_entity.state != 'active' or context.entities['62']._is_system"),
+                      "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                      "context.entities['62'].namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'")
       ]
     )
   
