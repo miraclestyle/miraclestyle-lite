@@ -59,22 +59,22 @@ class User(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('0', Action.build_key('0', 'login').urlsafe(), True,
-                       "context.entities['0']._is_guest or context.entities['0'].state == 'active'"),
+                       "context.entity._is_guest or context.entity.state == 'active'"),
       ActionPermission('0', Action.build_key('0', 'update').urlsafe(), True,
-                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+                       "not context.entity._is_guest and context.user.key == context.entity.key"),
       ActionPermission('0', Action.build_key('0', 'logout').urlsafe(), True,
-                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key and context.entities['0']._csrf == context.input['csrf']"),
+                       "not context.entity._is_guest and context.user.key == context.entity.key"),
       ActionPermission('0', Action.build_key('0', 'read_domains').urlsafe(), True,
-                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+                       "not context.entity._is_guest and context.user.key == context.entity.key"),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                      "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+                      "not context.user._is_guest and not context.action.key_id_str == 'search' and context.user.key == context.entity.key"),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+                      "not context.user._is_guest and not context.action.key_id_str == 'search' and context.user.key == context.entity.key"),
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively); 
       # read users history (exclusively); perform sudo operations (exclusively).
       ActionPermission('0', Action.build_key('0', 'read').urlsafe(), True,
-                       "context.user._root_admin or context.user.key == context.entities['0'].key"),
+                       "context.user._root_admin or context.user.key == context.entity.key"),
       ActionPermission('0', Action.build_key('0', 'search').urlsafe(), True, "context.user._root_admin"),
       ActionPermission('0', Action.build_key('0', 'search').urlsafe(), False, "not context.user._root_admin"),
       ActionPermission('0', Action.build_key('0', 'read_records').urlsafe(), True, "context.user._root_admin"),
@@ -105,10 +105,9 @@ class User(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.UserLoginUpdate(transactional=True),
-        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
-        log.Write(transactional=True),
         rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
         rule.Read(transactional=True),
+        log.Write(transactional=True),
         auth.UserLoginOutput(transactional=True)
         ]
       ),
@@ -184,7 +183,7 @@ class User(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(),
+        common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Search(),
@@ -244,7 +243,6 @@ class User(ndb.BaseExpando):
       key=Action.build_key('0', 'logout'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'csrf': ndb.SuperStringProperty(required=True)
         },
       _plugins=[
         common.Context(),

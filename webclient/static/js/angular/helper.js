@@ -1,46 +1,28 @@
 KINDS._friendlyActionName = {};
 KINDS.friendlyActionName = function(kind, action_key)
 {
-	/*
-	var match = kind + '.' + action_key;
-	
-	if (match in this._friendlyActionName)
-	{
-		return this._friendlyActionName[match];
-	}*/
-	
+ 
 	var info = this.get(kind);
 	var actions = info['actions'];
 	var ra = null;
 	
-	for (var action_name in actions)
+	for (var action in actions)
 	{
-		 
-		if (action_name == undefined) continue;
-		
- 		if (actions[action_name]['key'] == action_key)
+ 
+ 		if (action['key'] == action_key)
 		{
-			ra = action_name;
+			ra = action['id'];
 			break;
 		}
 	}
-	
-	/*
-	this._friendlyActionName[match] = ra;
-	*/
+ 
 	return ra;
 };
 
 //KINDS._get = {};
 KINDS.get = function (kind_id)
 {
-   /*
-   if (kind_id in this._get)
-   {
- 
-   	  return this._get[kind_id];
-   }*/
-	
+  
    var kind = this.info[kind_id];
    var fields = {};
    
@@ -55,9 +37,7 @@ KINDS.get = function (kind_id)
    	  'actions' : kind['_actions'],
    	  'fields' : fields,
    };
-   /*
-   this._get[kind_id] = data;
-   */
+ 
    return data;
 };
 

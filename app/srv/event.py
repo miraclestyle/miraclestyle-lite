@@ -18,7 +18,7 @@ class Action(ndb.BaseExpando):
   
   @classmethod
   def build_key(cls, kind, action_id):
-    return ndb.Key(kind, 'action', cls._get_kind(), action_id))
+    return ndb.Key(kind, 'action', cls._get_kind(), action_id)
 
 
 class Plugin(ndb.BasePolyExpando):

@@ -59,17 +59,17 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		{
 	        angular.forEach(this._rule_actions, function (value, key) {
 	        	
-	        	if (!that.action[key])
+	        	if (!that.action[value.id])
 	        	{
-	        		that.action[key] = {};
+	        		that.action[value.id] = {};
 	        	}
 	        	
-		    	that.action[key]['executable'] = that._executable(key);
+		    	that.action[value.id]['executable'] = that._executable(key);
 		    	
 		    	angular.forEach(value.arguments, function (argument_value, argument_key) {
-		    		if (!that.input[key]) that.input[key] = {};
+		    		if (!that.input[value.id]) that.input[value.id] = {};
 		    		
-		    		that.input[key][argument_key] = argument_value;
+		    		that.input[value.id][argument_key] = argument_value;
 		    	});
 		    	
 		    });
@@ -93,9 +93,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			this._rule_actions = kind_info['actions'];
 			 
 			this.init();
-			
-			
-			 
+		 
 		};
 	
 		if ((data && data['_action_permissions']))
@@ -258,8 +256,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	};
 }])
 .factory('Endpoint', ['$http', function ($http) {
-	
-	
+	 
 	var endpoint_url = '/endpoint';
 	
 	var _compile = function(action, model, data, config)
@@ -269,7 +266,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			
 		 return [angular.extend({
 				action_model : model,
-				action_key : action,
+				action_id : action,
 			}, data), config];
 		
 	};

@@ -47,14 +47,18 @@ class Context():
       self.output['errors'][key] = []
     self.output['errors'][key].append(value)
     return self  # @todo Do we need this line?
+  
+  def __repr__(self):
+    return self.action.key_id_str
 
 
 class Engine:
   
   @classmethod
   def get_schema(cls):
-    from app import etc, opt
-    from app.srv import auth, blob, callback, event, log, nav, notify, rule, setup, marketing, business, product
+    # marketing, business, product
+    # from app import etc, opt
+    from app.srv import auth, blob, event, log, nav, notify, rule, setup
     kinds = ndb.Model._kind_map
     return kinds
   
@@ -113,8 +117,10 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
+    util.logger('Execute action: %s' % context)
     def execute_plugins(plugins):
       for plugin in plugins:
+        util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
     if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
       try:

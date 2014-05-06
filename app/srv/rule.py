@@ -60,10 +60,10 @@ class ActionPermission(Permission):
             'executable': self.executable, 'condition': self.condition, 'type': self.__class__.__name__}
   
   def run(self, role, context):
-    if (self.kind in context.entities):
+    if (self.kind == context.entity.get_kind()):
       for action in self.actions:
-        if (action in context.entities[self.kind].get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
-          context.entities[self.kind]._action_permissions[action]['executable'].append(self.executable)
+        if (action in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
+          context.entity._action_permissions[action]['executable'].append(self.executable)
 
 
 class FieldPermission(Permission):
@@ -82,9 +82,9 @@ class FieldPermission(Permission):
             'visible': self.visible, 'condition': self.condition, 'type': self.__class__.__name__}
   
   def run(self, role, context):
-    if (self.kind in context.entities):
+    if (self.kind == context.entity.get_kind()):
       for field in self.fields:
-        parsed_field = _parse_field(context.entities[self.kind]._field_permissions, field)  # Retrieves field value from foo.bar.far
+        parsed_field = _parse_field(context.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
         if parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)

@@ -5,7 +5,7 @@
 	<div class="form-control">
 		<label class="form-label">Target State</label>
 		<div class="form-input">
-			<select style="width:40%;" ng-required="rule.input.sudo.state.required" ui-select2 ng-model="log.state" data-placeholder="Select target state for this App">
+			<select style="width:40%;" ng-required="rule.input.sudo.state.required" ui-select2 ng-model="log.state" data-placeholder="Select target state for this entity">
 				    <option value=""></option>
 				    <option ng-repeat="state in rule.input.sudo.state.choices track by $index" value="{{state}}">{{state}}</option>
 			</select>

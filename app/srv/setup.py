@@ -8,7 +8,7 @@ Created on Apr 30, 2014
 from app import ndb, settings
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.plugins import common, rule, log, callback, setup
+from app.plugins import common, rule, log, callback, setup as plugin_setup
 
 
 class Configuration(ndb.BaseExpando):
@@ -75,12 +75,12 @@ class Configuration(ndb.BaseExpando):
         Action.build_key('57', 'cron_install')
         ]
       ),
-    setup.Install(
+    plugin_setup.Install(
       subscriptions=[
         Action.build_key('57', 'install')
         ]
       ),
-    setup.CronInstall(
+    plugin_setup.CronInstall(
       subscriptions=[
         Action.build_key('57', 'cron_install')
         ]

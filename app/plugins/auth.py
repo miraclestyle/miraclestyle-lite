@@ -88,38 +88,41 @@ class UserLoginOAuth(event.Plugin):
 class UserLoginUpdate(event.Plugin):
   
   def run(self, context):
-    from app.srv.auth import User, Identity
-    entity = context.entities['0']
-    if entity._is_guest:
-      entity = User()
-      entity.emails.append(context.email)
-      entity.identities.append(Identity(identity=context.identity_id, email=context.email, primary=True))
-      entity.state = 'active'
-      session = new_session(entity)
-      entity.put()
-    else:
-      if context.email not in entity.emails:
+    if hasattr(context, 'identity_id'):
+      from app.srv.auth import User, Identity
+      entity = context.entities['0']
+      if entity._is_guest:
+        entity = User()
         entity.emails.append(context.email)
-      used_identity = has_identity(entity, context.identity_id)
-      if not used_identity:
-        entity.append(Identity(identity=context.identity_id, email=context.email, primary=False))
+        entity.identities.append(Identity(identity=context.identity_id, email=context.email, primary=True))
+        entity.state = 'active'
+        session = new_session(entity)
+        entity.put()
       else:
-        used_identity.associated = True
-        if used_identity.email != context.email:
-          used_identity.email = context.email
-      session = new_session(entity)
-      entity.put()
-    User.set_current_user(entity, session)
-    context.entities['0'] = entity
-    context.user = entity
-    context.session = session
+        if context.email not in entity.emails:
+          entity.emails.append(context.email)
+        used_identity = has_identity(entity, context.identity_id)
+        if not used_identity:
+          entity.append(Identity(identity=context.identity_id, email=context.email, primary=False))
+        else:
+          used_identity.associated = True
+          if used_identity.email != context.email:
+            used_identity.email = context.email
+        session = new_session(entity)
+        entity.put()
+      User.set_current_user(entity, session)
+      context.entities['0'] = entity
+      context.user = entity
+      context.session = session
+      context.log_entities.append((entity, {'ip_address' : context.ip_address}))
 
 
 class UserLoginOutput(event.Plugin):
   
   def run(self, context):
     context.output['entity'] = context.entities['0']
-    context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.session.session_id)
+    if not context.entities['0']._is_guest:
+      context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.session.session_id)
 
 
 class UserIPAddress(event.Plugin):

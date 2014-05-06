@@ -9,7 +9,7 @@ import time
 import datetime
 
 from app import ndb, settings, util
-from app.srv import event, log, nav, rule, callback
+from app.srv import event, log, nav, rule
 from app.plugins import log as plugin_log
 from app.plugins import callback as plugin_callback
 
@@ -89,11 +89,12 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     permissions = []
-    from app.srv import auth, nav, notify, business, marketing, product
+    from app.srv import auth, nav, notify #business, marketing, product
     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget,
-               notify.Template, notify.MailNotify, notify.HttpNotify,
-               marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-               product.Content, product.Instance, product.Template, product.Variant]
+               notify.Template, notify.MailNotify, notify.HttpNotify, nav.Widget,
+               #marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+               #product.Content, product.Instance, product.Template, product.Variant
+               ]
     for obj in objects:
       if hasattr(obj, '_actions'):
         actions = []

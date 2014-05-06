@@ -20,7 +20,7 @@ class Login(handler.Angular):
            data['login_method'] = provider
            data.update({
                         'action_model' : '0',
-                        'action_key' : 'login',   
+                        'action_id' : 'login',   
                        })
  
            output = io.Engine.run(data)  
