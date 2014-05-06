@@ -90,7 +90,7 @@ class UserLoginUpdate(event.Plugin):
   def run(self, context):
     from app.srv.auth import User, Identity
     entity = context.entities['0']
-    if not entity or entity._is_guest:
+    if entity._is_guest:
       entity = User()
       entity.emails.append(context.email)
       entity.identities.append(Identity(identity=context.identity_id, email=context.email, primary=True))
