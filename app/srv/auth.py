@@ -67,9 +67,9 @@ class User(ndb.BaseExpando):
       ActionPermission('0', Action.build_key('0', 'read_domains').urlsafe(), True,
                        "not context.entity._is_guest and context.user.key == context.entity.key"),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                      "not context.user._is_guest and not context.action.key_id_str == 'search' and context.user.key == context.entity.key"),
+                      "not context.user._is_guest and context.user.key == context.entity.key"),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      "not context.user._is_guest and not context.action.key_id_str == 'search' and context.user.key == context.entity.key"),
+                      "not context.user._is_guest and context.user.key == context.entity.key"),
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively); 
       # read users history (exclusively); perform sudo operations (exclusively).
@@ -82,8 +82,8 @@ class User(ndb.BaseExpando):
       ActionPermission('0', Action.build_key('0', 'sudo').urlsafe(), True, "context.user._root_admin"),
       ActionPermission('0', Action.build_key('0', 'sudo').urlsafe(), False, "not context.user._root_admin"),
       FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                                 'ip_address', '_primary_email', '_records'], False, True, "context.user._root_admin")
-      # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
+                            'ip_address', '_primary_email', '_records'], False, True, "context.user._root_admin"),
+      FieldPermission('0', ['state'], True, None, "context.action.key_id_str == 'sudo' and context.user._root_admin")
       ]
     )
   
@@ -388,9 +388,11 @@ class Domain(ndb.BaseExpando):
                        "context.entity.state != 'active'"),
       ActionPermission('6', Action.build_key('6', 'activate').urlsafe(), False,
                        "context.entity.state == 'active' or context.entity.state == 'su_suspended'"),
-      FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
+      FieldPermission('6', ['name', 'primary_contact', 'logo', 'state', '_records', '_primary_contact_email'], False, None,
                       "context.entity.state != 'active'"),
       FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
+      FieldPermission('6', ['state'], True, None,
+                      "(context.action.key_id_str == 'activate' and context.value.state == 'active') or (context.action.key_id_str == 'suspend' and context.value.state == 'suspended')"),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively); 
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
@@ -413,8 +415,9 @@ class Domain(ndb.BaseExpando):
       FieldPermission('6', ['_records.note'], True, True,
                       "context.user._root_admin"),
       FieldPermission('6', ['_records.note'], False, False,
-                      "not context.user._root_admin")
-      # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
+                      "not context.user._root_admin"),
+      FieldPermission('6', ['state'], True, None,
+                      "(context.action.key_id_str == 'sudo') and context.user._root_admin and (context.value.state == 'active' or context.value.state == 'su_suspended')")
       ]
     )
   
