@@ -17,12 +17,13 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 class Context(event.Plugin):
   
   def run(self, context):
+    from app.srv import auth
     if not hasattr(context, 'entities'):
       context.entities = {}
     if not hasattr(context, 'values'):
       context.values = {}
+    context.user = auth.User.current_user()
     # @todo Following lines are temporary!
-    context.user = context.auth.user
     domain_key = context.input.get('domain')
     if domain_key:
       context.domain = domain_key.get()
