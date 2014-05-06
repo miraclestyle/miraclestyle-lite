@@ -6,15 +6,13 @@ KINDS.friendlyActionName = function(kind, action_key)
 	var actions = info['actions'];
 	var ra = null;
 	
-	for (var action in actions)
-	{
- 
- 		if (action['key'] == action_key)
+	angular.forEach(actions, function (action) {
+		if (action['key'] == action_key)
 		{
 			ra = action['id'];
-			break;
 		}
-	}
+	});
+ 
  
 	return ra;
 };
@@ -33,8 +31,15 @@ KINDS.get = function (kind_id)
    		}
    });
    
+   var actions = {};
+   
+   angular.forEach(kind['_actions'], function (action) {
+   	  actions[action.id] = action;
+   });
+   
    var data = {
    	  'actions' : kind['_actions'],
+   	  'mapped_actions' : actions,
    	  'fields' : fields,
    };
  

@@ -432,6 +432,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.declineApp = function (app)
             {
+            	$scope.removeFromApp(app);
+            	/*
             	AppUser.decline(app._domain_user.key, function (data) {
             	 
             		if (data['entity'])
@@ -439,7 +441,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             		    entities.remove(app);
   					 
             		}
-            	});
+            	});*/
             };
             
             $scope.removeFromApp = function (app)

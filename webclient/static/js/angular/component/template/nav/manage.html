@@ -81,7 +81,7 @@
 					</tbody>
 		</table>
 	 
-	<div ng-show="rule.action.read_records.executable && history" class="form-control">
+	<div ng-show="rule.action.read_records.executable && history && entity.id" class="form-control">
 		<div ng-include="logic_template('misc/logs.html')"></div>
 	</div>	 
 	 

@@ -567,7 +567,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            $scope.resolve_handle = opts['handle'];
 	                            $scope.resolve_complete = opts['complete'];
 	                            $scope.resolve_cancel = opts['cancel'];
-	                            $scope.options = update($scope.options, opts);
+	                            update($scope.options, opts);
                         	};
                         	
                         	var entity = options['entity'];
@@ -594,8 +594,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                        _resolve_options(options);
                             
                             $scope.save = function () {
- 
-                                Endpoint.post(action, options['kind'], $scope.entity)
+                            
+                                Endpoint.post(action, $scope.options['kind'], $scope.entity)
                                 .success(function (data) {
                                 	
                                 	 	var initial_action = action;
@@ -786,7 +786,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			
     			try
     			{
-    				search_argument = kindinfo.actions['search']['arguments']['search'];	
+    				search_argument = kindinfo.mapped_actions['search']['arguments']['search'];	
     			}
     			catch(e){}
     			

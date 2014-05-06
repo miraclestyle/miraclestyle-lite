@@ -219,7 +219,7 @@ class Widget(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(),
-        rule.Prepare(),
+        rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
         ]

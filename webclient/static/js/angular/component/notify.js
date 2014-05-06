@@ -8,8 +8,8 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
     		
     		 if (key in FRIENDLY_KIND_NAMES)
     		 {
-    		 	angular.forEach(value._actions, function (action, action_name) {
-	    		 	 actions[action.key] = FRIENDLY_KIND_NAMES[key] + '.' + action_name;
+    		 	angular.forEach(value._actions, function (action) {
+	    		 	 actions[action.key] = FRIENDLY_KIND_NAMES[key] + '.' + action.id;
 	    		 });
     		 }
     		 
@@ -27,6 +27,7 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
          			
          			that.roles = data.roles;
 			        that.users = data.users;
+			        that.options['kind'] = data['entity']['kind'];
          		});
          	},
     	};
@@ -42,7 +43,7 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
                 	 'handle' : function (data)
 			         {
 			            this.entity['domain'] = domain_key;
-			             
+ 
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('notify/manage.html'),

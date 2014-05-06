@@ -61,7 +61,8 @@ class Template(ndb.BasePoly):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.61'})
+        common.Set(dynamic_values={'output.entity': 'entities.61'}),
+        notify.RolesAndUsers(),
         ]
       ),
     Action(
@@ -76,6 +77,8 @@ class Template(ndb.BasePoly):
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
             },
           indexes=[
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['action'],
@@ -196,7 +199,8 @@ class MailNotify(Template):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.58'})
+        common.Set(dynamic_values={'output.entity': 'entities.58'}),
+        notify.RolesAndUsers(),
         ]
       ),
     Action(
@@ -249,7 +253,8 @@ class MailNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.58'})
+        common.Set(dynamic_values={'output.entity': 'entities.58'}),
+        notify.RolesAndUsers(),
         ]
       ),
     Action(
@@ -425,7 +430,8 @@ class HttpNotify(Template):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.63'})
+        common.Set(dynamic_values={'output.entity': 'entities.63'}),
+        notify.RolesAndUsers(),
         ]
       ),
     Action(
@@ -478,7 +484,8 @@ class HttpNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.63'})
+        common.Set(dynamic_values={'output.entity': 'entities.63'}),
+        notify.RolesAndUsers(),
         ]
       ),
     Action(

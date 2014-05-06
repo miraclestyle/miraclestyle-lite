@@ -7,7 +7,7 @@ Created on Apr 16, 2014
 
 import collections
 
-from app import ndb, settings
+from app import ndb, settings, util
 from app.srv import event
 
 
@@ -38,6 +38,8 @@ def _write_helper(permissions, entity, field_key, field, field_value):
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
       setattr(entity, field_key, field_value)
+    except TypeError as e:
+      util.logger('write: setattr error: %s' % e)
     except ndb.ComputedPropertyError:
       pass
   else:
