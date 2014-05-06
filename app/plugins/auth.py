@@ -13,10 +13,8 @@ from google.appengine.api import blobstore
 from app import ndb, settings, memcache, util
 from app.srv import event, blob
 from app.srv.setup import Configuration
-from app.srv.rule import DomainUser
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib import oauth2
-from app.plugins import rule as plugin_rule
 
 
 def new_session(entity):
@@ -148,7 +146,7 @@ class UserReadDomains(event.Plugin):
         if domain:
           # Rule engine cannot run in tasklets because the context.rule.entity gets in wrong places for some reason... which
           # also causes rule engine to not work properly with _action_permissions, this i could not debug because it is impossible to determine what is going on in iterator
-          domain_user_key = DomainUser.build_key(context.user.key_id_str, namespace=domain.key_namespace)
+          domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=domain.key_namespace)
           domain_user = yield domain_user_key.get_async()
         raise ndb.Return(domain_user)
       
