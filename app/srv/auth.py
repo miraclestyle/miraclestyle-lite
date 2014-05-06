@@ -6,26 +6,12 @@ Created on Jan 6, 2014
 '''
 
 import hashlib
-import os
-import copy
-
-from google.appengine.api import blobstore
 
 from app import ndb, settings, memcache, util
-from app.lib import oauth2
-from app.srv import event, rule, log, setup, blob, callback, cruds
-
-
-class OAuth2Error(Exception):
-  
-  def __init__(self, error):
-    self.message = {'oauth2_error' : error}
-
-
-class Context():
-  
-  def __init__(self):
-    self.user = User.current_user()
+from app.srv.event import Action
+from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
+from app.srv import log as ndb_log, blob
+from app.plugins import common, rule, log, callback, auth
 
 
 class Session(ndb.BaseModel):
@@ -67,60 +53,106 @@ class User(ndb.BaseExpando):
   _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': log.SuperLocalStructuredRecordProperty('0', repeated=True)
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('0', repeated=True)
     }
   
-  _global_role = rule.GlobalRole(
+  _global_role = GlobalRole(
     permissions=[
-      rule.ActionPermission('0', event.Action.build_key('0-0').urlsafe(), True,
-                            "context.rule.entity._is_guest or context.rule.entity.state == 'active'"),
-      rule.ActionPermission('0', event.Action.build_key('0-2').urlsafe(), True,
-                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
-      rule.ActionPermission('0', event.Action.build_key('0-6').urlsafe(), True,
-                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
-      rule.ActionPermission('0', event.Action.build_key('0-7').urlsafe(), True,
-                            "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
-      rule.FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                           "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
-      rule.FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                           "not context.rule.entity._is_guest and context.auth.user.key == context.rule.entity.key"),
+      ActionPermission('0', Action.build_key('0', 'login').urlsafe(), True,
+                       "context.entities['0']._is_guest or context.entities['0'].state == 'active'"),
+      ActionPermission('0', Action.build_key('0', 'update').urlsafe(), True,
+                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+      ActionPermission('0', Action.build_key('0', 'logout').urlsafe(), True,
+                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key and context.entities['0']._csrf == context.input['csrf']"),
+      ActionPermission('0', Action.build_key('0', 'read_domains').urlsafe(), True,
+                       "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+      FieldPermission('0', ['created', 'updated', 'state'], False, True,
+                      "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
+      FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
+                      "not context.entities['0']._is_guest and context.user.key == context.entities['0'].key"),
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively); 
       # read users history (exclusively); perform sudo operations (exclusively).
-      rule.ActionPermission('0', event.Action.build_key('0-1').urlsafe(), True,
-                            "context.auth.user._root_admin or context.auth.user.key == context.rule.entity.key"),
-      rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-3').urlsafe(), False, "not context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-4').urlsafe(), False, "not context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), True, "context.auth.user._root_admin"),
-      rule.ActionPermission('0', event.Action.build_key('0-5').urlsafe(), False, "not context.auth.user._root_admin"),
-      rule.FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                                 'ip_address', '_primary_email', '_records'], False, True, "context.auth.user._root_admin")
+      ActionPermission('0', Action.build_key('0', 'read').urlsafe(), True,
+                       "context.user._root_admin or context.user.key == context.entities['0'].key"),
+      ActionPermission('0', Action.build_key('0', 'search').urlsafe(), True, "context.user._root_admin"),
+      ActionPermission('0', Action.build_key('0', 'search').urlsafe(), False, "not context.user._root_admin"),
+      ActionPermission('0', Action.build_key('0', 'read_records').urlsafe(), True, "context.user._root_admin"),
+      ActionPermission('0', Action.build_key('0', 'read_records').urlsafe(), False, "not context.user._root_admin"),
+      ActionPermission('0', Action.build_key('0', 'sudo').urlsafe(), True, "context.user._root_admin"),
+      ActionPermission('0', Action.build_key('0', 'sudo').urlsafe(), False, "not context.user._root_admin"),
+      FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
+                                 'ip_address', '_primary_email', '_records'], False, True, "context.user._root_admin")
       # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
       ]
     )
   
-  _actions = {
-    'login': event.Action(
-      id='0-0',
+  _actions = [
+    Action(
+      key=Action.build_key('0', 'login'),
       arguments={
         'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
         'code': ndb.SuperStringProperty(),
         'error': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        auth.UserLoginPrepare(),
+        auth.UserIPAddress(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserLoginOAuth(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserLoginUpdate(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
+        log.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
+        rule.Read(transactional=True),
+        auth.UserLoginOutput(transactional=True)
+        ]
       ),
-    'read': event.Action(id='0-1', arguments={'key': ndb.SuperKeyProperty(kind='0', required=True)}),
-    'update': event.Action(
-      id='0-2',
+    Action(
+      key=Action.build_key('0', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.0'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('0', 'update'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'primary_email': ndb.SuperStringProperty(),
         'disassociate': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        auth.UserUpdate(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'search': event.Action(
-      id='0-3',
+    Action(
+      key=Action.build_key('0', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
@@ -149,27 +181,106 @@ class User(ndb.BaseExpando):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
-    'read_records': event.Action(
-      id='0-4',
+    Action(
+      key=Action.build_key('0', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+        
       ),
-    'sudo': event.Action(
-      id='0-5',
+    # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
+    # i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
+    # fix ----- quoted comments cannot be here, only in free space
+    Action(
+      key=Action.build_key('0', 'sudo'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
         'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
         'message': ndb.SuperStringProperty(required=True),
         'note': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.0.state': 'input.state'}),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserSudo(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'logout': event.Action(id='0-6', arguments={'csrf': ndb.SuperStringProperty(required=True)}),
-    'read_domains': event.Action(id='0-7')
-    }
+    Action(
+      key=Action.build_key('0', 'logout'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'csrf': ndb.SuperStringProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.0.sessions': []}),
+        auth.UserIPAddress(),
+        rule.Prepare(skip_user_roles=True,  strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
+        log.Write(transactional=True),
+        auth.UserLogoutOutput(transactional=True)
+        ]
+      ),
+    Action(
+      key=Action.build_key('0', 'read_domains'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='0', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.UserReadDomains(),
+        common.Set(dynamic_values={'entities': 'domains'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'entities': 'domain_users'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.domains': 'domains', 'output.domain_users': 'domain_users'})
+        ]
+      )
+    ]
   
   def get_output(self):
     dic = super(User, self).get_output()
@@ -224,34 +335,11 @@ class User(ndb.BaseExpando):
   def current_user_session(cls):
     return memcache.temp_memory_get('_current_user_session')
   
-  def generate_authorization_code(self, session):
-    return '%s|%s' % (self.key.urlsafe(), session.session_id)
-  
-  def generate_session_id(self):
-    session_ids = [session.session_id for session in self.sessions]
-    while True:
-      random_string = hashlib.md5(util.random_chars(30)).hexdigest()
-      if random_string not in session_ids:
-        break
-    return random_string
-  
-  def new_session(self):
-    session_id = self.generate_session_id()
-    session = Session(session_id=session_id)
-    self.sessions.append(session)
-    return session
-  
   def session_by_id(self, session_id):
     for session in self.sessions:
       if session.session_id == session_id:
         return session
     return None
-  
-  def has_identity(self, identity_id):
-    for identity in self.identities:
-      if identity.identity == identity_id:
-        return identity
-    return False
   
   @classmethod
   def login_from_authorization_code(cls, auth_code):
@@ -266,224 +354,6 @@ class User(ndb.BaseExpando):
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)
-  
-  @classmethod
-  def sudo(cls, context):
-    """@todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
-    i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
-    
-    """
-    entity_key = context.input.get('key')
-    state = context.input.get('state')
-    message = context.input.get('message')
-    note = context.input.get('note')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      values = {'state': state}
-      if rule.writable(context, 'state') and state == 'suspended':
-        values['sessions'] = []  # Delete sessions.
-      rule.write(entity, values)
-      entity.put()
-      values = {'message': message, 'note': note}  # This is confusing due to the fact that action argument 'message' is required, and if field 'message' should implement field permissions...
-      if not rule.writable(context, '_records.note'):
-        values.pop('note')
-      context.log.entities.append((entity, values))
-      log.Engine.run(context)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-  
-  @classmethod
-  def update(cls, context):
-    entity_key = context.input.get('key')
-    primary_email = context.input.get('primary_email')
-    disassociate = context.input.get('disassociate')
-    entity = cls.current_user()
-    if entity_key != entity.key:
-      entity = entity_key.get()
-    context.rule.entity = entity
-    context.rule.skip_user_roles = True
-    identities = copy.deepcopy(entity.identities)
-    for identity in identities:
-      if primary_email:
-        identity.primary = False
-        if identity.email == primary_email:
-          identity.primary = True
-      identity.associated = True
-      if disassociate:
-        if identity.identity in disassociate:
-          identity.associated = False
-    context.cruds.entity = entity
-    context.cruds.values = {'identities': identities}
-    cruds.Engine.update(context)
-  
-  @classmethod
-  def read_records(cls, context):
-    context.rule.skip_user_roles = True
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read_records(context)
-  
-  @classmethod
-  def read(cls, context):
-    context.rule.skip_user_roles = True
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read(context)
-  
-  @classmethod
-  def search(cls, context):
-    context.rule.entity = context.auth.user
-    context.rule.skip_user_roles = True
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.search(context)
-  
-  @classmethod
-  def read_domains(cls, context):
-    context.rule.entity = context.auth.user
-    context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    entities = []
-    if context.auth.user.domains:
-      entities = ndb.get_multi(context.auth.user.domains)
-      context.rule.skip_user_roles = False
-      
-      @ndb.tasklet
-      def async(entity):
-        if entity:
-          # Rule engine cannot run in tasklets because the context.rule.entity gets in wrong places for some reason... which
-          # also causes rule engine to not work properly with _action_permissions, this i could not debug because it is impossible to determine what is going on in iterator
-          domain_user_key = rule.DomainUser.build_key(context.auth.user.key_id_str, namespace=entity.key_namespace)
-          domain_user = yield domain_user_key.get_async()
-          entity._domain_user = domain_user
-          entity.add_output('_domain_user')
-        raise ndb.Return(entity)
-      
-      @ndb.tasklet
-      def helper(entities):
-        entities = yield map(async, entities)
-        raise ndb.Return(entities)
-      
-      entities = helper(entities).get_result()
-      for entity in entities:
-        context.rule.entity = entity
-        rule.Engine.run(context)
-        context.rule.entity = entity._domain_user
-        rule.Engine.run(context)
-    context.output['entities'] = entities
-  
-  @classmethod
-  def logout(cls, context):
-    entity = cls.current_user()
-    context.rule.entity = entity
-    context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      if not entity._csrf == context.input.get('csrf'):  # We will see what will be done about this, because CSRF protection must be done globally.
-        raise rule.ActionDenied(context)
-      if entity.sessions:
-        entity.sessions = []
-      entity.put()
-      context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
-      log.Engine.run(context)
-      entity.set_current_user(None, None)
-      context.output['entity'] = entity.current_user()
-    
-    transaction()
-  
-  @classmethod
-  def login(cls, context):
-    login_method = context.input.get('login_method')
-    error = context.input.get('error')
-    code = context.input.get('code')
-    current_user = cls.current_user()
-    context.rule.entity = current_user
-    context.auth.user = current_user
-    context.rule.skip_user_roles = True
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
-    client = oauth2.Client(**oauth2_cfg)
-    context.output['authorization_url'] = client.get_authorization_code_uri()
-    urls = {}
-    for urls_login_method, cfg in settings.LOGIN_METHODS.items():
-      urls_oauth2_cfg = cfg['oauth2']
-      urls_client = oauth2.Client(**urls_oauth2_cfg)
-      urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
-    context.output['authorization_urls'] = urls
-    if error:
-      raise OAuth2Error('rejected_account_access')
-    if code:
-      client.get_token(code)
-      if not client.access_token:
-        raise OAuth2Error('failed_access_token')
-      userinfo = oauth2_cfg['userinfo']
-      info = client.resource_request(url=userinfo)
-      if info and 'email' in info:
-        identity = oauth2_cfg['type']
-        identity_id = '%s-%s' % (info['id'], identity)
-        email = info['email']
-        user = cls.query(cls.identities.identity == identity_id).get()
-        if not user:
-          user = cls.query(cls.emails == email).get()
-        if user:
-          context.rule.entity = user
-          context.auth.user = user
-          context.rule.skip_user_roles = True
-          rule.Engine.run(context)
-          if not rule.executable(context):
-            raise rule.ActionDenied(context)
-        
-        @ndb.transactional(xg=True)
-        def transaction(entity):
-          if not entity or entity._is_guest:
-            entity = cls()
-            entity.emails.append(email)
-            entity.identities.append(Identity(identity=identity_id, email=email, primary=True))
-            entity.state = 'active'
-            session = entity.new_session()
-            entity.put()
-          else:
-            if email not in entity.emails:
-              entity.emails.append(email)
-            used_identity = entity.has_identity(identity_id)
-            if not used_identity:
-              entity.append(Identity(identity=identity_id, email=email, primary=False))
-            else:
-              used_identity.associated = True
-              if used_identity.email != email:
-                used_identity.email = email
-            session = entity.new_session()
-            entity.put()
-          cls.set_current_user(entity, session)
-          context.auth.user = entity
-          context.log.entities.append((entity, {'ip_address': os.environ['REMOTE_ADDR']}))
-          log.Engine.run(context)
-          context.rule.entity = entity
-          rule.Engine.run(context)
-          rule.read(entity)
-          context.output.update({'entity': entity,
-                                 'authorization_code': entity.generate_authorization_code(session)})
-        
-        transaction(user)
 
 
 class Domain(ndb.BaseExpando):
@@ -505,72 +375,131 @@ class Domain(ndb.BaseExpando):
   
   _virtual_fields = {
     '_primary_contact_email': ndb.SuperStringProperty(),
-    '_records': log.SuperLocalStructuredRecordProperty('6', repeated=True)
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('6', repeated=True)
     }
   
-  _global_role = rule.GlobalRole(
+  _global_role = GlobalRole(
     permissions=[
-      rule.ActionPermission('6', event.Action.build_key('6-0').urlsafe(), True,
-                            "not context.auth.user._is_guest"),
-      rule.ActionPermission('6', event.Action.build_key('6-1').urlsafe(), True,
-                            "not context.auth.user._is_guest"),
-      rule.ActionPermission('6', event.Action.build_key('6-3').urlsafe(), False,
-                            "context.rule.entity.state != 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-6').urlsafe(), False,
-                            "context.rule.entity.state != 'active'"),
-      rule.ActionPermission('6', event.Action.build_key('6-7').urlsafe(), False,
-                            "context.rule.entity.state == 'active' or context.rule.entity.state == 'su_suspended'"),
-      rule.FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
-                           "context.rule.entity.state != 'active'"),
-      rule.FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
+      ActionPermission('6', Action.build_key('6', 'prepare').urlsafe(), True,
+                       "not context.user._is_guest"),
+      ActionPermission('6', Action.build_key('6', 'create').urlsafe(), True,
+                       "not context.user._is_guest"),
+      ActionPermission('6', Action.build_key('6', 'update').urlsafe(), False,
+                       "context.entities['6'].state != 'active'"),
+      ActionPermission('6', Action.build_key('6', 'suspend').urlsafe(), False,
+                       "context.entities['6'].state != 'active'"),
+      ActionPermission('6', Action.build_key('6', 'activate').urlsafe(), False,
+                       "context.entities['6'].state == 'active' or context.entities['6'].state == 'su_suspended'"),
+      FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
+                      "context.entities['6'].state != 'active'"),
+      FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively); 
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
-      rule.ActionPermission('6', event.Action.build_key('6-2').urlsafe(), True,
-                            "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), True,
-                            "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-4').urlsafe(), False,
-                            "not context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-5').urlsafe(), True,
-                            "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), True,
-                            "context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-8').urlsafe(), False,
-                            "not context.auth.user._root_admin"),
-      rule.ActionPermission('6', event.Action.build_key('6-9').urlsafe(), True,
-                            "context.auth.user._root_admin"),
-      rule.FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
-                                 '_primary_contact_email'], False, True, "context.auth.user._root_admin"),
-      rule.FieldPermission('6', ['_records.note'], True, True,
-                           "context.auth.user._root_admin"),
-      rule.FieldPermission('6', ['_records.note'], False, False,
-                           "not context.auth.user._root_admin")
+      ActionPermission('6', Action.build_key('6', 'read').urlsafe(), True,
+                       "context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'search').urlsafe(), True,
+                       "context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'search').urlsafe(), False,
+                       "not context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'read_records').urlsafe(), True,
+                       "context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'sudo').urlsafe(), True,
+                       "context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'sudo').urlsafe(), False,
+                       "not context.user._root_admin"),
+      ActionPermission('6', Action.build_key('6', 'log_message').urlsafe(), True,
+                       "context.user._root_admin"),
+      FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
+                            '_primary_contact_email'], False, True, "context.user._root_admin"),
+      FieldPermission('6', ['_records.note'], True, True,
+                      "context.user._root_admin"),
+      FieldPermission('6', ['_records.note'], False, False,
+                      "not context.user._root_admin")
       # @todo Not sure how to handle field permissions (though some actions seem to not respect field permissions)?
       ]
     )
   
-  _actions = {
-    'prepare': event.Action(id='6-0', arguments={'upload_url': ndb.SuperStringProperty(required=True)}),
-    'create': event.Action(
-      id='6-1',
+  _actions = [
+    Action(
+      key=Action.build_key('6', 'prepare'),
+      arguments={
+        'upload_url': ndb.SuperStringProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.6'}),
+        auth.DomainPrepare()
+        ]
+      ),
+    Action(
+      key=Action.build_key('6', 'create'),
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
         'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        auth.DomainCreate(transactional=True),
+        rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'callback',
+                         static_data = {'action_key': 'install', 'action_model': '57'},
+                         dynamic_data = {'key': 'entities.57.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'read': event.Action(id='6-2', arguments={'key': ndb.SuperKeyProperty(kind='6', required=True)}),
-    'update': event.Action(
-      id='6-3',
+    Action(
+      key=Action.build_key('6', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='6', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        auth.DomainRead(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.6'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('6', 'update'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact'}),  # @todo Logo will be implemented later.
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'search': event.Action(
-      id='6-4',
+    Action(
+      key=Action.build_key('6', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
@@ -599,47 +528,140 @@ class Domain(ndb.BaseExpando):
             },
           ),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        common.Search(),
+        auth.DomainSearch(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
-    'read_records': event.Action(
-      id='6-5',
+    Action(
+      key=Action.build_key('6', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'next_cursor': ndb.SuperStringProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
       ),
-    'suspend': event.Action(
-      id='6-6',
+    Action(
+      key=Action.build_key('6', 'suspend'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.6.state': 'suspended'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'activate': event.Action(
-      id='6-7',
+    Action(
+      key=Action.build_key('6', 'activate'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True)
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.6.state': 'active'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'sudo': event.Action(
-      id='6-8',
+    Action(
+      key=Action.build_key('6', 'sudo'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.6.state': 'input.state'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
-    'log_message': event.Action(
-      id='6-9',
+    Action(
+      key=Action.build_key('6', 'log_message'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
-        }
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       )
-    }
+    ]
   
   @property
   def key_namespace(self):
@@ -648,193 +670,3 @@ class Domain(ndb.BaseExpando):
   @property
   def namespace_entity(self):
     return self
-  
-  @classmethod
-  def search(cls, context):
-    context.rule.skip_user_roles = True
-    
-    @ndb.tasklet
-    def async(entity):
-      user = yield entity.primary_contact.get_async()
-      entity._primary_contact_email = user._primary_email
-      raise ndb.Return(entity)
-    
-    @ndb.tasklet
-    def helper(entities):
-      entities = yield map(async, entities)
-      raise ndb.Return(entities)
-    
-    def mapper(context, entities):
-      return helper(entities).get_result()
-    
-    context.cruds.search_entities_callback = mapper
-    context.cruds.entity = cls()
-    cruds.Engine.search(context)
-  
-  @classmethod
-  def create(cls, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity = cls(state='active', primary_contact=context.auth.user.key)
-      context.rule.entity = entity
-      context.rule.skip_user_roles = True
-      rule.Engine.run(context)
-      if not rule.executable(context):
-        raise rule.ActionDenied(context)
-      config_input = context.input.copy()
-      domain_logo = config_input.get('domain_logo')
-      blob.Manager.used_blobs(domain_logo.image)
-      config_input['domain_primary_contact'] = context.auth.user.key
-      config = setup.Configuration(parent=context.auth.user.key, configuration_input=config_input, setup='setup_domain', state='active')
-      config.put()
-      context.callback.payloads.append(('callback', {'action_key': 'install',
-                                      'action_model': '57',
-                                      'key': config.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-  
-  @classmethod
-  def prepare(cls, context):
-    entity = cls(state='active', primary_contact=context.auth.user.key)
-    context.rule.entity = entity
-    context.rule.skip_user_roles = True
-    context.cruds.entity = entity
-    cruds.Engine.prepare(context)
-    context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
-  
-  @classmethod
-  def read(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    primary_contact = entity.primary_contact.get_async()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    primary_contact = primary_contact.get_result()
-    entity._primary_contact_email = primary_contact._primary_email
-    rule.read(entity)
-    context.output['entity'] = entity
-  
-  @classmethod
-  def read_records(cls, context):
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.read_records(context)
-  
-  @classmethod
-  def update(cls, context):
-    context.cruds.values = {'name': context.input.get('name'), 'primary_contact': context.input.get('primary_contact')}  # @todo Logo will be implemented later.
-    context.cruds.entity = context.input.get('key').get()
-    cruds.Engine.update(context)
-  
-  @classmethod
-  def suspend(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      rule.write(entity, {'state': 'suspended'})
-      entity.put()
-      rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))
-      log.Engine.run(context)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-  
-  @classmethod
-  def activate(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      rule.write(entity, {'state': 'active'})
-      entity.put()
-      rule.Engine.run(context)
-      context.log.entities.append((entity, {'message': context.input.get('message')}))
-      log.Engine.run(context)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-  
-  @classmethod
-  def sudo(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      rule.write(entity, {'state': context.input.get('state')})
-      entity.put()
-      rule.Engine.run(context)
-      values = {'message': context.input.get('message'), 'note': context.input.get('note')}
-      if not rule.writable(context, '_records.note'):
-        values.pop('note')
-      context.log.entities.append((entity, values))
-      log.Engine.run(context)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
-  
-  @classmethod
-  def log_message(cls, context):
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    context.rule.entity = entity
-    rule.Engine.run(context)
-    if not rule.executable(context):
-      raise rule.ActionDenied(context)
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-      entity.put()  # We update this entity (before logging it) in order to set the value of the 'updated' property to newest date.
-      values = {'message': context.input.get('message'), 'note': context.input.get('note')}
-      if not rule.writable(context, '_records.note'):
-        values.pop('note')
-      context.log.entities.append((entity, values))
-      log.Engine.run(context)
-      context.callback.payloads.append(('notify',
-                                        {'action_key': 'initiate',
-                                         'action_model': '61',
-                                         'caller_entity': entity.key.urlsafe()}))
-      callback.Engine.run(context)
-      rule.read(entity)
-      context.output['entity'] = entity
-    
-    transaction()
