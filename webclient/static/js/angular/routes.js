@@ -67,7 +67,7 @@ MainApp.config(['$stateProvider',
      			  $rootScope.search.setSearch($stateParams['kind'], query['search']);
   
 			      return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
-							  return output.data;
+					    return output.data;
 				  });
  
         	}]

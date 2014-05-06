@@ -313,15 +313,16 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 ])
     .controller('AppView', ['$scope', '$stateParams', '$rootScope', '$state',
         function ($scope, $stateParams, $rootScope, $state) {
-
+	 
             var nav = $rootScope.nav;
             var menu = nav['menu'][0]['filters'][0];
-
-            $state.go('app_view_search', {
+            var params = {
                 'domain_key': nav.domain.key,
                 'kind': menu['kind'],
                 'query': JSON.stringify(menu['query'])
-            });
+            };
+  
+            $state.go('app_view_search', params);
 
         }
     ])

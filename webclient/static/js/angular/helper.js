@@ -3,6 +3,7 @@ KINDS.friendlyActionName = function(kind, action_key)
 {
  
 	var info = this.get(kind);
+	if (info == undefined) return undefined;
 	var actions = info['actions'];
 	var ra = null;
 	
@@ -22,6 +23,7 @@ KINDS.get = function (kind_id)
 {
   
    var kind = this.info[kind_id];
+   if (kind == undefined) return undefined;
    var fields = {};
    
    angular.forEach(kind, function (value, key) {

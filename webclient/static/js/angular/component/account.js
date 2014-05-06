@@ -68,7 +68,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
           	if (rejection.status > 200)
           	{ 
           		Confirm.error500(rejection.data);
-          		return $q.reject(rejection);
+          		//return $q.reject(rejection);
           	}
           	else
 			{

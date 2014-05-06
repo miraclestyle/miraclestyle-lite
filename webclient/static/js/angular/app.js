@@ -713,7 +713,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			
     			try
     			{
-    				search_argument = kindinfo.actions['search']['arguments']['search'];	
+    				search_argument = kindinfo.mapped_actions['search']['arguments']['search'];	
     			}
     			catch(e){}
     			
@@ -803,6 +803,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			}
     			
 	    			
+    	   }else
+    	   {
+    	   	this.hide = true;
     	   }
     		 
     	},
