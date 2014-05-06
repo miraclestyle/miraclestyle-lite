@@ -19,7 +19,7 @@ class Prepare(event.Plugin):
   def run(self, context):
     caller_entity_key = context.input.get('caller_entity')
     context.entities['caller_entity'] = caller_entity_key.get()  # @todo If user is taskqueue (as is expected to be) how do we handle it in rule?
-    context.entities[context.model.get_kind()] = context.model(namespace=context.caller_entity.key_namespace)
+    context.entities[context.model.get_kind()] = context.model(namespace=context.entities['caller_entity'].key_namespace)
 
 
 class MailSend(event.Plugin):
@@ -43,7 +43,7 @@ class Initiate(event.Plugin):
     context.entities['caller_user'] = caller_user_key.get()
     templates = context.model.query(context.model.active == True,
                                     context.model.action == caller_action_key,
-                                    namespace=context.caller_entity.key_namespace).fetch()
+                                    namespace=context.entities['caller_user'].key_namespace).fetch()
     if templates:
       for template in templates:
         template.run(context)

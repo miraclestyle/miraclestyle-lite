@@ -55,7 +55,7 @@ SEARCH_KIND_CONFIG = {
 				    'key': 'active'
 				    }]
     },
-    '35': {
+    '35a': {
     	'title' : 'Catalogs',
     	'add_new' : 'New Catalog',
     	'service' : 'Catalog',
