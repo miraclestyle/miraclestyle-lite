@@ -31,17 +31,14 @@ def get_records(entity, urlsafe_cursor):
       agent = yield entity.agent.get_async()
       agent = agent._primary_email
     entity._agent = agent
-    action_key_id = str(entity.action.id()).split('-')
-    if len(action_key_id) == 2:
-      kind_id, action_id = action_key_id
-      modelclass = entity._kind_map.get(kind_id)
-      if modelclass and hasattr(modelclass, '_actions'):
-        for action_key, action in modelclass._actions.items():
-          if entity.action == action.key:
-            entity._action = '%s.%s' % (modelclass.__name__, action_key)
-            break
-    else:
-      entity._action = entity.action.id()
+    action_parent = entity.action.parent()
+    modelclass = entity._kind_map.get(action_parent.kind())
+    action_id = entity.action.id()
+    if modelclass and hasattr(modelclass, '_actions'):
+      for action in modelclass._actions:
+        if entity.action == action.key:
+          entity._action = '%s.%s' % (modelclass.__name__, action_id)
+          break
     raise ndb.Return(entity)
   
   @ndb.tasklet
