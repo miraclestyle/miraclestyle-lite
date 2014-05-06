@@ -259,3 +259,5 @@ class Widget(ndb.BaseExpando):
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
+
+ 
