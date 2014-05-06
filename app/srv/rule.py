@@ -181,7 +181,7 @@ class DomainRole(Role):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -222,7 +222,7 @@ class DomainRole(Role):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -244,7 +244,7 @@ class DomainRole(Role):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -390,7 +390,7 @@ class DomainUser(ndb.BaseModel):
         rule.Read(),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -431,7 +431,7 @@ class DomainUser(ndb.BaseModel):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -455,7 +455,7 @@ class DomainUser(ndb.BaseModel):
         rule.Read(),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
@@ -535,7 +535,7 @@ class DomainUser(ndb.BaseModel):
         rule.Read(transactional=True, read_entities=['8', '6']),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_key': 'initiate', 'action_model': '61'},
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
