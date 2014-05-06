@@ -371,7 +371,6 @@ class DomainUserUpdate(event.Plugin):
 class DomainUserRemove(event.Plugin):
   
   def run(self, context):
-    from app.srv import auth
     user = ndb.Key('0', long(context.entities['8'].key.id())).get()
     user.domains.remove(ndb.Key(urlsafe=context.entities['8'].key_namespace))
     context.entities['0'] = user
