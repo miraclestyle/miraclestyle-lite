@@ -7,7 +7,7 @@ Created on Jan 6, 2014
 
 import hashlib
 
-from app import ndb, settings, memcache, util
+from app import ndb, settings, memcache
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log, blob
@@ -71,7 +71,7 @@ class User(ndb.BaseExpando):
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
                       "not context.user._is_guest and context.user.key == context.entity.key"),
       # User is unit of administration, hence root admins need control over it!
-      # Root admins can always: read user; search for users (exclusively); 
+      # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
       ActionPermission('0', Action.build_key('0', 'read').urlsafe(), True,
                        "context.user._root_admin or context.user.key == context.entity.key"),
@@ -207,11 +207,9 @@ class User(ndb.BaseExpando):
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
         ]
-        
       ),
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
     # i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
-    # fix ----- quoted comments cannot be here, only in free space
     Action(
       key=Action.build_key('0', 'sudo'),
       arguments={
@@ -394,7 +392,7 @@ class Domain(ndb.BaseExpando):
       FieldPermission('6', ['state'], True, None,
                       "(context.action.key_id_str == 'activate' and context.value and context.value.state == 'active') or (context.action.key_id_str == 'suspend' and context.value and context.value.state == 'suspended')"),
       # Domain is unit of administration, hence root admins need control over it!
-      # Root admins can always: read domain; search for domains (exclusively); 
+      # Root admins can always: read domain; search for domains (exclusively);
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
       ActionPermission('6', Action.build_key('6', 'read').urlsafe(), True,
                        "context.user._root_admin"),
@@ -505,21 +503,21 @@ class Domain(ndb.BaseExpando):
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
           filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}, 
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
           indexes=[
             {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']], 
-                          ['created', ['asc', 'desc']], 
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
                           ['updated', ['asc', 'desc']]]},
             {'filter': ['state'],
              'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']], 
+                          ['created', ['asc', 'desc']],
                           ['updated', ['asc', 'desc']]]},
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']], 
+                          ['created', ['asc', 'desc']],
                           ['updated', ['asc', 'desc']]]}
             ],
           order_by={
