@@ -251,6 +251,7 @@ class Prepare(event.Plugin):
       elif isinstance(context.entities, list):
         for entity in context.entities:
           context.entity = entity
+          context.value = None
           prepare(context, self.skip_user_roles, self.strict)
 
 
