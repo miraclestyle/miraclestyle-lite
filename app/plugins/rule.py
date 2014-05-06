@@ -242,6 +242,7 @@ class Prepare(event.Plugin):
           for kind_id in self.prepare_entities:
             if kind_id in context.entities:
               context.entity = context.entities[kind_id]
+              context.value = context.values[kind_id]
               prepare(context, self.skip_user_roles, self.strict)
         else:
           context.entity = context.entities[context.model.get_kind()]
@@ -279,7 +280,7 @@ class Write(event.Plugin):
       if isinstance(context.entities, dict):
         if len(self.write_entities):
           for kind_id in self.write_entities:
-            if kind_id in context.entities:  # @todo Do we check context.values as well?
+            if kind_id in context.entities and kind_id in context.values:
               write(context.entities[kind_id], context.values[kind_id])
         else:
           write(context.entities[context.model.get_kind()], context.values[context.model.get_kind()])
