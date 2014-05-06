@@ -46,6 +46,7 @@ class UserLoginPrepare(event.Plugin):
   def run(self, context):
     from app.srv.auth import User
     context.entities['0'] = User.current_user()
+    context.values['0'] = User.current_user()
     context.user = User.current_user()
 
 
