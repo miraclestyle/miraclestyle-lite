@@ -126,23 +126,23 @@ class DomainRole(Role):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('60', Action.build_key('60', 'prepare').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('60', Action.build_key('60', 'create').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active' or context.entities['60'].key_id_str == 'admin'"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == 'admin'"),
       ActionPermission('60', Action.build_key('60', 'read').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('60', Action.build_key('60', 'update').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active' or context.entities['60'].key_id_str == 'admin'"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == 'admin'"),
       ActionPermission('60', Action.build_key('60', 'delete').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active' or context.entities['60'].key_id_str == 'admin'"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == 'admin'"),
       ActionPermission('60', Action.build_key('60', 'search').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('60', Action.build_key('60', 'read_records').urlsafe(), False,
-                       "context.entities['60'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
-                      "context.entities['60'].namespace_entity.state != 'active' or context.entities['60'].key_id_str == 'admin'"),
+                      "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == 'admin'"),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], None, False,
-                      "context.entities['60'].namespace_entity.state != 'active'")
+                      "context.entity.namespace_entity.state != 'active'")
       ]
     )
   
@@ -323,35 +323,35 @@ class DomainUser(ndb.BaseModel):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('8', Action.build_key('8', 'prepare').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'invite').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'read').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'update').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active' or context.entities['8'].key_id_str == context.entities['8'].namespace_entity.primary_contact.entity.key_id_str"),
+                       "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str"),
       ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), True,
-                       "(context.entities['8'].namespace_entity.state == 'active' and context.user.key_id_str == context.entities['8'].key_id_str) and not (context.entities['8'].key_id_str == context.entities['8'].namespace_entity.primary_contact.entity.key_id_str)"),
+                       "(context.entity.namespace_entity.state == 'active' and context.user.key_id_str == context.entity.key_id_str) and not (context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str)"),
       ActionPermission('8', Action.build_key('8', 'search').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'read_records').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active'"),
+                       "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active' or context.user.key_id_str != context.entities['8'].key_id_str"),
+                       "context.entity.namespace_entity.state != 'active' or context.user.key_id_str != context.entity.key_id_str"),
       ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), True,
-                       "context.entities['8'].namespace_entity.state == 'active' and context.user.key_id_str == context.entities['8'].key_id_str and context.entities['8'].state == 'invited'"),
+                       "context.entity.namespace_entity.state == 'active' and context.user.key_id_str == context.entity.key_id_str and context.entity.state == 'invited'"),
       ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), False,
-                       "context.entities['8'].namespace_entity.state != 'active' or not context.user._is_taskqueue"),
+                       "context.entity.namespace_entity.state != 'active' or not context.user._is_taskqueue"),
       ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), True,
-                       "context.entities['8'].namespace_entity.state == 'active' and context.user._is_taskqueue"),
+                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('8', ['name', 'roles', 'state', '_records'], False, False,
-                      "context.entities['8'].namespace_entity.state != 'active'"),
+                      "context.entity.namespace_entity.state != 'active'"),
       FieldPermission('8', ['state'], False, None,
-                      "context.entities['8'].namespace_entity.state == 'active'"),
+                      "context.entity.namespace_entity.state == 'active'"),
       FieldPermission('8', ['state'], True, None,
-                      "(context.action.key_id_str == 'invite' and context.values['8'].state == 'invited') or (context.action.key_id_str == 'accept' and context.values['8'].state == 'accepted')")
+                      "(context.action.key_id_str == 'invite' and context.value.state == 'invited') or (context.action.key_id_str == 'accept' and context.value.state == 'accepted')")
       ]
     )
   
