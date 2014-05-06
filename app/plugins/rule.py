@@ -246,6 +246,7 @@ class Prepare(event.Plugin):
               prepare(context, self.skip_user_roles, self.strict)
         else:
           context.entity = context.entities[context.model.get_kind()]
+          context.value = context.values[context.model.get_kind()]
           prepare(context, self.skip_user_roles, self.strict)
       elif isinstance(context.entities, list):
         for entity in context.entities:
