@@ -20,6 +20,7 @@ class Prepare(event.Plugin):
     caller_entity_key = context.input.get('caller_entity')
     context.entities['caller_entity'] = caller_entity_key.get()  # @todo If user is taskqueue (as is expected to be) how do we handle it in rule?
     context.entities[context.model.get_kind()] = context.model(namespace=context.caller_entity.key_namespace)
+    context.values[context.model.get_kind()] = context.model(namespace=context.caller_entity.key_namespace)
 
 
 class MailSend(event.Plugin):
