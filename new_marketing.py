@@ -50,7 +50,7 @@ class Catalog(ndb.BaseExpando):
   name = ndb.SuperStringProperty('3', required=True)
   publish_date = ndb.SuperDateTimeProperty('4', required=True)
   discontinue_date = ndb.SuperDateTimeProperty('5', required=True)
-  state = ndb.SuperStringProperty('6', required=True, default='unpublished', choices=['unpublished', 'published'])
+  state = ndb.SuperStringProperty('6', required=True, default='unpublished', choices=['unpublished', 'locked', 'published', 'discontinued'])
   
   _expando_fields = {
     'cover': ndb.SuperKeyProperty('7', kind='36'),
@@ -77,6 +77,19 @@ class Catalog(ndb.BaseExpando):
   
   _actions = [
     Action(
+      key=Action.build_key('35', 'prepare'),
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.35'})
+        ]
+      ),
+    Action(
       key=Action.build_key('35', 'create'),
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
@@ -84,48 +97,32 @@ class Catalog(ndb.BaseExpando):
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True)
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'values.35.name': 'input.name',
+                                   'values.35.publish_date': 'input.publish_date',
+                                   'values.35.discontinue_date': 'input.discontinue_date'}),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
-      key=Action.build_key('35', 'lock'),
+      key=Action.build_key('35', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'discontinue'),
-      arguments={
-        'key'  : ndb.SuperKeyProperty(kind='35', required=True),
-        'message' : ndb.SuperTextProperty(required=True),
-        'note' : ndb.SuperTextProperty(required=True)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'publish'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'log_message'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'duplicate'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        'start_images': ndb.SuperIntegerProperty(default=0)
         },
       _plugins=[]
       ),
@@ -138,38 +135,6 @@ class Catalog(ndb.BaseExpando):
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
         'start_images': ndb.SuperIntegerProperty(default=0)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'upload_images'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
-        'upload_url': ndb.SuperStringProperty()
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'read'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'start_images': ndb.SuperIntegerProperty(default=0)
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'read_records'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'next_cursor': ndb.SuperStringProperty()
-        },
-      _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'prepare'),
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
       _plugins=[]
       ),
@@ -208,6 +173,98 @@ class Catalog(ndb.BaseExpando):
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'read_records'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.35', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'lock'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[]
+      ),
+    Action(
+      key=Action.build_key('35', 'publish'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[]
+      ),
+    Action(
+      key=Action.build_key('35', 'discontinue'),
+      arguments={
+        'key'  : ndb.SuperKeyProperty(kind='35', required=True),
+        'message' : ndb.SuperTextProperty(required=True),
+        'note' : ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[]
+      ),
+    Action(
+      key=Action.build_key('35', 'log_message'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Write(transactional=True),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'duplicate'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugins=[]
+      ),
+    Action(
+      key=Action.build_key('35', 'upload_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
+        'upload_url': ndb.SuperStringProperty()
         },
       _plugins=[]
       )
