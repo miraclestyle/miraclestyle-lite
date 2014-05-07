@@ -5,6 +5,8 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+from google.appengine.ext import blobstore
+
 from app import ndb, settings
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -31,3 +33,33 @@ class Read(event.Plugin):
     context.entities['35']._images = results
     context.images_cursor = start + settings.CATALOG_PAGE  # @todo Next images cursor. Not sure if this is needed or the client does the mageic?
     context.more_images = more
+
+
+class UploadImagesPrepare(event.Plugin):
+  
+  def run(self, context):
+    from app.srv import marketing
+    images = context.input.get('images')
+    upload_url = context.input.get('upload_url')
+    if upload_url:
+      context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+      return  # @todo Do we brake entire plugins loop here, and if so, how do we do it?
+    else:
+      if not images: # if no images were saved, do nothing...
+        return  # @todo Do we brake entire plugins loop here, and if so, how do we do it?
+    i = marketing.CatalogImage.query(ancestor=context.entities['35'].key).count()  # Get last sequence.
+    for image in images:
+      image.set_key(str(i), parent=context.entities['35'].key)
+      i += 1
+    context.images = images
+
+
+class UploadImagesWrite(event.Plugin):
+  
+  def run(self, context):
+    ndb.put_multi(context.images)
+    for image in context.images:
+      if image:
+        context.log_entities.append((image, ))
+        blob.Manager.used_blobs(image.image)  # @todo Can we mark blobs as used prior being logged, or do we need to do it after logging?
+    context.entities['35']._images.extend(context.images)
