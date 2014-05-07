@@ -205,35 +205,89 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'lock'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
+        'message': ndb.SuperTextProperty(required=True)
+        #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.35.state': 'locked'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('35', 'publish'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
+        'message': ndb.SuperTextProperty(required=True)
+        #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.35.state': 'published'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('35', 'discontinue'),
       arguments={
         'key'  : ndb.SuperKeyProperty(kind='35', required=True),
-        'message' : ndb.SuperTextProperty(required=True),
-        'note' : ndb.SuperTextProperty(required=True)
+        'message' : ndb.SuperTextProperty(required=True)
+        #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.35.state': 'discontinued'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       ),
     Action(
       key=Action.build_key('35', 'log_message'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty(required=True)
+        'note': ndb.SuperTextProperty()
         },
       _plugins=[
         common.Context(),
