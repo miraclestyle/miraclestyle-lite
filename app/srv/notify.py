@@ -13,7 +13,6 @@ from app import ndb, settings
 from app.lib.safe_eval import safe_eval
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import auth as ndb_auth
 from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, notify
 
@@ -46,7 +45,6 @@ class Template(ndb.BasePoly):
                        "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
       FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
                       "context.entity.namespace_entity.state != 'active'")
-      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -62,7 +60,7 @@ class Template(ndb.BasePoly):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.61'}),
-        notify.RolesAndUsers(),
+        notify.RolesAndUsers()
         ]
       ),
     Action(
@@ -139,7 +137,7 @@ class CustomNotify(Template):
   outlet = ndb.SuperStringProperty('9', required=True, default='58')
   
   def run(self, context):
-    template_values = {'entity' : context.entities['caller_entity']}
+    template_values = {'entity': context.entities['caller_entity']}
     data = {'action_id': 'send',
             'action_model': self.outlet,
             'recipient': self.message_recievers(context.entities['caller_entity'], context.entities['caller_user']),
@@ -184,7 +182,6 @@ class MailNotify(Template):
       FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
                       "context.entity.namespace_entity.state != 'active'")
-      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -200,7 +197,7 @@ class MailNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.58'}),
-        notify.RolesAndUsers(),
+        notify.RolesAndUsers()
         ]
       ),
     Action(
@@ -254,7 +251,7 @@ class MailNotify(Template):
         rule.Exec(),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.58'}),
-        notify.RolesAndUsers(),
+        notify.RolesAndUsers()
         ]
       ),
     Action(
@@ -359,8 +356,8 @@ class MailNotify(Template):
       from app.srv.rule import DomainUser
       domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                            namespace=self.message_reciever.namespace()).fetch()
-      recievers = ndb.get_multi([ndb_auth.User.build_key(long(reciever.key.id())) for reciever in domain_users])
-      sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
+      recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
+      sender_key = ndb.Key('0', long(self.message_sender.id()))
       sender = sender_key.get()
       template_values = {'entity': context.entities['caller_entity']}
       data = {'action_id': 'send',
@@ -415,7 +412,6 @@ class HttpNotify(Template):
       FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
                       "context.entity.namespace_entity.state != 'active'")
-      # @todo Field permissions should be reviewed!
       ]
     )
   
@@ -431,7 +427,7 @@ class HttpNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.63'}),
-        notify.RolesAndUsers(),
+        notify.RolesAndUsers()
         ]
       ),
     Action(
@@ -485,7 +481,7 @@ class HttpNotify(Template):
         rule.Exec(),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.63'}),
-        notify.RolesAndUsers(),
+        notify.RolesAndUsers()
         ]
       ),
     Action(
@@ -587,7 +583,7 @@ class HttpNotify(Template):
   def run(self, context):
     values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
     if safe_eval(self.condition, values):
-      sender_key = ndb_auth.User.build_key(long(self.message_sender.id()))
+      sender_key = ndb.Key('0', long(self.message_sender.id()))
       sender = sender_key.get()
       template_values = {'entity': context.entities['caller_entity']}
       data = {'action_id': 'send',
