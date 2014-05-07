@@ -59,7 +59,7 @@ class Catalog(ndb.BaseExpando):
   
   _virtual_fields = {
     '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
-    '_records': log.SuperLocalStructuredRecordProperty('35', repeated=True)
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('35', repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -330,6 +330,21 @@ class Catalog(ndb.BaseExpando):
         'images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
         'upload_url': ndb.SuperStringProperty()
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.UploadImagesPrepare(),
+        marketing.UploadImagesWrite(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
       )
     ]
