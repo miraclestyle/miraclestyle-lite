@@ -492,7 +492,7 @@ class Domain(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -577,7 +577,7 @@ class Domain(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -603,7 +603,7 @@ class Domain(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -631,7 +631,7 @@ class Domain(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -655,7 +655,7 @@ class Domain(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'key': 'entities.6.key_urlsafe'}),
+                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
