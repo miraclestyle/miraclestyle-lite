@@ -7,11 +7,11 @@ Created on May 6, 2014
 
 from google.appengine.api import images
 
-from app import ndb, settings, memcache, util
+from app import ndb, settings
 from app.srv.event import Action
 from app.srv import blob
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log, blob
+from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, marketing
 
 
@@ -122,9 +122,19 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'start_images': ndb.SuperIntegerProperty(default=0)
+        'images_cursor': ndb.SuperIntegerProperty(default=0)
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.35',
+                                   'output.images_cursor': 'images_cursor',
+                                   'output.more_images': 'more_images'})
+        ]
       ),
     Action(
       key=Action.build_key('35', 'update'),
