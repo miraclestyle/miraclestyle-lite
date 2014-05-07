@@ -38,7 +38,7 @@ class Permission():
   If the futuer deems scaling a problem, possible solutions could be to:
   a) Create DomainUserPermissions entity, taht will fan-out on DomainUser entity,
   and will contain all permissions for the domain user (based on it's domain role membership) in it;
-  b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...), 
+  b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...),
   and store each permission in datasotre as child entity of DomainUser;
   c) Some other similar pattern.
   
@@ -311,7 +311,7 @@ class DomainUser(ndb.BaseModel):
   _kind = 8
   
   name = ndb.SuperStringProperty('1', required=True)
-  roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since taht can pose security issue!!
+  roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since that can pose security issue!!
   state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
   
   _default_indexed = False
@@ -471,7 +471,7 @@ class DomainUser(ndb.BaseModel):
           default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])},
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])}
             },
           indexes=[
             {'filter': ['name'],
