@@ -128,18 +128,13 @@ class DomainSetup(Setup):
                            namespace=namespace,
                            name='Marketing',
                            role=role_key,
-                           filters=[nav.Filter(name='Catalog', kind='35')]),
-                nav.Widget(id='system_business',
-                           namespace=namespace,
-                           name='Business',
-                           role=role_key,
-                           filters=[nav.Filter(name='Companies', kind='44')]),
+                           filters=[nav.Filter(name='Catalogs', kind='35')]),
                 nav.Widget(id='system_security',
                            namespace=namespace,
                            name='Security',
                            role=role_key,
                            filters=[nav.Filter(name='Roles', kind='60'),
-                                    nav.Filter(name='Filter Groups', kind='62')])]
+                                    nav.Filter(name='Users', kind='8')])]
     for i, entity in enumerate(entities):
       entity.sequence = i
     ndb.put_multi(entities)
@@ -159,11 +154,11 @@ class DomainSetup(Setup):
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
     sequence = config_input.get('sequence')
-    entities = [nav.Widget(id='system_app_users',
+    entities = [nav.Widget(id='system_user_interface',
                            namespace=namespace,
-                           name='App Users',
+                           name='User Interface',
                            role=role_key,
-                           filters=[nav.Filter(name='Users', kind='8')]),
+                           filters=[nav.Filter(name='Widgets', kind='62')]),
                 nav.Widget(id='system_notifications',
                            namespace=namespace,
                            name='Notifications',
