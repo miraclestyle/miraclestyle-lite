@@ -360,7 +360,6 @@ class Catalog(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.UpdateRead(),
         marketing.UploadImagesSet(),
         rule.Write(transactional=True),
         marketing.UploadImagesWrite(transactional=True),
