@@ -148,7 +148,7 @@ class Catalog(ndb.BaseExpando):
         '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
-        'start_images': ndb.SuperIntegerProperty(default=0)
+        'images_cursor': ndb.SuperIntegerProperty(default=0)
         },
       _plugins=[
         common.Context(),

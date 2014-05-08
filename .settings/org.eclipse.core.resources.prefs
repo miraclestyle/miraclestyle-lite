@@ -10,6 +10,7 @@ encoding//app/plugins/auth.py=utf-8
 encoding//app/plugins/callback.py=utf-8
 encoding//app/plugins/common.py=utf-8
 encoding//app/plugins/log.py=utf-8
+encoding//app/plugins/marketing.py=utf-8
 encoding//app/plugins/nav.py=utf-8
 encoding//app/plugins/notify.py=utf-8
 encoding//app/plugins/order.py=utf-8

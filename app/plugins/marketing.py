@@ -10,7 +10,7 @@ import copy
 from google.appengine.ext import blobstore
 
 from app import ndb, settings
-from app.srv import event
+from app.srv import event, blob
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 

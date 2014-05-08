@@ -143,7 +143,7 @@ MainApp
         	 'completed' : function (data)
         	 {
         	 	this.entity._images.extend(data['entity']['_images']);
-        	 	this.entity.start_images = this.entity._images.length;
+        	 	this.entity.images_cursor = this.entity._images.length;
         	 },
         	 'removeImage' : function (image)
         	 {
@@ -156,7 +156,7 @@ MainApp
         	 	if (that.entity.more_images && !that.entity.loading_new)
         	 	{
         	  
-        	 	that.entity.start_images = that.entity._images.length;
+        	 	that.entity.images_cursor = that.entity._images.length;
         	 	
         	 	that.entity.loading_new = true;
         	 	
@@ -208,7 +208,7 @@ MainApp
 				            {
 				        	 	if ($scope.entity.more_images && !$scope.entity.loading_new)
 				        	 	{ 
-					        	 	$scope.entity.start_images = $scope.entity._images.length;
+					        	 	$scope.entity.images_cursor = $scope.entity._images.length;
 					        	 	
 					        	 	$scope.entity.loading_new = true;
 					        	 	

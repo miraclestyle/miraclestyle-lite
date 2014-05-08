@@ -37,6 +37,8 @@ def _write_helper(permissions, entity, field_key, field, field_value):
   """
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
+      if field_value is None:
+        return
       setattr(entity, field_key, field_value)
     except TypeError as e:
       util.logger('write: setattr error: %s' % e)

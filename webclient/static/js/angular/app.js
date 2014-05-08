@@ -654,7 +654,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                              
                             $scope.cancel = function () {
                             	
+                            	if ($scope.resolve_cancel)
                             	$scope.resolve_cancel($modalInstance);
+                            	
                                 $modalInstance.dismiss('cancel');
                             };
 
