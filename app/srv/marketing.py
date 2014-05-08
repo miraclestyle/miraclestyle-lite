@@ -64,14 +64,18 @@ class Catalog(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('35', Action.build_key('35', 'create').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35', 'lock').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35', 'update').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35', 'discontinue').urlsafe(), False, "context.rule.entity.namespace_entity.state != 'active' and context.rule.entity.state == 'unpublished'"),
-      ActionPermission('35', Action.build_key('35', 'publish').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35', 'log_message').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35', 'duplicate').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')"),
-      ActionPermission('35', Action.build_key('35-6').urlsafe(), False, "not (context.rule.entity.namespace_entity.state == 'active' and context.rule.entity.state == 'unpublished')")
+      ActionPermission('35', Action.build_key('35', 'prepare').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'create').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'read').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'update').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'search').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'read_records').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'lock').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'publish').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'discontinue').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('35', Action.build_key('35', 'log_message').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'duplicate').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('35', Action.build_key('35', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'")
       ]
     )
   
