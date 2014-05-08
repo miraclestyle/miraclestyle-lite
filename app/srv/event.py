@@ -8,6 +8,10 @@ Created on Jan 6, 2014
 from app import ndb
 
 
+class TerminateAction(Exception):
+  pass
+
+
 class Action(ndb.BaseExpando):
   
   _kind = 56
