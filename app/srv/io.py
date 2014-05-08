@@ -11,6 +11,7 @@ from google.appengine.api import taskqueue
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, util
+from app.srv import event
 
 
 class InputError(Exception):
@@ -145,6 +146,8 @@ class Engine:
           ndb.transaction(lambda: execute_plugins(transactional_plugins), xg=True)
         if len(post_transactional_plugins):
           execute_plugins(post_transactional_plugins)
+      except event.TerminateAction as e:
+        pass
       except Exception as e:
         raise
   
