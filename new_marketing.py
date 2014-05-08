@@ -146,7 +146,15 @@ class Catalog(ndb.BaseExpando):
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
         'start_images': ndb.SuperIntegerProperty(default=0)
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.UpdateRead(),
+        marketing.UpdateSet(),
+        rule.Write(transactional=True),
+        ]
       ),
     Action(
       key=Action.build_key('35', 'search'),
@@ -338,6 +346,7 @@ class Catalog(ndb.BaseExpando):
         marketing.UploadImagesPrepare(),
         marketing.UploadImagesWrite(transactional=True),
         log.Write(transactional=True),
+        marketing.UploadImagesUsedBlobs(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
         callback.Payload(transactional=True, queue = 'notify',
