@@ -32,12 +32,12 @@ class CatalogImage(blob.Image):
   
   _kind = 36
   
-  pricetags = ndb.SuperLocalStructuredProperty(CatalogPricetag, '6', repeated=True)
+  pricetags = ndb.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
   
   def get_output(self):
     dic = super(CatalogImage, self).get_output()
-    dic['_image_240'] = images.get_serving_url(self.image, 240)
-    dic['_image_600'] = images.get_serving_url(self.image, 600)
+    dic['_image_240'] = self.get_serving_url(240)
+    dic['_image_600'] = self.get_serving_url(600)
     return dic
 
 
@@ -75,7 +75,8 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', Action.build_key('35', 'discontinue').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
       ActionPermission('35', Action.build_key('35', 'log_message').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
       ActionPermission('35', Action.build_key('35', 'duplicate').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'")
+      ActionPermission('35', Action.build_key('35', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, "context.user._is_taskqueue"),
       ]
     )
   
@@ -372,6 +373,26 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),   
+      Action(
+      key=Action.build_key('35', 'process_images'),
+      arguments={
+        'key' : ndb.SuperKeyProperty(kind='35', required=True),
+        'catalog_images': ndb.SuperKeyProperty(kind='36', repeated=True),
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(domain_model=True),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.ProcessImages(transactional=True),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        # here it cannot do the callback cuzz the user is not in
         ]
       )
     ]

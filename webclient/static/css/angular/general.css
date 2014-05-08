@@ -265,3 +265,13 @@ strong, b
 {
 	display:none;
 }
+
+.placeholder-image
+{
+	background:gray;
+	color:white;
+	font-weight:bold;
+	padding:20px;
+	width:240px;
+	height:200px;
+}

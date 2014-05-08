@@ -65,7 +65,9 @@
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
 			<div ng-repeat="image in entity._images" class="image-image">
-				<img class="img" ng-src="{{image._image_240}}" />
+				<div handle-image-spit class="img placeholder-image">
+					Processing...
+				</div>
 				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>

@@ -33,6 +33,47 @@ ctx.set_memcache_policy(False)
 class PropertyError(Exception):
   pass
 
+def validate_images(objects):
+  
+  """
+  objects: a blob.Image valid object(s) that need validation
+  """
+  for i,obj in enumerate(objects):    
+    if obj.width or obj.height:
+      continue # already processed
+    cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
+    # This will throw an error if the file does not exist in cloudstorage.
+    image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
+    # Will throw error if the file is not an image, or its corrupted.
+    try:
+      load_image = images.Image(image_data=image_data)
+      width = load_image.width # this property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, hence not good
+      height = load_image.height
+    except images.NotImageError as e:
+      # this file is not an image... # remove from existence
+      objects.pop(i)
+    # Closes the pipeline.
+    cloudstorage_file.close()
+ 
+    obj.populate(**{'width': width,
+                    'height': height,
+                 })
+    del image_data, load_image  # Free memory
+  
+  
+  # tasklets for retrieving serving urls async
+  @tasklet
+  def async(obj):
+    if obj.serving_url is None: # if there is no serving url
+      obj.serving_url = yield images.get_serving_url_async(obj.image)
+    raise Return(obj)
+    
+  @tasklet
+  def helper(objects):
+    results = yield map(async, objects)
+    raise Return(results)
+  
+  return helper(objects).get_result()
 
 def _validate_prop(prop, value):
   """This helper function will raise exception based on ndb property specifications
@@ -113,23 +154,15 @@ def _structured_image_property_format(prop, value):
     blob_info = blobstore.parse_blob_info(blob)
     meta_required = ('image/jpeg', 'image/jpg', 'image/png')
     if file_info.content_type not in meta_required:
-      raise PropertyError('invalid_image_type')
-    gs_object_name = file_info.gs_object_name
-    cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
-    # This will throw an error if the file does not exist in cloudstorage.
-    image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-    # Will throw error if the file is not an image, or its corrupted.
-    load_image = images.Image(image_data=image_data)
-    # Closes the pipeline.
-    cloudstorage_file.close()
-    # _modelclass (SuperLocalStructuredImageProperty(ModelClass)) must have
-    # 'width', 'height', 'size', and 'image' properties (see @app.srv.blob.Image as an example).
-    models.append(prop._modelclass(**{'width': load_image.width,
-                                      'height': load_image.height,
-                                      'size': file_info.size,
+      raise PropertyError('invalid_image_type') # first line of validation based on meta data from client
+
+    models.append(prop._modelclass(**{'size': file_info.size,
                                       'content_type': file_info.content_type,
+                                      'gs_object_name' : file_info.gs_object_name,
                                       'image': blob_info.key()}))
-    del image_data, load_image  # Free memory?
+  if prop._validate_images:
+    models = validate_images(models)
+  
   if not prop._repeated:
     if len(models):
       return models[0]
@@ -317,7 +350,7 @@ class _BaseModel(object):
       return super(_BaseModel, self).__getattr__(name)
     except AttributeError as e:
       # Here is expected Attribute error, not Exception. This fixes some internal python problems.
-      raise AttributeError('No attribute "%s" found in instance of "%s"' % (name, self.__class__.__name__))
+      raise AttributeError('No attribute "%s" found in instance of "%s". Error was: %s' % (name, self.__class__.__name__, e))
   
   def __setattr__(self, name, value):
     virtual_fields = self.get_virtual_fields()
@@ -338,10 +371,14 @@ class _BaseModel(object):
   
   @property
   def key_id(self):
+    if self.key is None:
+      return None
     return self.key.id()
   
   @property
   def key_urlsafe(self):
+    if self.key is None:
+      return None
     return self.key.urlsafe()
   
   @property
@@ -350,14 +387,20 @@ class _BaseModel(object):
   
   @property
   def key_namespace(self):
+    if self.key is None:
+      return None
     return self.key.namespace()
   
   @property
   def key_parent(self):
+    if self.key is None:
+      return None
     return self.key.parent()
   
   @property
   def namespace_entity(self):
+    if self.key is None:
+      return None
     if self.key.namespace():
       return Key(urlsafe=self.key.namespace()).get()
     else:
@@ -365,6 +408,8 @@ class _BaseModel(object):
   
   @property
   def parent_entity(self):
+    if self.key is None:
+      return None
     if self.key.parent():
       return self.key.parent().get()
     else:
@@ -798,6 +843,10 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
 
 
 class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
+  
+  def __init__(self, *args, **kwargs):
+    self._validate_images = kwargs.pop('validate_images', None)
+    super(SuperLocalStructuredImageProperty, self).__init__(*args, **kwargs)
  
   def format(self, value):
     return _structured_image_property_format(self, value)
@@ -805,6 +854,10 @@ class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
 
 class SuperStructuredImageProperty(SuperStructuredProperty):
   
+  def __init__(self, *args, **kwargs):
+    self._validate_images = kwargs.pop('validate_images', None)
+    super(SuperStructuredImageProperty, self).__init__(*args, **kwargs)
+   
   def format(self, value):
     return _structured_image_property_format(self, value)
 

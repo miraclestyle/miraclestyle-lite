@@ -83,8 +83,7 @@ class Variant(ndb.BaseModel):
 class Image(blob.Image):
   
   _kind = 76
-  
-  
+   
   def get_output(self):
     
     dic = super(Image, self).get_output()

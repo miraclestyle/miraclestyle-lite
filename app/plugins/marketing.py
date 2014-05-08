@@ -109,9 +109,16 @@ class UploadImagesWrite(event.Plugin):
   def run(self, context):
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
+      keys = []
       for image in context.entities['35']._images:
         if image:
+          keys.append(image.key.urlsafe())
           context.log_entities.append((image, ))
+      if keys:    
+        context.callback_payloads.append(('callback', {'catalog_images' : keys,
+                                                       'key' : context.entities['35'].key.urlsafe(),
+                                                       'action_model' : '35', 
+                                                       'action_id' : 'process_images'}))
 
 
 class UploadImagesUsedBlobs(event.Plugin):
@@ -120,3 +127,19 @@ class UploadImagesUsedBlobs(event.Plugin):
     for image in context.entities['35']._images:
       if image:
         blob.Manager.used_blobs(image.image)
+
+class ProcessImages(event.Plugin):
+  
+  def run(self, context):
+    catalog_image_keys = []
+    for catalog_image_key in context.input.get('catalog_images'):
+      if catalog_image_key.parent() == context.entities['35'].key:
+        catalog_image_keys.append(catalog_image_key)
+    if catalog_image_keys:
+      catalog_images = ndb.get_multi(catalog_image_keys)
+      for i,catalog_image in enumerate(catalog_images):
+        if catalog_image is None:
+          catalog_images.pop(i)
+      if catalog_images:
+        catalog_images = ndb.validate_images(catalog_images)
+        ndb.put_multi(catalog_images)

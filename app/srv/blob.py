@@ -9,7 +9,7 @@ import cgi
 
 from google.appengine.ext import blobstore
 
-from app import ndb, memcache
+from app import ndb, memcache, util
 
 
 class Image(ndb.BaseModel):
@@ -20,8 +20,16 @@ class Image(ndb.BaseModel):
   image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)
   content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
   size = ndb.SuperFloatProperty('3', required=True, indexed=False)
-  width = ndb.SuperIntegerProperty('4', required=True, indexed=False)
-  height = ndb.SuperIntegerProperty('5', required=True, indexed=False)
+  width = ndb.SuperIntegerProperty('4', indexed=False)
+  height = ndb.SuperIntegerProperty('5', indexed=False)
+  gs_object_name = ndb.SuperStringProperty('6') # You must save the gs_object_name yourself in your upload handler or this data will be lost. The other metadata for the object in GCS is stored in GCS automatically, so you don't need to save that in your upload handler.
+  serving_url = ndb.SuperStringProperty('7')
+   
+  def get_serving_url(self, size):
+    if self.serving_url:
+      return '%s=s%s' % (self.serving_url, size)
+    else:
+      return ''
 
 
 class Manager():
@@ -90,6 +98,6 @@ class Manager():
     """This functon must be always called last in the application execution."""
     unused_blob_keys = cls.get_unused_blobs()
     if len(unused_blob_keys):
-      print 'deleted blobs: ', len(unused_blob_keys)
+      util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
       blobstore.delete(unused_blob_keys)
       memcache.temp_memory_set(cls._UNUSED_BLOB_KEY, [])

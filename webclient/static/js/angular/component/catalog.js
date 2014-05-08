@@ -1,4 +1,17 @@
 MainApp
+.directive('handleImageSpit', function () {
+	return {
+		link : function (scope, element, attr)
+		{
+			if (scope.image._image_240)
+			{
+				$(element).removeClass('placeholder-image');
+				$(element).html('<img class="img" src="'+scope.image._image_240+'" />');
+			}
+			
+		}
+	};
+})
 .directive('catalogPricetagPosition', function ($timeout) {
 	return {
 		priority : -513,
