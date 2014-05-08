@@ -56,21 +56,35 @@ class UpdateSet(event.Plugin):
     context.values['35'].publish_date = context.input.get('publish_date')
     context.values['35']._images = context.input.get('_images')
     new_images = []
+    context.delete_image_keys = []
+    context.delete_blob_image_keys = []
     if context.values['35']._images:
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.values['35'].key)
         new_images.append(image.key)
     if len(context.values['35']._images):
       context.values['35'].cover = context.values['35']._images[0].key
-    delete_image_keys = []
-    delete_blob_image_keys = []
     for image in context.entities['35']._images:
       if image.key not in new_images:
-        delete_image_keys.append(image.key)
-        delete_blob_image_keys.append(image.image)
+        context.delete_image_keys.append(image.key)
+        context.delete_blob_image_keys.append(image.image)
+    context.entities['35']._images = []
 
 
-class UploadImagesPrepare(event.Plugin):
+class UpdateWrite(event.Plugin):
+  
+  def run(self, context):
+    if context.entities['35']._field_permissions['_images']['writable']:
+      if len(context.delete_image_keys):
+        ndb.delete_multi(context.delete_image_keys)
+      if len(context.delete_blob_image_keys):
+        blob.Manager.unused_blobs(context.delete_blob_image_keys)
+    context.entities['35'].put()
+    if len(context.entities['35']._images):
+      ndb.put_multi(context.entities['35']._images)
+
+
+class UploadImagesSet(event.Plugin):
   
   def run(self, context):
     from app.srv import marketing
@@ -86,22 +100,23 @@ class UploadImagesPrepare(event.Plugin):
     for image in images:
       image.set_key(str(i), parent=context.entities['35'].key)
       i += 1
-    context.images = images
+    context.entities['35']._images = []
+    context.values['35']._images = images
 
 
 class UploadImagesWrite(event.Plugin):
   
   def run(self, context):
-    ndb.put_multi(context.images)
-    for image in context.images:
-      if image:
-        context.log_entities.append((image, ))
+    if len(context.entities['35']._images):
+      ndb.put_multi(context.entities['35']._images)
+      for image in context.entities['35']._images:
+        if image:
+          context.log_entities.append((image, ))
 
 
 class UploadImagesUsedBlobs(event.Plugin):
   
   def run(self, context):
-    for image in context.images:
+    for image in context.entities['35']._images:
       if image:
         blob.Manager.used_blobs(image.image)
-    context.entities['35']._images.extend(context.images)
