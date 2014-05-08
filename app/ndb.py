@@ -34,40 +34,35 @@ class PropertyError(Exception):
   pass
 
 def validate_images(objects):
+  """'objects' argument is a list of valid blob.Image 
+  object(s) that require validation!
   
   """
-  objects: a blob.Image valid object(s) that need validation
-  """
-  for i,obj in enumerate(objects):    
+  for i, obj in enumerate(objects):
     if obj.width or obj.height:
-      continue # already processed
+      continue
     cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
     # This will throw an error if the file does not exist in cloudstorage.
     image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-    # Will throw error if the file is not an image, or its corrupted.
+    # This will throw an error if the file is not an image, or is corrupted.
     try:
-      load_image = images.Image(image_data=image_data)
-      width = load_image.width # this property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, hence not good
-      height = load_image.height
+      image = images.Image(image_data=image_data)
+      width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
+      height = image.height
     except images.NotImageError as e:
-      # this file is not an image... # remove from existence
+      # This file is not an image, remove it from the list.
       objects.pop(i)
-    # Closes the pipeline.
     cloudstorage_file.close()
- 
     obj.populate(**{'width': width,
-                    'height': height,
-                 })
-    del image_data, load_image  # Free memory
+                    'height': height})
+    del image_data, image  # Free memory
   
-  
-  # tasklets for retrieving serving urls async
   @tasklet
   def async(obj):
-    if obj.serving_url is None: # if there is no serving url
+    if obj.serving_url is None:
       obj.serving_url = yield images.get_serving_url_async(obj.image)
     raise Return(obj)
-    
+  
   @tasklet
   def helper(objects):
     results = yield map(async, objects)
@@ -154,15 +149,13 @@ def _structured_image_property_format(prop, value):
     blob_info = blobstore.parse_blob_info(blob)
     meta_required = ('image/jpeg', 'image/jpg', 'image/png')
     if file_info.content_type not in meta_required:
-      raise PropertyError('invalid_image_type') # first line of validation based on meta data from client
-
+      raise PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
     models.append(prop._modelclass(**{'size': file_info.size,
                                       'content_type': file_info.content_type,
-                                      'gs_object_name' : file_info.gs_object_name,
+                                      'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()}))
   if prop._validate_images:
     models = validate_images(models)
-  
   if not prop._repeated:
     if len(models):
       return models[0]
@@ -847,7 +840,7 @@ class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
   def __init__(self, *args, **kwargs):
     self._validate_images = kwargs.pop('validate_images', None)
     super(SuperLocalStructuredImageProperty, self).__init__(*args, **kwargs)
- 
+  
   def format(self, value):
     return _structured_image_property_format(self, value)
 
@@ -857,7 +850,7 @@ class SuperStructuredImageProperty(SuperStructuredProperty):
   def __init__(self, *args, **kwargs):
     self._validate_images = kwargs.pop('validate_images', None)
     super(SuperStructuredImageProperty, self).__init__(*args, **kwargs)
-   
+  
   def format(self, value):
     return _structured_image_property_format(self, value)
 
