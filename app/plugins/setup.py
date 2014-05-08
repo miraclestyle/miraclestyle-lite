@@ -158,7 +158,7 @@ class DomainSetup(Setup):
                            namespace=namespace,
                            name='User Interface',
                            role=role_key,
-                           filters=[nav.Filter(name='Widgets', kind='62')]),
+                           filters=[nav.Filter(name='Menu Widgets', kind='62')]),
                 nav.Widget(id='system_notifications',
                            namespace=namespace,
                            name='Notifications',
