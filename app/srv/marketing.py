@@ -392,7 +392,7 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        # here it cannot do the callback cuzz the user is not in
+        
         ]
       )
     ]
