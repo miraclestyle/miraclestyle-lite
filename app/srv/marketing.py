@@ -5,8 +5,6 @@ Created on May 6, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from google.appengine.api import images
-
 from app import ndb, settings
 from app.srv.event import Action
 from app.srv import blob
@@ -76,7 +74,7 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', Action.build_key('35', 'log_message').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
       ActionPermission('35', Action.build_key('35', 'duplicate').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
       ActionPermission('35', Action.build_key('35', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
-      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, "context.user._is_taskqueue"),
+      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, "context.user._is_taskqueue")
       ]
     )
   
@@ -371,15 +369,18 @@ class Catalog(ndb.BaseExpando):
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue = 'callback',
+                         static_data = {'action_id': 'process_images', 'action_model': '35'},
+                         dynamic_data = {'catalog_image_keys': 'catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
-      ),   
-      Action(
+      ),
+    Action(
       key=Action.build_key('35', 'process_images'),
       arguments={
-        'key' : ndb.SuperKeyProperty(kind='35', required=True),
-        'catalog_images': ndb.SuperKeyProperty(kind='36', repeated=True),
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True)
         },
       _plugins=[
         common.Context(),
@@ -392,7 +393,6 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        
         ]
       )
     ]
