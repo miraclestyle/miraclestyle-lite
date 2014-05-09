@@ -32,13 +32,6 @@ def parse_blob_keys(field_storages):
         pass
   return blob_keys
 
-def get_unused_blobs():
-  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-
-def unused_blobs(blob_keys):
-  """Marks a key or a list of keys for deletation"""
-  return field_storage_unused_blobs(blob_keys)
-
 def field_storage_used_blobs(field_storages):
   """Internal helper for structured properties that handle uploads"""
   unused_blob_keys = get_unused_blobs()
@@ -52,6 +45,9 @@ def field_storage_unused_blobs(field_storages):
   unused_blob_keys = get_unused_blobs()
   unused_blob_keys.extend(parse_blob_keys(field_storages))
   memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
+
+def get_unused_blobs():
+  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
 
 def delete_unused_blobs():
   """This functon must be always called last in the application execution."""
@@ -88,3 +84,14 @@ class UsedBlobs(event.Plugin):
         if blob_key in unused_blob_keys:
           unused_blob_keys.remove(blob_key)
       return unused_blob_keys
+
+
+class UnusedBlobs(event.Plugin):
+  
+  blob_keys_location = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    """Marks a key or a list of keys for deletation"""
+    blob_keys = get_attr(context, self.blob_keys_location)
+    if blob_keys:
+      return field_storage_unused_blobs(blob_keys)
