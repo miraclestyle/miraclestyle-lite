@@ -43,7 +43,7 @@ def delete_unused_blobs():
 
 class UploadURL(event.Plugin):
   
-  gs_bucket_name = ndb.SuperStringProperty('5', required=True, indexed=False)
+  gs_bucket_name = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     upload_url = context.input.get('upload_url')
