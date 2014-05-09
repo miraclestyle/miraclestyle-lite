@@ -32,26 +32,9 @@ def parse_blob_keys(field_storages):
         pass
   return blob_keys
 
-def field_storage_used_blobs(field_storages):
-  """Internal helper for structured properties that handle uploads"""
-  unused_blob_keys = get_unused_blobs()
-  blob_keys = parse_blob_keys(field_storages)
-  for blob_key in blob_keys:
-    unused_blob_keys.remove(blob_key)
-  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
-
-def field_storage_unused_blobs(field_storages):
-  """Internal helper for structured properties that handle uploads"""
-  unused_blob_keys = get_unused_blobs()
-  unused_blob_keys.extend(parse_blob_keys(field_storages))
-  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
-
-def get_unused_blobs():
-  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-
 def delete_unused_blobs():
   """This functon must be always called last in the application execution."""
-  unused_blob_keys = get_unused_blobs()
+  unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
   if len(unused_blob_keys):
     util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
     blobstore.delete(unused_blob_keys)
@@ -74,16 +57,14 @@ class UsedBlobs(event.Plugin):
   blob_keys_location = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
   
   def run(self, context):
-    """Marks a key or a list of keys to not be deleted"""
+    """Marks a key or a list of keys to be preserved"""
     blob_keys = get_attr(context, self.blob_keys_location)
     if blob_keys:
-      unused_blob_keys = get_unused_blobs()
-      if not isinstance(blob_keys, (list, tuple)):
-        blob_keys = [blob_keys]
+      unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+      blob_keys = parse_blob_keys(blob_keys)
       for blob_key in blob_keys:
-        if blob_key in unused_blob_keys:
-          unused_blob_keys.remove(blob_key)
-      return unused_blob_keys
+        unused_blob_keys.remove(blob_key)
+      memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 
 class UnusedBlobs(event.Plugin):
@@ -94,4 +75,6 @@ class UnusedBlobs(event.Plugin):
     """Marks a key or a list of keys for deletation"""
     blob_keys = get_attr(context, self.blob_keys_location)
     if blob_keys:
-      return field_storage_unused_blobs(blob_keys)
+      unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+      unused_blob_keys.extend(parse_blob_keys(blob_keys))
+      memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
