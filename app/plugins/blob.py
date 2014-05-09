@@ -14,7 +14,7 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-_UNUSED_BLOBS_KEY = '_unused_blobs_key'
+_UNUSED_BLOBS_KEY = '_unused_blobs'
 
 def parse_blob_keys(field_storages):
   if not isinstance(field_storages, (list, tuple)):
