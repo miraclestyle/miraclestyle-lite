@@ -14,8 +14,7 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-_UNUSED_BLOB_KEY = '_unused_blob_key'
-
+_UNUSED_BLOBS_KEY = '_unused_blobs_key'
 
 def parse_blob_keys(field_storages):
   if not isinstance(field_storages, (list, tuple)):
@@ -34,7 +33,7 @@ def parse_blob_keys(field_storages):
   return blob_keys
 
 def get_unused_blobs():
-  return memcache.temp_memory_get(_UNUSED_BLOB_KEY, [])
+  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
 
 def unused_blobs(blob_keys):
   """Marks a key or a list of keys for deletation"""
@@ -46,13 +45,13 @@ def field_storage_used_blobs(field_storages):
   blob_keys = parse_blob_keys(field_storages)
   for blob_key in blob_keys:
     unused_blob_keys.remove(blob_key)
-  memcache.temp_memory_set(_UNUSED_BLOB_KEY, unused_blob_keys)
+  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def field_storage_unused_blobs(field_storages):
   """Internal helper for structured properties that handle uploads"""
   unused_blob_keys = get_unused_blobs()
   unused_blob_keys.extend(parse_blob_keys(field_storages))
-  memcache.temp_memory_set(_UNUSED_BLOB_KEY, unused_blob_keys)
+  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def delete_unused_blobs():
   """This functon must be always called last in the application execution."""
@@ -60,7 +59,7 @@ def delete_unused_blobs():
   if len(unused_blob_keys):
     util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
     blobstore.delete(unused_blob_keys)
-    memcache.temp_memory_set(_UNUSED_BLOB_KEY, [])
+    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])
 
 
 class UploadURL(event.Plugin):
