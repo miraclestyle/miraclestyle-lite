@@ -476,7 +476,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'logo': ndb.SuperLocalStructuredImageProperty(blob.Image, validate_images=True), # @todo also logo is needed here!!
+        'logo': ndb.SuperLocalStructuredImageProperty(blob.Image, validate_images=True),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
         },
       _plugins=[
