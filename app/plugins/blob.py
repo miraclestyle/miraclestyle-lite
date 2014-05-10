@@ -41,7 +41,7 @@ def delete_unused_blobs():
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])
 
 
-class UploadURL(event.Plugin):
+class URL(event.Plugin):
   
   gs_bucket_name = ndb.SuperStringProperty('5', indexed=False, required=True)
   
@@ -54,7 +54,7 @@ class UploadURL(event.Plugin):
 
 class Write(event.Plugin):
   
-  blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
+  keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     """Marks a key or a list of keys to be preserved"""
@@ -69,7 +69,7 @@ class Write(event.Plugin):
 
 class Delete(event.Plugin):
   
-  blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
+  keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     """Marks a key or a list of keys for deletation"""
