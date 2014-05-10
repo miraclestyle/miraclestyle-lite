@@ -8,10 +8,8 @@ Created on Apr 15, 2014
 import os
 import hashlib
 
-from google.appengine.api import blobstore
-
 from app import ndb, settings, memcache, util
-from app.srv import event, blob
+from app.srv import event
 from app.srv.setup import Configuration
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib import oauth2
@@ -191,13 +189,12 @@ class DomainCreate(event.Plugin):
   
   def run(self, context):
     config_input = context.input.copy()
-    domain_logo = config_input.get('domain_logo')
-    blob.Manager.used_blobs(domain_logo.image)
     config_input['domain_primary_contact'] = context.user.key
     config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
     config.put()
     context.entities[config.get_kind()] = config
-    
+
+
 class DomainRead(event.Plugin):
   
   def run(self, context):
@@ -209,12 +206,6 @@ class DomainRead(event.Plugin):
     #primary_contact = primary_contact.get_result()
     primary_contact = context.entities['6'].primary_contact.get()
     context.entities['6']._primary_contact_email = primary_contact._primary_email
-
-
-class DomainPrepare(event.Plugin):
-  
-  def run(self, context):
-    context.output['upload_url'] = blobstore.create_upload_url(context.input.get('upload_url'), gs_bucket_name=settings.COMPANY_LOGO_BUCKET)
 
 
 class DomainSearch(event.Plugin):
