@@ -10,8 +10,8 @@ import hashlib
 from app import ndb, settings, memcache
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log, blob
-from app.plugins import common, rule, log, callback, auth
+from app.srv import log as ndb_log, ndb_blob
+from app.plugins import common, rule, log, callback, blob, auth
 
 
 class Session(ndb.BaseModel):
@@ -363,7 +363,7 @@ class Domain(ndb.BaseExpando):
   name = ndb.SuperStringProperty('3', required=True)
   primary_contact = ndb.SuperKeyProperty('4', kind=User, required=True, indexed=False)
   state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = ndb.SuperLocalStructuredImageProperty(blob.Image, '6', required=True)
+  logo = ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, '6', required=True)
   
   _default_indexed = False
   
@@ -423,30 +423,31 @@ class Domain(ndb.BaseExpando):
     Action(
       key=Action.build_key('6', 'prepare'),
       arguments={
-        'upload_url': ndb.SuperStringProperty(required=True)
         },
       _plugins=[
         common.Context(),
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.6'}),
-        auth.DomainPrepare()
+        common.Set(dynamic_values={'output.entity': 'entities.6'})
         ]
       ),
     Action(
       key=Action.build_key('6', 'create'),
       arguments={
         # Domain
+        'upload_url': ndb.SuperStringProperty(required=True),
         'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': ndb.SuperLocalStructuredImageProperty(blob.Image, required=True, validate_images=True)
+        'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True, validate_images=True)
         },
       _plugins=[
         common.Context(),
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
+        blob.UploadURL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
         auth.DomainCreate(transactional=True),
+        blob.UsedBlobs(transactional=True, blob_keys_location='input.domain_logo.image'),
         rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         callback.Payload(transactional=True, queue = 'callback',
@@ -476,21 +477,27 @@ class Domain(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'logo': ndb.SuperLocalStructuredImageProperty(blob.Image, validate_images=True),
-        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
+        'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True),
+        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0'),
+        'upload_url': ndb.SuperStringProperty(required=True)
         },
       _plugins=[
         common.Context(),
         common.Read(),
-        common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact'}),  # @todo Logo will be implemented later.
+        common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact', 'values.6.logo': 'input.logo'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
+        blob.UploadURL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
+        common.Set(transactional=True, dynamic_values={'original_logo': 'entities.6.logo'}),
         rule.Write(transactional=True),
         common.Write(transactional=True),
+        common.Set(transactional=True, dynamic_values={'new_logo': 'entities.6.logo'}),
         log.Entity(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
+        blob.UnusedBlobs(transactional=True, blob_keys_location='original_logo.image'),
+        blob.UsedBlobs(transactional=True, blob_keys_location='new_logo.image'),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
