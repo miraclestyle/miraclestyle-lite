@@ -54,7 +54,7 @@ class UploadURL(event.Plugin):
 
 class UsedBlobs(event.Plugin):
   
-  blob_keys_location = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
+  blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     """Marks a key or a list of keys to be preserved"""
@@ -69,7 +69,7 @@ class UsedBlobs(event.Plugin):
 
 class UnusedBlobs(event.Plugin):
   
-  blob_keys_location = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
+  blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     """Marks a key or a list of keys for deletation"""
