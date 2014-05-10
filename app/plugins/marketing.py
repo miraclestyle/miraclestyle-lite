@@ -100,7 +100,7 @@ class UploadImagesWrite(event.Plugin):
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
       context.catalog_image_keys = []
-      context.catalog_blob_image_keys = []
+      context.write_blobs = []
       for image in context.entities['35']._images:
         if image:
           context.catalog_image_keys.append(image.key.urlsafe())
