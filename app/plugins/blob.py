@@ -58,7 +58,7 @@ class Write(event.Plugin):
   
   def run(self, context):
     """Marks a key or a list of keys to be preserved"""
-    blob_keys = get_attr(context, self.blob_keys_location)
+    blob_keys = get_attr(context, self.keys_location)
     if blob_keys:
       unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
       blob_keys = parse_blob_keys(blob_keys)
@@ -73,7 +73,7 @@ class Delete(event.Plugin):
   
   def run(self, context):
     """Marks a key or a list of keys for deletation"""
-    blob_keys = get_attr(context, self.blob_keys_location)
+    blob_keys = get_attr(context, self.keys_location)
     if blob_keys:
       unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
       unused_blob_keys.extend(parse_blob_keys(blob_keys))
