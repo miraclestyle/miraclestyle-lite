@@ -7,10 +7,8 @@ Created on Apr 15, 2014
 
 import copy
 
-from google.appengine.ext import blobstore
-
 from app import ndb, settings
-from app.srv import event, blob
+from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -56,8 +54,7 @@ class UpdateSet(event.Plugin):
     context.values['35'].publish_date = context.input.get('publish_date')
     context.values['35']._images = context.input.get('_images')
     new_images = []
-    context.delete_image_keys = []
-    context.delete_blob_image_keys = []
+    context.delete_images = []
     if context.values['35']._images:
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.values['35'].key)
@@ -66,8 +63,7 @@ class UpdateSet(event.Plugin):
       context.values['35'].cover = context.values['35']._images[0].key
     for image in context.entities['35']._images:
       if image.key not in new_images:
-        context.delete_image_keys.append(image.key)
-        context.delete_blob_image_keys.append(image.image)
+        context.delete_images.append(image)
     context.entities['35']._images = []
 
 
@@ -75,10 +71,9 @@ class UpdateWrite(event.Plugin):
   
   def run(self, context):
     if context.entities['35']._field_permissions['_images']['writable']:
-      if len(context.delete_image_keys):
-        ndb.delete_multi(context.delete_image_keys)
-      if len(context.delete_blob_image_keys):
-        blob.Manager.unused_blobs(context.delete_blob_image_keys)
+      if len(context.delete_images):
+        ndb.delete_multi([image.key for image in context.delete_images])
+        context.delete_blobs = [image.image for image in context.delete_images]
     context.entities['35'].put()
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
@@ -89,13 +84,8 @@ class UploadImagesSet(event.Plugin):
   def run(self, context):
     from app.srv import marketing
     images = context.input.get('images')
-    upload_url = context.input.get('upload_url')
-    if upload_url:
-      context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+    if not images:  # If no images were saved, do nothing.
       raise event.TerminateAction()
-    else:
-      if not images:  # If no images were saved, do nothing.
-        raise event.TerminateAction()
     i = marketing.CatalogImage.query(ancestor=context.entities['35'].key).count()  # Get last sequence.
     for image in images:
       image.set_key(str(i), parent=context.entities['35'].key)
@@ -110,18 +100,12 @@ class UploadImagesWrite(event.Plugin):
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
       context.catalog_image_keys = []
+      context.catalog_blob_image_keys = []
       for image in context.entities['35']._images:
         if image:
           context.catalog_image_keys.append(image.key.urlsafe())
+          context.write_blobs.append(image.image)
           context.log_entities.append((image, ))
-
-
-class UploadImagesUsedBlobs(event.Plugin):
-  
-  def run(self, context):
-    for image in context.entities['35']._images:
-      if image:
-        blob.Manager.used_blobs(image.image)
 
 
 class ProcessImages(event.Plugin):
