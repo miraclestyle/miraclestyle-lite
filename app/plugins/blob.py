@@ -52,7 +52,7 @@ class UploadURL(event.Plugin):
       raise event.TerminateAction()
 
 
-class UsedBlobs(event.Plugin):
+class Write(event.Plugin):
   
   blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
@@ -67,7 +67,7 @@ class UsedBlobs(event.Plugin):
       memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 
-class UnusedBlobs(event.Plugin):
+class Delete(event.Plugin):
   
   blob_keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
