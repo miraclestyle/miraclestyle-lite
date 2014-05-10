@@ -7,10 +7,10 @@ Created on May 6, 2014
 
 from app import ndb, settings
 from app.srv.event import Action
-from app.srv import blob
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
-from app.plugins import common, rule, log, callback, marketing
+from app.srv import blob as ndb_blob
+from app.plugins import common, rule, log, callback, blob, marketing
 
 
 # this is LocalStructuredProperty and is repeated per catalog image.
@@ -26,7 +26,7 @@ class CatalogPricetag(ndb.BaseModel):
   value = ndb.SuperStringProperty('4', required=True, indexed=False)
 
 
-class CatalogImage(blob.Image):
+class CatalogImage(ndb_blob.Image):
   
   _kind = 36
   
@@ -165,6 +165,7 @@ class Catalog(ndb.BaseExpando):
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35',
                                                        'output.images_cursor': 'images_cursor',
                                                        'output.more_images': 'more_images'}),
+        blob.Delete(transactional=True, keys_location='delete_blobs'),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
@@ -359,13 +360,14 @@ class Catalog(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
+        blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
         marketing.UploadImagesSet(),
         rule.Write(transactional=True),
         marketing.UploadImagesWrite(transactional=True),
         log.Write(transactional=True),
-        marketing.UploadImagesUsedBlobs(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        blob.Write(transactional=True, keys_location='write_blobs'),
         callback.Payload(transactional=True, queue = 'notify',
                          static_data = {'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
