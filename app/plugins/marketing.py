@@ -83,15 +83,15 @@ class UploadImagesSet(event.Plugin):
   
   def run(self, context):
     from app.srv import marketing
-    images = context.input.get('images')
-    if not images:  # If no images were saved, do nothing.
+    _images = context.input.get('_images')
+    if not _images:  # If no images were saved, do nothing.
       raise event.TerminateAction()
     i = marketing.CatalogImage.query(ancestor=context.entities['35'].key).count()  # Get last sequence.
-    for image in images:
+    for image in _images:
       image.set_key(str(i), parent=context.entities['35'].key)
       i += 1
     context.entities['35']._images = []
-    context.values['35']._images = images
+    context.values['35']._images = _images
 
 
 class UploadImagesWrite(event.Plugin):

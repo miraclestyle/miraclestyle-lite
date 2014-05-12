@@ -352,7 +352,7 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'upload_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
+        '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
         'upload_url': ndb.SuperStringProperty()
         },
       _plugins=[
