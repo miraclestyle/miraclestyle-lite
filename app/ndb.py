@@ -138,39 +138,37 @@ def _structured_image_property_format(prop, value):
   
   """
   value = _property_value(prop, value)
-  if not prop._repeated:
-    blobs = [value]
-  else:
+  if prop._repeated:
     blobs = value
-  models = []
+  else:
+    blobs = [value]
+  out = []
   for blob in blobs:
     # These will throw errors if the 'blob' is not cgi.FileStorage.
     if not isinstance(blob, cgi.FieldStorage) and not prop._required:
       continue
-      
     file_info = blobstore.parse_file_info(blob)
     blob_info = blobstore.parse_blob_info(blob)
     meta_required = ('image/jpeg', 'image/jpg', 'image/png')
     if file_info.content_type not in meta_required:
       raise PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-    models.append(prop._modelclass(**{'size': file_info.size,
+    out.append(prop._modelclass(**{'size': file_info.size,
                                       'content_type': file_info.content_type,
                                       'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()}))
   if prop._validate_images:
-    models = validate_images(models)
-  if not prop._repeated:
-    if len(models):
-      return models[0]
+    out = validate_images(out)
+  if prop._repeated:
+    return out
+  else:
+    if len(out):
+      return out[0]
     else:
       return None
-  else:
-    return models
 
 def make_complete_name(entity, name_property, parent_property=None, separator=None):
   if separator is None:
     separator = unicode(' / ')
-  
   path = entity
   names = []
   while True:
@@ -188,7 +186,6 @@ def make_complete_name(entity, name_property, parent_property=None, separator=No
     else:
       names.append(getattr(path, name_property))
       path = parent
-  
   names.reverse()
   return separator.join(names)
 
@@ -509,7 +506,6 @@ class BaseExpando(_BaseModel, Expando):
   
   def _get_property_for(self, p, indexed=True, depth=0):
     """Internal helper method to get the Property for a protobuf-level property."""
-    
     name = p.name()
     parts = name.split('.')
     if len(parts) <= depth:
@@ -530,7 +526,6 @@ class BaseExpando(_BaseModel, Expando):
             prop = expando_prop
             self._properties[expando_prop._name] = expando_prop
             break
-    
     if prop is None:
       prop = self._fake_property(p, next, indexed)
     return prop
@@ -638,8 +633,8 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       value = [value]
       single = True
     out = []
-    for val in value:
-      out.append(datetime.datetime.strptime(val, settings.DATETIME_FORMAT))
+    for v in value:
+      out.append(datetime.datetime.strptime(v, settings.DATETIME_FORMAT))
     if single:
       try:
         return out[0]
@@ -716,16 +711,13 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     else:
       returns = [Key(urlsafe=value)]
       single = True
-    
     for k in returns:
       if self._kind and k.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    
     items = get_multi(returns, use_cache=True)
     for i, item in enumerate(items):
       if item is None:
         raise PropertyError('not_found_%s' % returns[i].urlsafe())
-    
     if single:
       return returns[0]
     else:
@@ -748,11 +740,9 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
     else:
       returns = [Key(urlsafe=value)]
       single = True
-    
     for k in returns:
       if self._kind and k.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    
     if single:
       return returns[0]
     else:
@@ -774,19 +764,19 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   def format(self, value):
     value = _property_value(self, value)
     if self._repeated:
-      values = []
+      out = []
       for v in value:
         # This alone will raise error if the upload is malformed.
         try:
           blob = blobstore.parse_blob_info(v).key()
         except:
           blob = blobstore.BlobKey(v)
-        values.append(blob)
-      return values
+        out.append(blob)
+      return out
     else:
       # This alone will raise error if the upload is malformed.
       try:
-        blob = blobstore.BlobKey(value)
+        blob = blobstore.BlobKey(value)  # @todo The above try/except block has these lines permutated. Is this block correct?
       except:
         blob = blobstore.parse_blob_info(value).key()
       return blob
@@ -803,23 +793,22 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
   
   def format(self, value):
     value = _property_value(self, value)
-    if not self._repeated:
+    if self._repeated:
+      blobs = value
+      out = []
+      for v in value:
+        try:
+          out.append(blobstore.parse_blob_info(v).key())
+        except:
+          blobs.remove(v)
+          out.append(blobstore.BlobInfo(v))
+      value = out
+    else:
       blobs = [value]
       try:
         value = blobstore.parse_blob_info(value).key()
       except:
         return blobstore.BlobKey(value)
-    else:
-      blobs = value
-      value_ = []
-      for val in value:
-        try:
-          value_.append(blobstore.parse_blob_info(val).key())
-        except:
-          blobs.remove(val)
-          value_.append(blobstore.BlobInfo(val))
-      value = value_
-    
     for blob in blobs:
       info = blobstore.parse_file_info(blob)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')
@@ -834,7 +823,6 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
       # Closes the pipeline.
       cloudstorage_file.close()
       del load_image, cloudstorage_file  # Free memory.
-    
     return value
 
 
