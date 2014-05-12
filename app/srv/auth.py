@@ -616,7 +616,7 @@ class Domain(ndb.BaseExpando):
         common.Context(),
         common.Read(),
         common.Set(dynamic_values={'values.6.state': 'input.state'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
