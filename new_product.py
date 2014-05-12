@@ -172,7 +172,7 @@ class Template(ndb.BaseExpando):
         'description': ndb.SuperTextProperty(required=True),
         'product_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True),
+        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'code': ndb.SuperStringProperty(required=True),
         'weight': ndb.SuperDecimalProperty(required=True),
         'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
@@ -201,7 +201,7 @@ class Template(ndb.BaseExpando):
         'description': ndb.SuperTextProperty(required=True),
         'product_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperIntegerProperty(required=True),
+        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'code': ndb.SuperStringProperty(required=True),
         'weight': ndb.SuperDecimalProperty(required=True),
         'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
@@ -282,7 +282,7 @@ class Instance(ndb.BaseExpando):
   
   _expando_fields = {
     'code': ndb.SuperStringProperty('1', required=True),
-    'availability': ndb.SuperStringProperty('2', required=True),
+    'availability': ndb.SuperStringProperty('2', required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
     'description': ndb.SuperTextProperty('3', required=True),
     'unit_price': ndb.SuperDecimalProperty('4', required=True),
     'low_stock_quantity': ndb.SuperDecimalProperty('5', default='0.00'),
@@ -309,7 +309,7 @@ class Instance(ndb.BaseExpando):
       key=Action.build_key('39', 'update'),
       arguments={
         'code': ndb.SuperStringProperty(required=True),
-        'availability': ndb.SuperIntegerProperty(required=True),
+        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'description': ndb.SuperTextProperty(required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
         '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
@@ -413,4 +413,3 @@ def build_categories():
   return write_data
 
 register_system_categories(*(Category(**d) for d in build_categories()))
-      
