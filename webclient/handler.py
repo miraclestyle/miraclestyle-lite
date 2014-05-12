@@ -13,9 +13,8 @@ import importlib
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
-from app import settings, util
-from app.srv import blob
-from app.memcache import _local
+from app import settings, util, memcache
+from app.plugins import blob
  
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
@@ -192,11 +191,10 @@ class Base(webapp2.RequestHandler):
   
     def initialize(self, request, response):
         super(Base, self).initialize(request, response)
- 
         for key, value in self.request.params.items():
             if isinstance(value, cgi.FieldStorage):
               if 'blob-key' in value.type_options:
-                  blob.Manager.field_storage_unused_blobs(value)
+                  blob.unused_blobs(value)
 
          
     def send_json(self, data):
@@ -258,13 +256,13 @@ class Base(webapp2.RequestHandler):
     def dispatch(self):
       
         csrf = None
-        csrf_cookie_value = self.request.cookies.get('XSRF-TOKEN')
+        csrf_cookie_value = self.request.cookies.get(webclient_settings.COOKIE_CSRF_KEY)
         
         if self.LOAD_CURRENT_USER:
           
            from app.srv import auth
            
-           auth.User.login_from_authorization_code(self.request.cookies.get('auth'))
+           auth.User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
            
            current_user = auth.User.current_user()
            current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName'))
@@ -273,10 +271,10 @@ class Base(webapp2.RequestHandler):
  
            csrf = current_user._csrf
             
-        if not csrf_cookie_value or (csrf != csrf_cookie_value):
+        if not csrf_cookie_value:
            if csrf == None:
               csrf = util.random_chars(32)
-           self.response.set_cookie('XSRF-TOKEN', csrf)
+           self.response.set_cookie(webclient_settings.COOKIE_CSRF_KEY, csrf)
             
         try:
             self.before()
@@ -286,11 +284,10 @@ class Base(webapp2.RequestHandler):
             self.after()
         finally:
             
-            # delete all blobs that did not got used in the application execution
-            blob.Manager.delete_unused_blobs()
-            
-            # support the core's locals, and release them upon request complete
-            _local.__release_local__()
+            # delete all blobs that were marked for deletation
+            blob.delete_unused_blobs()
+            # support the memcache wrapper lib temporary variables, and release them upon request complete
+            memcache._local.__release_local__()
          
 class Blank(Base):
   

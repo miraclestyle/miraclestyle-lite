@@ -145,6 +145,9 @@ def _structured_image_property_format(prop, value):
   models = []
   for blob in blobs:
     # These will throw errors if the 'blob' is not cgi.FileStorage.
+    if not isinstance(blob, cgi.FieldStorage) and not prop._required:
+      continue
+      
     file_info = blobstore.parse_file_info(blob)
     blob_info = blobstore.parse_blob_info(blob)
     meta_required = ('image/jpeg', 'image/jpg', 'image/png')

@@ -116,9 +116,15 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                             $scope.rule = RuleEngine.factory(data['entity']);
                             $scope.entity = data['entity'];
                             $scope.step = 1;
-                            $scope.upload_url = data.upload_url;
-
-
+                            $scope.form_info = {'action' : Endpoint.url};
+                            
+                            $scope.createUploadUrlOnSelectOptions = {
+                            	'complete' : function (data)
+	                            {
+	                            	$scope.form_info.action = data.upload_url;
+	                            }
+                            };
+                   
                             $scope.nextStep = function (which_step) {
                                 $scope.step = which_step;
                             };
@@ -130,14 +136,14 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                         function () {
                                             $scope.cancel();
                                         });
+                                        
                                 } else {
 
                                     Confirm.notice('An error occurred, please try again.', function () {
                                         Endpoint.post('prepare', '6', {
                                             'upload_url': Endpoint.url
                                         }).success(function (data) {
-
-                                            $scope.upload_url = data.upload_url;
+                                            $scope.form_info.action = data.upload_url;
                                         });
                                     });
 
@@ -154,9 +160,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
                 };
 
-                Endpoint.post('prepare', '6', {
-                    'upload_url': Endpoint.url
-                }).success(handle);
+                Endpoint.post('prepare', '6', {}).success(handle);
 
             },
             update: function (entity) {
@@ -169,7 +173,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                         controller: function ($scope, $modalInstance, RuleEngine) {
 
                             update(entity, data['entity']);
-
+							
+							$scope.form_info = {'action' : Endpoint.url, 'blobstore' : false};
                             $scope.rule = RuleEngine.factory(data['entity']);
                             $scope.entity = angular.copy(entity);
                             $scope.container = {};
@@ -178,6 +183,13 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                 'args': {
                                     'key': entity['key'],
                                 }
+                            };
+                            
+                            $scope.createUploadUrlOnSelectOptions = {
+                            	'complete' : function (data)
+	                            {
+	                            	$scope.form_info.action = data.upload_url;
+	                            }
                             };
 
                             $parentScope = $scope;
@@ -274,6 +286,20 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                             $scope.activate = function () {
                                 this._do_user_admin(entity, 'activate');
                             };
+                            
+                            var saved = function (data) {
+                       
+                                  update($scope.entity, entity, data['entity']);
+
+                                  $scope.rule.update(data['entity']);
+
+                            };
+                            
+                            $scope.completed = function (data)
+                            {
+                            	saved(data);
+                            	 
+                            };
 
                             $scope.save = function () {
 
@@ -282,13 +308,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                     'primary_contact': $scope.entity['primary_contact'],
                                     'key': $scope.entity['key'],
                                 })
-                                .success(function (data) {
-
-                                        update($scope.entity, entity, data['entity']);
-
-                                        $scope.rule.update(data['entity']);
-
-                                 });
+                                .success(saved);
 
                             };
 

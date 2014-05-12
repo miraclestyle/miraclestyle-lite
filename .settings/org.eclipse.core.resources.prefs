@@ -7,6 +7,7 @@ encoding//app/ndb.py=utf-8
 encoding//app/opt/buyer.py=utf-8
 encoding//app/opt/misc.py=utf-8
 encoding//app/plugins/auth.py=utf-8
+encoding//app/plugins/blob.py=utf-8
 encoding//app/plugins/callback.py=utf-8
 encoding//app/plugins/common.py=utf-8
 encoding//app/plugins/log.py=utf-8

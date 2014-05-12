@@ -57,9 +57,7 @@ class Engine:
   
   @classmethod
   def get_schema(cls):
-    # product
-    # from app import etc, opt
-    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing
+    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, uom
     kinds = ndb.Model._kind_map
     return kinds
   

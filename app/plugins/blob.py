@@ -9,9 +9,9 @@ import cgi
 
 from google.appengine.ext import blobstore
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.srv import event
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app.lib.attribute_manipulator import get_attr
 
 
 _UNUSED_BLOBS_KEY = '_unused_blobs'
@@ -32,13 +32,22 @@ def parse_blob_keys(field_storages):
         pass
   return blob_keys
 
+def get_unused_blobs():
+  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+
 def delete_unused_blobs():
   """This functon must be always called last in the application execution."""
-  unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+  unused_blob_keys = get_unused_blobs()
   if len(unused_blob_keys):
-    util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
+    util.logger('DELETED BLOBS: %s' % len(unused_blob_keys)) # for debug purposes
     blobstore.delete(unused_blob_keys)
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])
+     
+def unused_blobs(field_storages):
+  """Internal helper for appending blob keys and marking them as unused"""
+  unused_blob_keys = get_unused_blobs()
+  unused_blob_keys.extend(parse_blob_keys(field_storages))
+  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 
 class URL(event.Plugin):

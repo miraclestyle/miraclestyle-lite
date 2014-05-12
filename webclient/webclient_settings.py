@@ -47,4 +47,8 @@ JQUERY_PLUGINS = [
                   'select2/select2',
                  ]
 
+
+COOKIE_CSRF_KEY = 'XSRF-TOKEN'
+COOKIE_USER_KEY = 'auth'
+
 WEBAPP2_EXTRAS = {}

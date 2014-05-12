@@ -1,4 +1,9 @@
-<form name="container.main" ng-submit="save()">
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
+
+<input type="hidden" name="key" value="{{entity.key}}" />	
+<input type="hidden" name="action_id" value="update" />
+<input type="hidden" name="action_model" value="6" />
+
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
 	
@@ -41,16 +46,17 @@
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input ng-disabled="!rule.field.name.writable" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+				 <input name="name" ng-disabled="!rule.field.name.writable"
+				 	    ng-required="rule.input[action].name.required" 
+				 	    class="text-input" type="text" ng-model="entity.name" />
 			</div>
 		</div>
 	</div>
-	
 	 
 	<div class="form-control">
 		<label class="form-label">Primary Contact</label>
 		<div class="form-input">
-			<select ng-disabled="!rule.field.primary_contact.writable" 
+			<select name="primary_contact" ng-disabled="!rule.field.primary_contact.writable" 
 				    ng-required="rule.input[action].primary_contact.required"
 				    ui-select2 ng-model="entity.primary_contact" data-placeholder="Select primary contact for this App">
 				    <option value=""></option>
@@ -58,8 +64,29 @@
 			</select>
 		</div>
 	</div>	 
-	 
 	
+	<div class="form-control">
+		<label class="form-label">Logo</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input create-upload-url-on-select="createUploadUrlOnSelectOptions" name="logo" ng-required="true" type="file" ng-model="entity.domain_logo" />
+		 
+			</div>
+		</div>
+	</div>
+	 
+	<div class="form-control">
+		<label class="form-label">Current logo</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <div>
+					 <img style="max-width:240px;height:auto;" ng-src="{{entity.logo.serving_url}}" />
+				 </div>
+			</div>
+		</div>
+		
+	</div>
+	  
 	<div ng-show="rule.action.read_records.executable && entity.id" class="form-control">
 		<div ng-include="logic_template('misc/logs.html')"></div>
 	</div>
@@ -82,7 +109,7 @@
 		Activate
 	</button>
  
-	<button ng-show="rule.action.update.executable" busy class="button">
+	<button type="submit" ng-disabled="!container.main.$valid || $isUploading" ng-show="rule.action.update.executable" busy class="button">
 		Save
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

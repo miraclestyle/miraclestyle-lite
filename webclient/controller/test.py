@@ -15,17 +15,11 @@ class Reset(handler.Angular):
   
   def respond(self):
     
-      from app import srv
-      #from app import opt
-    
-      models = [srv.auth.Domain, srv.log.Record, srv.setup.Configuration, srv.auth.User, srv.rule.DomainRole, srv.rule.DomainUser,
-                srv.setup.Configuration, srv.nav.Widget, srv.event.Action, srv.notify.Template,
-                #srv.business.Company, srv.business.CompanyContent, srv.marketing.Catalog,
-                #srv.marketing.CatalogImage, srv.marketing.CatalogPricetag, srv.product.Content,
-                #srv.product.Instance, srv.product.InventoryAdjustment, srv.product.InventoryLog,
-                #srv.product.Variant, srv.product.Template, opt.buyer.Address, opt.buyer.Collection, 
-                #opt.misc.Content, opt.misc.ProductCategory, opt.misc.SupportRequest
-                
+      from app.srv import auth, log, setup, rule, nav, event, notify, marketing
+ 
+      models = [auth.Domain, log.Record, setup.Configuration, auth.User, rule.DomainRole, rule.DomainUser,
+                setup.Configuration, nav.Widget, event.Action, notify.Template,
+                marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                 ]
       
       if self.request.get('delete'):

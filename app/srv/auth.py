@@ -10,7 +10,8 @@ import hashlib
 from app import ndb, settings, memcache
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log, ndb_blob
+from app.srv import log as ndb_log
+from app.srv import blob as ndb_blob
 from app.plugins import common, rule, log, callback, blob, auth
 
 
@@ -411,12 +412,14 @@ class Domain(ndb.BaseExpando):
     Action(
       key=Action.build_key('6', 'prepare'),
       arguments={
+          'upload_url': ndb.SuperStringProperty(), # it has to be here cuz we will get domain_name and domain_logo required errors        
         },
       _plugins=[
         common.Context(),
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
+        blob.URL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
         common.Set(dynamic_values={'output.entity': 'entities.6'})
         ]
       ),
@@ -424,7 +427,6 @@ class Domain(ndb.BaseExpando):
       key=Action.build_key('6', 'create'),
       arguments={
         # Domain
-        'upload_url': ndb.SuperStringProperty(required=True),
         'domain_name': ndb.SuperStringProperty(required=True),
         'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True, validate_images=True)
         },
@@ -433,7 +435,6 @@ class Domain(ndb.BaseExpando):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        blob.URL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
         auth.DomainCreate(transactional=True),
         blob.Write(transactional=True, keys_location='input.domain_logo.image'),
         rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
@@ -467,7 +468,6 @@ class Domain(ndb.BaseExpando):
         'name': ndb.SuperStringProperty(required=True),
         'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0'),
-        'upload_url': ndb.SuperStringProperty(required=True)
         },
       _plugins=[
         common.Context(),
@@ -475,7 +475,6 @@ class Domain(ndb.BaseExpando):
         common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact', 'values.6.logo': 'input.logo'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        blob.URL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
         common.Set(transactional=True, dynamic_values={'original_logo': 'entities.6.logo'}),
         rule.Write(transactional=True),
         common.Write(transactional=True),

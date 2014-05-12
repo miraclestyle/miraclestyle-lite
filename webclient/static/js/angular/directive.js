@@ -56,8 +56,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 .directive('submitOnChange', ['$parse', function ($parse) {
  
 	return {
-		
-		
+		 
         link: function(scope, element, attrs, controller) {
         	
         	var callback = $parse(attrs.submitOnChange);
@@ -84,6 +83,40 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
         }
     };
 })
+.directive('createUploadUrlOnSelect', ['Endpoint', function (Endpoint) {
+	return {
+		link : function (scope, element, attrs)
+		{
+			var change = function () {
+				
+				var that = $(this);
+				
+				if (!that.val()) return false;
+		 
+				var options = resolve_defaults({
+					'kind' : scope.entity.kind,
+					'action' : 'prepare',
+					'args' : {},
+				}, scope.$eval(attrs.createUploadUrlOnSelect));
+			 
+				Endpoint.post(options['action'], 
+							  options['kind'], 
+							  angular.extend({'upload_url' : Endpoint.url}, options['args'])
+							 )
+							 .success(function (data) {
+				        	 	 if ('complete' in options)
+				        	 	 options['complete'](data);
+			            	});
+            };
+           
+			$(element).on('change', change);
+			
+			scope.$on('$destroy', function () {
+				$(element).off('change', change);
+			});
+		}
+	};
+}])
 .directive('uploadOnSelect', ['Endpoint', function (Endpoint) {
 	return {
 		link : function (scope, element, attrs)
@@ -91,6 +124,9 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 			var change = function () {
 				
 				var that = $(this);
+				
+				if (!that.val()) return false;
+				
 				var form = that.parents('[ng-form]:first');
 				if (!form.length)
 				{
@@ -103,6 +139,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 						'key' : scope.entity.key,
 					},
 				}, scope.$eval(attrs.uploadOnSelect));
+				 
 			 
 				Endpoint.post(options['action'], options['kind'], angular.extend({'upload_url' : Endpoint.url}, options['args'])).success(function (data) {
 	        	 	form.attr('action', data.upload_url).trigger('submit');

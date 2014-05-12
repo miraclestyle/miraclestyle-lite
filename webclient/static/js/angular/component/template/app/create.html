@@ -1,4 +1,4 @@
-<form ng-attr-action="{{upload_url}}" ng-upload="completed(content)" name="container.main">
+<form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
 <input type="hidden" name="action_id" value="create" />
 <input type="hidden" name="action_model" value="6" />
@@ -18,11 +18,11 @@
 		</div>
 	</div>
 	
-		<div class="form-control">
+	<div class="form-control">
 		<label class="form-label">Logo</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="domain_logo" ng-required="true" type="file" ng-model="entity.domain_logo" />
+				 <input create-upload-url-on-select="createUploadUrlOnSelectOptions" name="domain_logo" ng-required="true" type="file" ng-model="entity.domain_logo" />
 			</div>
 		</div>
 	</div>
@@ -33,7 +33,6 @@
 <div ng-form="company_form" ng-show="step == 2">
 	
 	<h2 class="fieldset">Other</h2>
-  
     <div class="form-control">
 		<label class="form-label">Stuff</label>
 		<div class="form-input">
@@ -43,26 +42,20 @@
 		</div>
 	</div>
 	
-	
-
-	
- 
 </div>
  
 </div>
 </div>
 
 <div class="modal-footer">
-    
-    
+     
     <button type="button" class="button" ng-click="nextStep(step-1)" ng-show="step > 1">
 		Back
 	</button>
-	
 	<button type="button" class="button" ng-click="nextStep(2)" ng-show="step == 1" ng-disabled="!container.main.$valid">
 		Next
 	</button>
-	<button  ng-disabled="!container.main.$valid || $isUploading" ng-show="step == 2" busy class="button">
+	<button type="submit" ng-disabled="!container.main.$valid || $isUploading" ng-show="step == 2" busy class="button">
 		Submit
 	</button>
 	<button type="button" class="button" ng-click="cancel()">
