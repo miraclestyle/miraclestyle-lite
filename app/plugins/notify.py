@@ -23,7 +23,6 @@ class Prepare(event.Plugin):
     context.values[context.model.get_kind()] = context.model(namespace=context.entities['caller_entity'].key_namespace)
 
 
-
 class MailSend(event.Plugin):
   
   def run(self, context):
@@ -49,12 +48,3 @@ class Initiate(event.Plugin):
     if templates:
       for template in templates:
         template.run(context)
-
-      
-      
-class RolesAndUsers(event.Plugin):
-  
-  def run(self, context):
-    from app.srv.rule import DomainUser, DomainRole
-    context.output['users'] = DomainUser.query(namespace=context.output['entity'].key_namespace).fetch()
-    context.output['roles'] = DomainRole.query(namespace=context.output['entity'].key_namespace).fetch()
