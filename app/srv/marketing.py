@@ -82,13 +82,15 @@ class Catalog(ndb.BaseExpando):
     Action(
       key=Action.build_key('35', 'prepare'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'upload_url': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
+        blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
         common.Set(dynamic_values={'output.entity': 'entities.35'})
         ]
       ),
@@ -293,8 +295,8 @@ class Catalog(ndb.BaseExpando):
     Action(
       key=Action.build_key('35', 'discontinue'),
       arguments={
-        'key'  : ndb.SuperKeyProperty(kind='35', required=True),
-        'message' : ndb.SuperTextProperty(required=True)
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'message': ndb.SuperTextProperty(required=True)
         #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
       _plugins=[
@@ -352,15 +354,13 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'upload_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True),
-        'upload_url': ndb.SuperStringProperty()
+        '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True)
         },
       _plugins=[
         common.Context(),
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
         marketing.UploadImagesSet(),
         rule.Write(transactional=True),
         marketing.UploadImagesWrite(transactional=True),
