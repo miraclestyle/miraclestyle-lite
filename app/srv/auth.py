@@ -412,7 +412,7 @@ class Domain(ndb.BaseExpando):
     Action(
       key=Action.build_key('6', 'prepare'),
       arguments={
-          'upload_url': ndb.SuperStringProperty(), # it has to be here cuz we will get domain_name and domain_logo required errors        
+          'upload_url': ndb.SuperStringProperty(),
         },
       _plugins=[
         common.Context(),
@@ -467,7 +467,7 @@ class Domain(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True),
-        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0'),
+        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
         },
       _plugins=[
         common.Context(),
