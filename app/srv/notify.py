@@ -56,8 +56,7 @@ class Template(ndb.BasePoly):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.61'}),
-        notify.RolesAndUsers()
+        common.Set(dynamic_values={'output.entity': 'entities.61'})
         ]
       ),
     Action(
@@ -186,8 +185,7 @@ class MailNotify(Template):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.58'}),
-        notify.RolesAndUsers()
+        common.Set(dynamic_values={'output.entity': 'entities.58'})
         ]
       ),
     Action(
@@ -240,8 +238,7 @@ class MailNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.58'}),
-        notify.RolesAndUsers()
+        common.Set(dynamic_values={'output.entity': 'entities.58'})
         ]
       ),
     Action(
@@ -409,8 +406,7 @@ class HttpNotify(Template):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.63'}),
-        notify.RolesAndUsers()
+        common.Set(dynamic_values={'output.entity': 'entities.63'})
         ]
       ),
     Action(
@@ -463,8 +459,7 @@ class HttpNotify(Template):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.63'}),
-        notify.RolesAndUsers()
+        common.Set(dynamic_values={'output.entity': 'entities.63'})
         ]
       ),
     Action(
