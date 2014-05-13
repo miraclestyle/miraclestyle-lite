@@ -391,10 +391,3 @@ class DomainUserCleanRoles(event.Plugin):
     for i, role in enumerate(roles):
       if role is None:
         context.values['8'].roles.pop(i)
-
-
-class SelectRoles(event.Plugin):
-  
-  def run(self, context):
-    from app.srv import rule
-    context.output['roles'] = rule.DomainRole.query(rule.DomainRole.active == True, namespace=context.entities['8'].key_namespace).fetch()

@@ -7,7 +7,6 @@ Created on Apr 15, 2014
 
 from app import ndb, settings
 from app.srv import event
-from app.srv.rule import DomainRole
 
 
 class Set(event.Plugin):
@@ -37,9 +36,3 @@ class BuildMenu(event.Plugin):
                             model.role.IN(domain_user.roles),
                             namespace=context.domain.key_namespace).order(model.sequence).fetch()
       context.widgets = widgets
-
-
-class SelectRoles(event.Plugin):
-  
-  def run(self, context):
-    context.output['roles'] = DomainRole.query(DomainRole.active == True, namespace=context.entities['62'].key_namespace).fetch()

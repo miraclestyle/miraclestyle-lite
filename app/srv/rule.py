@@ -361,8 +361,7 @@ class DomainUser(ndb.BaseModel):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.8'}),
-        rule.SelectRoles()
+        common.Set(dynamic_values={'output.entity': 'entities.8'})
         ]
       ),
     Action(
@@ -402,8 +401,7 @@ class DomainUser(ndb.BaseModel):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.8'}),
-        rule.SelectRoles()
+        common.Set(dynamic_values={'output.entity': 'entities.8'})
         ]
       ),
     Action(
