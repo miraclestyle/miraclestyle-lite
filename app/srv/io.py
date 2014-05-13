@@ -56,10 +56,15 @@ class Context():
 class Engine:
   
   @classmethod
+  def init(cls):
+    from app.opt import buyer
+    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, uom, location
+    # this function initilizes all models, must be called before executing anything
+  
+  @classmethod
   def get_schema(cls):
-    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, uom
-    kinds = ndb.Model._kind_map
-    return kinds
+    cls.init()
+    return ndb.Model._kind_map
   
   @classmethod
   def get_model(cls, context, input):
@@ -153,6 +158,7 @@ class Engine:
   def run(cls, input):
     context = Context()
     try:
+      cls.init()
       cls.get_model(context, input)
       cls.get_action(context, input)
       cls.process_action_input(context, input)

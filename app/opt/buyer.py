@@ -4,328 +4,152 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import ndb
-from app.srv import rule, event, log
+import time
+import hashlib
+
+from app import ndb, util
+from app.srv.event import Action
+from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
+from app.plugins import common, rule, log, callback, buyer
  
 class Address(ndb.BaseExpando):
     
     _kind = 9
     # ancestor User
     # composite index: ancestor:yes - name
-    name = ndb.SuperStringProperty('1', required=True)
-    country = ndb.SuperKeyProperty('2', kind='15', required=True, indexed=False)
-    city = ndb.SuperStringProperty('3', required=True, indexed=False)
-    postal_code = ndb.SuperStringProperty('4', required=True, indexed=False)
-    street = ndb.SuperStringProperty('5', required=True, indexed=False)
-    default_shipping = ndb.SuperBooleanProperty('6', default=True, indexed=False)
-    default_billing = ndb.SuperBooleanProperty('7', default=True, indexed=False)
+    internal_id = ndb.SuperStringProperty('1', required=True) # md5 hash => <timestamp>-<random_str>-<name>-<city>-<postal code>-<street>-<default_shipping>-<default_billing>
+    name = ndb.SuperStringProperty('2', required=True)
+    country = ndb.SuperKeyProperty('3', kind='15', required=True, indexed=False)
+    city = ndb.SuperStringProperty('4', required=True, indexed=False)
+    postal_code = ndb.SuperStringProperty('5', required=True, indexed=False)
+    street = ndb.SuperStringProperty('6', required=True, indexed=False)
+    default_shipping = ndb.SuperBooleanProperty('7', default=True, indexed=False)
+    default_billing = ndb.SuperBooleanProperty('8', default=True, indexed=False)
   
     _default_indexed = False
     
-    _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('9', event.Action.build_key('9-0').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                                rule.ActionPermission('9', event.Action.build_key('9-3').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                                rule.ActionPermission('9', event.Action.build_key('9-1').urlsafe(), True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                               ])
- 
     _expando_fields = {
-        'region' :  ndb.SuperKeyProperty('8', kind='16'),
+        'region' :  ndb.SuperKeyProperty('9', kind='16'),
         'email' : ndb.SuperStringProperty('10'),
         'telephone' : ndb.SuperStringProperty('11'),
     }
-
-    _actions = {
-       'update' : event.Action(id='9-0',
-                              arguments={
-              
-                                 'name' : ndb.SuperStringProperty(required=True),
-                                 'country' : ndb.SuperKeyProperty(kind='15', required=True),
-                                 'city' : ndb.SuperStringProperty(required=True),
-                                 'postal_code' : ndb.SuperStringProperty(required=True),
-                                 'street' : ndb.SuperStringProperty(required=True),
-                                 'default_shipping' : ndb.SuperBooleanProperty(default=True),
-                                 'default_billing' : ndb.SuperBooleanProperty(default=True),
-                                 
-                                 'key' : ndb.SuperKeyProperty(kind='9', required=True),
-                                 
-                                  # expando
-                                 'region' :  ndb.SuperKeyProperty(kind='16'),
-                                 'email' : ndb.SuperStringProperty(),
-                                 'telephone' : ndb.SuperStringProperty(),
-                              }
-                             ),
-                
-       'create' : event.Action(id='9-3',
-                              arguments={
-              
-                                 'name' : ndb.SuperStringProperty(required=True),
-                                 'country' : ndb.SuperKeyProperty(kind='15', required=True),
-                                 'city' : ndb.SuperStringProperty(required=True),
-                                 'postal_code' : ndb.SuperStringProperty(required=True),
-                                 'street' : ndb.SuperStringProperty(required=True),
-                                 'default_shipping' : ndb.SuperBooleanProperty(default=True),
-                                 'default_billing' : ndb.SuperBooleanProperty(default=True),
-                                
-                                  # expando
-                                 'region' :  ndb.SuperKeyProperty(kind='16'),
-                                 'email' : ndb.SuperStringProperty(),
-                                 'telephone' : ndb.SuperStringProperty(),
-                              }
-                             ),
-                
-       'delete' : event.Action(id='9-1',
-                              arguments={
-                                 'address' : ndb.SuperKeyProperty(kind='9', required=True),
-                              }
-                             ),
-                
-       'list' : event.Action(id='9-2'),
-    }  
- 
-      
-    @classmethod
-    def list(cls, context):
-      
-        user = context.auth.user
-              
-        context.output['addresses'] = cls.query(ancestor=user.key).fetch()
-              
-        return context
-     
-    @classmethod
-    def delete(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-                        
-             entity_key = context.input.get('key')
-             entity = entity_key.get()
-             context.rule.entity = entity
-             rule.Engine.run(context, True)
-             if not rule.executable(context):
-                raise rule.ActionDenied(context)
-              
-             entity.key.delete()
-             context.log.entities.append((entity,))
-             log.Engine.run(context)
-             
-             context.output['deleted'] = True
-     
-        transaction()
-             
-        return context
-      
-    @classmethod
-    def complete_save(cls, entity, context):
-      
-        set_args = {}
-        
-        for field_key in cls.get_fields():
-             if field_key in context.input:
-                set_args[field_key] = context.input.get(field_key)
-      
-        context.rule.entity = entity
-        rule.Engine.run(context, True)
-            
-        if not rule.executable(context):
-           raise rule.ActionDenied(context)
-         
-        entity.populate(**set_args)
-        entity.put()
-            
-        if (entity.default_shipping or entity.default_billing):
-          all_addresses = cls.query(ancestor=context.auth.user.key).fetch()
-          
-          for address in all_addresses:
-            log = False
-            if address.key != entity.key:
-              if entity.default_shipping:
-                 address.default_shipping = False
-                 log = True
-              if entity.default_billing:
-                 address.default_billing = False
-                 log = True
-              #if (log):
-                #context.log.entities.append((address, ))
-                 
-          ndb.put_multi(all_addresses) # no need to log default_billing and default_shipping, doesnt make sense
-  
-        context.log.entities.append((entity, ))
-        log.Engine.run(context)
- 
-              
-    @classmethod
-    def update(cls, context): # im not sure if we are going to perform updates on multiple address instances - this is a UI thing
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-            
-            entity_key = context.input.get('key')
-            entity = entity_key.get()
-   
-            cls.complete_save(entity, context)
-             
-        transaction()
-            
-        return context
-            
-    @classmethod
-    def create(cls, context): # im not sure if we are going to perform updates on multiple address instances - this is a UI thing
- 
-       @ndb.transactional(xg=True)
-       def transaction():
- 
-           entity = cls(parent=context.auth.user.key)
-           
-           cls.complete_save(entity, context)
-          
-       transaction()
-            
-       return context
     
+    def generate_internal_id(self):
+      internal_id = '%s-%s-%s-%s-%s-%s-%s-%s' %  (str(time.time()), util.random_chars(10), self.name,
+       self.city, self.postal_code, self.street, self.default_shipping, self.default_billing)
+      self.internal_id = hashlib.md5(internal_id).hexdigest()
+    
+
+class Addresses(ndb.BaseModel):
+  
+  _kind = 77
+  
+  addresses = ndb.SuperLocalStructuredProperty(Address, repeated=True)
+  
+  _global_role = GlobalRole(permissions=[
+                   ActionPermission('77', Action.build_key('77', 'update').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                   ActionPermission('77', Action.build_key('77', 'read').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                   FieldPermission('77', ['addresses'], True, True, 'True'),
+                 ])
+  
+  _actions = [
+      Action(key=Action.build_key('77', 'update'),
+            arguments={
+                 'user': ndb.SuperKeyProperty(kind='0', required=True),
+                 'addresses' : ndb.SuperLocalStructuredProperty(Address, repeated=True),
+            },
+            _plugins=[
+              common.Context(),
+              buyer.AddressRead(),
+              buyer.AddressUpdate(),
+              rule.Prepare(skip_user_roles=True, strict=False),
+              rule.Exec(),
+              rule.Write(transactional=True),
+              common.Write(transactional=True),
+              log.Entity(transactional=True),
+              log.Write(transactional=True),
+              rule.Read(transactional=True),
+              common.Set(transactional=True, dynamic_values={'output.entity': 'entities.77'}),
+              callback.Payload(transactional=True, queue = 'notify',
+                               static_data = {'action_id': 'initiate', 'action_model': '77'},
+                               dynamic_data = {'caller_entity': 'entities.77.key_urlsafe'}),
+              callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+              ]             
+     ),       
+    Action(
+      key=Action.build_key('77', 'read'),
+      arguments={
+        'user': ndb.SuperKeyProperty(kind='0', required=True) # here we user key to retrieve "by user" addresses
+        },
+      _plugins=[
+        common.Context(),
+        buyer.AddressRead(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.77'})
+        ]
+      )         
+  ]
+     
             
 # done!
 class Collection(ndb.BaseModel):
     
-    _kind = 10
-    
-    # ancestor User
-    # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
-    # composite index: ancestor:yes - name
-    name = ndb.SuperStringProperty('1', required=True)
-    notify = ndb.SuperBooleanProperty('2', required=True, default=False)
-    companies = ndb.SuperKeyProperty('3', kind='44', repeated=True)
-    
-    primary_email = ndb.SuperStringProperty('4', required=True, indexed=False)
- 
-
-    _global_role = rule.GlobalRole(permissions=[
-                                                rule.ActionPermission('10', event.Action.build_key('10-0').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                                rule.ActionPermission('10', event.Action.build_key('10-3').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                                rule.ActionPermission('10', event.Action.build_key('10-1').urlsafe(),
-                                                                     True, "context.rule.entity.key_parent == context.auth.user.key and (not context.auth.user._is_guest)"),
-                                               ])
- 
-
-    _actions = {
-       'update' : event.Action(id='10-0',
-                              arguments={
-                                 'name' : ndb.SuperStringProperty(required=True),
-                                 'notify' : ndb.SuperBooleanProperty(default=False),
-                                 'key' : ndb.SuperKeyProperty(kind='10', required=True),
-                                 'companies' : ndb.SuperKeyProperty(kind='44', repeated=True),
-                              }
-                             ),
-                
-       'create' : event.Action(id='10-3',
-                              arguments={
-                                 'name' : ndb.SuperStringProperty(required=True),
-                                 'notify' : ndb.SuperBooleanProperty(default=False),
-                                 'companies' : ndb.SuperKeyProperty(kind='44'),
-                              }
-                             ),
-                
-       'delete' : event.Action(id='10-1',
-                              arguments={
-                                  'key' : ndb.SuperKeyProperty(kind='10', required=True),
-                              }
-                             ),
-                
-       'list' : event.Action(id='10-2'),
-    }  
- 
-    @classmethod
-    def list(cls, context):
- 
-        user = context.auth.user
-              
-        context.output['collections'] = cls.query(ancestor=user.key).fetch()
-              
-        return context
-         
-    @classmethod
-    def delete(cls, context):
- 
-       @ndb.transactional(xg=True)
-       def transaction():
-                       
-            entity_key = context.input.get('key')
-            entity = entity_key.get()
-            context.rule.entity = entity
-            rule.Engine.run(context, True)
-            
-            if not rule.executable(context):
-               raise rule.ActionDenied(context)
-             
-            entity.key.delete()
-            context.log.entities.append((entity,))
-            log.Engine.run(context)
- 
-       transaction()
-           
-       return context
-     
-     
-    @classmethod
-    def complete_save(cls, entity, context):
-      
-        set_args = {}
-        
-        for field_key in cls.get_fields():
-             if field_key in context.input:
-                set_args[field_key] = context.input.get(field_key)
-      
-        context.rule.entity = entity
-        rule.Engine.run(context, True)
-        
-        if not rule.executable(context):
-           raise rule.ActionDenied(context)
-        
-        entity.primary_email = context.auth.user._primary_email
-        
-        company_keys = set_args.get('companies', [])
-        
-        if company_keys:
-            companies = ndb.get_multi(company_keys)
-            company_keys = []
-            for company in companies:
-                if not company.state == 'open':
-                   company_keys.remove(company.key)
-                    
-        entity.populate(**set_args)
-        entity.put()
-         
-        context.log.entities.append((entity, ))
-        log.Engine.run(context)
-    
-     
-    @classmethod
-    def update(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-   
-            entity_key = context.input.get('key')
-            entity = entity_key.get()
-          
-            cls.complete_save(entity, context)
-           
-        transaction()
-            
-        return context
-      
-    @classmethod
-    def create(cls, context):
- 
-        @ndb.transactional(xg=True)
-        def transaction():
-    
-            entity = cls(parent=context.auth.user.key)
- 
-            cls.complete_save(entity, context)
-           
-        transaction()
-            
-        return context
+  _kind = 10
+  
+  # ancestor User
+  # mozda bude trebao index na primary_email radi mogucnosti update-a kada user promeni primarnu email adresu na svom profilu
+  # composite index: ancestor:yes - name
+  
+  notify = ndb.SuperBooleanProperty('1', required=True, default=False)
+  domains = ndb.SuperKeyProperty('2', kind='6', repeated=True)
+  #primary_email = ndb.SuperStringProperty('3', required=True, indexed=False) # dont know what to do with this?
+  
+  
+  _global_role = GlobalRole(permissions=[
+                 ActionPermission('10', Action.build_key('10', 'update').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                 ActionPermission('10', Action.build_key('10', 'read').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                 FieldPermission('10', ['notify', 'domains'], True, True, 'True')
+               ])
+  
+  _actions = [
+      Action(key=Action.build_key('10', 'update'),
+            arguments={
+                 'user': ndb.SuperKeyProperty(kind='0', required=True),
+                 'notify' : ndb.SuperBooleanProperty(default=True),
+                 'domains' : ndb.SuperKeyProperty(kind='6'),
+            },
+      _plugins=[
+              common.Context(),
+              buyer.CollectionRead(),
+              common.Set(dynamic_values={'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}),
+              rule.Prepare(skip_user_roles=True, strict=False),
+              rule.Exec(),
+              rule.Write(transactional=True),
+              common.Write(transactional=True),
+              log.Entity(transactional=True),
+              log.Write(transactional=True),
+              rule.Read(transactional=True),
+              common.Set(transactional=True, dynamic_values={'output.entity': 'entities.10'}),
+              callback.Payload(transactional=True, queue = 'notify',
+                               static_data = {'action_id': 'initiate', 'action_model': '10'},
+                               dynamic_data = {'caller_entity': 'entities.10.key_urlsafe'}),
+              callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+              ]             
+     ),
+    Action(
+      key=Action.build_key('10', 'read'),
+      arguments={
+         'user': ndb.SuperKeyProperty(kind='0', required=True) # here we use the user key instead of actual collection key to retrieve "by user" collection
+        },
+      _plugins=[
+        common.Context(),
+        buyer.CollectionRead(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.10'})
+        ]
+      )       
+   ]

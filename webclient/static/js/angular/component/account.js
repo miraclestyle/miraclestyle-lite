@@ -327,13 +327,14 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
    };
 	 
 }])
-.run(['$rootScope', '$location', 'Account', 
+.run(['$rootScope', '$location', 'Account',
 	function ($rootScope, $location, Account) {
 	 
 	$rootScope.manageAccount = function ()
 	{
   		 Account.update($rootScope.current_user);
 	};
+ 
 	 
     $rootScope.doLogin = function ()
 	{

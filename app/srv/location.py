@@ -6,7 +6,9 @@ Created on Jan 9, 2014
 '''
 
 from app import ndb
-
+from app.srv.event import Action
+from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
+from app.plugins import common, rule, callback, log, location
 
 def get_location(location):
   if isinstance(location, ndb.Key):
@@ -29,6 +31,9 @@ class Country(ndb.BaseModel):
   
   _kind = 15
   
+  _use_cache = True
+  _use_memcache = True
+  
   # root
   # http://hg.tryton.org/modules/country/file/tip/country.py#l8
   # http://en.wikipedia.org/wiki/ISO_3166
@@ -40,56 +45,72 @@ class Country(ndb.BaseModel):
   name = ndb.SuperStringProperty('2', required=True)
   active = ndb.SuperBooleanProperty('3', default=True)
   
-  @classmethod
-  def import_countries_and_subdivisions(cls, args):
-    url = 'https://raw.github.com/tryton/country/develop/country.xml'
-    from xml.etree import ElementTree
-    from google.appengine.api import urlfetch
-    text = urlfetch.fetch(url) 
-    tree = ElementTree.fromstring(text.content)
-    root = tree.findall('data')
-    
-    to_put = []
-    
-    for child in root[1]:
-      dat = dict()
-      dat['id'] = child.attrib['id']
-      for child2 in child:
-        name = child2.attrib.get('name')
-        if name is None:
-          continue
-        if child2.text:
-          dat[name] = child2.text
-          
-      to_put.append(cls(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
-    
-    for child in root[2]:
-      dat = dict()
-      dat['id'] = child.attrib['id']
-      for child2 in child:
-        k = child2.attrib.get('name')
-        if k is None:
-          continue
-        if child2.text:
-          dat[k] = child2.text
-        if 'ref' in child2.attrib:
-          dat[k] = child2.attrib['ref']
-      
-      kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 'unknown'), code=dat['code'], active=True)
-      
-      if 'country' in dat:
-        kw['parent'] = ndb.Key(Country, dat['country'])
-      
-      if 'parent' in dat:
-        kw['parent_record'] = ndb.Key(CountrySubdivision, dat['parent'])
-      
-      to_put.append(CountrySubdivision(**kw))
-    
-    ndb.put_multi(to_put)
-    return {'response' : {'items' : [put.key.id() for put in to_put]}}
-
-
+  _global_role = GlobalRole(permissions=[
+                   ActionPermission('15', Action.build_key('15', 'update').urlsafe(), True, "context.user._root_admin"),
+                   ActionPermission('15', Action.build_key('15', 'search').urlsafe(), True, "True"),
+                   FieldPermission('15', ['code', 'name', 'active'], True, True, 'True'),
+                 ])
+  
+  _actions = [
+    Action(key=Action.build_key('15', 'update'),
+             arguments={},
+             _plugins=[
+              common.Context(),
+              common.Prepare(domain_model=False),
+              rule.Prepare(skip_user_roles=True, strict=False),
+              rule.Exec(),
+              location.CountryUpdate(),
+            ]             
+     ),       
+    Action(
+      key=Action.build_key('15', 'search'),
+      arguments={
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          filters={
+            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty()},
+            'code': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            },
+          indexes=[
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['key'],
+             'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['code'],
+             'order_by': [['name', ['asc', 'desc']], ['code', ['asc', 'desc']]]},       
+            {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=False),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),      
+  ]
+ 
+ 
 class CountrySubdivision(ndb.BaseModel):
+    
+  _kind = 16
+  
+  _use_cache = True
+  _use_memcache = True
   
   TYPES = {
            'unknown' : 1,
@@ -179,8 +200,7 @@ class CountrySubdivision(ndb.BaseModel):
            'constitutional province': 74,
            'special city': 56
            }
-  
-  _kind = 16
+
   
   # ancestor Country
   # http://hg.tryton.org/modules/country/file/tip/country.py#l52
@@ -193,6 +213,17 @@ class CountrySubdivision(ndb.BaseModel):
   complete_name = ndb.SuperTextProperty('4')
   type = ndb.SuperIntegerProperty('5', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('6', default=True)
+  
+  _virtual_fields = {
+    'type_text' : ndb.ComputedProperty(lambda self: self.type_into_text())
+  }
+  
+  def type_into_text(self):
+    items = self.TYPES.items()
+    try:
+      i = items.index(self.type)
+    except IndexError as e:
+      return items[i]
 
 
 class Location(ndb.BaseExpando):
@@ -209,9 +240,9 @@ class Location(ndb.BaseExpando):
   
   _default_indexed = False
   
-  EXPANDO_FIELDS = {
-                    'region' :  ndb.SuperStringProperty('7'),
-                    'region_code' :  ndb.SuperStringProperty('8'),
-                    'email' : ndb.SuperStringProperty('9'),
-                    'telephone' : ndb.SuperStringProperty('10'),
-                    }
+  _expando_fields = {
+    'region' :  ndb.SuperStringProperty('7'),
+    'region_code' :  ndb.SuperStringProperty('8'),
+    'email' : ndb.SuperStringProperty('9'),
+    'telephone' : ndb.SuperStringProperty('10'),
+  }

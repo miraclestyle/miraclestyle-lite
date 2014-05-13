@@ -185,7 +185,7 @@ MainApp.filter('permissionResolveActionName', function() {
     	 	},
     	 	'removePermission' : function (perm)
     	 	{
-    	 		this.entity.permissions.remove(filter);
+    	 		this.entity.permissions.remove(perm);
   			      
     	 	},
     	 

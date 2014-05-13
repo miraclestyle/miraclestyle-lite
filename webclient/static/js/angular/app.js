@@ -24,6 +24,80 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	 $locationProvider.html5Mode(true);
      
 }])
+.factory('Select2Options', ['Endpoint', function (Endpoint) {
+	return {
+		factory : function (new_opts)
+		{
+			var opts = {
+				'field': 'name',
+				'operator' : 'contains',
+				'order_by' : 'name',
+				'order_dir' : 'asc',
+				'label' : 'name',
+			};
+			
+			opts = angular.extend(opts, new_opts);
+			 
+ 			return {
+			    minimumInputLength: 1,
+			    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
+			        params : {
+			        	 dataType: 'json',
+				         type:'post', 
+				         processData: false,
+				         contentType: 'application/json',
+			        },
+			        url: Endpoint.url,
+			        data: function (term, page) {
+			            return JSON.stringify(
+			            	{  
+			            		"action_model" : opts['kind'],
+			            	    "action_id" : "search",
+			            		"search" : {"filters":[{'value' : term, 'operator':'contains', 'field' : opts['field']}],
+			            				    "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}} 
+			                }
+			            );
+			        },
+			        results: function (data, page) { // parse the results into the format expected by Select2.
+			            // since we are using custom formatting functions we do not need to alter remote JSON data
+			            var results = [];
+			            angular.forEach(data.entities, function (value) {
+			            	results.push({text: value[opts['label']], id: value.key});
+			            });
+			            return {results: results};
+			        }
+			    },
+			    initSelection: function(element, callback) {
+			        // the input tag has a value attribute preloaded that points to a preselected movie's id
+			        // this function resolves that id attribute to an object that select2 can render
+			        // using its formatResult renderer - that way the movie name is shown preselected
+			        var id=$(element).val();
+			        if (id!=="") {
+	 
+			            $.ajax({
+			            	url : Endpoint.url,
+			                data: JSON.stringify(
+				            	{  
+				            		"action_model" : opts['kind'],
+				            	    "action_id" : "search",
+				            		"search" : {"filters":[{'value' : id, 'operator':'==', 'field' : 'key'}],
+				            				    "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}} 
+				                }
+				            ),
+			                dataType: 'json',
+					        type:'post',
+					        processData: false,
+					        contentType: 'application/json',
+			            }).done(function(data) {
+			            	 var value = data.entities[0];
+			            	 callback({text: value[opts['label']], id: value.key}); 
+			            });
+			        }
+			    },
+			    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller}
+	   };
+	}
+};}])
 .factory('RuleEngine', function () {
 	
 	function RuleEngine(data)
@@ -680,13 +754,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
     }
 ])
-.run(['$rootScope', '$state', 'Title', function ($rootScope, $state, Title) {
+.run(['$rootScope', '$state', 'Title', 'Select2Options', function ($rootScope, $state, Title, Select2Options) {
     
     $rootScope.ADMIN_KINDS = {
     	'0' : 'Users',
     	'6' : 'Apps',
     }; 
-   
+   	
+   	$rootScope.select2Options = {
+   		'country' : Select2Options.factory({
+   			kind : '15',
+   		}),
+   		 
+   	};
+   	
+   	
+   	
     $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_user = current_user;
     $rootScope.$state = $state;

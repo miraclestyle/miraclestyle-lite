@@ -1,0 +1,34 @@
+<form name="container.main" ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+	
+	 <div class="form-control">
+		<label class="form-label">Country</label>
+		<div class="form-input">
+			<input type="text" name="country" ui-select2="select2Options.country" 
+					ng-model="address.country" data-placeholder="Select a country" />
+		</div>
+	</div>
+ 
+	 
+	<div ng-show="rule.action.read_records.executable && history && entity.id" class="form-control">
+		<div ng-include="logic_template('misc/logs.html')"></div>
+	</div>	 
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button busy class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

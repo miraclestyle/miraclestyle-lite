@@ -6,6 +6,7 @@ Created on Apr 15, 2014
 '''
 
 import copy
+import string
 
 from google.appengine.datastore.datastore_query import Cursor
 
@@ -150,6 +151,12 @@ class Search(event.Plugin):
           args.append(field >= value)
         elif op == 'IN':
           args.append(field.IN(value))
+        elif op == 'contains':
+          letters = list(string.printable)
+          last = letters[letters.index(value[-1].lower()) + 1]
+          args.append(field >= value)
+          args.append(field < last)
+  
       query = query.filter(*args)
       order_by_field = getattr(model, order_by['field'])
       asc = order_by['operator'] == 'asc'

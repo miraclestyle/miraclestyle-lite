@@ -39,6 +39,7 @@ ANGULAR_COMPONENTS = ['home',
                       'notify',
                       'product',
                       'catalog',
+                      'buyer',
                       # this goes last
                       'admin',
                       ]
