@@ -9,9 +9,9 @@ import cgi
 
 from google.appengine.ext import blobstore
 
-from app import ndb, memcache, util
+from app import ndb, settings, memcache, util
 from app.srv import event
-from app.lib.attribute_manipulator import get_attr
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 _UNUSED_BLOBS_KEY = '_unused_blobs'
@@ -32,22 +32,29 @@ def parse_blob_keys(field_storages):
         pass
   return blob_keys
 
-def get_unused_blobs():
-  return memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+def blobs_to_preserve(blob_keys):
+  """Marks a key or a list of keys to be preserved"""
+  if blob_keys:
+    unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+    blob_keys = parse_blob_keys(blob_keys)
+    for blob_key in blob_keys:
+      unused_blob_keys.remove(blob_key)
+    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
+
+def blobs_to_delete(blob_keys):
+  """Marks a key or a list of keys for deletation"""
+  if blob_keys:
+    unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
+    unused_blob_keys.extend(parse_blob_keys(blob_keys))
+    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def delete_unused_blobs():
   """This functon must be always called last in the application execution."""
-  unused_blob_keys = get_unused_blobs()
+  unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
   if len(unused_blob_keys):
-    util.logger('DELETED BLOBS: %s' % len(unused_blob_keys)) # for debug purposes
+    util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
     blobstore.delete(unused_blob_keys)
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])
-     
-def unused_blobs(field_storages):
-  """Internal helper for appending blob keys and marking them as unused"""
-  unused_blob_keys = get_unused_blobs()
-  unused_blob_keys.extend(parse_blob_keys(field_storages))
-  memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 
 class URL(event.Plugin):
@@ -66,14 +73,8 @@ class Write(event.Plugin):
   keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
-    """Marks a key or a list of keys to be preserved"""
     blob_keys = get_attr(context, self.keys_location)
-    if blob_keys:
-      unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-      blob_keys = parse_blob_keys(blob_keys)
-      for blob_key in blob_keys:
-        unused_blob_keys.remove(blob_key)
-      memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
+    blobs_to_preserve(blob_keys)
 
 
 class Delete(event.Plugin):
@@ -81,9 +82,5 @@ class Delete(event.Plugin):
   keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
-    """Marks a key or a list of keys for deletation"""
     blob_keys = get_attr(context, self.keys_location)
-    if blob_keys:
-      unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-      unused_blob_keys.extend(parse_blob_keys(blob_keys))
-      memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
+    blobs_to_delete(blob_keys)
