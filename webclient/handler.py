@@ -194,7 +194,7 @@ class Base(webapp2.RequestHandler):
         for key, value in self.request.params.items():
             if isinstance(value, cgi.FieldStorage):
               if 'blob-key' in value.type_options:
-                  blob.unused_blobs(value)
+                  blob.blobs_to_delete(value)
 
          
     def send_json(self, data):

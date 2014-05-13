@@ -117,7 +117,7 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 		}
 	};
 }])
-.directive('uploadOnSelect', ['Endpoint', function (Endpoint) {
+.directive('uploadOnSelect', ['Endpoint', '$rootScope', function (Endpoint, $rootScope) {
 	return {
 		link : function (scope, element, attrs)
 		{
@@ -134,9 +134,9 @@ MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 				}
 				var options = resolve_defaults({
 					'kind' : scope.entity.kind,
-					'action' : 'upload_images',
+					'action' : 'prepare',
 					'args' : {
-						'key' : scope.entity.key,
+						'domain' : $rootScope.nav.domain.key,
 					},
 				}, scope.$eval(attrs.uploadOnSelect));
 				 

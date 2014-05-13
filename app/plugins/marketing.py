@@ -70,6 +70,7 @@ class UpdateSet(event.Plugin):
 class UpdateWrite(event.Plugin):
   
   def run(self, context):
+    context.delete_blobs = []
     if context.entities['35']._field_permissions['_images']['writable']:
       if len(context.delete_images):
         ndb.delete_multi([image.key for image in context.delete_images])
