@@ -69,8 +69,7 @@ class Widget(ndb.BaseExpando):
         common.Prepare(domain_model=True),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.62'}),
-        nav.SelectRoles()
+        common.Set(dynamic_values={'output.entity': 'entities.62'})
         ]
       ),
     Action(
@@ -114,8 +113,7 @@ class Widget(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.62'}),
-        nav.SelectRoles()
+        common.Set(dynamic_values={'output.entity': 'entities.62'})
         ]
       ),
     Action(
