@@ -776,9 +776,9 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
     else:
       # This alone will raise error if the upload is malformed.
       try:
-        blob = blobstore.BlobKey(value)  # @todo The above try/except block has these lines permutated. Is this block correct?
-      except:
         blob = blobstore.parse_blob_info(value).key()
+      except:
+        blob = blobstore.BlobKey(value)
       return blob
 
 
