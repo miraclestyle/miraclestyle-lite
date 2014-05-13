@@ -7,8 +7,6 @@ Created on Apr 15, 2014
 
 import copy
 
-from google.appengine.datastore.datastore_query import Cursor
-
 from app import ndb, settings
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
