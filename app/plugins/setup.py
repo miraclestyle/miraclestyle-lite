@@ -124,15 +124,23 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
-    entities = [nav.Widget(id='system_marketing',
+    entities = [nav.Widget(id='system_search',
+                           namespace=namespace,
+                           name='Search',
+                           role=role_key,
+                           search_form=True,
+                           filters=[]),
+                nav.Widget(id='system_marketing',
                            namespace=namespace,
                            name='Marketing',
                            role=role_key,
+                           search_form=False,
                            filters=[nav.Filter(name='Catalogs', kind='35')]),
                 nav.Widget(id='system_security',
                            namespace=namespace,
                            name='Security',
                            role=role_key,
+                           search_form=False,
                            filters=[nav.Filter(name='Roles', kind='60'),
                                     nav.Filter(name='Users', kind='8')])]
     for i, entity in enumerate(entities):
@@ -158,11 +166,13 @@ class DomainSetup(Setup):
                            namespace=namespace,
                            name='User Interface',
                            role=role_key,
+                           search_form=False,
                            filters=[nav.Filter(name='Menu Widgets', kind='62')]),
                 nav.Widget(id='system_notifications',
                            namespace=namespace,
                            name='Notifications',
                            role=role_key,
+                           search_form=False,
                            filters=[nav.Filter(name='Templates', kind='61')])]
     for i, entity in enumerate(entities):
       entity.sequence = (i+1) + sequence

@@ -56,7 +56,7 @@ class Catalog(ndb.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+    '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),  # @todo Why is this field sometimes SuperLocalStructuredImageProperty and sometimes SuperLocalStructuredProperty!!!???
     '_records': ndb_log.SuperLocalStructuredRecordProperty('35', repeated=True)
     }
   

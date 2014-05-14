@@ -6,6 +6,7 @@ Created on Apr 15, 2014
 '''
 
 import copy
+import hashlib
 
 from app import ndb, settings
 from app.srv import event
@@ -22,8 +23,17 @@ def build_keyes(context):
 class Prepare(event.Plugin):
   
   def run(self, context):
-    context.entities[context.model.get_kind()] = context.model(parent=context.input.get('catalog'))
-    context.values[context.model.get_kind()] = context.model(parent=context.input.get('catalog'))
+    context.entities[context.model.get_kind()] = context.model(parent=context.input.get('parent'))
+    context.values[context.model.get_kind()] = context.model(parent=context.input.get('parent'))
+
+
+class InstancePrepare(event.Plugin):
+  
+  def run(self, context):
+    variant_signature = context.input.get('variant_signature')
+    key_id = hashlib.md5(str(variant_signature)).hexdigest()
+    context.entities[context.model.get_kind()] = context.model(id=key_id, parent=context.input.get('parent'))
+    context.values[context.model.get_kind()] = context.model(id=key_id, parent=context.input.get('parent'))
 
 
 class Read(event.Plugin):
@@ -81,6 +91,19 @@ class WriteImages(event.Plugin):
       context.delete_blobs = []
 
 
+class ProcessImages(event.Plugin):
+  
+  def run(self, context):
+    _images = context.values[context.model.get_kind()]._images
+    if len(_images):
+      for i, image in enumerate(_images):
+        if image is None:
+          _images.pop(i)
+      if len(_images):
+        _images = ndb.validate_images(_images)
+      context.values[context.model.get_kind()]._images = _images
+
+
 class WriteVariants(event.Plugin):
   
   def run(self, context):
@@ -100,4 +123,35 @@ class WriteContents(event.Plugin):
     _contents = product.Contents(key=_contents_key)
     _contents.contents = context.entities[context.model.get_kind()]._contents
     _contents.put()
+    context.log_entities.append((_contents, ))
+
+
+class DeleteImages(event.Plugin):
+  
+  def run(self, context):
+    from app.srv import product
+    _images_key, _variants_key, _contents_key = build_keyes(context)
+    _images = _images_key.get()
+    context.delete_blobs = _images.images
+    _images.delete()
+    context.log_entities.append((_images, ))
+
+
+class DeleteVariants(event.Plugin):
+  
+  def run(self, context):
+    from app.srv import product
+    _images_key, _variants_key, _contents_key = build_keyes(context)
+    _variants = _variants_key.get()
+    _variants.delete()
+    context.log_entities.append((_variants, ))
+
+
+class DeleteContents(event.Plugin):
+  
+  def run(self, context):
+    from app.srv import product
+    _images_key, _variants_key, _contents_key = build_keyes(context)
+    _contents = _contents_key.get()
+    _contents.delete()
     context.log_entities.append((_contents, ))
