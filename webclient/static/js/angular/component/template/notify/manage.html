@@ -53,10 +53,18 @@
 	<div class="form-control">
 		<label class="form-label">Message Reciever</label>
 		<div class="form-input">
-			<select name="message_reciever" ng-required="rule.input[action].message_reciever.required" ng-disabled="!rule.field.message_reciever.writable" ui-select2 ng-model="entity.message_reciever" data-placeholder="Select a role">
-				    <option value=""></option>
-				    <option ng-repeat="role in roles track by $index" value="{{role.key}}">{{role.name}}</option>
-			</select>
+ 
+			
+			<input multiple="true" 
+			       name="message_reciever" 
+			       ng-required="rule.input[action].message_reciever.required" 
+			       ng-disabled="!rule.field.message_reciever.writable" 
+			       ui-select2="select2Options.role"
+			       ng-model="entity.message_reciever"
+			       data-domain="entity.domain"
+			       data-placeholder="Select a role" />
+			
+			
 		</div>
 	</div>
   </div>

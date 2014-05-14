@@ -38,6 +38,7 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
         Convert from Select2 view-model to Angular view-model.
         */
         var convertToAngularModel = function(select2_data) {
+         
           var model;
           if (opts.simple_tags) {
             model = [];
@@ -45,8 +46,20 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
               model.push(value.id);
             });
           } else {
-            model = select2_data.id;
+          	if (opts.multiple)
+          	{
+          		model = [];
+          		angular.forEach(select2_data, function(value, index) {
+	              model.push(value.id);
+	            });
+          	}
+          	else
+          	{
+          		model = select2_data.id;
+          	}
+            
           }
+    
           return model;
         };
 
@@ -54,6 +67,7 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
         Convert from Angular view-model to Select2 view-model.
         */
         var convertToSelect2Model = function(angular_data) {
+          
           var model = [];
           if (!angular_data) {
             return model;
@@ -67,7 +81,8 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
                 model.push({'id': value, 'text': value});
               });
           } else {
-            model = angular_data;
+          	 
+          	 model = angular_data;
           }
           return model;
         };
@@ -92,16 +107,15 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
             controller.$render();
           }, true);
           controller.$render = function () {
+     
             if (isSelect) {
               elm.select2('val', controller.$viewValue);
             } else {
               if (opts.multiple) {
                 var viewValue = controller.$viewValue;
-                if (angular.isString(viewValue)) {
-                  viewValue = viewValue.split(',');
-                }
-                elm.select2(
-                  'data', convertToSelect2Model(viewValue));
+            
+                //elm.select2(
+                //  'data', convertToSelect2Model(viewValue));
               } else {
                 if (angular.isObject(controller.$viewValue)) {
                   elm.select2('data', controller.$viewValue);
@@ -148,6 +162,7 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
           if (!isSelect) {
             // Set the view and model value and update the angular template manually for the ajax/multiple select2.
             elm.bind("change", function (e) {
+          
               e.stopImmediatePropagation();
               
               if (scope.$$phase || scope.$root.$$phase) {

@@ -129,7 +129,7 @@ class Search(event.Plugin):
       model = context.model
       if context.entities[context.model.get_kind()].key:
         namespace = context.entities[context.model.get_kind()].key_namespace
-    query = model.query(namespace=namespace)
+    
     search = context.input.get('search')
     if search:
       filters = search.get('filters')
@@ -163,8 +163,9 @@ class Search(event.Plugin):
             args.append(field < last)
           except ValueError as e: # i.e. value not in the letter scope, šččđčžćč for example
             args.append(field == value)
-           
-      query = query.filter(*args, **kwds)
+      
+      query = model.query(namespace=namespace, **kwds)     
+      query = query.filter(*args)
       order_by_field = getattr(model, order_by['field'])
       asc = order_by['operator'] == 'asc'
       if asc:

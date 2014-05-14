@@ -27,9 +27,14 @@
     <div class="form-control">
 		<label class="form-label">Roles</label>
 		<div class="form-input">
-			<select multiple="true" name="role" ng-required="rule.input[action].roles.required" ui-select2 ng-model="entity.roles" data-placeholder="Select roles for this user">
-				    <option ng-repeat="role in roles track by $index" value="{{role.key}}">{{role.name}}</option>
-			</select>
+			<input multiple="true" 
+			       name="role" 
+			       ng-required="rule.input[action].roles.required" 
+			       ng-disabled="!rule.field.roles.writable" 
+			       ui-select2="select2Options.role"
+			       ng-model="entity.roles"
+			       data-domain="entity.domain"
+			       data-placeholder="Select roles for this user" />
 		</div>
 	</div>
  

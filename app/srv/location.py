@@ -70,14 +70,15 @@ class Country(ndb.BaseModel):
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.capitalize()])},
-            'code': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])}
             },
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['key'],
-             'order_by': [['key', ['asc', 'desc']]]},  
+             'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['active'],
+             'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
              'order_by': [['name', ['asc', 'desc']]]},
             ],
@@ -229,7 +230,6 @@ class CountrySubdivision(ndb.BaseModel):
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='16')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
-            'code': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
             },
@@ -238,7 +238,11 @@ class CountrySubdivision(ndb.BaseModel):
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['key'],
              'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['active'],
+             'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},

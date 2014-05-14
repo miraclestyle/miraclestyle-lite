@@ -13,12 +13,12 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
  
                             $scope.entity = angular.copy(address ? address : {});
                             $scope.rule = $parentScope.rule;
-                    
+                   
                             var new_address = address ? false : true;
-             
+                         
                             $scope.save = function () {
-                            	
-                             
+                  
+                            	 
                                  if (new_address)
                                  {
                                  	if (!entity.addresses)

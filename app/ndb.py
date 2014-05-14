@@ -759,6 +759,34 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
     else:
       return returns
 
+class SuperKeyFromPathProperty(SuperKeyProperty):
+  
+  def format(self, value):
+    try:
+      # first it attempts to construct the key from urlsafe
+      return super(SuperKeyProperty, self).format(value)
+    except:
+      # failed to build from urlsafe, proceed with keyFromPath
+      value = _property_value(value)
+      assert isinstance(value, list) == True
+      out = []
+      for possible in value:
+        if self._repeated:
+          for v in possible:
+            k = Key(*v)
+            if self._kind and k.kind() != self._kind:
+              raise PropertyError('invalid_kind')
+            out.append(k)
+          gets = get_multi(out)
+          for i, get in enumerate(gets):
+             if get is None:
+               raise PropertyError('not_found_%s' % out[i].urlsafe())
+        else:
+          out = Key(*possible)
+          if self._kind and out.kind() != self._kind:
+            raise PropertyError('invalid_kind')
+          assert out.get() == None
+      return out
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   

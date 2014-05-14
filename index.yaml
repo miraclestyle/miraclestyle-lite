@@ -79,3 +79,19 @@ indexes:
   properties:
   - name: "6"
   - name: "3"
+
+- kind: "16"
+  ancestor: yes
+  properties:
+  - name: "6"
+  - name: "3"
+  
+- kind: "16"
+  ancestor: yes
+  properties:
+  - name: "3"
+  
+- kind: "60"
+  properties:
+  - name: "2"
+  - name: "1"

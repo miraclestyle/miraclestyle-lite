@@ -6,6 +6,7 @@ Created on May 13, 2014
 '''
 import copy
 
+from app import ndb
 from app.srv import event
 
 class AddressRead(event.Plugin):
@@ -17,6 +18,7 @@ class AddressRead(event.Plugin):
     entity = entity_key.get()
     if entity is None:
       entity = context.model(key=entity_key)
+ 
     context.entities[context.model.get_kind()] = entity
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 

@@ -13,12 +13,14 @@
 						<tr> 
 							<th>Name</th>
 							<th>Country</th>
+							<th>Region/State</th>
 							<th>City</th>
 							<th>Postal</th>
 							<th>Street</th>
 							<th>Default Shipping</th>
 							<th>Default Billing</th>
 							<th ng-show="rule.action.update.executable"></th>
+							<!-- what else to put here? -->
 						</tr>
 					</thead>
 					<tbody>
@@ -28,7 +30,12 @@
 							</td>
 							
 							<td>
-								{{addr.country}}
+								{{addr._country.name}}
+							</td>
+							
+							
+							<td>
+								{{addr._region.name}}
 							</td>
 							
 							<td>

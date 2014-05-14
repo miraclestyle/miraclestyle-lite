@@ -26,6 +26,18 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 }])
 .factory('Select2Options', ['Endpoint', function (Endpoint) {
 	return {
+		exchange : function (entity, name, name2, what)
+        {
+        	if (!entity[name2])
+        	{
+        		entity[name] = null;
+        	}
+        	else
+        	{
+        		entity[name] = entity[name2][what];
+        	}
+                                
+        },
 		factory : function (new_opts)
 		{
 			var opts = {
@@ -36,29 +48,46 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'label' : 'name',
 				'filters' : [],
 				'action' : 'search',
+				'cache' : true,
+				'filter_callback' : angular.noop,
+				'args_callback' : angular.noop,
 			 
 			};
 			
 			opts = angular.extend(opts, new_opts);
 			 
  			return {
-			    minimumInputLength: 1,
+			    minimumInputLength: 0,
 			    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
 			        quietMillis: 200,
-			        // @todo we can use http://riatiger.com/blog/2013/11/angular-ui-and-select2-remote-data-loading/
+ 
 			        transport: function (params)
 			        {
 			        	return Endpoint.post(opts['action'], opts['kind'], params.data).success(params.success);
 			        },
 			        data: function (term, page) {
+			       
 			        	  var find = [{'value' : term, 'operator':'contains', 'field' : opts['field']}];
+			        	  
+			        	  if (term == '')
+			        	  {
+			        	  	find = [];
+			        	  }
+			        	  
 			        	  find.extend(opts.filters);
-			              return {
+			        	  
+			        	  opts['filter_callback']($(this), find, term, page);
+			        	  
+			              var args = {
 			            	 "search" : {
 			            	 			 "filters": find,
 		  							     "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}
 		  							    } 
 			                };
+			                
+			              opts['args_callback']($(this), args, term, page);
+			                
+			              return args;
 			        },
 			        results: function (data, page) { // parse the results into the format expected by Select2.
 			            // since we are using custom formatting functions we do not need to alter remote JSON data
@@ -74,9 +103,16 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        // this function resolves that id attribute to an object that select2 can render
 			        // using its formatResult renderer - that way the movie name is shown preselected
 			        var id=$(element).val();
-			        if (id!=="") {
-			        	
-			        	var find = [{'value' : id, 'operator':'==', 'field' : 'key'}];
+			        
+			    
+			            if (id != '')
+			            {
+			            	var find = [{'value' : id, 'operator':'==', 'field' : 'key'}];
+			            }
+			        	else
+			        	{
+			        		var find = [];
+			        	}
 			         
 	 					Endpoint.post(opts['action'], opts['kind'], {  
 				            		  "search" : {
@@ -94,7 +130,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				                	
 				                });
 				      
-			        }
+			      
 			    },
 			    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller}
 	   };
@@ -768,31 +804,54 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    	$rootScope.select2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',
-   			filters : active_filter,
+   			filters : active_filter
    		}),
    		'region' : Select2Options.factory({
    			kind : '16',
    			filters : active_filter,
+   		    filter_callback : function(element, filter, term, page)
+   			{
+   				var scope = element.scope();
+   				var country = element.data('country');
+   				
+   				if (country)
+   				{
+   					var country_id = scope.$eval(country);
+   					
+   					filter.push({
+   						value : country_id,
+   						operator : '==',
+   						field : 'ancestor',
+   					});
+   				}
+   			}
    		}),
    		
    		'role' : Select2Options.factory({
    			kind : '60',
    			filters : active_filter,
+   			args_callback : function (element, args)
+   			{
+   				args['domain'] = $rootScope.nav.domain.key;
+   			}
    		}),
-   		
-   		'currency' : Select2Options.factory({
-   			kind : '60',
-   			filters : active_filter,
-   		}),
-   		
+   
    		'product_category' : Select2Options.factory({
    			kind : '17',
-   			filters : [{'value' : 'active', 'operator':'==', 'field' : 'stat'}],
+   			filters : [{'value' : 'active', 'operator':'==', 'field' : 'state'}],
    		}),
    		 
    	};
-   	
-   	
+   	 
+	var measurements = ['length', 'surface', 'time', 'unit', 'volume', 'weight'];
+	
+	angular.forEach(measurements, function (v) {
+		$rootScope.select2Options[v] = Select2Options.factory({
+   			kind : '19',
+   			filters : [{'value' : true, 'operator':'==', 'field' : 'active'},
+   					   {'value' : ['18', v], 'operator':'==', 'field' : 'ancestor'}],
+   		});
+	});
    	
     $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_user = current_user;

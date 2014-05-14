@@ -134,11 +134,33 @@ class Unit(ndb.BaseExpando):
             ]             
      ),      
     Action(
-      key=Action.build_key('19', 'search'), # search_currency, search_units? should this be separated?
-      arguments={},
-      _plugins=[
-       ]
-      )         
+      key=Action.build_key('19', 'search'),
+      arguments={
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "code", "operator": "asc"}},
+          filters={
+            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='19')},
+            'code': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.upper()])},
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
+            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyFromPathProperty(kind='18')},
+            },
+          indexes=[
+            {'filter': [],
+             'order_by': [['code', ['asc', 'desc']]]},
+            {'filter': ['key'],
+             'order_by': [['key', ['asc', 'desc']]]},  
+            {'filter': ['code', 'active'],
+             'order_by': [['code', ['asc', 'desc']]]},
+            {'filter': ['code', 'active', 'ancestor'],
+             'order_by': [['code', ['asc', 'desc']]]},
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+       )       
   ]
  
  

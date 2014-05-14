@@ -253,10 +253,15 @@ class DomainRole(Role):
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
+            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='60')},
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
             },
           indexes=[
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['key'],
+             'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['active'],

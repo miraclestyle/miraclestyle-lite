@@ -35,6 +35,12 @@ class Address(ndb.BaseExpando):
         'telephone' : ndb.SuperStringProperty('11'),
     }
     
+    def get_output(self):
+     dic = super(Address, self).get_output()
+     dic['_country'] = getattr(self, '_country', None)
+     dic['_region'] = getattr(self, '_region', None)
+     return dic
+    
     def generate_internal_id(self):
       internal_id = '%s-%s-%s-%s-%s-%s-%s-%s' %  (str(time.time()), util.random_chars(10), self.name,
        self.city, self.postal_code, self.street, self.default_shipping, self.default_billing)
@@ -57,6 +63,7 @@ class Addresses(ndb.BaseModel):
                    ActionPermission('77', Action.build_key('77', 'read_records').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
                    FieldPermission('77', ['addresses', '_records'], True, True, 'True'),
                  ])
+ 
   
   _actions = [
       Action(key=Action.build_key('77', 'update'),
@@ -113,6 +120,31 @@ class Addresses(ndb.BaseModel):
         ]
       ),       
   ]
+  
+  # this entire segment could be placed in plugins but at the moment this is the fastest method
+  # because on every entity that gets trough output this function get_async_information() must be called to fetch the data async
+  
+  def get_output(self):
+    self.get_async_information()
+    return super(Addresses, self).get_output()
+  
+  def get_async_information(self):
+    if self.addresses:
+      
+      @ndb.tasklet
+      def async(addr):
+        if addr.country:
+          addr._country = yield addr.country.get_async() # discover convention name of these two or put them in virtual fields?
+        if addr.region:
+         addr._region = yield addr.region.get_async()
+         raise ndb.Return(addr)
+        
+      @ndb.tasklet
+      def helper(addresses):
+        addresses = yield map(async, addresses)
+        raise ndb.Return(addresses)
+      
+      self.addresses = helper(self.addresses).get_result()
      
             
 # done!
