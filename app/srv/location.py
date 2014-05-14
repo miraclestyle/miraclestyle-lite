@@ -69,19 +69,15 @@ class Country(ndb.BaseModel):
           default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty()},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.capitalize()])},
             'code': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])}
             },
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['key'],
-             'order_by': [['key', ['asc', 'desc']]]},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['code'],
-             'order_by': [['name', ['asc', 'desc']], ['code', ['asc', 'desc']]]},       
+             'order_by': [['key', ['asc', 'desc']]]},  
             {'filter': ['name', 'active'],
              'order_by': [['name', ['asc', 'desc']]]},
             ],
@@ -218,12 +214,61 @@ class CountrySubdivision(ndb.BaseModel):
     'type_text' : ndb.ComputedProperty(lambda self: self.type_into_text())
   }
   
+  _global_role = GlobalRole(permissions=[
+                   ActionPermission('16', Action.build_key('16', 'search').urlsafe(), True, "True"),
+                   FieldPermission('16', ['parent_record', 'code', 'name',
+                                          'complete_name', 'type', 'type_text', 'active'], True, True, 'True'),
+                 ])
+  
+  _actions = [
+    Action(
+      key=Action.build_key('16', 'search'),
+      arguments={
+        'search': ndb.SuperSearchProperty(
+          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          filters={
+            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='16')},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
+            'code': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
+            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
+            },
+          indexes=[
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['key'],
+             'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['name', 'active', 'ancestor'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=False),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),      
+  ]
+  
   def type_into_text(self):
     items = self.TYPES.items()
     try:
       i = items.index(self.type)
-    except IndexError as e:
       return items[i]
+    except ValueError as e:
+      return self.type
 
 
 class Location(ndb.BaseExpando):

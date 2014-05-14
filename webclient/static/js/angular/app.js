@@ -34,6 +34,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'order_by' : 'name',
 				'order_dir' : 'asc',
 				'label' : 'name',
+				'filters' : [],
+				'action' : 'search',
+			 
 			};
 			
 			opts = angular.extend(opts, new_opts);
@@ -41,22 +44,21 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  			return {
 			    minimumInputLength: 1,
 			    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
-			        params : {
-			        	 dataType: 'json',
-				         type:'post', 
-				         processData: false,
-				         contentType: 'application/json',
+			        quietMillis: 200,
+			        // @todo we can use http://riatiger.com/blog/2013/11/angular-ui-and-select2-remote-data-loading/
+			        transport: function (params)
+			        {
+			        	return Endpoint.post(opts['action'], opts['kind'], params.data).success(params.success);
 			        },
-			        url: Endpoint.url,
 			        data: function (term, page) {
-			            return JSON.stringify(
-			            	{  
-			            		"action_model" : opts['kind'],
-			            	    "action_id" : "search",
-			            		"search" : {"filters":[{'value' : term, 'operator':'contains', 'field' : opts['field']}],
-			            				    "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}} 
-			                }
-			            );
+			        	  var find = [{'value' : term, 'operator':'contains', 'field' : opts['field']}];
+			        	  find.extend(opts.filters);
+			              return {
+			            	 "search" : {
+			            	 			 "filters": find,
+		  							     "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}
+		  							    } 
+			                };
 			        },
 			        results: function (data, page) { // parse the results into the format expected by Select2.
 			            // since we are using custom formatting functions we do not need to alter remote JSON data
@@ -73,25 +75,25 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        // using its formatResult renderer - that way the movie name is shown preselected
 			        var id=$(element).val();
 			        if (id!=="") {
-	 
-			            $.ajax({
-			            	url : Endpoint.url,
-			                data: JSON.stringify(
-				            	{  
-				            		"action_model" : opts['kind'],
-				            	    "action_id" : "search",
-				            		"search" : {"filters":[{'value' : id, 'operator':'==', 'field' : 'key'}],
-				            				    "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}} 
-				                }
-				            ),
-			                dataType: 'json',
-					        type:'post',
-					        processData: false,
-					        contentType: 'application/json',
-			            }).done(function(data) {
-			            	 var value = data.entities[0];
-			            	 callback({text: value[opts['label']], id: value.key}); 
-			            });
+			        	
+			        	var find = [{'value' : id, 'operator':'==', 'field' : 'key'}];
+			         
+	 					Endpoint.post(opts['action'], opts['kind'], {  
+				            		  "search" : {
+				            		  			  "filters":find,
+				            				      "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}
+				            				     } 
+				                }).success(function (data) {
+				                	try
+				                	{
+				                		
+				                	  var value = data.entities[0];
+			            		  	  callback({text: value[opts['label']], id: value.key}); 
+				                		
+				                	}catch(e){}
+				                	
+				                });
+				      
 			        }
 			    },
 			    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller}
@@ -760,10 +762,32 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	'0' : 'Users',
     	'6' : 'Apps',
     }; 
+    
+    var active_filter = [{'value' : true, 'operator':'==', 'field' : 'active'}];
    	
    	$rootScope.select2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',
+   			filters : active_filter,
+   		}),
+   		'region' : Select2Options.factory({
+   			kind : '16',
+   			filters : active_filter,
+   		}),
+   		
+   		'role' : Select2Options.factory({
+   			kind : '60',
+   			filters : active_filter,
+   		}),
+   		
+   		'currency' : Select2Options.factory({
+   			kind : '60',
+   			filters : active_filter,
+   		}),
+   		
+   		'product_category' : Select2Options.factory({
+   			kind : '17',
+   			filters : [{'value' : 'active', 'operator':'==', 'field' : 'stat'}],
    		}),
    		 
    	};

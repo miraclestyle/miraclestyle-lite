@@ -8,25 +8,34 @@ import inspect
 
 from webclient import handler 
 
-from app import ndb, memcache
+from app import ndb, memcache, util
 from app.srv import io
 
 class Reset(handler.Angular):
   
   def respond(self):
-    
-      from app.srv import auth, log, setup, rule, nav, event, notify, marketing
+      
+      from app.opt import buyer
+      from app.srv import auth, log, setup, rule, nav, event, notify, marketing, location, uom
  
       models = [auth.Domain, log.Record, setup.Configuration, auth.User, rule.DomainRole, rule.DomainUser,
                 setup.Configuration, nav.Widget, event.Action, notify.Template,
                 marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+                buyer.Addresses, buyer.Collection
                 ]
-      
+      keys_to_delete = []
       if self.request.get('delete'):
         for mod in models:
-            ndb.delete_multi(mod.query().fetch(keys_only=True))
+          keys_to_delete.extend(mod.query().fetch(keys_only=True))
+            
+      if self.request.get('system'):
+        for mod in [location.Country, location.CountrySubdivision, uom.Unit, uom.Measurement]:
+          keys_to_delete.extend(mod.query().fetch(keys_only=True))
+            
+      if keys_to_delete:
+         ndb.delete_multi(keys_to_delete)
              
-        memcache.flush_all()
+      memcache.flush_all()
         
       paths = {}
       

@@ -69,3 +69,13 @@ indexes:
   ancestor: yes
   properties:
   - name: "7"
+
+- kind: "15"
+  properties:
+  - name: "3"
+  - name: "2"
+  
+- kind: "16"
+  properties:
+  - name: "6"
+  - name: "3"

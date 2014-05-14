@@ -34,6 +34,30 @@ class CountryUpdate(event.Plugin):
       
       to_put = []
       
+      def make_complete_name_for_subdivision(entity, parent_id, process):
+        separator = unicode(' / ')
+        parent_property = 'parent_record'
+        name_property = 'name'
+        path = entity
+        names = []
+        while True:
+          parent = None
+          if parent_property is None:
+            parent_key = path.key.parent()
+            parent = parent_key.get()
+          else:
+            parent_key = getattr(path, parent_property)
+            if parent_key:
+              parent = process.get(parent_key.urlsafe())
+          if not parent:
+            names.append(getattr(path, name_property))
+            break
+          else:
+            names.append(getattr(path, name_property))
+            path = parent
+        names.reverse()
+        return separator.join(names)
+      
       for child in root[1]:
         dat = dict()
         dat['id'] = child.attrib['id']
@@ -46,7 +70,9 @@ class CountryUpdate(event.Plugin):
             
         to_put.append(Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
       
-      for child in root[2]:
+      processed_keys = {}
+      processed_ids = {}
+      for child in [c for c in root[2]] + [c for c in root[3]]:
         dat = dict()
         dat['id'] = child.attrib['id']
         for child2 in child:
@@ -57,30 +83,29 @@ class CountryUpdate(event.Plugin):
             dat[k] = child2.text
           if 'ref' in child2.attrib:
             dat[k] = child2.attrib['ref']
+            
         
-        kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 'unknown'), code=dat['code'], active=True)
+        kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 1), code=dat['code'], active=True)
         
         if 'country' in dat:
           kw['parent'] = Country.build_key(dat['country'])
         
         if 'parent' in dat:
-          kw['parent_record'] = CountrySubdivision.build_key(dat['parent'])
-        
-        to_put.append(CountrySubdivision(**kw))
+          parent = processed_ids.get(dat['parent'])
+          if parent:
+            kw['parent_record'] = parent.key
+           
+        new_sub_divison = CountrySubdivision(**kw)
+         
+        if 'parent' in dat:
+          new_sub_divison.complete_name = make_complete_name_for_subdivision(new_sub_divison, dat['parent'], processed_keys)
+          
+        processed_keys[new_sub_divison.key_urlsafe] = new_sub_divison
+        processed_ids[dat['id']] = new_sub_divison
       
-      total = len(to_put)
-      offset = 50
-      by = (total / offset) + 2
-      util.logger('Total countries to process: %s. Separated into %s batches.' % (total, by))
-      start = 0
-      for __ in range(0, by):
-        # do the protobuffs 50 at the time, not 4020 at once because it causes extremely high cpu usage.
-        end = start+offset
-        get = to_put[start:end]
-        util.logger('Offset at %s:%s. Found: %s items.' % (end, offset, len(get)))
-        if get:
-          ndb.put_multi(get)
-          start += offset
+        to_put.append(new_sub_divison)
+      
+      ndb.put_multi(to_put)
           
       Country._use_memcache = False
       Country._use_cache = False

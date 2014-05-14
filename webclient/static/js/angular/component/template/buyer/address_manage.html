@@ -2,19 +2,123 @@
 <div scroll-end="save" class="modal-body scrollable">
 <div class="modal-body-inner">
 	
+	 <h2 class="fieldset"><span class="fieldset-text">General</span></h2>
+ 
+	 <div class="form-control">
+		<label class="form-label">Name</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="name" 
+				 		ng-required="rule.input.update.addresses.name.required"
+				 	    class="text-input" type="text" ng-model="entity.name"
+				 	    ng-disabled="!rule.field.addresses.name.writable" />
+			</div>
+		</div>
+	 </div>
+	 
+	 <div class="form-control">
+		<label class="form-label">E-mail</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="email" 
+				 		ng-required="rule.input.update.addresses.email.required"
+				 	    class="text-input" type="text" ng-model="entity.email"
+				 	    ng-disabled="!rule.field.addresses.email.writable" />
+			</div>
+		</div>
+	 </div>
+	 
+	 <div class="form-control">
+		<label class="form-label">Phone</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="telephone" 
+				 		ng-required="rule.input.update.addresses.telephone.required"
+				 	    class="text-input" type="text" ng-model="entity.telephone"
+				 	    ng-disabled="!rule.field.addresses.telephone.writable" />
+			</div>
+		</div>
+	 </div>
+	
 	 <div class="form-control">
 		<label class="form-label">Country</label>
 		<div class="form-input">
-			<input type="text" name="country" ui-select2="select2Options.country" 
-					ng-model="address.country" data-placeholder="Select a country" />
+			<input type="text" name="country" 
+				    ng-required="rule.input.update.addresses.country.required"
+				    ng-disabled="!rule.field.addresses.country.writable"
+				    ui-select2="select2Options.country"
+					ng-model="entity.country" data-placeholder="Select a country" />
+		</div>
+	 </div>
+	 
+	<div class="form-control">
+		<label class="form-label">State / Region</label>
+		<div class="form-input">
+			<input type="text" name="region" 
+				    ng-required="rule.input.update.addresses.region.required"
+				    ng-disabled="!rule.field.addresses.region.writable"
+				    ui-select2="select2Options.region"
+					ng-model="entity.region" data-placeholder="Select a region" />
+		</div>
+	 </div>
+	
+	<div class="form-control">
+		<label class="form-label">City</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="city" 
+				 		ng-required="rule.input.update.addresses.city.required"
+				 	    class="text-input" type="text" ng-model="entity.city"
+				 	    ng-disabled="!rule.field.addresses.city.writable" />
+			</div>
+		</div>
+	 </div>
+	
+	<div class="form-control">
+		<label class="form-label">Postal Code</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="postal_code" 
+				 		ng-required="rule.input.update.addresses.postal_code.required"
+				 	    class="text-input" type="text" ng-model="entity.postal_code"
+				 	    ng-disabled="!rule.field.addresses.postal_code.writable" />
+			</div>
+		</div>
+	 </div>
+	 
+	<div class="form-control">
+		<label class="form-label">Street</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <input name="street" 
+				 		ng-required="rule.input.update.addresses.street.required"
+				 	    class="text-input" type="text" ng-model="entity.street"
+				 	    ng-disabled="!rule.field.addresses.street.writable" />
+			</div>
+		</div>
+	 </div>
+	 
+	 
+	 <div class="form-control">
+		<label class="form-label">Default Shipping</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.addresses.default_shipping.writable" 
+				 		 class="button" type="button" ng-model="entity.default_shipping"></button>
+			</div>
+		</div>
+	</div>
+	
+	<div class="form-control">
+		<label class="form-label">Default Billing</label>
+		<div class="form-input">
+			<div class="form-text">
+				 <button toggle ng-disabled="!rule.field.addresses.default_billing.writable" 
+				 	     class="button" type="button" ng-model="entity.default_billing"></button>
+			</div>
 		</div>
 	</div>
  
-	 
-	<div ng-show="rule.action.read_records.executable && history && entity.id" class="form-control">
-		<div ng-include="logic_template('misc/logs.html')"></div>
-	</div>	 
-	  
 </div>
  
   

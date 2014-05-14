@@ -8,6 +8,7 @@ import time
 import hashlib
 
 from app import ndb, util
+from app.srv import log as ndb_log
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, log, callback, buyer
@@ -46,10 +47,15 @@ class Addresses(ndb.BaseModel):
   
   addresses = ndb.SuperLocalStructuredProperty(Address, repeated=True)
   
+  _virtual_fields = {
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True)
+  }
+  
   _global_role = GlobalRole(permissions=[
                    ActionPermission('77', Action.build_key('77', 'update').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
                    ActionPermission('77', Action.build_key('77', 'read').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
-                   FieldPermission('77', ['addresses'], True, True, 'True'),
+                   ActionPermission('77', Action.build_key('77', 'read_records').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                   FieldPermission('77', ['addresses', '_records'], True, True, 'True'),
                  ])
   
   _actions = [
@@ -89,7 +95,23 @@ class Addresses(ndb.BaseModel):
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.77'})
         ]
-      )         
+      ),
+      Action(
+      key=Action.build_key('77', 'read_records'),
+      arguments={
+        'user': ndb.SuperKeyProperty(kind='0', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        buyer.AddressRead(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.77', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),       
   ]
      
             
@@ -106,11 +128,15 @@ class Collection(ndb.BaseModel):
   domains = ndb.SuperKeyProperty('2', kind='6', repeated=True)
   #primary_email = ndb.SuperStringProperty('3', required=True, indexed=False) # dont know what to do with this?
   
-  
+  _virtual_fields = {
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True)
+  }
+    
   _global_role = GlobalRole(permissions=[
                  ActionPermission('10', Action.build_key('10', 'update').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
                  ActionPermission('10', Action.build_key('10', 'read').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
-                 FieldPermission('10', ['notify', 'domains'], True, True, 'True')
+                 ActionPermission('77', Action.build_key('10', 'read_records').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                 FieldPermission('10', ['notify', 'domains', '_records'], True, True, 'True')
                ])
   
   _actions = [
@@ -151,5 +177,21 @@ class Collection(ndb.BaseModel):
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.10'})
         ]
-      )       
+      ),
+      Action(
+      key=Action.build_key('10', 'read_records'),
+      arguments={
+        'user': ndb.SuperKeyProperty(kind='0', required=True),
+        'next_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        buyer.CollectionRead(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        log.Read(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.10', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+      ),    
    ]

@@ -83,6 +83,15 @@ def _validate_prop(prop, value):
   if hasattr(prop, '_choices') and prop._choices:
     if value not in prop._choices:
       raise PropertyError('not_in_specified_choices')
+    
+def _apply_value_filters(prop, value):
+  if prop._value_filters:
+    if isinstance(prop._value_filters, (list, tuple)):
+      for f in prop._value_filters:
+        value = f(prop, value)
+    else:
+      value = prop._value_filters(prop, value)
+  return value
 
 def _property_value(prop, value):
   if value is None:
@@ -95,10 +104,10 @@ def _property_value(prop, value):
     for v in value:
       _validate_prop(prop, v)
       out.append(v)
-    return out
+    return _apply_value_filters(prop, out)
   else:
     _validate_prop(prop, value)
-    return value
+    return _apply_value_filters(prop, value)
 
 def _structured_property_field_format(fields, values):
   for value_key, value in values.items():
@@ -538,6 +547,7 @@ class BasePolyExpando(BasePoly, BaseExpando):
 class _BaseProperty(object):
   
   _max_size = None
+  _value_filters = None
   
   def get_meta(self):
     """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -558,6 +568,7 @@ class _BaseProperty(object):
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
+    self._value_filters = kwargs.pop('value_filters', self._value_filters)
     custom_kind = kwargs.get('kind')
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
       kwargs['kind'] = factory(custom_kind)

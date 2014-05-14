@@ -135,7 +135,11 @@ class Search(event.Plugin):
       filters = search.get('filters')
       order_by = search.get('order_by')
       args = []
+      kwds = {}
       for _filter in filters:
+        if _filter['field'] == 'ancestor':
+          kwds['ancestor'] = _filter['value']
+          continue
         field = getattr(model, _filter['field'])
         op = _filter['operator']
         value = _filter['value']
@@ -153,11 +157,14 @@ class Search(event.Plugin):
           args.append(field.IN(value))
         elif op == 'contains':
           letters = list(string.printable)
-          last = letters[letters.index(value[-1].lower()) + 1]
-          args.append(field >= value)
-          args.append(field < last)
-  
-      query = query.filter(*args)
+          try:
+            last = letters[letters.index(value[-1].lower()) + 1]
+            args.append(field >= value)
+            args.append(field < last)
+          except ValueError as e: # i.e. value not in the letter scope, šččđčžćč for example
+            args.append(field == value)
+           
+      query = query.filter(*args, **kwds)
       order_by_field = getattr(model, order_by['field'])
       asc = order_by['operator'] == 'asc'
       if asc:

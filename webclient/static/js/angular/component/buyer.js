@@ -6,12 +6,14 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     	
         	'_manageAddress' : function (address, entity)
         	{
+        		var $parentScope = this;
         		var modalInstance = $modal.open({
                         templateUrl: logic_template('buyer/address_manage.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
-                            $scope.address = angular.copy(address ? address : {});
-                       
+                            $scope.entity = angular.copy(address ? address : {});
+                            $scope.rule = $parentScope.rule;
+                    
                             var new_address = address ? false : true;
              
                             $scope.save = function () {
@@ -24,11 +26,11 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                                  		entity.addresses = [];
                                  	}
                                  	 
-                                 	entity.addresses.push($scope.address);
+                                 	entity.addresses.push($scope.entity);
                                  }
                                  else
                                  {
-                                 	update(address, $scope.address);
+                                 	update(address, $scope.entity);
                                  }
                                  
                                  $scope.cancel();
@@ -58,22 +60,24 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     	};
   
         return {
-            update: function (entity, complete)
+            update: function (user, complete)
             {
             	var that = this;
+            	
+            	var entity = {'user' : user['key']};
              
                 return EntityEditor.update({
                 	 'kind' : '77',
-                	 'entity' : {},
+                	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			      
+			      		  this.history.args.user = entity['user'];
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('buyer/addresses.html'),
                 	 'args' : {
-                	 	'user' : $rootScope.current_user.key,
+                	 	'user' : entity['user'],
                 	 }
                 });
             }
@@ -143,7 +147,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
 	
 	$rootScope.manageBuyer = function ()
 	{
-		BuyerAddress.update();
+		BuyerAddress.update($rootScope.current_user);
 	};
  
 	 

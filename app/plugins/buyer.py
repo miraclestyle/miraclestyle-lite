@@ -27,6 +27,8 @@ class AddressUpdate(event.Plugin):
     if supplied:
       shipping = True
       billing = True
+      default_billing = 0
+      default_shipping = 0
       for i,addr in enumerate(supplied):
         try:
           existing = context.values['77'].addresses[i]
@@ -34,22 +36,17 @@ class AddressUpdate(event.Plugin):
           # we cant use the rule engine here cuz we need to allow user to remove/append the addresses
         except IndexError as e:
           addr.generate_internal_id() # this is a new record so force-feed him the internal_id
-           
-        if not shipping:
-          addr.default_shipping = False
-        if not billing:
-          addr.default_billing = False
-          
+        
         if addr.default_shipping:
-          shipping = False
+          default_shipping = i
         if addr.default_billing:
-          billing = False
-          
-      if supplied:
-        if shipping:
-          supplied[0].default_shipping = True
-        if billing:
-          supplied[0].default_billing = True
+          default_billing = i
+             
+        addr.default_shipping = False
+        addr.default_billing = False
+           
+      supplied[default_shipping].default_shipping = True
+      supplied[default_billing].default_billing = True
            
     context.values['77'].addresses = supplied  
     
