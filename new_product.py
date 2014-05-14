@@ -79,6 +79,7 @@ class Images(ndb.BaseModel):
   
   _kind = 73
   
+  # @todo Why is this field sometimes SuperLocalStructuredImageProperty and sometimes SuperLocalStructuredProperty!!!???
   images = ndb.SuperLocalStructuredProperty(Image, '1', repeated=True)  # Soft limit 100 instances.
 
 
