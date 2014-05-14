@@ -138,6 +138,16 @@ class Template(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
+      ActionPermission('38', Action.build_key('38', 'prepare').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'create').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'read').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'update').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('38', Action.build_key('38', 'delete').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('38', Action.build_key('38', 'search').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'read_records').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'duplicate').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, "context.user._is_taskqueue")
       ]
     )
   
@@ -295,7 +305,39 @@ class Template(ndb.BaseExpando):
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'})
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
+        blob.Write(transactional=True, keys_location='write_blobs'),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.38.key_urlsafe'}),
+        callback.Payload(transactional=True, queue = 'callback',
+                         static_data = {'action_id': 'process_images', 'action_model': '38'},
+                         dynamic_data = {'key': 'entities.38.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('38', 'process_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(domain_model=True),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.ProcessImages(transactional=True),
+        rule.Write(transactional=True),
+        product.WriteImages(transactional=True),
+        log.Write(transactional=True),
+        blob.Write(transactional=True, keys_location='write_blobs'),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.38.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -410,6 +452,13 @@ class Instance(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
+      ActionPermission('38', Action.build_key('38', 'prepare').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'create').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'read').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'update').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
+      ActionPermission('38', Action.build_key('38', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('38', Action.build_key('38', 'delete').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
+      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, "context.user._is_taskqueue")
       ]
     )
   
@@ -554,7 +603,39 @@ class Instance(ndb.BaseExpando):
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'})
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
+        blob.Write(transactional=True, keys_location='write_blobs'),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Payload(transactional=True, queue = 'callback',
+                         static_data = {'action_id': 'process_images', 'action_model': '39'},
+                         dynamic_data = {'key': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'process_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='39', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(domain_model=True),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.ProcessImages(transactional=True),
+        rule.Write(transactional=True),
+        product.WriteImages(transactional=True),
+        log.Write(transactional=True),
+        blob.Write(transactional=True, keys_location='write_blobs'),
+        callback.Payload(transactional=True, queue = 'notify',
+                         static_data = {'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data = {'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
