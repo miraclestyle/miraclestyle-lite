@@ -4,6 +4,7 @@ Created on May 12, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+import collections
 
 from app import ndb, settings
 from app.srv.event import Action
@@ -164,7 +165,7 @@ class Template(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         blob.URL(gs_bucket_name=settings.PRODUCT_TEMPLATE_BUCKET),
-        common.Set('output.entity': 'entities.38')
+        common.Set(dynamic_values = {'output.entity': 'entities.38'})
         ]
       ),
     Action(
@@ -189,7 +190,7 @@ class Template(ndb.BaseExpando):
         product.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values{'values.38.product_category': 'input.product_category',
+        common.Set(dynamic_values={'values.38.product_category': 'input.product_category',
                                   'values.38.name': 'input.name',
                                   'values.38.description': 'input.description',
                                   'values.38.product_uom': 'input.product_uom',
@@ -255,7 +256,7 @@ class Template(ndb.BaseExpando):
         product.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values{'values.38.product_category': 'input.product_category',
+        common.Set(dynamic_values={'values.38.product_category': 'input.product_category',
                                   'values.38.name': 'input.name',
                                   'values.38.description': 'input.description',
                                   'values.38.product_uom': 'input.product_uom',
@@ -475,7 +476,7 @@ class Instance(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         blob.URL(gs_bucket_name=settings.PRODUCT_INSTANCE_BUCKET),
-        common.Set('output.entity': 'entities.39')
+        common.Set(dynamic_values={'output.entity': 'entities.39'})
         ]
       ),
     Action(
@@ -498,7 +499,7 @@ class Instance(ndb.BaseExpando):
         product.InstancePrepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values{'values.39.variant_signature': 'input.variant_signature',
+        common.Set(dynamic_values={'values.39.variant_signature': 'input.variant_signature',
                                   'values.39.code': 'input.code',
                                   'values.39.description': 'input.description',
                                   'values.39.unit_price': 'input.unit_price',
@@ -558,7 +559,7 @@ class Instance(ndb.BaseExpando):
         product.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values{'values.39.code': 'input.code',
+        common.Set(dynamic_values={'values.39.code': 'input.code',
                                   'values.39.description': 'input.description',
                                   'values.39.unit_price': 'input.unit_price',
                                   'values.39.availability': 'input.availability',
