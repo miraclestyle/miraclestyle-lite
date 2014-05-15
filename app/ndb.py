@@ -1010,21 +1010,28 @@ class SuperSearchProperty(SuperJsonProperty):
       for_composite_filter.append(key)
     for_composite_order_by = []
     config = search['order_by']
-    key = config.get('field')
-    _order_by = self._order_by.get(key)
-    if not _order_by:
-      raise PropertyError('field_not_in_order_by_list')
-    assert config.get('operator') in _order_by['operators']
-    for_composite_order_by.append(key)
-    for_composite_order_by.append(config.get('operator'))
+    if config:
+      key = config.get('field')
+      _order_by = self._order_by.get(key)
+      if not _order_by:
+        raise PropertyError('field_not_in_order_by_list')
+      assert config.get('operator') in _order_by['operators']
+      for_composite_order_by.append(key)
+      for_composite_order_by.append(config.get('operator'))
     composite_filter = False
     composite_order_by = False
     for index in self._indexes:
       if index.get('filter') == for_composite_filter:
         composite_filter = True
       order_by = index.get('order_by')
-      for order_by_config in order_by:
-        if order_by_config[0] == for_composite_order_by[0] and for_composite_order_by[1] in order_by_config[1]:
-          composite_order_by = True
+      if order_by:
+        for order_by_config in order_by:
+          try:
+            if order_by_config[0] == for_composite_order_by[0] and for_composite_order_by[1] in order_by_config[1]:
+              composite_order_by = True
+          except IndexError as e:
+            pass
+      elif not config:
+        composite_order_by = True
     assert composite_filter is True and composite_order_by is True
     return search

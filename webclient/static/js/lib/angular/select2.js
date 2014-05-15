@@ -113,9 +113,10 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
             } else {
               if (opts.multiple) {
                 var viewValue = controller.$viewValue;
-            
-                //elm.select2(
-                //  'data', convertToSelect2Model(viewValue));
+            	// convertToSelect2Model(viewValue)
+                elm.select2(
+                  'val', viewValue);
+                 
               } else {
                 if (angular.isObject(controller.$viewValue)) {
                   elm.select2('data', controller.$viewValue);
@@ -176,7 +177,9 @@ angular.module('app.ui.select2', []).value('uiSelect2Config', {}).directive('uiS
 
             if (opts.initSelection) {
               var initSelection = opts.initSelection;
+           
               opts.initSelection = function (element, callback) {
+            
                 initSelection(element, function (value) {
                   var isPristine = controller.$pristine;
                   controller.$setViewValue(convertToAngularModel(value));

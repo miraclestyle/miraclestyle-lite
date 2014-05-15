@@ -118,6 +118,7 @@ class Search(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
   search = ndb.SuperJsonProperty('6', indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
+  limit = ndb.SuperIntegerProperty('7', indexed=False)
   
   def run(self, context):
     namespace = None
@@ -129,7 +130,7 @@ class Search(event.Plugin):
       model = context.model
       if context.entities[context.model.get_kind()].key:
         namespace = context.entities[context.model.get_kind()].key_namespace
-    
+    value = None
     search = context.input.get('search')
     if search:
       filters = search.get('filters')
@@ -166,16 +167,42 @@ class Search(event.Plugin):
       
       query = model.query(namespace=namespace, **kwds)     
       query = query.filter(*args)
-      order_by_field = getattr(model, order_by['field'])
-      asc = order_by['operator'] == 'asc'
-      if asc:
-        query = query.order(order_by_field)
-      else:
-        query = query.order(-order_by_field)
+      if order_by:
+        order_by_field = getattr(model, order_by['field'])
+        asc = order_by['operator'] == 'asc'
+        if asc:
+          query = query.order(order_by_field)
+        else:
+          query = query.order(-order_by_field)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
-    if next_cursor:
-      next_cursor = next_cursor.urlsafe()
+    
+    def they_are_all_keys(value):
+      for v in value:
+        if not isinstance(v, ndb.Key):
+          return False
+      return True
+    
+    if value is not None and (isinstance(value, ndb.Key)) or (isinstance(value, list) and len(value) and they_are_all_keys(value)):
+      # this has to be done like this because there is no way to order the fetched items
+      # in the order the keys were provided, the MultiQuery disallowes that http://stackoverflow.com/questions/12449197/badargumenterror-multiquery-with-cursors-requires-key-order-in-ndb
+      fetch = value
+      if not isinstance(fetch, list):
+        fetch = [value]
+      entities = ndb.get_multi(fetch)
+      next_cursor = None
+      more = False
+    else:
+      limit = self.limit
+      if limit is None:
+        limit = settings.SEARCH_PAGE
+      if limit:
+        entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
+        if next_cursor:
+          next_cursor = next_cursor.urlsafe()
+      else:
+        entities = query.fetch()
+        next_cursor = None
+        more = False
     context.entities = entities
     context.next_cursor = next_cursor
     context.more = more

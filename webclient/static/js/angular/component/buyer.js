@@ -18,7 +18,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                          
                             $scope.save = function () {
                   
-                            	 
+                            	 // @todo missing async fetching for the country and region ._country etc.
                                  if (new_address)
                                  {
                                  	if (!entity.addresses)
@@ -85,69 +85,55 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
         };
 
     }
-]).factory('BuyerCollection', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+]).factory('BuyerCollection', ['$rootScope', 'EntityEditor',
 
-    function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
+    function ($rootScope, EntityEditor) {
     	  
-        var scope = {
-    	};
-        return {
-            create: function (domain_key, complete) {
+       return {
+            update: function (user, complete)
+            {
+            	var that = this;
+            	
+            	var entity = {'user' : user['key']};
+            	var scope = {
+            		
+            		'removeApp' : function (app)
+            		{
+            			this.entity.domains.remove(app.key);
+            			this.entity._domains.remove(app);
+            		}
+            	};
              
-            	  
-               return EntityEditor.create({
-                	 'kind' : '60',
-                	 'entity' : {
-                	 	'permissions' : [],
-                	 },
+                return EntityEditor.update({
+                	 'kind' : '10',
+                	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			            this.entity['domain'] = domain_key;
+			      		  this.history.args.user = entity['user'];
 			         },
                 	 'complete' : complete,
-                	 'templateUrl' : logic_template('rule/manage_role.html'),
+                	 'templateUrl' : logic_template('buyer/collection_manage.html'),
                 	 'args' : {
-                	 	'domain' : domain_key,
-                	 }
-                });
-                
-            },
-            remove : function (entity, complete)
-            {
-               
-               return EntityEditor.remove({
-               	  'kind' : '60',
-               	  'entity' : entity,
-               	  'complete' : complete,
-               });
-         
-            },
-            update: function (entity, complete)
-            {
-             
-                return EntityEditor.update({
-                	 'kind' : '60',
-                	 'entity' : entity,
-                	 'scope' : scope,
-                	 'complete' : complete,
-                	 'templateUrl' : logic_template('rule/manage_role.html'),
-                	 'args' : {
-                	 	'key' : entity['key'],
+                	 	'user' : entity['user'],
                 	 }
                 });
             }
 
         };
-
     }
-]).run(['$rootScope', 'BuyerAddress',
-	function ($rootScope, BuyerAddress) {
+]).run(['$rootScope', 'BuyerAddress', 'BuyerCollection',
+	function ($rootScope, BuyerAddress, BuyerCollection) {
  
 	
 	$rootScope.manageBuyer = function ()
 	{
 		BuyerAddress.update($rootScope.current_user);
+	};
+	
+	$rootScope.manageCollection = function ()
+	{
+		BuyerCollection.update($rootScope.current_user);
 	};
  
 	 

@@ -42,12 +42,15 @@
 		<label class="form-label">Default Unit of Measure</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <select name="product_uom" ng-required="rule.input[action].product_uom.required"
-					    ng-disabled="!rule.field.product_uom.writable" ui-select2 
-					    ng-model="entity.product_uom" data-placeholder="Select a product unit of measure">
-				    <option value=""></option>
-				    <option ng-repeat="unit in units track by $index" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
-				 </select>
+				
+				 <input
+			       name="product_uom" 
+			       ng-required="rule.input[action].product_uom.required"
+			       ng-disabled="!rule.field.product_uom.writable"
+			       ui-select2="select2Options.units"
+			       ng-model="entity.product_uom"
+			       data-placeholder="Select a product unit of measure" />
+			 
 			</div>
 		</div>
 		</div>
@@ -87,12 +90,14 @@
 											 	    class="text-input" type="text" ng-model="entity.weight"
 											 	    ng-disabled="!rule.field.weight.writable" /></td>
 				 			<td class="t40 cpl10">
-				 				 <select name="weight_uom" ng-required="rule.input[action].weight_uom.required"
-									    ng-disabled="!rule.field.weight_uom.writable" ui-select2 
-									    ng-model="entity.weight_uom" data-placeholder="Select a weight unit of measure">
-								    <option value=""></option>
-								    <option ng-repeat="unit in units track by $index" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
-								 </select>
+			 
+								<input
+							       name="weight_uom" 
+							       ng-required="rule.input[action].weight_uom.required"
+							       ng-disabled="!rule.field.weight_uom.writable"
+							       ui-select2="select2Options.weight"
+							       ng-model="entity.weight_uom"
+							       data-placeholder="Select a weight unit of measure" />								 
 				 			</td>
 				 		</tr>
 				 	</tbody>
@@ -113,12 +118,15 @@
 											 	    class="text-input" type="text" ng-model="entity.volume"
 											 	    ng-disabled="!rule.field.volume.writable" /></td>
 				 			<td class="t40 cpl10">
-				 				 <select name="product_uom" ng-required="rule.input[action].volume_uom.required"
-									    ng-disabled="!rule.field.product_uom.writable" ui-select2 
-									    ng-model="entity.volume_uom" data-placeholder="Select a volume unit of measure">
-								    <option value=""></option>
-								    <option ng-repeat="unit in units track by $index" value="{{unit.key}}">{{unit._measurement.name}} - {{unit.name}}</option>
-								 </select>
+				 	 
+								<input
+							       name="volume_uom" 
+							       ng-required="rule.input[action].volume_uom.required"
+							       ng-disabled="!rule.field.volume_uom.writable"
+							       ui-select2="select2Options.volume"
+							       ng-model="entity.volume_uom"
+							       data-placeholder="Select a volume unit of measure" />									 
+								 
 				 			</td>
 				 		</tr>
 				 	</tbody>
@@ -201,7 +209,7 @@
 		  <div class="pull-right">
 		  <div ng-show="rule.field._images.writable" class="button fake-button">
 		  	 <span>Add Images</span>
-		  	 <input class="upload" name="images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
+		  	 <input class="upload" name="_images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
 		  </div>
 		  </div>
 		  

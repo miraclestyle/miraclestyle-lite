@@ -349,6 +349,9 @@ class User(ndb.BaseExpando):
       if session:
         cls.set_current_user(user, session)
 
+def domain_logo_size(prop, value):
+  ## here we need validation of image width, height for the logo
+  pass
 
 class Domain(ndb.BaseExpando):
   
@@ -361,7 +364,7 @@ class Domain(ndb.BaseExpando):
   name = ndb.SuperStringProperty('3', required=True)
   primary_contact = ndb.SuperKeyProperty('4', kind=User, required=True, indexed=False)
   state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, '6', required=True)
+  logo = ndb.SuperLocalStructuredProperty(ndb_blob.Image, '6', required=True)
   
   _default_indexed = False
   
@@ -428,7 +431,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True, validate_images=True)
+        'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True, validate_images=True, validator=domain_logo_size)
         },
       _plugins=[
         common.Context(),

@@ -132,7 +132,7 @@ MainApp.filter('permissionResolveActionName', function() {
                             	var fields = {};
                             	
                             	angular.forEach(info['actions'], function (value, key) {
-                            		actions[value.key] = key;
+                            		actions[value.key] = value.id;
                             	});
                             	
                             	angular.forEach(info['fields'], function (value, key) {

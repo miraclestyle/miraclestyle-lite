@@ -107,8 +107,8 @@ class Unit(ndb.BaseExpando):
   
   
   _global_role = GlobalRole(permissions=[
-                   ActionPermission('19', Action.build_key('19', 'update_currency').urlsafe(), True, "context.user._root_admin"),
-                   ActionPermission('19', Action.build_key('19', 'update_unit').urlsafe(), True, "context.user._root_admin"),
+                   ActionPermission('19', Action.build_key('19', 'update_currency').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
+                   ActionPermission('19', Action.build_key('19', 'update_unit').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
                    ActionPermission('19', Action.build_key('19', 'search').urlsafe(), True, "True"),
                  ])
   
@@ -137,30 +137,51 @@ class Unit(ndb.BaseExpando):
       key=Action.build_key('19', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "code", "operator": "asc"}},
+          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='19')},
             'code': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.upper()])},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.capitalize()])},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyFromPathProperty(kind='18')},
             },
           indexes=[
             {'filter': [],
              'order_by': [['code', ['asc', 'desc']]]},
-            {'filter': ['key'],
-             'order_by': [['key', ['asc', 'desc']]]},  
+            {'filter': ['key'],},  
             {'filter': ['code', 'active'],
              'order_by': [['code', ['asc', 'desc']]]},
             {'filter': ['code', 'active', 'ancestor'],
              'order_by': [['code', ['asc', 'desc']]]},
+                   
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']]]},       
+            {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['name', 'active', 'ancestor'],
+             'order_by': [['name', ['asc', 'desc']]]},
+                   
             ],
           order_by={
-            'name': {'operators': ['asc', 'desc']}
+            'name': {'operators': ['asc', 'desc']},
+            'code': {'operators': ['asc', 'desc']}
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
         },
-       )       
+           
+        _plugins=[
+          common.Context(),
+          common.Prepare(domain_model=False),
+          rule.Prepare(skip_user_roles=False, strict=False),
+          rule.Exec(),
+          common.Search(limit=-1), # -1 represents all results
+          uom.RemoveCurrencies(),
+          rule.Prepare(skip_user_roles=False, strict=False),
+          rule.Read(),
+          common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        ]
+       )      
   ]
  
  

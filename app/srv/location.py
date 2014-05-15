@@ -46,7 +46,7 @@ class Country(ndb.BaseModel):
   active = ndb.SuperBooleanProperty('3', default=True)
   
   _global_role = GlobalRole(permissions=[
-                   ActionPermission('15', Action.build_key('15', 'update').urlsafe(), True, "context.user._root_admin"),
+                   ActionPermission('15', Action.build_key('15', 'update').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
                    ActionPermission('15', Action.build_key('15', 'search').urlsafe(), True, "True"),
                    FieldPermission('15', ['code', 'name', 'active'], True, True, 'True'),
                  ])
@@ -75,8 +75,7 @@ class Country(ndb.BaseModel):
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],
-             'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['key'],},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
@@ -93,7 +92,7 @@ class Country(ndb.BaseModel):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Search(),
+        common.Search(limit=-1),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
@@ -236,8 +235,7 @@ class CountrySubdivision(ndb.BaseModel):
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],
-             'order_by': [['key', ['asc', 'desc']]]},
+            {'filter': ['key'],},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
@@ -267,12 +265,10 @@ class CountrySubdivision(ndb.BaseModel):
   ]
   
   def type_into_text(self):
-    items = self.TYPES.items()
-    try:
-      i = items.index(self.type)
-      return items[i]
-    except ValueError as e:
-      return self.type
+    for name, key in self.TYPES.items():
+      if key == self.type:
+          return name
+    return self.type
 
 
 class Location(ndb.BaseExpando):

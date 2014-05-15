@@ -253,26 +253,23 @@ class DomainRole(Role):
         'search': ndb.SuperSearchProperty(
           default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
           filters={
-            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='60')},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='60', repeated=True),},
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
             },
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],
-             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['key'],},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
-            'name': {'operators': ['asc', 'desc']}
+            'name': {'operators': ['asc', 'desc']},
             }
           ),
         'next_cursor': ndb.SuperStringProperty()

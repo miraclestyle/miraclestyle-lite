@@ -147,3 +147,11 @@ class UnitUpdate(event.Plugin):
       ndb.put_multi([Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms])
       
       cache_control(True)
+      
+      
+class RemoveCurrencies(event.Plugin):
+  
+  def run(self, context):
+    for i,entity in enumerate(context.entities):
+      if entity.key.parent().id() == 'currency':
+        context.entities.pop(i)

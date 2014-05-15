@@ -275,3 +275,10 @@ strong, b
 	width:240px;
 	height:200px;
 }
+
+.app-block
+{
+	width:240px;
+	height:150px;
+}
+.app-block .logo {width:100%;height:auto;}

@@ -48,13 +48,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'label' : 'name',
 				'filters' : [],
 				'action' : 'search',
-				'cache' : true,
+				'cache' : false,
 				'filter_callback' : angular.noop,
 				'args_callback' : angular.noop,
 			 
 			};
 			
 			opts = angular.extend(opts, new_opts);
+			
+			var endpointOpts = {};
+ 
+        	if (opts['cache'])
+        	{
+        		endpointOpts['params'] = {
+        			'___cache_key' : opts['cache']
+        		};
+        		endpointOpts['cache'] = true;
+        	} 
 			 
  			return {
 			    minimumInputLength: 0,
@@ -62,14 +72,14 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        quietMillis: 200,
  
 			        transport: function (params)
-			        {
-			        	return Endpoint.post(opts['action'], opts['kind'], params.data).success(params.success);
+			        { 
+			        	return Endpoint.post(opts['action'], opts['kind'], params.data, endpointOpts).success(params.success);
 			        },
 			        data: function (term, page) {
 			       
 			        	  var find = [{'value' : term, 'operator':'contains', 'field' : opts['field']}];
 			        	  
-			        	  if (term == '')
+			        	  if (term == '' || opts['cache'])
 			        	  {
 			        	  	find = [];
 			        	  }
@@ -103,29 +113,66 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        // this function resolves that id attribute to an object that select2 can render
 			        // using its formatResult renderer - that way the movie name is shown preselected
 			        var id=$(element).val();
+			        var initial_id = id;
+			         
 			        
+			        var select2 = $(element).data('select2');
+			        
+			        if (select2.opts.multiple)
+			        {
+			        	if (id)
+			        	{
+			        		id = id.split(',');
+			        	}
+			        }
+			         
 			    
 			            if (id != '')
 			            {
-			            	var find = [{'value' : id, 'operator':'==', 'field' : 'key'}];
+			            	var find = [{'value' : id, 'operator': (select2.opts.multiple ? 'IN' : '=='), 'field' : 'key'}];
 			            }
 			        	else
 			        	{
 			        		var find = [];
+			        		find.extend(opts.filters);
+			        		
+			        		return;
 			        	}
 			         
-	 					Endpoint.post(opts['action'], opts['kind'], {  
+			        	
+			        	var args = {  
 				            		  "search" : {
 				            		  			  "filters":find,
-				            				      "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}
 				            				     } 
-				                }).success(function (data) {
+				               };
+			        	
+			        	opts['args_callback']($(this), args);
+			        	
+			        	var copyendpointOpts = angular.copy(endpointOpts);
+			        	if (!copyendpointOpts['params']) copyendpointOpts['params'] = {};
+			        	copyendpointOpts['params']['__ids'] = initial_id;
+			        	copyendpointOpts['cache'] = true;
+			        	 
+	 					Endpoint.post(opts['action'], opts['kind'], args, copyendpointOpts).success(function (data) {
 				                	try
 				                	{
-				                		
-				                	  var value = data.entities[0];
-			            		  	  callback({text: value[opts['label']], id: value.key}); 
-				                		
+				                	  
+				                	  if (select2.opts.multiple)
+								      {
+								        	var items = [];
+								        	angular.forEach(data.entities, function (value) {
+								        		items.push({text: value[opts['label']], id: value.key});
+								        	});
+								      }
+								      else
+								      {
+								          var value = data.entities[0];
+								          var items = {text: value[opts['label']], id: value.key};
+			            		  	     
+								      }
+								      
+								       callback(items); 
+				                	   
 				                	}catch(e){}
 				                	
 				                });
@@ -395,7 +442,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		{
 		    compiled = _compile(action, model, data, config);
 		    
-		    compiled[1]['params'] = $.param(compiled[0]);
+		    //compiled[1]['params'] = $.param(compiled[0]);
 			
 			return $http.get(endpoint_url, compiled[1]);
 		},
@@ -804,7 +851,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    	$rootScope.select2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',
-   			filters : active_filter
+   			filters : active_filter,
+   			cache : 'country',
+   		    
    		}),
    		'region' : Select2Options.factory({
    			kind : '16',
@@ -814,15 +863,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    				var scope = element.scope();
    				var country = element.data('country');
    				
-   				if (country)
+   				 
+   				if (country.length)
    				{
    					var country_id = scope.$eval(country);
    					
-   					filter.push({
-   						value : country_id,
-   						operator : '==',
-   						field : 'ancestor',
-   					});
+   					if (country_id && country_id.length)
+   					{
+   						
+   						filter.push({
+	   						value : country_id,
+	   						operator : '==',
+	   						field : 'ancestor',
+	   					});
+   						
+   					}
+   					
    				}
    			}
    		}),
@@ -836,9 +892,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    			}
    		}),
    
-   		'product_category' : Select2Options.factory({
-   			kind : '17',
-   			filters : [{'value' : 'active', 'operator':'==', 'field' : 'state'}],
+   		'units' : Select2Options.factory({
+   			kind : '19',
+   			filters : [{'value' : true, 'operator':'==', 'field' : 'active'}],
+   			cache : 'units',
    		}),
    		 
    	};
@@ -850,6 +907,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    			kind : '19',
    			filters : [{'value' : true, 'operator':'==', 'field' : 'active'},
    					   {'value' : ['18', v], 'operator':'==', 'field' : 'ancestor'}],
+   		    cache : v,
    		});
 	});
    	

@@ -26,6 +26,9 @@ class Address(ndb.BaseExpando):
     street = ndb.SuperStringProperty('6', required=True, indexed=False)
     default_shipping = ndb.SuperBooleanProperty('7', default=True, indexed=False)
     default_billing = ndb.SuperBooleanProperty('8', default=True, indexed=False)
+    
+    _country = None # prevent from expando saving
+    _region = None # prevent from expando saving
   
     _default_indexed = False
     
@@ -157,18 +160,18 @@ class Collection(ndb.BaseModel):
   # composite index: ancestor:yes - name
   
   notify = ndb.SuperBooleanProperty('1', required=True, default=False)
-  domains = ndb.SuperKeyProperty('2', kind='6', repeated=True)
-  #primary_email = ndb.SuperStringProperty('3', required=True, indexed=False) # dont know what to do with this?
-  
+  domains = ndb.SuperKeyProperty('2', kind='6', repeated=True, indexed=False)
+ 
   _virtual_fields = {
-    '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True)
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True),
+    '_domains' : ndb.SuperLocalStructuredProperty('6', repeated=True), # we need virtual domain prop so we can control what user can see in the domain results e.g. show only name, key, and logo
   }
     
   _global_role = GlobalRole(permissions=[
-                 ActionPermission('10', Action.build_key('10', 'update').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
-                 ActionPermission('10', Action.build_key('10', 'read').urlsafe(), True, "context.rule.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                 ActionPermission('10', Action.build_key('10', 'update').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
+                 ActionPermission('10', Action.build_key('10', 'read').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
                  ActionPermission('77', Action.build_key('10', 'read_records').urlsafe(), True, "context.entity.key_parent == context.user.key and (not context.user._is_guest)"),
-                 FieldPermission('10', ['notify', 'domains', '_records'], True, True, 'True')
+                 FieldPermission('10', ['notify', 'domains', '_records', '_domains'], True, True, 'True')
                ])
   
   _actions = [
@@ -176,7 +179,7 @@ class Collection(ndb.BaseModel):
             arguments={
                  'user': ndb.SuperKeyProperty(kind='0', required=True),
                  'notify' : ndb.SuperBooleanProperty(default=True),
-                 'domains' : ndb.SuperKeyProperty(kind='6'),
+                 'domains' : ndb.SuperKeyProperty(kind='6', repeated=True),
             },
       _plugins=[
               common.Context(),
@@ -227,3 +230,8 @@ class Collection(ndb.BaseModel):
         ]
       ),    
    ]
+  
+  def get_output(self):
+    self._domains = ndb.get_multi(self.domains)
+    return super(Collection, self).get_output()
+    
