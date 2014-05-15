@@ -108,37 +108,28 @@ class Search(event.Plugin):
     search = context.input.get('search')
     if search:
       filters = search.get('filters')
-      order_by = search.get('order_by')
       args = []
-      kwds = {}
       for _filter in filters:
-        if _filter['field'] == 'ancestor':
-          kwds['ancestor'] = _filter['value']
-          continue
-        field = getattr(model, _filter['field'])
+        field = _filter['field']
         op = _filter['operator']
         value = _filter['value']
         if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-          args.append(field == value)
+          args.append('(' + field + '=' + value + ')')
         elif op == '!=':
-          args.append(field != value)
+          args.append('(NOT ' + field + '=' + value + ')')
         elif op == '>':
-          args.append(field > value)
+          args.append('(' + field + '>' + value + ')')
         elif op == '<':
-          args.append(field < value)
+          args.append('(' + field + '<' + value + ')')
         elif op == '>=':
-          args.append(field >= value)
+          args.append('(' + field + '>=' + value + ')')
+        elif op == '<=':
+          args.append('(' + field + '<=' + value + ')')
         elif op == 'IN':
-          args.append(field.IN(value))
-        elif op == 'contains':
-          letters = list(string.printable)
-          try:
-            last = letters[letters.index(value[-1].lower()) + 1]
-            args.append(field >= value)
-            args.append(field < last)
-          except ValueError as e: # i.e. value not in the letter scope, šččđčžćč for example
-            args.append(field == value)
+          args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
       
+      query_string = ' AND '.join(args)
+      order_by = search.get('order_by')
       if order_by['operator'] == 'asc':
         direction = search.SortExpression.ASCENDING
       else:
