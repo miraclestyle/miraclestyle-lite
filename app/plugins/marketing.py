@@ -37,13 +37,13 @@ class Read(event.Plugin):
   
   def run(self, context):
     read_catalog_images(context)
-    context.values['35']._images = ndb.clone_entity(context.entities['35']._images)
+    context.values['35']._images = ndb.copy.deepcopy(context.entities['35']._images)
 
 class UpdateRead(event.Plugin):
   
   def run(self, context):
     read_catalog_images(context, True)
-    context.values['35']._images = ndb.clone_entity(context.entities['35']._images)
+    context.values['35']._images = ndb.copy.deepcopy(context.entities['35']._images)
 
 
 class UpdateSet(event.Plugin):

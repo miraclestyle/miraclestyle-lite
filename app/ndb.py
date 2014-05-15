@@ -34,39 +34,6 @@ ctx.set_memcache_policy(False)
 class PropertyError(Exception):
   pass
 
-def clone_entity(entity):
-  """ 
-    Due copy.deepcopy inability to copy over our virtual fields,
-    this implementation will copy the rest.
-    NOTE: Copied objects ``should never`` call .put() because it might make problems with context cache.
-    
-    Quote from:
-    Guido van Rossum   
-    10/16/12
-    
-    
-    Hmmm... An entity itself is mutable, and we share the entity via the 
-    cache. The same for mutable attributes like repeated properties. This 
-    was a conscious decision -- the idea is that if you are planning to 
-    update an entity, you should see the entity as it will be written back 
-    everywhere in your request (as long as you're using the same context). 
-    We couldn't change it now even if we wanted to because it would be 
-    backward incompatible. 
-      
-      
-    Tested this, this just wont work. We have to think of another way to perform these copies...
-    
-    we might have to use __deepcopy__ hook...
-    
-  """ 
-  new_entity = copy.deepcopy(entity) # we deepcopy here eitherway
-  """
-  fields = entity.get_fields()
-  for f in fields:
-    if hasattr(entity, f):
-       setattr(new_entity, f, getattr(entity, f, None)) # we could try deepcopy on the getattr result, but problem pressists with hierarchy
-  """
-  return new_entity
 
 def validate_images(objects):
   """'objects' argument is a list of valid blob.Image 
@@ -452,9 +419,18 @@ class _BaseModel(object):
     else:
       return None
     
-  def __deepcopy2__(self, memo):
+  def __deepcopy__(self, memo):
     ## this must copy the entity properly somehow
-    pass
+    klass = self.__class__
+    
+    new_entity = klass()
+    
+    for f in self.get_fields():
+      if hasattr(self, f):
+        d = getattr(self, f, None)
+        d = copy.deepcopy(d)
+        setattr(new_entity, f, d)
+    return new_entity
 
 
 class BaseModel(_BaseModel, Model):
