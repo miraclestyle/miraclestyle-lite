@@ -53,13 +53,18 @@ def clone_entity(entity):
     We couldn't change it now even if we wanted to because it would be 
     backward incompatible. 
       
+      
+    Tested this, this just wont work. We have to think of another way to perform these copies...
+    
+    we might have to use __deepcopy__ hook...
+    
   """ 
   new_entity = copy.deepcopy(entity) # we deepcopy here eitherway
   """
   fields = entity.get_fields()
   for f in fields:
     if hasattr(entity, f):
-       setattr(new_entity, f, getattr(entity, f, None))
+       setattr(new_entity, f, getattr(entity, f, None)) # we could try deepcopy on the getattr result, but problem pressists with hierarchy
   """
   return new_entity
 
@@ -446,6 +451,10 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
+    
+  def __deepcopy2__(self, memo):
+    ## this must copy the entity properly somehow
+    pass
 
 
 class BaseModel(_BaseModel, Model):
