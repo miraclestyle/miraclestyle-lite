@@ -16,11 +16,12 @@ class Reset(handler.Angular):
   def respond(self):
       
       from app.opt import buyer
-      from app.srv import auth, log, setup, rule, nav, event, notify, marketing, location, uom
+      from app.srv import auth, log, setup, rule, nav, event, notify, marketing, product, location, uom
  
       models = [auth.Domain, log.Record, setup.Configuration, auth.User, rule.DomainRole, rule.DomainUser,
                 setup.Configuration, nav.Widget, event.Action, notify.Template,
                 marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
+                product.Template, product.Images, product.Instance, product.Variants, product.Contents,
                 buyer.Addresses, buyer.Collection
                 ]
       keys_to_delete = []

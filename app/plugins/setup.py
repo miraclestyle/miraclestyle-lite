@@ -89,11 +89,11 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     permissions = []
-    from app.srv import auth, nav, notify, marketing#, product
+    from app.srv import auth, nav, notify, marketing, product
     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget,
-               notify.Template, notify.MailNotify, notify.HttpNotify, nav.Widget,
+               notify.Template, notify.MailNotify, notify.HttpNotify,
                marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-               #product.Content, product.Instance, product.Template, product.Variant
+               product.Template, product.Images, product.Instance, product.Variants, product.Contents,
                ]
     for obj in objects:
       if hasattr(obj, '_actions'):

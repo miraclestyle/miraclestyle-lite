@@ -15,12 +15,14 @@
     	<label class="form-label">Category</label>
 		<div class="form-input">
 			<div class="form-text">
-				<select name="product_category" ng-required="rule.input[action].product_category.required"
-					    ng-disabled="!rule.field.product_category.writable" ui-select2 
-					    ng-model="entity.product_category" data-placeholder="Select a product category">
-				    <option value=""></option>
-				    <option ng-repeat="category in categories track by $index" value="{{category.key}}">{{category.complete_name}}</option>
-				</select>
+
+				<input
+			       name="product_category" 
+			       ng-required="rule.input[action].product_category.required"
+			       ng-disabled="!rule.field.product_category.writable"
+			       ui-select2="select2Options.product_category"
+			       ng-model="entity.product_category"
+			       data-placeholder="Select a product category" />
 			</div>
 		</div>
 		</div>
@@ -151,10 +153,15 @@
 		<label class="form-label">Availability</label>
 		<div class="form-input">
 			<div class="form-text">
-			   <input name="availability" 
-				 		ng-required="rule.input[action].availability.required"
-				 	    class="text-input" type="text" ng-model="entity.availability"
-				 	    ng-disabled="!rule.field.availability.writable" />
+ 
+				 	    
+			   <select name="availability" ng-required="rule.input[action].availability.required"
+					    ng-disabled="!rule.field.availability.writable" ui-select2 
+					    ng-model="entity.availability" data-placeholder="Select availability">
+				    <option value=""></option>
+				    <option ng-repeat="choice in rule.input[action].availability.choices track by $index" value="{{choice}}">{{choice}}</option>
+				</select>
+				
 			</div>
 		</div>
 		</div>
@@ -209,7 +216,7 @@
 		  <div class="pull-right">
 		  <div ng-show="rule.field._images.writable" class="button fake-button">
 		  	 <span>Add Images</span>
-		  	 <input class="upload" name="_images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
+		  	 <input class="upload" name="_images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
 		  </div>
 		  </div>
 		  

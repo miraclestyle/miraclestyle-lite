@@ -154,4 +154,4 @@ class RemoveCurrencies(event.Plugin):
   def run(self, context):
     for i,entity in enumerate(context.entities):
       if entity.key.parent().id() == 'currency':
-        context.entities.pop(i)
+        context.entities.remove(entity)

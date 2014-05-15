@@ -371,6 +371,7 @@ function ($compile, $parse, $document, $position, dateFilter, datepickerPopupCon
 
       // TODO: reverse from dateFilter string to Date object
       function parseDate(viewValue) {
+      	
         if (!viewValue) {
           ngModel.$setValidity('date', true);
           return null;

@@ -52,7 +52,8 @@ class Read(event.Plugin):
       context.entities[context.model.get_kind()]._contents = _contents.contents
     else:
       context.entities[context.model.get_kind()]._contents = []
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+    context.values[context.model.get_kind()] = ndb.clone_entity(context.entities[context.model.get_kind()])
+ 
 
 
 class UploadImagesSet(event.Plugin):
@@ -98,7 +99,7 @@ class ProcessImages(event.Plugin):
     if len(_images):
       for i, image in enumerate(_images):
         if image is None:
-          _images.pop(i)
+          _images.remove(image)
       if len(_images):
         _images = ndb.validate_images(_images)
       context.values[context.model.get_kind()]._images = _images
@@ -155,3 +156,38 @@ class DeleteContents(event.Plugin):
     _contents = _contents_key.get()
     _contents.delete()
     context.log_entities.append((_contents, ))
+    
+    
+class CategoryUpdate(event.Plugin):
+  
+  def run(self, context):
+    # this code builds leaf categories for selection with complete names, 3.8k of them
+    from app.srv.product import Category
+    data = []
+    with file(settings.PRODUCT_CATEGORY_DATA_FILE) as f:
+      for line in f:
+        if not line.startswith('#'):
+          data.append(line.replace("\n", ''))
+        
+    write_data = []
+    sep = ' > '
+    parent = None
+    dig = 0
+    for ii,item in enumerate(data):
+      new_cat = {}
+      current = item.split(sep)
+      try:
+        next = data[ii+1].split(sep)
+      except IndexError as e:
+        next = current
+      if len(next) == len(current):
+         current_total = len(current)-1
+         last = current[current_total]
+         parent = current[current_total-1]
+         new_cat['id'] = hashlib.md5(last).hexdigest()
+         new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
+         new_cat['name'] = last
+         new_cat['complete_name'] = " / ".join(current[:current_total+1])
+         new_cat['state'] = 'searchable'
+         write_data.append(Category(**new_cat))
+    ndb.put_multi(write_data)

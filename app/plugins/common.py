@@ -65,11 +65,11 @@ class Read(event.Plugin):
       for key, value in self.read_entities.items():
         entity_key = context.input.get(value)
         context.entities[key] = entity_key.get()
-        context.values[key] = copy.deepcopy(context.entities[key])
+        context.values[key] = ndb.clone_entity(context.entities[key])
     else:
       entity_key = context.input.get('key')
       context.entities[context.model.get_kind()] = entity_key.get()
-      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+      context.values[context.model.get_kind()] = ndb.clone_entity(context.entities[context.model.get_kind()])
 
 
 class Set(event.Plugin):
@@ -193,10 +193,10 @@ class Search(event.Plugin):
       more = False
     else:
       limit = self.limit
-      if limit is None:
-        limit = settings.SEARCH_PAGE
-      if limit:
-        entities, next_cursor, more = query.fetch_page(settings.SEARCH_PAGE, start_cursor=cursor)
+      if limit is None or limit > 0:
+        if limit is None:
+          limit = settings.SEARCH_PAGE
+        entities, next_cursor, more = query.fetch_page(limit, start_cursor=cursor)
         if next_cursor:
           next_cursor = next_cursor.urlsafe()
       else:

@@ -37,13 +37,13 @@ class Read(event.Plugin):
   
   def run(self, context):
     read_catalog_images(context)
-    context.values['35']._images = copy.deepcopy(context.entities['35']._images)
+    context.values['35']._images = ndb.clone_entity(context.entities['35']._images)
 
 class UpdateRead(event.Plugin):
   
   def run(self, context):
     read_catalog_images(context, True)
-    context.values['35']._images = copy.deepcopy(context.entities['35']._images)
+    context.values['35']._images = ndb.clone_entity(context.entities['35']._images)
 
 
 class UpdateSet(event.Plugin):
@@ -121,7 +121,7 @@ class ProcessImages(event.Plugin):
         catalog_images = ndb.get_multi(catalog_image_keys)
         for i, catalog_image in enumerate(catalog_images):
           if catalog_image is None:
-            catalog_images.pop(i)
+            catalog_images.remove(catalog_image)
         if catalog_images:
           catalog_images = ndb.validate_images(catalog_images)
           ndb.put_multi(catalog_images)

@@ -110,6 +110,7 @@ class Unit(ndb.BaseExpando):
                    ActionPermission('19', Action.build_key('19', 'update_currency').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
                    ActionPermission('19', Action.build_key('19', 'update_unit').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
                    ActionPermission('19', Action.build_key('19', 'search').urlsafe(), True, "True"),
+                   FieldPermission('19', ['name', 'symbol'], True, True, 'True')
                  ])
   
   _actions = [
@@ -154,9 +155,14 @@ class Unit(ndb.BaseExpando):
             {'filter': ['code', 'active', 'ancestor'],
              'order_by': [['code', ['asc', 'desc']]]},
                    
+            {'filter': ['active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+                   
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},       
             {'filter': ['name', 'active'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},

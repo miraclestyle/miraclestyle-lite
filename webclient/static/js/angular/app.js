@@ -897,6 +897,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    			filters : [{'value' : true, 'operator':'==', 'field' : 'active'}],
    			cache : 'units',
    		}),
+   		
+   		'product_category' : Select2Options.factory({
+   			kind : '17',
+   			filters : [{'value' : 'searchable', 'operator':'==', 'field' : 'state'}],
+   			label : 'complete_name',
+   		}),
    		 
    	};
    	 

@@ -10,6 +10,7 @@ import cgi
 import datetime
 import importlib
 import json
+import copy
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
@@ -33,6 +34,33 @@ ctx.set_memcache_policy(False)
 class PropertyError(Exception):
   pass
 
+def clone_entity(entity):
+  """ 
+    Due copy.deepcopy inability to copy over our virtual fields,
+    this implementation will copy the rest.
+    NOTE: Copied objects ``should never`` call .put() because it might make problems with context cache.
+    
+    Quote from:
+    Guido van Rossum   
+    10/16/12
+    
+    
+    Hmmm... An entity itself is mutable, and we share the entity via the 
+    cache. The same for mutable attributes like repeated properties. This 
+    was a conscious decision -- the idea is that if you are planning to 
+    update an entity, you should see the entity as it will be written back 
+    everywhere in your request (as long as you're using the same context). 
+    We couldn't change it now even if we wanted to because it would be 
+    backward incompatible. 
+      
+  """ 
+  new_entity = copy.deepcopy(entity) # we deepcopy here eitherway
+  fields = entity.get_fields()
+  for f in fields:
+    if hasattr(entity, f):
+       setattr(new_entity, f, getattr(entity, f, None))
+  return new_entity
+
 def validate_images(objects):
   """'objects' argument is a list of valid blob.Image 
   object(s) that require validation!
@@ -51,7 +79,7 @@ def validate_images(objects):
       height = image.height
     except images.NotImageError as e:
       # This file is not an image, remove it from the list.
-      objects.pop(i)
+      objects.remove(obj)
     cloudstorage_file.close()
     obj.populate(**{'width': width,
                     'height': height})
@@ -767,11 +795,11 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
       return super(SuperKeyProperty, self).format(value)
     except:
       # failed to build from urlsafe, proceed with keyFromPath
-      value = _property_value(value)
+      value = _property_value(self, value)
       assert isinstance(value, list) == True
       out = []
-      for possible in value:
-        if self._repeated:
+      if self._repeated:
+        for possible in value:
           for v in possible:
             k = Key(*v)
             if self._kind and k.kind() != self._kind:
@@ -781,11 +809,11 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
           for i, get in enumerate(gets):
              if get is None:
                raise PropertyError('not_found_%s' % out[i].urlsafe())
-        else:
-          out = Key(*possible)
-          if self._kind and out.kind() != self._kind:
-            raise PropertyError('invalid_kind')
-          assert out.get() == None
+      else:
+        out = Key(*value)
+        if self._kind and out.kind() != self._kind:
+          raise PropertyError('invalid_kind')
+        assert out.get() != None
       return out
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):

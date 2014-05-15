@@ -206,7 +206,7 @@ class CountrySubdivision(ndb.BaseModel):
   parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
   code = ndb.SuperStringProperty('2', required=True, indexed=False) # Turn on index if projection query is required.
   name = ndb.SuperStringProperty('3', required=True)
-  complete_name = ndb.SuperTextProperty('4')
+  complete_name = ndb.SuperTextProperty('4') # # i think complete names can be 500 char strings example of 500 chars: http://pastebin.com/raw.php?i=Gk3S0HFx
   type = ndb.SuperIntegerProperty('5', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('6', default=True)
   

@@ -208,7 +208,7 @@ MainApp
                         	
                         	$scope.updateProduct = function (product)
 				        	 {
-				        	 	Product.update(product, function (product_updated) {
+				        	 	Product.update(that.entity.key, product, function (product_updated) {
 				        	 		update(product, product_updated);
 				        	 	});
 				        	 };
@@ -330,7 +330,7 @@ MainApp
 
                 };
                 
-                Endpoint.post('search', '38', {'catalog' : that.entity['key']}).success(handle);
+                Endpoint.post('search', '38', {'parent' : that.entity['key']}).success(handle);
  
 			         	};
 			         	 

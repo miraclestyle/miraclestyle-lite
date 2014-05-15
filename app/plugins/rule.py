@@ -390,4 +390,4 @@ class DomainUserCleanRoles(event.Plugin):
     roles = ndb.get_multi(context.entities['8'].roles)
     for i, role in enumerate(roles):
       if role is None:
-        context.values['8'].roles.pop(i)
+        context.values['8'].roles.remove(role)

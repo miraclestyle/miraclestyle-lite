@@ -335,14 +335,26 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
         function ($scope, $stateParams, $rootScope, $state) {
 	 
             var nav = $rootScope.nav;
-            var menu = nav['menu'][0]['filters'][0];
-            var params = {
-                'domain_key': nav.domain.key,
-                'kind': menu['kind'],
-                'query': JSON.stringify(menu['query'])
-            };
-  
-            $state.go('app_view_search', params);
+            var menu = null;
+            angular.forEach(nav.menu, function (value) {
+            	if (!value.search_form)
+            	{
+            		menu = value;
+            	}
+            });
+            
+            if (menu)
+            {
+            	 var menu = menu['filters'][0];
+	             var params = {
+	                'domain_key': nav.domain.key,
+	                'kind': menu['kind'],
+	                'query': JSON.stringify(menu['query'])
+	            };
+	  
+	            $state.go('app_view_search', params);
+            }
+           
 
         }
     ])

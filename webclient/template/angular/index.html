@@ -67,11 +67,13 @@
 	  		    <li><button type="button" class="button block" ng-click="doLogout()">Logout</button></li>
 	  		</ul>
 	  		
-	  		<h1 class="fieldset">Buyer Tools</h1>
-	  		<ul ng-show="!current_user._is_guest" class="menu">
-	  		    <li><button type="button" class="button block" ng-click="manageBuyer()">My Addresses</button></li>
-	  		    <li><button type="button" class="button block" ng-click="manageCollection()">My Collection</button></li>
-	  		</ul>
+	  		<div ng-show="!current_user._is_guest">
+		  		<h1 class="fieldset">Buyer Tools</h1>
+		  		<ul ng-show="!current_user._is_guest" class="menu">
+		  		    <li><button type="button" class="button block" ng-click="manageBuyer()">My Addresses</button></li>
+		  		    <li><button type="button" class="button block" ng-click="manageCollection()">My Collection</button></li>
+		  		</ul>
+	  		</div>
 	  		
 	  		<ul ng-show="current_user._is_guest" class="menu">
 	  		    <li><button type="button" busy class="button block" ng-click="doLogin()">Login</button></li>

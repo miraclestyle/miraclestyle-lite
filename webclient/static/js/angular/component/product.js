@@ -99,7 +99,8 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     });
         	 	
         	  },
-      
+      		 
+      		
     	};
     	
         return {
@@ -113,19 +114,17 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			            this.categories = data['categories'];
-			            this.units = data['units'];
-			            this.entity['catalog'] = catalog_key;
+			            this.entity['parent'] = catalog_key;
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('product/manage.html'),
                 	 'args' : {
-                	 	'catalog' : catalog_key,
+                	 	'parent' : catalog_key,
                 	 }
                 });
                 
             },
-            update: function (entity, complete)
+            update: function (catalog_key, entity, complete)
             {
              
                 return EntityEditor.update({
@@ -134,10 +133,14 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			            this.categories = data['categories'];
-			            this.units = data['units'];
-			            
+ 
 			            this.update_mode = true;
+			            
+			            this.uploadConfig = {
+			            	'args' : {
+			            		'parent' : catalog_key,
+			            	}
+			            };
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('product/manage.html'),
