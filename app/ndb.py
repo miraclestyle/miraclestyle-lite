@@ -55,10 +55,12 @@ def clone_entity(entity):
       
   """ 
   new_entity = copy.deepcopy(entity) # we deepcopy here eitherway
+  """
   fields = entity.get_fields()
   for f in fields:
     if hasattr(entity, f):
        setattr(new_entity, f, getattr(entity, f, None))
+  """
   return new_entity
 
 def validate_images(objects):

@@ -53,7 +53,6 @@ class Read(event.Plugin):
     else:
       context.entities[context.model.get_kind()]._contents = []
     context.values[context.model.get_kind()] = ndb.clone_entity(context.entities[context.model.get_kind()])
- 
 
 
 class UploadImagesSet(event.Plugin):
