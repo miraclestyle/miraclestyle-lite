@@ -71,6 +71,15 @@ class URL(event.Plugin):
 
 class Update(event.Plugin):
   
+  blob_delete = ndb.SuperStringProperty('5', indexed=False)
+  blob_write = ndb.SuperStringProperty('6', indexed=False)
+  
   def run(self, context):
-    blobs_to_delete(context.blob_delete)
-    blobs_to_preserve(context.blob_write)
+    if self.blob_delete:
+      blobs_to_delete(self.blob_delete)
+    else:
+      blobs_to_delete(context.blob_delete)
+    if self.blob_write:
+      blobs_to_preserve(self.blob_write)
+    else:
+      blobs_to_preserve(context.blob_write)
