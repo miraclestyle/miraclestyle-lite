@@ -431,9 +431,11 @@ class _BaseModel(object):
      
      return entity
      
+     We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
+     
     """
     klass = self.__class__
-    
+  
     new_entity = klass()
     new_entity.key = self.key
     

@@ -53,12 +53,6 @@ class Read(event.Plugin):
     else:
       context.entities[context.model.get_kind()]._contents = []
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
-    
-    context.values[context.model.get_kind()]._images[0].content_type = 'foo'
-    
-    # test for deep copy
-    #assert context.values[context.model.get_kind()]._images[0].content_type == context.entities[context.model.get_kind()]._images[0].content_type
-    
 
 
 class UploadImagesSet(event.Plugin):
