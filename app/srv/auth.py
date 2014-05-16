@@ -60,28 +60,28 @@ class User(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('0', Action.build_key('0', 'login').urlsafe(), True,
-                       "context.entity._is_guest or context.entity.state == 'active'"),
+                       'context.entity._is_guest or context.entity.state == "active"'),
       ActionPermission('0', [Action.build_key('0', 'read').urlsafe(),
                              Action.build_key('0', 'update').urlsafe(),
                              Action.build_key('0', 'logout').urlsafe(),
-                             Action.build_key('0', 'read_domains').urlsafe()], True, "not context.entity._is_guest and context.user.key == context.entity.key"),
+                             Action.build_key('0', 'read_domains').urlsafe()], True, 'not context.entity._is_guest and context.user.key == context.entity.key'),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                      "not context.user._is_guest and context.user.key == context.entity.key"),
+                      'not context.user._is_guest and context.user.key == context.entity.key'),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      "not context.user._is_guest and context.user.key == context.entity.key"),
+                      'not context.user._is_guest and context.user.key == context.entity.key'),
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
       ActionPermission('0', [Action.build_key('0', 'read').urlsafe(),
                              Action.build_key('0', 'search').urlsafe(),
                              Action.build_key('0', 'read_records').urlsafe(),
-                             Action.build_key('0', 'sudo').urlsafe()], True, "context.user._root_admin"),
+                             Action.build_key('0', 'sudo').urlsafe()], True, 'context.user._root_admin'),
       ActionPermission('0', [Action.build_key('0', 'search').urlsafe(),
                              Action.build_key('0', 'read_records').urlsafe(),
-                             Action.build_key('0', 'sudo').urlsafe()], False, "not context.user._root_admin"),
+                             Action.build_key('0', 'sudo').urlsafe()], False, 'not context.user._root_admin'),
       FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                            'ip_address', '_primary_email', '_records'], False, True, "context.user._root_admin"),
-      FieldPermission('0', ['state'], True, None, "context.action.key_id_str == 'sudo' and context.user._root_admin")
+                            'ip_address', '_primary_email', '_records'], False, True, 'context.user._root_admin'),
+      FieldPermission('0', ['state'], True, None, 'context.action.key_id_str == "sudo" and context.user._root_admin')
       ]
     )
   
@@ -142,17 +142,17 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
       key=Action.build_key('0', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
+          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
             'emails': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
@@ -187,7 +187,7 @@ class User(ndb.BaseExpando):
         common.Search(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -203,7 +203,7 @@ class User(ndb.BaseExpando):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
@@ -229,16 +229,16 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
       key=Action.build_key('0', 'logout'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
+        'key': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),
@@ -249,7 +249,7 @@ class User(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
-        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'ip_address'}),
+        log.Entity(transactional=True, dynamic_arguments={'ip_address': 'tmp.ip_address'}),
         log.Write(transactional=True),
         auth.UserLogoutOutput(transactional=True)
         ]
@@ -271,7 +271,7 @@ class User(ndb.BaseExpando):
         common.Set(dynamic_values={'entities': 'domain_users'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.domains': 'domains', 'output.domain_users': 'domain_users'})
+        common.Set(dynamic_values={'output.domains': 'tmp.domains', 'output.domain_users': 'tmp.domain_users'})
         ]
       )
     ]
@@ -350,7 +350,7 @@ class User(ndb.BaseExpando):
         cls.set_current_user(user, session)
 
 def domain_logo_size(prop, value):
-  ## here we need validation of image width, height for the logo
+  # here we need validation of image width, height for the logo
   pass
 
 class Domain(ndb.BaseExpando):
@@ -378,18 +378,18 @@ class Domain(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('6', [Action.build_key('6', 'prepare').urlsafe(),
-                             Action.build_key('6', 'create').urlsafe()], True, "not context.user._is_guest"),
+                             Action.build_key('6', 'create').urlsafe()], True, 'not context.user._is_guest'),
       ActionPermission('6', Action.build_key('6', 'update').urlsafe(), False,
-                       "context.entity.state != 'active'"),
+                       'context.entity.state != "active"'),
       ActionPermission('6', Action.build_key('6', 'suspend').urlsafe(), False,
-                       "context.entity.state != 'active'"),
+                       'context.entity.state != "active"'),
       ActionPermission('6', Action.build_key('6', 'activate').urlsafe(), False,
-                       "context.entity.state == 'active' or context.entity.state == 'su_suspended'"),
+                       'context.entity.state == "active" or context.entity.state == "su_suspended"'),
       FieldPermission('6', ['name', 'primary_contact', 'logo', 'state', '_records', '_primary_contact_email'], False, None,
-                      "context.entity.state != 'active'"),
-      FieldPermission('6', ['created', 'updated', 'state'], False, None, "True"),
+                      'context.entity.state != "active"'),
+      FieldPermission('6', ['created', 'updated', 'state'], False, None, 'True'),
       FieldPermission('6', ['state'], True, None,
-                      "(context.action.key_id_str == 'activate' and context.value and context.value.state == 'active') or (context.action.key_id_str == 'suspend' and context.value and context.value.state == 'suspended')"),
+                      '(context.action.key_id_str == "activate" and context.value and context.value.state == "active") or (context.action.key_id_str == "suspend" and context.value and context.value.state == "suspended")'),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively);
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
@@ -397,17 +397,17 @@ class Domain(ndb.BaseExpando):
                              Action.build_key('6', 'search').urlsafe(),
                              Action.build_key('6', 'read_records').urlsafe(),
                              Action.build_key('6', 'sudo').urlsafe(),
-                             Action.build_key('6', 'log_message').urlsafe()], True, "context.user._root_admin"),
+                             Action.build_key('6', 'log_message').urlsafe()], True, 'context.user._root_admin'),
       ActionPermission('6', [Action.build_key('6', 'search').urlsafe(),
-                             Action.build_key('6', 'sudo').urlsafe()], False, "not context.user._root_admin"),
+                             Action.build_key('6', 'sudo').urlsafe()], False, 'not context.user._root_admin'),
       FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
-                            '_primary_contact_email'], None, True, "context.user._root_admin"),
+                            '_primary_contact_email'], None, True, 'context.user._root_admin'),
       FieldPermission('6', ['_records.note'], True, True,
-                      "context.user._root_admin"),
+                      'context.user._root_admin'),
       FieldPermission('6', ['_records.note'], False, False,
-                      "not context.user._root_admin"),
+                      'not context.user._root_admin'),
       FieldPermission('6', ['state'], True, None,
-                      "(context.action.key_id_str == 'sudo') and context.user._root_admin and context.value and (context.value.state == 'active' or context.value.state == 'su_suspended')")
+                      '(context.action.key_id_str == "sudo") and context.user._root_admin and context.value and (context.value.state == "active" or context.value.state == "su_suspended")')
       ]
     )
   
@@ -415,7 +415,7 @@ class Domain(ndb.BaseExpando):
     Action(
       key=Action.build_key('6', 'prepare'),
       arguments={
-          'upload_url': ndb.SuperStringProperty(),
+        'upload_url': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -439,14 +439,14 @@ class Domain(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.DomainCreate(transactional=True),
-        blob.Write(transactional=True, keys_location='input.domain_logo.image'),
+        blob.Update(transactional=True, blob_write='input.domain_logo.image'),
         rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'callback',
-                         static_data = {'action_id': 'install', 'action_model': '57'},
-                         dynamic_data = {'key': 'entities.57.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'install', 'action_model': '57'},
+                         dynamic_data={'key': 'entities.57.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -469,7 +469,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True),
+        'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True, validator=domain_logo_size),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
         },
       _plugins=[
@@ -478,28 +478,27 @@ class Domain(ndb.BaseExpando):
         common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact', 'values.6.logo': 'input.logo'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(transactional=True, dynamic_values={'original_logo': 'entities.6.logo'}),
+        common.Set(transactional=True, dynamic_values={'tmp.original_logo': 'entities.6.logo'}),
         rule.Write(transactional=True),
         common.Write(transactional=True),
-        common.Set(transactional=True, dynamic_values={'new_logo': 'entities.6.logo'}),
+        common.Set(transactional=True, dynamic_values={'tmp.new_logo': 'entities.6.logo'}),
         log.Entity(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        blob.Delete(transactional=True, keys_location='original_logo.image'),
-        blob.Write(transactional=True, keys_location='new_logo.image'),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
+        blob.Update(transactional=True, blob_delete='tmp.original_logo.image', blob_write='tmp.new_logo.image'),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
       key=Action.build_key('6', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
+          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
@@ -535,7 +534,7 @@ class Domain(ndb.BaseExpando):
         auth.DomainSearch(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -551,7 +550,7 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     Action(
@@ -573,11 +572,11 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -599,11 +598,11 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -627,11 +626,11 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -651,11 +650,11 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       )
     ]
