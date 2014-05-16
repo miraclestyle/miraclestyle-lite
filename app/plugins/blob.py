@@ -69,19 +69,8 @@ class URL(event.Plugin):
       raise event.TerminateAction()
 
 
-class Write(event.Plugin):
-  
-  keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
+class Update(event.Plugin):
   
   def run(self, context):
-    blob_keys = get_attr(context, self.keys_location)
-    blobs_to_preserve(blob_keys)
-
-
-class Delete(event.Plugin):
-  
-  keys_location = ndb.SuperStringProperty('5', indexed=False, required=True)
-  
-  def run(self, context):
-    blob_keys = get_attr(context, self.keys_location)
-    blobs_to_delete(blob_keys)
+    blobs_to_delete(context.blob_delete)
+    blobs_to_preserve(context.blob_write)
