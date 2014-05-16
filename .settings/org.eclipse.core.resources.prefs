@@ -52,7 +52,6 @@ encoding//webclient/webclient_settings.py=utf-8
 encoding//webclient/wsgi.py=utf-8
 encoding/appengine_config.py=utf-8
 encoding/business.py=utf-8
-encoding/new_product.py=utf-8
 encoding/temp.py=utf-8
 encoding/test2.py=utf-8
 encoding/test3.py=utf-8
