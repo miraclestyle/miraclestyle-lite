@@ -33,7 +33,7 @@ def parse_blob_keys(field_storages):
   return blob_keys
 
 def blobs_to_preserve(blob_keys):
-  """Marks a key or a list of keys to be preserved"""
+  '''Marks a key or a list of keys to be preserved'''
   if blob_keys:
     unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
     blob_keys = parse_blob_keys(blob_keys)
@@ -43,14 +43,14 @@ def blobs_to_preserve(blob_keys):
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def blobs_to_delete(blob_keys):
-  """Marks a key or a list of keys for deletation"""
+  '''Marks a key or a list of keys for deletation'''
   if blob_keys:
     unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
     unused_blob_keys.extend(parse_blob_keys(blob_keys))
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def delete_unused_blobs():
-  """This functon must be always called last in the application execution."""
+  '''This functon must be always called last in the application execution.'''
   unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
   if len(unused_blob_keys):
     util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
