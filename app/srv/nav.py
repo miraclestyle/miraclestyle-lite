@@ -16,9 +16,9 @@ class Filter(ndb.BaseExpando):
   
   _kind = 65
   
-  name = ndb.SuperStringProperty('1', required=True)
-  kind = ndb.SuperStringProperty('2', required=True)
-  query = ndb.SuperJsonProperty('3', required=True, default={})
+  name = ndb.SuperStringProperty('1', required=True, indexed=False)
+  kind = ndb.SuperStringProperty('2', required=True, indexed=False)
+  query = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
 
 
 class Widget(ndb.BaseExpando):
@@ -29,7 +29,7 @@ class Widget(ndb.BaseExpando):
   sequence = ndb.SuperIntegerProperty('2', required=True)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
   role = ndb.SuperKeyProperty('4', kind='60', required=True)
-  search_form = ndb.SuperBooleanProperty('5', required=True, default=True)
+  search_form = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _virtual_fields = {
@@ -45,16 +45,16 @@ class Widget(ndb.BaseExpando):
                               Action.build_key('62', 'delete').urlsafe(),
                               Action.build_key('62', 'search').urlsafe(),
                               Action.build_key('62', 'read_records').urlsafe(),
-                              Action.build_key('62', 'build_menu').urlsafe()], False, "context.entity.namespace_entity.state != 'active'"),
+                              Action.build_key('62', 'build_menu').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('62', [Action.build_key('62', 'create').urlsafe(),
                               Action.build_key('62', 'update').urlsafe(),
-                              Action.build_key('62', 'delete').urlsafe()], False, "context.entity._is_system"),
+                              Action.build_key('62', 'delete').urlsafe()], False, 'context.entity._is_system'),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      "context.entity.namespace_entity.state != 'active' or context.entity._is_system"),
+                      'context.entity.namespace_entity.state != "active" or context.entity._is_system'),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
-                      "context.entity.namespace_entity.state != 'active'"),
+                      'context.entity.namespace_entity.state != "active"'),
       FieldPermission('62', ['role'], False, None,
-                      "(context.action.key_id_str == 'create' or context.action.key_id_str == 'update') and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)")
+                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)')
       ]
     )
   
@@ -95,11 +95,11 @@ class Widget(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.62.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -139,11 +139,11 @@ class Widget(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.62.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -161,11 +161,11 @@ class Widget(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.62.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.62.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -173,7 +173,7 @@ class Widget(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "sequence", "operator": "asc"}},
+          default={'filters': [], 'order_by': {'field': 'sequence', 'operator': 'asc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'role': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='60')},
@@ -214,7 +214,7 @@ class Widget(ndb.BaseExpando):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -230,7 +230,7 @@ class Widget(ndb.BaseExpando):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.62', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     Action(
@@ -244,7 +244,7 @@ class Widget(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         nav.BuildMenu(),
-        common.Set(dynamic_values={'output.menu': 'widgets', 'output.domain': 'domain'})
+        common.Set(dynamic_values={'output.menu': 'tmp.widgets', 'output.domain': 'domain'})
         ]
       )
     ]
