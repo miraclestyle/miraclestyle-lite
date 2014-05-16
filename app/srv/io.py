@@ -57,14 +57,18 @@ class Engine:
   
   @classmethod
   def init(cls):
+    '''This function initilizes all models, so it must be called before executing anything!'''
     from app.opt import buyer
     from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, product, uom, location
-    # this function initilizes all models, must be called before executing anything
   
   @classmethod
   def get_schema(cls):
     cls.init()
     return ndb.Model._kind_map
+  
+  @classmethod
+  def get_models(cls, context):
+    context.models = ndb.Model._kind_map
   
   @classmethod
   def get_model(cls, context, input):
@@ -159,6 +163,7 @@ class Engine:
     context = Context()
     try:
       cls.init()
+      cls.get_models(context)
       cls.get_model(context, input)
       cls.get_action(context, input)
       cls.process_action_input(context, input)
