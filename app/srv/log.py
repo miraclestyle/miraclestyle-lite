@@ -8,23 +8,22 @@ Created on Dec 25, 2013
 from app import ndb, settings
 
 
-"""
+'''
 The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
 It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because 
 if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
 meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will 
-cause complete inconsistency and errors while fetching, storing and deleting data. This behaveor was noticed upon testing.
+cause complete inconsistency and errors while fetching, storing and deleting data. This behavior was noticed upon testing.
 
-Same approach must be done with the transaction / entry / entry-line scenario, which implements its own logic for new
+Same approach must be done with the transaction / entry / line scenario, which implements its own logic for new
 properties.
 
 This implementation will not cause any performance issues or variable leak whatsoever, the _properties will be adjusted to
-be available in 'self' - not 'cls'.
+be available in "self" - not "cls".
 
-In the begining i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
+In the beginning i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
 allowed mutations to class(cls) scope.
-
-"""
+'''
 
 
 class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
@@ -44,7 +43,7 @@ class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
 
 
 class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
-  """Usage: '_records': ndb.SuperStructuredRecordProperty(Domain or '6')"""
+  '''Usage: '_records': ndb.SuperStructuredRecordProperty(Domain or '6')'''
   
   def __init__(self, *args, **kwargs):
     args = list(args)
@@ -101,10 +100,10 @@ class Record(ndb.BaseExpando):
     return super(Record, self).__getattr__(name)
   
   def _get_property_for(self, p, indexed=True, depth=0):
-    """Overrides ndb.BaseExpando._get_property_for.
+    '''Overrides ndb.BaseExpando._get_property_for.
     Only way to merge properties from its parent kind to log entity.
     
-    """
+    '''
     name = p.name()
     parts = name.split('.')
     if len(parts) <= depth:
