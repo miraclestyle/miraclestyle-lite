@@ -52,7 +52,7 @@ class Read(event.Plugin):
       context.entities[context.model.get_kind()]._contents = _contents.contents
     else:
       context.entities[context.model.get_kind()]._contents = []
-    context.values[context.model.get_kind()] = ndb.copy.deepcopy(context.entities[context.model.get_kind()])
+    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
     
     context.values[context.model.get_kind()]._images[0].content_type = 'foo'
     

@@ -65,11 +65,11 @@ class Read(event.Plugin):
       for key, value in self.read_entities.items():
         entity_key = context.input.get(value)
         context.entities[key] = entity_key.get()
-        context.values[key] = ndb.copy.deepcopy(context.entities[key])
+        context.values[key] = copy.deepcopy(context.entities[key])
     else:
       entity_key = context.input.get('key')
       context.entities[context.model.get_kind()] = entity_key.get()
-      context.values[context.model.get_kind()] = ndb.copy.deepcopy(context.entities[context.model.get_kind()])
+      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class Set(event.Plugin):

@@ -420,10 +420,22 @@ class _BaseModel(object):
       return None
     
   def __deepcopy__(self, memo):
-    ## this must copy the entity properly somehow
+    """
+     This hook for deepcopy will only instance a new entity that has the same ``properties``
+     as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
+     This function can be overriden by models who need to include additional fields that should also be copied. 
+     e.g.
+     
+     entity = super(Entity, self).__deepcopy__()
+     entity._my_unexisting_field = self._my_unexisting_field
+     
+     return entity
+     
+    """
     klass = self.__class__
     
     new_entity = klass()
+    new_entity.key = self.key
     
     for f in self.get_fields():
       if hasattr(self, f):
