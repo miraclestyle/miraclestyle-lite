@@ -64,7 +64,7 @@
 		<div class="text-right" ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
-			<div ng-repeat="image in entity._images" class="image-image">
+			<div ng-repeat="image in entity._images track by $index" class="image-image">
 				<div handle-image-spit class="img placeholder-image">
 					Processing...
 				</div>

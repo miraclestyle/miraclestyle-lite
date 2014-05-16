@@ -112,6 +112,8 @@ class UploadImagesWrite(event.Plugin):
 class ProcessImages(event.Plugin):
   
   def run(self, context):
+    context.write_blobs = []
+    context.delete_blobs = []
     if len(context.input.get('catalog_image_keys')):
       catalog_image_keys = []
       for catalog_image_key in context.input.get('catalog_image_keys'):
@@ -122,6 +124,11 @@ class ProcessImages(event.Plugin):
         for i, catalog_image in enumerate(catalog_images):
           if catalog_image is None:
             catalog_images.remove(catalog_image)
+            context.delete_blobs.append(catalog_image.image) # first mark them all for delete
         if catalog_images:
           catalog_images = ndb.validate_images(catalog_images)
           ndb.put_multi(catalog_images)
+          for catalog_image in catalog_images:
+            context.log_entities.append((catalog_image, ))
+            context.write_blobs.append(catalog_image.image) # do not delete those who made it
+            

@@ -225,9 +225,13 @@
 		<div ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
-			<div ng-repeat="image in entity._images  track by $index" class="image-image">
-				<img class="img" ng-src="{{image._image_240}}" />
-				<button ng-show="rule.field._images.writable" type="button" class="button" ng-click="removeImage(image)">Remove</button>
+	 
+			
+			<div ng-repeat="image in entity._images track by $index" class="image-image">
+				<div handle-image-spit class="img placeholder-image">
+					Processing...
+				</div>
+				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
 	</div>

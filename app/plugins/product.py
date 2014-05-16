@@ -94,11 +94,13 @@ class WriteImages(event.Plugin):
 class ProcessImages(event.Plugin):
   
   def run(self, context):
+    context.delete_blobs = []
     _images = context.values[context.model.get_kind()]._images
     if len(_images):
       for i, image in enumerate(_images):
         if image is None:
           _images.remove(image)
+        context.delete_blobs.append(image.image)
       if len(_images):
         _images = ndb.validate_images(_images)
       context.values[context.model.get_kind()]._images = _images

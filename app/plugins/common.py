@@ -24,6 +24,11 @@ class Context(event.Plugin):
     if not hasattr(context, 'values'):
       context.values = {}
     context.user = auth.User.current_user()
+    caller_user_key = context.input.get('caller_user')
+    if context.user._is_taskqueue and caller_user_key:
+      caller_user = caller_user_key.get()
+      if caller_user:
+         context.user = caller_user
     # @todo Following lines are temporary!
     domain_key = context.input.get('domain')
     if domain_key:

@@ -382,19 +382,23 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'process_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True)
+        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True),
         },
       _plugins=[
         common.Context(),
-        common.Read(domain_model=True),
+        common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         marketing.ProcessImages(transactional=True),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        log.Write(transactional=True),
+        blob.Delete(transactional=True, keys_location='delete_blobs'),
+        blob.Write(transactional=True, keys_location='write_blobs'),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       )
     ]

@@ -195,17 +195,17 @@ class Template(ndb.BaseExpando):
     Action(
       key=Action.build_key('38', 'create'),
       arguments={
-        'product_category': ndb.SuperVirtualKeyProperty(kind='17', required=True),
+        'product_category': ndb.SuperKeyProperty(kind='17', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'description': ndb.SuperTextProperty(required=True),
-        'product_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'product_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
         'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'code': ndb.SuperStringProperty(required=True),
         'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'parent': ndb.SuperKeyProperty(kind='35', required=True)
         },
@@ -260,17 +260,17 @@ class Template(ndb.BaseExpando):
         '_variants': ndb.SuperLocalStructuredProperty(Variant, repeated=True),
         '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
         '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
-        'product_category': ndb.SuperVirtualKeyProperty(kind='17', required=True),
+        'product_category': ndb.SuperKeyProperty(kind='17', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'description': ndb.SuperTextProperty(required=True),
-        'product_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'product_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
         'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'code': ndb.SuperStringProperty(required=True),
         'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
@@ -345,7 +345,8 @@ class Template(ndb.BaseExpando):
     Action(
       key=Action.build_key('38', 'process_images'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'key': ndb.SuperKeyProperty(kind='38', required=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),
@@ -356,7 +357,8 @@ class Template(ndb.BaseExpando):
         product.ProcessImages(transactional=True),
         rule.Write(transactional=True),
         product.WriteImages(transactional=True),
-        #log.Write(transactional=True),
+        log.Write(transactional=True),
+        blob.Delete(transactional=True, keys_location='delete_blobs'),
         blob.Write(transactional=True, keys_location='write_blobs'),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
@@ -400,7 +402,7 @@ class Template(ndb.BaseExpando):
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'desc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'product_category': {'operators': ['==', '!='], 'type': ndb.SuperVirtualKeyProperty(kind='17')}
+            'product_category': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='17')}
             },
           indexes=[
             {'filter': [],
@@ -512,9 +514,9 @@ class Instance(ndb.BaseExpando):
         'unit_price': ndb.SuperDecimalProperty(required=True),
         'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'parent': ndb.SuperKeyProperty(kind='38', required=True)
         },
@@ -571,9 +573,9 @@ class Instance(ndb.BaseExpando):
         'unit_price': ndb.SuperDecimalProperty(required=True),
         'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
         'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperVirtualKeyProperty(kind='19', required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
@@ -640,14 +642,15 @@ class Instance(ndb.BaseExpando):
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
-    Action(
+     Action(
       key=Action.build_key('39', 'process_images'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True)
+        'key': ndb.SuperKeyProperty(kind='39', required=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),
-        common.Read(domain_model=True),
+        common.Read(),
         product.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
@@ -655,6 +658,7 @@ class Instance(ndb.BaseExpando):
         rule.Write(transactional=True),
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
+        blob.Delete(transactional=True, keys_location='delete_blobs'),
         blob.Write(transactional=True, keys_location='write_blobs'),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
