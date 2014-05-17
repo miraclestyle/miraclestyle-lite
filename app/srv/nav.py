@@ -12,15 +12,13 @@ from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, nav
 
 
-class Filter(ndb.BaseExpando):
+class Filter(ndb.BaseModel):
   
   _kind = 65
   
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
   kind = ndb.SuperStringProperty('2', required=True, indexed=False)
   query = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
-  
-  _default_indexed = False
 
 
 class Widget(ndb.BaseExpando):
