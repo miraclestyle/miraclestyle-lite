@@ -19,6 +19,8 @@ class Filter(ndb.BaseExpando):
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
   kind = ndb.SuperStringProperty('2', required=True, indexed=False)
   query = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
+  
+  _default_indexed = False
 
 
 class Widget(ndb.BaseExpando):
