@@ -370,7 +370,7 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '35'},
-                         dynamic_data={'catalog_image_keys': 'catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
+                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
