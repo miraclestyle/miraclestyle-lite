@@ -67,14 +67,16 @@ class Record(ndb.BaseExpando):
   agent = ndb.SuperKeyProperty('u', kind='0', required=True)
   action = ndb.SuperKeyProperty('a', kind='56', required=True)
   
-  _virtual_fields = {
-    '_agent': ndb.SuperStringProperty(),
-    '_action': ndb.SuperStringProperty()
-    }
+  _default_indexed = False
   
   _expando_fields = {
     'message': ndb.SuperTextProperty('m'),
     'note': ndb.SuperTextProperty('n')
+    }
+  
+  _virtual_fields = {
+    '_agent': ndb.SuperStringProperty(),
+    '_action': ndb.SuperStringProperty()
     }
   
   def _if_properties_are_cloned(self):
