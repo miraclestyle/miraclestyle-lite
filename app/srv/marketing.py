@@ -13,9 +13,6 @@ from app.srv import blob as ndb_blob
 from app.plugins import common, rule, log, callback, blob, marketing
 
 
-# this is LocalStructuredProperty and is repeated per catalog image.
-# properties to remain in this class are:
-# product_template, position_top (former source_position_top), position_left (former source_position_left), value
 class CatalogPricetag(ndb.BaseModel):
   
   _kind = 34
@@ -56,25 +53,25 @@ class Catalog(ndb.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),  # @todo Why is this field sometimes SuperLocalStructuredImageProperty and sometimes SuperLocalStructuredProperty!!!???
+    '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
     '_records': ndb_log.SuperLocalStructuredRecordProperty('35', repeated=True)
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('35', Action.build_key('35', 'prepare').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'create').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'read').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'update').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'search').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'read_records').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'lock').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'publish').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'discontinue').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
-      ActionPermission('35', Action.build_key('35', 'log_message').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'duplicate').urlsafe(), False, "(context.entity.namespace_entity.state != 'active')"),
-      ActionPermission('35', Action.build_key('35', 'upload_images').urlsafe(), False, "context.entity.namespace_entity.state != 'active'"),
-      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, "context.user._is_taskqueue")
+      ActionPermission('35', [Action.build_key('35', 'prepare').urlsafe(),
+                              Action.build_key('35', 'create').urlsafe(),
+                              Action.build_key('35', 'read').urlsafe(),
+                              Action.build_key('35', 'update').urlsafe(),
+                              Action.build_key('35', 'search').urlsafe(),
+                              Action.build_key('35', 'read_records').urlsafe(),
+                              Action.build_key('35', 'lock').urlsafe(),
+                              Action.build_key('35', 'publish').urlsafe(),
+                              Action.build_key('35', 'discontinue').urlsafe(),
+                              Action.build_key('35', 'log_message').urlsafe(),
+                              Action.build_key('35', 'duplicate').urlsafe(),
+                              Action.build_key('35', 'upload_images').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
       ]
     )
   
@@ -117,11 +114,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -138,8 +135,8 @@ class Catalog(ndb.BaseExpando):
         marketing.Read(),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.35',
-                                   'output.images_cursor': 'images_cursor',
-                                   'output.more_images': 'more_images'})
+                                   'output.images_cursor': 'tmp.images_cursor',
+                                   'output.images_more': 'tmp.images_more'})
         ]
       ),
     Action(
@@ -165,14 +162,14 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35',
-                                                       'output.images_cursor': 'images_cursor',
-                                                       'output.more_images': 'more_images'}),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+                                                       'output.images_cursor': 'tmp.images_cursor',
+                                                       'output.images_more': 'tmp.images_more'}),
+        blob.Update(transactional=True),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -180,7 +177,7 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "created", "operator": "desc"}},
+          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
@@ -219,7 +216,7 @@ class Catalog(ndb.BaseExpando):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -235,7 +232,7 @@ class Catalog(ndb.BaseExpando):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.35', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.35', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     Action(
@@ -258,11 +255,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -285,11 +282,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -312,11 +309,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -336,11 +333,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -367,15 +364,15 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        blob.Write(transactional=True, keys_location='write_blobs'),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Payload(transactional=True, queue = 'callback',
-                         static_data = {'action_id': 'process_images', 'action_model': '35'},
-                         dynamic_data = {'catalog_image_keys': 'catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_images', 'action_model': '35'},
+                         dynamic_data={'catalog_image_keys': 'catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -383,7 +380,7 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),
@@ -392,8 +389,7 @@ class Catalog(ndb.BaseExpando):
         rule.Exec(),
         marketing.ProcessImages(transactional=True),
         log.Write(transactional=True),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
-        blob.Write(transactional=True, keys_location='write_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
