@@ -108,7 +108,7 @@ class Template(ndb.BasePoly):
       arguments={
         'caller_entity': ndb.SuperKeyProperty(required=True),
         'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
-        'caller_action' : ndb.SuperVirtualKeyProperty(required=True)
+        'caller_action': ndb.SuperVirtualKeyProperty(required=True)
         },
       _plugins=[
         common.Context(),
