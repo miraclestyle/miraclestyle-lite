@@ -32,6 +32,8 @@ class Widget(ndb.BaseExpando):
   search_form = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
   filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
+  _default_indexed = False
+  
   _virtual_fields = {
     '_records': ndb_log.SuperLocalStructuredRecordProperty('62', repeated=True)
     }
