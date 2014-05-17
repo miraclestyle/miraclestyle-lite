@@ -47,6 +47,8 @@ class Catalog(ndb.BaseExpando):
   discontinue_date = ndb.SuperDateTimeProperty('5', required=True)
   state = ndb.SuperStringProperty('6', required=True, default='unpublished', choices=['unpublished', 'locked', 'published', 'discontinued'])
   
+  _default_indexed = False
+  
   _expando_fields = {
     'cover': ndb.SuperKeyProperty('7', kind='36'),
     'cost': ndb.SuperDecimalProperty('8')
