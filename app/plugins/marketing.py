@@ -124,7 +124,7 @@ class ProcessImages(event.Plugin):
         for i, catalog_image in enumerate(catalog_images):
           if catalog_image is None:
             catalog_images.remove(catalog_image)
-            context.delete_blobs.append(catalog_image.image) # first mark them all for delete
+          context.delete_blobs.append(catalog_image.image) # first mark them all for delete
         if catalog_images:
           catalog_images = ndb.validate_images(catalog_images)
           ndb.put_multi(catalog_images)
