@@ -17,16 +17,18 @@ class Configuration(ndb.BaseExpando):
   
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
-  configuration_input = ndb.SuperPickleProperty('3', required=True, compressed=False)
+  configuration_input = ndb.SuperPickleProperty('3', required=True, compressed=False, indexed=False)
   setup = ndb.SuperStringProperty('4', required=True, indexed=False)
   state = ndb.SuperStringProperty('5', required=True)
   next_operation = ndb.SuperStringProperty('6', indexed=False)
   next_operation_input = ndb.SuperPickleProperty('7', indexed=False)
   
+  _default_indexed = False
+  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('57', [Action.build_key('57', 'install').urlsafe(),
-                              Action.build_key('57', 'cron_install').urlsafe()], True, "context.user._is_taskqueue")
+                              Action.build_key('57', 'cron_install').urlsafe()], True, 'context.user._is_taskqueue')
       ]
     )
   
