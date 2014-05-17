@@ -49,8 +49,6 @@ class User(ndb.BaseExpando):
   
   _default_indexed = False
   
-  _expando_fields = {}
-  
   _virtual_fields = {
     'ip_address': ndb.SuperStringProperty(),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
@@ -367,8 +365,6 @@ class Domain(ndb.BaseExpando):
   logo = ndb.SuperLocalStructuredProperty(ndb_blob.Image, '6', required=True)
   
   _default_indexed = False
-  
-  _expando_fields = {}
   
   _virtual_fields = {
     '_primary_contact_email': ndb.SuperStringProperty(),
