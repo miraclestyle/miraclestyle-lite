@@ -20,6 +20,8 @@ class Action(ndb.BaseExpando):
   arguments = ndb.SuperPickleProperty('2', required=True, default={})
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
   
+  _default_indexed = False
+  
   @classmethod
   def build_key(cls, kind, action_id):
     return ndb.Key(kind, 'action', cls._get_kind(), action_id)
@@ -33,3 +35,5 @@ class Plugin(ndb.BasePolyExpando):
   subscriptions = ndb.SuperKeyProperty('2', kind='56', repeated=True)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
   transactional = ndb.SuperBooleanProperty('4', required=True, default=False, indexed=False)
+  
+  _default_indexed = False
