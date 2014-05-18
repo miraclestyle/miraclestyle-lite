@@ -46,7 +46,6 @@ class Images(ndb.BaseModel):
   
   _kind = 73
   
-  # @todo Why is this field sometimes SuperLocalStructuredImageProperty and sometimes SuperLocalStructuredProperty!!!???
   images = ndb.SuperLocalStructuredProperty(Image, '1', repeated=True)  # Soft limit 100 instances.
 
 
@@ -69,13 +68,13 @@ class Category(ndb.BaseModel):
   _kind = 17
   
   parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
-  name = ndb.SuperStringProperty('2', required=True)  # @todo indexed=False?
+  name = ndb.SuperStringProperty('2', required=True)
   complete_name = ndb.SuperTextProperty('3')
   state = ndb.SuperStringProperty('4', required=True, default='searchable')
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('17', Action.build_key('17', 'update').urlsafe(), True, '(context.user._root_admin) or (context.user._is_taskqueue)'),
+      ActionPermission('17', Action.build_key('17', 'update').urlsafe(), True, 'context.user._root_admin or context.user._is_taskqueue'),
       ActionPermission('17', Action.build_key('17', 'search').urlsafe(), True, 'True'),
       FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True, 'True')
       ]
@@ -126,7 +125,7 @@ class Category(ndb.BaseModel):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       )
     ]
@@ -163,16 +162,16 @@ class Template(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', Action.build_key('38', 'prepare').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'create').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'read').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'update').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'upload_images').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'delete').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'search').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'read_records').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'duplicate').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, '(context.user._is_taskqueue)')
+      ActionPermission('38', [Action.build_key('38', 'prepare').urlsafe(),
+                              Action.build_key('38', 'create').urlsafe(),
+                              Action.build_key('38', 'read').urlsafe(),
+                              Action.build_key('38', 'update').urlsafe(),
+                              Action.build_key('38', 'upload_images').urlsafe(),
+                              Action.build_key('38', 'delete').urlsafe(),
+                              Action.build_key('38', 'search').urlsafe(),
+                              Action.build_key('38', 'read_records').urlsafe(),
+                              Action.build_key('38', 'duplicate').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
       ]
     )
   
@@ -305,7 +304,7 @@ class Template(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
@@ -331,13 +330,13 @@ class Template(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
-        blob.Write(transactional=True, keys_location='write_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '38'},
-                         dynamic_data={'key': 'entities.38.key_urlsafe', 'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}),
+                         dynamic_data={'key': 'entities.38.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -358,8 +357,7 @@ class Template(ndb.BaseExpando):
         rule.Write(transactional=True),
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
-        blob.Write(transactional=True, keys_location='write_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
@@ -386,7 +384,7 @@ class Template(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
@@ -428,7 +426,7 @@ class Template(ndb.BaseExpando):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -444,7 +442,7 @@ class Template(ndb.BaseExpando):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.38', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.38', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     Action(
@@ -479,13 +477,13 @@ class Instance(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', Action.build_key('38', 'prepare').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'create').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'read').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'update').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'upload_images').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'delete').urlsafe(), False, '(context.entity.namespace_entity.state != "active")'),
-      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, '(context.user._is_taskqueue)')
+      ActionPermission('38', [Action.build_key('38', 'prepare').urlsafe(),
+                              Action.build_key('38', 'create').urlsafe(),
+                              Action.build_key('38', 'read').urlsafe(),
+                              Action.build_key('38', 'update').urlsafe(),
+                              Action.build_key('38', 'upload_images').urlsafe(),
+                              Action.build_key('38', 'delete').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
       ]
     )
   
@@ -605,7 +603,7 @@ class Instance(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
@@ -631,7 +629,7 @@ class Instance(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Write(transactional=True, keys_location='write_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
@@ -658,8 +656,7 @@ class Instance(ndb.BaseExpando):
         rule.Write(transactional=True),
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
-        blob.Write(transactional=True, keys_location='write_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
@@ -685,7 +682,7 @@ class Instance(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Delete(transactional=True, keys_location='delete_blobs'),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
