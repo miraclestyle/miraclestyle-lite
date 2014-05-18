@@ -27,7 +27,7 @@ class Address(ndb.BaseExpando):
   
   _default_indexed = False
   
-  _country = None  # Prevent from expando saving.
+  _country = None  # Prevent from expando saving. @todo Is this in order to avoid visibility in permissions?
   _region = None  # Prevent from expando saving.
   
   _expando_fields = {
@@ -154,7 +154,7 @@ class Collection(ndb.BaseModel):
   
   _virtual_fields = {
     '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True),
-    '_domains': ndb.SuperLocalStructuredProperty('6', repeated=True)
+    '_domains': ndb.SuperLocalStructuredProperty('6', repeated=True)  # @todo Why do we use mix of kind id's and classes for struct props?
     }
   
   _global_role = GlobalRole(
@@ -226,5 +226,5 @@ class Collection(ndb.BaseModel):
     ]
   
   def get_output(self):
-    self._domains = ndb.get_multi(self.domains)
+    self._domains = ndb.get_multi(self.domains)  # @todo Is this controlled by rule engine?
     return super(Collection, self).get_output()
