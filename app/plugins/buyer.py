@@ -4,10 +4,19 @@ Created on May 13, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+
+import time
+import hashlib
 import copy
 
-from app import ndb
+from app import ndb, util
 from app.srv import event
+
+def generate_internal_id(address):
+  internal_id = '%s-%s-%s-%s-%s-%s-%s-%s' %  (str(time.time()), util.random_chars(10),
+                                              address.name, address.city, address.postal_code,
+                                              address.street, address.default_shipping, address.default_billing)
+  address.internal_id = hashlib.md5(internal_id).hexdigest()
 
 class AddressRead(event.Plugin):
   
@@ -37,7 +46,7 @@ class AddressUpdate(event.Plugin):
           addr.internal_id = existing.internal_id # ensure that the internal id will never be changed by the client
           # we cant use the rule engine here cuz we need to allow user to remove/append the addresses
         except IndexError as e:
-          addr.generate_internal_id() # this is a new record so force-feed him the internal_id
+          generate_internal_id(addr) # this is a new record so force-feed him the internal_id
         
         if addr.default_shipping:
           default_shipping = i
