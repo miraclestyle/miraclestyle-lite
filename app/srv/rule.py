@@ -7,42 +7,22 @@ Created on Dec 20, 2013
 
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
+from app.lib.attribute_manipulator import set_attr, get_attr
 from app.srv.event import Action
 from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback
 
 
-def _parse_field(values, field_path):
-  """Returns part of the 'values' that coresponds to the ending node of the given field path.
-  'field_path' is a string that takes dot notation form ('foo.bar.far').
-  It is assumed that 'values' is a structure that contains mixture of objects and dictionaries along the given path.
-  
-  """
-  fields = field_path.split('.')
-  for field in fields:
-    if isinstance(values, dict):
-      try:
-        values = values[field]
-      except KeyError as e:
-        return None
-    else:
-      try:
-        values = getattr(values, field)
-      except ValueError as e:
-        return None
-  return values
-
-
 class Permission():
-  """Base class for all permissions.
-  If the futuer deems scaling a problem, possible solutions could be to:
-  a) Create DomainUserPermissions entity, taht will fan-out on DomainUser entity,
+  '''Base class for all permissions.
+  If the futuer deems scaling to be a problem, possible solutions could be to:
+  a) Create DomainUserPermissions entity, that will fan-out on DomainUser entity,
   and will contain all permissions for the domain user (based on it's domain role membership) in it;
   b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...),
   and store each permission in datasotre as child entity of DomainUser;
   c) Some other similar pattern.
   
-  """
+  '''
 
 
 class ActionPermission(Permission):
@@ -84,7 +64,7 @@ class FieldPermission(Permission):
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for field in self.fields:
-        parsed_field = _parse_field(context.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
+        parsed_field = get_attr(context.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
         if parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)
@@ -101,7 +81,7 @@ class Role(ndb.BaseExpando):
   # complete_name = ndb.SuperTextProperty('2')
   name = ndb.SuperStringProperty('1', required=True)
   active = ndb.SuperBooleanProperty('2', required=True, default=True)
-  permissions = ndb.SuperPickleProperty('3', required=True, compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
+  permissions = ndb.SuperPickleProperty('3', required=True, indexed=False, compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
   
   _default_indexed = False
   
@@ -131,14 +111,14 @@ class DomainRole(Role):
                               Action.build_key('60', 'update').urlsafe(),
                               Action.build_key('60', 'delete').urlsafe(),
                               Action.build_key('60', 'search').urlsafe(),
-                              Action.build_key('60', 'read_records').urlsafe()], False, "context.entity.namespace_entity.state != 'active'"),
+                              Action.build_key('60', 'read_records').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('60', [Action.build_key('60', 'create').urlsafe(),
                               Action.build_key('60', 'update').urlsafe(),
-                              Action.build_key('60', 'delete').urlsafe()], False, "context.entity.key_id_str == 'admin'"),
+                              Action.build_key('60', 'delete').urlsafe()], False, 'context.entity.key_id_str == "admin"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
-                      "context.entity.namespace_entity.state != 'active' or context.entity.key_id_str == 'admin'"),
+                      'context.entity.namespace_entity.state != "active" or context.entity.key_id_str == "admin"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], None, False,
-                      "context.entity.namespace_entity.state != 'active'")
+                      'context.entity.namespace_entity.state != "active"')
       ]
     )
   
@@ -176,11 +156,11 @@ class DomainRole(Role):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -217,11 +197,11 @@ class DomainRole(Role):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -239,11 +219,11 @@ class DomainRole(Role):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.60'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.60.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.60.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -251,25 +231,25 @@ class DomainRole(Role):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='60', repeated=True),},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='60', repeated=True)},
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
             },
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],},
+            {'filter': ['key']},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]},
+             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
-            'name': {'operators': ['asc', 'desc']},
+            'name': {'operators': ['asc', 'desc']}
             }
           ),
         'next_cursor': ndb.SuperStringProperty()
@@ -282,7 +262,7 @@ class DomainRole(Role):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -298,18 +278,18 @@ class DomainRole(Role):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.60', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.60', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       )
     ]
 
 
-class DomainUser(ndb.BaseModel):
+class DomainUser(ndb.BaseExpando):
   
   _kind = 8
   
   name = ndb.SuperStringProperty('1', required=True)
-  roles = ndb.SuperKeyProperty('2', kind=DomainRole, repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since that can pose security issue!!
+  roles = ndb.SuperKeyProperty('2', kind='60', repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since that can pose security issue!!
   state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
   
   _default_indexed = False
@@ -328,27 +308,27 @@ class DomainUser(ndb.BaseModel):
                              Action.build_key('8', 'search').urlsafe(),
                              Action.build_key('8', 'read_records').urlsafe(),
                              Action.build_key('8', 'accept').urlsafe(),
-                             Action.build_key('8', 'clean_roles').urlsafe()], False, "context.entity.namespace_entity.state != 'active'"),
+                             Action.build_key('8', 'clean_roles').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), False,
-                       "context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str"),
+                       'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), True,
-                       "(context.entity.namespace_entity.state == 'active' and context.user.key_id_str == context.entity.key_id_str) and not (context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str)"),
+                       '(context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str) and not (context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str)'),
       ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), False,
-                       "context.user.key_id_str != context.entity.key_id_str"),
+                       'context.user.key_id_str != context.entity.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), True,
-                       "context.entity.namespace_entity.state == 'active' and context.user.key_id_str == context.entity.key_id_str and context.entity.state == 'invited'"),
+                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity.state == "invited"'),
       ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), False,
-                       "not context.user._is_taskqueue"),
+                       'not context.user._is_taskqueue'),
       ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), True,
-                       "context.entity.namespace_entity.state == 'active' and context.user._is_taskqueue"),
+                       'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
       FieldPermission('8', ['name', 'roles', 'state', '_records'], False, False,
-                      "context.entity.namespace_entity.state != 'active'"),
+                      'context.entity.namespace_entity.state != "active"'),
       FieldPermission('8', ['roles'], False, None,
-                      "context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str"),
+                      'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
       FieldPermission('8', ['state'], False, None,
-                      "context.entity.namespace_entity.state == 'active'"),
+                      'context.entity.namespace_entity.state == "active"'),
       FieldPermission('8', ['state'], True, None,
-                      "(context.action.key_id_str == 'invite' and context.value and context.value.state == 'invited') or (context.action.key_id_str == 'accept' and context.value and context.value.state == 'accepted')")
+                      '(context.action.key_id_str == "invite" and context.value and context.value.state == "invited") or (context.action.key_id_str == "accept" and context.value and context.value.state == "accepted")')
       ]
     )
   
@@ -372,7 +352,7 @@ class DomainUser(ndb.BaseModel):
         'domain': ndb.SuperKeyProperty(kind='6'),
         'name': ndb.SuperStringProperty(required=True),
         'email': ndb.SuperStringProperty(required=True),
-        'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
+        'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
         },
       _plugins=[
         common.Context(),
@@ -385,11 +365,11 @@ class DomainUser(ndb.BaseModel):
         log.Write(transactional=True),
         rule.Read(),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -411,7 +391,7 @@ class DomainUser(ndb.BaseModel):
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'roles': ndb.SuperKeyProperty(kind=DomainRole, repeated=True)
+        'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
         },
       _plugins=[
         common.Context(),
@@ -425,11 +405,11 @@ class DomainUser(ndb.BaseModel):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -449,11 +429,11 @@ class DomainUser(ndb.BaseModel):
         log.Write(transactional=True),
         rule.Read(),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -461,7 +441,7 @@ class DomainUser(ndb.BaseModel):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])}
@@ -490,7 +470,7 @@ class DomainUser(ndb.BaseModel):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
       ),
     Action(
@@ -506,7 +486,7 @@ class DomainUser(ndb.BaseModel):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.8', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entity': 'entities.8', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
       ),
     Action(
@@ -529,11 +509,11 @@ class DomainUser(ndb.BaseModel):
         rule.Prepare(transactional=True, prepare_entities=['8', '6'], skip_user_roles=False, strict=False),
         rule.Read(transactional=True, read_entities=['8', '6']),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.8', 'output.domain': 'entities.6'}),
-        callback.Payload(transactional=True, queue = 'notify',
-                         static_data = {'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data = {'caller_entity': 'entities.8.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.8.key_urlsafe'}),
         callback.Exec(transactional=True,
-                      dynamic_data = {'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
