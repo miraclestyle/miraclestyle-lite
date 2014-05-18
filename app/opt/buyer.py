@@ -5,7 +5,7 @@ Created on May 18, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb, util
+from app import ndb, settings
 from app.srv import log as ndb_log
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
