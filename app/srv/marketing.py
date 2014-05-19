@@ -61,19 +61,19 @@ class Catalog(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('35', [Action.build_key('35', 'prepare').urlsafe(),
-                              Action.build_key('35', 'create').urlsafe(),
-                              Action.build_key('35', 'read').urlsafe(),
-                              Action.build_key('35', 'update').urlsafe(),
-                              Action.build_key('35', 'search').urlsafe(),
-                              Action.build_key('35', 'read_records').urlsafe(),
-                              Action.build_key('35', 'lock').urlsafe(),
-                              Action.build_key('35', 'publish').urlsafe(),
-                              Action.build_key('35', 'discontinue').urlsafe(),
-                              Action.build_key('35', 'log_message').urlsafe(),
-                              Action.build_key('35', 'duplicate').urlsafe(),
-                              Action.build_key('35', 'upload_images').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('35', Action.build_key('35', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
+      ActionPermission('35', [Action.build_key('35', 'prepare'),
+                              Action.build_key('35', 'create'),
+                              Action.build_key('35', 'read'),
+                              Action.build_key('35', 'update'),
+                              Action.build_key('35', 'search'),
+                              Action.build_key('35', 'read_records'),
+                              Action.build_key('35', 'lock'),
+                              Action.build_key('35', 'publish'),
+                              Action.build_key('35', 'discontinue'),
+                              Action.build_key('35', 'log_message'),
+                              Action.build_key('35', 'duplicate'),
+                              Action.build_key('35', 'upload_images')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('35', Action.build_key('35', 'process_images'), True, 'context.user._is_taskqueue')
       ]
     )
   
