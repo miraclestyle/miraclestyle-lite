@@ -13,7 +13,7 @@ from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback
 
 
-class Permission():
+class Permission(ndb.BasePolyExpando):
   '''Base class for all permissions.
   If the futuer deems scaling to be a problem, possible solutions could be to:
   a) Create DomainUserPermissions entity, that will fan-out on DomainUser entity,
@@ -23,43 +23,55 @@ class Permission():
   c) Some other similar pattern.
   
   '''
+  _kind = 78
+  
+  _default_indexed = False
 
 
 class ActionPermission(Permission):
   
-  def __init__(self, kind, actions, executable=None, condition=None):
+  _kind = 79
+  
+  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
+  actions = ndb.SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
+  executable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
+  condition = ndb.SuperStringProperty('4', required=True, indexed=False)
+  
+  def __init__(self, kind, actions, executable=None, condition=None, **kwargs):
     if not isinstance(actions, (tuple, list)):
       actions = [actions]
-    self.kind = kind  # Entity kind identifier (entity._kind).
-    self.actions = actions  # List of action urlsafe keys.
+    self.kind = kind
+    self.actions = actions
     self.executable = executable
     self.condition = condition
-  
-  def get_output(self):
-    return {'kind': self.kind, 'actions': self.actions,
-            'executable': self.executable, 'condition': self.condition, 'type': self.__class__.__name__}
+    super(ActionPermission, self).__init__(**kwargs)
   
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for action in self.actions:
-        if (action in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
-          context.entity._action_permissions[action]['executable'].append(self.executable)
+        if (action.urlsafe() in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
+          context.entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
 
 
 class FieldPermission(Permission):
   
-  def __init__(self, kind, fields, writable=None, visible=None, condition=None):
+  _kind = 80
+  
+  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
+  fields = ndb.SuperStringProperty('2', repeated=True, indexed=False)
+  writable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
+  visible = ndb.SuperBooleanProperty('4', required=True, default=True, indexed=False)
+  condition = ndb.SuperStringProperty('5', required=True, indexed=False)
+  
+  def __init__(self, kind, fields, writable=None, visible=None, condition=None, **kwargs):
     if not isinstance(fields, (tuple, list)):
       fields = [fields]
-    self.kind = kind  # Entity kind identifier (entity._kind).
-    self.fields = fields  # List of field code names from ndb property (field._code_name).
+    self.kind = kind
+    self.fields = fields
     self.writable = writable
     self.visible = visible
     self.condition = condition
-  
-  def get_output(self):
-    return {'kind': self.kind, 'fields': self.fields, 'writable': self.writable,
-            'visible': self.visible, 'condition': self.condition, 'type': self.__class__.__name__}
+    super(FieldPermission, self).__init__(**kwargs)
   
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
@@ -105,16 +117,16 @@ class DomainRole(Role):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('60', [Action.build_key('60', 'prepare').urlsafe(),
-                              Action.build_key('60', 'create').urlsafe(),
-                              Action.build_key('60', 'read').urlsafe(),
-                              Action.build_key('60', 'update').urlsafe(),
-                              Action.build_key('60', 'delete').urlsafe(),
-                              Action.build_key('60', 'search').urlsafe(),
-                              Action.build_key('60', 'read_records').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('60', [Action.build_key('60', 'create').urlsafe(),
-                              Action.build_key('60', 'update').urlsafe(),
-                              Action.build_key('60', 'delete').urlsafe()], False, 'context.entity.key_id_str == "admin"'),
+      ActionPermission('60', [Action.build_key('60', 'prepare'),
+                              Action.build_key('60', 'create'),
+                              Action.build_key('60', 'read'),
+                              Action.build_key('60', 'update'),
+                              Action.build_key('60', 'delete'),
+                              Action.build_key('60', 'search'),
+                              Action.build_key('60', 'read_records')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('60', [Action.build_key('60', 'create'),
+                              Action.build_key('60', 'update'),
+                              Action.build_key('60', 'delete')], False, 'context.entity.key_id_str == "admin"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
                       'context.entity.namespace_entity.state != "active" or context.entity.key_id_str == "admin"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], None, False,
@@ -300,26 +312,26 @@ class DomainUser(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('8', [Action.build_key('8', 'prepare').urlsafe(),
-                             Action.build_key('8', 'invite').urlsafe(),
-                             Action.build_key('8', 'read').urlsafe(),
-                             Action.build_key('8', 'update').urlsafe(),
-                             Action.build_key('8', 'remove').urlsafe(),
-                             Action.build_key('8', 'search').urlsafe(),
-                             Action.build_key('8', 'read_records').urlsafe(),
-                             Action.build_key('8', 'accept').urlsafe(),
-                             Action.build_key('8', 'clean_roles').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), False,
+      ActionPermission('8', [Action.build_key('8', 'prepare'),
+                             Action.build_key('8', 'invite'),
+                             Action.build_key('8', 'read'),
+                             Action.build_key('8', 'update'),
+                             Action.build_key('8', 'remove'),
+                             Action.build_key('8', 'search'),
+                             Action.build_key('8', 'read_records'),
+                             Action.build_key('8', 'accept'),
+                             Action.build_key('8', 'clean_roles')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('8', Action.build_key('8', 'remove'), False,
                        'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
-      ActionPermission('8', Action.build_key('8', 'remove').urlsafe(), True,
+      ActionPermission('8', Action.build_key('8', 'remove'), True,
                        '(context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str) and not (context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str)'),
-      ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), False,
+      ActionPermission('8', Action.build_key('8', 'accept'), False,
                        'context.user.key_id_str != context.entity.key_id_str'),
-      ActionPermission('8', Action.build_key('8', 'accept').urlsafe(), True,
+      ActionPermission('8', Action.build_key('8', 'accept'), True,
                        'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity.state == "invited"'),
-      ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), False,
+      ActionPermission('8', Action.build_key('8', 'clean_roles'), False,
                        'not context.user._is_taskqueue'),
-      ActionPermission('8', Action.build_key('8', 'clean_roles').urlsafe(), True,
+      ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
                        'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
       FieldPermission('8', ['name', 'roles', 'state', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
