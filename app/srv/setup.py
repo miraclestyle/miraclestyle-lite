@@ -27,8 +27,8 @@ class Configuration(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('57', [Action.build_key('57', 'install').urlsafe(),
-                              Action.build_key('57', 'cron_install').urlsafe()], True, 'context.user._is_taskqueue')
+      ActionPermission('57', [Action.build_key('57', 'install'),
+                              Action.build_key('57', 'cron_install')], True, 'context.user._is_taskqueue')
       ]
     )
   
