@@ -4,6 +4,8 @@ Created on Oct 20, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+# testing git from Nitrous.IO
+
 from app import ndb, settings
 from app.srv import uom, event, rule, log, blob
 
