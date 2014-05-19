@@ -27,7 +27,23 @@ class AddressRead(event.Plugin):
     entity = entity_key.get()
     if entity is None:
       entity = context.model(key=entity_key)
- 
+    if entity.addresses:
+      
+      @ndb.tasklet
+      def async(address):
+        if address.country:
+          address._country = yield address.country.get_async()
+        if address.region:
+          address._region = yield address.region.get_async()
+        raise ndb.Return(address)
+      
+      @ndb.tasklet
+      def helper(addresses):
+        addresses = yield map(async, addresses)
+        raise ndb.Return(addresses)
+      
+      entity.addresses = helper(entity.addresses).get_result()
+    
     context.entities[context.model.get_kind()] = entity
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
@@ -71,5 +87,7 @@ class CollectionRead(event.Plugin):
     entity = entity_key.get()
     if entity is None:
       entity = context.model(key=entity_key)
+    if entity.domains and len(entity.domains):
+      entity._domains = ndb.get_multi(entity.domains)
     context.entities[context.model.get_kind()] = entity
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
