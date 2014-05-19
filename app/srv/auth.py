@@ -57,12 +57,12 @@ class User(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('0', Action.build_key('0', 'login').urlsafe(), True,
+      ActionPermission('0', Action.build_key('0', 'login'), True,
                        'context.entity._is_guest or context.entity.state == "active"'),
-      ActionPermission('0', [Action.build_key('0', 'read').urlsafe(),
-                             Action.build_key('0', 'update').urlsafe(),
-                             Action.build_key('0', 'logout').urlsafe(),
-                             Action.build_key('0', 'read_domains').urlsafe()], True, 'not context.entity._is_guest and context.user.key == context.entity.key'),
+      ActionPermission('0', [Action.build_key('0', 'read'),
+                             Action.build_key('0', 'update'),
+                             Action.build_key('0', 'logout'),
+                             Action.build_key('0', 'read_domains')], True, 'not context.entity._is_guest and context.user.key == context.entity.key'),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
                       'not context.user._is_guest and context.user.key == context.entity.key'),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
@@ -70,13 +70,13 @@ class User(ndb.BaseExpando):
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
-      ActionPermission('0', [Action.build_key('0', 'read').urlsafe(),
-                             Action.build_key('0', 'search').urlsafe(),
-                             Action.build_key('0', 'read_records').urlsafe(),
-                             Action.build_key('0', 'sudo').urlsafe()], True, 'context.user._root_admin'),
-      ActionPermission('0', [Action.build_key('0', 'search').urlsafe(),
-                             Action.build_key('0', 'read_records').urlsafe(),
-                             Action.build_key('0', 'sudo').urlsafe()], False, 'not context.user._root_admin'),
+      ActionPermission('0', [Action.build_key('0', 'read'),
+                             Action.build_key('0', 'search'),
+                             Action.build_key('0', 'read_records'),
+                             Action.build_key('0', 'sudo')], True, 'context.user._root_admin'),
+      ActionPermission('0', [Action.build_key('0', 'search'),
+                             Action.build_key('0', 'read_records'),
+                             Action.build_key('0', 'sudo')], False, 'not context.user._root_admin'),
       FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
                             'ip_address', '_primary_email', '_records'], False, True, 'context.user._root_admin'),
       FieldPermission('0', ['state'], True, None, 'context.action.key_id_str == "sudo" and context.user._root_admin')
@@ -373,13 +373,13 @@ class Domain(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('6', [Action.build_key('6', 'prepare').urlsafe(),
-                             Action.build_key('6', 'create').urlsafe()], True, 'not context.user._is_guest'),
-      ActionPermission('6', Action.build_key('6', 'update').urlsafe(), False,
+      ActionPermission('6', [Action.build_key('6', 'prepare'),
+                             Action.build_key('6', 'create')], True, 'not context.user._is_guest'),
+      ActionPermission('6', Action.build_key('6', 'update'), False,
                        'context.entity.state != "active"'),
-      ActionPermission('6', Action.build_key('6', 'suspend').urlsafe(), False,
+      ActionPermission('6', Action.build_key('6', 'suspend'), False,
                        'context.entity.state != "active"'),
-      ActionPermission('6', Action.build_key('6', 'activate').urlsafe(), False,
+      ActionPermission('6', Action.build_key('6', 'activate'), False,
                        'context.entity.state == "active" or context.entity.state == "su_suspended"'),
       FieldPermission('6', ['name', 'primary_contact', 'logo', 'state', '_records', '_primary_contact_email'], False, None,
                       'context.entity.state != "active"'),
@@ -389,13 +389,13 @@ class Domain(ndb.BaseExpando):
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively);
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
-      ActionPermission('6', [Action.build_key('6', 'read').urlsafe(),
-                             Action.build_key('6', 'search').urlsafe(),
-                             Action.build_key('6', 'read_records').urlsafe(),
-                             Action.build_key('6', 'sudo').urlsafe(),
-                             Action.build_key('6', 'log_message').urlsafe()], True, 'context.user._root_admin'),
-      ActionPermission('6', [Action.build_key('6', 'search').urlsafe(),
-                             Action.build_key('6', 'sudo').urlsafe()], False, 'not context.user._root_admin'),
+      ActionPermission('6', [Action.build_key('6', 'read'),
+                             Action.build_key('6', 'search'),
+                             Action.build_key('6', 'read_records'),
+                             Action.build_key('6', 'sudo'),
+                             Action.build_key('6', 'log_message')], True, 'context.user._root_admin'),
+      ActionPermission('6', [Action.build_key('6', 'search'),
+                             Action.build_key('6', 'sudo')], False, 'not context.user._root_admin'),
       FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
                             '_primary_contact_email'], None, True, 'context.user._root_admin'),
       FieldPermission('6', ['_records.note'], True, True,
