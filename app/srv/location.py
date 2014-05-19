@@ -10,6 +10,7 @@ from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, callback, log, location
 
+
 def get_location(location):
   if isinstance(location, ndb.Key):
     location = location.get()
@@ -34,39 +35,35 @@ class Country(ndb.BaseModel):
   _use_cache = True
   _use_memcache = True
   
-  # root
-  # http://hg.tryton.org/modules/country/file/tip/country.py#l8
-  # http://en.wikipedia.org/wiki/ISO_3166
-  # http://hg.tryton.org/modules/country/file/tip/country.xml
-  # http://downloads.tryton.org/2.8/trytond_country-2.8.0.tar.gz
-  # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L42
-  # composite index: ancestor:no - active,name
-  code = ndb.SuperStringProperty('1', required=True, indexed=False) # Turn on index if projection query is required.
+  code = ndb.SuperStringProperty('1', required=True, indexed=False)
   name = ndb.SuperStringProperty('2', required=True)
-  active = ndb.SuperBooleanProperty('3', default=True)
+  active = ndb.SuperBooleanProperty('3', required=True, default=True)
   
-  _global_role = GlobalRole(permissions=[
-                   ActionPermission('15', Action.build_key('15', 'update').urlsafe(), True, "context.user._root_admin or context.user._is_taskqueue"),
-                   ActionPermission('15', Action.build_key('15', 'search').urlsafe(), True, "True"),
-                   FieldPermission('15', ['code', 'name', 'active'], True, True, 'True'),
-                 ])
+  _global_role = GlobalRole(
+    permissions=[
+      ActionPermission('15', Action.build_key('15', 'update'), True, 'context.user._root_admin or context.user._is_taskqueue'),
+      ActionPermission('15', Action.build_key('15', 'search'), True, 'True'),
+      FieldPermission('15', ['code', 'name', 'active'], True, True, 'True')
+      ]
+    )
   
   _actions = [
-    Action(key=Action.build_key('15', 'update'),
-             arguments={},
-             _plugins=[
-              common.Context(),
-              common.Prepare(domain_model=False),
-              rule.Prepare(skip_user_roles=True, strict=False),
-              rule.Exec(),
-              location.CountryUpdate(),
-            ]             
-     ),       
+    Action(
+      key=Action.build_key('15', 'update'),
+      arguments={},
+      _plugins=[
+        common.Context(),
+        common.Prepare(domain_model=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        location.CountryUpdate()
+        ]
+      ),
     Action(
       key=Action.build_key('15', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p,s: s.capitalize()])},
@@ -75,11 +72,11 @@ class Country(ndb.BaseModel):
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],},
+            {'filter': ['key']},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]},
+             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']}
@@ -95,21 +92,20 @@ class Country(ndb.BaseModel):
         common.Search(limit=-1),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
-      ),      
-  ]
- 
- 
+      )
+    ]
+
+
 class CountrySubdivision(ndb.BaseModel):
-    
+  
   _kind = 16
   
   _use_cache = True
   _use_memcache = True
   
-  TYPES = {
-           'unknown' : 1,
+  TYPES = {'unknown': 1,
            'municipalities': 81,
            'included for completeness': 36,
            'autonomous municipality': 53,
@@ -194,48 +190,42 @@ class CountrySubdivision(ndb.BaseModel):
            'city corporation': 40,
            'unitary authority (england)': 43,
            'constitutional province': 74,
-           'special city': 56
-           }
-
+           'special city': 56}
   
-  # ancestor Country
-  # http://hg.tryton.org/modules/country/file/tip/country.py#l52
-  # http://bazaar.launchpad.net/~openerp/openobject-server/7.0/view/head:/openerp/addons/base/res/res_country.py#L86
-  # composite index: ancestor:yes - name; ancestor:yes - active,name
-  # kind='app.core.misc.CountrySubdivision',
   parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
-  code = ndb.SuperStringProperty('2', required=True, indexed=False) # Turn on index if projection query is required.
+  code = ndb.SuperStringProperty('2', required=True, indexed=False)
   name = ndb.SuperStringProperty('3', required=True)
-  complete_name = ndb.SuperTextProperty('4') # # i think complete names can be 500 char strings example of 500 chars: http://pastebin.com/raw.php?i=Gk3S0HFx
-  type = ndb.SuperIntegerProperty('5', required=True, indexed=False)
-  active = ndb.SuperBooleanProperty('6', default=True)
+  complete_name = ndb.SuperTextProperty('4')
+  type = ndb.SuperIntegerProperty('5', required=True, indexed=False)  # @todo Shall we make this string property and use choices prop for allowed values?
+  active = ndb.SuperBooleanProperty('6', required=True, default=True)
   
   _virtual_fields = {
-    'type_text' : ndb.ComputedProperty(lambda self: self.type_into_text())
-  }
+    'type_text': ndb.ComputedProperty(lambda self: self.type_into_text())
+    }
   
-  _global_role = GlobalRole(permissions=[
-                   ActionPermission('16', Action.build_key('16', 'search').urlsafe(), True, "True"),
-                   FieldPermission('16', ['parent_record', 'code', 'name',
-                                          'complete_name', 'type', 'type_text', 'active'], True, True, 'True'),
-                 ])
+  _global_role = GlobalRole(
+    permissions=[
+      ActionPermission('16', Action.build_key('16', 'search'), True, 'True'),
+      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'type_text', 'active'], True, True, 'True')
+      ]
+    )
   
   _actions = [
     Action(
       key=Action.build_key('16', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={"filters": [], "order_by": {"field": "name", "operator": "asc"}},
+          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='16')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
-            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
+            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')}
             },
           indexes=[
             {'filter': [],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key'],},
+            {'filter': ['key']},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active'],
@@ -243,7 +233,7 @@ class CountrySubdivision(ndb.BaseModel):
             {'filter': ['active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['name', 'active', 'ancestor'],
-             'order_by': [['name', ['asc', 'desc']]]},
+             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']}
@@ -259,15 +249,15 @@ class CountrySubdivision(ndb.BaseModel):
         common.Search(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'next_cursor', 'output.more': 'more'})
+        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
         ]
-      ),      
-  ]
+      )
+    ]
   
   def type_into_text(self):
     for name, key in self.TYPES.items():
       if key == self.type:
-          return name
+        return name
     return self.type
 
 
@@ -275,7 +265,6 @@ class Location(ndb.BaseExpando):
   
   _kind = 68
   
-  # Local structured property
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
   country = ndb.SuperStringProperty('2', required=True, indexed=False)
   country_code = ndb.SuperStringProperty('3', required=True, indexed=False)
@@ -286,8 +275,8 @@ class Location(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'region' :  ndb.SuperStringProperty('7'),
-    'region_code' :  ndb.SuperStringProperty('8'),
-    'email' : ndb.SuperStringProperty('9'),
-    'telephone' : ndb.SuperStringProperty('10'),
-  }
+    'region': ndb.SuperStringProperty('7'),
+    'region_code': ndb.SuperStringProperty('8'),
+    'email': ndb.SuperStringProperty('9'),
+    'telephone': ndb.SuperStringProperty('10')
+    }
