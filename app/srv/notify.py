@@ -24,7 +24,7 @@ def render_template(template_as_string, values={}):
   return from_string_template.render(values)
 
 
-class Template(ndb.BasePoly):
+class Template(ndb.BasePolyExpando):
   
   _kind = 61
   
@@ -32,6 +32,8 @@ class Template(ndb.BasePoly):
   action = ndb.SuperKeyProperty('2', kind='56', required=True)
   condition = ndb.SuperStringProperty('3', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('4', required=True, default=True)
+  
+  _default_indexed = False
   
   _global_role = GlobalRole(
     permissions=[
