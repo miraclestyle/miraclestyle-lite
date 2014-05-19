@@ -7,6 +7,7 @@ Created on May 18, 2014
 
 from app import ndb, settings
 from app.srv import log as ndb_log
+from app.srv import auth as ndb_auth
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, log, callback, buyer
@@ -27,20 +28,16 @@ class Address(ndb.BaseExpando):
   
   _default_indexed = False
   
-  _country = None  # Prevent from expando saving. @todo Is this in order to avoid visibility in permissions?
-  _region = None  # Prevent from expando saving.
-  
   _expando_fields = {
     'region': ndb.SuperKeyProperty('9', kind='16'),
     'email': ndb.SuperStringProperty('10'),
     'telephone': ndb.SuperStringProperty('11')
     }
   
-  def get_output(self):
-    dic = super(Address, self).get_output()
-    dic['_country'] = getattr(self, '_country', None)
-    dic['_region'] = getattr(self, '_region', None)
-    return dic
+  _virtual_fields = {
+    '_country': ndb.SuperStringProperty(),
+    '_region': ndb.SuperStringProperty()
+    }
 
 
 class Addresses(ndb.BaseModel):
@@ -55,9 +52,9 @@ class Addresses(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('77', [Action.build_key('77', 'update').urlsafe(),
-                              Action.build_key('77', 'read').urlsafe(),
-                              Action.build_key('77', 'read_records').urlsafe()], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
+      ActionPermission('77', [Action.build_key('77', 'update'),
+                              Action.build_key('77', 'read'),
+                              Action.build_key('77', 'read_records')], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
       FieldPermission('77', ['addresses', '_records'], True, True, 'True')
       ]
     )
@@ -119,30 +116,6 @@ class Addresses(ndb.BaseModel):
         ]
       )
     ]
-  
-  # this entire segment could be placed in plugins but at the moment this is the fastest method
-  # because on every entity that gets trough output this function get_async_information() must be called to fetch the data async
-  def get_output(self):
-    self.get_async_information()
-    return super(Addresses, self).get_output()
-  
-  def get_async_information(self):
-    if self.addresses:
-      
-      @ndb.tasklet
-      def async(address):
-        if address.country:
-          address._country = yield address.country.get_async()
-        if address.region:
-          address._region = yield address.region.get_async()
-        raise ndb.Return(address)
-      
-      @ndb.tasklet
-      def helper(addresses):
-        addresses = yield map(async, addresses)
-        raise ndb.Return(addresses)
-      
-      self.addresses = helper(self.addresses).get_result()
 
 
 class Collection(ndb.BaseModel):
@@ -154,14 +127,14 @@ class Collection(ndb.BaseModel):
   
   _virtual_fields = {
     '_records': ndb_log.SuperLocalStructuredRecordProperty('10', repeated=True),
-    '_domains': ndb.SuperLocalStructuredProperty('6', repeated=True)  # @todo Why do we use mix of kind id's and classes for struct props?
+    '_domains': ndb.SuperLocalStructuredProperty(ndb_auth.Domain, repeated=True)
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('10', [Action.build_key('10', 'update').urlsafe(),
-                              Action.build_key('10', 'read').urlsafe(),
-                              Action.build_key('10', 'read_records').urlsafe()], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
+      ActionPermission('10', [Action.build_key('10', 'update'),
+                              Action.build_key('10', 'read'),
+                              Action.build_key('10', 'read_records')], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
       FieldPermission('10', ['notify', 'domains', '_records', '_domains'], True, True, 'True')
       ]
     )
@@ -224,7 +197,3 @@ class Collection(ndb.BaseModel):
         ]
       )
     ]
-  
-  def get_output(self):
-    self._domains = ndb.get_multi(self.domains)  # @todo Is this controlled by rule engine?
-    return super(Collection, self).get_output()
