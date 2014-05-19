@@ -37,10 +37,10 @@ class Template(ndb.BasePolyExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('61', [Action.build_key('61', 'prepare').urlsafe(),
-                              Action.build_key('61', 'search').urlsafe(),
-                              Action.build_key('61', 'initiate').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('61', Action.build_key('61', 'initiate').urlsafe(), True,
+      ActionPermission('61', [Action.build_key('61', 'prepare'),
+                              Action.build_key('61', 'search'),
+                              Action.build_key('61', 'initiate')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('61', Action.build_key('61', 'initiate'), True,
                        'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
       FieldPermission('61', ['name', 'action', 'condition', 'active'], False, False,
                       'context.entity.namespace_entity.state != "active"')
@@ -161,14 +161,14 @@ class MailNotify(Template):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('58', [Action.build_key('58', 'prepare').urlsafe(),
-                              Action.build_key('58', 'create').urlsafe(),
-                              Action.build_key('58', 'read').urlsafe(),
-                              Action.build_key('58', 'update').urlsafe(),
-                              Action.build_key('58', 'delete').urlsafe(),
-                              Action.build_key('58', 'read_records').urlsafe(),
-                              Action.build_key('58', 'send').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('58', Action.build_key('58', 'send').urlsafe(), True,
+      ActionPermission('58', [Action.build_key('58', 'prepare'),
+                              Action.build_key('58', 'create'),
+                              Action.build_key('58', 'read'),
+                              Action.build_key('58', 'update'),
+                              Action.build_key('58', 'delete'),
+                              Action.build_key('58', 'read_records'),
+                              Action.build_key('58', 'send')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('58', Action.build_key('58', 'send'), True,
                        'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
       FieldPermission('58', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
@@ -382,14 +382,14 @@ class HttpNotify(Template):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('63', [Action.build_key('63', 'prepare').urlsafe(),
-                              Action.build_key('63', 'create').urlsafe(),
-                              Action.build_key('63', 'read').urlsafe(),
-                              Action.build_key('63', 'update').urlsafe(),
-                              Action.build_key('63', 'delete').urlsafe(),
-                              Action.build_key('63', 'read_records').urlsafe(),
-                              Action.build_key('63', 'send').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('63', Action.build_key('63', 'send').urlsafe(), True,
+      ActionPermission('63', [Action.build_key('63', 'prepare'),
+                              Action.build_key('63', 'create'),
+                              Action.build_key('63', 'read'),
+                              Action.build_key('63', 'update'),
+                              Action.build_key('63', 'delete'),
+                              Action.build_key('63', 'read_records'),
+                              Action.build_key('63', 'send')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('63', Action.build_key('63', 'send'), True,
                        'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
       FieldPermission('63', ['name', 'action', 'condition', 'active', 'message_sender',
                              'message_reciever', 'message_subject', 'message_body', '_records'], False, False,
