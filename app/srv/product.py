@@ -74,8 +74,8 @@ class Category(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('17', Action.build_key('17', 'update').urlsafe(), True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('17', Action.build_key('17', 'search').urlsafe(), True, 'True'),
+      ActionPermission('17', Action.build_key('17', 'update'), True, 'context.user._root_admin or context.user._is_taskqueue'),
+      ActionPermission('17', Action.build_key('17', 'search'), True, 'True'),
       FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True, 'True')
       ]
     )
@@ -162,16 +162,16 @@ class Template(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', [Action.build_key('38', 'prepare').urlsafe(),
-                              Action.build_key('38', 'create').urlsafe(),
-                              Action.build_key('38', 'read').urlsafe(),
-                              Action.build_key('38', 'update').urlsafe(),
-                              Action.build_key('38', 'upload_images').urlsafe(),
-                              Action.build_key('38', 'delete').urlsafe(),
-                              Action.build_key('38', 'search').urlsafe(),
-                              Action.build_key('38', 'read_records').urlsafe(),
-                              Action.build_key('38', 'duplicate').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
+      ActionPermission('38', [Action.build_key('38', 'prepare'),
+                              Action.build_key('38', 'create'),
+                              Action.build_key('38', 'read'),
+                              Action.build_key('38', 'update'),
+                              Action.build_key('38', 'upload_images'),
+                              Action.build_key('38', 'delete'),
+                              Action.build_key('38', 'search'),
+                              Action.build_key('38', 'read_records'),
+                              Action.build_key('38', 'duplicate')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
       ]
     )
   
@@ -477,13 +477,13 @@ class Instance(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', [Action.build_key('38', 'prepare').urlsafe(),
-                              Action.build_key('38', 'create').urlsafe(),
-                              Action.build_key('38', 'read').urlsafe(),
-                              Action.build_key('38', 'update').urlsafe(),
-                              Action.build_key('38', 'upload_images').urlsafe(),
-                              Action.build_key('38', 'delete').urlsafe()], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', Action.build_key('38', 'process_images').urlsafe(), True, 'context.user._is_taskqueue')
+      ActionPermission('38', [Action.build_key('38', 'prepare'),
+                              Action.build_key('38', 'create'),
+                              Action.build_key('38', 'read'),
+                              Action.build_key('38', 'update'),
+                              Action.build_key('38', 'upload_images'),
+                              Action.build_key('38', 'delete')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
       ]
     )
   
