@@ -43,8 +43,7 @@ def build_url(base, additional_params=None):
 
 class Client(object):
   
-  def __init__(self, client_id, client_secret, redirect_uri, \
-               authorization_uri, token_uri, access_token=None, **kwds):
+  def __init__(self, client_id, client_secret, redirect_uri, authorization_uri, token_uri, access_token=None, **kwds):
     '''Constructor for OAuth 2.0 Client.
     'client_id' parameter: Client ID.
     'client_id' type: String.
