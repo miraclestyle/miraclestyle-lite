@@ -182,7 +182,7 @@ class User(ndb.BaseExpando):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        common.Search(),
+        common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
@@ -199,7 +199,7 @@ class User(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        log.Read(),
+        log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]
@@ -526,7 +526,7 @@ class Domain(ndb.BaseExpando):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        common.Search(),
+        common.Search(page_size=settings.SEARCH_PAGE),
         auth.DomainSearch(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
@@ -544,7 +544,7 @@ class Domain(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        log.Read(),
+        log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
         ]

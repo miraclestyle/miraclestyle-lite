@@ -129,7 +129,7 @@ class Unit(ndb.BaseExpando):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Search(limit=-1),
+        common.Search(page_size=-1),
         uom.RemoveCurrencies(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),

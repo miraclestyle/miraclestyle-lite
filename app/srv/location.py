@@ -89,7 +89,7 @@ class Country(ndb.BaseModel):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Search(limit=-1),
+        common.Search(page_size=-1),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
@@ -246,7 +246,7 @@ class CountrySubdivision(ndb.BaseModel):
         common.Prepare(domain_model=False),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Search(),
+        common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
