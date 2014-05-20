@@ -7,8 +7,9 @@ Created on Apr 16, 2014
 
 import collections
 
-from app import ndb, settings, util
+from app import ndb, settings, memcache, util
 from app.srv import event
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 class DomainUserError(Exception):
@@ -24,17 +25,17 @@ class ActionDenied(Exception):
 
 
 def _is_structured_field(field):
-  """Checks if the provided field is instance of one of the structured properties,
+  '''Checks if the provided field is instance of one of the structured properties,
   and if the '_modelclass' is set.
   
-  """
+  '''
   return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
 
 def _write_helper(permissions, entity, field_key, field, field_value):
-  """If the field is writable, ignore substructure permissions and override field fith new values.
+  '''If the field is writable, ignore substructure permissions and override field fith new values.
   Otherwise go one level down and check again.
   
-  """
+  '''
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
       if field_value is None:
@@ -66,10 +67,10 @@ def write(entity, values):
       _write_helper(entity._field_permissions, entity, field_key, field, field_value)
 
 def _read_helper(permissions, entity, field_key, field):
-  """If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
+  '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
   Otherwise go one level down and check again.
   
-  """
+  '''
   if (not field_key in permissions) or (not permissions[field_key]['visible']):
     entity.remove_output(field_key)
   else:
@@ -110,10 +111,10 @@ def reset_fields(field_permissions, fields):
       reset_fields(field_permissions[field_key], model_fields)
 
 def reset(entity):
-  """This method builds dictionaries that will hold permissions inside
+  '''This method builds dictionaries that will hold permissions inside
   entity object.
   
-  """
+  '''
   entity._action_permissions = {}
   entity._field_permissions = {}
   actions = entity.get_actions()
@@ -189,10 +190,10 @@ def compile(global_permissions, local_permissions, strict):
   return permissions
 
 def prepare(context, skip_user_roles, strict):
-  """This method generates permissions situation for the context.entity object,
+  '''This method generates permissions situation for the context.entity object,
   at the time of execution.
   
-  """
+  '''
   if context.entity:
     reset(context.entity)
     if hasattr(context.entity, '_global_role') and context.entity._global_role.get_kind() == '67':
@@ -303,11 +304,11 @@ class Exec(event.Plugin):
     if len(context.entities):
       if isinstance(context.entities, dict):
         if self.kind_id != None:
-          if not context.entities[self.kind_id]._action_permissions[context.action.key.urlsafe()]['executable']:
-            raise ActionDenied(context)
+          kind_id = self.kind_id
         else:
-          if not context.entities[context.model.get_kind()]._action_permissions[context.action.key.urlsafe()]['executable']:
-            raise ActionDenied(context)
+          kind_id = context.model.get_kind()
+        if not context.entities[kind_id]._action_permissions[context.action.key.urlsafe()]['executable']:
+          raise ActionDenied(context)
       else:
         raise ActionDenied(context)
     else:
@@ -317,7 +318,8 @@ class Exec(event.Plugin):
 class DomainRoleSet(event.Plugin):
   
   def run(self, context):
-    from app.srv.rule import FieldPermission, ActionPermission
+    ActionPermission = context.models['79']
+    FieldPermission = context.models['80']
     input_permissions = context.input.get('permissions')
     permissions = []
     for permission in input_permissions:
@@ -340,22 +342,22 @@ class DomainRoleSet(event.Plugin):
 class DomainUserInvite(event.Plugin):
   
   def run(self, context):
-    from app.srv import auth
+    User = context.models['0']
     email = context.input.get('email')
-    user = auth.User.query(auth.User.emails == email).get()
+    user = User.query(auth.User.emails == email).get()
     if not user:
       raise DomainUserError('not_found')
     if user.state != 'active':
       raise DomainUserError('not_active')
-    already_invited = context.model.build_key(user.key_id_str, namespace=context.domain.key_namespace).get()
+    already_invited = context.model.build_key(user.key_id_str, namespace=context.namespace).get()
     if already_invited:
       raise DomainUserError('already_invited')
-    context.entities['8'] = context.model(id=user.key_id_str, namespace=context.domain.key_namespace)
-    context.values['8'] = context.model(id=user.key_id_str, namespace=context.domain.key_namespace)
+    context.entities['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
+    context.values['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
     input_roles = ndb.get_multi(context.input.get('roles'))
     roles = []
     for role in input_roles:
-      if role.key.namespace() == context.domain.key_namespace:
+      if role.key.namespace() == context.namespace:
         roles.append(role.key)
     context.values['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
     user.domains.append(context.domain.key)

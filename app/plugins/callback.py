@@ -9,16 +9,16 @@ import json
 
 from google.appengine.api import taskqueue
 
-from app import ndb, settings
+from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 class Payload(event.Plugin):
   
-  queue = ndb.SuperStringProperty('5', indexed=False, required=True)
-  static_data = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
-  dynamic_data = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
+  queue = ndb.SuperStringProperty('5', required=True, indexed=False)
+  static_data = ndb.SuperJsonProperty('6', required=True, indexed=False, default={})
+  dynamic_data = ndb.SuperJsonProperty('7', required=True, indexed=False, default={})
   
   def run(self, context):
     data = {}

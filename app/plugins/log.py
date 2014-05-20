@@ -7,67 +7,60 @@ Created on Apr 17, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, settings
+from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
-from app.srv.log import Record
-
-
-def get_records(entity, urlsafe_cursor):
-  items_per_page = settings.RECORDS_PAGE
-  cursor = Cursor(urlsafe=urlsafe_cursor)
-  query = Record.query(ancestor=entity.key).order(-Record.logged)
-  entities, next_cursor, more = query.fetch_page(items_per_page, start_cursor=cursor)
-  if next_cursor:
-    next_cursor = next_cursor.urlsafe()
-  
-  @ndb.tasklet
-  def async(entity):
-    if entity.key_namespace:
-      domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
-      agent = yield domain_user_key.get_async()
-      agent = agent.name
-    else:
-      agent = yield entity.agent.get_async()
-      agent = agent._primary_email
-    entity._agent = agent
-    action_parent = entity.action.parent()
-    modelclass = entity._kind_map.get(action_parent.kind())
-    action_id = entity.action.id()
-    if modelclass and hasattr(modelclass, '_actions'):
-      for action in modelclass._actions:
-        if entity.action == action.key:
-          entity._action = '%s.%s' % (modelclass.__name__, action_id)
-          break
-    raise ndb.Return(entity)
-  
-  @ndb.tasklet
-  def helper(entities):
-    results = yield map(async, entities)
-    raise ndb.Return(results)
-  
-  entities = helper(entities)
-  entities = [entity for entity in entities.get_result()]
-  return entities, next_cursor, more
 
 
 class Read(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
+  page_size = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=10)
   
   def run(self, context):
-    if len(context.entities):
-      if isinstance(context.entities, dict):
-        if self.kind_id != None:
-          entities, next_cursor, more = get_records(context.entities[self.kind_id], context.input.get('next_cursor'))
-          context.entities[self.kind_id]._records = entities
-          context.next_cursor = next_cursor
-          context.more = more
+    if len(context.entities) and isinstance(context.entities, dict):
+      if self.kind_id != None:
+        kind_id = self.kind_id
+      else:
+        kind_id = context.model.get_kind()
+      cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+      model = context.models['5']
+      entity = context.entities[kind_id]
+      query = model.query(ancestor=entity.key).order(-model.logged)
+      entities, cursor, more = query.fetch_page(self.page_size, start_cursor=cursor)
+      if cursor:
+        cursor = cursor.urlsafe()
+
+      @ndb.tasklet
+      def async(entity):
+        if entity.key_namespace:
+          domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
+          agent = yield domain_user_key.get_async()
+          agent = agent.name
         else:
-          entities, next_cursor, more = get_records(context.entities[context.model.get_kind()], context.input.get('next_cursor'))
-          context.entities[context.model.get_kind()]._records = entities
-          context.next_cursor = next_cursor
-          context.more = more
+          agent = yield entity.agent.get_async()
+          agent = agent._primary_email
+        entity._agent = agent
+        action_parent = entity.action.parent()
+        modelclass = entity._kind_map.get(action_parent.kind())
+        action_id = entity.action.id()
+        if modelclass and hasattr(modelclass, '_actions'):
+          for action in modelclass._actions:
+            if entity.action == action.key:
+              entity._action = '%s.%s' % (modelclass.__name__, action_id)
+              break
+        raise ndb.Return(entity)
+
+      @ndb.tasklet
+      def helper(entities):
+        results = yield map(async, entities)
+        raise ndb.Return(results)
+
+      entities = helper(entities)
+      entities = [entity for entity in entities.get_result()]
+      context.entities[kind_id]._records = entities
+      context.log_read_cursor = cursor
+      context.log_read_more = more
 
 
 class Entity(event.Plugin):
@@ -77,18 +70,17 @@ class Entity(event.Plugin):
   dynamic_arguments = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
   
   def run(self, context):
-    if len(context.entities):
-      if isinstance(context.entities, dict):
-        arguments = {}
-        arguments.update(self.static_arguments)
-        for key, value in self.dynamic_arguments.items():
-          arguments[key] = get_attr(context, value)
-        if len(self.log_entities):
-          for kind_id in self.log_entities:
-            if kind_id in context.entities:
-              context.log_entities.append((context.entities[kind_id], arguments))
-        else:
-          context.log_entities.append((context.entities[context.model.get_kind()], arguments))
+    if len(context.entities) and isinstance(context.entities, dict):
+      arguments = {}
+      arguments.update(self.static_arguments)
+      for key, value in self.dynamic_arguments.items():
+        arguments[key] = get_attr(context, value)
+      if len(self.log_entities):
+        for kind_id in self.log_entities:
+          if kind_id in context.entities:
+            context.log_entities.append((context.entities[kind_id], arguments))
+      else:
+        context.log_entities.append((context.entities[context.model.get_kind()], arguments))
 
 
 class Write(event.Plugin):
@@ -99,24 +91,27 @@ class Write(event.Plugin):
   def run(self, context):
     records = []
     if len(context.log_entities):
+      model = context.models['5']
+      write_arguments = {}
+      write_arguments.update(self.static_arguments)
+      for key, value in self.dynamic_arguments.items():
+        write_arguments[key] = get_attr(context, value)
       for config in context.log_entities:
         arguments = {}
         kwargs = {}
-        arguments.update(self.static_arguments)
-        for key, value in self.dynamic_arguments.items():
-          arguments[key] = get_attr(context, value)
         entity = config[0]
         try:
           entity_arguments = config[1]
         except:
           entity_arguments = {}
+        arguments.update(write_arguments)
         arguments.update(entity_arguments)
         log_entity = arguments.pop('log_entity', True)
         if len(arguments):
           for key, value in arguments.items():
             if entity._field_permissions['_records'][key]['writable']:
               kwargs[key] = value
-        record = Record(parent=entity.key, agent=context.user.key, action=context.action.key, **kwargs)
+        record = model(parent=entity.key, agent=context.user.key, action=context.action.key, **kwargs)
         if log_entity is True:
           log_entity = entity
         if log_entity:

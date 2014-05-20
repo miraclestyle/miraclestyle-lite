@@ -10,7 +10,7 @@ import string
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, settings
+from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
@@ -18,63 +18,30 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 class Context(event.Plugin):
   
   def run(self, context):
-    from app.srv import auth
-    if not hasattr(context, 'entities'):
-      context.entities = {}
-    if not hasattr(context, 'values'):
-      context.values = {}
-    context.user = auth.User.current_user()
+    # @todo Following lines are temporary, until we decide where and how to distribute them!
+    context.user = context.models['0'].current_user()
     caller_user_key = context.input.get('caller_user')
     if context.user._is_taskqueue and caller_user_key:
       caller_user = caller_user_key.get()
       if caller_user:
-         context.user = caller_user
-    # @todo Following lines are temporary!
+        context.user = caller_user
+    context.namespace = None
     domain_key = context.input.get('domain')
     if domain_key:
       context.domain = domain_key.get()
+      context.namespace = context.domain.key_namespace
+    if not hasattr(context, 'entities'):
+      context.entities = {}
+    if not hasattr(context, 'values'):
+      context.values = {}
     if not hasattr(context, 'callback_payloads'):
       context.callback_payloads = []
     if not hasattr(context, 'log_entities'):
       context.log_entities = []
-
-
-class Prepare(event.Plugin):
-  
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  domain_model = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
-  
-  def run(self, context):
-    if self.kind_id != None:
-      if self.domain_model:
-        context.entities[self.kind_id] = context.model(namespace=context.domain.key_namespace)
-        context.values[self.kind_id] = context.model(namespace=context.domain.key_namespace)
-      else:
-        context.entities[self.kind_id] = context.model()
-        context.values[self.kind_id] = context.model()
-    else:
-      if self.domain_model:
-        context.entities[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
-        context.values[context.model.get_kind()] = context.model(namespace=context.domain.key_namespace)
-      else:
-        context.entities[context.model.get_kind()] = context.model()
-        context.values[context.model.get_kind()] = context.model()
-
-
-class Read(event.Plugin):
-  
-  read_entities = ndb.SuperJsonProperty('5', indexed=False, default={})
-  
-  def run(self, context):
-    if len(self.read_entities):
-      for key, value in self.read_entities.items():
-        entity_key = context.input.get(value)
-        context.entities[key] = entity_key.get()
-        context.values[key] = copy.deepcopy(context.entities[key])
-    else:
-      entity_key = context.input.get('key')
-      context.entities[context.model.get_kind()] = entity_key.get()
-      context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+    if not hasattr(context, 'blob_delete'):
+      context.blob_delete = []
+    if not hasattr(context, 'blob_write'):
+      context.blob_write = []
 
 
 class Set(event.Plugin):
@@ -87,6 +54,43 @@ class Set(event.Plugin):
       set_attr(context, key, value)
     for key, value in self.dynamic_values.items():
       set_attr(context, key, get_attr(context, value))
+
+
+class Prepare(event.Plugin):
+  
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  domain_model = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  
+  def run(self, context):
+    namespace = None
+    if self.kind_id != None:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    if self.domain_model:
+      namespace = context.namespace
+    context.entities[kind_id] = context.model(namespace=namespace)
+    context.values[kind_id] = context.model(namespace=namespace)
+
+
+class Read(event.Plugin):
+  
+  read_entities = ndb.SuperJsonProperty('5', indexed=False, default={})
+  
+  def run(self, context):
+    keys = []
+    values = []
+    if len(self.read_entities):
+      for key, value in self.read_entities.items():
+        keys.append(key)
+        values.append(context.input.get(value))
+    else:
+      keys.append(context.model.get_kind())
+      values.append(context.input.get('key'))
+    entities = ndb.get_multi(values)
+    for i, key in enumerate(keys):
+      context.entities[key] = entities[i]
+      context.values[key] = copy.deepcopy(context.entities[key])
 
 
 class Write(event.Plugin):
@@ -122,26 +126,25 @@ class Delete(event.Plugin):
 class Search(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  search = ndb.SuperJsonProperty('6', indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
-  limit = ndb.SuperIntegerProperty('7', indexed=False)
+  page_size = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=10)
+  search = ndb.SuperJsonProperty('7', indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
   
   def run(self, context):
     namespace = None
     if self.kind_id != None:
-      model = context.entities[self.kind_id].__class__
-      if context.entities[self.kind_id].key:
-        namespace = context.entities[self.kind_id].key_namespace
+      kind_id = self.kind_id
     else:
-      model = context.model
-      if context.entities[context.model.get_kind()].key:
-        namespace = context.entities[context.model.get_kind()].key_namespace
+      kind_id = context.model.get_kind()
+    model = context.models[kind_id]
+    if context.entities[kind_id].key:
+      namespace = context.entities[kind_id].key_namespace
     value = None
     search = context.input.get('search')
     if search:
-      filters = search.get('filters')
-      order_by = search.get('order_by')
       args = []
       kwds = {}
+      filters = search.get('filters')
+      order_by = search.get('order_by')
       for _filter in filters:
         if _filter['field'] == 'ancestor':
           kwds['ancestor'] = _filter['value']
@@ -167,47 +170,45 @@ class Search(event.Plugin):
             last = letters[letters.index(value[-1].lower()) + 1]
             args.append(field >= value)
             args.append(field < last)
-          except ValueError as e: # i.e. value not in the letter scope, šččđčžćč for example
+          except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
             args.append(field == value)
-      
-      query = model.query(namespace=namespace, **kwds)     
+      query = model.query(namespace=namespace, **kwds)
       query = query.filter(*args)
       if order_by:
         order_by_field = getattr(model, order_by['field'])
-        asc = order_by['operator'] == 'asc'
-        if asc:
+        if order_by['operator'] == 'asc':
           query = query.order(order_by_field)
         else:
           query = query.order(-order_by_field)
     cursor = Cursor(urlsafe=context.input.get('next_cursor'))
-    
-    def they_are_all_keys(value):
-      for v in value:
-        if not isinstance(v, ndb.Key):
-          return False
-      return True
-    
-    if value is not None and (isinstance(value, ndb.Key)) or (isinstance(value, list) and len(value) and they_are_all_keys(value)):
+    def value_is_key(value):
+      if isinstance(value, list) and len(value):
+        for v in value:
+          if not isinstance(v, ndb.Key):
+            return False
+        return True
+      elif isinstance(value, ndb.Key):
+        return True
+      else:
+        return False
+    if value_is_key(value):
       # this has to be done like this because there is no way to order the fetched items
       # in the order the keys were provided, the MultiQuery disallowes that http://stackoverflow.com/questions/12449197/badargumenterror-multiquery-with-cursors-requires-key-order-in-ndb
-      fetch = value
-      if not isinstance(fetch, list):
-        fetch = [value]
-      entities = ndb.get_multi(fetch)
-      next_cursor = None
+      keys = value
+      if not isinstance(keys, list):
+        keys = [value]
+      entities = ndb.get_multi(keys)
+      cursor = None
       more = False
     else:
-      limit = self.limit
-      if limit is None or limit > 0:
-        if limit is None:
-          limit = settings.SEARCH_PAGE
-        entities, next_cursor, more = query.fetch_page(limit, start_cursor=cursor)
-        if next_cursor:
-          next_cursor = next_cursor.urlsafe()
+      if self.page_size != None and self.page_size > 0:
+        entities, cursor, more = query.fetch_page(self.page_size, start_cursor=cursor)
+        if cursor:
+          cursor = cursor.urlsafe()
       else:
         entities = query.fetch()
-        next_cursor = None
+        cursor = None
         more = False
     context.entities = entities
-    context.next_cursor = next_cursor
-    context.more = more
+    context.search_cursor = cursor
+    context.search_more = more

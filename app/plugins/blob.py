@@ -77,11 +77,11 @@ class Update(event.Plugin):
   def run(self, context):
     if self.blob_delete:
       blob_delete = get_attr(context, self.blob_delete)
-      blobs_to_delete(blob_delete)
     else:
-      blobs_to_delete(context.blob_delete)
+      blob_delete = context.blob_delete
+    blobs_to_delete(blob_delete)
     if self.blob_write:
       blob_write = get_attr(context, self.blob_write)
-      blobs_to_preserve(blob_write)
     else:
-      blobs_to_preserve(context.blob_write)
+      blob_write = context.blob_write
+    blobs_to_preserve(blob_write)

@@ -6,8 +6,9 @@ Created on May 13, 2014
 '''
 from xml.etree import ElementTree
 
-from app import ndb, settings, util
+from app import ndb, settings, memcache, util
 from app.srv import event
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 class CountryUpdate(event.Plugin):

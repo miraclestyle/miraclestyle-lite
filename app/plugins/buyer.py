@@ -9,8 +9,9 @@ import time
 import hashlib
 import copy
 
-from app import ndb, util
+from app import ndb, settings, memcache, util
 from app.srv import event
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 def generate_internal_id(address):
   internal_id = '%s-%s-%s-%s-%s-%s-%s-%s' %  (str(time.time()), util.random_chars(10),
