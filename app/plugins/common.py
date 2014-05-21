@@ -182,7 +182,7 @@ class Search(event.Plugin):
           query = query.order(order_by_field)
         else:
           query = query.order(-order_by_field)
-    cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+    cursor = Cursor(urlsafe=context.input.get('search_cursor'))
     def value_is_key(value):
       if isinstance(value, list) and len(value):
         for v in value:

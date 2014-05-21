@@ -23,7 +23,7 @@ class Read(event.Plugin):
         kind_id = self.kind_id
       else:
         kind_id = context.model.get_kind()
-      cursor = Cursor(urlsafe=context.input.get('next_cursor'))
+      cursor = Cursor(urlsafe=context.input.get('log_read_cursor'))
       model = context.models['5']
       entity = context.entities[kind_id]
       query = model.query(ancestor=entity.key).order(-model.logged)

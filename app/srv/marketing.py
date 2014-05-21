@@ -156,7 +156,7 @@ class Catalog(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.UpdateRead(),
+        marketing.Read(read_from_start=True),
         marketing.UpdateSet(),
         rule.Write(transactional=True),
         marketing.UpdateWrite(transactional=True),

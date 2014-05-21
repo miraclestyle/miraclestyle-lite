@@ -11,8 +11,8 @@ import hashlib
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.srv.setup import Configuration
-from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib import oauth2
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 def new_session(model, entity):
