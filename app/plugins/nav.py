@@ -13,7 +13,7 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 class Set(event.Plugin):
   
   def run(self, context):
-    from app.srv.nav import Filter
+    Filter = context.models['65']
     filters = []
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
@@ -30,10 +30,10 @@ class BuildMenu(event.Plugin):
   
   def run(self, context):
     model = context.model
-    domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.domain.key.urlsafe())
+    domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.namespace)
     domain_user = domain_user_key.get()
     if domain_user:
       widgets = model.query(model.active == True,
                             model.role.IN(domain_user.roles),
-                            namespace=context.domain.key_namespace).order(model.sequence).fetch()
-      context.widgets = widgets
+                            namespace=context.namespace).order(model.sequence).fetch()
+      context.tmp['widgets'] = widgets

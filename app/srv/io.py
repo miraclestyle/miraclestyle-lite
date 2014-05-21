@@ -37,7 +37,9 @@ class Context():
   def __init__(self):
     self.input = {}
     self.output = {}
+    self.tmp = {}
     self.model = None
+    self.models = None
     self.action = None
     # @todo Perhaps here we should put also self.user and retreave current session user?
   

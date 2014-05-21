@@ -15,8 +15,8 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib import oauth2
 
 
-def new_session(entity):
-  from app.srv.auth import Session
+def new_session(model, entity):
+  Session = model
   session_ids = [session.session_id for session in entity.sessions]
   while True:
     session_id = hashlib.md5(util.random_chars(30)).hexdigest()
@@ -42,7 +42,7 @@ class OAuth2Error(Exception):
 class UserLoginPrepare(event.Plugin):
   
   def run(self, context):
-    from app.srv.auth import User
+    User = context.models['0']
     context.entities['0'] = User.current_user()
     context.values['0'] = User.current_user()
     context.user = User.current_user()
@@ -51,7 +51,7 @@ class UserLoginPrepare(event.Plugin):
 class UserLoginOAuth(event.Plugin):
   
   def run(self, context):
-    from app.srv.auth import User
+    User = context.models['0']
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -74,11 +74,11 @@ class UserLoginOAuth(event.Plugin):
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
-        context.identity_id = '%s-%s' % (info['id'], identity)
-        context.email = info['email']
-        user = User.query(User.identities.identity == context.identity_id).get()
+        context.tmp['identity_id'] = '%s-%s' % (info['id'], identity)
+        context.tmp['email'] = info['email']
+        user = User.query(User.identities.identity == context.tmp['identity_id']).get()
         if not user:
-          user = User.query(User.emails == context.email).get()
+          user = User.query(User.emails == context.tmp['email']).get()
         if user:
           context.entities['0'] = user
           context.user = user
@@ -88,32 +88,33 @@ class UserLoginUpdate(event.Plugin):
   
   def run(self, context):
     if hasattr(context, 'identity_id'):
-      from app.srv.auth import User, Identity
+      User = context.models['0']
+      Identity = context.models['64']
       entity = context.entities['0']
       if entity._is_guest:
         entity = User()
-        entity.emails.append(context.email)
-        entity.identities.append(Identity(identity=context.identity_id, email=context.email, primary=True))
+        entity.emails.append(context.tmp['email'])
+        entity.identities.append(Identity(identity=context.tmp['identity_id'], email=context.tmp['email'], primary=True))
         entity.state = 'active'
-        session = new_session(entity)
+        session = new_session(context.models['70'], entity)
         entity.put()
       else:
-        if context.email not in entity.emails:
-          entity.emails.append(context.email)
-        used_identity = has_identity(entity, context.identity_id)
+        if context.tmp['email'] not in entity.emails:
+          entity.emails.append(context.tmp['email'])
+        used_identity = has_identity(entity, context.tmp['identity_id'])
         if not used_identity:
-          entity.append(Identity(identity=context.identity_id, email=context.email, primary=False))
+          entity.append(Identity(identity=context.tmp['identity_id'], email=context.tmp['email'], primary=False))
         else:
           used_identity.associated = True
-          if used_identity.email != context.email:
-            used_identity.email = context.email
-        session = new_session(entity)
+          if used_identity.email != context.tmp['email']:
+            used_identity.email = context.tmp['email']
+        session = new_session(context.models['70'], entity)
         entity.put()
       User.set_current_user(entity, session)
       context.entities['0'] = entity
       context.user = entity
-      context.session = session
-      context.log_entities.append((entity, {'ip_address' : context.ip_address}))
+      context.tmp['session'] = session
+      context.log_entities.append((entity, {'ip_address' : context.tmp['ip_address']}))
 
 
 class UserLoginOutput(event.Plugin):
@@ -121,13 +122,13 @@ class UserLoginOutput(event.Plugin):
   def run(self, context):
     context.output['entity'] = context.entities['0']
     if not context.entities['0']._is_guest:
-      context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.session.session_id)
+      context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.tmp['session'].session_id)
 
 
 class UserIPAddress(event.Plugin):
   
   def run(self, context):
-    context.ip_address = os.environ['REMOTE_ADDR']
+    context.tmp['ip_address'] = os.environ['REMOTE_ADDR']
 
 
 class UserLogoutOutput(event.Plugin):
@@ -140,8 +141,8 @@ class UserLogoutOutput(event.Plugin):
 class UserReadDomains(event.Plugin):
   
   def run(self, context):
-    context.domains = []
-    context.domain_users = []
+    context.tmp['domains'] = []
+    context.tmp['domain_users'] = []
     if context.user.domains:
       
       @ndb.tasklet
@@ -158,8 +159,8 @@ class UserReadDomains(event.Plugin):
         domain_users = yield map(async, domains)
         raise ndb.Return(domain_users)
       
-      context.domains = ndb.get_multi(context.user.domains)
-      context.domain_users = helper(context.domains).get_result()
+      context.tmp['domains'] = ndb.get_multi(context.user.domains)
+      context.tmp['domain_users'] = helper(context.tmp['domains']).get_result()
 
 
 class UserUpdate(event.Plugin):

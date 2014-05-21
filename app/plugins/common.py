@@ -26,6 +26,7 @@ class Context(event.Plugin):
       if caller_user:
         context.user = caller_user
     context.namespace = None
+    context.domain = None
     domain_key = context.input.get('domain')
     if domain_key:
       context.domain = domain_key.get()
@@ -59,18 +60,19 @@ class Set(event.Plugin):
 class Prepare(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  domain_model = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  namespace = ndb.SuperStringProperty('6', indexed=False)
   
   def run(self, context):
-    namespace = None
     if self.kind_id != None:
       kind_id = self.kind_id
     else:
       kind_id = context.model.get_kind()
-    if self.domain_model:
+    if self.namespace != None:
+      namespace = get_attr(context, self.namespace)
+    else:
       namespace = context.namespace
-    context.entities[kind_id] = context.model(namespace=namespace)
-    context.values[kind_id] = context.model(namespace=namespace)
+    context.entities[kind_id] = context.models[kind_id](namespace=namespace)
+    context.values[kind_id] = context.models[kind_id](namespace=namespace)
 
 
 class Read(event.Plugin):

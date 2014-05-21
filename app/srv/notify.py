@@ -135,14 +135,14 @@ class CustomNotify(Template):
   outlet = ndb.SuperStringProperty('9', required=True, default='58', indexed=False)
   
   def run(self, context):
-    template_values = {'entity': context.entities['caller_entity']}
+    template_values = {'entity': context.tmp['caller_entity']}
     data = {'action_id': 'send',
             'action_model': self.outlet,
-            'recipient': self.message_recievers(context.entities['caller_entity'], context.entities['caller_user']),
+            'recipient': self.message_recievers(context.tmp['caller_entity'], context.tmp['caller_user']),
             'sender': self.message_sender,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
-            'caller_entity': context.entities['caller_entity'].key.urlsafe()}
+            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
     context.callback_payloads.append(('send', data))
 
 
@@ -340,7 +340,7 @@ class MailNotify(Template):
     ]
   
   def run(self, context):
-    values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
+    values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
     if safe_eval(self.condition, values):
       DomainUser = context.models['8']  # @todo Hope it can be like this!
       domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
@@ -348,14 +348,14 @@ class MailNotify(Template):
       recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
       sender_key = ndb.Key('0', long(self.message_sender.id()))
       sender = sender_key.get()
-      template_values = {'entity': context.entities['caller_entity']}
+      template_values = {'entity': context.tmp['caller_entity']}
       data = {'action_id': 'send',
               'action_model': '58',
               'recipient': [reciever._primary_email for reciever in recievers],
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.entities['caller_entity'].key.urlsafe()}
+              'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
       recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
       data_copy = data.copy()
       del data_copy['recipient']
@@ -561,16 +561,16 @@ class HttpNotify(Template):
     ]
   
   def run(self, context):
-    values = {'entity': context.entities['caller_entity'], 'user': context.entities['caller_user']}
+    values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
     if safe_eval(self.condition, values):
       sender_key = ndb.Key('0', long(self.message_sender.id()))
       sender = sender_key.get()
-      template_values = {'entity': context.entities['caller_entity']}
+      template_values = {'entity': context.tmp['caller_entity']}
       data = {'action_id': 'send',
               'action_model': '63',
               'recipient': self.message_reciever,
               'sender': sender._primary_email,
               'body': render_template(self.message_body, template_values),
               'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.entities['caller_entity'].key.urlsafe()}
+              'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
       context.callback_payloads.append(('send', data))
