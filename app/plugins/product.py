@@ -161,7 +161,7 @@ class CategoryUpdate(event.Plugin):
     with file(self.category_file_path) as f:
       for line in f:
         if not line.startswith('#'):
-          data.append(line.replace("\n", ''))
+          data.append(line.replace('\n', ''))
     write_data = []
     sep = ' > '
     parent = None
@@ -180,7 +180,7 @@ class CategoryUpdate(event.Plugin):
         new_cat['id'] = hashlib.md5(last).hexdigest()
         new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
         new_cat['name'] = last
-        new_cat['complete_name'] = " / ".join(current[:current_total+1])
+        new_cat['complete_name'] = ' / '.join(current[:current_total+1])
         new_cat['state'] = 'searchable'
         write_data.append(Category(**new_cat))
     ndb.put_multi(write_data)

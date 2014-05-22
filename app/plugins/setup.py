@@ -103,7 +103,7 @@ class DomainSetup(Setup):
         permissions.append(rule.ActionPermission(kind=obj.get_kind(),
                                                  actions=actions,
                                                  executable=True,
-                                                 condition="True"))
+                                                 condition='True'))
       props = obj.get_fields()
       prop_names = []
       for prop_name, prop in props.items():
