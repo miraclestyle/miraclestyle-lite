@@ -104,7 +104,7 @@ class Addresses(ndb.BaseModel):
       key=Action.build_key('77', 'read_records'),
       arguments={
         'user': ndb.SuperKeyProperty(kind='0', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -113,7 +113,9 @@ class Addresses(ndb.BaseModel):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.77', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.77',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       )
     ]
@@ -185,7 +187,7 @@ class Collection(ndb.BaseModel):
       key=Action.build_key('10', 'read_records'),
       arguments={
         'user': ndb.SuperKeyProperty(kind='0', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -194,7 +196,9 @@ class Collection(ndb.BaseModel):
         rule.Exec(),
         log.Read(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.10', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.10',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       )
     ]
