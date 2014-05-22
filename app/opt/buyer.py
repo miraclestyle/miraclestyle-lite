@@ -69,9 +69,10 @@ class Addresses(ndb.BaseModel):
       _plugins=[
         common.Context(),
         buyer.AddressRead(),
-        buyer.AddressUpdate(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
+        common.Set(dynamic_values={'values.77.addresses': 'input.addresses'}),
+        buyer.AddressSet(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
         log.Entity(transactional=True),
@@ -150,9 +151,9 @@ class Collection(ndb.BaseModel):
       _plugins=[
         common.Context(),
         buyer.CollectionRead(),
-        common.Set(dynamic_values={'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
+        common.Set(dynamic_values={'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}),
         rule.Write(transactional=True),
         common.Write(transactional=True),
         log.Entity(transactional=True),
