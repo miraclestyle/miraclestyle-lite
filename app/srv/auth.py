@@ -143,7 +143,8 @@ class User(ndb.BaseExpando):
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe',
+                                                        'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -175,24 +176,26 @@ class User(ndb.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       ),
     Action(
       key=Action.build_key('0', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -201,7 +204,9 @@ class User(ndb.BaseExpando):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.0', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.0',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
@@ -230,7 +235,8 @@ class User(ndb.BaseExpando):
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe',
+                                                        'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -415,7 +421,7 @@ class Domain(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         blob.URL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
@@ -431,7 +437,7 @@ class Domain(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.DomainCreate(transactional=True),
@@ -471,7 +477,9 @@ class Domain(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Read(),
-        common.Set(dynamic_values={'values.6.name': 'input.name', 'values.6.primary_contact': 'input.primary_contact', 'values.6.logo': 'input.logo'}),
+        common.Set(dynamic_values={'values.6.name': 'input.name',
+                                   'values.6.primary_contact': 'input.primary_contact',
+                                   'values.6.logo': 'input.logo'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(transactional=True, dynamic_values={'tmp.original_logo': 'entities.6.logo'}),
@@ -519,25 +527,27 @@ class Domain(ndb.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             },
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         auth.DomainSearch(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       ),
     Action(
       key=Action.build_key('6', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -546,7 +556,9 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.6', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.6',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     Action(

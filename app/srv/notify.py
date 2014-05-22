@@ -55,7 +55,7 @@ class Template(ndb.BasePolyExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.61'})
@@ -92,17 +92,19 @@ class Template(ndb.BasePolyExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       ),
     Action(
@@ -184,7 +186,7 @@ class MailNotify(Template):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.58'})
@@ -205,7 +207,7 @@ class MailNotify(Template):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'values.58.name': 'input.name',
@@ -308,7 +310,7 @@ class MailNotify(Template):
       key=Action.build_key('58', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -317,7 +319,9 @@ class MailNotify(Template):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.58', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.58',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     Action(
@@ -405,7 +409,7 @@ class HttpNotify(Template):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'output.entity': 'entities.63'})
@@ -426,7 +430,7 @@ class HttpNotify(Template):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(dynamic_values={'values.63.name': 'input.name',
@@ -529,7 +533,7 @@ class HttpNotify(Template):
       key=Action.build_key('63', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -538,7 +542,9 @@ class HttpNotify(Template):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.63', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.63',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     Action(

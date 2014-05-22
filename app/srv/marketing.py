@@ -86,7 +86,7 @@ class Catalog(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
@@ -103,7 +103,7 @@ class Catalog(ndb.BaseExpando):
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Set(static_values={'values.35.state': 'unpublished'},
@@ -208,24 +208,26 @@ class Catalog(ndb.BaseExpando):
             'update': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=True),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       ),
     Action(
       key=Action.build_key('35', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -234,7 +236,9 @@ class Catalog(ndb.BaseExpando):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.35', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.35',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     Action(
@@ -372,7 +376,8 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '35'},
-                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys', 'key': 'entities.35.key_urlsafe'}),
+                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
+                                       'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]

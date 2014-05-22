@@ -59,22 +59,22 @@ class Set(event.Plugin):
 
 class Prepare(event.Plugin):
   
-  prepare_kind = ndb.SuperStringProperty('5', indexed=False)
-  prepare_namespace = ndb.SuperStringProperty('6', indexed=False)
-  prepare_parent = ndb.SuperStringProperty('7', indexed=False)
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  namespace_path = ndb.SuperStringProperty('6', indexed=False)
+  parent_path = ndb.SuperStringProperty('7', indexed=False)
   
   def run(self, context):
     parent = None
-    if self.prepare_kind != None:
-      kind_id = self.prepare_kind
+    if self.kind_id != None:
+      kind_id = self.kind_id
     else:
       kind_id = context.model.get_kind()
-    if self.prepare_namespace != None:
-      namespace = get_attr(context, self.prepare_namespace)
+    if self.namespace_path != None:
+      namespace = get_attr(context, self.namespace_path)
     else:
       namespace = context.namespace
-    if self.prepare_parent != None:
-      parent = get_attr(context, self.prepare_parent)
+    if self.parent_path != None:
+      parent = get_attr(context, self.parent_path)
     context.entities[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
     context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
 
@@ -133,7 +133,7 @@ class Search(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
   page_size = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=10)
-  search = ndb.SuperJsonProperty('7', indexed=False, default={})  # @todo Transform this field to include optional query parameters to include in query.
+  search = ndb.SuperJsonProperty('7', indexed=False, default={})  # @todo Transform this field to include optional query parameters to add to query.
   
   def run(self, context):
     namespace = None

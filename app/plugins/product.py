@@ -152,13 +152,13 @@ class DeleteContents(event.Plugin):
 
 class CategoryUpdate(event.Plugin):
   
-  category_file_path = ndb.SuperStringProperty('5', indexed=False, required=True)  # @todo Don't know what file() expects?
+  file_path = ndb.SuperStringProperty('5', indexed=False, required=True)
   
   def run(self, context):
     # this code builds leaf categories for selection with complete names, 3.8k of them
     Category = context.models['17']
     data = []
-    with file(self.category_file_path) as f:
+    with file(self.file_path) as f:
       for line in f:
         if not line.startswith('#'):
           data.append(line.replace('\n', ''))

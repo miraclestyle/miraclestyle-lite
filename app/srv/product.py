@@ -86,10 +86,10 @@ class Category(ndb.BaseModel):
       arguments={},
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        product.CategoryUpdate()
+        product.CategoryUpdate(file_path=settings.PRODUCT_CATEGORY_DATA_FILE)
         ]
       ),
     Action(
@@ -115,17 +115,19 @@ class Category(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       )
     ]
@@ -416,7 +418,7 @@ class Template(ndb.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -426,14 +428,16 @@ class Template(ndb.BaseExpando):
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       ),
     Action(
       key=Action.build_key('38', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'next_cursor': ndb.SuperStringProperty()
+        'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
@@ -442,7 +446,9 @@ class Template(ndb.BaseExpando):
         rule.Exec(),
         log.Read(page_size=settings.RECORDS_PAGE),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.38', 'output.next_cursor': 'log_read_cursor', 'output.more': 'log_read_more'})
+        common.Set(dynamic_values={'output.entity': 'entities.38',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
         ]
       ),
     Action(

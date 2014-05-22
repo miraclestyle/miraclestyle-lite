@@ -41,8 +41,8 @@ class Setup():
   
   def run(self):
     iterations = 100
-    self.context.log_write = plugin_log.Write(static_arguments={}, dynamic_arguments={})  # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.callback_exec = plugin_callback.Exec(static_data={}, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})  # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
+    self.context.tmp['log_write'] = plugin_log.Write(static_arguments={}, dynamic_arguments={})  # We use log plugin for logging. @todo Decide if this this is optimal solution!
+    self.context.tmp['callback_exec'] = plugin_callback.Exec(static_data={}, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})  # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     while self.config.state == 'active':
       iterations -= 1
       runner = getattr(self, self.__get_next_operation())
@@ -79,7 +79,7 @@ class DomainSetup(Setup):
     entity.put()
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
     self.context.log_entities.append((entity, ))
-    self.context.log_write.run(self.context)
+    self.context.tmp['log_write'].run(self.context)
     self.config.next_operation_input = {'domain_key': entity.key}
     self.config.next_operation = 'create_domain_role'
     self.config.put()
@@ -112,8 +112,8 @@ class DomainSetup(Setup):
     entity = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity.put()
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    #self.context.log_entities.append((entity, ))
-    #self.context.log_write.run(self.context)
+    self.context.log_entities.append((entity, ))
+    self.context.tmp['log_write'].run(self.context)
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
     self.config.next_operation = 'create_widget_step_1'
@@ -149,7 +149,7 @@ class DomainSetup(Setup):
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
     for entity in entities:
       self.context.log_entities.append((entity, ))
-    self.context.log_write.run(self.context)
+    self.context.tmp['log_write'].run(self.context)
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
                                         'sequence': i}
@@ -180,7 +180,7 @@ class DomainSetup(Setup):
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
     for entity in entities:
       self.context.log_entities.append((entity, ))
-    self.context.log_write.run(self.context)
+    self.context.tmp['log_write'].run(self.context)
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
     self.config.next_operation = 'create_domain_user'
@@ -196,8 +196,8 @@ class DomainSetup(Setup):
                              roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
     entity.put()
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    #self.context.log_entities.append((entity, ))
-    #self.context.log_write.run(self.context)
+    self.context.log_entities.append((entity, ))
+    self.context.tmp['log_write'].run(self.context)
     self.config.next_operation = 'add_user_domain'
     self.config.next_operation_input = {'domain_key': domain_key}
     self.config.put()
@@ -211,7 +211,7 @@ class DomainSetup(Setup):
     entity.put()
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
     self.context.log_entities.append((entity, ))
-    self.context.log_write.run(self.context)
+    self.context.tmp['log_write'].run(self.context)
     from app.srv import notify
     custom_notify = notify.CustomNotify(name='Send domain link after domain is completed',
                                         action=event.Action.build_key('57', 'install'),
@@ -223,7 +223,7 @@ class DomainSetup(Setup):
     self.context.entities['caller_user'] = self.context.user
     custom_notify.run(self.context)
     # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
-    self.context.callback_exec.run(self.context)
+    self.context.tmp['callback_exec'].run(self.context)
     self.config.state = 'completed'
     self.config.put()
 

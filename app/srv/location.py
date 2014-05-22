@@ -53,10 +53,10 @@ class Country(ndb.BaseModel):
       arguments={},
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        location.CountryUpdate()
+        location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
         ]
       ),
     Action(
@@ -82,17 +82,19 @@ class Country(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(page_size=-1),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       )
     ]
@@ -239,17 +241,19 @@ class CountrySubdivision(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'next_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         common.Search(page_size=settings.SEARCH_PAGE),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities', 'output.next_cursor': 'search_cursor', 'output.more': 'search_more'})
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
         ]
       )
     ]

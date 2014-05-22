@@ -51,7 +51,7 @@ class Configuration(ndb.BaseExpando):
       arguments={},
       _plugins=[
         common.Context(),
-        common.Prepare(domain_model=False),
+        common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         plugin_setup.CronInstall()
