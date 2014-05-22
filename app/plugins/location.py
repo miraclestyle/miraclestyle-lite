@@ -71,7 +71,7 @@ class CountryUpdate(event.Plugin):
             dat[k] = child2.text
           if 'ref' in child2.attrib:
             dat[k] = child2.attrib['ref']
-        kw = dict(name=dat['name'], id=dat['id'], type=CountrySubdivision.TYPES.get(dat['type'], 1), code=dat['code'], active=True)
+        kw = dict(name=dat['name'], id=dat['id'], type=dat['type'], code=dat['code'], active=True)
         if 'country' in dat:
           kw['parent'] = Country.build_key(dat['country'])
         if 'parent' in dat:
