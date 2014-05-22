@@ -106,14 +106,14 @@ class CountrySubdivision(ndb.BaseModel):
   
   _use_cache = True
   _use_memcache = True
-    
+  
   parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
   code = ndb.SuperStringProperty('2', required=True, indexed=False)
   name = ndb.SuperStringProperty('3', required=True)
   complete_name = ndb.SuperTextProperty('4')
   type = ndb.SuperStringProperty('5', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('6', required=True, default=True)
- 
+  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('16', Action.build_key('16', 'search'), True, 'True'),
