@@ -331,7 +331,7 @@ class DomainRoleSet(event.Plugin):
                                            permission.get('condition')))
       elif permission.get('type') == 'ActionPermission':
         permissions.append(ActionPermission(permission.get('kind'),
-                                            permission.get('actions'),
+                                            [ndb.Key(urlsafe=f) for f in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
     context.values['60'].name = context.input.get('name')
@@ -344,7 +344,7 @@ class DomainUserInvite(event.Plugin):
   def run(self, context):
     User = context.models['0']
     email = context.input.get('email')
-    user = User.query(auth.User.emails == email).get()
+    user = User.query(User.emails == email).get()
     if not user:
       raise DomainUserError('not_found')
     if user.state != 'active':

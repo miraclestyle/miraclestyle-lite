@@ -443,7 +443,12 @@ class _BaseModel(object):
       if hasattr(self, f):
         d = getattr(self, f, None)
         d = copy.deepcopy(d)
-        setattr(new_entity, f, d)
+        try:
+         setattr(new_entity, f, d)
+        except ComputedPropertyError as e:
+          pass # this is intentional
+        except Exception as e:
+         util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
     return new_entity
 
 

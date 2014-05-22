@@ -87,7 +87,7 @@ class UserLoginOAuth(event.Plugin):
 class UserLoginUpdate(event.Plugin):
   
   def run(self, context):
-    if hasattr(context, 'identity_id'):
+    if context.tmp.get('identity_id') != None:
       User = context.models['0']
       Identity = context.models['64']
       entity = context.entities['0']

@@ -35,9 +35,11 @@ class AddressRead(event.Plugin):
       @ndb.tasklet
       def async(address):
         if address.country:
-          address._country = yield address.country.get_async()
+          country = yield address.country.get_async()
+          address._country = country.name
         if address.region:
-          address._region = yield address.region.get_async()
+          region = yield address.region.get_async()
+          address._region = region.name
         raise ndb.Return(address)
       
       @ndb.tasklet

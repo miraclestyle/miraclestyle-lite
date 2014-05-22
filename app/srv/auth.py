@@ -269,10 +269,10 @@ class User(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         auth.UserReadDomains(),
-        common.Set(dynamic_values={'entities': 'domains'}),
+        common.Set(dynamic_values={'entities': 'tmp.domains'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
-        common.Set(dynamic_values={'entities': 'domain_users'}),
+        common.Set(dynamic_values={'entities': 'tmp.domain_users'}),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Read(),
         common.Set(dynamic_values={'output.domains': 'tmp.domains', 'output.domain_users': 'tmp.domain_users'})

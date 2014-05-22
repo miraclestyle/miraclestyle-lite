@@ -37,15 +37,17 @@ class ActionPermission(Permission):
   executable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
   condition = ndb.SuperStringProperty('4', required=True, indexed=False)
   
-  def __init__(self, kind, actions, executable=None, condition=None, **kwargs):
-    if not isinstance(actions, (tuple, list)):
-      actions = [actions]
-    self.kind = kind
-    self.actions = actions
-    self.executable = executable
-    self.condition = condition
+  def __init__(self, *args, **kwargs):
     super(ActionPermission, self).__init__(**kwargs)
-  
+    if len(args):
+      kind, actions, executable, condition = args
+      if not isinstance(actions, (tuple, list)):
+        actions = [actions]
+      self.kind = kind
+      self.actions = actions
+      self.executable = executable
+      self.condition = condition
+     
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for action in self.actions:
@@ -63,16 +65,18 @@ class FieldPermission(Permission):
   visible = ndb.SuperBooleanProperty('4', required=True, default=True, indexed=False)
   condition = ndb.SuperStringProperty('5', required=True, indexed=False)
   
-  def __init__(self, kind, fields, writable=None, visible=None, condition=None, **kwargs):
-    if not isinstance(fields, (tuple, list)):
-      fields = [fields]
-    self.kind = kind
-    self.fields = fields
-    self.writable = writable
-    self.visible = visible
-    self.condition = condition
+  def __init__(self, *args, **kwargs):
     super(FieldPermission, self).__init__(**kwargs)
-  
+    if len(args):
+      kind, fields, writable, visible, condition = args
+      if not isinstance(fields, (tuple, list)):
+        fields = [fields]
+      self.kind = kind
+      self.fields = fields
+      self.writable = writable
+      self.visible = visible
+      self.condition = condition
+     
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for field in self.fields:

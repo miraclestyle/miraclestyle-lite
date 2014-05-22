@@ -5,7 +5,7 @@ Created on Jan 1, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb
+from app import ndb, settings
 from app.srv.event import Action
 from app.srv.rule import ActionPermission, FieldPermission, GlobalRole
 from app.plugins import common, callback, rule, uom
@@ -39,7 +39,7 @@ class Unit(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'code': ndb.SuperStringProperty('8', required=True),
+    'code': ndb.SuperStringProperty('8'),
     'numeric_code': ndb.SuperStringProperty('9'),
     'grouping': ndb.SuperIntegerProperty('10', repeated=True),
     'decimal_separator': ndb.SuperStringProperty('11'),

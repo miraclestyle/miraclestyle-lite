@@ -99,7 +99,7 @@ class DomainSetup(Setup):
       if hasattr(obj, '_actions'):
         actions = []
         for action_instance in obj._actions:
-          actions.append(action_instance.key.urlsafe())
+          actions.append(action_instance.key)
         permissions.append(rule.ActionPermission(kind=obj.get_kind(),
                                                  actions=actions,
                                                  executable=True,
@@ -219,8 +219,8 @@ class DomainSetup(Setup):
                                         message_sender=settings.NOTIFY_EMAIL,
                                         message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                         message_recievers=self.create_domain_notify_message_recievers)
-    self.context.entities['caller_entity'] = domain
-    self.context.entities['caller_user'] = self.context.user
+    self.context.tmp['caller_entity'] = domain
+    self.context.tmp['caller_user'] = self.context.user
     custom_notify.run(self.context)
     # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     self.context.tmp['callback_exec'].run(self.context)
