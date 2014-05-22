@@ -68,50 +68,44 @@ class UpdateSet(event.Plugin):
   
   def run(self, context):
     new_images = []
-    context.delete_blobs = []
     if context.values[context.model.get_kind()]._images:
       for image in context.values[context.model.get_kind()]._images:
         new_images.append(image.image)
     for image in context.entities[context.model.get_kind()]._images:
       if image.image not in new_images:
-        context.delete_blobs.append(image.image)
+        context.blob_delete.append(image.image)
 
-      
+
 class WriteImages(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
+    Images = context.models['73']
     _images_key, _variants_key, _contents_key = build_keyes(context)
-    _images = product.Images(key=_images_key)
+    _images = Images(key=_images_key)
     _images.images = context.entities[context.model.get_kind()]._images
     _images.put()
     context.log_entities.append((_images, ))
-    context.write_blobs = [image.image for image in context.entities[context.model.get_kind()]._images]
+    context.blob_write = [image.image for image in context.entities[context.model.get_kind()]._images]
     if not context.entities[context.model.get_kind()]._field_permissions['_images']['writable']:
-      context.delete_blobs = []
+      context.blob_delete = []
 
 
 class ProcessImages(event.Plugin):
   
   def run(self, context):
-    context.delete_blobs = []
     _images = context.values[context.model.get_kind()]._images
     if len(_images):
-      for i, image in enumerate(_images):
-        if image is None:
-          _images.remove(image)
-        context.delete_blobs.append(image.image)
-      if len(_images):
-        _images = ndb.validate_images(_images)
+      _images = ndb.validate_images(_images)
+      context.blob_delete.extend([image.image for image in _images])
       context.values[context.model.get_kind()]._images = _images
 
 
 class WriteVariants(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
+    Variants = context.models['74']
     _images_key, _variants_key, _contents_key = build_keyes(context)
-    _variants = product.Variants(key=_variants_key)
+    _variants = Variants(key=_variants_key)
     _variants.variants = context.entities[context.model.get_kind()]._variants
     _variants.put()
     context.log_entities.append((_variants, ))
@@ -120,9 +114,9 @@ class WriteVariants(event.Plugin):
 class WriteContents(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
+    Contents = context.models['75']
     _images_key, _variants_key, _contents_key = build_keyes(context)
-    _contents = product.Contents(key=_contents_key)
+    _contents = Contents(key=_contents_key)
     _contents.contents = context.entities[context.model.get_kind()]._contents
     _contents.put()
     context.log_entities.append((_contents, ))
@@ -131,10 +125,9 @@ class WriteContents(event.Plugin):
 class DeleteImages(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
     _images_key, _variants_key, _contents_key = build_keyes(context)
     _images = _images_key.get()
-    context.delete_blobs = _images.images
+    context.blob_delete = _images.images
     _images.delete()
     context.log_entities.append((_images, ))
 
@@ -142,7 +135,6 @@ class DeleteImages(event.Plugin):
 class DeleteVariants(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
     _images_key, _variants_key, _contents_key = build_keyes(context)
     _variants = _variants_key.get()
     _variants.delete()
@@ -152,43 +144,43 @@ class DeleteVariants(event.Plugin):
 class DeleteContents(event.Plugin):
   
   def run(self, context):
-    from app.srv import product
     _images_key, _variants_key, _contents_key = build_keyes(context)
     _contents = _contents_key.get()
     _contents.delete()
     context.log_entities.append((_contents, ))
-    
-    
+
+
 class CategoryUpdate(event.Plugin):
+  
+  category_file_path = ndb.SuperStringProperty('5', indexed=False, required=True)  # @todo Don't know what file() expects?
   
   def run(self, context):
     # this code builds leaf categories for selection with complete names, 3.8k of them
-    from app.srv.product import Category
+    Category = context.models['17']
     data = []
-    with file(settings.PRODUCT_CATEGORY_DATA_FILE) as f:
+    with file(self.category_file_path) as f:
       for line in f:
         if not line.startswith('#'):
           data.append(line.replace("\n", ''))
-        
     write_data = []
     sep = ' > '
     parent = None
     dig = 0
-    for ii,item in enumerate(data):
+    for i, item in enumerate(data):
       new_cat = {}
       current = item.split(sep)
       try:
-        next = data[ii+1].split(sep)
+        next = data[i+1].split(sep)
       except IndexError as e:
         next = current
       if len(next) == len(current):
-         current_total = len(current)-1
-         last = current[current_total]
-         parent = current[current_total-1]
-         new_cat['id'] = hashlib.md5(last).hexdigest()
-         new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
-         new_cat['name'] = last
-         new_cat['complete_name'] = " / ".join(current[:current_total+1])
-         new_cat['state'] = 'searchable'
-         write_data.append(Category(**new_cat))
+        current_total = len(current)-1
+        last = current[current_total]
+        parent = current[current_total-1]
+        new_cat['id'] = hashlib.md5(last).hexdigest()
+        new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
+        new_cat['name'] = last
+        new_cat['complete_name'] = " / ".join(current[:current_total+1])
+        new_cat['state'] = 'searchable'
+        write_data.append(Category(**new_cat))
     ndb.put_multi(write_data)

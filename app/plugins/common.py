@@ -59,20 +59,24 @@ class Set(event.Plugin):
 
 class Prepare(event.Plugin):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  namespace = ndb.SuperStringProperty('6', indexed=False)
+  prepare_kind = ndb.SuperStringProperty('5', indexed=False)
+  prepare_namespace = ndb.SuperStringProperty('6', indexed=False)
+  prepare_parent = ndb.SuperStringProperty('7', indexed=False)
   
   def run(self, context):
-    if self.kind_id != None:
-      kind_id = self.kind_id
+    parent = None
+    if self.prepare_kind != None:
+      kind_id = self.prepare_kind
     else:
       kind_id = context.model.get_kind()
-    if self.namespace != None:
-      namespace = get_attr(context, self.namespace)
+    if self.prepare_namespace != None:
+      namespace = get_attr(context, self.prepare_namespace)
     else:
       namespace = context.namespace
-    context.entities[kind_id] = context.models[kind_id](namespace=namespace)
-    context.values[kind_id] = context.models[kind_id](namespace=namespace)
+    if self.prepare_parent != None:
+      parent = get_attr(context, self.prepare_parent)
+    context.entities[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
+    context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
 
 
 class Read(event.Plugin):
