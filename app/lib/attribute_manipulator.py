@@ -50,3 +50,8 @@ def get_attr(entity, field_path):
     return entity[int(last_field)]
   else:
     return getattr(entity, last_field)
+
+def get_meta(entity, field_path):
+  entity, last_field = prepare_attr(entity, field_path)
+  if not isinstance(entity, dict) and not isinstance(entity, list):
+    return getattr(entity.__class__, last_field)
