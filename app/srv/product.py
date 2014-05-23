@@ -171,7 +171,7 @@ class Template(ndb.BaseExpando):
                               Action.build_key('38', 'delete'),
                               Action.build_key('38', 'search'),
                               Action.build_key('38', 'read_records'),
-                              Action.build_key('38', 'read_records'),
+                              Action.build_key('38', 'read_instances'),
                               Action.build_key('38', 'duplicate')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
       ]
