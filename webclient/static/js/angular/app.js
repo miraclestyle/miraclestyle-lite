@@ -51,32 +51,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'cache' : false,
 				'filter_callback' : angular.noop,
 				'args_callback' : angular.noop,
-			 
+				'select2' : {},
+				'endpoint' : {},
 			};
 			
 			opts = angular.extend(opts, new_opts);
-			
-			var endpointOpts = {};
- 
-        	if (opts['cache'])
-        	{
-        		endpointOpts['params'] = {
-        			'___cache_key' : opts['cache']
-        		};
-        		endpointOpts['cache'] = true;
-        	} 
-			 
- 			return {
+	  
+ 			var csearch = {
 			    minimumInputLength: 0,
 			    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
 			        quietMillis: 200,
  
 			        transport: function (params)
 			        { 
-			        	return Endpoint.post(opts['action'], opts['kind'], params.data, endpointOpts).success(params.success);
+			        	return Endpoint.post(opts['action'], opts['kind'], params.data, opts['endpoint']).success(params.success);
 			        },
 			        data: function (term, page) {
-			       
+			        	 
 			        	  var find = [{'value' : term, 'operator':'contains', 'field' : opts['field']}];
 			        	  
 			        	  if (term == '' || opts['cache'])
@@ -109,24 +100,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        }
 			    },
 			    initSelection: function(element, callback) {
-			        // the input tag has a value attribute preloaded that points to a preselected movie's id
-			        // this function resolves that id attribute to an object that select2 can render
-			        // using its formatResult renderer - that way the movie name is shown preselected
-			        var id=$(element).val();
-			        var initial_id = id;
-			         
-			        
-			        var select2 = $(element).data('select2');
-			        
-			        if (select2.opts.multiple)
-			        {
-			        	if (id)
-			        	{
-			        		id = id.split(',');
-			        	}
-			        }
-			         
-			    
+				        // the input tag has a value attribute preloaded that points to a preselected movie's id
+				        // this function resolves that id attribute to an object that select2 can render
+				        // using its formatResult renderer - that way the movie name is shown preselected
+				        var id=$(element).val();
+				        var initial_id = id;
+			          
+				        var select2 = $(element).data('select2');
+				        
+				        if (select2.opts.multiple)
+				        {
+				        	if (id)
+				        	{
+				        		id = id.split(',');
+				        	}
+				        }
+			          
 			            if (id != '')
 			            {
 			            	var find = [{'value' : id, 'operator': (select2.opts.multiple ? 'IN' : '=='), 'field' : 'key'}];
@@ -138,22 +127,16 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        		
 			        		return;
 			        	}
-			         
-			        	
+			          
 			        	var args = {  
-				            		  "search" : {
-				            		  			  "filters":find,
-				            				     } 
-				               };
+		            	   "search" : {
+		            		  "filters":find,
+		            	    } 
+				        };
 			        	
 			        	opts['args_callback']($(this), args);
-			        	
-			        	var copyendpointOpts = angular.copy(endpointOpts);
-			        	if (!copyendpointOpts['params']) copyendpointOpts['params'] = {};
-			        	copyendpointOpts['params']['__ids'] = initial_id;
-			        	copyendpointOpts['cache'] = true;
-			        	 
-	 					Endpoint.post(opts['action'], opts['kind'], args, copyendpointOpts).success(function (data) {
+			      
+	 					Endpoint.post(opts['action'], opts['kind'], args, opts['endpoint']).success(function (data) {
 				                	try
 				                	{
 				                	  
@@ -161,13 +144,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 								      {
 								        	var items = [];
 								        	angular.forEach(data.entities, function (value) {
-								        		items.push({text: value[opts['label']], id: value.key});
+								        		items.push({text: value[opts['label']], id: value['key']});
 								        	});
 								      }
 								      else
 								      {
 								          var value = data.entities[0];
-								          var items = {text: value[opts['label']], id: value.key};
+								          var items = {text: value[opts['label']], id: value['key']};
 			            		  	     
 								      }
 								      
@@ -181,6 +164,31 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			    },
 			    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller}
 	   };
+	   
+	   if (opts['cache'])
+	   {
+		   	 csearch['query'] = function (options)
+		   	 {
+		   	 	 var that = this;
+		   	 	 
+		   	 	 Endpoint.cached_post(opts['cache'], opts['action'], opts['kind'], that.ajax.data(), function (data) {
+		   	 	 	var out = [];
+		   	 	 	angular.forEach(data.entities, function (entity) {
+		   	 	 		var match = entity[opts['label']];
+		   	 	 		if (that.matcher(options.term, match, options.element))
+		   	 	 		{
+		   	 	 			out.push({id : entity['key'], text : match});
+		   	 	 		}
+		   	 	 		
+		   	 	 	});
+		   	 	 	
+		   	 	 	options.callback({results : out});
+		   	 	 	
+		   	 	 }, opts['endpoint']);
+		   	 };
+	   }	   
+	   
+	   return angular.extend(csearch, opts['select2']);
 	}
 };}])
 .factory('RuleEngine', function () {
@@ -414,7 +422,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		
 	};
 }])
-.factory('Endpoint', ['$http', function ($http) {
+.factory('Endpoint', ['$http', '$cacheFactory', function ($http, $cacheFactory) {
+	
+	var cache = $cacheFactory('endpoint_cache');
 	 
 	var endpoint_url = '/endpoint';
 	
@@ -432,6 +442,39 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	
 	return {
 		url : endpoint_url,
+		cached_post : function (key, action, model, data, success, config)
+		{
+			log('cache_post');
+			var loading_key = key + '_loading';
+			var loading = cache.get(loading_key);
+			var cached = cache.get(key);
+			
+			if (!cached)
+			{
+				if (!loading)
+				{
+					cache.put(loading_key, true);
+					return this.post(action, model, data, config).success(function (response) {
+						cache.put(key, response);
+						try
+						{
+							success(response);
+							
+						}catch(e){log(e);}
+						cache.put(loading_key, false);
+					}).error(function () {
+						cache.put(loading_key, false);
+					});
+			
+			    }
+			  
+			}
+			else
+			{
+				 success(cached);
+			}
+		   
+		},
 		post : function(action, model, data, config)
 		{
 		    compiled = _compile(action, model, data, config);
@@ -441,9 +484,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		get : function(action, model, data, config)
 		{
 		    compiled = _compile(action, model, data, config);
-		    
-		    //compiled[1]['params'] = $.param(compiled[0]);
-			
+	 
 			return $http.get(endpoint_url, compiled[1]);
 		},
 	};
@@ -856,9 +897,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    	$rootScope.select2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',
-   			filters : active_filter,
    			cache : 'country',
-   		    
+   			filters : active_filter,
    		}),
    		'region' : Select2Options.factory({
    			kind : '16',
@@ -867,7 +907,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    			{
    				var scope = element.scope();
    				var country = element.data('country');
-   				
    				 
    				if (country.length)
    				{
@@ -887,7 +926,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    				}
    			}
    		}),
-   		
    		'role' : Select2Options.factory({
    			kind : '60',
    			filters : active_filter,
@@ -899,8 +937,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    
    		'units' : Select2Options.factory({
    			kind : '19',
-   			filters : [{'value' : true, 'operator':'==', 'field' : 'active'}],
    			cache : 'units',
+   			filters: active_filter,
    		}),
    		
    		'product_category' : Select2Options.factory({

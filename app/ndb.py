@@ -40,7 +40,8 @@ def validate_images(objects):
   object(s) that require validation!
   
   """
-  for i, obj in enumerate(objects):
+  to_delete = []
+  for obj in objects:
     if obj.width or obj.height:
       continue
     cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
@@ -52,8 +53,10 @@ def validate_images(objects):
       width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
       height = image.height
     except images.NotImageError as e:
-      # This file is not an image, remove it from the list.
-      objects.remove(obj)
+      # cannot do objects.remove while in for loop objects
+      to_delete.append(obj)
+    for o in to_delete:
+      objects.remove(o)
     cloudstorage_file.close()
     obj.populate(**{'width': width,
                     'height': height})
@@ -869,13 +872,16 @@ class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
     if self._repeated:
       blobs = value
       out = []
+      to_delete = []
       for v in value:
         try:
           out.append(blobstore.parse_blob_info(v).key())
         except:
-          blobs.remove(v)
+          to_delete.append(v)
           out.append(blobstore.BlobInfo(v))
       value = out
+      for d in to_delete:
+         blobs.remove(d)
     else:
       blobs = [value]
       try:

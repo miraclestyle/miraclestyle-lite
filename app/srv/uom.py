@@ -90,36 +90,21 @@ class Unit(ndb.BaseExpando):
       key=Action.build_key('19', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field' : 'active', 'value' : True, 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='19')},
-            'code': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.upper()])},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyFromPathProperty(kind='18')}
             },
           indexes=[
-            {'filter': [],
-             'order_by': [['code', ['asc', 'desc']]]},
             {'filter': ['key']},
-            {'filter': ['code', 'active'],
-             'order_by': [['code', ['asc', 'desc']]]},
-            {'filter': ['code', 'active', 'ancestor'],
-             'order_by': [['code', ['asc', 'desc']]]},
             {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['active', 'ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active', 'ancestor'],
-             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'code': {'operators': ['asc', 'desc']}
+            'name': {'operators': ['asc', 'desc']}
             }
           ),
         'search_cursor': ndb.SuperStringProperty()

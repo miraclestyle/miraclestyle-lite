@@ -69,11 +69,6 @@ indexes:
   ancestor: yes
   properties:
   - name: "7"
-
-- kind: "15"
-  properties:
-  - name: "3"
-  - name: "2"
   
 - kind: "16"
   properties:
@@ -95,6 +90,16 @@ indexes:
   properties:
   - name: "2"
   - name: "1"
+  
+- kind: "17"
+  properties:
+  - name: "4"
+  - name: "2"
+  
+- kind: "19"
+  properties:
+  - name: "7"
+  - name: "1"
 
 - kind: "19"
   ancestor: yes
@@ -102,12 +107,7 @@ indexes:
   - name: "7"
   - name: "1"
   
-- kind: "19"
+- kind: "15"
   properties:
-  - name: "7"
-  - name: "1"
-  
-- kind: "17"
-  properties:
-  - name: "4"
+  - name: "3"
   - name: "2"

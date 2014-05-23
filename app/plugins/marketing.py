@@ -109,10 +109,13 @@ class ProcessImages(event.Plugin):
           catalog_image_keys.append(catalog_image_key)
       if catalog_image_keys:
         catalog_images = ndb.get_multi(catalog_image_keys)
-        for i, catalog_image in enumerate(catalog_images):
+        # # You are not permitted to remove elements from the list while iterating over it using a for loop.
+        def mark_catalog_images(catalog_image):
           if catalog_image is None:
-            catalog_images.remove(catalog_image)
-          context.blob_delete.append(catalog_image.image)  # First, mark all blobs for deletion.
+            return False
+          context.blob_delete.append(catalog_image.image)
+          return True
+        catalog_images = filter(mark_catalog_images, catalog_images)
         if catalog_images:
           catalog_images = ndb.validate_images(catalog_images)
           ndb.put_multi(catalog_images)

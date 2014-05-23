@@ -18,6 +18,14 @@ KINDS.friendlyActionName = function(kind, action_key)
 	return ra;
 };
 
+window.log = function(){
+  log.history = log.history || [];   // store logs to an array for reference
+  log.history.push(arguments);
+  if(this.console){
+    console.log( Array.prototype.slice.call(arguments) );
+  }
+};
+
 //KINDS._get = {};
 KINDS.get = function (kind_id)
 {

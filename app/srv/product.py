@@ -94,17 +94,15 @@ class Category(ndb.BaseModel):
       ),
     Action(
       key=Action.build_key('17', 'search'),
-      arguments={
+      arguments={ #@todo add default filter to list active ones
         'search': ndb.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field' : 'state', 'value' : 'searchable', 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='17')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
           indexes=[
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['key']},
             {'filter': ['state'],
              'order_by': [['name', ['asc', 'desc']]]},

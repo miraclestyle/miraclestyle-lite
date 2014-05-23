@@ -127,6 +127,4 @@ class UnitUpdate(event.Plugin):
 class RemoveCurrencies(event.Plugin):
   
   def run(self, context):
-    for i, entity in enumerate(context.entities):
-      if entity.key.parent().id() == 'currency':
-        context.entities.remove(entity)
+    context.entities = filter(lambda x: x.key.parent().id() != 'currency', context.entities)
