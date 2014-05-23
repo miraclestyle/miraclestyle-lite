@@ -43,6 +43,12 @@ class Context(event.Plugin):
       context.blob_delete = []
     if not hasattr(context, 'blob_write'):
       context.blob_write = []
+    if not hasattr(context, 'search_documents'):
+      context.search_documents = []
+    if not hasattr(context, 'search_documents_total_matches'):
+      context.search_documents_total_matches = None
+    if not hasattr(context, 'search_documents_count'):
+      context.search_documents_count = None
 
 
 class Set(event.Plugin):
