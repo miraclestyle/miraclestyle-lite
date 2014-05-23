@@ -19,11 +19,9 @@ __SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
                    'SuperImageKeyProperty': search.AtomField,
                    'SuperBlobKeyProperty': search.AtomField,
                    'SuperBooleanProperty': search.AtomField,
-                   
                    'SuperStringProperty': search.TextField,
                    'SuperJsonProperty': search.TextField,
                    'SuperTextProperty': search.HtmlField,
-                   
                    'SuperFloatProperty': search.NumberField,
                    'SuperIntegerProperty': search.NumberField,
                    'SuperDecimalProperty': search.NumberField,
