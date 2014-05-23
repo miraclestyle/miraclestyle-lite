@@ -16,13 +16,9 @@ from app.lib.attribute_manipulator import set_attr, get_attr, get_meta
 
 
 __SEARCH_FIELDS = {'SuperStringProperty': search.TextField,
-                   'SuperRawProperty': search.TextField,
                    'SuperJsonProperty': search.TextField,
-                   'SuperSearchProperty': search.TextField,
                    'SuperTextProperty': search.HtmlField,
                    'SuperKeyProperty': search.AtomField,
-                   'SuperVirtualKeyProperty': search.AtomField,
-                   'SuperKeyFromPathProperty': search.AtomField,
                    'SuperImageKeyProperty': search.AtomField,
                    'SuperBlobKeyProperty': search.AtomField,
                    'SuperBooleanProperty': search.AtomField,

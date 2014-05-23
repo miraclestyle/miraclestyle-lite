@@ -38,8 +38,8 @@ def blobs_to_preserve(blob_keys):
     unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
     blob_keys = parse_blob_keys(blob_keys)
     for blob_key in blob_keys:
-     if blob_key in unused_blob_keys:
-      unused_blob_keys.remove(blob_key)
+      if blob_key in unused_blob_keys:
+        unused_blob_keys.remove(blob_key)
     memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
 
 def blobs_to_delete(blob_keys):

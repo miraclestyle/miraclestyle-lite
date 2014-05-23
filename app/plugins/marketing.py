@@ -109,7 +109,7 @@ class ProcessImages(event.Plugin):
           catalog_image_keys.append(catalog_image_key)
       if catalog_image_keys:
         catalog_images = ndb.get_multi(catalog_image_keys)
-        # # You are not permitted to remove elements from the list while iterating over it using a for loop.
+        # You are not permitted to remove elements from the list while iterating over it using a for loop.
         def mark_catalog_images(catalog_image):
           if catalog_image is None:
             return False

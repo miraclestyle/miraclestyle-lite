@@ -63,7 +63,7 @@ class Country(ndb.BaseModel):
       key=Action.build_key('15', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={'filters': [{'field' : 'active', 'value' : True, 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])}
@@ -71,7 +71,7 @@ class Country(ndb.BaseModel):
           indexes=[
             {'filter': ['key']},
             {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
+             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']}
@@ -121,14 +121,14 @@ class CountrySubdivision(ndb.BaseModel):
       key=Action.build_key('16', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={'filters': [{'field' : 'active', 'value' : True, 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='16')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')}
             },
-          indexes=[ ## something here needs to be done
+          indexes=[  # Something here needs to be done.
             {'filter': ['key']},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
