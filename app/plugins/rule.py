@@ -331,7 +331,7 @@ class DomainRoleSet(event.Plugin):
                                            permission.get('condition')))
       elif permission.get('type') == 'ActionPermission':
         permissions.append(ActionPermission(permission.get('kind'),
-                                            [ndb.Key(urlsafe=f) for f in permission.get('actions')],
+                                            [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
     context.values['60'].name = context.input.get('name')

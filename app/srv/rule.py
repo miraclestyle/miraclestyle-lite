@@ -47,7 +47,7 @@ class ActionPermission(Permission):
       self.actions = actions
       self.executable = executable
       self.condition = condition
-     
+  
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for action in self.actions:
@@ -76,7 +76,7 @@ class FieldPermission(Permission):
       self.writable = writable
       self.visible = visible
       self.condition = condition
-     
+  
   def run(self, role, context):
     if (self.kind == context.entity.get_kind()):
       for field in self.fields:

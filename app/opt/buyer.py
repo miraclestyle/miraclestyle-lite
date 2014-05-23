@@ -78,7 +78,7 @@ class Addresses(ndb.BaseModel):
         log.Entity(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.77'}),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.77'})
         ]
       ),
     Action(
@@ -156,7 +156,7 @@ class Collection(ndb.BaseModel):
         log.Entity(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.10'}),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.10'})
         ]
       ),
     Action(

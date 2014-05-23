@@ -12,14 +12,24 @@ from google.appengine.api import search
 
 from app import ndb, settings
 from app.srv import event
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app.lib.attribute_manipulator import set_attr, get_attr, get_meta
 
 
-__SEARCH_FIELDS = {'text': search.TextField,
-                   'html': search.HtmlField,
-                   'atom': search.AtomField,
-                   'number': search.NumberField,
-                   'date': search.DateField,
+__SEARCH_FIELDS = {'SuperStringProperty': search.TextField,
+                   'SuperRawProperty': search.TextField,
+                   'SuperJsonProperty': search.TextField,
+                   'SuperSearchProperty': search.TextField,
+                   'SuperTextProperty': search.HtmlField,
+                   'SuperKeyProperty': search.AtomField,
+                   'SuperVirtualKeyProperty': search.AtomField,
+                   'SuperKeyFromPathProperty': search.AtomField,
+                   'SuperImageKeyProperty': search.AtomField,
+                   'SuperBlobKeyProperty': search.AtomField,
+                   'SuperBooleanProperty': search.AtomField,
+                   'SuperFloatProperty': search.NumberField,
+                   'SuperIntegerProperty': search.NumberField,
+                   'SuperDecimalProperty': search.NumberField,
+                   'SuperDateTimeProperty': search.DateField,
                    'geo': search.GeoField}
 
 
@@ -28,28 +38,49 @@ def get_search_field(field_type):
   return __SEARCH_FIELDS.get(field_type)
 
 
+def _is_structured_field(field):
+  '''Checks if the provided field is instance of one of the structured properties,
+  and if the '_modelclass' is set.
+  
+  '''
+  return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
+
+
 class Write(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  domain_index = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
-  fields = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
+  index_name = ndb.SuperStringProperty('6', indexed=False)
+  fields = ndb.SuperStringProperty('7', indexed=False, repeated=True)
   
   def run(self, context):
     if self.kind_id != None:
       kind_id = self.kind_id
     else:
       kind_id = context.model.get_kind()
-    if self.domain_index:
-      namespace = context.entities[kind_id].key_namespace
-    if namespace != None:
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
       index_name = namespace + '-' + kind_id
     else:
       index_name = kind_id
     doc_id = context.entities[kind_id].key_urlsafe
+    
     fields = []
-    for field_name, field_type in self.fields.items():
-      field = get_search_field(field_type)
-      fields.append(field(name=field_name, value=get_attr(context.entities[kind_id], field_name)))
+    for field_name in self.fields:
+      field_value = get_attr(context.entities[kind_id], field_name)
+      field_meta = get_meta(context.entities[kind_id], field_name)
+      field = get_search_field(field_meta.__class__.__name__)
+      if field_meta._repeated:
+        if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+          field_value = ' '.join(field_value.urlsafe())
+        else:
+          field_value = ' '.join(field_value)
+        field = get_search_field('SuperStringProperty')
+      if field_meta.__class__.__name__ in ['SuperJsonProperty', 'SuperSearchProperty']:
+        field_value = str(field_value)
+      fields.append(field(name=field_name, value=field_value))
+    
     if doc_id != None and len(fields):
       try:
         index = search.Index(name=index_name)
@@ -61,16 +92,17 @@ class Write(event.Plugin):
 class Delete(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  domain_index = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  index_name = ndb.SuperStringProperty('6', indexed=False)
   
   def run(self, context):
     if self.kind_id != None:
       kind_id = self.kind_id
     else:
       kind_id = context.model.get_kind()
-    if self.domain_index:
-      namespace = context.entities[kind_id].key_namespace
-    if namespace != None:
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
       index_name = namespace + '-' + kind_id
     else:
       index_name = kind_id
@@ -86,17 +118,19 @@ class Delete(event.Plugin):
 class Search(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
-  domain_index = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
+  index_name = ndb.SuperStringProperty('6', indexed=False)
   fields = ndb.SuperStringProperty('7', indexed=False, repeated=True)
+  page_size = ndb.SuperIntegerProperty('8', indexed=False, required=True, default=10)
   
   def run(self, context):
     if self.kind_id != None:
       kind_id = self.kind_id
     else:
       kind_id = context.model.get_kind()
-    if self.domain_index:
-      namespace = context.entities[kind_id].key_namespace
-    if namespace != None:
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
       index_name = namespace + '-' + kind_id
     else:
       index_name = kind_id
@@ -135,9 +169,9 @@ class Search(event.Plugin):
       else:
         direction = search.SortExpression.DESCENDING
       order = search.SortExpression(expression=order_by['field'], direction=direction)
-      sort_options = search.SortOptions(expressions=[order], limit=settings.SEARCH_PAGE)
-    cursor = search.Cursor(web_safe_string=context.input.get('next_cursor'))
-    options = search.QueryOptions(limit=settings.SEARCH_PAGE, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
+      sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
+    cursor = search.Cursor(web_safe_string=context.input.get('search_cursor'))
+    options = search.QueryOptions(limit=self.page_size, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
     query = search.Query(query_string=query_string, options=options)
     context.documents = []
     try:
@@ -147,11 +181,11 @@ class Search(event.Plugin):
         context.documents_count = len(result.results)
         context.documents = result.results
       if result.cursor != None:
-        context.next_cursor = result.cursor.web_safe_string
-        context.more = True
+        context.search_cursor = result.cursor.web_safe_string
+        context.search_more = True
       else:
-        context.next_cursor = None
-        context.more = False
+        context.search_cursor = None
+        context.search_more = False
     except:
       pass
 
