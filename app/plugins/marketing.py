@@ -52,7 +52,7 @@ class UpdateSet(event.Plugin):
         image.set_key(str(i), parent=context.values['35'].key)
         new_images.append(image.key)
     if len(context.values['35']._images):
-      context.values['35'].cover = context.values['35']._images[0].key
+      context.values['35'].cover = context.values['35']._images[0]  # @todo Not sure if we need only image.image or entire entity here?
     for image in context.entities['35']._images:
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
@@ -69,6 +69,16 @@ class UpdateWrite(event.Plugin):
     context.entities['35'].put()
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
+
+
+class Delete(event.Plugin):
+  
+  def run(self, context):
+    # @todo How do we handle over 1k records in the situation below?
+    context.tmp['delete_images'] = context.models['36'].query(ancestor=context.entities['35'].key).fetch()
+    if len(context.tmp['delete_images']):
+      ndb.delete_multi([image.key for image in context.tmp['delete_images']])
+      context.blob_delete = [image.image for image in context.tmp['delete_images']]
 
 
 class UploadImagesSet(event.Plugin):
@@ -122,3 +132,49 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
+
+
+class SearchWrite(event.Plugin):
+  
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  index_name = ndb.SuperStringProperty('6', indexed=False)
+  
+  def run(self, context):
+    if self.kind_id != None:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
+      index_name = namespace + '-' + kind_id
+    else:
+      index_name = kind_id
+    documents = []  # If we put products here as well, than care must be taken not to have more than 200 items of total for single index write!
+    doc_id = context.entities[kind_id].key_urlsafe
+    fields = []
+    fields.append(search.AtomField(name='key', value=context.entities[kind_id].key_urlsafe))
+    fields.append(search.AtomField(name='kind', value=kind_id))
+    fields.append(search.AtomField(name='id', value=context.entities[kind_id].key_id_str))
+    if context.entities[kind_id].key_namespace != None:
+      fields.append(search.AtomField(name='namespace', value=context.entities[kind_id].key_namespace))
+    fields.append(search.DateField(name='created', value=context.entities[kind_id].created))
+    fields.append(search.DateField(name='updated', value=context.entities[kind_id].updated))
+    fields.append(search.TextField(name='name', value=context.entities[kind_id].name))
+    fields.append(search.DateField(name='publish_date', value=context.entities[kind_id].publish_date))
+    fields.append(search.DateField(name='discontinue_date', value=context.entities[kind_id].discontinue_date))
+    fields.append(search.AtomField(name='state', value=context.entities[kind_id].state))
+    fields.append(search.AtomField(name='cover', value=context.entities[kind_id].cover.image))
+    fields.append(search.AtomField(name='seller_key', value=context.entities[kind_id].seller_key))
+    fields.append(search.TextField(name='seller_name', value=context.entities[kind_id].namespace_entity.name))
+    fields.append(search.AtomField(name='seller_logo', value=context.entities[kind_id].namespace_entity.logo.image))
+    #fields.append(search.NumberField(name='seller_feedback', value=context.entities[kind_id].namespace_entity.feedback))
+    documents.append(search.Document(doc_id=doc_id, fields=fields))
+    # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!
+    if doc_id != None and len(fields):
+      try:
+        index = search.Index(name=index_name)
+        index.put(documents)  # Batching puts is more efficient than adding documents one at a time.
+      except:
+        pass

@@ -5,6 +5,8 @@ Created on May 6, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import datetime
+
 from app import ndb, settings
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
@@ -50,7 +52,7 @@ class Catalog(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': ndb.SuperKeyProperty('7', kind='36'),
+    'cover': ndb.SuperLocalStructuredProperty(CatalogImage, '7'),  # Replacing old ndb.SuperKeyProperty('7', kind='36') - # @todo Not sure if we need only image.image or entire entity here?
     'cost': ndb.SuperDecimalProperty('8')
     }
   
@@ -85,7 +87,7 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', [Action.build_key('35', 'process_images')], False, 'True'),
       ActionPermission('35', [Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
       ActionPermission('35', [Action.build_key('35', 'delete')], False, 'True'),
-      ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.entity._is_aged and context.user._is_taskqueue'),
+      ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.entity._has_expired and context.user._is_taskqueue'),
       FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
@@ -192,6 +194,30 @@ class Catalog(ndb.BaseExpando):
                                                        'output.images_cursor': 'tmp.images_cursor',
                                                        'output.images_more': 'tmp.images_more'}),
         blob.Update(transactional=True),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.Delete(),
+        common.Delete(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        blob.Update(transactional=True),
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
@@ -430,3 +456,7 @@ class Catalog(ndb.BaseExpando):
         ]
       )
     ]
+  
+  @property
+  def _has_expired(self):
+    return (datetime.datetime.now()-self.updated) > datetime.timedelta(days=settings.CATALOG_LIFE)
