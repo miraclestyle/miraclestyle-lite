@@ -387,9 +387,9 @@ class Domain(ndb.BaseExpando):
                        'context.entity.state != "active"'),
       ActionPermission('6', Action.build_key('6', 'activate'), False,
                        'context.entity.state == "active" or context.entity.state == "su_suspended"'),
-      FieldPermission('6', ['name', 'primary_contact', 'logo', 'state', '_records', '_primary_contact_email'], False, None,
-                      'context.entity.state != "active"'),
       FieldPermission('6', ['created', 'updated', 'state'], False, None, 'True'),
+      FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
+                      'context.entity.state != "active"'),
       FieldPermission('6', ['state'], True, None,
                       '(context.action.key_id_str == "activate" and context.value and context.value.state == "active") or (context.action.key_id_str == "suspend" and context.value and context.value.state == "suspended")'),
       # Domain is unit of administration, hence root admins need control over it!
