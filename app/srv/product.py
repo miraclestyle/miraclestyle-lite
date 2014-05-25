@@ -94,9 +94,9 @@ class Category(ndb.BaseModel):
       ),
     Action(
       key=Action.build_key('17', 'search'),
-      arguments={ #@todo add default filter to list active ones
+      arguments={  #@todo Add default filter to list active ones.
         'search': ndb.SuperSearchProperty(
-          default={'filters': [{'field' : 'state', 'value' : 'searchable', 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field': 'state', 'value': 'searchable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='17')},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
@@ -157,6 +157,7 @@ class Template(ndb.BaseExpando):
     '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
     '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
     '_variants': ndb.SuperLocalStructuredProperty(Variant, repeated=True),
+    '_instances': ndb.SuperLocalStructuredProperty(Instance, repeated=True),
     '_records': ndb_log.SuperLocalStructuredRecordProperty('38', repeated=True)
     }
   
@@ -170,6 +171,7 @@ class Template(ndb.BaseExpando):
                               Action.build_key('38', 'delete'),
                               Action.build_key('38', 'search'),
                               Action.build_key('38', 'read_records'),
+                              Action.build_key('38', 'read_instances'),
                               Action.build_key('38', 'duplicate')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
       ]
@@ -447,6 +449,24 @@ class Template(ndb.BaseExpando):
         common.Set(dynamic_values={'output.entity': 'entities.38',
                                    'output.log_read_cursor': 'log_read_cursor',
                                    'output.log_read_more': 'log_read_more'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('38', 'read_instances'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='38', required=True),
+        'instances_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.ReadInstances(page_size=settings.SEARCH_PAGE),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.38',
+                                   'output.instances_cursor': 'tmp.instances_cursor',
+                                   'output.instances_more': 'tmp.instances_more'})
         ]
       ),
     Action(

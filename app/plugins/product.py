@@ -8,6 +8,8 @@ Created on Apr 15, 2014
 import copy
 import hashlib
 
+from google.appengine.datastore.datastore_query import Cursor
+
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -53,6 +55,26 @@ class Read(event.Plugin):
     else:
       context.entities[context.model.get_kind()]._contents = []
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+
+
+class ReadInstances(event.Plugin):
+  
+  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  
+  def run(self, context):
+    Instance = context.models['39']
+    cursor = Cursor(urlsafe=context.input.get('instances_cursor'))
+    ancestor = context.entities[context.model.get_kind()].key
+    _instances, cursor, more = Instance.query(ancestor=ancestor).fetch_page(self.page_size, start_cursor=cursor)
+    if cursor:
+      cursor = cursor.urlsafe()
+    if _instances:
+      context.entities[context.model.get_kind()]._instances = _instances
+    else:
+      context.entities[context.model.get_kind()]._instances = []
+    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+    context.tmp['instances_cursor'] = cursor
+    context.tmp['instances_more'] = more
 
 
 class UploadImagesSet(event.Plugin):

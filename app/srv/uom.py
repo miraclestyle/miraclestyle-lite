@@ -90,7 +90,7 @@ class Unit(ndb.BaseExpando):
       key=Action.build_key('19', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={'filters': [{'field' : 'active', 'value' : True, 'operator' : '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='19')},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
@@ -101,7 +101,7 @@ class Unit(ndb.BaseExpando):
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['active', 'ancestor'],
-             'order_by': [['name', ['asc', 'desc']]]},
+             'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']}

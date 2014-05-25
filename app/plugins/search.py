@@ -15,17 +15,13 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta
 
 
-__SEARCH_FIELDS = {'SuperStringProperty': search.TextField,
-                   'SuperRawProperty': search.TextField,
-                   'SuperJsonProperty': search.TextField,
-                   'SuperSearchProperty': search.TextField,
-                   'SuperTextProperty': search.HtmlField,
-                   'SuperKeyProperty': search.AtomField,
-                   'SuperVirtualKeyProperty': search.AtomField,
-                   'SuperKeyFromPathProperty': search.AtomField,
+__SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
                    'SuperImageKeyProperty': search.AtomField,
                    'SuperBlobKeyProperty': search.AtomField,
                    'SuperBooleanProperty': search.AtomField,
+                   'SuperStringProperty': search.TextField,
+                   'SuperJsonProperty': search.TextField,
+                   'SuperTextProperty': search.HtmlField,
                    'SuperFloatProperty': search.NumberField,
                    'SuperIntegerProperty': search.NumberField,
                    'SuperDecimalProperty': search.NumberField,
@@ -65,22 +61,39 @@ class Write(event.Plugin):
     else:
       index_name = kind_id
     doc_id = context.entities[kind_id].key_urlsafe
-    
     fields = []
+    fields.append(search.AtomField(name='key', value=context.entities[kind_id].key_urlsafe))
+    fields.append(search.AtomField(name='kind', value=kind_id))
+    fields.append(search.AtomField(name='id', value=context.entities[kind_id].key_id_str))
+    if context.entities[kind_id].key_namespace != None:
+      fields.append(search.AtomField(name='namespace', value=context.entities[kind_id].key_namespace))
+    if context.entities[kind_id].key_parent != None:
+      fields.append(search.AtomField(name='ancestor', value=context.entities[kind_id].key_parent.urlsafe()))
     for field_name in self.fields:
-      field_value = get_attr(context.entities[kind_id], field_name)
       field_meta = get_meta(context.entities[kind_id], field_name)
-      field = get_search_field(field_meta.__class__.__name__)
+      field_value = get_attr(context.entities[kind_id], field_name)
+      field = None
       if field_meta._repeated:
         if field_meta.__class__.__name__ in ['SuperKeyProperty']:
-          field_value = ' '.join(field_value.urlsafe())
-        else:
+          field_value = ' '.join(map(lambda x: x.urlsafe(), field_value))
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty']:
+          field_value = ' '.join(map(lambda x: str(x), field_value))
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperStringProperty', 'SuperFloatProperty', 'SuperIntegerProperty', 'SuperDecimalProperty', 'SuperDateTimeProperty']:
           field_value = ' '.join(field_value)
-        field = get_search_field('SuperStringProperty')
-      if field_meta.__class__.__name__ in ['SuperJsonProperty', 'SuperSearchProperty']:
-        field_value = str(field_value)
-      fields.append(field(name=field_name, value=field_value))
-    
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperTextProperty']:
+          field_value = ' '.join(field_value)
+          field = get_search_field('SuperTextProperty')
+      else:
+        if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+          field_value = field_value.urlsafe()
+        elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty', 'SuperJsonProperty']:
+          field_value = str(field_value)
+        field = get_search_field(field_meta.__class__.__name__)
+      if field != None:
+        fields.append(field(name=field_name, value=field_value))
     if doc_id != None and len(fields):
       try:
         index = search.Index(name=index_name)
@@ -135,8 +148,7 @@ class Search(event.Plugin):
     else:
       index_name = kind_id
     index = search.Index(name=index_name)
-    
-    # @todo Query String has to be implemented here, in order for this to work!
+    # Query String implementation start!
     query_string = ''
     sort_options = None
     search = context.input.get('search')
@@ -147,6 +159,9 @@ class Search(event.Plugin):
         field = _filter['field']
         op = _filter['operator']
         value = _filter['value']
+        if field == 'ancestor':
+          args.append('(' + field + '=' + value + ')')
+          continue
         if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
           args.append('(' + field + '=' + value + ')')
         elif op == '!=':
@@ -161,8 +176,8 @@ class Search(event.Plugin):
           args.append('(' + field + '<=' + value + ')')
         elif op == 'IN':
           args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
-      
       query_string = ' AND '.join(args)
+      # Query String implementation start!
       order_by = search.get('order_by')
       if order_by['operator'] == 'asc':
         direction = search.SortExpression.ASCENDING
@@ -173,13 +188,13 @@ class Search(event.Plugin):
     cursor = search.Cursor(web_safe_string=context.input.get('search_cursor'))
     options = search.QueryOptions(limit=self.page_size, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
     query = search.Query(query_string=query_string, options=options)
-    context.documents = []
+    context.search_documents = []
     try:
       result = index.search(query)
-      context.total_matches = result.number_found
+      context.search_documents_total_matches = result.number_found
       if len(result.results):
-        context.documents_count = len(result.results)
-        context.documents = result.results
+        context.search_documents_count = len(result.results)
+        context.search_documents = result.results
       if result.cursor != None:
         context.search_cursor = result.cursor.web_safe_string
         context.search_more = True
@@ -192,5 +207,5 @@ class Search(event.Plugin):
 class Entities(event.Plugin):
   
   def run(self, context):
-    if len(context.documents):
-      context.entities = ndb.get_multi([document.doc_id for document in context.documents])
+    if len(context.search_documents):
+      context.entities = ndb.get_multi([document.doc_id for document in context.search_documents])
