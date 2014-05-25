@@ -128,7 +128,7 @@ class CountrySubdivision(ndb.BaseModel):
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')}
             },
-          indexes=[ ## something here needs to be done
+          indexes=[
             {'filter': ['key']},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
