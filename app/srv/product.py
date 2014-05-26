@@ -151,6 +151,11 @@ class Instance(ndb.BaseExpando):
     'volume_uom': ndb.SuperKeyProperty('10', kind='19')
     }
   
+  _virtual_fields = {
+    '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
+    '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
+    }
+  
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('38', [Action.build_key('38', 'prepare'),
@@ -220,6 +225,21 @@ class Instance(ndb.BaseExpando):
                          dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'read_signature'), # attempts to fetch a product instance based on signature and template provided
+      arguments={
+        'variant_signature': ndb.SuperJsonProperty(required=True),
+        'parent': ndb.SuperKeyProperty(kind='38', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        product.InstanceReadSignature(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.39'})
         ]
       ),
     Action(

@@ -1,0 +1,35 @@
+<form ng-submit="save()" name="container.main">
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	<h2 class="fieldset">
+		 <span class="fieldset-text">General</span>
+	 </h2>
+  
+	<div ng-repeat="variant in variants track by $index" class="form-control">
+		<label class="form-label">{{variant.name}}</label>
+		<div class="form-input">
+			<select name="option_{{$index}}" ng-required="true" ui-select2 ng-model="variant.option" data-placeholder="Select option">
+					<option value=""></option>
+				    <option ng-repeat="opt in variant.options" value="{{opt}}">{{opt}}</option>
+			</select>
+		</div>
+	</div>
+	  
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+	<button type="submit" class="button">
+		Create
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+
+
+</form>

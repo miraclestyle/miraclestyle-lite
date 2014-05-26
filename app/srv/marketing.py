@@ -81,19 +81,19 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'process_images')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('35', [Action.build_key('35', 'update'),
                               Action.build_key('35', 'lock'),
-                              Action.build_key('35', 'upload_images')], False 'context.entity.state != "unpublished"'),
+                              Action.build_key('35', 'upload_images')], False, 'context.entity.state != "unpublished"'),
       ActionPermission('35', [Action.build_key('35', 'delete'),
                               Action.build_key('35', 'publish'),
                               Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
-                              Action.build_key('35', 'process_images')], False 'True'),
+                              Action.build_key('35', 'process_images')], False, 'True'),
       ActionPermission('35', [Action.build_key('35', 'discontinue'),
-                              Action.build_key('35', 'duplicate')], False 'context.entity.state != "published"'),
+                              Action.build_key('35', 'duplicate')], False, 'context.entity.state != "published"'),
       ActionPermission('35', [Action.build_key('35', 'read')], True, 'context.entity.state == "published" or context.entity.state == "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.entity._has_expired and context.user._is_taskqueue'),
-      ActionPermission('35', [Action.build_key('35', 'publish')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "published"'),
-      ActionPermission('35', [Action.build_key('35', 'discontinue')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "discontinued"'),
-      ActionPermission('35', [Action.build_key('35', 'log_message')], True 'context.user._is_taskqueue or context.user._root_admin'),
+      ActionPermission('35', [Action.build_key('35', 'publish')], True, '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "published"'),
+      ActionPermission('35', [Action.build_key('35', 'discontinue')], True, '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "discontinued"'),
+      ActionPermission('35', [Action.build_key('35', 'log_message')], True, 'context.user._is_taskqueue or context.user._root_admin'),
       ActionPermission('35', [Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
@@ -105,7 +105,7 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['state'], True, None,
                       '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued")'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
-                      'context.entity.state == "published" or context.entity.state == "discontinued"')
+                      'context.entity.state == "published" or context.entity.state == "discontinued"'),
       FieldPermission('35', ['_records.note'], True, True,
                       'context.user._root_admin'),
       FieldPermission('35', ['_records.note'], False, False,
@@ -434,7 +434,7 @@ class Catalog(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.SearchDelete()
+        #marketing.SearchDelete()
         ]
       ),
     Action(
@@ -499,4 +499,6 @@ class Catalog(ndb.BaseExpando):
   
   @property
   def _has_expired(self):
+    if not self.updated:
+      return False
     return (datetime.datetime.now()-self.updated) > datetime.timedelta(days=settings.CATALOG_LIFE)

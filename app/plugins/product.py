@@ -4,7 +4,7 @@ Created on Apr 15, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
+import json
 import copy
 import hashlib
 
@@ -13,6 +13,13 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
+
+
+def build_key_from_signature(context):
+  variant_signature = context.input.get('variant_signature')
+  key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
+  product_instance_key = context.model.build_key(key_id, parent=context.input.get('parent'))
+  return product_instance_key
 
 
 def build_keyes(context):
@@ -32,10 +39,20 @@ class Prepare(event.Plugin):
 class InstancePrepare(event.Plugin):
   
   def run(self, context):
-    variant_signature = context.input.get('variant_signature')
-    key_id = hashlib.md5(str(variant_signature)).hexdigest()
-    context.entities[context.model.get_kind()] = context.model(id=key_id, parent=context.input.get('parent'))
-    context.values[context.model.get_kind()] = context.model(id=key_id, parent=context.input.get('parent'))
+    product_instance_key = build_key_from_signature(context)
+    context.entities[context.model.get_kind()] = context.model(key=product_instance_key)
+    context.values[context.model.get_kind()] = context.model(key=product_instance_key)
+    
+    
+class InstanceReadSignature(event.Plugin):
+  
+  def run(self, context):
+    product_instance_key = build_key_from_signature(context)
+    product_instance = product_instance_key.get()
+    if not product_instance:
+       product_instance = context.model(key=product_instance_key)
+    context.entities[context.model.get_kind()] = product_instance
+    context.values[context.model.get_kind()] = copy.deepcopy(product_instance)
 
 
 class Read(event.Plugin):

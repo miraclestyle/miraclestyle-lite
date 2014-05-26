@@ -1,7 +1,7 @@
 <form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
 <input type="hidden" name="action_id" value="upload_images" />
-<input type="hidden" name="action_model" value="38" />
+<input type="hidden" name="action_model" value="39" />
 <input type="hidden" name="key" value="{{entity.key}}" />
 	
 <div scroll-end class="modal-body scrollable">
@@ -9,54 +9,19 @@
  
 <div ng-init="isOpen=true" accordion>
    <div is-open="isOpen" accordion-group heading="General">
-   
+  
     	<div class="form-control">
-    	
-    	<label class="form-label">Category</label>
-		<div class="form-input">
-			<div class="form-text">
-
-				<input
-			       name="product_category" 
-			       ng-required="rule.input[action].product_category.required"
-			       ng-disabled="!rule.field.product_category.writable"
-			       ui-select2="select2Options.product_category"
-			       ng-model="entity.product_category"
-			       data-placeholder="Select a product category" />
-			</div>
-		</div>
-		</div>
-		
-		
-    	<div class="form-control">
-		<label class="form-label">Name</label>
+		<label class="form-label">Code</label>
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name"
-				 	    ng-disabled="!rule.field.name.writable" />
+				 		ng-required="rule.input[action].code.required"
+				 	    class="text-input" type="text" ng-model="entity.code"
+				 	    ng-disabled="!rule.field.code.writable" />
 			</div>
 		</div>
 		</div>
-		
-		<div class="form-control">
-		<label class="form-label">Default Unit of Measure</label>
-		<div class="form-input">
-			<div class="form-text">
-				
-				 <input
-			       name="product_uom" 
-			       ng-required="rule.input[action].product_uom.required"
-			       ng-disabled="!rule.field.product_uom.writable"
-			       ui-select2="select2Options.units"
-			       ng-model="entity.product_uom"
-			       data-placeholder="Select a product unit of measure" />
-			 
-			</div>
-		</div>
-		</div>
-		
+ 
 		<div class="form-control">
 		<label class="form-label">Unit Price</label>
 		<div class="form-input">
@@ -136,19 +101,7 @@
 			</div>
 		</div>
 		</div>
-  
-		<div class="form-control">
-		<label class="form-label">Code</label>
-		<div class="form-input">
-			<div class="form-text">
-				 <input name="code" 
-				 		ng-required="rule.input[action].code.required"
-				 	    class="text-input" type="text" ng-model="entity.code"
-				 	    ng-disabled="!rule.field.code.writable" />
-			</div>
-		</div>
-		</div>
-		
+		 
 		<div class="form-control">
 		<label class="form-label">Availability</label>
 		<div class="form-input">
@@ -165,7 +118,7 @@
 			</div>
 		</div>
 		</div>
-		
+ 
 		<div class="form-control">
 		<label class="form-label">Low stock quantity</label>
 		<div class="form-input">
@@ -180,37 +133,7 @@
 		
 		
 	</div>
- 
-	<div ng-show="entity.id" accordion-group heading="Variants">
-		
-		<div class="clearfix">
-			<div class="pull-right">
-				<button ng-show="rule.field._variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
-			</div>
-		</div>
-		
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="variant in entity._variants track by $index">
-					<td>{{variant.name}}</td>
-					<td>
-						<span ng-show="rule.field._variants.writable">
-						<button type="button" ng-click="removeVariant(variant)" class="button">Remove</button>
-						<button type="button" ng-click="manageVariant(variant)" class="button">Edit</button>
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		 
-	</div>
-	 
+   
 	<div ng-show="entity.id" accordion-group heading="Images">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
@@ -235,80 +158,12 @@
 			</div>
 		</div>
 	</div>
-	
-	<div ng-show="entity.id" accordion-group heading="Contents">
-		
-		 <div class="clearfix">
-			<div class="pull-right">
-				<button ng-show="rule.field._contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
-			</div>
-		</div>
-		
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="content in entity._contents track by $index">
-					<td>{{content.title}}</td>
-					<td>
-						<span ng-show="rule.field._contents.writable">
-						<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
-						<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		 
-	</div>
-	
-	<div ng-show="entity.id" accordion-group heading="Product Instances">
-		 
-		 <div class="clearfix">
-			<div class="pull-right">
-				<button ng-show="rule.field._instances.writable" ng-click="newInstance()" type="button" class="button">Add Product Instance</button>
-			</div>
-		</div>
-		
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Code</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="instance in entity._instances track by $index">
-					<td>{{instance.code}}</td>
-					<td>
-						<span ng-show="rule.field._instances.writable">
-						<button type="button" ng-click="removeInstance(instance)" class="button">Remove</button>
-						<button type="button" ng-click="manageInstance(instance)" class="button">Edit</button>
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-	
-	
-	 
 </div>
-
-
-<div ng-show="rule.action.read_records.executable && entity.id" class="form-control">
-  <div ng-include="logic_template('misc/logs.html')"></div>
-</div>
+ 
  
 </div>
 </div>
-
-
-
+ 
 <div class="modal-footer">
  
     <button ng-disabled="$isUploading" type="button" 
@@ -327,6 +182,7 @@
 	<button type="button" class="button" ng-click="cancel()">
 		Cancel
 	</button>
+	
 </div>
 
 

@@ -2,6 +2,7 @@ eclipse.preferences.version=1
 encoding//app/lib/attribute_manipulator.py=utf-8
 encoding//app/lib/oauth2.py=utf-8
 encoding//app/lib/safe_eval.py=utf-8
+encoding//app/lib/uom_manipulator.py=utf-8
 encoding//app/memcache.py=utf-8
 encoding//app/ndb.py=utf-8
 encoding//app/opt/buyer.py=utf-8

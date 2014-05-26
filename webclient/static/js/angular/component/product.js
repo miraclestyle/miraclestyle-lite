@@ -1,8 +1,7 @@
 MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
-    	
-    	
+    	 
     	var kind = '38';
     	  
         var scope = {
@@ -99,6 +98,91 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     });
         	 	
         	  },
+        	  
+        	  'manageInstance' : function (instance)
+        	  {
+        			return EntityEditor.update({
+	                	 'kind' : '39',
+	                	 'entity' : instance,
+	                	 'data' : {
+	                	 	'entity' : instance,
+	                	 },
+	                	 'scope' : {
+	                	   'form_info' : {'action' : Endpoint.url},
+				           'completed' : function (data)
+				        	{
+				        	 	this.entity._images = data['entity']['_images'];
+				        	},
+				           'removeImage' : function (image)
+				            {
+				        	 	this.entity._images.remove(image);
+				            },
+	                	 },
+	                	 'handle' : function (data)
+				         { 
+				            this.update_mode = true;
+				         },
+	                	 'templateUrl' : logic_template('product/manage_instance.html'),
+	                	 'args' : {
+	                	 	'key' : instance['key'],
+	                	 }
+	                });
+        	  },
+        	  'newInstance' : function ()
+        	  {
+        	  	
+				var that = this;
+        	 	 
+        	 	var modalInstance = $modal.open({
+                        templateUrl: logic_template('product/create_instance.html'),
+                        controller: function ($scope, $modalInstance, RuleEngine) {
+  							
+  							$scope.variants = [];
+  				 
+  							angular.forEach(that.entity._variants, function (v) {
+ 
+  								$scope.variants.push({
+  									'name' : v.name,
+  									'options' : v.options,
+  									'option' : null,
+  								});
+  							});
+  							
+                            $scope.save = function () {
+                            	 
+                            	 var sig = [];
+                            	 angular.forEach($scope.variants, function (v) {
+                            	 	var d = {};
+                            	 	d[v.name] = v.option;
+                            	 	sig.push(d);
+                            	 });
+                            	 
+                            	 var parent = that.entity['key'];
+                            	 
+                            	 Endpoint.post('read_signature', '39', {
+                            	 	'variant_signature' : sig,
+                            	 	'parent' : parent,
+                            	 }).success(function (data) {
+                            	 	
+                            	 	data.entity.variant_signature = sig;
+                            	 	data.entity.parent = parent;
+                            	 	
+                            	 	that.manageInstance(data.entity);
+                            	 	
+                            	 	$scope.cancel();
+                            	 	
+                            	 });
+                            	 
+                            };
+
+                            $scope.cancel = function () {
+                                $modalInstance.dismiss('cancel');
+                            };
+
+                        }
+                    });
+        	  	
+        	  },
       		 
       		
     	};
@@ -132,8 +216,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
-			         {
- 
+			         { 
 			            this.update_mode = true;
 			            
 			            this.uploadConfig = {
