@@ -74,11 +74,14 @@ class UpdateWrite(event.Plugin):
 class Delete(event.Plugin):
   
   def run(self, context):
-    # @todo How do we handle over 1k records in the situation below?
-    context.tmp['delete_images'] = context.models['36'].query(ancestor=context.entities['35'].key).fetch()
-    if len(context.tmp['delete_images']):
-      ndb.delete_multi([image.key for image in context.tmp['delete_images']])
-      context.blob_delete = [image.image for image in context.tmp['delete_images']]
+    delete = True
+    while delete:
+      delete_images = context.models['36'].query(ancestor=context.entities['35'].key).fetch()
+      if len(delete_images):
+        context.blob_delete.extend([image.image for image in delete_images])  # We should strive to execute all data manipulation operations inside a transaction (in this example, blobstore.delete())!
+        ndb.delete_multi([image.key for image in delete_images])
+      else:
+        delete = False
 
 
 class UploadImagesSet(event.Plugin):

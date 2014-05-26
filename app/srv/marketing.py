@@ -74,27 +74,38 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'publish'),
                               Action.build_key('35', 'discontinue'),
                               Action.build_key('35', 'log_message'),
+                              Action.build_key('35', 'index'),
+                              Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'duplicate'),
-                              Action.build_key('35', 'upload_images')], False, 'context.entity.namespace_entity.state != "active"'),
+                              Action.build_key('35', 'upload_images'),
+                              Action.build_key('35', 'process_images')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('35', [Action.build_key('35', 'update'),
                               Action.build_key('35', 'lock'),
                               Action.build_key('35', 'upload_images')], False 'context.entity.state != "unpublished"'),
-      ActionPermission('35', [Action.build_key('35', 'publish')], False 'True'),
-      ActionPermission('35', [Action.build_key('35', 'publish')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "published"'),
+      ActionPermission('35', [Action.build_key('35', 'delete'),
+                              Action.build_key('35', 'publish'),
+                              Action.build_key('35', 'index'),
+                              Action.build_key('35', 'unindex'),
+                              Action.build_key('35', 'process_images')], False 'True'),
       ActionPermission('35', [Action.build_key('35', 'discontinue'),
                               Action.build_key('35', 'duplicate')], False 'context.entity.state != "published"'),
-      ActionPermission('35', [Action.build_key('35', 'discontinue')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "discontinued"'),
-      ActionPermission('35', [Action.build_key('35', 'process_images')], False, 'True'),
-      ActionPermission('35', [Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
-      ActionPermission('35', [Action.build_key('35', 'delete')], False, 'True'),
+      ActionPermission('35', [Action.build_key('35', 'read')], True, 'context.entity.state == "published" or context.entity.state == "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.entity._has_expired and context.user._is_taskqueue'),
+      ActionPermission('35', [Action.build_key('35', 'publish')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "published"'),
+      ActionPermission('35', [Action.build_key('35', 'discontinue')], True '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "discontinued"'),
+      ActionPermission('35', [Action.build_key('35', 'log_message')], True 'context.user._is_taskqueue or context.user._root_admin'),
+      ActionPermission('35', [Action.build_key('35', 'index'),
+                              Action.build_key('35', 'unindex'),
+                              Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
       FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
                       'context.entity.state != "unpublished"'),
       FieldPermission('35', ['state'], True, None,
-                      '(context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued")'),
+                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued")'),
+      FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
+                      'context.entity.state == "published" or context.entity.state == "discontinued"')
       FieldPermission('35', ['_records.note'], True, True,
                       'context.user._root_admin'),
       FieldPermission('35', ['_records.note'], False, False,
@@ -202,6 +213,7 @@ class Catalog(ndb.BaseExpando):
         ]
       ),
     Action(
+      # marketing.Delete() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'delete'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
@@ -395,6 +407,34 @@ class Catalog(ndb.BaseExpando):
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'index'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.SearchWrite()
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'unindex'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.SearchDelete()
         ]
       ),
     Action(
