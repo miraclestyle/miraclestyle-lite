@@ -6,6 +6,7 @@ Created on Apr 15, 2014
 '''
 
 import copy
+import math
 
 from app import ndb, settings, memcache, util
 from app.srv import event
@@ -75,10 +76,11 @@ class Delete(event.Plugin):
   
   def run(self, context):
     delete = True
+    # @todo Do we need to delete products and their containers here!?
     while delete:
       delete_images = context.models['36'].query(ancestor=context.entities['35'].key).fetch()
       if len(delete_images):
-        context.blob_delete.extend([image.image for image in delete_images])  # We should strive to execute all data manipulation operations inside a transaction (in this example, blobstore.delete())!
+        context.blob_delete.extend([image.image for image in delete_images])
         ndb.delete_multi([image.key for image in delete_images])
       else:
         delete = False
@@ -141,6 +143,7 @@ class SearchWrite(event.Plugin):
   
   kind_id = ndb.SuperStringProperty('5', indexed=False)
   index_name = ndb.SuperStringProperty('6', indexed=False)
+  documents_per_index = ndb.SuperIntegerProperty('7', indexed=False)
   
   def run(self, context):
     if self.kind_id != None:
@@ -154,7 +157,7 @@ class SearchWrite(event.Plugin):
       index_name = namespace + '-' + kind_id
     else:
       index_name = kind_id
-    documents = []  # If we put products here as well, than care must be taken not to have more than 200 items of total for single index write!
+    documents = []
     doc_id = context.entities[kind_id].key_urlsafe
     fields = []
     fields.append(search.AtomField(name='key', value=context.entities[kind_id].key_urlsafe))
@@ -175,9 +178,47 @@ class SearchWrite(event.Plugin):
     #fields.append(search.NumberField(name='seller_feedback', value=context.entities[kind_id].namespace_entity.feedback))
     documents.append(search.Document(doc_id=doc_id, fields=fields))
     # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!
-    if doc_id != None and len(fields):
-      try:
-        index = search.Index(name=index_name)
-        index.put(documents)  # Batching puts is more efficient than adding documents one at a time.
-      except:
-        pass
+    if len(documents):
+      documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
+      for i in range(0, documents_per_cycle+1):
+        documents_partition = documents[self.documents_per_index*i:self.documents_per_index*(i+1)]
+        if documents_partition:
+          try:
+            index = search.Index(name=index_name)
+            index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
+          except:
+            pass
+
+
+class SearchDelete(event.Plugin):
+  
+  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  index_name = ndb.SuperStringProperty('6', indexed=False)
+  documents_per_index = ndb.SuperIntegerProperty('7', indexed=False)
+  
+  def run(self, context):
+    if self.kind_id != None:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
+      index_name = namespace + '-' + kind_id
+    else:
+      index_name = kind_id
+    documents = []
+    doc_id = context.entities[kind_id].key_urlsafe
+    documents.append(doc_id)
+    # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!
+    if len(documents):
+      documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
+      for i in range(0, documents_per_cycle+1):
+        documents_partition = documents[self.documents_per_index*i:self.documents_per_index*(i+1)]
+        if documents_partition:
+          try:
+            index = search.Index(name=index_name)
+            index.delete(documents_partition)  # Batching deletes is more efficient than handling them one at a time.
+          except:
+            pass

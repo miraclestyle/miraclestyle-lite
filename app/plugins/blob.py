@@ -5,8 +5,6 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import cgi
-
 from google.appengine.ext import blobstore
 
 from app import ndb, settings, memcache, util
@@ -14,48 +12,12 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-_UNUSED_BLOBS_KEY = '_unused_blobs'
-
-def parse_blob_keys(field_storages):
-  if not isinstance(field_storages, (list, tuple)):
-    field_storages = [field_storages]
-  blob_keys = []
-  for field_storage in field_storages:
-    if isinstance(field_storage, blobstore.BlobKey):
-      blob_keys.append(field_storage)
-      continue
-    if isinstance(field_storage, cgi.FieldStorage):
-      try:
-        blob_info = blobstore.parse_blob_info(field_storage)
-        blob_keys.append(blob_info.key())
-      except blobstore.BlobInfoParseError as e:
-        pass
-  return blob_keys
-
-def blobs_to_preserve(blob_keys):
-  '''Marks a key or a list of keys to be preserved'''
-  if blob_keys:
-    unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-    blob_keys = parse_blob_keys(blob_keys)
-    for blob_key in blob_keys:
-      if blob_key in unused_blob_keys:
-        unused_blob_keys.remove(blob_key)
-    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
-
-def blobs_to_delete(blob_keys):
-  '''Marks a key or a list of keys for deletation'''
-  if blob_keys:
-    unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-    unused_blob_keys.extend(parse_blob_keys(blob_keys))
-    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, unused_blob_keys)
-
-def delete_unused_blobs():
-  '''This functon must be always called last in the application execution.'''
-  unused_blob_keys = memcache.temp_memory_get(_UNUSED_BLOBS_KEY, [])
-  if len(unused_blob_keys):
-    util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
-    blobstore.delete(unused_blob_keys)
-    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])  # @todo What are the possibilities of ditching memcache here in favor of context?
+def parse(blob_keys):
+  results = []
+  for blob_key in blob_keys:
+    if isinstance(blob_key, blobstore.BlobKey):
+      results.append(blob_key)
+  return results
 
 
 class URL(event.Plugin):
@@ -79,14 +41,14 @@ class Update(event.Plugin):
       blob_delete = get_attr(context, self.blob_delete)
     else:
       blob_delete = context.blob_delete
-    blobs_to_delete(blob_delete)
+    if blob_delete:
+      context.blob_unused.extend(parse(blob_delete))
     if self.blob_write:
       blob_write = get_attr(context, self.blob_write)
     else:
       blob_write = context.blob_write
-    blobs_to_preserve(blob_write)
-
-class Delete(event.Plugin):
-  
-  def run(self, context):
-    delete_unused_blobs()
+    if blob_write:
+      blob_write = parse(blob_write)
+      for blob_key in blob_write:
+        if blob_key in context.blob_unused:
+          context.blob_unused.remove(blob_key)

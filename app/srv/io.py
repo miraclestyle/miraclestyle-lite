@@ -5,9 +5,10 @@ Created on Dec 17, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import cgi
 import importlib
 
-from google.appengine.api import taskqueue
+from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, util
@@ -41,6 +42,7 @@ class Context():
     self.model = None
     self.models = None
     self.action = None
+    self.blob_unused = []
     # @todo Perhaps here we should put also self.user and retreave current session user?
   
   def error(self, key, value):
@@ -67,6 +69,23 @@ class Engine:
   def get_schema(cls):
     cls.init()
     return ndb.Model._kind_map
+  
+  @classmethod
+  def process_blob_input(cls, context, input):
+    for key, value in input.items():
+      if isinstance(value, cgi.FieldStorage):
+        if 'blob-key' in value.type_options:
+          try:
+            blob_info = blobstore.parse_blob_info(value)
+            context.blob_unused.append(blob_info.key())
+          except blobstore.BlobInfoParseError as e:
+            pass
+  
+  @classmethod
+  def process_blob_output(cls, context):
+    if len(context.blob_unused):
+      blobstore.delete(context.blob_unused)
+      context.blob_unused = []
   
   @classmethod
   def get_models(cls, context):
@@ -163,6 +182,7 @@ class Engine:
   @classmethod
   def run(cls, input):
     context = Context()
+    cls.process_blob_input(context, input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
       cls.init()
       cls.get_models(context)
@@ -185,4 +205,5 @@ class Engine:
         throw = False
       if throw:
         raise  # Here we raise all other unhandled exceptions!
+    cls.process_blob_output(context)  # This is the most efficient strategy to handle blobs we can think of!
     return context.output

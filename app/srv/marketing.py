@@ -410,31 +410,33 @@ class Catalog(ndb.BaseExpando):
         ]
       ),
     Action(
+      # marketing.SearchWrite() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'index'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
       _plugins=[
         common.Context(),
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.SearchWrite()
+        marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
+                              documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
         ]
       ),
     Action(
+      # marketing.SearchDelete() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'unindex'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
       _plugins=[
         common.Context(),
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.SearchDelete()
+        marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
+                               documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
         ]
       ),
     Action(
