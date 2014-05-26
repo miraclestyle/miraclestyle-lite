@@ -14,6 +14,8 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 
 def parse(blob_keys):
   results = []
+  if not isinstance(blob_keys, (list, tuple)):
+    blob_keys = [blob_keys]
   for blob_key in blob_keys:
     if isinstance(blob_key, blobstore.BlobKey):
       results.append(blob_key)

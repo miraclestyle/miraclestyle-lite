@@ -14,8 +14,7 @@ from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
 from app import settings, util, memcache
-from app.plugins import blob
- 
+
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
 
@@ -191,11 +190,7 @@ class Base(webapp2.RequestHandler):
   
     def initialize(self, request, response):
         super(Base, self).initialize(request, response)
-        for key, value in self.request.params.items():
-            if isinstance(value, cgi.FieldStorage):
-              if 'blob-key' in value.type_options:
-                  blob.blobs_to_delete(value)
-
+        
          
     def send_json(self, data):
         """ sends `data` to json format, accepts anything json compatible """
@@ -283,9 +278,6 @@ class Base(webapp2.RequestHandler):
             
             self.after()
         finally:
-            
-            # delete all blobs that were marked for deletation
-            blob.delete_unused_blobs()
             # support the memcache wrapper lib temporary variables, and release them upon request complete
             memcache._local.__release_local__()
          

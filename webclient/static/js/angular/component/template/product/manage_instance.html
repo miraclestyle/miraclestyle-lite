@@ -158,6 +158,40 @@
 			</div>
 		</div>
 	</div>
+	
+	
+	
+	<div ng-show="entity.id" accordion-group heading="Contents">
+		
+		 <div class="clearfix">
+			<div class="pull-right">
+				<button ng-show="rule.field._contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+			</div>
+		</div>
+		
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="content in entity._contents track by $index">
+					<td>{{content.title}}</td>
+					<td>
+						<span ng-show="rule.field._contents.writable">
+						<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
+						<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		 
+	</div>
+	
+	
 </div>
  
  

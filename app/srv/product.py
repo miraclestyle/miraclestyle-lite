@@ -231,25 +231,11 @@ class Instance(ndb.BaseExpando):
       key=Action.build_key('39', 'read'),
       arguments={
         'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
+        'parent': ndb.SuperKeyProperty(kind='38', required=True),
         },
       _plugins=[
         common.Context(),
         product.InstanceRead(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.39'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'old_read'),  # @todo Shall we remove this action?!
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
         product.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),

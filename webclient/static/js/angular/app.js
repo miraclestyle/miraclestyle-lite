@@ -444,7 +444,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		url : endpoint_url,
 		cached_post : function (key, action, model, data, success, config)
 		{
-			log('cache_post');
+ 
 			var loading_key = key + '_loading';
 			var loading = cache.get(loading_key);
 			var cached = cache.get(key);

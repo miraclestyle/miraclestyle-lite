@@ -51,7 +51,7 @@ class InstanceRead(event.Plugin):
     product_instance_key = build_key_from_signature(context)
     product_instance = product_instance_key.get()
     if not product_instance:
-      product_instance = context.model(key=product_instance_key)
+      raise event.TerminateAction('not_found_%s' % product_instance_key.urlsafe())
     context.entities[context.model.get_kind()] = product_instance
     context.values[context.model.get_kind()] = copy.deepcopy(product_instance)
 

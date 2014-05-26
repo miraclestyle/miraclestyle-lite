@@ -99,34 +99,44 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	 	
         	  },
         	  
-        	  'manageInstance' : function (instance)
+        	  'manageInstance' : function (instance, create)
         	  {
-        			return EntityEditor.update({
+        	  	    var that = this;
+     
+        	  	    var cfg = {
 	                	 'kind' : '39',
 	                	 'entity' : instance,
-	                	 'data' : {
-	                	 	'entity' : instance,
-	                	 },
-	                	 'scope' : {
-	                	   'form_info' : {'action' : Endpoint.url},
-				           'completed' : function (data)
-				        	{
-				        	 	this.entity._images = data['entity']['_images'];
-				        	},
-				           'removeImage' : function (image)
-				            {
-				        	 	this.entity._images.remove(image);
-				            },
-	                	 },
+	                	 'scope' : scope,
 	                	 'handle' : function (data)
 				         { 
 				            this.update_mode = true;
+				            
+				            this.uploadConfig = {
+				            	'args' : {
+				            		'parent' : that.entity.key,
+				            	}
+				            };
+				            
+				            if (create)
+				            {
+                            	this.entity.variant_signature = create['variant_signature'];
+	                            this.entity.parent = create['parent'];
+				            }
+				            
 				         },
 	                	 'templateUrl' : logic_template('product/manage_instance.html'),
-	                	 'args' : {
-	                	 	'key' : instance['key'],
-	                	 }
-	                });
+	                 
+	               };
+        	  	    
+        		  if (create) {
+        		  	cfg['args'] = create;
+        		  	EntityEditor.create(cfg);
+        		  }
+        		  else
+        		  {
+        		  	cfg['args'] = {'variant_signature' : instance['variant_signature'], 'parent' : that.entity.key};
+        		  	EntityEditor.update(cfg);
+        		  }
         	  },
         	  'newInstance' : function ()
         	  {
@@ -150,25 +160,29 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
   							
                             $scope.save = function () {
                             	 
-                            	 var sig = [];
+                            	 var variant_signature = [];
                             	 angular.forEach($scope.variants, function (v) {
                             	 	var d = {};
                             	 	d[v.name] = v.option;
-                            	 	sig.push(d);
+                            	 	variant_signature.push(d);
                             	 });
                             	 
-                            	 var parent = that.entity['key'];
+                            	 var parent = that.entity.key;
                             	 
-                            	 Endpoint.post('read_signature', '39', {
-                            	 	'variant_signature' : sig,
+                            	 Endpoint.post('read', '39', {
+                            	 	'variant_signature' : variant_signature,
                             	 	'parent' : parent,
                             	 }).success(function (data) {
                             	 	
-                            	 	data.entity.variant_signature = sig;
-                            	 	data.entity.parent = parent;
-                            	 	
-                            	 	that.manageInstance(data.entity);
-                            	 	
+                            	 	if (!data['entity'])
+                            	 	{ 
+	                            	 	that.manageInstance({}, {'variant_signature' : variant_signature, 'parent' : parent});
+                            	 	}
+                            	 	else
+                            	 	{
+                            	 		that.manageInstance(data.entity);
+                            	 	}
+                            	 	 
                             	 	$scope.cancel();
                             	 	
                             	 });
@@ -216,7 +230,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
-			         { 
+			         {
 			            this.update_mode = true;
 			            
 			            this.uploadConfig = {
@@ -224,6 +238,19 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 			            		'parent' : catalog_key,
 			            	}
 			            };
+			            
+			            var a = this;
+			      
+		                if (!a.live_entity._instances.length)
+		                {
+		        
+		                	Endpoint.post('read_instances', '38', a.live_entity).success(function (data) {
+		       
+			                	EntityEditor.update_entity(a, data);
+			                	
+			                });
+		                }
+		                
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('product/manage.html'),
