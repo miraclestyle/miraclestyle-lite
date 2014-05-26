@@ -131,6 +131,243 @@ class Category(ndb.BaseModel):
     ]
 
 
+class Instance(ndb.BaseExpando):
+  
+  _kind = 39
+  
+  variant_signature = ndb.SuperJsonProperty('1', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'code': ndb.SuperStringProperty('2'),
+    'availability': ndb.SuperStringProperty('3', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+    'description': ndb.SuperTextProperty('4'),
+    'unit_price': ndb.SuperDecimalProperty('5'),
+    'low_stock_quantity': ndb.SuperDecimalProperty('6', default='0.00'),
+    'weight': ndb.SuperDecimalProperty('7'),
+    'weight_uom': ndb.SuperKeyProperty('8', kind='19'),
+    'volume': ndb.SuperDecimalProperty('9'),
+    'volume_uom': ndb.SuperKeyProperty('10', kind='19')
+    }
+  
+  _global_role = GlobalRole(
+    permissions=[
+      ActionPermission('38', [Action.build_key('38', 'prepare'),
+                              Action.build_key('38', 'create'),
+                              Action.build_key('38', 'read'),
+                              Action.build_key('38', 'update'),
+                              Action.build_key('38', 'upload_images'),
+                              Action.build_key('38', 'delete')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
+      ]
+    )
+  
+  _actions = [
+    Action(
+      key=Action.build_key('39', 'prepare'),
+      arguments={
+        'parent': ndb.SuperKeyProperty(kind='38', required=True),
+        'upload_url': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        product.Prepare(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        blob.URL(gs_bucket_name=settings.PRODUCT_INSTANCE_BUCKET),
+        common.Set(dynamic_values={'output.entity': 'entities.39'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'create'),
+      arguments={
+        'variant_signature': ndb.SuperJsonProperty(required=True),
+        'code': ndb.SuperStringProperty(required=True),
+        'description': ndb.SuperTextProperty(required=True),
+        'unit_price': ndb.SuperDecimalProperty(required=True),
+        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+        'weight': ndb.SuperDecimalProperty(required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
+        'volume': ndb.SuperDecimalProperty(required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
+        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
+        'parent': ndb.SuperKeyProperty(kind='38', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        product.InstancePrepare(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'values.39.variant_signature': 'input.variant_signature',
+                                   'values.39.code': 'input.code',
+                                   'values.39.description': 'input.description',
+                                   'values.39.unit_price': 'input.unit_price',
+                                   'values.39.availability': 'input.availability',
+                                   'values.39.weight': 'input.weight',
+                                   'values.39.weight_uom': 'input.weight_uom',
+                                   'values.39.volume': 'input.volume',
+                                   'values.39.volume_uom': 'input.volume_uom',
+                                   'values.39.low_stock_quantity': 'input.low_stock_quantity'}),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='39', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.39'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'update'),
+      arguments={
+        '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
+        '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
+        'code': ndb.SuperStringProperty(required=True),
+        'description': ndb.SuperTextProperty(required=True),
+        'unit_price': ndb.SuperDecimalProperty(required=True),
+        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+        'weight': ndb.SuperDecimalProperty(required=True),
+        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
+        'volume': ndb.SuperDecimalProperty(required=True),
+        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
+        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
+        'key': ndb.SuperKeyProperty(kind='39', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'values.39.code': 'input.code',
+                                   'values.39.description': 'input.description',
+                                   'values.39.unit_price': 'input.unit_price',
+                                   'values.39.availability': 'input.availability',
+                                   'values.39.weight': 'input.weight',
+                                   'values.39.weight_uom': 'input.weight_uom',
+                                   'values.39.volume': 'input.volume',
+                                   'values.39.volume_uom': 'input.volume_uom',
+                                   'values.39.low_stock_quantity': 'input.low_stock_quantity',
+                                   'values.39._images': 'input._images',
+                                   'values.39._contents': 'input._contents'}),
+        product.UpdateSet(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        product.WriteImages(transactional=True),
+        product.WriteContents(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'upload_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='39', required=True),
+        '_images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.UploadImagesSet(),
+        rule.Write(transactional=True),
+        product.WriteImages(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_images', 'action_model': '39'},
+                         dynamic_data={'key': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+     Action(
+      key=Action.build_key('39', 'process_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='39', required=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.ProcessImages(transactional=True),
+        rule.Write(transactional=True),
+        product.WriteImages(transactional=True),
+        log.Write(transactional=True),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('39', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='39', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        product.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        product.DeleteImages(transactional=True),
+        product.DeleteContents(transactional=True),
+        common.Delete(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      )
+    ]
+
 class Template(ndb.BaseExpando):
   
   _kind = 38
@@ -475,243 +712,5 @@ class Template(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
       _plugins=[]
-      )
-    ]
-
-
-class Instance(ndb.BaseExpando):
-  
-  _kind = 39
-  
-  variant_signature = ndb.SuperJsonProperty('1', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'code': ndb.SuperStringProperty('2'),
-    'availability': ndb.SuperStringProperty('3', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-    'description': ndb.SuperTextProperty('4'),
-    'unit_price': ndb.SuperDecimalProperty('5'),
-    'low_stock_quantity': ndb.SuperDecimalProperty('6', default='0.00'),
-    'weight': ndb.SuperDecimalProperty('7'),
-    'weight_uom': ndb.SuperKeyProperty('8', kind='19'),
-    'volume': ndb.SuperDecimalProperty('9'),
-    'volume_uom': ndb.SuperKeyProperty('10', kind='19')
-    }
-  
-  _global_role = GlobalRole(
-    permissions=[
-      ActionPermission('38', [Action.build_key('38', 'prepare'),
-                              Action.build_key('38', 'create'),
-                              Action.build_key('38', 'read'),
-                              Action.build_key('38', 'update'),
-                              Action.build_key('38', 'upload_images'),
-                              Action.build_key('38', 'delete')], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
-      ]
-    )
-  
-  _actions = [
-    Action(
-      key=Action.build_key('39', 'prepare'),
-      arguments={
-        'parent': ndb.SuperKeyProperty(kind='38', required=True),
-        'upload_url': ndb.SuperStringProperty()
-        },
-      _plugins=[
-        common.Context(),
-        product.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        blob.URL(gs_bucket_name=settings.PRODUCT_INSTANCE_BUCKET),
-        common.Set(dynamic_values={'output.entity': 'entities.39'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'create'),
-      arguments={
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'code': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        product.InstancePrepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'values.39.variant_signature': 'input.variant_signature',
-                                   'values.39.code': 'input.code',
-                                   'values.39.description': 'input.description',
-                                   'values.39.unit_price': 'input.unit_price',
-                                   'values.39.availability': 'input.availability',
-                                   'values.39.weight': 'input.weight',
-                                   'values.39.weight_uom': 'input.weight_uom',
-                                   'values.39.volume': 'input.volume',
-                                   'values.39.volume_uom': 'input.volume_uom',
-                                   'values.39.low_stock_quantity': 'input.low_stock_quantity'}),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'read'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        product.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.39'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'update'),
-      arguments={
-        '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
-        'code': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'key': ndb.SuperKeyProperty(kind='39', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        product.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'values.39.code': 'input.code',
-                                   'values.39.description': 'input.description',
-                                   'values.39.unit_price': 'input.unit_price',
-                                   'values.39.availability': 'input.availability',
-                                   'values.39.weight': 'input.weight',
-                                   'values.39.weight_uom': 'input.weight_uom',
-                                   'values.39.volume': 'input.volume',
-                                   'values.39.volume_uom': 'input.volume_uom',
-                                   'values.39.low_stock_quantity': 'input.low_stock_quantity',
-                                   'values.39._images': 'input._images',
-                                   'values.39._contents': 'input._contents'}),
-        product.UpdateSet(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        product.WriteImages(transactional=True),
-        product.WriteContents(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'upload_images'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True),
-        '_images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        product.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        product.UploadImagesSet(),
-        rule.Write(transactional=True),
-        product.WriteImages(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_images', 'action_model': '39'},
-                         dynamic_data={'key': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
-      ),
-     Action(
-      key=Action.build_key('39', 'process_images'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        product.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        product.ProcessImages(transactional=True),
-        rule.Write(transactional=True),
-        product.WriteImages(transactional=True),
-        log.Write(transactional=True),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('39', 'delete'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        product.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        product.DeleteImages(transactional=True),
-        product.DeleteContents(transactional=True),
-        common.Delete(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
       )
     ]
