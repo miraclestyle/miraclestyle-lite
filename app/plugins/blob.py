@@ -55,7 +55,7 @@ def delete_unused_blobs():
   if len(unused_blob_keys):
     util.logger('DELETED BLOBS: %s' % len(unused_blob_keys))
     blobstore.delete(unused_blob_keys)
-    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])
+    memcache.temp_memory_set(_UNUSED_BLOBS_KEY, [])  # @todo What are the possibilities of ditching memcache here in favor of context?
 
 
 class URL(event.Plugin):
@@ -85,3 +85,8 @@ class Update(event.Plugin):
     else:
       blob_write = context.blob_write
     blobs_to_preserve(blob_write)
+
+class Delete(event.Plugin):
+  
+  def run(self, context):
+    delete_unused_blobs()
