@@ -4,6 +4,7 @@ Created on Apr 15, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import json
 import copy
 import hashlib
@@ -42,15 +43,15 @@ class InstancePrepare(event.Plugin):
     product_instance_key = build_key_from_signature(context)
     context.entities[context.model.get_kind()] = context.model(key=product_instance_key)
     context.values[context.model.get_kind()] = context.model(key=product_instance_key)
-    
-    
-class InstanceReadSignature(event.Plugin):
+
+
+class InstanceRead(event.Plugin):
   
   def run(self, context):
     product_instance_key = build_key_from_signature(context)
     product_instance = product_instance_key.get()
     if not product_instance:
-       product_instance = context.model(key=product_instance_key)
+      product_instance = context.model(key=product_instance_key)
     context.entities[context.model.get_kind()] = product_instance
     context.values[context.model.get_kind()] = copy.deepcopy(product_instance)
 
@@ -74,7 +75,7 @@ class Read(event.Plugin):
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
-class ReadInstances(event.Plugin):
+class TemplateReadInstances(event.Plugin):
   
   page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
   

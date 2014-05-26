@@ -153,7 +153,7 @@ class Instance(ndb.BaseExpando):
   
   _virtual_fields = {
     '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
-    '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
+    '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -228,14 +228,14 @@ class Instance(ndb.BaseExpando):
         ]
       ),
     Action(
-      key=Action.build_key('39', 'read_signature'), # attempts to fetch a product instance based on signature and template provided
+      key=Action.build_key('39', 'read'),
       arguments={
         'variant_signature': ndb.SuperJsonProperty(required=True),
         'parent': ndb.SuperKeyProperty(kind='38', required=True)
         },
       _plugins=[
         common.Context(),
-        product.InstanceReadSignature(),
+        product.InstanceRead(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
@@ -243,7 +243,7 @@ class Instance(ndb.BaseExpando):
         ]
       ),
     Action(
-      key=Action.build_key('39', 'read'),
+      key=Action.build_key('39', 'old_read'),  # @todo Shall we remove this action?!
       arguments={
         'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
@@ -387,6 +387,7 @@ class Instance(ndb.BaseExpando):
         ]
       )
     ]
+
 
 class Template(ndb.BaseExpando):
   
@@ -719,7 +720,7 @@ class Template(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        product.ReadInstances(page_size=settings.SEARCH_PAGE),
+        product.TemplateReadInstances(page_size=settings.SEARCH_PAGE),
         rule.Read(),
         common.Set(dynamic_values={'output.entity': 'entities.38',
                                    'output.instances_cursor': 'tmp.instances_cursor',

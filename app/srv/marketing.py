@@ -434,6 +434,7 @@ class Catalog(ndb.BaseExpando):
         common.Context(),
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
         marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
                                documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
         ]
