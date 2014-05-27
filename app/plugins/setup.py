@@ -212,13 +212,13 @@ class DomainSetup(Setup):
     # We use log plugin for logging. @todo Decide if this this is optimal solution!
     self.context.log_entities.append((entity, ))
     self.context.tmp['log_write'].run(self.context)
-    from app.srv import notify
-    custom_notify = notify.CustomNotify(name='Send domain link after domain is completed',
-                                        action=event.Action.build_key('57', 'install'),
-                                        message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
-                                        message_sender=settings.NOTIFY_EMAIL,
-                                        message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
-                                        message_recievers=self.create_domain_notify_message_recievers)
+    CustomTemplate = self.context.models['59']
+    custom_notify = CustomTemplate(name='Send domain link after domain is completed',
+                                   action=event.Action.build_key('57', 'install'),
+                                   message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
+                                   message_sender=settings.NOTIFY_EMAIL,
+                                   message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
+                                   message_recievers=self.create_domain_notify_message_recievers)
     self.context.tmp['caller_entity'] = domain
     self.context.tmp['caller_user'] = self.context.user
     custom_notify.run(self.context)
