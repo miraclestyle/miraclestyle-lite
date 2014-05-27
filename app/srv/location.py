@@ -65,7 +65,7 @@ class Country(ndb.BaseModel):
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='15', repeated=True)},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])}
             },
           indexes=[
@@ -123,7 +123,7 @@ class CountrySubdivision(ndb.BaseModel):
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='16')},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='16', repeated=True)},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')}

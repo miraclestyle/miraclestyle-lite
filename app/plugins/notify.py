@@ -23,12 +23,12 @@ class Set(event.Plugin):
     templates = []
     for template in input_templates:
       klass = MailTemplate
-      if template.get('type') == 'HttpTemplate':
+      if template.get('kind') == '63':
         klass = HttpTemplate
       fields = klass.get_fields()
       for key,value in template.items():
-        field = fields.get(key)
-        if field != None:
+        if key in fields:
+          field = fields.get(key)
           template[key] = field.format(value) # call format functions on simpleton json values
         else:
           del template[key]

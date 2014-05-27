@@ -463,10 +463,12 @@ class DomainUser(ndb.BaseExpando):
         'search': ndb.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='8', repeated=True)},
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])}
             },
           indexes=[
+            {'filter' : ['key']},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['state'],

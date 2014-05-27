@@ -118,7 +118,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			          
 			            if (id != '')
 			            {
-			            	var find = [{'value' : id, 'operator': (select2.opts.multiple ? 'IN' : '=='), 'field' : 'key'}];
+			            	var find = [{'value' : id, 'operator': 'IN', 'field' : 'key'}];
 			            }
 			        	else
 			        	{
@@ -934,6 +934,14 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    				args['domain'] = $rootScope.nav.domain.key;
    			}
    		}),
+   		
+   		'domain_user' : Select2Options.factory({
+   			kind : '8',
+   			args_callback : function (element, args)
+   			{
+   				args['domain'] = $rootScope.nav.domain.key;
+   			}
+   	    }),
    
    		'units' : Select2Options.factory({
    			kind : '19',

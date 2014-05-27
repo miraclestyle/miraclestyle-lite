@@ -1,0 +1,63 @@
+<form ng-submit="save()" name="container.main">
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+  	<h2 class="fieldset">
+		 <span class="fieldset-text">General</span>
+	 </h2>
+ 
+	 <div class="form-control">
+		<label class="form-label">Message Sender</label>
+		<div class="form-input">
+			<input 
+			       name="message_sender" 
+			       ng-required="true" 
+			       ui-select2="select2Options.domain_user"
+			       ng-model="entity.message_sender"
+			       data-placeholder="Select a domain user" />
+		</div>
+	</div>
+	 
+	 <div class="form-control">
+		<label class="form-label">Message Reciever</label>
+		<div class="form-input">
+			<input 
+			       name="message_reciever" 
+			       ng-required="true" 
+			       ui-select2="select2Options.role"
+			       ng-model="entity.message_reciever"
+			       data-placeholder="Select a role" />
+		</div>
+	</div>
+	
+	 <div class="form-control">
+		<label class="form-label">Subject</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <input name="subject" 
+					 		ng-required="true" 
+					 		class="text-input" type="text" ng-model="entity.message_subject" />
+				</div>
+			</div>
+		</div>
+	  
+	  <div class="form-control">
+			<label class="form-label">Body</label>
+			<div class="form-input">
+				<div class="form-text">
+					 <textarea name="body" ng-required="true" 
+					 		 class="text-input" ng-model="entity.message_body"></textarea>
+				</div>
+			</div>
+		</div>
+</div>
+</div>
+<div class="modal-footer">
+	<button class="button">
+		Save
+	</button>
+	<button type="button" class="button" ng-click="cancel()">
+		Cancel
+	</button>
+</div>
+</form>

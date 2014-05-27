@@ -100,7 +100,7 @@ class Category(ndb.BaseModel):
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'searchable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='17')},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='17', repeated=True)},
             'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },

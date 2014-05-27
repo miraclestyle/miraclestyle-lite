@@ -92,7 +92,7 @@ class Unit(ndb.BaseExpando):
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='19')},
+            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='19', repeated=True)},
             'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyFromPathProperty(kind='18')}
             },

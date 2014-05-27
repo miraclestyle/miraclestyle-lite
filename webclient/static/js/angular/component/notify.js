@@ -14,22 +14,87 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
     		 }
     		 
     	});
+    	
+    	var TYPES = {
+    		'63' : {
+    			'label' : 'Http',
+    			'sys' : 'http',
+    		},
+    		'58' : {
+    			'label' : 'Mail',
+    			'sys' : 'mail',
+    		},
+    	};
     	  
         var scope = {
-         	'modes' : [{'name' : 'Mail', 'kind' : 58}, {'name' : 'Http', 'kind' : 59}],
-         	'actions' : actions,
-         	'changeKind' : function ()
-         	{
-         		var that = this;
-         		Endpoint.post('prepare', this.options['kind'], this.entity).success(function (data) {
-         			
-         			EntityEditor.update_entity(that, data);
-         			
-         			that.roles = data.roles;
-			        that.users = data.users;
-			        that.options['kind'] = data['entity']['kind'];
-         		});
-         	},
+         	 'actions' : actions,
+         	 'removeTemplate' : function (template)
+        	 {
+        	 	this.entity.templates.remove(template);
+        	 },
+        	 'createTemplate' : function ()
+        	 {
+        	 	
+        	 	var that = this;
+        	 	 
+        	 	var modalInstance = $modal.open({
+                        templateUrl: logic_template('notify/create.html'),
+                        controller: function ($scope, $modalInstance, RuleEngine) {
+ 
+                            $scope.entity = {};
+                            $scope.types = TYPES;
+                  
+                            $scope.save = function () {
+                                $scope.cancel();
+                            	 
+            				    that.manageTemplate($scope.entity, 1);
+            				   
+                            };
+
+                            $scope.cancel = function () {
+                                $modalInstance.dismiss('cancel');
+                            };
+
+                        }
+                    });
+        	 },
+        	 'manageTemplate' : function (template, create) { 
+        	 	
+        	 	var that = this;
+        	 	var sys = TYPES[template.kind]['sys'];
+        	 	
+        	 	var modalInstance = $modal.open({
+                        templateUrl: logic_template('notify/manage_'+sys+'.html'),
+                        controller: function ($scope, $modalInstance, RuleEngine) {
+ 
+                            $scope.entity = angular.copy(template);
+                      
+                            var new_template = create;
+             
+                            $scope.save = function () {
+           						 
+           						 if (!that.entity.templates) that.entity.templates = [];
+           						 
+                                 if (new_template)
+                                 {
+                                 	that.entity.templates.push($scope.entity);
+                                 }
+                                 else
+                                 {
+                                 	update(template, $scope.entity);
+                                 }
+                                 
+                                 $scope.cancel();
+                            };
+
+                            $scope.cancel = function () {
+                                $modalInstance.dismiss('cancel');
+                            };
+
+                        }
+                    });
+        	 	
+        	  },
     	};
     	
         return {

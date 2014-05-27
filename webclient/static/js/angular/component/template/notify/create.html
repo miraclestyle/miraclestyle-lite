@@ -5,16 +5,17 @@
   	<h2 class="fieldset">
 		 <span class="fieldset-text">General</span>
 	 </h2>
-  
-    <div class="form-control">
-		<label class="form-label">Name</label>
+ 
+	  <div class="form-control">
+		<label class="form-label">Template Type</label>
 		<div class="form-input">
-			<div class="form-text">
-				 <input name="option" ng-required="true" class="text-input" type="text" ng-model="option.name" />
-			</div>
+			<select name="kind" ui-select2 ng-model="entity.kind" data-placeholder="Select a type">
+				    <option value=""></option>
+				    <option ng-repeat="(key, type) in types" value="{{key}}">{{type.label}}</option>
+			</select>
 		</div>
-	</div>
-  
+	  </div>
+ 
 </div>
  
   
@@ -23,7 +24,7 @@
 <div class="modal-footer">
  
 	<button class="button">
-		Save
+		Create
 	</button>
 	<button type="button" class="button" ng-click="cancel()">
 		Cancel
