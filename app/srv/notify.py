@@ -116,7 +116,9 @@ class Template(ndb.BasePolyExpando):
         },
       _plugins=[
         common.Context(),
-        notify.Prepare(),
+        common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
+        common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
+        #notify.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         notify.Initiate(),
@@ -335,7 +337,9 @@ class MailNotify(Template):
         },
       _plugins=[
         common.Context(),
-        notify.Prepare(),
+        common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
+        common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
+        #notify.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         notify.MailSend()
@@ -558,7 +562,9 @@ class HttpNotify(Template):
         },
       _plugins=[
         common.Context(),
-        notify.Prepare(),
+        common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
+        common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
+        #notify.Prepare(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         notify.HttpSend()

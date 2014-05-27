@@ -74,11 +74,8 @@ class User(ndb.BaseExpando):
                              Action.build_key('0', 'search'),
                              Action.build_key('0', 'read_records'),
                              Action.build_key('0', 'sudo')], True, 'context.user._root_admin'),
-      ActionPermission('0', [Action.build_key('0', 'search'),
-                             Action.build_key('0', 'read_records'),
-                             Action.build_key('0', 'sudo')], False, 'not context.user._root_admin'),
       FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                            'ip_address', '_primary_email', '_records'], False, True, 'context.user._root_admin'),
+                            'ip_address', '_primary_email', '_records'], None, True, 'context.user._root_admin'),
       FieldPermission('0', ['state'], True, None, 'context.action.key_id_str == "sudo" and context.user._root_admin')
       ]
     )

@@ -52,7 +52,7 @@ class Catalog(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': ndb.SuperLocalStructuredProperty(CatalogImage, '7'),  # Replacing old ndb.SuperKeyProperty('7', kind='36') - # @todo Not sure if we need only image.image or entire entity here?
+    'cover': ndb.SuperLocalStructuredProperty(CatalogImage, '7'),
     'cost': ndb.SuperDecimalProperty('8')
     }
   

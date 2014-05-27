@@ -8,6 +8,8 @@ Created on Apr 15, 2014
 import copy
 import math
 
+from google.appengine.api import search
+
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -82,6 +84,7 @@ class Delete(event.Plugin):
       if len(delete_images):
         context.blob_delete.extend([image.image for image in delete_images])
         ndb.delete_multi([image.key for image in delete_images])
+        context.log_entities.extend([(image, ) for image in delete_images])
       else:
         delete = False
 
@@ -171,10 +174,10 @@ class SearchWrite(event.Plugin):
     fields.append(search.DateField(name='publish_date', value=context.entities[kind_id].publish_date))
     fields.append(search.DateField(name='discontinue_date', value=context.entities[kind_id].discontinue_date))
     fields.append(search.AtomField(name='state', value=context.entities[kind_id].state))
-    fields.append(search.AtomField(name='cover', value=context.entities[kind_id].cover.image))
+    fields.append(search.AtomField(name='cover', value=context.entities[kind_id].cover.serving_url))
     fields.append(search.AtomField(name='seller_key', value=context.entities[kind_id].seller_key))
     fields.append(search.TextField(name='seller_name', value=context.entities[kind_id].namespace_entity.name))
-    fields.append(search.AtomField(name='seller_logo', value=context.entities[kind_id].namespace_entity.logo.image))
+    fields.append(search.AtomField(name='seller_logo', value=context.entities[kind_id].namespace_entity.logo.serving_url))
     #fields.append(search.NumberField(name='seller_feedback', value=context.entities[kind_id].namespace_entity.feedback))
     documents.append(search.Document(doc_id=doc_id, fields=fields))
     # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!

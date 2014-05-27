@@ -74,13 +74,15 @@ class Category(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('17', Action.build_key('17', 'update'), True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('17', Action.build_key('17', 'search'), True, 'True'),
-      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True, 'True')
+      ActionPermission('17', [Action.build_key('17', 'update'),
+                             Action.build_key('17', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, None, 'True'),
+      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
+                      'context.user._root_admin or context.user._is_taskqueue')
       ]
     )
   
-  _actions = [
+  _actions = [  # @todo Do we need read action here?
     Action(
       key=Action.build_key('17', 'update'),
       arguments={},
@@ -94,7 +96,7 @@ class Category(ndb.BaseModel):
       ),
     Action(
       key=Action.build_key('17', 'search'),
-      arguments={  #@todo Add default filter to list active ones.
+      arguments={  # @todo Add default filter to list active ones.
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'searchable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
@@ -140,15 +142,15 @@ class Instance(ndb.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'code': ndb.SuperStringProperty('2'),
-    'availability': ndb.SuperStringProperty('3', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-    'description': ndb.SuperTextProperty('4'),
-    'unit_price': ndb.SuperDecimalProperty('5'),
-    'low_stock_quantity': ndb.SuperDecimalProperty('6', default='0.00'),
-    'weight': ndb.SuperDecimalProperty('7'),
-    'weight_uom': ndb.SuperKeyProperty('8', kind='19'),
-    'volume': ndb.SuperDecimalProperty('9'),
-    'volume_uom': ndb.SuperKeyProperty('10', kind='19')
+    'description': ndb.SuperTextProperty('2'),
+    'unit_price': ndb.SuperDecimalProperty('3'),
+    'availability': ndb.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+    'code': ndb.SuperStringProperty('5'),
+    'weight': ndb.SuperDecimalProperty('6'),
+    'weight_uom': ndb.SuperKeyProperty('7', kind='19'),
+    'volume': ndb.SuperDecimalProperty('8'),
+    'volume_uom': ndb.SuperKeyProperty('9', kind='19'),
+    'low_stock_quantity': ndb.SuperDecimalProperty('10', default='0.00')
     }
   
   _virtual_fields = {
@@ -158,13 +160,33 @@ class Instance(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', [Action.build_key('38', 'prepare'),
-                              Action.build_key('38', 'create'),
-                              Action.build_key('38', 'read'),
-                              Action.build_key('38', 'update'),
-                              Action.build_key('38', 'upload_images'),
-                              Action.build_key('38', 'delete')], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
+      ActionPermission('39', [Action.build_key('39', 'prepare'),
+                              Action.build_key('39', 'create'),
+                              Action.build_key('39', 'read'),
+                              Action.build_key('39', 'update'),
+                              Action.build_key('39', 'upload_images'),
+                              Action.build_key('39', 'process_images'),
+                              Action.build_key('39', 'delete')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('39', [Action.build_key('39', 'create'),
+                              Action.build_key('39', 'update'),
+                              Action.build_key('39', 'upload_images')], False, 'context.entity.parent_entity.state != "unpublished"'),
+      ActionPermission('39', [Action.build_key('39', 'delete'),
+                              Action.build_key('39', 'process_images')], False, 'True'),
+      ActionPermission('39', [Action.build_key('39', 'read')], True, 'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
+      ActionPermission('39', [Action.build_key('39', 'delete'),
+                              Action.build_key('39', 'process_images')], True, 'context.user._is_taskqueue'),
+      FieldPermission('39', ['variant_signature', 'description', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents'], False, False,
+                      'context.entity.namespace_entity.state != "active"'),
+      FieldPermission('39', ['variant_signature', 'description', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents'], False, None,
+                      'context.entity.parent_entity.state != "unpublished"'),
+      FieldPermission('39', ['variant_signature', 'description', 'unit_price', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', '_images', '_contents'], None, True,
+                      'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
+      FieldPermission('39', ['variant_signature', 'description', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents'], None, True,
+                      'context.user._is_taskqueue or context.user._root_admin')
       ]
     )
   
@@ -412,12 +434,34 @@ class Template(ndb.BaseExpando):
                               Action.build_key('38', 'read'),
                               Action.build_key('38', 'update'),
                               Action.build_key('38', 'upload_images'),
+                              Action.build_key('38', 'process_images'),
                               Action.build_key('38', 'delete'),
                               Action.build_key('38', 'search'),
                               Action.build_key('38', 'read_records'),
                               Action.build_key('38', 'read_instances'),
                               Action.build_key('38', 'duplicate')], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', Action.build_key('38', 'process_images'), True, 'context.user._is_taskqueue')
+      ActionPermission('38', [Action.build_key('38', 'create'),
+                              Action.build_key('38', 'update'),
+                              Action.build_key('38', 'upload_images'),
+                              Action.build_key('38', 'duplicate')], False, 'context.entity.parent_entity.state != "unpublished"'),
+      ActionPermission('38', [Action.build_key('38', 'delete'),
+                              Action.build_key('38', 'process_images')], False, 'True'),
+      ActionPermission('38', [Action.build_key('38', 'read'),
+                              Action.build_key('38', 'read_instances')], True, 'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
+      ActionPermission('38', [Action.build_key('38', 'delete'),
+                              Action.build_key('38', 'process_images')], True, 'context.user._is_taskqueue'),
+      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents', '_variants', '_instances', '_records'], False, False,
+                      'context.entity.namespace_entity.state != "active"'),
+      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents', '_variants', '_instances', '_records'], False, None,
+                      'context.entity.parent_entity.state != "unpublished"'),
+      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', '_images', '_contents', '_variants', '_instances'], None, True,
+                      'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
+      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents', '_variants', '_instances', '_records'], None, True,
+                      'context.user._is_taskqueue or context.user._root_admin')
       ]
     )
   
