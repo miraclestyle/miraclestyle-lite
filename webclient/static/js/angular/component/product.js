@@ -98,7 +98,18 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     });
         	 	
         	  },
-        	  
+        	  'removeInstance' : function (instance)
+        	  {
+        	  	  var that = this;
+        	  	  EntityEditor.remove({
+        	  	  	kind : instance.kind,
+        	  	  	entity : instance,
+        	  	  	complete : function (entity)
+        	  	  	{
+        	  	  		that.entity._instances.remove(instance);
+        	  	  	}
+        	  	  });
+        	  },
         	  'manageInstance' : function (instance, create)
         	  {
         	  	    var that = this;
