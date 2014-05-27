@@ -231,7 +231,7 @@ class Instance(ndb.BaseExpando):
       key=Action.build_key('39', 'read'),
       arguments={
         'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True),
+        'parent': ndb.SuperKeyProperty(kind='38', required=True)
         },
       _plugins=[
         common.Context(),
