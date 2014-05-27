@@ -105,6 +105,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
      
         	  	    var cfg = {
 	                	 'kind' : '39',
+	                	 'close' : false,
 	                	 'entity' : instance,
 	                	 'scope' : scope,
 	                	 'handle' : function (data)
@@ -130,6 +131,14 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
         	  	    
         		  if (create) {
         		  	cfg['args'] = create;
+        		  	cfg['complete'] = function (entity)
+        		  	{
+        		  	    if (create)
+        		  	    {
+        		  	    	that.entity._instances.push(entity);
+        		  	    }
+        		  		
+        		  	};
         		  	EntityEditor.create(cfg);
         		  }
         		  else
@@ -239,14 +248,14 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 			            	}
 			            };
 			            
-			            var a = this;
+			            var ref = this;
 			      
-		                if (!a.live_entity._instances.length)
+		                if (!ref.live_entity._instances.length)
 		                {
 		        
-		                	Endpoint.post('read_instances', '38', a.live_entity).success(function (data) {
+		                	Endpoint.post('read_instances', '38', ref.live_entity).success(function (data) {
 		       
-			                	EntityEditor.update_entity(a, data);
+			                	ref.live_entity._instances = ref.entity._instances = data.entity._instances;
 			                	
 			                });
 		                }
