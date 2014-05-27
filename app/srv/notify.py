@@ -26,7 +26,7 @@ def render_template(template_as_string, values={}):
 
 class Template(ndb.BasePolyExpando):
   
-  _kind = 99
+  _kind = 81
   
   _default_indexed = False
 

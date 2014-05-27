@@ -91,7 +91,7 @@ class DomainSetup(Setup):
     permissions = []
     from app.srv import auth, nav, notify, marketing, product
     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget,
-               notify.Template, notify.MailNotify, notify.HttpNotify,
+               notify.Notification,
                marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
                product.Template, product.Images, product.Instance, product.Variants, product.Contents,
                ]

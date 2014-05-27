@@ -22,16 +22,17 @@ class Set(event.Plugin):
     input_templates = context.input.get('templates')
     templates = []
     for template in input_templates:
-      if template.get('type') == 'MailTemplate':
-        templates.append(MailTemplate(template.get('message_sender'),
-                                      template.get('message_reciever'),
-                                      template.get('message_subject'),
-                                      template.get('message_body')))
-      elif template.get('type') == 'HttpTemplate':
-        templates.append(HttpTemplate(template.get('message_sender'),
-                                      template.get('message_reciever'),
-                                      template.get('message_subject'),
-                                      template.get('message_body')))
+      klass = MailTemplate
+      if template.get('type') == 'HttpTemplate':
+        klass = HttpTemplate
+      fields = klass.get_fields()
+      for key,value in template.items():
+        field = fields.get(key)
+        if field != None:
+          template[key] = field.format(value) # call format functions on simpleton json values
+        else:
+          del template[key]
+      templates.append(klass(**template))
     context.values['61'].name = context.input.get('name')
     context.values['61'].action = context.input.get('action')
     context.values['61'].condition = context.input.get('condition')
