@@ -14,6 +14,32 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
+class Set(event.Plugin):
+  
+  def run(self, context):
+    MailTemplate = context.models['58']
+    HttpTemplate = context.models['63']
+    input_templates = context.input.get('templates')
+    templates = []
+    for template in input_templates:
+      if template.get('type') == 'MailTemplate':
+        templates.append(MailTemplate(template.get('message_sender'),
+                                      template.get('message_reciever'),
+                                      template.get('message_subject'),
+                                      template.get('message_body')))
+      elif template.get('type') == 'HttpTemplate':
+        templates.append(HttpTemplate(template.get('message_sender'),
+                                      template.get('message_reciever'),
+                                      template.get('message_subject'),
+                                      template.get('message_body')))
+    context.values['61'].name = context.input.get('name')
+    context.values['61'].action = context.input.get('action')
+    context.values['61'].condition = context.input.get('condition')
+    context.values['61'].active = context.input.get('active')
+    context.values['61'].templates = templates
+
+
+# @todo After tests confirm no problems, this plugin should be removed!
 class Prepare(event.Plugin):
   
   def run(self, context):
@@ -42,9 +68,10 @@ class Initiate(event.Plugin):
     caller_user_key = context.input.get('caller_user')
     caller_action_key = context.input.get('caller_action')
     context.tmp['caller_user'] = caller_user_key.get()
-    templates = context.model.query(context.model.active == True,
-                                    context.model.action == caller_action_key,
-                                    namespace=context.tmp['caller_user'].key_namespace).fetch()
-    if templates:
-      for template in templates:
-        template.run(context)
+    notifications = context.model.query(context.model.active == True,
+                                        context.model.action == caller_action_key,
+                                        namespace=context.tmp['caller_user'].key_namespace).fetch()
+    if notifications:
+      for notification in notifications:
+        for template in notification.templates:
+          template.run(context)
