@@ -41,9 +41,11 @@ class Country(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('15', Action.build_key('15', 'update'), True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('15', Action.build_key('15', 'search'), True, 'True'),
-      FieldPermission('15', ['code', 'name', 'active'], True, True, 'True')
+      ActionPermission('15', [Action.build_key('15', 'update'),
+                              Action.build_key('15', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      FieldPermission('15', ['code', 'name', 'active'], False, None, 'True'),
+      FieldPermission('15', ['code', 'name', 'active'], True, True,
+                      'context.user._root_admin or context.user._is_taskqueue')
       ]
     )
   
@@ -111,8 +113,10 @@ class CountrySubdivision(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('16', Action.build_key('16', 'search'), True, 'True'),
-      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'type_text', 'active'], True, True, 'True')
+      ActionPermission('16', [Action.build_key('16', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, None, 'True'),
+      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], True, True,
+                      'context.user._root_admin or context.user._is_taskqueue')
       ]
     )
   

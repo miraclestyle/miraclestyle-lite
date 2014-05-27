@@ -468,7 +468,7 @@ class DomainUser(ndb.BaseExpando):
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])}
             },
           indexes=[
-            {'filter' : ['key']},
+            {'filter': ['key']},
             {'filter': ['name'],
              'order_by': [['name', ['asc', 'desc']]]},
             {'filter': ['state'],

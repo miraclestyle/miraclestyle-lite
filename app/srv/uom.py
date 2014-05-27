@@ -56,10 +56,18 @@ class Unit(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('19', Action.build_key('19', 'update_currency'), True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('19', Action.build_key('19', 'update_unit'), True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('19', Action.build_key('19', 'search'), True, 'True'),
-      FieldPermission('19', ['name', 'symbol'], True, True, 'True')
+      ActionPermission('19', [Action.build_key('19', 'update_currency'),
+                              Action.build_key('19', 'update_unit'),
+                              Action.build_key('19', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+                             'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
+                             'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
+                             'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, None, 'True'),
+      FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+                             'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
+                             'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
+                             'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
+                      'context.user._root_admin or context.user._is_taskqueue')
       ]
     )
   
