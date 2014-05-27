@@ -22,6 +22,7 @@ class Set(event.Plugin):
     input_templates = context.input.get('templates')
     templates = []
     for template in input_templates:
+      template.pop('class_', None)
       klass = MailTemplate
       if template.get('kind') == '63':
         klass = HttpTemplate
@@ -29,7 +30,8 @@ class Set(event.Plugin):
       for key,value in template.items():
         if key in fields:
           field = fields.get(key)
-          template[key] = field.format(value) # call format functions on simpleton json values
+          if hasattr(field, 'format'):
+            template[key] = field.format(value) # call format functions on simpleton json values
         else:
           del template[key]
       templates.append(klass(**template))
