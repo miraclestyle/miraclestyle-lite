@@ -7,6 +7,7 @@ Created on Apr 15, 2014
 
 import copy
 import math
+import datetime
 
 from google.appengine.api import search
 
@@ -236,6 +237,55 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
+
+
+class CronPublish(event.Plugin):
+  
+  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  
+  def run(self, context):
+    Catalog = context.models['35']
+    catalogs = Catalog.query(Catalog.state == 'locked',
+                             Catalog.publish_date <= datetime.datetime.now(),
+                             namespace=context.namespace).fetch(limit=self.page_size)
+    for catalog in catalogs:
+      data = {'action_id': 'publish',
+              'action_model': '35',
+              'key': catalog.key.urlsafe()}
+      context.context.callback_payloads.append(('callback', data))
+
+
+class CronDiscontinue(event.Plugin):
+  
+  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  
+  def run(self, context):
+    Catalog = context.models['35']
+    catalogs = Catalog.query(Catalog.state == 'published',
+                             Catalog.discontinue_date <= datetime.datetime.now(),
+                             namespace=context.namespace).fetch(limit=self.page_size)
+    for catalog in catalogs:
+      data = {'action_id': 'discontinue',
+              'action_model': '35',
+              'key': catalog.key.urlsafe()}
+      context.context.callback_payloads.append(('callback', data))
+
+
+class CronDelete(event.Plugin):
+  
+  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  catalog_life = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=180)
+  
+  def run(self, context):
+    Catalog = context.models['35']
+    catalogs = Catalog.query(Catalog.state == 'discontinued',
+                             Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_life)),
+                             namespace=context.namespace).fetch(limit=self.page_size)
+    for catalog in catalogs:
+      data = {'action_id': 'delete',
+              'action_model': '35',
+              'key': catalog.key.urlsafe()}
+      context.context.callback_payloads.append(('callback', data))
 
 
 class SearchWrite(event.Plugin):

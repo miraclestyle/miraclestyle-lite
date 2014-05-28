@@ -626,7 +626,7 @@ class Domain(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
         log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
         log.Write(transactional=True),
         rule.Read(transactional=True),

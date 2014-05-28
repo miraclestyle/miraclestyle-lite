@@ -77,12 +77,13 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', [Action.build_key('35', 'update'),
                               Action.build_key('35', 'lock'),
                               Action.build_key('35', 'upload_images')], False, 'context.entity.state != "unpublished"'),
-      ActionPermission('35', [Action.build_key('35', 'delete'),
+      ActionPermission('35', [Action.build_key('35', 'process_images'),
+                              Action.build_key('35', 'delete'),
                               Action.build_key('35', 'publish'),
                               Action.build_key('35', 'sudo'),
                               Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
-                              Action.build_key('35', 'process_images')], False, 'True'),
+                              Action.build_key('35', 'cron')], False, 'True'),
       ActionPermission('35', [Action.build_key('35', 'discontinue'),
                               Action.build_key('35', 'duplicate')], False, 'context.entity.state != "published"'),
       ActionPermission('35', [Action.build_key('35', 'read')], True, 'context.entity.state == "published" or context.entity.state == "discontinued"'),
@@ -90,9 +91,10 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', [Action.build_key('35', 'publish')], True, 'context.user._is_taskqueue and context.entity.state != "published"'),
       ActionPermission('35', [Action.build_key('35', 'discontinue')], True, 'context.user._is_taskqueue and context.entity.state != "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'sudo')], True, 'context.user._root_admin'),
-      ActionPermission('35', [Action.build_key('35', 'index'),
+      ActionPermission('35', [Action.build_key('35', 'process_images'),
+                              Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
-                              Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
+                              Action.build_key('35', 'cron')], True, 'context.user._is_taskqueue'),
       FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
@@ -268,7 +270,7 @@ class Catalog(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         marketing.Delete(transactional=True),
         common.Delete(transactional=True),
@@ -389,11 +391,11 @@ class Catalog(ndb.BaseExpando):
         common.Context(),
         common.Read(),
         common.Set(static_values={'values.35.state': 'published'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
         log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
         log.Write(transactional=True),
         rule.Read(transactional=True),
@@ -455,7 +457,7 @@ class Catalog(ndb.BaseExpando):
         rule.Exec(),
         rule.Write(transactional=True),
         common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
         log.Entity(transactional=True,
                    dynamic_arguments={'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
                                       'message': 'input.message',
@@ -506,7 +508,7 @@ class Catalog(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
                               documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
@@ -530,7 +532,7 @@ class Catalog(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
                                documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
@@ -546,6 +548,22 @@ class Catalog(ndb.BaseExpando):
         ]
       ),
     Action(
+      key=Action.build_key('35', 'cron'),
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)  # @todo This is unlikely to be a definitive solution (how are we gonna run cron per domain?)!
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        marketing.CronPublish(page_size=10),
+        marketing.CronDiscontinue(page_size=10),
+        marketing.CronDelete(page_size=10, catalog_life=settings.CATALOG_LIFE),
+        callback.Exec(dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
       key=Action.build_key('35', 'duplicate'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
@@ -558,4 +576,4 @@ class Catalog(ndb.BaseExpando):
   def _has_expired(self):
     if not self.updated:
       return False
-    return (datetime.datetime.now()-self.updated) > datetime.timedelta(days=settings.CATALOG_LIFE)
+    return self.updated < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_LIFE))
