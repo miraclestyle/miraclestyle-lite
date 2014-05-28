@@ -15,6 +15,74 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
+def get_catalog_images(CatalogImage, catalog_key):
+  catalog_images = []
+  more = True
+  offset = 0
+  limit = 1000
+  while more:
+    entities = CatalogImage.query(ancestor=catalog_key).fetch(limit=limit, offset=offset)
+    if len(entities):
+      catalog_images.extend(entities)
+      offset = offset + limit
+    else:
+      more = False
+  return catalog_images
+
+
+def get_product_templates(Template, catalog_key=None, catalog_images=None, complete=True):
+  keys = []
+  templates = []
+  if catalog_images:
+    for catalog_image in catalog_images:
+      keys.extend([pricetag.product_template for pricetag in catalog_image.pricetags])
+    keys = list(set(keys))
+    templates = ndb.get_multi(keys)
+  elif catalog_key:
+    more = True
+    offset = 0
+    limit = 1000
+    while more:
+      entities = Template.query(ancestor=catalog_key).fetch(limit=limit, offset=offset)
+      if len(entities):
+        templates.extend(entities)
+        keys.extend([entity.key for entity in entities])
+        offset = offset + limit
+      else:
+        more = False
+  images = None
+  variants = None
+  contents = None
+  if complete:
+    images = ndb.get_multi([ndb.Key('73', str(key.id()), parent=key) for key in keys])
+    variants = ndb.get_multi([ndb.Key('74', str(key.id()), parent=key) for key in keys])
+    contents = ndb.get_multi([ndb.Key('75', str(key.id()), parent=key) for key in keys])
+  return {'templates': templates, 'images': images, 'variants': variants, 'contents': contents}
+
+
+def get_product_instances(Instance, template_keys, complete=True):
+  keys = []
+  instances = []
+  for template_key in template_keys:
+    more = True
+    offset = 0
+    limit = 1000
+    while more:
+      entities = Instance.query(ancestor=template_key).fetch(limit=limit, offset=offset)
+      if len(entities):
+        instances.extend(entities)
+        keys.extend([entity.key for entity in entities])
+        offset = offset + limit
+      else:
+        more = False
+  images = None
+  contents = None
+  if complete:
+    images = ndb.get_multi([ndb.Key('73', str(key.id()), parent=key) for key in keys])
+    contents = ndb.get_multi([ndb.Key('75', str(key.id()), parent=key) for key in keys])
+  return {'instances': instances, 'images': images, 'contents': contents}
+
+
 class Read(event.Plugin):
   
   read_from_start = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=False)
@@ -77,16 +145,31 @@ class UpdateWrite(event.Plugin):
 class Delete(event.Plugin):
   
   def run(self, context):
-    delete = True
-    # @todo Do we need to delete products and their containers here!?
-    while delete:
-      delete_images = context.models['36'].query(ancestor=context.entities['35'].key).fetch()
-      if len(delete_images):
-        context.blob_delete.extend([image.image for image in delete_images])
-        ndb.delete_multi([image.key for image in delete_images])
-        context.log_entities.extend([(image, ) for image in delete_images])
-      else:
-        delete = False
+    
+    def delete(entities):
+      ndb.delete_multi([entity.key for entity in entities])
+      context.log_entities.extend([(entity, ) for entity in entities])
+    
+    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
+    templates = get_product_templates(context.models['38'], catalog_key=context.entities['35'].key)
+    instances = get_product_instances(context.models['39'], [template.key for template in templates])
+    blob_templates_images = []
+    for image in templates['images']:
+      blob_templates_images.extend(image.images)
+    blob_instances_images = []
+    for image in instances['images']:
+      blob_instances_images.extend(image.images)
+    context.blob_delete.extend([image.image for image in blob_instances_images])
+    context.blob_delete.extend([image.image for image in blob_templates_images])
+    context.blob_delete.extend([image.image for image in catalog_images])
+    delete(instances['contents'])
+    delete(instances['images'])
+    delete(instances['instances'])
+    delete(templates['contents'])
+    delete(templates['variants'])
+    delete(templates['images'])
+    delete(templates['templates'])
+    delete(catalog_images)
 
 
 class UploadImagesSet(event.Plugin):
@@ -161,13 +244,11 @@ class SearchWrite(event.Plugin):
     else:
       index_name = kind_id
     documents = []
-    doc_id = context.entities[kind_id].key_urlsafe
     fields = []
     fields.append(search.AtomField(name='key', value=context.entities[kind_id].key_urlsafe))
     fields.append(search.AtomField(name='kind', value=kind_id))
     fields.append(search.AtomField(name='id', value=context.entities[kind_id].key_id_str))
-    if context.entities[kind_id].key_namespace != None:
-      fields.append(search.AtomField(name='namespace', value=context.entities[kind_id].key_namespace))
+    fields.append(search.AtomField(name='namespace', value=context.entities[kind_id].key_namespace))
     fields.append(search.DateField(name='created', value=context.entities[kind_id].created))
     fields.append(search.DateField(name='updated', value=context.entities[kind_id].updated))
     fields.append(search.TextField(name='name', value=context.entities[kind_id].name))
@@ -179,8 +260,22 @@ class SearchWrite(event.Plugin):
     fields.append(search.TextField(name='seller_name', value=context.entities[kind_id].namespace_entity.name))
     fields.append(search.AtomField(name='seller_logo', value=context.entities[kind_id].namespace_entity.logo.serving_url))
     #fields.append(search.NumberField(name='seller_feedback', value=context.entities[kind_id].namespace_entity.feedback))
-    documents.append(search.Document(doc_id=doc_id, fields=fields))
-    # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!
+    documents.append(search.Document(doc_id=context.entities[kind_id].key_urlsafe, fields=fields))
+    def index_product_template(template):
+      fields = []
+      fields.append(search.AtomField(name='key', value=template.key_urlsafe))
+      fields.append(search.AtomField(name='kind', value=template.get_kind()))
+      fields.append(search.AtomField(name='id', value=template.key_id_str))
+      fields.append(search.AtomField(name='namespace', value=template.key_namespace))
+      fields.append(search.AtomField(name='product_category', value=template.product_category.urlsafe()))
+      fields.append(search.TextField(name='name', value=template.name))
+      fields.append(search.HtmlField(name='description', value=template.description))
+      fields.append(search.AtomField(name='code', value=template.code))
+      return search.Document(doc_id=template.key_urlsafe, fields=fields)
+    catalog_images = get_catalog_images(context.models['36'], context.entities[kind_id].key)
+    templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False)
+    for template in templates['templates']:
+      documents.append(index_product_template(template))
     if len(documents):
       documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
       for i in range(0, documents_per_cycle+1):
@@ -212,9 +307,11 @@ class SearchDelete(event.Plugin):
     else:
       index_name = kind_id
     documents = []
-    doc_id = context.entities[kind_id].key_urlsafe
-    documents.append(doc_id)
-    # We need indexing of all individual products that catalog references, and if we plan doing it here than this plugin has to run in tasqueue!!
+    documents.append(context.entities[kind_id].key_urlsafe)
+    catalog_images = get_catalog_images(context.models['36'], context.entities[kind_id].key)
+    templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False)
+    for template in templates['templates']:
+      documents.append(template.key_urlsafe)
     if len(documents):
       documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
       for i in range(0, documents_per_cycle+1):
