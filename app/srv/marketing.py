@@ -67,33 +67,29 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'create'),
                               Action.build_key('35', 'read'),
                               Action.build_key('35', 'update'),
-                              Action.build_key('35', 'delete'),
+                              Action.build_key('35', 'upload_images'),
                               Action.build_key('35', 'search'),
                               Action.build_key('35', 'read_records'),
                               Action.build_key('35', 'lock'),
-                              Action.build_key('35', 'publish'),
                               Action.build_key('35', 'discontinue'),
                               Action.build_key('35', 'log_message'),
-                              Action.build_key('35', 'index'),
-                              Action.build_key('35', 'unindex'),
-                              Action.build_key('35', 'duplicate'),
-                              Action.build_key('35', 'upload_images'),
-                              Action.build_key('35', 'process_images')], False, 'context.entity.namespace_entity.state != "active"'),
+                              Action.build_key('35', 'duplicate')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('35', [Action.build_key('35', 'update'),
                               Action.build_key('35', 'lock'),
                               Action.build_key('35', 'upload_images')], False, 'context.entity.state != "unpublished"'),
       ActionPermission('35', [Action.build_key('35', 'delete'),
                               Action.build_key('35', 'publish'),
+                              Action.build_key('35', 'sudo'),
                               Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'process_images')], False, 'True'),
       ActionPermission('35', [Action.build_key('35', 'discontinue'),
                               Action.build_key('35', 'duplicate')], False, 'context.entity.state != "published"'),
       ActionPermission('35', [Action.build_key('35', 'read')], True, 'context.entity.state == "published" or context.entity.state == "discontinued"'),
-      ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.entity._has_expired and context.user._is_taskqueue'),
-      ActionPermission('35', [Action.build_key('35', 'publish')], True, '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "published"'),
-      ActionPermission('35', [Action.build_key('35', 'discontinue')], True, '(context.user._is_taskqueue or context.user._root_admin) and context.entity.state != "discontinued"'),
-      ActionPermission('35', [Action.build_key('35', 'log_message')], True, 'context.user._is_taskqueue or context.user._root_admin'),
+      ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.user._is_taskqueue and context.entity._has_expired'),
+      ActionPermission('35', [Action.build_key('35', 'publish')], True, 'context.user._is_taskqueue and context.entity.state != "published"'),
+      ActionPermission('35', [Action.build_key('35', 'discontinue')], True, 'context.user._is_taskqueue and context.entity.state != "discontinued"'),
+      ActionPermission('35', [Action.build_key('35', 'sudo')], True, 'context.user._root_admin'),
       ActionPermission('35', [Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'process_images')], True, 'context.user._is_taskqueue'),
@@ -103,7 +99,7 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
                       'context.entity.state != "unpublished"'),
       FieldPermission('35', ['state'], True, None,
-                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued")'),
+                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued") or (context.action.key_id_str == "sudo" and context.value and (context.value.state == "published" or context.value.state == "discontinued")'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
                       'context.entity.state == "published" or context.entity.state == "discontinued"'),
       FieldPermission('35', ['_records.note'], True, True,
@@ -213,6 +209,57 @@ class Catalog(ndb.BaseExpando):
         ]
       ),
     Action(
+      key=Action.build_key('35', 'upload_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.UploadImagesSet(),
+        rule.Write(transactional=True),
+        marketing.UploadImagesWrite(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_images', 'action_model': '35'},
+                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
+                                       'key': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'process_images'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True),
+        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.ProcessImages(transactional=True),
+        log.Write(transactional=True),
+        blob.Update(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
       # marketing.Delete() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'delete'),
       arguments={
@@ -223,7 +270,7 @@ class Catalog(ndb.BaseExpando):
         common.Read(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        marketing.Delete(),
+        marketing.Delete(transactional=True),
         common.Delete(transactional=True),
         log.Entity(transactional=True),
         log.Write(transactional=True),
@@ -354,6 +401,9 @@ class Catalog(ndb.BaseExpando):
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'index', 'action_model': '35'},
+                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -381,6 +431,44 @@ class Catalog(ndb.BaseExpando):
         callback.Payload(transactional=True, queue='notify',
                          static_data={'action_id': 'initiate', 'action_model': '61'},
                          dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'unindex', 'action_model': '35'},
+                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'sudo'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'state': ndb.SuperStringProperty(required=True, choices=['published', 'discontinued']),
+        'index_state': ndb.SuperStringProperty(choices=['index', 'unindex']),
+        'message': ndb.SuperTextProperty(required=True),
+        'note': ndb.SuperTextProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(dynamic_values={'values.35.state': 'input.state'}),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True,
+                   dynamic_arguments={'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+                                      'message': 'input.message',
+                                      'note': 'input.note'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_model': '35'},
+                         dynamic_data={'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'}),  # @todo What happens if input.index_state is not supplied (e.g. None)?
         callback.Exec(transactional=True,
                       dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
@@ -421,7 +509,16 @@ class Catalog(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
-                              documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+                              documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
+        log.Entity(transactional=True,
+                   static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                   dynamic_arguments={'message': 'tmp.message'}),
+        log.Write(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -436,7 +533,16 @@ class Catalog(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
-                               documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+                               documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
+        log.Entity(transactional=True,
+                   static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                   dynamic_arguments={'message': 'tmp.message'}),
+        log.Write(transactional=True),
+        callback.Payload(transactional=True, queue='notify',
+                         static_data={'action_id': 'initiate', 'action_model': '61'},
+                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True,
+                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
         ]
       ),
     Action(
@@ -445,57 +551,6 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
       _plugins=[]
-      ),
-    Action(
-      key=Action.build_key('35', 'upload_images'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.UploadImagesSet(),
-        rule.Write(transactional=True),
-        marketing.UploadImagesWrite(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_images', 'action_model': '35'},
-                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
-                                       'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
-      ),
-    Action(
-      key=Action.build_key('35', 'process_images'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.ProcessImages(transactional=True),
-        log.Write(transactional=True),
-        blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
-        ]
       )
     ]
   

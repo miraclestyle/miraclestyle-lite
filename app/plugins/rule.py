@@ -38,7 +38,7 @@ def _write_helper(permissions, entity, field_key, field, field_value):
   '''
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
-      if field_value is None:
+      if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
         return
       setattr(entity, field_key, field_value)
     except TypeError as e:
