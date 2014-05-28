@@ -49,7 +49,7 @@ class Country(ndb.BaseModel):
       ]
     )
   
-  _actions = [
+  _actions = [  # @todo Do we need read action here?
     Action(
       key=Action.build_key('15', 'update'),
       arguments={},
@@ -120,7 +120,7 @@ class CountrySubdivision(ndb.BaseModel):
       ]
     )
   
-  _actions = [
+  _actions = [  # @todo Do we need read action here?
     Action(
       key=Action.build_key('16', 'search'),
       arguments={

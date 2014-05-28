@@ -71,7 +71,7 @@ class Unit(ndb.BaseExpando):
       ]
     )
   
-  _actions = [
+  _actions = [  # @todo Do we need read action here?
     Action(
       key=Action.build_key('19', 'update_currency'),
       arguments={},
