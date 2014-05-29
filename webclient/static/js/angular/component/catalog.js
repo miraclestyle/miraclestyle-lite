@@ -306,12 +306,15 @@ MainApp
                                 templateUrl: logic_template('catalog/user_admin.html'),
                                 windowClass: 'modal-medium',
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                              
 
                                     $scope.rule = that.rule;
                                     $scope.action = action;
                                     $scope.log = {
                                         'message': '',
                                         'key': that.entity['key'],
+                                        'state' : that.entity['state'],
+                                        'note' : '',
                                     };
 
                                     $scope.save = function () {

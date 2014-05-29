@@ -101,7 +101,7 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
                       'context.entity.state != "unpublished"'),
       FieldPermission('35', ['state'], True, None,
-                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued") or (context.action.key_id_str == "sudo" and context.value and (context.value.state == "published" or context.value.state == "discontinued")'),
+                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued") or (context.action.key_id_str == "sudo" and context.value) and (context.value.state == "published" or context.value.state == "discontinued")'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
                       'context.entity.state == "published" or context.entity.state == "discontinued"'),
       FieldPermission('35', ['_records.note'], True, True,
@@ -459,7 +459,7 @@ class Catalog(ndb.BaseExpando):
         common.Write(transactional=True),
         rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
         log.Entity(transactional=True,
-                   dynamic_arguments={'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+                   dynamic_arguments={#'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
                                       'message': 'input.message',
                                       'note': 'input.note'}),
         log.Write(transactional=True),
@@ -503,7 +503,8 @@ class Catalog(ndb.BaseExpando):
       # marketing.SearchWrite() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'index'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'caller_user' : ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),
@@ -527,7 +528,8 @@ class Catalog(ndb.BaseExpando):
       # marketing.SearchDelete() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'unindex'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        'key': ndb.SuperKeyProperty(kind='35', required=True),
+        'caller_user' : ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
         common.Context(),

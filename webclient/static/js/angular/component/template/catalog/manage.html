@@ -14,7 +14,9 @@
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+				 <input name="name" ng-required="rule.input[action].name.required" 
+				 		ng-disabled="!rule.field.name.writable"
+				 		class="text-input" type="text" ng-model="entity.name" />
 			</div>
 		</div>
 		
@@ -26,7 +28,8 @@
 			<div class="form-text">
 				 <input datepicker-options="datepickOptions" 
 				 		datepicker-popup="{{DATE_FULL}}" name="publish_date" 
-				 		ng-required="rule.input[action].publish_date.required" 
+				 		ng-required="rule.input[action].publish_date.required"
+				 		ng-disabled="!rule.field.publish_date.writable"
 				 		class="text-input" type="text" ng-model="entity.publish_date" />
 			</div>
 		</div>
@@ -40,6 +43,7 @@
 				 <input datepicker-options="datepickOptions" 
 				 		datepicker-popup="{{DATE_FULL}}" name="discontinue_date"
 				 	    ng-required="rule.input[action].discontinue_date.required" 
+				 	    ng-disabled="!rule.field.discontinue_date.writable"
 				 	    class="text-input" type="text" ng-model="entity.discontinue_date" />
 			</div>
 		</div>
@@ -51,9 +55,9 @@
 	
 	<div ng-show="entity.id" accordion-group heading="Products">
 		<div class="form-control clearfix mb15">
-		  <div class="pull-right">
-		  <button n-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
-		  <div class="button fake-button">
+		  <div ng-show="rule.field._images.writable" class="pull-right">
+		  <button  ng-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
+		  <div  class="button fake-button">
 		  	 <span>Add Images</span>
 		  	 <input class="upload" name="_images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
 		  </div>

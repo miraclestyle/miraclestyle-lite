@@ -21,30 +21,35 @@
 			 <div>
 			 	Sudo text warning
 			 </div>
-			 
-			 <div class="form-control">
-				<label class="form-label">Target state</label>
-				<div class="form-input">
-					<select name="kind" ui-select2 ng-model="log.state" data-placeholder="Choose a state">
-						    <option value=""></option>
-						    <option ng-repeat="state in rule.input[action].state.choices" value="{{state}}">{{state}}</option>
-					</select>
-				</div>
-			  </div>
-			  
-			  <div class="form-control">
-				<label class="form-label">Index state</label>
-				<div class="form-input">
-					<select name="kind" ui-select2 ng-model="log.index_state" data-placeholder="Choose a index state">
-						    <option value=""></option>
-						    <option ng-repeat="state in rule.input[action].index_state.choices" value="{{state}}">{{state}}</option>
-					</select>
-				</div>
-			  </div>
+			
 			 
 			</div>
 		</div>
 	</div>	 
+	
+	
+	<div ng-show="action=='sudo'">
+		 <div class="form-control">
+		<label class="form-label">Target state</label>
+		<div class="form-input">
+			<select name="kind" ui-select2 ng-model="log.state" data-placeholder="Choose a state">
+				    <option value=""></option>
+				    <option ng-repeat="state in rule.input[action].state.choices" value="{{state}}">{{state}}</option>
+			</select>
+		</div>
+	  </div>
+	  
+	  <div class="form-control">
+		<label class="form-label">Index state</label>
+		<div class="form-input">
+			<select name="kind" ui-select2 ng-model="log.index_state" data-placeholder="Choose a index state">
+				    <option value=""></option>
+				    <option ng-repeat="state in rule.input[action].index_state.choices" value="{{state}}">{{state}}</option>
+			</select>
+		</div>
+	  </div>
+	</div>
+	
 	  
    
    	<div class="form-control">
@@ -53,13 +58,17 @@
 			<textarea ng-required="rule.input[action].message.required" class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
 		</div>
 	</div>	 
-	
-	<div ng-show="action=='sudo'" class="form-control">
+	 
+	<div ng-show="action=='sudo'">
+		
+	<div class="form-control">
 		<label class="form-label">Note</label>
 		<div class="form-input">
 			<textarea ng-required="rule.input[action].note.required" class="text-input text-textarea" ng-model="log.note" name="note"></textarea>
 		</div>
 	</div>
+	  
+	  </div>
 	   
 </div>
 </div>
