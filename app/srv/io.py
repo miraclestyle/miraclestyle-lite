@@ -63,7 +63,7 @@ class Engine:
   def init(cls):
     '''This function initializes all models, so it must be called before executing anything!'''
     from app.opt import buyer
-    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, product, uom, location
+    from app.srv import auth, blob, event, log, nav, notify, rule, setup, marketing, product, uom, location, cron
   
   @classmethod
   def get_schema(cls):

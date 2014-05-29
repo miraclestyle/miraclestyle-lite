@@ -53,6 +53,9 @@ CATALOG_PAGE = 10
 CATALOG_LIFE = 180
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
+
+DOMAINS_PER_CRON = 10
+
 _http = 'http://'
 
 if os.environ.get('HTTPS') == 'on':

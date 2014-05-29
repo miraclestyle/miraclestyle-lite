@@ -21,10 +21,13 @@ class Context(event.Plugin):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
     context.user = context.models['0'].current_user()
     caller_user_key = context.input.get('caller_user')
-    if context.user._is_taskqueue and caller_user_key:
-      caller_user = caller_user_key.get()
-      if caller_user:
-        context.user = caller_user
+    if context.user._is_taskqueue:
+      if caller_user_key:
+        caller_user = caller_user_key.get()
+        if caller_user:
+          context.user = caller_user
+      else:
+        context.user = context.models['0'].get_system_user()
     context.namespace = None
     context.domain = None
     domain_key = context.input.get('domain')

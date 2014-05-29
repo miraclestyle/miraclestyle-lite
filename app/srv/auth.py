@@ -282,8 +282,15 @@ class User(ndb.BaseExpando):
   def _is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
   
+  @property
+  def _is_cron(self):
+    return memcache.temp_memory_get('_current_request_is_cron')
+  
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
+  
+  def set_cron(self, is_it):
+    return memcache.temp_memory_set('_current_request_is_cron', is_it)  
   
   @property
   def _root_admin(self):
@@ -319,6 +326,16 @@ class User(ndb.BaseExpando):
     if not current_user:
       current_user = cls()
     return current_user
+  
+  @classmethod
+  def get_system_user(cls):
+    user_key = cls.build_key('system')
+    user = user_key.get()
+    if not user:
+      identities = [Identity(email='System', identity='1-0', associated=True, primary=True)]
+      user = cls(key=user_key, state='active', emails=['System'], identities=identities)
+      user.put()
+    return user
   
   @classmethod
   def current_user_session(cls):
