@@ -593,8 +593,10 @@ class CatalogIndex(ndb.BaseExpando):
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']},
-            'created': {'operators': ['asc', 'desc']},
-            'update': {'operators': ['asc', 'desc']}
+            'created': {'operators': ['asc', 'desc'],
+                        'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
+            'update': {'operators': ['asc', 'desc'],
+                       'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}
             }
           ),
         'search_cursor': ndb.SuperStringProperty()

@@ -183,10 +183,12 @@ class Search(event.Plugin):
       # Query String implementation start!
       order_by = search_config.get('order_by')
       if order_by['operator'] == 'asc':
+        default_value=order_by['default_value']['asc']
         direction = search.SortExpression.ASCENDING
       else:
+        default_value=order_by['default_value']['desc']
         direction = search.SortExpression.DESCENDING
-      order = search.SortExpression(expression=order_by['field'], direction=direction)
+      order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
       sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
     cursor = context.input.get('search_cursor')
     if cursor:
