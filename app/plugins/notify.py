@@ -43,16 +43,6 @@ class Set(event.Plugin):
     context.values['61'].templates = templates
 
 
-# @todo After tests confirm no problems, this plugin should be removed!
-class Prepare(event.Plugin):
-  
-  def run(self, context):
-    caller_entity_key = context.input.get('caller_entity')
-    context.tmp['caller_entity'] = caller_entity_key.get()  # @todo If user is taskqueue (as is expected to be) how do we handle it in rule?
-    context.entities[context.model.get_kind()] = context.model(namespace=context.tmp['caller_entity'].key_namespace)
-    context.values[context.model.get_kind()] = context.model(namespace=context.tmp['caller_entity'].key_namespace)
-
-
 class MailSend(event.Plugin):
   
   def run(self, context):
