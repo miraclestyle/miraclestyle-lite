@@ -15,7 +15,7 @@ class CronConfig(ndb.BaseModel):
   
   _kind = 83
   
-  data = ndb.SuperJsonProperty(default={})
+  data = ndb.SuperJsonProperty('1', indexed=False, default={})
   
   _global_role = GlobalRole(
     permissions=[

@@ -139,7 +139,7 @@ class UpdateSet(event.Plugin):
     if len(context.values['35']._images):
       context.values['35'].cover = context.values['35']._images[0]  # @todo Not sure if we need only image.image or entire entity here?
     else:
-      context.values['35'].cover = None # if user deleted all images cover must not exist anymore
+      context.values['35'].cover = None  # If user deleted all images cover must not exist anymore.
     for image in context.entities['35']._images:
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
