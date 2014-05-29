@@ -2,38 +2,39 @@
 '''
 Created on May 29, 2014
 
-@author:  Edis Sehalic (edis.sehalic@gmail.com)
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from app import ndb, settings
 from app.srv.rule import GlobalRole, ActionPermission
 from app.srv.event import Action
 from app.plugins import common, rule, callback, cron
 
 
-class DomainCatalogProcess(ndb.BaseModel): # it can be called differently
-   
+class CronConfig(ndb.BaseModel):
+  
   _kind = 83
   
-  current_cursor = ndb.SuperStringProperty()
-  current_more = ndb.SuperBooleanProperty(default=False)
-   
+  current_cursor = ndb.SuperStringProperty('1', indexed=False)
+  current_more = ndb.SuperBooleanProperty('2', indexed=False, default=False)
+  
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('83', [Action.build_key('83', 'run')], True, 'context.user._is_cron')
+      ActionPermission('83', [Action.build_key('83', 'process_catalogs')], True, 'context.user._is_cron')
       ]
     )
   
   _actions = [
     Action(
-      key=Action.build_key('83', 'run'), # it can be called differently
+      key=Action.build_key('83', 'process_catalogs'),
       arguments={},
       _plugins=[
         common.Context(),
         common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
-        cron.DomainCatalogProcessRun(page_size=settings.DOMAINS_PER_CRON),
-        callback.Exec(dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'}),
+        cron.ProcessCatalogs(page_size=settings.DOMAINS_PER_CRON),
+        callback.Exec()
         ]
       )
     ]

@@ -252,7 +252,7 @@ class CronPublish(event.Plugin):
       if catalog._is_eligible:
         data = {'action_id': 'publish',
                 'action_model': '35',
-                'message' : 'Published by Cron',
+                'message': 'Published by Cron.',
                 'key': catalog.key.urlsafe()}
         context.callback_payloads.append(('callback', data))
 
@@ -269,7 +269,7 @@ class CronDiscontinue(event.Plugin):
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
               'action_model': '35',
-              'message' : 'Expired',
+              'message': 'Expired',
               'key': catalog.key.urlsafe()}
       context.callback_payloads.append(('callback', data))
 

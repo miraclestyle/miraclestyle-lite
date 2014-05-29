@@ -653,14 +653,14 @@ class Template(ndb.BaseExpando):
     Action(
       key=Action.build_key('38', 'search'),
       arguments={
-        'parent': ndb.SuperKeyProperty(kind='35', required=True), # this is here for permission purposes
+        'parent': ndb.SuperKeyProperty(kind='35', required=True),  # This argument is used for access control.
         'search': ndb.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'desc'}},
           filters={
             'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='35')},
             'product_category': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='17')}
             },
-          indexes=[ # we'll see if we are going to allow searches by name we'll see
+          indexes=[  # We'll see if we are going to allow searches by name.
             {'filter': ['ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
             #{'filter': ['name'],

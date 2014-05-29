@@ -290,7 +290,7 @@ class User(ndb.BaseExpando):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
   
   def set_cron(self, is_it):
-    return memcache.temp_memory_set('_current_request_is_cron', is_it)  
+    return memcache.temp_memory_set('_current_request_is_cron', is_it)
   
   @property
   def _root_admin(self):
