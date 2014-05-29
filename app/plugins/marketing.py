@@ -142,7 +142,7 @@ class UpdateSet(event.Plugin):
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
     context.entities['35']._images = []
- 
+
 
 class UpdateWrite(event.Plugin):
   
