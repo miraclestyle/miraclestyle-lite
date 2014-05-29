@@ -27,6 +27,7 @@ ANGULAR_MODULES = ['underscore',
                    'checklist',
                    'position',
                    'datepicker',
+          
                    'sortable',
                    'ngDragDrop',
                   ]

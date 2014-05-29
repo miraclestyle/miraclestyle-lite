@@ -93,27 +93,34 @@
 
 
 <div class="modal-footer">
+	
+	<button ng-disabled="$isUploading" type="button" 
+    		ng-click="sudo()" ng-show="rule.action.sudo && entity.id" busy class="button">
+		Administer
+	</button>
  
     <button ng-disabled="$isUploading" type="button" 
-    		ng-click="publish()" ng-show="rule.action.publish && entity.id" busy class="button">
+    		ng-click="publish()" ng-show="rule.action.publish.executable && entity.id" busy class="button">
 		Publish
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button" 
-			ng-click="discontinue()" ng-show="rule.action.discontinue && entity.id" busy class="button">
+			ng-click="discontinue()" ng-show="rule.action.discontinue.executable && entity.id" busy class="button">
 		Discontinue
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button"
-		    ng-click="lock()" ng-show="rule.action.lock && entity.id" busy class="button">
+		    ng-click="lock()" ng-show="rule.action.lock.executable && entity.id" busy class="button">
 		Lock
 	</button>
 	 
-	<button type="button" ng-click="save()" 
-			ng-show="rule.action.update || rule.action.create" 
+	<button type="button"
+			ng-click="save()" 
+			ng-show="rule.action.update.executable || rule.action.create.executable" 
 			ng-disabled="container.main.$invalid || $isUploading" busy class="button">
 		Save
 	</button>
+	
 	<button type="button" class="button" ng-click="cancel()">
 		Cancel
 	</button>

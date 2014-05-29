@@ -1,4 +1,14 @@
-MainApp.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
+MainApp
+.directive('showNav', ['$compile', function ($compile) {
+	return {
+		link : function (scope, element, attr)
+		{
+			 
+			 element.append($compile(html.join("\n"))(scope));
+		}
+	};
+}])
+.factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
     	  

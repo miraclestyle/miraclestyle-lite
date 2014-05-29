@@ -124,8 +124,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     }
 ]).run(['$rootScope', 'BuyerAddress', 'BuyerCollection',
 	function ($rootScope, BuyerAddress, BuyerCollection) {
- 
-	
+  
 	$rootScope.manageBuyer = function ()
 	{
 		BuyerAddress.update($rootScope.current_user);

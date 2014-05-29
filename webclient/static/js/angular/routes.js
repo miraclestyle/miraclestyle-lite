@@ -87,8 +87,7 @@ MainApp.config(['$stateProvider',
 	        		defaults = config['templateUrl'];
 	        	}
         	}
-        	
-        	
+        	 
         	return defaults;
         },
         controller: 'AdminSearch',

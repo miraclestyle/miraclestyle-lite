@@ -12,7 +12,7 @@ from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
 from app.srv import blob as ndb_blob
-from app.plugins import common, rule, log, callback, blob, marketing
+from app.plugins import common, rule, log, callback, blob, marketing, search
 
 
 class CatalogPricetag(ndb.BaseModel):

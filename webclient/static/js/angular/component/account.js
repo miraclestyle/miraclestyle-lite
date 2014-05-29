@@ -151,10 +151,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		logout : function (on_logout)
 		{
-			Endpoint.post('logout', '0',
-		     {
-		   	   'csrf' : $rootScope.current_user._csrf,
-		     })
+			Endpoint.post('logout', '0')
 		     .success(function (data) {
 				 $rootScope.current_user = data.entity;
 				 

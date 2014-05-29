@@ -1,4 +1,16 @@
-MainApp.directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
+MainApp.directive('handleImageSpit', function () { /// this should get some love, like which key to use - right now it uses _image_240 which is depressings
+	return {
+		link : function (scope, element, attr)
+		{
+			if (scope.image._image_240)
+			{
+				$(element).removeClass('placeholder-image');
+				$(element).html('<img class="img" src="'+scope.image._image_240+'" />');
+			}
+			
+		}
+	};
+}).directive('scrollEnd', ['$timeout', '$log', function ($timeout, $log) {
 	  return {
 	    link : function (scope, element, attrs)
 	    {

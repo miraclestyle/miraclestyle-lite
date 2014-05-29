@@ -26,6 +26,5 @@ MainApp.controller('HomePage', ['$scope', 'Title', function ($scope, Title) {
 				});
 			}		
 		};
- 
-	 
+  
 }]);

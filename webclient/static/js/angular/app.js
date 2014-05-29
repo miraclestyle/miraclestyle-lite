@@ -1,4 +1,3 @@
-
 angular.module('app.ui',
 	  [
 	   'app.ui.transition',
@@ -271,8 +270,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
 		      
 	  }
-  
-	
+   
 	return {
 		factory : function (data) {
 			return new RuleEngine(data);
@@ -597,8 +595,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 						$(window).trigger('resize');
 					});
 					
-				});		
-		 
+				});
 		}		
 		
 	};
@@ -794,8 +791,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            		'key' : entity['key'],
 	                            	}
 	                        };
-	                        
-	                        
+	                         
 	                        _resolve_options(options);
                             
                             $scope.save = function () {
@@ -812,8 +808,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 		if (data['errors'])
                                 		{
     
-                                			angular.forEach(data['errors'], function (fields, type) {
-                                		 
+                                			angular.forEach(data['errors'], function (fields, actual_type) {
+                                		 		var type = 'invalid';
+                                		 		if (actual_type == 'required')
+                                		 		{
+                                		 			type = actual_type;
+                                		 		}
                                 				if (type == 'required' || type == 'non_property_error')
                                 				{
                                 					if (('container' in $scope)
@@ -1084,8 +1084,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		    			this.send = search;
 		    		}
     			}
-    			
-	    			
+    			 
     	   }else
     	   {
     	   	this.hide = true;
