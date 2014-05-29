@@ -10,9 +10,9 @@ from app import ndb, settings
 
 '''
 The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
-It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because 
+It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because
 if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
-meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will 
+meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will
 cause complete inconsistency and errors while fetching, storing and deleting data. This behavior was noticed upon testing.
 
 Same approach must be done with the transaction / entry / line scenario, which implements its own logic for new

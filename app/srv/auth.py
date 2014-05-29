@@ -137,11 +137,8 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe',
-                                                        'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -229,11 +226,8 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
-        callback.Exec(transactional=True, dynamic_data={'caller_user': 'user.key_urlsafe',
-                                                        'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -444,8 +438,7 @@ class Domain(ndb.BaseExpando):
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'install', 'action_model': '57'},
                          dynamic_data={'key': 'entities.57.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -488,11 +481,8 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         blob.Update(transactional=True, blob_delete='tmp.original_logo.image', blob_write='tmp.new_logo.image'),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -577,11 +567,8 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -603,11 +590,8 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -631,11 +615,8 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -655,11 +636,8 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Exec(transactional=True)
         ]
       )
     ]

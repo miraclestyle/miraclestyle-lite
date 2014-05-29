@@ -347,8 +347,7 @@ class Instance(ndb.BaseExpando):
      Action(
       key=Action.build_key('39', 'process_images'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
       _plugins=[
         common.Context(),
@@ -634,8 +633,7 @@ class Template(ndb.BaseExpando):
     Action(
       key=Action.build_key('38', 'process_images'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
       _plugins=[
         common.Context(),

@@ -14,6 +14,18 @@ from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
+class Notify(event.Plugin):
+  
+  dynamic_data = ndb.SuperJsonProperty('5', required=True, indexed=False, default={})
+  
+  def run(self, context):
+    data = {}
+    data.update({'action_id': 'initiate', 'action_model': '61'})
+    for key, value in self.dynamic_data.items():
+      data[key] = get_attr(context, value)
+    context.callback_payloads.append(('notify', data))
+
+
 class Payload(event.Plugin):
   
   queue = ndb.SuperStringProperty('5', required=True, indexed=False)
@@ -31,9 +43,7 @@ class Payload(event.Plugin):
 class Exec(event.Plugin):
   
   static_data = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
-  dynamic_data = ndb.SuperJsonProperty('6', indexed=False, required=True,
-                                       default={'caller_user': 'user.key_urlsafe',
-                                                'caller_action': 'action.key_urlsafe'})
+  dynamic_data = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
   
   def run(self, context):
     queues = {}
@@ -48,6 +58,10 @@ class Exec(event.Plugin):
         for key, value in self.dynamic_data.items():
           data[key] = get_attr(context, value)
         data.update(payload_data)
+        if data.get('caller_user') == None:
+          data['caller_user'] = get_attr(context, 'user.key_urlsafe')
+        if data.get('caller_action') == None:
+          data['caller_action'] = get_attr(context, 'action.key_urlsafe')
         if queue_name not in queues:
           queues[queue_name] = []
         queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))
