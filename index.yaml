@@ -111,3 +111,23 @@ indexes:
   properties:
   - name: "3"
   - name: "2"
+
+- kind: "35"
+  properties:
+  - name: "6"
+  - name: "4"
+  
+- kind: "35"
+  properties:
+  - name: "6"
+  - name: "5"
+ 
+- kind: "35"
+  properties:
+  - name: "6"
+  - name: "2"
+  
+- kind: "38"
+  ancestor: yes
+  properties:
+  - name: "2"

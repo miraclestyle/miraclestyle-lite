@@ -685,22 +685,22 @@ class Template(ndb.BaseExpando):
     Action(
       key=Action.build_key('38', 'search'),
       arguments={
-        'parent': ndb.SuperKeyProperty(kind='35', required=True),
+        'parent': ndb.SuperKeyProperty(kind='35', required=True), # this is here for permission purposes
         'search': ndb.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'desc'}},
           filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='35')},
             'product_category': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='17')}
             },
-          indexes=[
-            {'filter': [],
+          indexes=[ # we'll see if we are going to allow searches by name we'll see
+            {'filter': ['ancestor'],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name'],
+            #{'filter': ['name'],
+            # 'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['ancestor', 'product_category'],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['product_category'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'product_category'],
-             'order_by': [['name', ['asc', 'desc']]]}
+            #{'filter': ['name', 'product_category'],
+            # 'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
             'name': {'operators': ['asc', 'desc']}

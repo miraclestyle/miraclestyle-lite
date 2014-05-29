@@ -1,0 +1,4 @@
+cron:
+- description: Domain catalog processing
+  url: /cron/83/run
+  schedule: every 1 mins

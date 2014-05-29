@@ -293,7 +293,11 @@ MainApp
                         };
 
                         Endpoint.post('search', '38', {
-                            'parent': that.entity['key']
+                            'parent': that.entity['key'],
+                            'search' : {
+                            	'filters' : [{'value' : that.entity['key'], 'operator' : '==', 'field' : 'ancestor'}],
+                            	 'order_by': {'field': 'name','operator': 'asc'}
+                            },
                         }).success(handle);
 
                     };
