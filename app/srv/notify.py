@@ -10,7 +10,6 @@ import math
 from jinja2.sandbox import SandboxedEnvironment
 
 from app import ndb, settings
-from app.lib.safe_eval import safe_eval
 from app.srv.event import Action
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
@@ -63,31 +62,29 @@ class MailTemplate(Template):
   message_body = ndb.SuperTextProperty('4', required=True)
   
   def run(self, context):
-    values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
-    if safe_eval(self.condition, values):
-      DomainUser = context.models['8']  # @todo Hope it can be like this!
-      domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
-                                      namespace=self.message_reciever.namespace()).fetch()
-      recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
-      sender_key = ndb.Key('0', long(self.message_sender.id()))
-      sender = sender_key.get()
-      template_values = {'entity': context.tmp['caller_entity']}
-      data = {'action_id': 'send_mail',
-              'action_model': '61',
-              'recipient': [reciever._primary_email for reciever in recievers],
-              'sender': sender._primary_email,
-              'body': render_template(self.message_body, template_values),
-              'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-      recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
-      data_copy = data.copy()
-      del data_copy['recipient']
-      for i in range(0, recipients_per_task+1):
-        recipients = data['recipient'][settings.RECIPIENTS_PER_TASK*i:settings.RECIPIENTS_PER_TASK*(i+1)]
-        if recipients:
-          new_data = data_copy.copy()
-          new_data['recipient'] = recipients
-          context.callback_payloads.append(('send', new_data))
+    DomainUser = context.models['8']  # @todo Hope it can be like this!
+    domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
+                                    namespace=self.message_reciever.namespace()).fetch()
+    recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
+    sender_key = ndb.Key('0', long(self.message_sender.id()))
+    sender = sender_key.get()
+    template_values = {'entity': context.tmp['caller_entity']}
+    data = {'action_id': 'send_mail',
+            'action_model': '61',
+            'recipient': [reciever._primary_email for reciever in recievers],
+            'sender': sender._primary_email,
+            'body': render_template(self.message_body, template_values),
+            'subject': render_template(self.message_subject, template_values),
+            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
+    recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
+    data_copy = data.copy()
+    del data_copy['recipient']
+    for i in range(0, recipients_per_task+1):
+      recipients = data['recipient'][settings.RECIPIENTS_PER_TASK*i:settings.RECIPIENTS_PER_TASK*(i+1)]
+      if recipients:
+        new_data = data_copy.copy()
+        new_data['recipient'] = recipients
+        context.callback_payloads.append(('send', new_data))
 
 
 class HttpTemplate(Template):
@@ -100,19 +97,17 @@ class HttpTemplate(Template):
   message_body = ndb.SuperTextProperty('4', required=True)
   
   def run(self, context):
-    values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
-    if safe_eval(self.condition, values):
-      sender_key = ndb.Key('0', long(self.message_sender.id()))
-      sender = sender_key.get()
-      template_values = {'entity': context.tmp['caller_entity']}
-      data = {'action_id': 'send_http',
-              'action_model': '61',
-              'recipient': self.message_reciever,
-              'sender': sender._primary_email,
-              'body': render_template(self.message_body, template_values),
-              'subject': render_template(self.message_subject, template_values),
-              'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-      context.callback_payloads.append(('send', data))
+    sender_key = ndb.Key('0', long(self.message_sender.id()))
+    sender = sender_key.get()
+    template_values = {'entity': context.tmp['caller_entity']}
+    data = {'action_id': 'send_http',
+            'action_model': '61',
+            'recipient': self.message_reciever,
+            'sender': sender._primary_email,
+            'body': render_template(self.message_body, template_values),
+            'subject': render_template(self.message_subject, template_values),
+            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
+    context.callback_payloads.append(('send', data))
 
 
 class Notification(ndb.BaseExpando):

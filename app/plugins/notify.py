@@ -13,6 +13,8 @@ from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
+from app.lib.safe_eval import safe_eval
+
 
 class Set(event.Plugin):
   
@@ -73,8 +75,10 @@ class Initiate(event.Plugin):
     context.tmp['caller_user'] = caller_user_key.get()
     notifications = context.model.query(context.model.active == True,
                                         context.model.action == caller_action_key,
-                                        namespace=context.tmp['caller_user'].key_namespace).fetch()
+                                        namespace=context.tmp['caller_entity'].key_namespace).fetch()
     if notifications:
       for notification in notifications:
-        for template in notification.templates:
-          template.run(context)
+        values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
+        if safe_eval(notification.condition, values):
+          for template in notification.templates:
+            template.run(context)

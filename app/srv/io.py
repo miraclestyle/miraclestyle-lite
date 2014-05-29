@@ -146,7 +146,7 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
-    util.logger('Execute action: %s' % context)
+    util.logger('Execute action: %s.%s' % (context.model.__name__, context))
     def execute_plugins(plugins):
       for plugin in plugins:
         util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
