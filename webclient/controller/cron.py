@@ -10,9 +10,9 @@ from webclient import handler
 
 class IOEngineCronRun(handler.Base):
      
-     def respond(self, action_model, action_id):
+     def respond(self, action_id):
          util.logger('Begin IOEngineCronRun execute')
-         io.Engine.run({'action_model' : action_model, 'action_id' : action_id})
+         io.Engine.run({'action_model' : '83', 'action_id' : action_id})
          util.logger('End IOEngineCronRun execute')
  
-handler.register(('/cron/<action_model>/<action_id>', IOEngineCronRun, 'io_engine_cron_run'))
+handler.register(('/cron/<action_id>', IOEngineCronRun, 'io_engine_cron_run'))

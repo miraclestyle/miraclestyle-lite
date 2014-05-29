@@ -1,4 +1,4 @@
 cron:
 - description: Domain catalog processing
-  url: /cron/83/run
+  url: /cron/process_catalogs
   schedule: every 1 mins

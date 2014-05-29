@@ -23,8 +23,8 @@ class ProcessCatalogs(event.Plugin):
     if not config:
       config = CronConfig(key=config_key)
     cursor = None
-    if config.current_cursor and config.current_more:
-      cursor = Cursor(urlsafe=config.current_cursor)
+    if config.data.get('current_cursor') and config.data.get('current_more'):
+      cursor = Cursor(urlsafe=config.data.get('current_cursor'))
     entities, cursor, more = Domain.query().order(Domain.created).fetch_page(self.page_size, start_cursor=cursor, keys_only=True)
     if cursor:
       cursor = cursor.urlsafe()
@@ -33,6 +33,6 @@ class ProcessCatalogs(event.Plugin):
               'action_model': '35',
               'domain': key.urlsafe()}
       context.callback_payloads.append(('callback', data))
-    config.current_cursor = cursor
-    config.current_more = more
+    config.data['current_cursor'] = cursor
+    config.data['current_more'] = more
     config.put()
