@@ -326,9 +326,8 @@ class SearchWrite(event.Plugin):
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False, load_categories=True)
     write_index = True
-    if index_product_templates:
-      for template in templates['templates']:
-        documents.append(index_product_template(template))
+    for template in templates['templates']:
+      documents.append(index_product_template(template))
     for template in templates['templates']:
       if template._product_category.state != 'searchable':
         write_index = False
