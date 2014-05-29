@@ -249,10 +249,11 @@ class CronPublish(event.Plugin):
                              Catalog.publish_date <= datetime.datetime.now(),
                              namespace=context.namespace).fetch(limit=self.page_size)
     for catalog in catalogs:
-      data = {'action_id': 'publish',
-              'action_model': '35',
-              'key': catalog.key.urlsafe()}
-      context.context.callback_payloads.append(('callback', data))
+      if catalog._is_eligible:
+        data = {'action_id': 'publish',
+                'action_model': '35',
+                'key': catalog.key.urlsafe()}
+        context.context.callback_payloads.append(('callback', data))
 
 
 class CronDiscontinue(event.Plugin):

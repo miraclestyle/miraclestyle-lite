@@ -88,7 +88,7 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'duplicate')], False, 'context.entity.state != "published"'),
       ActionPermission('35', [Action.build_key('35', 'read')], True, 'context.entity.state == "published" or context.entity.state == "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'delete')], True, 'context.user._is_taskqueue and context.entity._has_expired'),
-      ActionPermission('35', [Action.build_key('35', 'publish')], True, 'context.user._is_taskqueue and context.entity.state != "published"'),
+      ActionPermission('35', [Action.build_key('35', 'publish')], True, 'context.user._is_taskqueue and context.entity.state != "published" and context.entity._is_eligible'),
       ActionPermission('35', [Action.build_key('35', 'discontinue')], True, 'context.user._is_taskqueue and context.entity.state != "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'sudo')], True, 'context.user._root_admin'),
       ActionPermission('35', [Action.build_key('35', 'process_images'),
@@ -601,13 +601,15 @@ class CatalogIndex(ndb.BaseExpando):
       key=Action.build_key('35', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
+          default={'filters': [{'field': 'kind', 'value': '35', 'operator': '=='}], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
+            'query_string': {'operators': ['=='], 'type': ndb.SuperStringProperty()},
+            'kind': {'operators': ['=='], 'type': ndb.SuperStringProperty()},
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
             'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
           indexes=[
-            {'filter': [],
+            {'filter': ['kind'],
              'order_by': [['name', ['asc', 'desc']],
                           ['created', ['asc', 'desc']],
                           ['updated', ['asc', 'desc']]]},
