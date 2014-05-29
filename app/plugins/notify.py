@@ -11,9 +11,8 @@ from google.appengine.api import mail, urlfetch
 
 from app import ndb, settings, memcache, util
 from app.srv import event
-from app.lib.attribute_manipulator import set_attr, get_attr
-
 from app.lib.safe_eval import safe_eval
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 class Set(event.Plugin):
