@@ -1037,7 +1037,8 @@ class SuperSearchProperty(SuperJsonProperty):
   def format(self, value):
     value = super(SuperSearchProperty, self).format(value)
     search = {'filters': value.get('filters'),
-              'order_by': value.get('order_by')}
+              'order_by': value.get('order_by'),
+              'property' : self}
     for_composite_filter = []
     for config in search['filters']:
       key = config.get('field')

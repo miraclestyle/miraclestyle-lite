@@ -182,11 +182,12 @@ class Search(event.Plugin):
       query_string = ' AND '.join(args)
       # Query String implementation start!
       order_by = search_config.get('order_by')
+      property_config = search_config.get('property')
       if order_by['operator'] == 'asc':
-        default_value=order_by['default_value']['asc']
+        default_value=property_config._order_by[order_by['field']]['default_value']['asc']
         direction = search.SortExpression.ASCENDING
       else:
-        default_value=order_by['default_value']['desc']
+        default_value=property_config._order_by[order_by['field']]['default_value']['desc']
         direction = search.SortExpression.DESCENDING
       order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
       sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
@@ -212,6 +213,20 @@ class Search(event.Plugin):
         context.search_more = False
     except:
       raise
+    
+class OutputSearch(event.Plugin):
+  
+  def run(self, context):
+    context.entities = []
+    for document in context.search_documents:
+      result = {}
+      result['doc_id'] = document.doc_id
+      result['language'] = document.language
+      result['rank'] = document.rank
+      fields = document.fields
+      for field in fields:
+        result[field.name] = field.value
+      context.entities.append(result)
 
 class Entities(event.Plugin):
   
