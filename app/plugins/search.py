@@ -151,9 +151,9 @@ class Search(event.Plugin):
     # Query String implementation start!
     query_string = ''
     sort_options = None
-    search = context.input.get('search')
-    if search:
-      filters = search.get('filters')
+    search_config = context.input.get('search')
+    if search_config:
+      filters = search_config.get('filters')
       args = []
       for _filter in filters:
         field = _filter['field']
@@ -181,17 +181,21 @@ class Search(event.Plugin):
           args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
       query_string = ' AND '.join(args)
       # Query String implementation start!
-      order_by = search.get('order_by')
+      order_by = search_config.get('order_by')
       if order_by['operator'] == 'asc':
         direction = search.SortExpression.ASCENDING
       else:
         direction = search.SortExpression.DESCENDING
       order = search.SortExpression(expression=order_by['field'], direction=direction)
       sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
-    cursor = search.Cursor(web_safe_string=context.input.get('search_cursor'))
+    cursor = context.input.get('search_cursor')
+    if cursor:
+      cursor = search.Cursor(web_safe_string=cursor)
     options = search.QueryOptions(limit=self.page_size, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
     query = search.Query(query_string=query_string, options=options)
     context.search_documents = []
+    context.search_cursor = None
+    context.search_more = False
     try:
       result = index.search(query)
       context.search_documents_total_matches = result.number_found
@@ -205,7 +209,7 @@ class Search(event.Plugin):
         context.search_cursor = None
         context.search_more = False
     except:
-      pass
+      raise
 
 class Entities(event.Plugin):
   

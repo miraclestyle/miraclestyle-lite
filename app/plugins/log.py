@@ -35,9 +35,12 @@ class Read(event.Plugin):
       def async(entity):
         if entity.key_namespace:
           domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
-          agent = yield domain_user_key.get_async()
-          agent = agent.name
-        else:
+          try:
+            agent = yield domain_user_key.get_async()
+            agent = agent.name
+          except:
+            agent = None
+        if agent == None:
           agent = yield entity.agent.get_async()
           agent = agent._primary_email
         entity._agent = agent

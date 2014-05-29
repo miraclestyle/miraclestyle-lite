@@ -1,5 +1,8 @@
-MainApp.controller('HomePage', ['$scope', 'Title', function ($scope, Title) {
- 
+MainApp.controller('HomePage', ['$scope', 'Title', 'Endpoint', function ($scope, Title, Endpoint) {
+    $scope.catalogs = [];
+    Endpoint.post('search', '82').success(function (data) {
+    	$scope.catalogs = data.entities;
+    });
 }])
 .run(['$rootScope',
      function ($rootScope) {
