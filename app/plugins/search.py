@@ -159,6 +159,9 @@ class Search(event.Plugin):
         field = _filter['field']
         op = _filter['operator']
         value = _filter['value']
+        if field == 'query_string':
+          args.append(value)
+          break
         if field == 'ancestor':
           args.append('(' + field + '=' + value + ')')
           continue
