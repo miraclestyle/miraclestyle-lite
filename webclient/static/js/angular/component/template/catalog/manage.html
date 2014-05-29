@@ -120,7 +120,7 @@
 	 
 	<button type="button"
 			ng-click="save()" 
-			ng-show="rule.action.update.executable || rule.action.create.executable" 
+			ng-show="rule.action.update.executable || (rule.action.create.executable && action == 'create')" 
 			ng-disabled="container.main.$invalid || $isUploading" busy class="button">
 		Save
 	</button>
