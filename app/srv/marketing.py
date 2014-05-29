@@ -109,7 +109,9 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['_records.note'], False, False,
                       'not context.user._root_admin'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
-                      'context.user._is_taskqueue or context.user._root_admin')
+                      'context.user._is_taskqueue or context.user._root_admin'),
+      FieldPermission('35', ['_images'], True, None,
+                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)')
       ]
     )
   
@@ -234,8 +236,7 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'process_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True)
         },
       _plugins=[
         common.Context(),
@@ -473,8 +474,7 @@ class Catalog(ndb.BaseExpando):
       # marketing.SearchWrite() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'index'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
       _plugins=[
         common.Context(),
@@ -495,8 +495,7 @@ class Catalog(ndb.BaseExpando):
       # marketing.SearchDelete() plugin deems this action to allways execute in taskqueue!
       key=Action.build_key('35', 'unindex'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'caller_user': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
       _plugins=[
         common.Context(),

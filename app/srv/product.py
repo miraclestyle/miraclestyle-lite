@@ -186,7 +186,9 @@ class Instance(ndb.BaseExpando):
                       'context.entity.parent_entity.parent_entity.state == "published" or context.entity.parent_entity.parent_entity.state == "discontinued"'),
       FieldPermission('39', ['variant_signature', 'description', 'unit_price', 'availability', 'code',
                              'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents'], None, True,
-                      'context.user._is_taskqueue or context.user._root_admin')
+                      'context.user._is_taskqueue or context.user._root_admin'),
+      FieldPermission('39', ['_images'], True, None,
+                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)')
       ]
     )
   
@@ -445,7 +447,9 @@ class Template(ndb.BaseExpando):
                       'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
       FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
                              'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', '_images', '_contents', '_variants', '_instances', '_records'], None, True,
-                      'context.user._is_taskqueue or context.user._root_admin')
+                      'context.user._is_taskqueue or context.user._root_admin'),
+      FieldPermission('38', ['_images'], True, None,
+                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)')
       ]
     )
   
