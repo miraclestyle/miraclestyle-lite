@@ -592,13 +592,13 @@ class CatalogIndex(ndb.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('99', [Action.build_key('99', 'search')], True, 'True')
+      ActionPermission('82', [Action.build_key('82', 'search')], True, 'True')
       ]
     )
   
   _actions = [
     Action(
-      key=Action.build_key('99', 'search'),
+      key=Action.build_key('82', 'search'),
       arguments={
         'search': ndb.SuperSearchProperty(
           default={'filters': [{'field': 'kind', 'value': '35', 'operator': '=='}], 'order_by': {'field': 'created', 'operator': 'desc'}},
