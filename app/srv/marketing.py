@@ -152,11 +152,8 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -203,11 +200,8 @@ class Catalog(ndb.BaseExpando):
                                                        'output.images_cursor': 'tmp.images_cursor',
                                                        'output.images_more': 'tmp.images_more'}),
         blob.Update(transactional=True),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -228,15 +222,12 @@ class Catalog(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '35'},
                          dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
                                        'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -254,11 +245,8 @@ class Catalog(ndb.BaseExpando):
         marketing.ProcessImages(transactional=True),
         log.Write(transactional=True),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -279,11 +267,8 @@ class Catalog(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -373,11 +358,8 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -400,14 +382,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'index', 'action_model': '35'},
                          dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -430,14 +409,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'unindex', 'action_model': '35'},
                          dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -465,14 +441,11 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_model': '35'},
                          dynamic_data={'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'}),  # @todo What happens if input.index_state is not supplied (e.g. None)?
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -492,11 +465,8 @@ class Catalog(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -517,11 +487,8 @@ class Catalog(ndb.BaseExpando):
                    static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
                    dynamic_arguments={'message': 'tmp.message'}),
         log.Write(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -542,11 +509,8 @@ class Catalog(ndb.BaseExpando):
                    static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
                    dynamic_arguments={'message': 'tmp.message'}),
         log.Write(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -562,7 +526,7 @@ class Catalog(ndb.BaseExpando):
         marketing.CronPublish(page_size=10),
         marketing.CronDiscontinue(page_size=10),
         marketing.CronDelete(page_size=10, catalog_life=settings.CATALOG_LIFE),
-        callback.Exec(dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec()
         ]
       ),
     Action(

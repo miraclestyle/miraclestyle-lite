@@ -137,7 +137,7 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -226,7 +226,7 @@ class User(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.0'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.0.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -498,7 +498,7 @@ class Domain(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
         blob.Update(transactional=True, blob_delete='tmp.original_logo.image', blob_write='tmp.new_logo.image'),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -584,7 +584,7 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -607,7 +607,7 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -632,7 +632,7 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       ),
@@ -653,7 +653,7 @@ class Domain(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.6'}),
-        callback.Notify(transactional=True, dynamic_data={'caller_entity': 'entities.6.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Exec(transactional=True)
         ]
       )

@@ -242,11 +242,8 @@ class Instance(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -308,11 +305,8 @@ class Instance(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -334,14 +328,11 @@ class Instance(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '39'},
                          dynamic_data={'key': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
      Action(
@@ -360,11 +351,8 @@ class Instance(ndb.BaseExpando):
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -386,11 +374,8 @@ class Instance(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.39'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.39.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       )
     ]
@@ -520,11 +505,8 @@ class Template(ndb.BaseExpando):
         log.Write(transactional=True),
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -594,11 +576,8 @@ class Template(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -620,14 +599,11 @@ class Template(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
+        callback.Notify(transactional=True),
         callback.Payload(transactional=True, queue='callback',
                          static_data={'action_id': 'process_images', 'action_model': '38'},
                          dynamic_data={'key': 'entities.38.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -646,11 +622,8 @@ class Template(ndb.BaseExpando):
         product.WriteImages(transactional=True),
         log.Write(transactional=True),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(
@@ -673,11 +646,8 @@ class Template(ndb.BaseExpando):
         rule.Read(transactional=True),
         common.Set(transactional=True, dynamic_values={'output.entity': 'entities.38'}),
         blob.Update(transactional=True),
-        callback.Payload(transactional=True, queue='notify',
-                         static_data={'action_id': 'initiate', 'action_model': '61'},
-                         dynamic_data={'caller_entity': 'entities.38.key_urlsafe'}),
-        callback.Exec(transactional=True,
-                      dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
         ]
       ),
     Action(

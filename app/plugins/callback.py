@@ -21,6 +21,7 @@ class Notify(event.Plugin):
   def run(self, context):
     data = {}
     data.update({'action_id': 'initiate', 'action_model': '61'})
+    data['caller_entity'] = context.entities[context.model.get_kind()].key_urlsafe
     for key, value in self.dynamic_data.items():
       data[key] = get_attr(context, value)
     context.callback_payloads.append(('notify', data))
