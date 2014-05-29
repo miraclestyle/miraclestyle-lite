@@ -577,3 +577,75 @@ class Catalog(ndb.BaseExpando):
     if not self.updated:
       return False
     return self.updated < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_LIFE))
+  
+  @property
+  def _is_eligible(self):
+    # @todo Here we implement the logic to validate if catalog publisher has funds to support catalog publishing!
+    return True
+
+
+class CatalogIndex(ndb.BaseExpando):
+  
+  _kind = 35
+  
+  _default_indexed = False
+  
+  _global_role = GlobalRole(
+    permissions=[
+      ActionPermission('35', [Action.build_key('35', 'search')], True, 'True')
+      ]
+    )
+  
+  _actions = [
+    Action(
+      key=Action.build_key('35', 'search'),
+      arguments={
+        'search': ndb.SuperSearchProperty(
+          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
+            },
+          indexes=[
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': ['state'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]},
+            {'filter': ['name', 'state'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['created', ['asc', 'desc']],
+                          ['updated', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']},
+            'created': {'operators': ['asc', 'desc']},
+            'update': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'search_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=True, strict=False),
+        rule.Exec(),
+        search.Search(index_name=settings.CATALOG_INDEX, page_size=settings.SEARCH_PAGE),
+        #search.Entities(),
+        #rule.Prepare(skip_user_roles=True, strict=False),
+        #rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'search_documents',
+                                   'output.search_documents_total_matches': 'search_documents_total_matches',
+                                   'output.search_documents_count': 'search_documents_count',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
+        ]
+      )
+    ]
