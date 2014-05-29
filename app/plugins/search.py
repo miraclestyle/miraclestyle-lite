@@ -151,9 +151,9 @@ class Search(event.Plugin):
     # Query String implementation start!
     query_string = ''
     sort_options = None
-    search_config = context.input.get('search')
-    if search_config:
-      filters = search_config.get('filters')
+    search_argument = context.input.get('search')
+    if search_argument:
+      filters = search_argument.get('filters')
       args = []
       for _filter in filters:
         field = _filter['field']
@@ -181,8 +181,8 @@ class Search(event.Plugin):
           args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
       query_string = ' AND '.join(args)
       # Query String implementation start!
-      order_by = search_config.get('order_by')
-      property_config = search_config.get('property')
+      order_by = search_argument.get('order_by')
+      property_config = search_argument.get('property')
       if order_by['operator'] == 'asc':
         default_value=property_config._order_by[order_by['field']]['default_value']['asc']
         direction = search.SortExpression.ASCENDING
@@ -213,22 +213,26 @@ class Search(event.Plugin):
         context.search_more = False
     except:
       raise
-    
-class OutputSearch(event.Plugin):
+
+
+class DictConverter(event.Plugin):
   
   def run(self, context):
-    context.entities = []
-    for document in context.search_documents:
-      result = {}
-      result['doc_id'] = document.doc_id
-      result['language'] = document.language
-      result['rank'] = document.rank
-      fields = document.fields
-      for field in fields:
-        result[field.name] = field.value
-      context.entities.append(result)
+    entities = []
+    if len(context.search_documents):
+      for document in context.search_documents:
+        dic = {}
+        dic['doc_id'] = document.doc_id
+        dic['language'] = document.language
+        dic['rank'] = document.rank
+        fields = document.fields
+        for field in fields:
+          dic[field.name] = field.value
+        entities.append(dic)
+    context.entities = entities
 
-class Entities(event.Plugin):
+
+class EntityConverter(event.Plugin):
   
   def run(self, context):
     if len(context.search_documents):

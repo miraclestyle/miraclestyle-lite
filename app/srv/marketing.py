@@ -607,7 +607,7 @@ class CatalogIndex(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
         search.Search(index_name=settings.CATALOG_INDEX, page_size=settings.SEARCH_PAGE),
-        search.OutputSearch(),
+        search.DictConverter(),
         #search.Entities(),
         #rule.Prepare(skip_user_roles=True, strict=False),
         #rule.Read(),
