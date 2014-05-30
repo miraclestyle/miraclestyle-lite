@@ -187,6 +187,20 @@ class Delete(event.Plugin):
     context.blob_delete.extend([image.image for image in blob_instances_images])
     context.blob_delete.extend([image.image for image in blob_templates_images])
     context.blob_delete.extend([image.image for image in catalog_images])
+    # this delete() could be done differently....
+    '''
+     def delete(*args):
+      entities = []
+      for a in args:
+        entities.extend(a)
+      ndb.delete_multi([entity.key for entity in entities])
+      context.log_entities.extend([(entity, ) for entity in entities])
+      
+      # and then
+      
+      delete(instances['contents'], instances['images'], templates['contents']...... etc)
+      
+    '''
     delete(instances['contents'])
     delete(instances['images'])
     delete(instances['instances'])
@@ -322,7 +336,7 @@ class SearchWrite(event.Plugin):
     fields.append(search.DateField(name='publish_date', value=context.entities['35'].publish_date))
     fields.append(search.DateField(name='discontinue_date', value=context.entities['35'].discontinue_date))
     fields.append(search.AtomField(name='state', value=context.entities['35'].state))
-    fields.append(search.AtomField(name='cover', value=context.entities['35'].cover.serving_url))
+    fields.append(search.AtomField(name='cover', value=context.entities['35'].cover.serving_url)) # as for cover we might want to include width, height
     fields.append(search.TextField(name='seller_name', value=context.entities['35'].namespace_entity.name))
     fields.append(search.AtomField(name='seller_logo', value=context.entities['35'].namespace_entity.logo.serving_url))
     #fields.append(search.NumberField(name='seller_feedback', value=context.entities['35'].namespace_entity.feedback))
@@ -415,6 +429,9 @@ class SearchDelete(event.Plugin):
 class CoverUpdate(event.Plugin):
  
   def run(self, context):
+    # this plugin will update cover based on two context tmp
+    # new_cover => will set the cover with the defined instance of CatalogImage, copy its blob etc..
+    # remove_cover => will plainly remove the cover and its blob from existence
     new_cover = context.tmp.get('new_cover')
     remove_cover = context.tmp.get('remove_cover')
     if new_cover:
