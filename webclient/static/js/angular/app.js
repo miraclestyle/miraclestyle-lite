@@ -23,6 +23,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	 $locationProvider.html5Mode(true);
      
 }])
+.constant('MAX_GRID_WIDTH', 240)
+.constant('MIN_GRID_WIDTH', 180)
 .factory('Select2Options', ['Endpoint', function (Endpoint) {
 	return {
 		exchange : function (entity, name, name2, what)

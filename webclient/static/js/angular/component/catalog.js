@@ -139,12 +139,13 @@ MainApp
                     this.entity.images_cursor = this.entity._images.length;
                 },
                 'removeImage': function (image) {
+                	console.log(this);
                     this.entity._images.remove(image);
                 },
                 'getImages': function () {
                     var that = this;
 
-                    if(that.entity.more_images && !that.entity.loading_new) {
+                    if(that.entity.images_more && !that.entity.loading_new) {
 
                         that.entity.images_cursor = that.entity._images.length;
 
@@ -153,22 +154,22 @@ MainApp
                         Endpoint.post('read', kind, that.entity).then(function (response) {
                             var data = response.data;
                             that.entity._images.extend(data['entity']['_images']);
-                            that.entity.more_images = data['more_images'];
+                            that.entity.images_more = data['images_more'];
                             that.entity.loading_new = false;
                         });
 
                     }
                 },
-
             };
 
             var update_options = {
                 'kind': kind,
                 'scope': scope,
                 'handle': function (data) {
+                	
                     var that = this;
 
-                    this.entity.more_images = data['more_images'];
+                    this.entity.images_more = data['images_more'];
 
                     this.addProducts = function () {
                     	
@@ -192,7 +193,7 @@ MainApp
                                     $scope.entity = angular.copy(that.entity);
 
                                     $scope.getImages = function () {
-                                        if($scope.entity.more_images && !$scope.entity.loading_new) {
+                                        if($scope.entity.images_more && !$scope.entity.loading_new) {
                                             $scope.entity.images_cursor = $scope.entity._images.length;
 
                                             $scope.entity.loading_new = true;
@@ -200,7 +201,7 @@ MainApp
                                             Endpoint.post('read', kind, $scope.entity).then(function (response) {
                                                 var data = response.data;
                                                 $scope.entity._images.extend(data['entity']['_images']);
-                                                $scope.entity.more_images = data['more_images'];
+                                                $scope.entity.images_more = data['more_images'];
                                                 $scope.entity.loading_new = false;
                                             });
 
@@ -365,21 +366,19 @@ MainApp
 
                     this.sortableOptions = {
                         'forcePlaceholderSize': true,
-                        'placeholder': 'image-image image-image-placeholder',
+                        'placeholder': 'image-image image-image-placeholder grid-item',
                         'stop': function (e, u) {
-
+  							 
                         }
                     };
 
                 },
                 'templateUrl': logic_template('catalog/manage.html'),
-
             };
 
             return {
 
                 create: function (domain_key, complete) {
-
                     return EntityEditor.create({
                         'kind': kind,
                         'entity': {},
@@ -394,14 +393,6 @@ MainApp
                         'args': {
                             'domain': domain_key,
                         }
-                    });
-
-                },
-                remove: function (entity, complete) {
-                    return EntityEditor.remove({
-                        'kind': kind,
-                        'entity': entity,
-                        'complete': complete,
                     });
 
                 },

@@ -83,7 +83,7 @@ a:visited
 
 .content
 {
-  margin-top: 65px;
+  margin-top: 68px;
 }
 
 #main-menu
@@ -157,9 +157,14 @@ strong, b
 .image-image
 {
 	float:left;
-	margin-right:10px;
 	margin-bottom:20px;
-	max-width:240px;
+	overflow:hidden;
+}
+
+.image-image .spaceout
+{
+	padding:5px;
+	width:100%;
 	height:auto;
 }
 
@@ -167,9 +172,7 @@ strong, b
 {
 	
 	display: block;
-	margin-bottom: 10px;
-	max-width:240px;
-	height:auto;
+ 
 }
 .text-muted
 {
@@ -282,3 +285,21 @@ strong, b
 	height:150px;
 }
 .app-block .logo {width:100%;height:auto;}
+
+.grid-item img
+{
+	width:100%;
+	height:auto;
+}
+
+.frontpage
+{
+	float:left;
+    overflow:hidden;
+}
+
+.frontpage .inner
+{
+	padding:5px;
+	display:block;
+}

@@ -8,8 +8,9 @@ Created on Apr 15, 2014
 import copy
 import math
 import datetime
+import cloudstorage
 
-from google.appengine.api import search
+from google.appengine.api import search, blobstore, images
 
 from app import ndb, settings, memcache, util
 from app.srv import event
@@ -126,6 +127,26 @@ class Read(event.Plugin):
 class UpdateSet(event.Plugin):
   
   def run(self, context):
+    
+    if not hasattr(context, 'delete_blobs'):
+      #@todo i think we should make some helper for this context, this is annoying, like context.introduce('variable_name', default_value)...
+      #so basically any plugin that uses "delete_blobs" doesnt have to implement this hasattr logic, because if you put .delete_blobs = [] you might override what previous plugin set
+      # so on every run, you can go
+      # context.introduce('delete_blobs', []) # it will check if there is already delete_blobs defined and skip if it isnt
+      # and later in code just context.delete_blobs.append()..
+      context.delete_blobs = []
+    changed = False
+    len_values_images = len(context.values['35']._images)
+    len_entitiy_images = len(context.entities['35']._images)
+    if not len_entitiy_images or not len_values_images:
+      changed = True
+    elif (not context.entities['35'].cover) or (str(context.entities['35']._images[0].image) == str(context.values['35']._images[0].image)):
+      changed = True
+    if changed:
+      if len_values_images:
+        context.tmp['new_cover'] = context.values['35']._images[0]
+      else:
+        context.tmp['remove_cover'] = True
     context.values['35'].name = context.input.get('name')
     context.values['35'].discontinue_date = context.input.get('discontinue_date')
     context.values['35'].publish_date = context.input.get('publish_date')
@@ -136,10 +157,6 @@ class UpdateSet(event.Plugin):
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.values['35'].key)
         new_images.append(image.key)
-    if len(context.values['35']._images):
-      context.values['35'].cover = context.values['35']._images[0]  # @todo Not sure if we need only image.image or entire entity here?
-    else:
-      context.values['35'].cover = None  # If user deleted all images cover must not exist anymore.
     for image in context.entities['35']._images:
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
@@ -201,8 +218,6 @@ class UploadImagesSet(event.Plugin):
       i += 1
     context.entities['35']._images = []
     context.values['35']._images = _images
-    if not context.values['35'].cover and _images[0]:
-      context.values['35'].cover = _images[0]
 
 
 class UploadImagesWrite(event.Plugin):
@@ -241,6 +256,8 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
+          if not context.entities['35'].cover:
+            context.tmp['new_cover'] = catalog_images[0]
 
 
 class CronPublish(event.Plugin):
@@ -401,3 +418,41 @@ class SearchDelete(event.Plugin):
         context.tmp['message'] = 'Unindexing failed!'
       else:
         context.tmp['message'] = 'No documents to unindex!'
+        
+        
+class CoverUpdate(event.Plugin):
+ 
+  def run(self, context):
+    new_cover = context.tmp.get('new_cover')
+    remove_cover = context.tmp.get('remove_cover')
+    if new_cover:
+      new_cover = copy.deepcopy(new_cover)
+      new_filename = '%s_copy' % new_cover.gs_object_name
+      new_blob_key = blobstore.create_gs_key(new_filename)
+      try:
+        with cloudstorage.open(new_cover.gs_object_name[3:], 'r') as r:
+            blob = r.read()
+            with cloudstorage.open(new_filename[3:], 'w') as w:
+              img = images.Image(image_data=blob)
+              width = img.width
+              height = int(img.width * 1.5) # force aspect ratio
+              img.resize(width, height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
+              new_cover.gs_object_name = new_filename
+              new_cover.width = width
+              new_cover.height = height
+              blob = img.execute_transforms(output_encoding=img.format)
+              new_cover.size = len(blob)
+              new_cover.image = blobstore.BlobKey(new_blob_key)
+              new_cover.serving_url = images.get_serving_url(new_cover.image)
+              w.write(blob)
+      except Exception as e:
+        util.logger(e, 'exception')
+        context.delete_blobs.append(new_blob_key)
+      finally:
+        if context.values['35'].cover:
+          context.delete_blobs.append(context.values['35'].cover.image) # dont forget to delete previous cover... 
+        context.values['35'].cover = new_cover
+    elif remove_cover:
+      if context.values['35'].cover:
+        context.blob_delete.append(context.values['35'].cover.image)
+        context.values['35'].cover = None  # If user deleted all images cover must not exist anymore.

@@ -13,6 +13,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             'removeImage' : function (image)
         	 {
         	 	this.entity._images.remove(image);
+        	 	this.entity.images_cursor = this.entity._images.length;
         	 },
         	 'removeContent' : function (content) {
         	 	this.entity._contents.remove(content);

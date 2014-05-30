@@ -1,4 +1,36 @@
-MainApp.directive('handleImageSpit', function () { /// this should get some love, like which key to use - right now it uses _image_240 which is depressings
+MainApp
+.directive('uploadedImageGrid', ['MAX_GRID_WIDTH', 'MIN_GRID_WIDTH', function(MAX_GRID_WIDTH, MIN_GRID_WIDTH) {
+	return {
+		link : function (scope, element, attr)
+		{
+			if (scope.$last)
+			{
+	 
+				var wrapper = $(element).parents('.grid-wrapper');
+				var canvas_width = wrapper.width();
+				var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH);
+				/*
+				    values[0] = rounded;
+				    values[1] = sides;
+				    values[2] = cover_width;
+				    values[3] = cover_count;
+				 * */
+				 
+	 			var r = calc[1] / 2;
+				wrapper.css({
+					marginRight : r,
+					marginLeft : r,
+				});
+				
+				wrapper.find('.grid-item').each(function () {
+					$(this).width(calc[0]).height(calc[0]);
+				});
+			
+		   }
+		}
+	};
+}])
+.directive('handleImageSpit', function () { /// this should get some love, like which key to use - right now it uses _image_240 which is depressings
 	return {
 		link : function (scope, element, attr)
 		{

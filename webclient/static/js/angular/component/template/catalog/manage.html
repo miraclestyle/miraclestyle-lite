@@ -67,10 +67,10 @@
 		
 		<div class="text-right" ng-show="$isUploading">Images are uploading... please wait...</div>
 		
-		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix">
-			<div ng-repeat="image in entity._images track by $index" class="image-image">
-				<div handle-image-spit class="img placeholder-image">
-					Processing...
+		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix grid-wrapper">
+			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid class="image-image grid-item">
+				<div class="img spaceout">
+					<img ng-src="{{image._image_240}}" />
 				</div>
 				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
@@ -80,7 +80,6 @@
 	</div>
 	
 	<div ng-show="entity.id" accordion-group heading="Embed">
-		 ....
 	</div>
 	 
 	 

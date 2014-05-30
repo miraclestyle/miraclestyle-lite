@@ -1,4 +1,36 @@
-MainApp.controller('HomePage', ['$scope', 'Title', 'Endpoint', function ($scope, Title, Endpoint) {
+MainApp
+.directive('homepageGrid', ['MAX_GRID_WIDTH', 'MIN_GRID_WIDTH', function(MAX_GRID_WIDTH, MIN_GRID_WIDTH) {
+	return {
+		link : function (scope, element, attr)
+		{
+			if (scope.$last)
+			{
+				
+			
+			var wrapper = $(element).parents('.grid-wrapper'); 
+			var canvas_width = wrapper.width();
+			var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH);
+			/*
+			    values[0] = rounded;
+			    values[1] = sides;
+			    values[2] = cover_width;
+			    values[3] = cover_count;
+			 * */
+			 
+			var r = calc[1] / 2;
+			wrapper.css({
+				marginRight : r,
+				marginLeft : r,
+			});
+			
+			wrapper.find('.grid-item').width(calc[0]).height(calc[0]*1.5);
+			
+			}
+		 
+		}
+	};
+}])
+.controller('HomePage', ['$scope', 'Title', 'Endpoint', function ($scope, Title, Endpoint) {
     $scope.catalogs = [];
     Endpoint.post('search', '82').success(function (data) {
     	$scope.catalogs = data.entities;

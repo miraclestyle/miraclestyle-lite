@@ -1,3 +1,37 @@
+function calculate_grider(all_canvas, max_w, min_w){
+ 
+  var loop = max_w - min_w;
+  	 
+  var canvas_width = all_canvas;
+  var values = [];
+  
+  for (var i=0;i<loop;i++){
+    var cover_width_raw = (max_w + 1)-i;
+    var cover_count_raw = canvas_width/cover_width_raw;
+    var cover_count = Math.floor(cover_count_raw);
+    var cover_width = (canvas_width/cover_count);
+    if (cover_width>max_w){
+      cover_count = cover_count+1
+      cover_width = (canvas_width/cover_count);
+      if (cover_width<min_w){
+        cover_width = max_w;
+        cover_count = cover_count-1
+      }
+    }
+    var rounded = Math.floor(cover_width);
+    var sides = (cover_width - rounded) * cover_count;
+    
+    values[0] = rounded;
+    values[1] = sides;
+    values[2] = cover_width;
+    values[3] = cover_count;
+    if (cover_count_raw>4||cover_count==1){
+      break;
+    }
+  }
+  return values
+};
+
 KINDS._friendlyActionName = {};
 KINDS.friendlyActionName = function(kind, action_key)
 {
@@ -84,7 +118,7 @@ FRIENDLY_KIND_NAMES = {
     "34": "CatalogPricetag"
 };
 
-var always_object = function (obj)
+function always_object(obj)
 {
 	if (!angular.isObject(obj))
 	{
@@ -94,7 +128,7 @@ var always_object = function (obj)
 	return obj;
 };
 
-var use_init = function (key, fun)
+function use_init(key, fun)
 {
 	
 	if ('initdata' in window && initdata[key])
@@ -170,6 +204,7 @@ function resolve_defaults(defaults, options)
 
 Array.prototype.remove = function (val)
 {
+	
 	var index = this.indexOf(val);
   	this.splice(index,1);  
   	
@@ -228,7 +263,7 @@ Array.prototype.extend = function (other_array) {
     angular.forEach(other_array, function(v) {that.push(v);});
 };
 
-var new_width_by_height = function (original_width, original_height, new_height)
+function new_width_by_height(original_width, original_height, new_height)
 {
 	original_width = parseInt(original_width);
 	original_height = parseInt(original_height);
@@ -241,7 +276,7 @@ var new_width_by_height = function (original_width, original_height, new_height)
  
 };
 
-var new_height_by_width = function (original_width, original_height, new_width)
+function new_height_by_width(original_width, original_height, new_width)
 {
 	original_width = parseInt(original_width);
 	original_height = parseInt(original_height);
@@ -255,7 +290,7 @@ var new_height_by_width = function (original_width, original_height, new_width)
 
 
 	
-var calculate_pricetag_position = function(ihp, ivp, iiw, iih, ciw, cih){
+function calculate_pricetag_position(ihp, ivp, iiw, iih, ciw, cih){
  
  
 	  /*  

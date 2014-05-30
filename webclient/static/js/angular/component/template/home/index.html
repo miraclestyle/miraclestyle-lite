@@ -1,5 +1,7 @@
-<h1>Welcome</h1>
-
-<div ng-repeat="catalog in catalogs">
-	{{catalog|json}}
+<div class="grid-wrapper">
+	<div ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
+		<a class="inner" href="#">
+			<img ng-src="{{catalog.cover}}=s240">
+		</a>
+	</div>
 </div>
