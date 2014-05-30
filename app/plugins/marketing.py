@@ -127,14 +127,6 @@ class Read(event.Plugin):
 class UpdateSet(event.Plugin):
   
   def run(self, context):
-    
-    if not hasattr(context, 'delete_blobs'):
-      #@todo i think we should make some helper for this context, this is annoying, like context.introduce('variable_name', default_value)...
-      #so basically any plugin that uses "delete_blobs" doesnt have to implement this hasattr logic, because if you put .delete_blobs = [] you might override what previous plugin set
-      # so on every run, you can go
-      # context.introduce('delete_blobs', []) # it will check if there is already delete_blobs defined and skip if it isnt
-      # and later in code just context.delete_blobs.append()..
-      context.delete_blobs = []
     changed = False
     len_values_images = len(context.values['35']._images)
     len_entitiy_images = len(context.entities['35']._images)
@@ -447,10 +439,10 @@ class CoverUpdate(event.Plugin):
               w.write(blob)
       except Exception as e:
         util.logger(e, 'exception')
-        context.delete_blobs.append(new_blob_key)
+        context.blob_delete.append(new_blob_key)
       finally:
         if context.values['35'].cover:
-          context.delete_blobs.append(context.values['35'].cover.image) # dont forget to delete previous cover... 
+          context.blob_delete.append(context.values['35'].cover.image) # dont forget to delete previous cover... 
         context.values['35'].cover = new_cover
     elif remove_cover:
       if context.values['35'].cover:
