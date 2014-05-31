@@ -34,6 +34,14 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	 {
 	        	 	this.entity._images = data['entity']['_images'];
 	        	 },
+	        	'pre_save' : function ()
+	        	{
+	        		var new_order = [];
+	        		angular.forEach(this.entity._images, function (item, index) {
+	        			new_order.push(index);
+	        		});
+	        		this.entity.sort_images = new_order;
+	        	},
 	            'removeImage' : function (image)
 	        	 {
 	        	 	this.entity._images.remove(image);

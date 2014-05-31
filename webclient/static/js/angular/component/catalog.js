@@ -156,6 +156,14 @@ MainApp
                 'form_info': {
                     'action': Endpoint.url
                 },
+                'pre_save' : function ()
+	        	{
+	        		var new_order = [];
+	        		angular.forEach(this.entity._images, function (item, index) {
+	        			new_order.push(index);
+	        		});
+	        		this.entity.sort_images = new_order;
+	        	},
                 'completed': function (data) {
                     this.entity._images.extend(data['entity']['_images']);
                     this.entity.images_cursor = this.entity._images.length;

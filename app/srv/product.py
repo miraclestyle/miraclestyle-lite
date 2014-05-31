@@ -262,7 +262,7 @@ class Instance(ndb.BaseExpando):
       key=Action.build_key('39', 'update'),
       arguments={
         '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
+        'sort_images': ndb.SuperStringProperty(repeated=True),
         'code': ndb.SuperStringProperty(required=True),
         'description': ndb.SuperTextProperty(required=True),
         'unit_price': ndb.SuperDecimalProperty(required=True),
@@ -289,7 +289,6 @@ class Instance(ndb.BaseExpando):
                                    'values.39.volume': 'input.volume',
                                    'values.39.volume_uom': 'input.volume_uom',
                                    'values.39.low_stock_quantity': 'input.low_stock_quantity',
-                                   'values.39._images': 'input._images',
                                    'values.39._contents': 'input._contents'}),
         product.UpdateSet(),
         rule.Write(transactional=True),
@@ -527,7 +526,7 @@ class Template(ndb.BaseExpando):
       arguments={
         '_variants': ndb.SuperLocalStructuredProperty(Variant, repeated=True),
         '_contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        '_images': ndb.SuperLocalStructuredProperty(Image, repeated=True),
+        'sort_images': ndb.SuperStringProperty(repeated=True),
         'product_category': ndb.SuperKeyProperty(kind='17', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'description': ndb.SuperTextProperty(required=True),
@@ -560,7 +559,6 @@ class Template(ndb.BaseExpando):
                                    'values.38.volume': 'input.volume',
                                    'values.38.volume_uom': 'input.volume_uom',
                                    'values.38.low_stock_quantity': 'input.low_stock_quantity',
-                                   'values.38._images': 'input._images',
                                    'values.38._variants': 'input._variants',
                                    'values.38._contents': 'input._contents'}),
         product.UpdateSet(),

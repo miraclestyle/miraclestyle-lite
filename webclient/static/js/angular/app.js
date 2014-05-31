@@ -637,6 +637,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     		'templateUrl' : '',
     		'args' : {},
     		'kind' : '',
+    		'pre_save' : angular.noop,
+    		'after_save' : angular.noop,
     	};
     	
     	var resolve_options = function (options)
@@ -770,6 +772,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            $scope.resolve_handle = opts['handle'];
 	                            $scope.resolve_complete = opts['complete'];
 	                            $scope.resolve_cancel = opts['cancel'];
+	                            $scope.pre_save = opts['pre_save'];
+	                            $scope.after_save = opts['after_save'];
 	                            update($scope.options, opts);
                         	};
                         	
@@ -796,7 +800,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                        _resolve_options(options);
                             
                             $scope.save = function () {
-                            
+                            	
+                            	$scope.pre_save();
+                             
                                 Endpoint.post(action, $scope.options['kind'], $scope.entity)
                                 .success(function (data) {
                                 	
@@ -849,6 +855,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                         	_resolve_options(options['options_after_update']);
                                         	$scope.resolve_handle(data);
                                         }
+                                        
+                                        $scope.after_save();
                                         
                                          
                                 });

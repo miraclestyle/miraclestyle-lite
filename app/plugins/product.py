@@ -14,6 +14,7 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
+from app.lib.list_manipulator import sort_by_list
 
 
 def build_key_from_signature(context):
@@ -107,13 +108,11 @@ class UploadImagesSet(event.Plugin):
 class UpdateSet(event.Plugin):
   
   def run(self, context):
-    new_images = []
-    if context.values[context.model.get_kind()]._images:
-      for image in context.values[context.model.get_kind()]._images:
-        new_images.append(image.image)
-    for image in context.entities[context.model.get_kind()]._images:
-      if image.image not in new_images:
-        context.blob_delete.append(image.image)
+    entity_images = context.entities[context.model.get_kind()]._images
+    updated_images, delete_images = sort_by_list(entity_images, 'id', context.input.get('images_sort'))
+    context.entities[context.model.get_kind()]._images = updated_images
+    for image in delete_images:
+      context.blob_delete.append(image.image)
 
 
 class WriteImages(event.Plugin):
