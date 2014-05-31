@@ -8,9 +8,8 @@ Created on Apr 15, 2014
 import copy
 import math
 import datetime
-import cloudstorage
 
-from google.appengine.api import search, blobstore, images
+from google.appengine.api import search
 
 from app import ndb, settings, memcache, util
 from app.srv import event
@@ -104,6 +103,8 @@ class Read(event.Plugin):
   
   def run(self, context):
     start = context.input.get('images_cursor')
+    if not start:
+      start = 0
     end = start + settings.CATALOG_PAGE + 1  # Always ask for one extra image, so we can determine if there are more images to get in next round.
     if self.read_from_start:
       start = 0
@@ -127,20 +128,6 @@ class Read(event.Plugin):
 class UpdateSet(event.Plugin):
   
   def run(self, context):
-    changed = False
-    len_values_images = len(context.values['35']._images)
-    len_entitiy_images = len(context.entities['35']._images)
-    if not len_entitiy_images or not len_values_images:
-      changed = True
-    elif (not context.entities['35'].cover) or (str(context.entities['35']._images[0].image) == str(context.values['35']._images[0].image)):
-      changed = True
-    if changed:
-      if len_values_images:
-        context.blob_transform = context.values['35']._images[0]
-      else:
-        if context.values['35'].cover:
-          context.blob_delete.append(context.values['35'].cover.image)
-          context.values['35'].cover = None
     context.values['35'].name = context.input.get('name')
     context.values['35'].discontinue_date = context.input.get('discontinue_date')
     context.values['35'].publish_date = context.input.get('publish_date')
@@ -149,21 +136,16 @@ class UpdateSet(event.Plugin):
     context.tmp['delete_images'] = []
     if context.values['35']._images:
       for i, image in enumerate(context.values['35']._images):
-        image.set_key(str(i), parent=context.values['35'].key)
+        image.set_key(str(i), parent=context.entities['35'].key)
         new_images.append(image.key)
+    if len(context.values['35']._images):
+      context.values['35'].cover = context.values['35']._images[0]
+    else:
+      context.values['35'].cover = None
     for image in context.entities['35']._images:
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
     context.entities['35']._images = []
-
-
-class CoverSet(event.Plugin):
-  
-  def run(self, context):
-    if context.blob_transform:
-      if context.values['35'].cover:
-        context.blob_delete.append(context.values['35'].cover.image
-      context.values['35'].cover = blob_transform
 
 
 class UpdateWrite(event.Plugin):
@@ -173,37 +155,8 @@ class UpdateWrite(event.Plugin):
       if len(context.tmp['delete_images']):
         ndb.delete_multi([image.key for image in context.tmp['delete_images']])
         context.blob_delete = [image.image for image in context.tmp['delete_images']]
-    context.entities['35'].put()
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
-
-
-class Delete(event.Plugin):
-  
-  def run(self, context):
-    
-    def delete(*args):
-      entities = []
-      for argument in args:
-        entities.extend(argument)
-      ndb.delete_multi([entity.key for entity in entities])
-      context.log_entities.extend([(entity, ) for entity in entities])
-    
-    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_product_templates(context.models['38'], catalog_key=context.entities['35'].key)
-    instances = get_product_instances(context.models['39'], [template.key for template in templates])
-    blob_templates_images = []
-    for image in templates['images']:
-      blob_templates_images.extend(image.images)
-    blob_instances_images = []
-    for image in instances['images']:
-      blob_instances_images.extend(image.images)
-    context.blob_delete.extend([image.image for image in blob_instances_images])
-    context.blob_delete.extend([image.image for image in blob_templates_images])
-    context.blob_delete.extend([image.image for image in catalog_images])
-    delete(instances['contents'], instances['images'], instances['instances'],
-          templates['contents'], templates['variants'], templates['images'],
-          templates['templates'], catalog_images)
 
 
 class UploadImagesSet(event.Plugin):
@@ -219,8 +172,6 @@ class UploadImagesSet(event.Plugin):
       i += 1
     context.entities['35']._images = []
     context.values['35']._images = _images
-    if not context.values['35'].cover and _images[0]:
-      context.values['35'].cover = _images[0]
 
 
 class UploadImagesWrite(event.Plugin):
@@ -259,12 +210,45 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
-<<<<<<< HEAD
-=======
-          if not context.entities['35'].cover:
-            context.tmp['new_cover'] = catalog_images[0]
-            context.tmp['do_put'] = True
->>>>>>> 59c41b8e1f426efb9d5fa78f01dd68975255f291
+          if not context.entities['35'].cover and catalog_images[0]:
+            context.values['35'].cover = catalog_images[0]
+
+
+class TransformCover(event.Plugin):
+  
+  def run(self, context):
+    if str(context.tmp['original_cover'].image) != str(context.tmp['new_cover'].image):
+      if context.tmp['original_cover']:
+        context.blob_delete.append(context.tmp['original_cover'].image)
+      context.blob_transform = context.tmp['new_cover']
+
+
+class Delete(event.Plugin):
+  
+  def run(self, context):
+    
+    def delete(*args):
+      entities = []
+      for argument in args:
+        entities.extend(argument)
+      ndb.delete_multi([entity.key for entity in entities])
+      context.log_entities.extend([(entity, ) for entity in entities])
+    
+    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
+    templates = get_product_templates(context.models['38'], catalog_key=context.entities['35'].key)
+    instances = get_product_instances(context.models['39'], [template.key for template in templates])
+    blob_templates_images = []
+    for image in templates['images']:
+      blob_templates_images.extend(image.images)
+    blob_instances_images = []
+    for image in instances['images']:
+      blob_instances_images.extend(image.images)
+    context.blob_delete.extend([image.image for image in blob_instances_images])
+    context.blob_delete.extend([image.image for image in blob_templates_images])
+    context.blob_delete.extend([image.image for image in catalog_images])
+    delete(instances['contents'], instances['images'], instances['instances'],
+          templates['contents'], templates['variants'], templates['images'],
+          templates['templates'], catalog_images)
 
 
 class CronPublish(event.Plugin):
@@ -337,9 +321,13 @@ class SearchWrite(event.Plugin):
     fields.append(search.DateField(name='publish_date', value=context.entities['35'].publish_date))
     fields.append(search.DateField(name='discontinue_date', value=context.entities['35'].discontinue_date))
     fields.append(search.AtomField(name='state', value=context.entities['35'].state))
-    fields.append(search.AtomField(name='cover', value=context.entities['35'].cover.serving_url)) # as for cover we might want to include width, height
+    fields.append(search.AtomField(name='cover', value=context.entities['35'].cover.serving_url))
+    fields.append(search.AtomField(name='cover_width', value=context.entities['35'].cover.width))
+    fields.append(search.AtomField(name='cover_height', value=context.entities['35'].cover.height))
     fields.append(search.TextField(name='seller_name', value=context.entities['35'].namespace_entity.name))
     fields.append(search.AtomField(name='seller_logo', value=context.entities['35'].namespace_entity.logo.serving_url))
+    fields.append(search.AtomField(name='seller_logo_width', value=context.entities['35'].namespace_entity.logo.width))
+    fields.append(search.AtomField(name='seller_logo_height', value=context.entities['35'].namespace_entity.logo.height))
     #fields.append(search.NumberField(name='seller_feedback', value=context.entities['35'].namespace_entity.feedback))
     documents.append(search.Document(doc_id=context.entities['35'].key_urlsafe, fields=fields))
     def index_product_template(template):
@@ -425,52 +413,3 @@ class SearchDelete(event.Plugin):
         context.tmp['message'] = 'Unindexing failed!'
       else:
         context.tmp['message'] = 'No documents to unindex!'
-        
-        
-class CoverUpdate(event.Plugin):
- 
-  def run(self, context):
-    # this plugin will update cover based on two context tmp
-    # new_cover => will set the cover with the defined instance of CatalogImage, copy its blob etc..
-    # remove_cover => will plainly remove the cover and its blob from existence
-    new_cover = context.tmp.get('new_cover')
-    remove_cover = context.tmp.get('remove_cover')
-    do_put = context.tmp.get('do_put')
-    change = False
-    if new_cover:
-      new_cover = copy.deepcopy(new_cover)
-      new_filename = '%s_copy' % new_cover.gs_object_name
-      new_blob_key = blobstore.create_gs_key(new_filename)
-      try:
-        with cloudstorage.open(new_cover.gs_object_name[3:], 'r') as r:
-            blob = r.read()
-            with cloudstorage.open(new_filename[3:], 'w') as w:
-              img = images.Image(image_data=blob)
-              width = img.width
-              height = int(img.width * 1.5) # force aspect ratio
-              img.resize(width, height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
-              new_cover.gs_object_name = new_filename
-              new_cover.width = width
-              new_cover.height = height
-              blob = img.execute_transforms(output_encoding=img.format)
-              new_cover.size = len(blob)
-              new_cover.image = blobstore.BlobKey(new_blob_key)
-              new_cover.serving_url = images.get_serving_url(new_cover.image)
-              w.write(blob)
-      except Exception as e:
-        util.logger(e, 'exception')
-        context.blob_delete.append(new_blob_key)
-      finally:
-        if context.values['35'].cover:
-          context.blob_delete.append(context.values['35'].cover.image) # dont forget to delete previous cover... 
-        context.values['35'].cover = new_cover
-        change = True
-    elif remove_cover:
-      if context.values['35'].cover:
-        context.blob_delete.append(context.values['35'].cover.image)
-        context.values['35'].cover = None  # If user deleted all images cover must not exist anymore.
-        change = True
-    if change and do_put:
-      context.entities['35'].cover = context.values['35'].cover
-      context.entities['35'].put()
-      context.log_entities.append((context.entities['35'], ))

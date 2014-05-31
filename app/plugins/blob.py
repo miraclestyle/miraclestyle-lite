@@ -57,9 +57,11 @@ class Update(event.Plugin):
         if blob_key in context.blob_unused:
           context.blob_unused.remove(blob_key)
 
+
 class TransformImage(event.Plugin):
   
   blob_transform = ndb.SuperStringProperty('5', indexed=False)
+  set_image = ndb.SuperStringProperty('6', indexed=False)
   
   def run(self, context):
     if self.blob_transform:
@@ -90,4 +92,4 @@ class TransformImage(event.Plugin):
         util.logger(e, 'exception')
         context.blob_delete.append(blob_key)
       finally:
-        context.blob_transform = new_image
+        set_attr(context, self.set_image, new_image)
