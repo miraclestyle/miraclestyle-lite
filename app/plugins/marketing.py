@@ -139,7 +139,8 @@ class UpdateSet(event.Plugin):
         image.set_key(str(i), parent=context.entities['35'].key)
         new_images.append(image.key)
     if len(context.values['35']._images):
-      context.values['35'].cover = context.values['35']._images[0]
+      if str(context.entities['35']._images[0].image) != str(context.values['35']._images[0].image):
+        context.values['35'].cover = context.values['35']._images[0]
     else:
       context.values['35'].cover = None
     for image in context.entities['35']._images:
