@@ -6,8 +6,10 @@ Created on Apr 15, 2014
 '''
 
 import copy
+import cloudstorage
 
-from google.appengine.ext import blobstore, images
+from google.appengine.ext import blobstore
+from google.appengine.api import images
 
 from app import ndb, settings, memcache, util
 from app.srv import event
@@ -83,12 +85,12 @@ class TransformImage(event.Plugin):
             new_image.gs_object_name = gs_object_name
             new_image.width = image_width
             new_image.height = image_height
-            blob = image.execute_transforms(output_encoding=img.format)
+            blob = image.execute_transforms(output_encoding=image.format)
             new_image.size = len(blob)
             new_image.image = blobstore.BlobKey(blob_key)
             new_image.serving_url = images.get_serving_url(new_image.image)
             w.write(blob)
-      except:
+      except Exception as e:
         util.logger(e, 'exception')
         context.blob_delete.append(blob_key)
       finally:
