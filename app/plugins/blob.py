@@ -5,7 +5,9 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from google.appengine.ext import blobstore
+import copy
+
+from google.appengine.ext import blobstore, images
 
 from app import ndb, settings, memcache, util
 from app.srv import event
@@ -54,3 +56,40 @@ class Update(event.Plugin):
       for blob_key in blob_write:
         if blob_key in context.blob_unused:
           context.blob_unused.remove(blob_key)
+
+
+class TransformImage(event.Plugin):
+  
+  blob_transform = ndb.SuperStringProperty('5', indexed=False)
+  set_image = ndb.SuperStringProperty('6', indexed=False)
+  
+  def run(self, context):
+    if self.blob_transform:
+      blob_transform = get_attr(context, self.blob_transform)
+    else:
+      blob_transform = context.blob_transform
+    if blob_transform:
+      new_image = copy.deepcopy(blob_transform)
+      gs_object_name = '%s_copy' % new_image.gs_object_name
+      blob_key = blobstore.create_gs_key(gs_object_name)
+      try:
+        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as r:
+          blob = r.read()
+          with cloudstorage.open(gs_object_name[3:], 'w') as w:
+            image = images.Image(image_data=blob)
+            image_width = image.width
+            image_height = int(image.width * 1.5)  # Force aspect ratio
+            image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
+            new_image.gs_object_name = gs_object_name
+            new_image.width = image_width
+            new_image.height = image_height
+            blob = image.execute_transforms(output_encoding=img.format)
+            new_image.size = len(blob)
+            new_image.image = blobstore.BlobKey(blob_key)
+            new_image.serving_url = images.get_serving_url(new_image.image)
+            w.write(blob)
+      except:
+        util.logger(e, 'exception')
+        context.blob_delete.append(blob_key)
+      finally:
+        set_attr(context, self.set_image, new_image)
