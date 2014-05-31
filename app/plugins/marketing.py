@@ -218,13 +218,13 @@ class ProcessImages(event.Plugin):
 class TransformCover(event.Plugin):
   
   def run(self, context):
-    if context.tmp['original_cover'] and context.tmp['new_cover']:
+    if context.tmp.get('original_cover') and context.tmp.get('new_cover'):
       if str(context.tmp['original_cover'].image) != str(context.tmp['new_cover'].image):
         context.blob_delete.append(context.tmp['original_cover'].image)
         context.blob_transform = context.tmp['new_cover']
-    elif context.tmp['original_cover']:
+    elif context.tmp.get('original_cover'):
       context.blob_delete.append(context.tmp['original_cover'].image)
-    elif context.tmp['new_cover']:
+    elif context.tmp.get('new_cover'):
       context.blob_transform = context.tmp['new_cover']
 
 
