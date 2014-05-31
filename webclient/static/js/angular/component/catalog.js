@@ -133,6 +133,10 @@ MainApp
             		'products' : false,
             		'embed' : false,
             	},
+            	'gridConfig' : function ()
+            	{
+            		
+            	},
                 'datepickOptions': {
                     'showWeeks': false,
                 },
