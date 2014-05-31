@@ -5,7 +5,9 @@ MainApp
 		{
 			if (scope.$last)
 			{ 
-				var config = scope.$eval(attr.uploadedImageGrid);
+				var config_fn = scope.$eval(attr.uploadedImageGrid);
+				
+				var config = config_fn(scope);
 			 
 	 			var resize = function () {
 					var wrapper = $(element).parents('.grid-wrapper');
@@ -31,10 +33,10 @@ MainApp
 				
 				resize();
 				
-				$(window).bind('resize', resize);
+				$(window).bind('resize gridinit', resize);
 				
 				scope.$on('$destroy', function () {
-					$(window).unbind('resize', resize);
+					$(window).unbind('resize gridinit', resize);
 				});
 			
 		   }

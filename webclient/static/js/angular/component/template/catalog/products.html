@@ -11,7 +11,7 @@
 			     data-drop="true" ng-model='catalog_image.pricetags' data-jqyoui-options="{accept: '.new-pricetag'}" 
 			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}"
 			     data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
-				 <img catalog-slider class="img" ng-src="{{catalog_image._image_600}}" />
+				 <img catalog-slider class="img" ng-src="{{catalog_image.serving_url}}=s600" />
 				 
 				 <div ng-style="{top: pricetag._position_top + 'px', left : pricetag._position_left + 'px'}"
 				      ng-model="image.pricetags" data-jqyoui-options="{containment : 'parent'}" 

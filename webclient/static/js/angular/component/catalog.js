@@ -127,15 +127,28 @@ MainApp
 
             var kind = '35';
 
-            var scope = {
+            var make_scope = function ()
+            {
+            	return {
+            		
             	'accordions' : {
             		'general' : true,
             		'products' : false,
             		'embed' : false,
             	},
-            	'gridConfig' : function ()
+            	'gridConfig' : function (scope)
             	{
+            		scope.$watch('accordions.products', function (new_value, old) {
+            			if (new_value)
+            			{
+            				$(window).trigger('gridinit');
+            			}
+            			
+            		});
             		
+            		return {
+            			margin : 10
+            		};
             	},
                 'datepickOptions': {
                     'showWeeks': false,
@@ -170,10 +183,15 @@ MainApp
                     }
                 },
             };
-
-            var update_options = {
+            
+            };
+			
+			var make_update_scope = function (){
+				
+                return {
+                	
                 'kind': kind,
-                'scope': scope,
+                'scope': make_scope(),
                 'handle': function (data) {
                 	
                     var that = this;
@@ -209,8 +227,13 @@ MainApp
 
                                             Endpoint.post('read', kind, $scope.entity).then(function (response) {
                                                 var data = response.data;
-                                                $scope.entity._images.extend(data['entity']['_images']);
-                                                $scope.entity.images_more = data['more_images'];
+                                                var imgs = data['entity']['_images'];
+                                                var more = data['images_more'];
+                                                $scope.entity._images.extend(imgs);
+                                                $scope.live_entity._images.extend(imgs);
+                                                
+                                                $scope.live_entity.images_more = more;
+                                                $scope.entity.images_more = more;
                                                 $scope.entity.loading_new = false;
                                             });
 
@@ -384,14 +407,16 @@ MainApp
                 },
                 'templateUrl': logic_template('catalog/manage.html'),
             };
-
+            
+            };
+             
             return {
 
                 create: function (domain_key, complete) {
                     return EntityEditor.create({
                         'kind': kind,
                         'entity': {},
-                        'scope': scope,
+                        'scope': make_scope(),
                         'close': false,
                         'handle': function (data) {
                             this.entity['domain'] = domain_key;
@@ -412,7 +437,7 @@ MainApp
                         'args': {
                             'key': entity['key'],
                         }
-                    }, update_options));
+                    }, make_update_scope()));
                 }
 
             };

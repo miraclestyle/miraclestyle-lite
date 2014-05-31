@@ -7,23 +7,38 @@ MainApp
 			{
 				
 			
-			var wrapper = $(element).parents('.grid-wrapper'); 
-			var canvas_width = wrapper.width();
-			var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH);
-			/*
-			    values[0] = rounded;
-			    values[1] = sides;
-			    values[2] = cover_width;
-			    values[3] = cover_count;
-			 * */
+			 var resize = function ()
+			 {
 			 
-			var r = calc[1] / 2;
-			wrapper.css({
-				marginRight : r,
-				marginLeft : r,
-			});
-			
-			wrapper.find('.grid-item').width(calc[0]).height(calc[0]*1.5);
+			 	var wrapper = $(element).parents('.grid-wrapper'); 
+				var canvas_width = wrapper.width();
+				var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH);
+				/*
+				    values[0] = rounded;
+				    values[1] = sides;
+				    values[2] = cover_width;
+				    values[3] = cover_count;
+				 * */
+				 
+				var r = calc[1] / 2;
+				wrapper.css({
+					marginRight : r,
+					marginLeft : r,
+				});
+				
+				wrapper.find('.grid-item').width(calc[0]).height(calc[0]*1.5);
+			 	
+			 };
+			 
+			 resize();
+			 
+			 $(window).bind('resize', resize);
+			 
+			 scope.$on('$destroy', function () {
+			 	$(window).unbind('resize', resize);
+			 });
+			 
+			 
 			
 			}
 		 

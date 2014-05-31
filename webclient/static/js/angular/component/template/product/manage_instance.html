@@ -7,8 +7,8 @@
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
  
-<div ng-init="isOpen=true" accordion>
-   <div is-open="isOpen" accordion-group heading="General">
+<div accordion>
+   <div is-open="accordions.general" accordion-group heading="General">
   
     	<div class="form-control">
 		<label class="form-label">Code</label>
@@ -134,7 +134,7 @@
 		
 	</div>
    
-	<div ng-show="entity.id" accordion-group heading="Images">
+	<div ng-show="entity.id" is-open="accordions.images" accordion-group heading="Images">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
 		  <div ng-show="rule.field._images.writable" class="button fake-button">
@@ -148,18 +148,19 @@
 		<div ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix grid-wrapper">
-			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid class="image-image grid-item">
+			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
 				<div class="img spaceout">
 					<img ng-src="{{image.serving_url}}=s360" />
 				</div>
 				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
+		
 	</div>
 	
 	
 	
-	<div ng-show="entity.id" accordion-group heading="Contents">
+	<div ng-show="entity.id" is-open="accordions.contents" accordion-group heading="Contents">
 		
 		 <div class="clearfix">
 			<div class="pull-right">
