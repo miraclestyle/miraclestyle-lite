@@ -1,6 +1,7 @@
-function calculate_grider(all_canvas, max_w, min_w){
+function calculate_grider(all_canvas, max_w, min_w, margin){
  
   var loop = max_w - min_w;
+  if (margin == undefined) margin = 0;
   	 
   var canvas_width = all_canvas;
   var values = [];
@@ -11,13 +12,14 @@ function calculate_grider(all_canvas, max_w, min_w){
     var cover_count = Math.floor(cover_count_raw);
     var cover_width = (canvas_width/cover_count);
     if (cover_width>max_w){
-      cover_count = cover_count+1
+      cover_count = cover_count+1;
       cover_width = (canvas_width/cover_count);
       if (cover_width<min_w){
         cover_width = max_w;
-        cover_count = cover_count-1
+        cover_count = cover_count-1;
       }
     }
+    cover_width = cover_width - margin;
     var rounded = Math.floor(cover_width);
     var sides = (cover_width - rounded) * cover_count;
     
@@ -52,13 +54,17 @@ KINDS.friendlyActionName = function(kind, action_key)
 	return ra;
 };
 
-window.log = function(){
-  log.history = log.history || [];   // store logs to an array for reference
-  log.history.push(arguments);
-  if(this.console){
-    console.log( Array.prototype.slice.call(arguments) );
-  }
-};
+if (!'console' in window)
+{
+	window.console = {'logo' : $.noop};
+}
+else
+{
+	if (!'log' in window.console)
+	{
+		window.console.log = $.noop;
+	}
+}
 
 //KINDS._get = {};
 KINDS.get = function (kind_id)

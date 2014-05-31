@@ -19,9 +19,3 @@ class Image(ndb.BaseModel):
   height = ndb.SuperIntegerProperty('5', indexed=False)
   gs_object_name = ndb.SuperStringProperty('6', indexed=False)
   serving_url = ndb.SuperStringProperty('7', indexed=False)
-  
-  def get_serving_url(self, size):
-    if self.serving_url:
-      return '%s=s%s' % (self.serving_url, size)
-    else:
-      return ''

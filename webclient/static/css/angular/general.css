@@ -157,13 +157,14 @@ strong, b
 .image-image
 {
 	float:left;
-	margin-bottom:20px;
 	overflow:hidden;
+	position:relative;
+	margin:5px;
 }
 
 .image-image .spaceout
 {
-	padding:5px;
+	 
 	width:100%;
 	height:auto;
 }
@@ -179,7 +180,7 @@ strong, b
 	color:gray;
 }
 
-.image-image-placeholder
+.image-image-placeholder .img
 {
 	border:1px dashed #CCC;
 	background:#FAFAFA;
@@ -288,8 +289,7 @@ strong, b
 
 .grid-item img
 {
-	width:100%;
-	height:auto;
+	 
 }
 
 .frontpage
@@ -302,4 +302,10 @@ strong, b
 {
 	padding:5px;
 	display:block;
+}
+
+.image-image .button {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
 }

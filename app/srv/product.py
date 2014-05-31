@@ -34,12 +34,6 @@ class Variant(ndb.BaseModel):
 class Image(ndb_blob.Image):
   
   _kind = 76
-  
-  def get_output(self):
-    dic = super(Image, self).get_output()
-    dic['_image_240'] = self.get_serving_url(240)
-    dic['_image_600'] = self.get_serving_url(600)
-    return dic
 
 
 class Images(ndb.BaseModel):

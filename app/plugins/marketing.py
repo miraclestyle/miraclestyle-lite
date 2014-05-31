@@ -264,6 +264,7 @@ class ProcessImages(event.Plugin):
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
           if not context.entities['35'].cover:
             context.tmp['new_cover'] = catalog_images[0]
+            context.tmp['do_put'] = True
 
 
 class CronPublish(event.Plugin):
@@ -434,6 +435,8 @@ class CoverUpdate(event.Plugin):
     # remove_cover => will plainly remove the cover and its blob from existence
     new_cover = context.tmp.get('new_cover')
     remove_cover = context.tmp.get('remove_cover')
+    do_put = context.tmp.get('do_put')
+    change = False
     if new_cover:
       new_cover = copy.deepcopy(new_cover)
       new_filename = '%s_copy' % new_cover.gs_object_name
@@ -461,7 +464,13 @@ class CoverUpdate(event.Plugin):
         if context.values['35'].cover:
           context.blob_delete.append(context.values['35'].cover.image) # dont forget to delete previous cover... 
         context.values['35'].cover = new_cover
+        change = True
     elif remove_cover:
       if context.values['35'].cover:
         context.blob_delete.append(context.values['35'].cover.image)
         context.values['35'].cover = None  # If user deleted all images cover must not exist anymore.
+        change = True
+    if change and do_put:
+      context.entities['35'].cover = context.values['35'].cover
+      context.entities['35'].put()
+      context.log_entities.append((context.entities['35'], ))

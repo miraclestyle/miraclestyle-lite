@@ -128,6 +128,11 @@ MainApp
             var kind = '35';
 
             var scope = {
+            	'accordions' : {
+            		'general' : true,
+            		'products' : false,
+            		'embed' : false,
+            	},
                 'datepickOptions': {
                     'showWeeks': false,
                 },

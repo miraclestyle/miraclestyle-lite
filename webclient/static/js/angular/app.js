@@ -62,7 +62,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			    minimumInputLength: 0,
 			    ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
 			        quietMillis: 200,
- 
 			        transport: function (params)
 			        { 
 			        	return Endpoint.post(opts['action'], opts['kind'], params.data, opts['endpoint']).success(params.success);
@@ -104,7 +103,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				        // the input tag has a value attribute preloaded that points to a preselected movie's id
 				        // this function resolves that id attribute to an object that select2 can render
 				        // using its formatResult renderer - that way the movie name is shown preselected
-				        var id=$(element).val();
+				        var id = $(element).val();
 				        var initial_id = id;
 			          
 				        var select2 = $(element).data('select2');
@@ -137,7 +136,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        	
 			        	opts['args_callback']($(this), args);
 			      
-	 					Endpoint.post(opts['action'], opts['kind'], args, opts['endpoint']).success(function (data) {
+	 					Endpoint.cached_post('search_' + initial_id, opts['action'], opts['kind'], args, function (data) {
 				                	try
 				                	{
 				                	  
@@ -159,7 +158,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				                	   
 				                	}catch(e){}
 				                	
-				                });
+				                },  opts['endpoint']);
 				      
 			      
 			    },
@@ -460,7 +459,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 						{
 							success(response);
 							
-						}catch(e){log(e);}
+						}catch(e){console.log(e);}
 						cache.put(loading_key, false);
 					}).error(function () {
 						cache.put(loading_key, false);
