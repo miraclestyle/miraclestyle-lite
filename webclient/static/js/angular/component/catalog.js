@@ -422,7 +422,7 @@ MainApp
                             this.entity['domain'] = domain_key;
                         },
                         'complete': complete,
-                        'options_after_update': update_options,
+                        'options_after_update': make_update_scope(),
                         'templateUrl': logic_template('catalog/manage.html'),
                         'args': {
                             'domain': domain_key,
