@@ -30,12 +30,6 @@ class CatalogImage(ndb_blob.Image):
   _kind = 36
   
   pricetags = ndb.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
-  
-  def get_output(self):
-    dic = super(CatalogImage, self).get_output()
-    dic['_image_240'] = self.get_serving_url(240)
-    dic['_image_600'] = self.get_serving_url(600)
-    return dic
 
 
 class Catalog(ndb.BaseExpando):
@@ -110,7 +104,7 @@ class Catalog(ndb.BaseExpando):
                       'not context.user._root_admin'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
                       'context.user._is_taskqueue or context.user._root_admin'),
-      FieldPermission('35', ['_images'], True, None,
+      FieldPermission('35', ['_images', 'cover'], True, None,
                       'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)')
       ]
     )

@@ -4,26 +4,37 @@ MainApp
 		link : function (scope, element, attr)
 		{
 			if (scope.$last)
-			{
-	 
-				var wrapper = $(element).parents('.grid-wrapper');
-				var canvas_width = wrapper.width();
-				var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH);
-				/*
-				    values[0] = rounded;
-				    values[1] = sides;
-				    values[2] = cover_width;
-				    values[3] = cover_count;
-				 * */
-				 
-	 			var r = calc[1] / 2;
-				wrapper.css({
-					marginRight : r,
-					marginLeft : r,
-				});
+			{ 
+				var config = scope.$eval(attr.uploadedImageGrid);
+			 
+	 			var resize = function () {
+					var wrapper = $(element).parents('.grid-wrapper');
+					var canvas_width = wrapper.width();
+					var calc = calculate_grider(canvas_width, MAX_GRID_WIDTH, MIN_GRID_WIDTH, parseInt(config['margin']));
+					/*
+					    values[0] = rounded;
+					    values[1] = sides;
+					    values[2] = cover_width;
+					    values[3] = cover_count;
+					 * */
+					 
+		 			var r = calc[1] / 2;
+					wrapper.css({
+						marginRight : r,
+						marginLeft : r,
+					});
+					
+					wrapper.find('.grid-item').each(function () {
+						$(this).width(calc[0]).height(calc[0]);
+					});
+				};
 				
-				wrapper.find('.grid-item').each(function () {
-					$(this).width(calc[0]).height(calc[0]);
+				resize();
+				
+				$(window).bind('resize', resize);
+				
+				scope.$on('$destroy', function () {
+					$(window).unbind('resize', resize);
 				});
 			
 		   }
