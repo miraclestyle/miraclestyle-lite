@@ -136,9 +136,11 @@ class UpdateSet(event.Plugin):
       changed = True
     if changed:
       if len_values_images:
-        context.tmp['new_cover'] = context.values['35']._images[0]
+        context.blob_transform = context.values['35']._images[0]
       else:
-        context.tmp['remove_cover'] = True
+        if context.values['35'].cover:
+          context.blob_delete.append(context.values['35'].cover.image)
+          context.values['35'].cover = None
     context.values['35'].name = context.input.get('name')
     context.values['35'].discontinue_date = context.input.get('discontinue_date')
     context.values['35'].publish_date = context.input.get('publish_date')
@@ -153,6 +155,15 @@ class UpdateSet(event.Plugin):
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
     context.entities['35']._images = []
+
+
+class CoverSet(event.Plugin):
+  
+  def run(self, context):
+    if context.blob_transform:
+      if context.values['35'].cover:
+        context.blob_delete.append(context.values['35'].cover.image
+      context.values['35'].cover = blob_transform
 
 
 class UpdateWrite(event.Plugin):
@@ -171,7 +182,10 @@ class Delete(event.Plugin):
   
   def run(self, context):
     
-    def delete(entities):
+    def delete(*args):
+      entities = []
+      for argument in args:
+        entities.extend(argument)
       ndb.delete_multi([entity.key for entity in entities])
       context.log_entities.extend([(entity, ) for entity in entities])
     
@@ -187,28 +201,9 @@ class Delete(event.Plugin):
     context.blob_delete.extend([image.image for image in blob_instances_images])
     context.blob_delete.extend([image.image for image in blob_templates_images])
     context.blob_delete.extend([image.image for image in catalog_images])
-    # this delete() could be done differently....
-    '''
-     def delete(*args):
-      entities = []
-      for a in args:
-        entities.extend(a)
-      ndb.delete_multi([entity.key for entity in entities])
-      context.log_entities.extend([(entity, ) for entity in entities])
-      
-      # and then
-      
-      delete(instances['contents'], instances['images'], templates['contents']...... etc)
-      
-    '''
-    delete(instances['contents'])
-    delete(instances['images'])
-    delete(instances['instances'])
-    delete(templates['contents'])
-    delete(templates['variants'])
-    delete(templates['images'])
-    delete(templates['templates'])
-    delete(catalog_images)
+    delete(instances['contents'], instances['images'], instances['instances'],
+          templates['contents'], templates['variants'], templates['images'],
+          templates['templates'], catalog_images)
 
 
 class UploadImagesSet(event.Plugin):
@@ -224,6 +219,8 @@ class UploadImagesSet(event.Plugin):
       i += 1
     context.entities['35']._images = []
     context.values['35']._images = _images
+    if not context.values['35'].cover and _images[0]:
+      context.values['35'].cover = _images[0]
 
 
 class UploadImagesWrite(event.Plugin):
@@ -262,8 +259,6 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
-          if not context.entities['35'].cover:
-            context.tmp['new_cover'] = catalog_images[0]
 
 
 class CronPublish(event.Plugin):
