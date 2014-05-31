@@ -138,11 +138,6 @@ class UpdateSet(event.Plugin):
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.entities['35'].key)
         new_images.append(image.key)
-    if len(context.values['35']._images):
-      if str(context.entities['35']._images[0].image) != str(context.values['35']._images[0].image):
-        context.values['35'].cover = context.values['35']._images[0]
-    else:
-      context.values['35'].cover = None
     for image in context.entities['35']._images:
       if image.key not in new_images:
         context.tmp['delete_images'].append(image)
@@ -155,9 +150,11 @@ class UpdateWrite(event.Plugin):
     if context.entities['35']._field_permissions['_images']['writable']:
       if len(context.tmp['delete_images']):
         ndb.delete_multi([image.key for image in context.tmp['delete_images']])
+        context.log_entities.extend([(image, ) for image in context.tmp['delete_images']])
         context.blob_delete = [image.image for image in context.tmp['delete_images']]
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
+      context.log_entities.extend([(image, ) for image in context.entities['35']._images])
 
 
 class UploadImagesSet(event.Plugin):
@@ -211,11 +208,22 @@ class ProcessImages(event.Plugin):
           for catalog_image in catalog_images:
             context.log_entities.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
-          if not context.entities['35'].cover and catalog_images[0]:
-            context.values['35'].cover = catalog_images[0]
 
 
-class TransformCover(event.Plugin):
+class ProcessCoverSet(event.Plugin):
+  
+  def run(self, context):
+    if len(context.entities['35']._images):
+      if context.entities['35'].cover:
+        if context.entities['35'].cover.gs_object_name[:-5] != context.entities['35']._images[0].gs_object_name:
+          context.values['35'].cover = context.entities['35']._images[0]
+      else:
+        context.values['35'].cover = context.entities['35']._images[0]
+    else:
+      context.values['35'].cover = None
+
+
+class ProcessCoverTransform(event.Plugin):
   
   def run(self, context):
     if context.tmp.get('original_cover') and context.tmp.get('new_cover'):
