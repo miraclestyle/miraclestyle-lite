@@ -109,10 +109,11 @@ class UpdateSet(event.Plugin):
   
   def run(self, context):
     entity_images = context.entities[context.model.get_kind()]._images
-    updated_images, delete_images = sort_by_list(entity_images, 'id', context.input.get('images_sort'))
-    context.entities[context.model.get_kind()]._images = updated_images
+    updated_images, delete_images = sort_by_list(entity_images, context.input.get('sort_images'), 'image')
     for image in delete_images:
       context.blob_delete.append(image.image)
+      updated_images.remove(image)
+    context.values[context.model.get_kind()]._images = updated_images
 
 
 class WriteImages(event.Plugin):

@@ -66,7 +66,7 @@ class Set(event.Plugin):
       set_attr(context, key, value)
     for key, value in self.dynamic_values.items():
       set_attr(context, key, get_attr(context, value))
-
+      
 
 class Prepare(event.Plugin):
   

@@ -179,7 +179,7 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+        'sort_images': ndb.SuperStringProperty(repeated=True),
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
         'images_cursor': ndb.SuperIntegerProperty(default=0)

@@ -14,6 +14,7 @@ from google.appengine.api import search
 from app import ndb, settings, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
+from app.lib.list_manipulator import sort_by_list
 
 
 def get_catalog_images(CatalogImage, catalog_key):
@@ -131,16 +132,15 @@ class UpdateSet(event.Plugin):
     context.values['35'].name = context.input.get('name')
     context.values['35'].discontinue_date = context.input.get('discontinue_date')
     context.values['35'].publish_date = context.input.get('publish_date')
-    context.values['35']._images = context.input.get('_images')
-    new_images = []
+    entity_images, delete_images = sort_by_list(context.entities['35']._images, context.input.get('sort_images'), 'image')
     context.tmp['delete_images'] = []
+    for delete in delete_images:
+      entity_images.remove(delete)
+      context.tmp['delete_images'].append(delete)
+    context.values['35']._images = entity_images
     if context.values['35']._images:
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.entities['35'].key)
-        new_images.append(image.key)
-    for image in context.entities['35']._images:
-      if image.key not in new_images:
-        context.tmp['delete_images'].append(image)
     context.entities['35']._images = []
 
 

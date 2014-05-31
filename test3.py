@@ -23,7 +23,7 @@ foos = [Foo(id='1'), Foo(id='2'), Foo(id='3'), Foo(id='4'), Foo(id='5'), Foo(id=
 total = len(foos)+1
 delete_items = []
 
-def sortem(i, wha=None):
+def sortem(i):
   try:
     ii = sorting_list.index(i.id)+1
   except ValueError as e:

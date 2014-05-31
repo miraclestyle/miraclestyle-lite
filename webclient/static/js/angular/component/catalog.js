@@ -160,7 +160,7 @@ MainApp
 	        	{
 	        		var new_order = [];
 	        		angular.forEach(this.entity._images, function (item, index) {
-	        			new_order.push(index);
+	        			new_order.push(item.image);
 	        		});
 	        		this.entity.sort_images = new_order;
 	        	},

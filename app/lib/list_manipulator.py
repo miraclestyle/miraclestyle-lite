@@ -6,7 +6,7 @@ Created on May 31, 2014
 '''
 from app.lib.attribute_manipulator import get_attr
  
-def sort_by_list(for_sorting, field, sort_list):
+def sort_by_list(for_sorting, sort_list, field):
   total = len(for_sorting)+1
   to_delete = []
   def sorting_function(item):

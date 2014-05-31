@@ -36,6 +36,7 @@ def _write_helper(permissions, entity, field_key, field, field_value):
   Otherwise go one level down and check again.
   
   '''
+  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
   if (field_key in permissions) and (permissions[field_key]['writable']):
     try:
       if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
@@ -57,7 +58,8 @@ def _write_helper(permissions, entity, field_key, field, field_value):
             except IndexError as e:
               pass
         else:
-          _write_helper(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+          if field_value != None:
+            _write_helper(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
 
 def write(entity, values):
   entity_fields = entity.get_fields()
