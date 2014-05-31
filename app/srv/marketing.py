@@ -72,6 +72,7 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'lock'),
                               Action.build_key('35', 'upload_images')], False, 'context.entity.state != "unpublished"'),
       ActionPermission('35', [Action.build_key('35', 'process_images'),
+                              Action.build_key('35', 'process_cover'),
                               Action.build_key('35', 'delete'),
                               Action.build_key('35', 'publish'),
                               Action.build_key('35', 'sudo'),
@@ -86,10 +87,11 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', [Action.build_key('35', 'discontinue')], True, 'context.user._is_taskqueue and context.entity.state != "discontinued"'),
       ActionPermission('35', [Action.build_key('35', 'sudo')], True, 'context.user._root_admin'),
       ActionPermission('35', [Action.build_key('35', 'process_images'),
+                              Action.build_key('35', 'process_cover'),
                               Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'cron')], True, 'context.user._is_taskqueue'),
-      FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
+      FieldPermission('35', ['created', 'updated', 'state', 'cover'], False, None, 'True'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
@@ -104,8 +106,10 @@ class Catalog(ndb.BaseExpando):
                       'not context.user._root_admin'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
                       'context.user._is_taskqueue or context.user._root_admin'),
-      FieldPermission('35', ['_images', 'cover'], True, None,
-                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)')
+      FieldPermission('35', ['_images'], True, None,
+                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)'),
+      FieldPermission('35', ['cover'], True, None,
+                      'context.action.key_id_str == "process_cover" and (context.user._is_taskqueue or context.user._root_admin)')
       ]
     )
   
@@ -186,13 +190,9 @@ class Catalog(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         marketing.Read(read_from_start=True),
-        common.Set(transactional=True, dynamic_values={'tmp.original_cover': 'entities.35.cover'}),
-        marketing.UpdateSet(transactional=True),
+        marketing.UpdateSet(),
         rule.Write(transactional=True),
-        common.Set(transactional=True, dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
         marketing.UpdateWrite(transactional=True),
-        marketing.TransformCover(transactional=True),
-        blob.TransformImage(transactional=True, set_image='entities.35.cover'),
         common.Write(transactional=True),
         log.Entity(transactional=True),
         log.Write(transactional=True),
@@ -202,6 +202,9 @@ class Catalog(ndb.BaseExpando):
                                                        'output.images_more': 'tmp.images_more'}),
         blob.Update(transactional=True),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
         callback.Notify(transactional=True),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_cover', 'action_model': '35'},
+                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
         callback.Exec(transactional=True)
         ]
       ),
@@ -243,10 +246,31 @@ class Catalog(ndb.BaseExpando):
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         marketing.ProcessImages(transactional=True),
+        log.Write(transactional=True),
+        blob.Update(transactional=True),
+        callback.Notify(transactional=True),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_cover', 'action_model': '35'},
+                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True)
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'process_cover'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        marketing.Read(read_from_start=True),
+        marketing.ProcessCoverSet(),
         common.Set(transactional=True, dynamic_values={'tmp.original_cover': 'entities.35.cover'}),
         rule.Write(transactional=True),
         common.Set(transactional=True, dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
-        marketing.TransformCover(transactional=True),
+        marketing.ProcessCoverTransform(transactional=True),
         blob.TransformImage(transactional=True, set_image='entities.35.cover'),
         common.Write(transactional=True),
         log.Entity(transactional=True),
