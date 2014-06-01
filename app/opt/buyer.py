@@ -54,8 +54,8 @@ class Addresses(ndb.BaseModel):
     permissions=[
       ActionPermission('77', [Action.build_key('77', 'update'),
                               Action.build_key('77', 'read'),
-                              Action.build_key('77', 'read_records')], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
-      FieldPermission('77', ['addresses', '_records'], True, True, 'True')
+                              Action.build_key('77', 'read_records')], True, 'context.entity.key_parent == context.user.key and not context.user._is_guest'),
+      FieldPermission('77', ['addresses', '_records'], True, True, 'context.entity.key_parent == context.user.key and not context.user._is_guest')
       ]
     )
   
@@ -132,8 +132,8 @@ class Collection(ndb.BaseModel):
     permissions=[
       ActionPermission('10', [Action.build_key('10', 'update'),
                               Action.build_key('10', 'read'),
-                              Action.build_key('10', 'read_records')], True, 'context.entity.key_parent == context.user.key and (not context.user._is_guest)'),
-      FieldPermission('10', ['notify', 'domains', '_records', '_domains'], True, True, 'True')
+                              Action.build_key('10', 'read_records')], True, 'context.entity.key_parent == context.user.key and not context.user._is_guest'),
+      FieldPermission('10', ['notify', 'domains', '_records', '_domains'], True, True, 'context.entity.key_parent == context.user.key and not context.user._is_guest')
       ]
     )
   
