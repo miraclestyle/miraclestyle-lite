@@ -99,7 +99,7 @@ class Engine:
     if not action_model_schema:
       context.model = model
     else:
-      context.model = model(_model__schema=action_model_schema)
+      context.model = model(_model_schema=action_model_schema)
     if not context.model:
       raise InvalidModel(model_key)
   
