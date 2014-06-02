@@ -68,9 +68,11 @@ class Journal(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Prepare(),
+        transaction.JournalFields(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.49'})
+        common.Set(dynamic_values={'output.entity': 'entities.49',
+                                   'output.available_fields': 'tmp.available_fields'})
         ]
       ),
     Action(
@@ -81,23 +83,27 @@ class Journal(ndb.BaseExpando):
       _plugins=[
         common.Context(),
         common.Read(),
+        transaction.JournalFields(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
         rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.49'})
+        common.Set(dynamic_values={'output.entity': 'entities.49',
+                                   'output.available_fields': 'tmp.available_fields'})
         ]
       ),
     Action(
       key=Action.build_key('49', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        #'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'code': ndb.SuperStringProperty(required=True),
         'name': ndb.SuperStringProperty(required=True),
         'entry_fields': ndb.SuperJsonProperty(required=True),
         'line_fields': ndb.SuperJsonProperty(required=True)
         },
       _plugins=[
         common.Context(),
-        common.Read(),
+        transaction.JournalRead(),
         transaction.JournalSet(),
         rule.Prepare(skip_user_roles=False, strict=False),
         rule.Exec(),
