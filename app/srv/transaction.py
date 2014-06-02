@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 '''
-Created on Dec 17, 2013
+Created on Jun 2, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import collections
-
-from app import ndb
-from app.srv import uom
-
-
-class Context:
-  
-  def __init__(self, **kwargs):
-    self.group = None
-    self.entities = collections.OrderedDict()
+from app import ndb, settings
+from app.srv.event import Action
+from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
+from app.srv import log as ndb_log
+from app.srv import uom as ndb_uom
+from app.plugins import common, rule, log, callback, notify
 
 
 class Journal(ndb.BaseExpando):
@@ -27,38 +22,229 @@ class Journal(ndb.BaseExpando):
   # key.id defines constraint of unique journal code (<user supplied value> part of the key.id) per domain.
   # @todo sequencing counter is missing, and has to be determined how to solve that!
   
-  name = ndb.SuperStringProperty('1', required=True)
-  state = ndb.SuperStringProperty('2', required=True, choices=['draft', 'active', 'decommissioned'])
-  entry_fields = ndb.SuperPickleProperty('3', required=True, compressed=False)
-  line_fields = ndb.SuperPickleProperty('4', required=True, compressed=False)
-  plugin_categories = ndb.SuperStringProperty('5', repeated=True)  # @todo Not sure if we will need this?
+  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
+  name = ndb.SuperStringProperty('3', required=True)
+  state = ndb.SuperStringProperty('4', required=True, default='draft', choices=['draft', 'active', 'decommissioned'])
+  entry_fields = ndb.SuperPickleProperty('5', required=True, compressed=False)
+  line_fields = ndb.SuperPickleProperty('6', required=True, compressed=False)
   
-  def get_kind(self):  # @todo Do we need this?
-    return 'j_%s' % self.key.id()
+  _default_indexed = False
   
-  def get_key(self, *args, **kwargs):
-    if not self.key:
-      return self.set_key(*args, **kwargs)
-    else:
-      return self.key
+  _virtual_fields = {
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('49', repeated=True)
+    }
   
-  def set_entry_global_role(self, entry):
-    if hasattr(self, '_entry_global_role') and entry:
-      entry._global_role = self._entry_global_role
+  _global_role = GlobalRole(
+    permissions=[
+      ActionPermission('49', [Action.build_key('49', 'prepare'),
+                              Action.build_key('49', 'read'),
+                              Action.build_key('49', 'update'),
+                              Action.build_key('49', 'delete'),
+                              Action.build_key('49', 'search'),
+                              Action.build_key('49', 'read_records'),
+                              Action.build_key('49', 'activate'),
+                              Action.build_key('49', 'decommission')], False, 'context.entity.namespace_entity.state != "active"'),
+      ActionPermission('49', [Action.build_key('49', 'update'),
+                              Action.build_key('49', 'delete')], False, 'context.entity._is_system or context.entity.state != "draft"'),
+      ActionPermission('49', [Action.build_key('49', 'activate')], False, 'context.entity.state == "active"'),
+      ActionPermission('49', [Action.build_key('49', 'decommission')], False, 'context.entity._is_system or context.entity.state == "decommissioned"'),
+      FieldPermission('49', ['created', 'updated', 'state'], False, None, 'True'),
+      FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records'], False, False,
+                      'context.entity.namespace_entity.state != "active"'),
+      FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records'], False, None,
+                      'context.entity._is_system'),
+      FieldPermission('49', ['state'], True, None,
+                      '(context.action.key_id_str == "activate" and context.value and context.value.state == "active") or (context.action.key_id_str == "decommission" and context.value and context.value.state == "decommissioned")')
+      ]
+    )
   
-  def _instance_actions(self):
-    journal_actions = Action.query(Action.active == True,
-                                   ancestor=self.key).fetch()
-    actions = {}
-    for action in journal_actions:
-      actions[action.key.urlsafe()] = action
-    return actions
+  _actions = [
+    Action(
+      key=Action.build_key('49', 'prepare'),
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Set(dynamic_values={'output.entity': 'entities.49'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.49'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'update'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'name': ndb.SuperStringProperty(required=True),
+        'entry_fields': ndb.SuperJsonProperty(required=True),
+        'line_fields': ndb.SuperJsonProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        transaction.JournalSet(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Delete(transactional=True),
+        log.Entity(transactional=True),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'search'),
+      arguments={
+        'domain': ndb.SuperKeyProperty(kind='6', required=True),
+        'search': ndb.SuperSearchProperty(
+          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          filters={
+            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            },
+          indexes=[
+            {'filter': ['name'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['state', ['asc', 'desc']]]},
+            {'filter': ['state'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['state', ['asc', 'desc']]]},
+            {'filter': ['name', 'state'],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['state', ['asc', 'desc']]]},
+            {'filter': [],
+             'order_by': [['name', ['asc', 'desc']],
+                          ['state', ['asc', 'desc']]]}
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']},
+            'state': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'search_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Prepare(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        common.Search(page_size=settings.SEARCH_PAGE),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entities': 'entities',
+                                   'output.search_cursor': 'search_cursor',
+                                   'output.search_more': 'search_more'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'read_records'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'log_read_cursor': ndb.SuperStringProperty()
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        log.Read(page_size=settings.RECORDS_PAGE),
+        rule.Read(),
+        common.Set(dynamic_values={'output.entity': 'entities.49',
+                                   'output.log_read_cursor': 'log_read_cursor',
+                                   'output.log_read_more': 'log_read_more'})
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'activate'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.49.state': 'active'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'decommission'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'message': ndb.SuperTextProperty(required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        common.Set(static_values={'values.49.state': 'decommissioned'}),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
+        ]
+      )
+    ]
   
-  def _instance_plugins(self, action_key):
-    plugins = Plugin.query(Plugin.active == True,
-                           Plugin.subscriptions == action_key,
-                           ancestor=self.key).order(Plugin.sequence).fetch()
-    return plugins
+  @property
+  def _is_system(self):
+    return self.key_id_str.startswith('system_')
+  
+  # _actions [prepare, read, update, delete, search, read_records, activate, decommission]
 
 
 class CategoryBalance(ndb.BaseExpando):

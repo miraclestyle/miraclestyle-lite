@@ -51,10 +51,10 @@ class Widget(ndb.BaseExpando):
       ActionPermission('62', [Action.build_key('62', 'create'),
                               Action.build_key('62', 'update'),
                               Action.build_key('62', 'delete')], False, 'context.entity._is_system'),
-      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      'context.entity.namespace_entity.state != "active" or context.entity._is_system'),
-      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], None, False,
+      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
+      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
+                      'context.entity._is_system'),
       FieldPermission('62', ['role'], False, None,
                       '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)')
       ]

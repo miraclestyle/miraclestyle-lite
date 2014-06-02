@@ -130,11 +130,11 @@ class DomainRole(Role):
                               Action.build_key('60', 'read_records')], False, 'context.entity.namespace_entity.state != "active"'),
       ActionPermission('60', [Action.build_key('60', 'create'),
                               Action.build_key('60', 'update'),
-                              Action.build_key('60', 'delete')], False, 'context.entity.key_id_str == "admin"'),
+                              Action.build_key('60', 'delete')], False, 'context.entity._is_system'),
+      FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, False,
+                      'context.entity.namespace_entity.state != "active"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
-                      'context.entity.namespace_entity.state != "active" or context.entity.key_id_str == "admin"'),
-      FieldPermission('60', ['name', 'active', 'permissions', '_records'], None, False,
-                      'context.entity.namespace_entity.state != "active"')
+                      'context.entity._is_system')
       ]
     )
   
@@ -293,6 +293,10 @@ class DomainRole(Role):
         ]
       )
     ]
+  
+  @property
+  def _is_system(self):
+    return self.key_id_str == 'admin'
 
 
 class DomainUser(ndb.BaseExpando):
