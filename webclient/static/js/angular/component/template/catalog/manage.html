@@ -70,7 +70,7 @@
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix grid-wrapper">
 			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
 				<div class="img spaceout">
-					<img ng-src="{{image.serving_url}}=s240" />
+					<img ng-src="{{image.serving_url}}=s360" />
 				</div>
 				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
