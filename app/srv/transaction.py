@@ -138,7 +138,7 @@ class Journal(ndb.BaseExpando):
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
             'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
             },
           indexes=[
             {'filter': ['name'],
