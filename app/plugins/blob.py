@@ -80,8 +80,8 @@ class CopyTransformImage(event.Plugin):
           with cloudstorage.open(gs_object_name[3:], 'w') as writable_blob:
             image = images.Image(image_data=blob)
             # @todo Transforming variables have to be implemented as plugin properties!
-            image_width = image.width
-            image_height = int(image.width * 1.5)
+            image_width = 240
+            image_height = 360
             image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
             blob = image.execute_transforms(output_encoding=image.format)
             new_image.gs_object_name = gs_object_name
