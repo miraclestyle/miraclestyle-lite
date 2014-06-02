@@ -94,9 +94,12 @@ class Engine:
   @classmethod
   def get_model(cls, context, input):
     model_key = input.get('action_model')
-    context.model = ndb.Model._kind_map.get(model_key)
-    if not context.model:
-      context.model = ndb.Key(urlsafe=model_key).get()  # @todo We can not do this. We must use special input parameter which will be included in the model instance (example: context.model = transaction.Entry(journal=input.action_model_journal)).
+    action_model_schema = input.get('action_model_schema')
+    model = ndb.Model._kind_map.get(model_key)
+    if not action_model_schema:
+      context.model = model
+    else:
+      context.model = model(_model__schema=action_model_schema)
     if not context.model:
       raise InvalidModel(model_key)
   
