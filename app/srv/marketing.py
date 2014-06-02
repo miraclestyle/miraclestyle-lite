@@ -271,7 +271,7 @@ class Catalog(ndb.BaseExpando):
         rule.Write(transactional=True),
         common.Set(transactional=True, dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
         marketing.ProcessCoverTransform(transactional=True),
-        blob.TransformImage(transactional=True, set_image='entities.35.cover'),
+        blob.CopyTransformImage(transactional=True, set_image='entities.35.cover'),
         common.Write(transactional=True),
         log.Entity(transactional=True),
         log.Write(transactional=True),

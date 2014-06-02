@@ -60,7 +60,7 @@ class Update(event.Plugin):
           context.blob_unused.remove(blob_key)
 
 
-class TransformImage(event.Plugin):
+class CopyTransformImage(event.Plugin):
   
   blob_transform = ndb.SuperStringProperty('5', indexed=False)
   set_image = ndb.SuperStringProperty('6', indexed=False)
@@ -75,23 +75,56 @@ class TransformImage(event.Plugin):
       gs_object_name = '%s_copy' % new_image.gs_object_name
       blob_key = blobstore.create_gs_key(gs_object_name)
       try:
-        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as r:
-          blob = r.read()
-          with cloudstorage.open(gs_object_name[3:], 'w') as w:
+        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
+          blob = readonly_blob.read()
+          with cloudstorage.open(gs_object_name[3:], 'w') as writable_blob:
             image = images.Image(image_data=blob)
+            # @todo Transforming variables have to be implemented as plugin properties!
             image_width = image.width
-            image_height = int(image.width * 1.5)  # Force aspect ratio
+            image_height = int(image.width * 1.5)
             image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
+            blob = image.execute_transforms(output_encoding=image.format)
             new_image.gs_object_name = gs_object_name
             new_image.width = image_width
             new_image.height = image_height
-            blob = image.execute_transforms(output_encoding=image.format)
             new_image.size = len(blob)
             new_image.image = blobstore.BlobKey(blob_key)
             new_image.serving_url = images.get_serving_url(new_image.image)
-            w.write(blob)
+            writable_blob.write(blob)
       except Exception as e:
         util.logger(e, 'exception')
         context.blob_delete.append(blob_key)
       finally:
         set_attr(context, self.set_image, new_image)
+
+
+class TransformImage(event.Plugin):
+  
+  blob_transform = ndb.SuperStringProperty('5', indexed=False)
+  set_image = ndb.SuperStringProperty('6', indexed=False)
+  
+  def run(self, context):
+    if self.blob_transform:
+      blob_transform = get_attr(context, self.blob_transform)
+    else:
+      blob_transform = context.blob_transform
+    if blob_transform:
+      try:
+        with cloudstorage.open(blob_transform.gs_object_name[3:], 'w') as writable_blob:
+          blob = writable_blob.read()
+          image = images.Image(image_data=blob)
+          # @todo Transforming variables have to be implemented as plugin properties!
+          image_width = 240
+          image_height = 100
+          if image.width != image_width or image.height != image_height:
+            image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
+            blob = image.execute_transforms(output_encoding=image.format)
+            blob_transform.width = image_width
+            blob_transform.height = image_height
+            blob_transform.size = len(blob)
+            writable_blob.write(blob)
+      except Exception as e:
+        util.logger(e, 'exception')
+        context.blob_delete.append(blob_transform.image)
+      finally:
+        set_attr(context, self.set_image, blob_transform)

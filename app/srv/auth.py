@@ -361,9 +361,6 @@ class User(ndb.BaseExpando):
       if session:
         cls.set_current_user(user, session)
 
-def domain_logo_size(prop, value):
-  # here we need validation of image width, height for the logo
-  pass
 
 class Domain(ndb.BaseExpando):
   
@@ -441,13 +438,14 @@ class Domain(ndb.BaseExpando):
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True, validate_images=True, validator=domain_logo_size)
+        'domain_logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, required=True)
         },
       _plugins=[
         common.Context(),
         common.Prepare(),
         rule.Prepare(skip_user_roles=True, strict=False),
         rule.Exec(),
+        blob.TransformImage(transactional=True, blob_transform='input.domain_logo', set_image='input.domain_logo'),
         auth.DomainCreate(transactional=True),
         blob.Update(transactional=True, blob_write='input.domain_logo.image'),
         rule.Read(transactional=True),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
@@ -478,7 +476,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, validate_images=True, validator=domain_logo_size),
+        'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
         },
       _plugins=[
@@ -493,6 +491,7 @@ class Domain(ndb.BaseExpando):
         rule.Write(transactional=True),
         common.Write(transactional=True),
         common.Set(transactional=True, dynamic_values={'tmp.new_logo': 'entities.6.logo'}),
+        blob.TransformImage(transactional=True, blob_transform='entities.6.logo', set_image='entities.6.logo'),
         log.Entity(transactional=True),
         log.Write(transactional=True),
         rule.Read(transactional=True),
