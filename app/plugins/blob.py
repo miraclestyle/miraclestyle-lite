@@ -73,7 +73,6 @@ class CopyTransformImage(event.Plugin):
     if blob_transform:
       new_image = copy.deepcopy(blob_transform)
       gs_object_name = '%s_copy' % new_image.gs_object_name
-      blob_key = blobstore.create_gs_key(gs_object_name)
       try:
         with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
           blob = readonly_blob.read()
@@ -88,9 +87,10 @@ class CopyTransformImage(event.Plugin):
             new_image.width = image_width
             new_image.height = image_height
             new_image.size = len(blob)
-            new_image.image = blobstore.BlobKey(blob_key)
-            new_image.serving_url = images.get_serving_url(new_image.image)
             writable_blob.write(blob)
+        blob_key = blobstore.create_gs_key(gs_object_name)
+        new_image.image = blobstore.BlobKey(blob_key)
+        new_image.serving_url = images.get_serving_url(new_image.image)
       except Exception as e:
         util.logger(e, 'exception')
         context.blob_delete.append(blob_key)
