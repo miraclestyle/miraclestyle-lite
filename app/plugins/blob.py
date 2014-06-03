@@ -72,7 +72,7 @@ class CopyTransformImage(event.Plugin):
       blob_transform = context.blob_transform
     if blob_transform:
       new_image = copy.deepcopy(blob_transform)
-      gs_object_name = '%s_copy' % new_image.gs_object_name
+      gs_object_name = '%s_cover' % new_image.gs_object_name
       try:
         with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
           blob = readonly_blob.read()

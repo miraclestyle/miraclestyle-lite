@@ -107,7 +107,7 @@ class CountrySubdivision(ndb.BaseModel):
   parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
   code = ndb.SuperStringProperty('2', required=True, indexed=False)
   name = ndb.SuperStringProperty('3', required=True)
-  complete_name = ndb.SuperTextProperty('4')
+  complete_name = ndb.SuperTextProperty('4', required=True)
   type = ndb.SuperStringProperty('5', required=True, indexed=False)
   active = ndb.SuperBooleanProperty('6', required=True, default=True)
   

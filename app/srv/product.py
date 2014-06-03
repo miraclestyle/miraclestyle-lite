@@ -63,8 +63,8 @@ class Category(ndb.BaseModel):
   
   parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
   name = ndb.SuperStringProperty('2', required=True)
-  complete_name = ndb.SuperTextProperty('3')
-  state = ndb.SuperStringProperty('4', required=True, default='searchable')
+  complete_name = ndb.SuperTextProperty('3', required=True)
+  state = ndb.SuperStringProperty('4', required=True, default='indexable')
   
   _global_role = GlobalRole(
     permissions=[

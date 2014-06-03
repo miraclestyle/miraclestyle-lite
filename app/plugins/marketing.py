@@ -215,7 +215,7 @@ class ProcessCoverSet(event.Plugin):
   def run(self, context):
     if len(context.entities['35']._images):
       if context.entities['35'].cover:
-        if context.entities['35'].cover.gs_object_name[:-5] != context.entities['35']._images[0].gs_object_name:
+        if context.entities['35'].cover.gs_object_name[:-6] != context.entities['35']._images[0].gs_object_name:
           context.values['35'].cover = context.entities['35']._images[0]
       else:
         context.values['35'].cover = context.entities['35']._images[0]
@@ -366,10 +366,12 @@ class SearchWrite(event.Plugin):
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False, load_categories=True)
     write_index = True
+    if not len(templates['templates']):
+      # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
     for template in templates['templates']:
       documents.append(index_product_template(template))
     for template in templates['templates']:
-      if template._product_category.state != 'searchable':
+      if template._product_category.state != 'indexable':
         write_index = False
     indexing = False
     if write_index and len(documents):
