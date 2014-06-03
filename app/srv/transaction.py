@@ -254,8 +254,8 @@ class CategoryBalance(ndb.BaseModel):
   
   _kind = 71
   
-  from_date = ndb.SuperDateTimeProperty('1', auto_now_add=True, required=True, indexed=False)
-  to_date = ndb.SuperDateTimeProperty('2', auto_now_add=True, required=True, indexed=False)
+  from_date = ndb.SuperDateTimeProperty('1', required=True, indexed=False)
+  to_date = ndb.SuperDateTimeProperty('2', required=True, indexed=False)
   debit = ndb.SuperDecimalProperty('3', required=True, indexed=False)
   credit = ndb.SuperDecimalProperty('4', required=True, indexed=False)
   balance = ndb.SuperDecimalProperty('5', required=True, indexed=False)
@@ -266,11 +266,6 @@ class Category(ndb.BaseExpando):
   
   _kind = 47
   
-  # root (namespace Domain)
-  
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L448
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/account.py#l525
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/account.py#l19
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
   parent_record = ndb.SuperKeyProperty('3', kind='47')
