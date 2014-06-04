@@ -6,7 +6,7 @@ Created on Jan 9, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, callback, log, location
 

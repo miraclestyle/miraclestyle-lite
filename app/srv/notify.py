@@ -10,7 +10,7 @@ import math
 from jinja2.sandbox import SandboxedEnvironment
 
 from app import ndb, settings
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, notify

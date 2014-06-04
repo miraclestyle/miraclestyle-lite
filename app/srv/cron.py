@@ -7,7 +7,7 @@ Created on May 29, 2014
 
 from app import ndb, settings
 from app.srv.rule import GlobalRole, ActionPermission
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.plugins import common, rule, callback, cron
 
 

@@ -8,7 +8,7 @@ Created on May 6, 2014
 import datetime
 
 from app import ndb, settings
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
 from app.srv import blob as ndb_blob

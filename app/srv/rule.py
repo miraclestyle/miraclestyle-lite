@@ -8,7 +8,7 @@ Created on Dec 20, 2013
 from app import ndb, settings
 from app.lib.safe_eval import safe_eval
 from app.lib.attribute_manipulator import set_attr, get_attr
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback
 
