@@ -12,7 +12,7 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images
 
 from app import ndb, settings, memcache, util
-from app.srv import event
+from app.srv import event  # @todo We need this import for event.TerminateAction() exception. Is there a workaround?
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -26,9 +26,9 @@ def parse(blob_keys):
   return results
 
 
-class URL(event.Plugin):
+class URL(ndb.BaseModel):
   
-  gs_bucket_name = ndb.SuperStringProperty('5', indexed=False, required=True)
+  gs_bucket_name = ndb.SuperStringProperty('1', indexed=False, required=True)
   
   def run(self, context):
     upload_url = context.input.get('upload_url')
@@ -37,10 +37,10 @@ class URL(event.Plugin):
       raise event.TerminateAction()
 
 
-class Update(event.Plugin):
+class Update(ndb.BaseModel):
   
-  blob_delete = ndb.SuperStringProperty('5', indexed=False)
-  blob_write = ndb.SuperStringProperty('6', indexed=False)
+  blob_delete = ndb.SuperStringProperty('1', indexed=False)
+  blob_write = ndb.SuperStringProperty('2', indexed=False)
   
   def run(self, context):
     if self.blob_delete:
@@ -60,10 +60,10 @@ class Update(event.Plugin):
           context.blob_unused.remove(blob_key)
 
 
-class CopyTransformImage(event.Plugin):
+class CopyTransformImage(ndb.BaseModel):
   
-  blob_transform = ndb.SuperStringProperty('5', indexed=False)
-  set_image = ndb.SuperStringProperty('6', indexed=False)
+  blob_transform = ndb.SuperStringProperty('1', indexed=False)
+  set_image = ndb.SuperStringProperty('2', indexed=False)
   
   def run(self, context):
     if self.blob_transform:
@@ -98,10 +98,10 @@ class CopyTransformImage(event.Plugin):
         set_attr(context, self.set_image, new_image)
 
 
-class TransformImage(event.Plugin):
+class TransformImage(ndb.BaseModel):
   
-  blob_transform = ndb.SuperStringProperty('5', indexed=False)
-  set_image = ndb.SuperStringProperty('6', indexed=False)
+  blob_transform = ndb.SuperStringProperty('1', indexed=False)
+  set_image = ndb.SuperStringProperty('2', indexed=False)
   
   def run(self, context):
     if self.blob_transform:

@@ -8,7 +8,6 @@ Created on Apr 16, 2014
 import collections
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -236,11 +235,11 @@ def prepare(context, skip_user_roles, strict):
     context.entity.add_output('_field_permissions')
 
 
-class Prepare(event.Plugin):
+class Prepare(ndb.BaseModel):
   
-  prepare_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
-  skip_user_roles = ndb.SuperBooleanProperty('6', indexed=False, required=True, default=True)
-  strict = ndb.SuperBooleanProperty('7', indexed=False, required=True, default=True)
+  prepare_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
+  skip_user_roles = ndb.SuperBooleanProperty('2', indexed=False, required=True, default=True)
+  strict = ndb.SuperBooleanProperty('3', indexed=False, required=True, default=True)
   
   def run(self, context):
     if context.entities:
@@ -262,9 +261,9 @@ class Prepare(event.Plugin):
           prepare(context, self.skip_user_roles, self.strict)
 
 
-class Read(event.Plugin):
+class Read(ndb.BaseModel):
   
-  read_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  read_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
   def run(self, context):
     if len(context.entities):
@@ -280,9 +279,9 @@ class Read(event.Plugin):
           read(entity)
 
 
-class Write(event.Plugin):
+class Write(ndb.BaseModel):
   
-  write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  write_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
   def run(self, context):
     if len(context.entities):
@@ -298,9 +297,9 @@ class Write(event.Plugin):
           write(entity, context.values[i])
 
 
-class Exec(event.Plugin):
+class Exec(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
   
   def run(self, context):
     if len(context.entities):
@@ -317,7 +316,7 @@ class Exec(event.Plugin):
       raise ActionDenied(context)
 
 
-class DomainRoleSet(event.Plugin):
+class DomainRoleSet(ndb.BaseModel):
   
   def run(self, context):
     ActionPermission = context.models['79']
@@ -341,7 +340,7 @@ class DomainRoleSet(event.Plugin):
     context.values['60'].permissions = permissions
 
 
-class DomainUserInvite(event.Plugin):
+class DomainUserInvite(ndb.BaseModel):
   
   def run(self, context):
     User = context.models['0']
@@ -367,7 +366,7 @@ class DomainUserInvite(event.Plugin):
     context.values['0'] = user
 
 
-class DomainUserUpdate(event.Plugin):
+class DomainUserUpdate(ndb.BaseModel):
   
   def run(self, context):
     input_roles = ndb.get_multi(context.input.get('roles'))
@@ -380,7 +379,7 @@ class DomainUserUpdate(event.Plugin):
     context.values['8'].roles = roles
 
 
-class DomainUserRemove(event.Plugin):
+class DomainUserRemove(ndb.BaseModel):
   
   def run(self, context):
     user = ndb.Key('0', long(context.entities['8'].key.id())).get()
@@ -388,7 +387,7 @@ class DomainUserRemove(event.Plugin):
     context.entities['0'] = user
 
 
-class DomainUserCleanRoles(event.Plugin):
+class DomainUserCleanRoles(ndb.BaseModel):
   
   def run(self, context):
     roles = ndb.get_multi(context.entities['8'].roles)

@@ -39,22 +39,30 @@ class Configuration(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(required=True, kind='57')
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        plugin_setup.Install()
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            plugin_setup.Install()
+            ]
+          )
         ]
       ),
     Action(
       key=Action.build_key('57', 'cron_install'),
       arguments={},
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        plugin_setup.CronInstall()
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            plugin_setup.CronInstall()
+            ]
+          )
         ]
       )
     ]

@@ -9,13 +9,12 @@ from decimal import Decimal
 from xml.etree import ElementTree
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class CurrencyUpdate(event.Plugin):
+class CurrencyUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('5', indexed=False, required=True)
+  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
   
   def run(self, context):
     Measurement = context.models['18']
@@ -82,9 +81,9 @@ class CurrencyUpdate(event.Plugin):
       ndb.put_multi([Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms])
 
 
-class UnitUpdate(event.Plugin):
+class UnitUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('5', indexed=False, required=True)
+  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
   
   def run(self, context):
     Measurement = context.models['18']
@@ -124,7 +123,7 @@ class UnitUpdate(event.Plugin):
       ndb.put_multi([Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms])
 
 
-class RemoveCurrencies(event.Plugin):
+class RemoveCurrencies(ndb.BaseModel):
   
   def run(self, context):
     context.entities = filter(lambda x: x.key.parent().id() != 'currency', context.entities)

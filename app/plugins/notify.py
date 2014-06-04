@@ -10,12 +10,11 @@ import json
 from google.appengine.api import mail, urlfetch
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.safe_eval import safe_eval
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class Set(event.Plugin):
+class Set(ndb.BaseModel):
   
   def run(self, context):
     MailTemplate = context.models['58']
@@ -43,20 +42,20 @@ class Set(event.Plugin):
     context.values['61'].templates = templates
 
 
-class MailSend(event.Plugin):
+class MailSend(ndb.BaseModel):
   
   def run(self, context):
     mail.send_mail(context.input['sender'], context.input['recipient'],
                    context.input['subject'], context.input['body'])
 
 
-class HttpSend(event.Plugin):
+class HttpSend(ndb.BaseModel):
   
   def run(self, context):
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
 
 
-class Initiate(event.Plugin):
+class Initiate(ndb.BaseModel):
   
   def run(self, context):
     caller_user_key = context.input.get('caller_user')

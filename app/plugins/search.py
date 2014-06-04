@@ -11,7 +11,6 @@ import string
 from google.appengine.api import search
 
 from app import ndb, settings
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta
 
 
@@ -42,11 +41,11 @@ def _is_structured_field(field):
   return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
 
 
-class Write(event.Plugin):
+class Write(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  index_name = ndb.SuperStringProperty('6', indexed=False)
-  fields = ndb.SuperStringProperty('7', indexed=False, repeated=True)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  index_name = ndb.SuperStringProperty('2', indexed=False)
+  fields = ndb.SuperStringProperty('3', indexed=False, repeated=True)
   
   def run(self, context):
     if self.kind_id != None:
@@ -102,10 +101,10 @@ class Write(event.Plugin):
         pass
 
 
-class Delete(event.Plugin):
+class Delete(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  index_name = ndb.SuperStringProperty('6', indexed=False)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  index_name = ndb.SuperStringProperty('2', indexed=False)
   
   def run(self, context):
     if self.kind_id != None:
@@ -128,12 +127,12 @@ class Delete(event.Plugin):
         pass
 
 
-class Search(event.Plugin):
+class Search(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  index_name = ndb.SuperStringProperty('6', indexed=False)
-  fields = ndb.SuperStringProperty('7', indexed=False, repeated=True)
-  page_size = ndb.SuperIntegerProperty('8', indexed=False, required=True, default=10)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  index_name = ndb.SuperStringProperty('2', indexed=False)
+  fields = ndb.SuperStringProperty('3', indexed=False, repeated=True)
+  page_size = ndb.SuperIntegerProperty('4', indexed=False, required=True, default=10)
   
   def run(self, context):
     if self.kind_id != None:
@@ -215,7 +214,7 @@ class Search(event.Plugin):
       raise
 
 
-class DictConverter(event.Plugin):
+class DictConverter(ndb.BaseModel):
   
   def run(self, context):
     entities = []
@@ -232,7 +231,7 @@ class DictConverter(event.Plugin):
     context.entities = entities
 
 
-class EntityConverter(event.Plugin):
+class EntityConverter(ndb.BaseModel):
   
   def run(self, context):
     if len(context.search_documents):

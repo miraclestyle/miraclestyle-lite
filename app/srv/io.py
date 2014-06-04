@@ -156,27 +156,14 @@ class Engine:
         plugin.run(context)
     if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
       try:
-        plugins = context.model.get_plugins(context.action)
-        pre_transactional_plugins = []
-        transactional_plugins = []
-        post_transactional_plugins = []
-        pre_transactional = True
-        if len(plugins):
-          for plugin in plugins:
-            if plugin.transactional:
-              transactional_plugins.append(plugin)
-              pre_transactional = False
-            else:
-              if pre_transactional:
-                pre_transactional_plugins.append(plugin)
+        plugin_groups = context.model.get_plugins(context.action)  # @todo Shall we rename get_plugins to get_plugin_groups?
+        if len(plugin_groups):
+          for group in plugin_groups:
+            if len(group.plugins):
+              if group.transactional:
+                ndb.transaction(lambda: execute_plugins(group.plugins), xg=True)
               else:
-                post_transactional_plugins.append(plugin)
-        if len(pre_transactional_plugins):
-          execute_plugins(pre_transactional_plugins)
-        if len(transactional_plugins):
-          ndb.transaction(lambda: execute_plugins(transactional_plugins), xg=True)
-        if len(post_transactional_plugins):
-          execute_plugins(post_transactional_plugins)
+                execute_plugins(group.plugins)
       except event.TerminateAction as e:
         pass
       except Exception as e:

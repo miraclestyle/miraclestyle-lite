@@ -63,13 +63,17 @@ class Journal(ndb.BaseExpando):
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        transaction.JournalFields(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.49',
-                                   'output.available_fields': 'tmp.available_fields'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            transaction.JournalFields(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'output.entity': 'entities.49',
+                                       'output.available_fields': 'tmp.available_fields'})
+            ]
+          )
         ]
       ),
     Action(
@@ -78,15 +82,19 @@ class Journal(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='49', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        transaction.JournalFields(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        transaction.JournalRead(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.49',
-                                   'output.available_fields': 'tmp.available_fields'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            transaction.JournalFields(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.JournalRead(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49',
+                                       'output.available_fields': 'tmp.available_fields'})
+            ]
+          )
         ]
       ),
     Action(
@@ -100,20 +108,29 @@ class Journal(ndb.BaseExpando):
         'line_fields': ndb.SuperJsonProperty(required=True)
         },
       _plugins=[
-        common.Context(),
-        transaction.JournalUpdateRead(),
-        transaction.JournalSet(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        transaction.JournalRead(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            transaction.JournalUpdateRead(),
+            transaction.JournalSet(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.JournalRead()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -122,17 +139,26 @@ class Journal(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='49', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Delete(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Delete(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -167,16 +193,20 @@ class Journal(ndb.BaseExpando):
         'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=settings.SEARCH_PAGE),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=settings.SEARCH_PAGE),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -186,15 +216,19 @@ class Journal(ndb.BaseExpando):
         'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.49',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -204,20 +238,29 @@ class Journal(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(static_values={'values.49.state': 'active'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(static_values={'values.49.state': 'active'}),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -227,20 +270,29 @@ class Journal(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(static_values={'values.49.state': 'decommissioned'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.49'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(static_values={'values.49.state': 'decommissioned'}),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       )
     ]
@@ -311,11 +363,15 @@ class Category(ndb.BaseExpando):
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.47'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'output.entity': 'entities.47'})
+            ]
+          )
         ]
       ),
     Action(
@@ -324,13 +380,17 @@ class Category(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='47', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        transaction.CategoryRead(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.47'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.CategoryRead(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.47'})
+            ]
+          )
         ]
       ),
     Action(
@@ -345,20 +405,29 @@ class Category(ndb.BaseExpando):
         'description': ndb.SuperTextProperty()
         },
       _plugins=[
-        common.Context(),
-        transaction.CategoryUpdateRead(),
-        transaction.CategorySet(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        transaction.CategoryRead(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.47'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            transaction.CategoryUpdateRead(),
+            transaction.CategorySet(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.CategoryRead()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.47'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -367,17 +436,26 @@ class Category(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='47', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Delete(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.47'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Delete(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.47'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -412,16 +490,20 @@ class Category(ndb.BaseExpando):
         'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=settings.SEARCH_PAGE),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=settings.SEARCH_PAGE),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -431,15 +513,19 @@ class Category(ndb.BaseExpando):
         'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.47',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.47',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       )
     ]

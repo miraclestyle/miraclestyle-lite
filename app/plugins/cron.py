@@ -7,13 +7,13 @@ Created on May 29, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb
-from app.srv import event
+from app import ndb, settings, memcache, util
+from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class ProcessCatalogs(event.Plugin):
+class ProcessCatalogs(ndb.BaseModel):
   
-  page_size = ndb.SuperIntegerProperty(default=10)
+  page_size = ndb.SuperIntegerProperty('1', indexed=False, default=10)
   
   def run(self, context):
     CronConfig = context.models['83']

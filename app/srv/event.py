@@ -17,7 +17,7 @@ class Action(ndb.BaseExpando):
   _kind = 56
   
   name = ndb.SuperStringProperty('1', required=True)
-  arguments = ndb.SuperPickleProperty('2', required=True, default={})
+  arguments = ndb.SuperPickleProperty('2', required=True, default={}, compressed=False)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
   
   _default_indexed = False
@@ -27,13 +27,15 @@ class Action(ndb.BaseExpando):
     return ndb.Key(kind, 'action', cls._get_kind(), action_id)
 
 
-class Plugin(ndb.BasePolyExpando):
+class PluginGroup(ndb.BaseExpando):
   
   _kind = 52
   
-  sequence = ndb.SuperIntegerProperty('1', required=True)
+  name = ndb.SuperStringProperty('1', required=True)
   subscriptions = ndb.SuperKeyProperty('2', kind='56', repeated=True)
   active = ndb.SuperBooleanProperty('3', required=True, default=True)
-  transactional = ndb.SuperBooleanProperty('4', required=True, default=False, indexed=False)
+  sequence = ndb.SuperIntegerProperty('4', required=True)  # @todo Not sure if we are gonna need this?
+  transactional = ndb.SuperBooleanProperty('5', required=True, default=False, indexed=False)
+  plugins = ndb.SuperPickleProperty('6', required=True, default=[], compressed=False)
   
   _default_indexed = False

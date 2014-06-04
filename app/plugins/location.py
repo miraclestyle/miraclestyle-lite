@@ -8,13 +8,12 @@ Created on May 13, 2014
 from xml.etree import ElementTree
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class CountryUpdate(event.Plugin):
+class CountryUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('5', indexed=False, required=True)
+  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
   
   def run(self, context):
     Country = context.models['15']

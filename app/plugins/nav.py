@@ -6,11 +6,10 @@ Created on Apr 15, 2014
 '''
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class Set(event.Plugin):
+class Set(ndb.BaseModel):
   
   def run(self, context):
     Filter = context.models['65']
@@ -26,7 +25,7 @@ class Set(event.Plugin):
     context.values['62'].filters = filters
 
 
-class BuildMenu(event.Plugin):
+class BuildMenu(ndb.BaseModel):
   
   def run(self, context):
     model = context.model
