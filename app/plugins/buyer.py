@@ -10,7 +10,6 @@ import hashlib
 import copy
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -21,7 +20,7 @@ def generate_internal_id(address):
   address.internal_id = hashlib.md5(internal_id).hexdigest()
 
 
-class AddressRead(event.Plugin):
+class AddressRead(ndb.BaseModel):
   
   def run(self, context):
     user_key = context.input.get('user')
@@ -52,7 +51,7 @@ class AddressRead(event.Plugin):
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
-class AddressSet(event.Plugin):
+class AddressSet(ndb.BaseModel):
   
   def run(self, context):
     if context.values['77'].addresses:
@@ -75,7 +74,7 @@ class AddressSet(event.Plugin):
       context.values['77'].addresses[default_billing].default_billing = True
 
 
-class CollectionRead(event.Plugin):
+class CollectionRead(ndb.BaseModel):
   
   def run(self, context):
     user_key = context.input.get('user')

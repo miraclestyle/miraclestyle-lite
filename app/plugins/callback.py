@@ -10,13 +10,12 @@ import json
 from google.appengine.api import taskqueue
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class Notify(event.Plugin):
+class Notify(ndb.BaseModel):
   
-  dynamic_data = ndb.SuperJsonProperty('5', required=True, indexed=False, default={})
+  dynamic_data = ndb.SuperJsonProperty('1', required=True, indexed=False, default={})
   
   def run(self, context):
     data = {}
@@ -27,11 +26,11 @@ class Notify(event.Plugin):
     context.callback_payloads.append(('notify', data))
 
 
-class Payload(event.Plugin):
+class Payload(ndb.BaseModel):
   
-  queue = ndb.SuperStringProperty('5', required=True, indexed=False)
-  static_data = ndb.SuperJsonProperty('6', required=True, indexed=False, default={})
-  dynamic_data = ndb.SuperJsonProperty('7', required=True, indexed=False, default={})
+  queue = ndb.SuperStringProperty('1', required=True, indexed=False)
+  static_data = ndb.SuperJsonProperty('2', required=True, indexed=False, default={})
+  dynamic_data = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
   
   def run(self, context):
     data = {}
@@ -41,10 +40,10 @@ class Payload(event.Plugin):
     context.callback_payloads.append((self.queue, data))
 
 
-class Exec(event.Plugin):
+class Exec(ndb.BaseModel):
   
-  static_data = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
-  dynamic_data = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  static_data = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  dynamic_data = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
   
   def run(self, context):
     queues = {}

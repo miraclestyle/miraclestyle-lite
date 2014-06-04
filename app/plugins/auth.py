@@ -9,7 +9,6 @@ import os
 import hashlib
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.srv.setup import Configuration
 from app.lib import oauth2
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -39,7 +38,7 @@ class OAuth2Error(Exception):
     self.message = {'oauth2_error': error}
 
 
-class UserLoginPrepare(event.Plugin):
+class UserLoginPrepare(ndb.BaseModel):
   
   def run(self, context):
     User = context.models['0']
@@ -48,7 +47,7 @@ class UserLoginPrepare(event.Plugin):
     context.user = User.current_user()
 
 
-class UserLoginOAuth(event.Plugin):
+class UserLoginOAuth(ndb.BaseModel):
   
   def run(self, context):
     User = context.models['0']
@@ -84,7 +83,7 @@ class UserLoginOAuth(event.Plugin):
           context.user = user
 
 
-class UserLoginUpdate(event.Plugin):
+class UserLoginUpdate(ndb.BaseModel):
   
   def run(self, context):
     if context.tmp.get('identity_id') != None:
@@ -117,7 +116,7 @@ class UserLoginUpdate(event.Plugin):
       context.log_entities.append((entity, {'ip_address' : context.tmp['ip_address']}))
 
 
-class UserLoginOutput(event.Plugin):
+class UserLoginOutput(ndb.BaseModel):
   
   def run(self, context):
     context.output['entity'] = context.entities['0']
@@ -125,20 +124,20 @@ class UserLoginOutput(event.Plugin):
       context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.tmp['session'].session_id)
 
 
-class UserIPAddress(event.Plugin):
+class UserIPAddress(ndb.BaseModel):
   
   def run(self, context):
     context.tmp['ip_address'] = os.environ['REMOTE_ADDR']
 
 
-class UserLogoutOutput(event.Plugin):
+class UserLogoutOutput(ndb.BaseModel):
   
   def run(self, context):
     context.entities['0'].set_current_user(None, None)
     context.output['entity'] = context.entities['0'].current_user()
 
 
-class UserReadDomains(event.Plugin):
+class UserReadDomains(ndb.BaseModel):
   
   def run(self, context):
     context.tmp['domains'] = []
@@ -163,7 +162,7 @@ class UserReadDomains(event.Plugin):
       context.tmp['domain_users'] = helper(context.tmp['domains']).get_result()
 
 
-class UserUpdate(event.Plugin):
+class UserUpdate(ndb.BaseModel):
   
   def run(self, context):
     primary_email = context.input.get('primary_email')
@@ -179,14 +178,14 @@ class UserUpdate(event.Plugin):
           identity.associated = True
 
 
-class UserSudo(event.Plugin):
+class UserSudo(ndb.BaseModel):
   
   def run(self, context):
     if context.entities['0']._field_permissions['state']['writable'] and context.values['0'].state == 'suspended':
       context.values['0'].sessions = []
 
 
-class DomainCreate(event.Plugin):
+class DomainCreate(ndb.BaseModel):
   
   def run(self, context):
     config_input = context.input.copy()
@@ -196,7 +195,7 @@ class DomainCreate(event.Plugin):
     context.entities[config.get_kind()] = config
 
 
-class DomainRead(event.Plugin):
+class DomainRead(ndb.BaseModel):
   
   def run(self, context):
     # @todo Async operations effectively require two separate plugins
@@ -209,7 +208,7 @@ class DomainRead(event.Plugin):
     context.entities['6']._primary_contact_email = primary_contact._primary_email
 
 
-class DomainSearch(event.Plugin):
+class DomainSearch(ndb.BaseModel):
   
   def run(self, context):
     @ndb.tasklet

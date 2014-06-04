@@ -6,7 +6,7 @@ Created on Feb 24, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
 from app.plugins import common, rule, log, callback, nav
@@ -67,11 +67,15 @@ class Widget(ndb.BaseExpando):
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'output.entity': 'entities.62'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'output.entity': 'entities.62'})
+            ]
+          )
         ]
       ),
     Action(
@@ -86,19 +90,28 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        nav.Set(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            nav.Set(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.62'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -107,12 +120,16 @@ class Widget(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='62', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.62'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.62'})
+            ]
+          )
         ]
       ),
     Action(
@@ -127,19 +144,28 @@ class Widget(ndb.BaseExpando):
         'filters': ndb.SuperJsonProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        nav.Set(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            nav.Set(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.62'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -148,17 +174,26 @@ class Widget(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='62', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Delete(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.62'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Delete(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.62'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -200,16 +235,20 @@ class Widget(ndb.BaseExpando):
         'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=settings.SEARCH_PAGE),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=settings.SEARCH_PAGE),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -219,15 +258,19 @@ class Widget(ndb.BaseExpando):
         'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.62',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.62',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -236,12 +279,16 @@ class Widget(ndb.BaseExpando):
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        nav.BuildMenu(),
-        common.Set(dynamic_values={'output.menu': 'tmp.widgets', 'output.domain': 'domain'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            nav.BuildMenu(),
+            common.Set(dynamic_values={'output.menu': 'tmp.widgets', 'output.domain': 'domain'})
+            ]
+          )
         ]
       )
     ]

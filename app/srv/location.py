@@ -6,7 +6,7 @@ Created on Jan 9, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, callback, log, location
 
@@ -54,11 +54,15 @@ class Country(ndb.BaseModel):
       key=Action.build_key('15', 'update'),
       arguments={},
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
+            ]
+          )
         ]
       ),
     Action(
@@ -82,16 +86,20 @@ class Country(ndb.BaseModel):
         'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=-1),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=-1),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       )
     ]
@@ -150,16 +158,20 @@ class CountrySubdivision(ndb.BaseModel):
         'search_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=settings.SEARCH_PAGE),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=settings.SEARCH_PAGE),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       )
     ]

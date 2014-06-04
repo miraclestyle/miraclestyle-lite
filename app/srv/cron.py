@@ -7,7 +7,7 @@ Created on May 29, 2014
 
 from app import ndb, settings
 from app.srv.rule import GlobalRole, ActionPermission
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.plugins import common, rule, callback, cron
 
 
@@ -28,12 +28,16 @@ class CronConfig(ndb.BaseModel):
       key=Action.build_key('83', 'process_catalogs'),
       arguments={},
       _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        cron.ProcessCatalogs(page_size=settings.DOMAINS_PER_CRON),
-        callback.Exec()
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            cron.ProcessCatalogs(page_size=settings.DOMAINS_PER_CRON),
+            callback.Exec()
+            ]
+          )
         ]
       )
     ]

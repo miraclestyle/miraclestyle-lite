@@ -11,11 +11,10 @@ import string
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class Context(event.Plugin):
+class Context(ndb.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
@@ -56,10 +55,10 @@ class Context(event.Plugin):
       context.search_documents_count = None
 
 
-class Set(event.Plugin):
+class Set(ndb.BaseModel):
   
-  static_values = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
-  dynamic_values = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  static_values = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  dynamic_values = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
   
   def run(self, context):
     for key, value in self.static_values.items():
@@ -68,11 +67,11 @@ class Set(event.Plugin):
       set_attr(context, key, get_attr(context, value))
 
 
-class Prepare(event.Plugin):
+class Prepare(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  namespace_path = ndb.SuperStringProperty('6', indexed=False)
-  parent_path = ndb.SuperStringProperty('7', indexed=False)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  namespace_path = ndb.SuperStringProperty('2', indexed=False)
+  parent_path = ndb.SuperStringProperty('3', indexed=False)
   
   def run(self, context):
     parent = None
@@ -90,9 +89,9 @@ class Prepare(event.Plugin):
     context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
 
 
-class Read(event.Plugin):
+class Read(ndb.BaseModel):
   
-  read_entities = ndb.SuperJsonProperty('5', indexed=False, default={})
+  read_entities = ndb.SuperJsonProperty('1', indexed=False, default={})
   
   def run(self, context):
     keys = []
@@ -110,9 +109,9 @@ class Read(event.Plugin):
       context.values[key] = copy.deepcopy(context.entities[key])
 
 
-class Write(event.Plugin):
+class Write(ndb.BaseModel):
   
-  write_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  write_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
   def run(self, context):
     entities = []
@@ -125,9 +124,9 @@ class Write(event.Plugin):
     ndb.put_multi(entities)
 
 
-class Delete(event.Plugin):
+class Delete(ndb.BaseModel):
   
-  delete_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
+  delete_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
   def run(self, context):
     keys = []
@@ -140,11 +139,11 @@ class Delete(event.Plugin):
     ndb.delete_multi(keys)
 
 
-class Search(event.Plugin):
+class Search(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  page_size = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=10)
-  search = ndb.SuperJsonProperty('7', indexed=False, default={})  # @todo Transform this field to include optional query parameters to add to query.
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  page_size = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
+  search = ndb.SuperJsonProperty('3', indexed=False, default={})  # @todo Transform this field to include optional query parameters to add to query.
   
   def run(self, context):
     namespace = None

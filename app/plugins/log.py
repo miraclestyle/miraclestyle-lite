@@ -8,14 +8,13 @@ Created on Apr 17, 2014
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
-class Read(event.Plugin):
+class Read(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('5', indexed=False)
-  page_size = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=10)
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  page_size = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
   
   def run(self, context):
     if len(context.entities) and isinstance(context.entities, dict):
@@ -63,11 +62,11 @@ class Read(event.Plugin):
       context.log_read_more = more
 
 
-class Entity(event.Plugin):
+class Entity(ndb.BaseModel):
   
-  log_entities = ndb.SuperStringProperty('5', indexed=False, repeated=True)
-  static_arguments = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
-  dynamic_arguments = ndb.SuperJsonProperty('7', indexed=False, required=True, default={})
+  log_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
+  static_arguments = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
+  dynamic_arguments = ndb.SuperJsonProperty('3', indexed=False, required=True, default={})
   
   def run(self, context):
     if len(context.entities) and isinstance(context.entities, dict):
@@ -83,10 +82,10 @@ class Entity(event.Plugin):
         context.log_entities.append((context.entities[context.model.get_kind()], arguments))
 
 
-class Write(event.Plugin):
+class Write(ndb.BaseModel):
   
-  static_arguments = ndb.SuperJsonProperty('5', indexed=False, required=True, default={})
-  dynamic_arguments = ndb.SuperJsonProperty('6', indexed=False, required=True, default={})
+  static_arguments = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  dynamic_arguments = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
   
   def run(self, context):
     records = []

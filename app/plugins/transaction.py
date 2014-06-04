@@ -9,7 +9,6 @@ import copy
 import collections
 
 from app import ndb, settings, memcache, util
-from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -24,13 +23,13 @@ __JOURNAL_FIELDS = collections.OrderedDict([('String', ndb.SuperStringProperty),
                                             ('JSON', ndb.SuperJsonProperty)])
 
 
-class JournalFields(event.Plugin):
+class JournalFields(ndb.BaseModel):
   
   def run(self, context):
     context.tmp['available_fields'] = __JOURNAL_FIELDS.keys()
 
 
-class JournalUpdateRead(event.Plugin):
+class JournalUpdateRead(ndb.BaseModel):
   
   def run(self, context):
     '''key.id() = prefix_<user supplied value>
@@ -52,14 +51,14 @@ class JournalUpdateRead(event.Plugin):
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
-class JournalRead(event.Plugin):
+class JournalRead(ndb.BaseModel):
   
   def run(self, context):
     context.entities[context.model.get_kind()]._code = context.entities[context.model.get_kind()].key_id_str[3:]
     context.values[context.model.get_kind()]._code = copy.deepcopy(context.entities[context.model.get_kind()]._code)
 
 
-class JournalSet(event.Plugin):
+class JournalSet(ndb.BaseModel):
   
   def run(self, context):
     
@@ -87,7 +86,7 @@ class JournalSet(event.Plugin):
     context.values[context.model.get_kind()].line_fields = line_fields
 
 
-class CategoryUpdateRead(event.Plugin):
+class CategoryUpdateRead(ndb.BaseModel):
   
   def run(self, context):
     '''key.id() = prefix_<user supplied value>
@@ -106,14 +105,14 @@ class CategoryUpdateRead(event.Plugin):
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
-class CategoryRead(event.Plugin):
+class CategoryRead(ndb.BaseModel):
   
   def run(self, context):
     context.entities[context.model.get_kind()]._code = context.entities[context.model.get_kind()].key_id_str[3:]
     context.values[context.model.get_kind()]._code = copy.deepcopy(context.entities[context.model.get_kind()]._code)
 
 
-class CategorySet(event.Plugin):
+class CategorySet(ndb.BaseModel):
   
   def run(self, context):
     context.values[context.model.get_kind()].parent_record = context.input.get('parent_record')
@@ -125,7 +124,7 @@ class CategorySet(event.Plugin):
 
 
 '''
-class Write(event.Plugin):
+class Write(ndb.BaseModel):
   
   @ndb.transactional(xg=True)  # @todo Study material. Perhaps 'context.transaction.group' can be context.entity, and 'context.transaction.entities' could be context.entity._entries ??
   def run(self, context):

@@ -9,7 +9,7 @@ import time
 import datetime
 
 from app import ndb, settings, util
-from app.srv import event, log, nav, rule
+from app.srv import event, log, nav, rule# @todo We need event import for event.Action.build_key. Is there a workaround?
 from app.plugins import log as plugin_log
 from app.plugins import callback as plugin_callback
 
@@ -230,7 +230,7 @@ class DomainSetup(Setup):
 register_system_setup(('setup_domain', DomainSetup))
 
 
-class Install(event.Plugin):
+class Install(ndb.BaseModel):
   
   def run(self, context):
     config = context.entities['57']
@@ -240,7 +240,7 @@ class Install(event.Plugin):
     setup.run()
 
 
-class CronInstall(event.Plugin):
+class CronInstall(ndb.BaseModel):
   
   def run(self, context):
     time_difference = datetime.datetime.now()-datetime.timedelta(minutes=15)
