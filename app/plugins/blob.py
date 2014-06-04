@@ -24,6 +24,32 @@ def parse(blob_keys):
     if isinstance(blob_key, blobstore.BlobKey):
       results.append(blob_key)
   return results
+'''  
+  dont know what to do with this? where to place it else?
+  this is used for duplications for product template.images, product instance images and catalog images
+  basically for any list that contains blob.Image compatible instances
+  
+  These functions will perform copying images in paralel
+  e.g. if there's 100 images they will not be processed in serial mode but in paralel.
+'''
+@ndb.tasklet
+def duplicate_image_async(context, image, i, field_target, field_source):
+  field = '%s.%s' % (field_target, i)
+  field2 = '%s.%s' % (field_source, i)
+  @ndb.tasklet
+  def generate(): # in order to simulate yield mechanisms the "yield" keyword must be called on something that has .get_result() and its Future-like class.
+    copyimage = CopyImage(set_image=field, blob_transform=field2) ## internal usage of CopyImage
+    copyimage.run(context)
+    raise ndb.Return(True)
+  yield generate()
+  raise ndb.Return(True)
+
+def duplicate_images_async(context, images, field_target, field_source): # this is not a tasklet, this function builds futures and waits for them to complete
+  futures = []
+  for i,image in enumerate(images):
+    future = duplicate_image_async(context, image, i, field_target, field_source)
+    futures.append(future)
+  return ndb.Future.wait_all(futures)
 
 
 class URL(event.Plugin):
@@ -73,6 +99,7 @@ class CopyTransformImage(event.Plugin):
     if blob_transform:
       new_image = copy.deepcopy(blob_transform)
       gs_object_name = '%s_cover' % new_image.gs_object_name
+      blob_key = None
       try:
         with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
           blob = readonly_blob.read()
@@ -87,6 +114,35 @@ class CopyTransformImage(event.Plugin):
             new_image.width = image_width
             new_image.height = image_height
             new_image.size = len(blob)
+            writable_blob.write(blob)
+        blob_key = blobstore.create_gs_key(gs_object_name)
+        new_image.image = blobstore.BlobKey(blob_key)
+        new_image.serving_url = images.get_serving_url(new_image.image)
+      except Exception as e:
+        util.logger(e, 'exception')
+        if blob_key != None:
+          context.blob_delete.append(blob_key)
+      finally:
+        set_attr(context, self.set_image, new_image)
+
+class CopyImage(event.Plugin):
+  
+  blob_transform = ndb.SuperStringProperty('5', indexed=False)
+  set_image = ndb.SuperStringProperty('6', indexed=False)
+  
+  def run(self, context):
+    if self.blob_transform:
+      blob_transform = get_attr(context, self.blob_transform)
+    else:
+      blob_transform = context.blob_transform
+    if blob_transform:
+      new_image = copy.deepcopy(blob_transform)
+      gs_object_name = '%s_copy' % new_image.gs_object_name
+      try:
+        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
+          blob = readonly_blob.read()
+          with cloudstorage.open(gs_object_name[3:], 'w') as writable_blob:
+            new_image.gs_object_name = gs_object_name
             writable_blob.write(blob)
         blob_key = blobstore.create_gs_key(gs_object_name)
         new_image.image = blobstore.BlobKey(blob_key)

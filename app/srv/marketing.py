@@ -88,6 +88,7 @@ class Catalog(ndb.BaseExpando):
       ActionPermission('35', [Action.build_key('35', 'sudo')], True, 'context.user._root_admin'),
       ActionPermission('35', [Action.build_key('35', 'process_images'),
                               Action.build_key('35', 'process_cover'),
+                              Action.build_key('35', 'process_duplicate'),
                               Action.build_key('35', 'index'),
                               Action.build_key('35', 'unindex'),
                               Action.build_key('35', 'cron')], True, 'context.user._is_taskqueue'),
@@ -180,6 +181,7 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'sort_images': ndb.SuperStringProperty(repeated=True),
+        'pricetags': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True), # must be like this because we need to match the pricetags with order..... 
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
         'images_cursor': ndb.SuperIntegerProperty(default=0)
@@ -559,11 +561,48 @@ class Catalog(ndb.BaseExpando):
         ]
       ),
     Action(
+      key=Action.build_key('35', 'process_duplicate'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        marketing.DuplicateRead(),
+        marketing.DuplicateCatalog(),
+        marketing.DuplicateProductTemplateInstances(), # DuplicateCatalog, and DuplicateProductTemplateInstances should be done in transaction
+        log.Write(transactional=True),
+        callback.Notify(transactional=True),
+        callback.Exec(transactional=True)
+        ]
+      ),          
+    Action(
       key=Action.build_key('35', 'duplicate'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[]
+      _plugins=[
+        common.Context(),
+        common.Read(),
+        rule.Prepare(skip_user_roles=False, strict=False),
+        rule.Exec(),
+        rule.Read(),
+        rule.Write(transactional=True),
+        common.Write(transactional=True),
+        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
+        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
+        log.Write(transactional=True),
+        rule.Read(transactional=True),
+        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
+        callback.Notify(transactional=True),
+        callback.Payload(transactional=True, queue='callback',
+                         static_data={'action_id': 'process_duplicate', 'action_model': '35'},
+                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
+        callback.Exec(transactional=True)
+        ]
       )
     ]
   

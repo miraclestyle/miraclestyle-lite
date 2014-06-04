@@ -1,13 +1,4 @@
 MainApp
-.directive('showNav', ['$compile', function ($compile) {
-	return {
-		link : function (scope, element, attr)
-		{
-			 
-			 element.append($compile(html.join("\n"))(scope));
-		}
-	};
-}])
 .factory('Nav', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal',
 
     function ($rootScope, Endpoint, EntityEditor, Title, $modal) {
@@ -80,19 +71,17 @@ MainApp
                     Title.set(['My Apps', $rootScope.nav.domain.name]);
                     return $rootScope.nav;
                 }
-
             },
             create: function (domain_key, complete) {
-             
-            	  
+              
                return EntityEditor.create({
                 	 'kind' : '62',
-                	 'entity' : {},
+                	 'entity' : {
+                	 	'domain' : domain_key,
+                	 },
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			            this.roles = data['roles'];
-			            this.entity['domain'] = domain_key;
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('nav/manage.html'),
@@ -121,7 +110,6 @@ MainApp
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			            this.roles = data['roles'];
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('nav/manage.html'),

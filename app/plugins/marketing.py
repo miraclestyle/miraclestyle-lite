@@ -8,11 +8,12 @@ Created on Apr 15, 2014
 import copy
 import math
 import datetime
-
+ 
 from google.appengine.api import search
 
 from app import ndb, settings, memcache, util
 from app.srv import event
+from app.plugins import blob
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib.list_manipulator import sort_by_list
 
@@ -98,6 +99,164 @@ def get_product_instances(Instance, template_keys, complete=True):
   return {'instances': instances, 'images': images, 'contents': contents}
 
 
+class DuplicateRead(event.Plugin):
+  
+  def run(self, context):
+    CatalogImage = context.models['36']
+    Instance = context.models['39']
+    catalog = context.entities['35']
+    images = CatalogImage.query(ancestor=catalog.key).fetch()
+    images.sort(key=lambda x : int(x.key.id()))  # sort all images by its id which goes 0-<x number>
+    catalog._images = images
+    if not images:
+      catalog._images = []
+    product_template_keys = []
+    for image in images:
+      add_product_template_keys = [pricetag.product_template for pricetag in image.pricetags]
+      product_template_keys.extend(add_product_template_keys)
+    product_template_keys = set(product_template_keys)
+    product_templates = ndb.get_multi(product_template_keys)
+    if not product_templates:
+      product_templates = []
+      
+    @ndb.tasklet
+    def async_partials(entity, instance=False):
+      keys = [ndb.Key('73', entity.key_id_str, parent=entity.key),
+              ndb.Key('75', entity.key_id_str, parent=entity.key),
+              ]
+      if not instance:
+        keys.append(ndb.Key('74', entity.key_id_str, parent=entity.key))
+      results = yield ndb.get_multi_async(keys)
+      images = results[0]
+      contents = results[1]
+      if images:
+        entity._images = images.images
+      if contents:
+        entity._contents = contents.contents
+      if not instance:
+        variants = results[2]
+        if variants:
+          entity._variants = variants.variants
+      raise ndb.Return(entity)
+       
+    @ndb.tasklet
+    def async(entity):
+      entity._instances = yield Instance.query(ancestor=entity.key).fetch_async()
+      yield async_partials(entity)
+      raise ndb.Return(entity)
+
+    @ndb.tasklet
+    def helper(entities):
+      results = yield map(async, entities)
+      raise ndb.Return(results)
+    
+    helper(product_templates).get_result()
+    futures = []
+    for product_template in product_templates:
+      for product_instance in product_template._instances:
+        futures.append(async_partials(product_instance, True))
+    ndb.Future.wait_all(futures)
+    context.tmp['product_templates'] = product_templates
+    context.tmp['new_product_templates'] = product_templates
+
+
+class DuplicateCatalog(event.Plugin):
+  
+  def run(self, context):
+    # this should be one  transaction
+    # with PluginGroup concept this can be done trough plugins other then creating separate transaction functions inside a plugin
+    catalog = context.entities['35']
+    new_catalog = copy.deepcopy(catalog)
+    new_catalog.created = datetime.datetime.now()
+    new_catalog.updated = datetime.datetime.now()
+    new_catalog.state = 'unpublished'
+    new_catalog.set_key(None, namespace=catalog.key.namespace())
+    context.tmp['new_catalog'] = new_catalog
+    # copy the catalog cover
+    blob.CopyImage(set_image='tmp.new_catalog.cover', blob_transform='entities.35.cover').run(context) # direct copy of cover
+    new_catalog.put()
+    context.log_entities.append((new_catalog, )) # LOG NEW CATALOG
+    # copy the catalog images
+    blob.duplicate_images_async(context, new_catalog._images, 'tmp.new_catalog._images', 'entities.35._images')
+    for i,image in enumerate(new_catalog._images):
+      image.set_key(str(i), parent=new_catalog.key)
+      context.log_entities.append((image, ))# LOG CATALOG IMAGE
+    ndb.put_multi(new_catalog._images)
+    # copy product templates
+    @ndb.tasklet
+    def async_product_template(product, i):
+      field = 'tmp.new_product_templates.%s._images' % i
+      field_source = 'tmp.product_templates.%s._images' % i
+      @ndb.tasklet
+      def generate(): # For future.wait_all to work the tasklets that build the futures must yield another tasklet which is actaully a future with .get_result()
+        blob.duplicate_images_async(context, get_attr(context, field), field, field_source)
+        product.set_key(None, parent=new_catalog.key)
+        context.log_entities.append((product, ))# LOG PRODUCT TEMPLATE
+        raise ndb.Return(True)
+      yield generate()
+      raise ndb.Return(True)
+ 
+    def helper_product_template(products):
+      futures = []
+      for i,product in enumerate(products):
+        futures.append(async_product_template(product, i))
+      return ndb.Future.wait_all(futures)
+    
+    helper_product_template(context.tmp['new_product_templates'])
+    ndb.put_multi(context.tmp['new_product_templates'])
+ 
+    Images = context.models['73']
+    Variants = context.models['74']
+    Contents = context.models['75']
+    
+    puts = []
+    for product_template in context.tmp['new_product_templates']:
+      puts.append(Images(parent=product_template.key, images=product_template._images, id=product_template.key_id_str))
+      puts.append(Variants(parent=product_template.key, variants=product_template._variants, id=product_template.key_id_str))
+      puts.append(Contents(parent=product_template.key, contents=product_template._contents, id=product_template.key_id_str))
+    ndb.put_multi(puts)
+    
+    
+class DuplicateProductTemplateInstances(event.Plugin):
+  
+  def run(self, context):
+    # copy product instances of every product template
+    @ndb.tasklet
+    def async_product_instance(product_template, instance, instance_i, product_template_i):
+      field = 'tmp.new_product_templates.%s._instances.%s._images' % (product_template_i, instance_i)
+      field_source = 'tmp.product_templates.%s._instances.%s._images' % (product_template_i, instance_i)
+      @ndb.tasklet
+      def generator():
+        blob.duplicate_images_async(context, get_attr(context, field), field, field_source)
+        instance.set_key(instance.key.id(), parent=product_template.key)
+        context.log_entities.append((instance, )) # LOG INSTANCES
+        raise ndb.Return(True)
+      yield generator()
+      raise ndb.Return(instance)
+ 
+    def helper_product_instance(product_template, instances, product_template_i):
+      futures = []
+      for instance_i,instance in enumerate(instances):
+        futures.append(async_product_instance(product_template, instance, instance_i, product_template_i))
+      return ndb.Future.wait_all(futures)
+ 
+    instances = []
+    for product_template_i,product_template in enumerate(context.tmp['new_product_templates']):
+      helper_product_instance(product_template, product_template._instances, product_template_i)
+      instances.extend(product_template._instances)
+    ndb.put_multi(instances)
+    
+    Images = context.models['73']
+    Contents = context.models['75']
+    
+    puts = []
+    for instance in instances:
+      puts.append(Images(parent=instance.key, images=instance._images, id=instance.key_id_str))
+      puts.append(Contents(parent=instance.key, contents=instance._contents, id=instance.key_id_str))
+    ndb.put_multi(puts)
+
+    
+ 
 class Read(event.Plugin):
   
   read_from_start = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=False)
@@ -132,7 +291,9 @@ class UpdateSet(event.Plugin):
     context.values['35'].name = context.input.get('name')
     context.values['35'].discontinue_date = context.input.get('discontinue_date')
     context.values['35'].publish_date = context.input.get('publish_date')
-    entity_images, delete_images = sort_by_list(context.entities['35']._images, context.input.get('sort_images'), 'image')
+    pricetags = context.input.get('pricetags')
+    sort_images = context.input.get('sort_images')
+    entity_images, delete_images = sort_by_list(context.entities['35']._images, sort_images, 'image')
     context.tmp['delete_images'] = []
     for delete in delete_images:
       entity_images.remove(delete)
@@ -141,6 +302,7 @@ class UpdateSet(event.Plugin):
     if context.values['35']._images:
       for i, image in enumerate(context.values['35']._images):
         image.set_key(str(i), parent=context.entities['35'].key)
+        image.pricetags = pricetags[i].pricetags
     context.entities['35']._images = []
 
 
@@ -368,6 +530,7 @@ class SearchWrite(event.Plugin):
     write_index = True
     if not len(templates['templates']):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
+      pass
     for template in templates['templates']:
       documents.append(index_product_template(template))
     for template in templates['templates']:

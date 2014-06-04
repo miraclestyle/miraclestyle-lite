@@ -18,12 +18,11 @@
     <div class="form-control">
 		<label class="form-label">Roles</label>
 		<div class="form-input">
-			<input multiple="true" 
-			       name="role" 
-			       ng-required="rule.input[action].roles.required" 
-			       ng-disabled="!rule.field.roles.writable" 
+			<input name="role" 
+			       ng-required="rule.input[action].role.required" 
+			       ng-disabled="!rule.field.role.writable" 
 			       ui-select2="select2Options.role"
-			       ng-model="entity.roles"
+			       ng-model="entity.role"
 			       data-placeholder="Select roles for this user" />
 		</div>
 	</div>

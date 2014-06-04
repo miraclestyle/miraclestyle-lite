@@ -38,7 +38,7 @@ def set_attr(entity, field_path, value):
   if isinstance(entity, dict):
     entity[last_field] = value
   elif isinstance(entity, list):
-    entity.insert(int(last_field), value)
+    entity[int(last_field)] = value
   else:
     setattr(entity, last_field, value)
 

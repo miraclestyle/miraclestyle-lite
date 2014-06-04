@@ -658,8 +658,17 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	};
 
         return {
-        	update_entity : function ($scope, data)
+        	update_entity : function ($scope, data, exclude)
         	{
+        		if (exclude)
+        		{
+        			angular.forEach(exclude, function (field) {
+        				if (field in data['entity'])
+        				{
+        					delete data['entity'][field];
+        				}
+        			});
+        		}
         		update($scope.entity, data['entity']);
         		
         		if ('live_entity' in $scope)
@@ -671,7 +680,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         		{
         			update($scope.entity, data['entity']);
         		}
-        	    
+        	   
+        	   this.update_rule($scope, data);
+        	},
+        	
+        	update_rule : function ($scope, data)
+        	{
+        		 
         	    if ('rule' in $scope)
         	    {
         	    	$scope.rule.update(data['entity']);
@@ -686,6 +701,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         		{
         			$scope.entity.rule.update(data['entity']);
         		}
+        		
         	},
             create: function (options) {
             
@@ -840,23 +856,30 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 			 
                                 			return false;
                                 		}
-
+                                	  
                                         that.update_entity($scope, data);
                                         
-                                        $scope.resolve_complete(entity, initial_action);
-                                        
-                                        if (options['close'])
+                                        if (!data['errors'])
                                         {
-                                        	$scope.cancel();
+                                        	
+                                        	$scope.resolve_complete(entity, initial_action);
+	                                        
+	                                        if (options['close'])
+	                                        {
+	                                        	$scope.cancel();
+	                                        }
+	                                        
+	                                        if (options['options_after_update'])
+	                                        {
+	                                        	_resolve_options(options['options_after_update']);
+	                                        	$scope.resolve_handle(data);
+	                                        }
+	                                        
+	                                        console.log($scope);
+	                                        
+	                                        $scope.after_save();
+                                        	
                                         }
-                                        
-                                        if (options['options_after_update'])
-                                        {
-                                        	_resolve_options(options['options_after_update']);
-                                        	$scope.resolve_handle(data);
-                                        }
-                                        
-                                        $scope.after_save();
                                         
                                          
                                 });

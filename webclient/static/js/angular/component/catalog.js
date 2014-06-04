@@ -159,10 +159,13 @@ MainApp
                 'pre_save' : function ()
 	        	{
 	        		var new_order = [];
+	        		var pricetags = [];
 	        		angular.forEach(this.entity._images, function (item, index) {
 	        			new_order.push(item.image);
+	        			pricetags.push(item);
 	        		});
 	        		this.entity.sort_images = new_order;
+	        		this.entity.pricetags = pricetags;
 	        	},
                 'completed': function (data) {
                     this.entity._images.extend(data['entity']['_images']);
@@ -318,8 +321,12 @@ MainApp
                                     };
 
                                     $scope.save = function () {
+                                    	
+                                    	console.log($scope.entity);
 
                                         update($scope.live_entity, $scope.entity);
+                                        
+                                        console.log(that, that.live_entity, $scope.live_entity);
 
                                         $scope.cancel();
 
@@ -367,7 +374,7 @@ MainApp
                                         Endpoint.post(action, that.entity['kind'], $scope.log)
                                             .success(function (data) {
 
-                                                EntityEditor.update_entity(that, data);
+                                                EntityEditor.update_entity(that, data, ['_images']);
 
                                                 $scope.cancel();
 
@@ -385,6 +392,11 @@ MainApp
 
                         handle();
 
+                    };
+                    
+                    this.duplicate = function()
+                    {
+                    	this._do_user_admin(this.entity, 'duplicate');
                     };
 
                     this.publish = function () {

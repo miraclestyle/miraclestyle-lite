@@ -98,8 +98,13 @@
 <div class="modal-footer">
 	
 	<button ng-disabled="$isUploading" type="button" 
-    		ng-click="sudo()" ng-show="rule.action.sudo && entity.id" busy class="button">
+    		ng-click="sudo()" ng-show="rule.action.sudo.executable && entity.id" busy class="button">
 		Administer
+	</button>
+	
+	<button ng-disabled="$isUploading" type="button" 
+    		ng-click="duplicate()" ng-show="rule.action.duplicate.executable && entity.id" busy class="button">
+		Duplicate
 	</button>
  
     <button ng-disabled="$isUploading" type="button" 
