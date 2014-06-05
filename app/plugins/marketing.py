@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import copy
 import math
 import datetime
- 
+
 from google.appengine.api import search
 
 from app import ndb, settings, memcache, util
@@ -33,14 +33,81 @@ def get_catalog_images(CatalogImage, catalog_key):
   return catalog_images
 
 
-def get_product_templates(Template, catalog_key=None, catalog_images=None, complete=True, load_categories=False):
-  keys = []
+def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=None, complete=True, categories=False):
+  
+  @ndb.tasklet
+  def complete_instance_async(entity):
+    keys = [ndb.Key('73', str(entity.key.id()), parent=entity.key),
+            ndb.Key('75', str(entity.key.id()), parent=entity.key)]
+    results = yield ndb.get_multi_async(keys)
+    images = results[0]
+    contents = contents[1]
+    if images:
+      entity._images_entity = images
+      entity._images = images.images
+    if contents:
+      entity._contents_entity = contents
+      entity._contents = contents.contents
+    raise ndb.Return(entity)
+  
+  @ndb.tasklet
+  def complete_template_async(entity):
+    instances = []
+    more = True
+    offset = 0
+    limit = 1000
+    while more:
+      entities = yield Instance.query(ancestor=template_key).fetch_async(limit=limit, offset=offset)
+      if len(entities):
+        instances.extend(entities)
+        offset = offset + limit
+      else:
+        more = False
+    keys = [ndb.Key('73', str(entity.key.id()), parent=entity.key),
+            ndb.Key('74', str(entity.key.id()), parent=entity.key),
+            ndb.Key('75', str(entity.key.id()), parent=entity.key)]
+    results = yield ndb.get_multi_async(keys)
+    images = results[0]
+    variants = results[1]
+    contents = contents[2]
+    if instances:
+      entity._instances = yield map(complete_instance_async, instances)
+    if images:
+      entity._images_entity = images
+      entity._images = images.images
+    if variants:
+      entity._variants_entity = variants
+      entity._variants = variants.variants
+    if contents:
+      entity._contents_entity = contents
+      entity._contents = contents.contents
+    raise ndb.Return(entity)
+  
+  @ndb.tasklet
+  def categories_async(entity):
+    category = yield entity.product_category.get_async()
+    entity._product_category = category
+    raise ndb.Return(entity)
+  
+  @ndb.tasklet
+  def complete_template_mapper(entities):
+    results = yield map(complete_template_async, entities)
+    raise ndb.Return(results)
+  
+  @ndb.tasklet
+  def categories_mapper(entities):
+    results = yield map(categories_async, entities)
+    raise ndb.Return(results)
+  
   templates = []
   if catalog_images:
+    keys = []
     for catalog_image in catalog_images:
       keys.extend([pricetag.product_template for pricetag in catalog_image.pricetags])
     keys = list(set(keys))
     templates = ndb.get_multi(keys)
+    if not templates:
+      templates = []
   elif catalog_key:
     more = True
     offset = 0
@@ -49,115 +116,30 @@ def get_product_templates(Template, catalog_key=None, catalog_images=None, compl
       entities = Template.query(ancestor=catalog_key).fetch(limit=limit, offset=offset)
       if len(entities):
         templates.extend(entities)
-        keys.extend([entity.key for entity in entities])
         offset = offset + limit
       else:
         more = False
-  if load_categories:
-    @ndb.tasklet
-    def async(entity):
-      category = yield entity.product_category.get_async()
-      entity._product_category = category
-      raise ndb.Return(entity)
-    
-    @ndb.tasklet
-    def mapper(entities):
-      entities = yield map(async, entities)
-      raise ndb.Return(entities)
-    
-    templates = mapper(templates).get_result()
-  images = None
-  variants = None
-  contents = None
+  if categories:
+    templates = categories_mapper(templates).get_result()
   if complete:
-    images = ndb.get_multi([ndb.Key('73', str(key.id()), parent=key) for key in keys])
-    variants = ndb.get_multi([ndb.Key('74', str(key.id()), parent=key) for key in keys])
-    contents = ndb.get_multi([ndb.Key('75', str(key.id()), parent=key) for key in keys])
-  return {'templates': templates, 'images': images, 'variants': variants, 'contents': contents}
-
-
-def get_product_instances(Instance, template_keys, complete=True):
-  keys = []
-  instances = []
-  for template_key in template_keys:
-    more = True
-    offset = 0
-    limit = 1000
-    while more:
-      entities = Instance.query(ancestor=template_key).fetch(limit=limit, offset=offset)
-      if len(entities):
-        instances.extend(entities)
-        keys.extend([entity.key for entity in entities])
-        offset = offset + limit
-      else:
-        more = False
-  images = None
-  contents = None
-  if complete:
-    images = ndb.get_multi([ndb.Key('73', str(key.id()), parent=key) for key in keys])
-    contents = ndb.get_multi([ndb.Key('75', str(key.id()), parent=key) for key in keys])
-  return {'instances': instances, 'images': images, 'contents': contents}
+    templates = complete_template_mapper(templates).get_result()
+  return templates
 
 
 class DuplicateRead(event.Plugin):
   
   def run(self, context):
-    CatalogImage = context.models['36']
-    Instance = context.models['39']
     catalog = context.entities['35']
-    images = CatalogImage.query(ancestor=catalog.key).fetch()
-    images.sort(key=lambda x : int(x.key.id()))  # sort all images by its id which goes 0-<x number>
-    catalog._images = images
-    if not images:
-      catalog._images = []
-    product_template_keys = []
-    for image in images:
-      add_product_template_keys = [pricetag.product_template for pricetag in image.pricetags]
-      product_template_keys.extend(add_product_template_keys)
-    product_template_keys = set(product_template_keys)
-    product_templates = ndb.get_multi(product_template_keys)
-    if not product_templates:
-      product_templates = []
-      
-    @ndb.tasklet
-    def async_partials(entity, instance=False):
-      keys = [ndb.Key('73', entity.key_id_str, parent=entity.key),
-              ndb.Key('75', entity.key_id_str, parent=entity.key),
-              ]
-      if not instance:
-        keys.append(ndb.Key('74', entity.key_id_str, parent=entity.key))
-      results = yield ndb.get_multi_async(keys)
-      images = results[0]
-      contents = results[1]
-      if images:
-        entity._images = images.images
-      if contents:
-        entity._contents = contents.contents
-      if not instance:
-        variants = results[2]
-        if variants:
-          entity._variants = variants.variants
-      raise ndb.Return(entity)
-       
-    @ndb.tasklet
-    def async(entity):
-      entity._instances = yield Instance.query(ancestor=entity.key).fetch_async()
-      yield async_partials(entity)
-      raise ndb.Return(entity)
-
-    @ndb.tasklet
-    def helper(entities):
-      results = yield map(async, entities)
-      raise ndb.Return(results)
-    
-    helper(product_templates).get_result()
-    futures = []
-    for product_template in product_templates:
-      for product_instance in product_template._instances:
-        futures.append(async_partials(product_instance, True))
-    ndb.Future.wait_all(futures)
-    context.tmp['product_templates'] = product_templates
-    context.tmp['new_product_templates'] = product_templates
+    catalog._images = []
+    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
+    catalog_images.sort(key=lambda x : int(x.key.id()))
+    if catalog_images:
+      catalog._images = catalog_images
+    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_images=catalog_images)
+    if not templates:
+      templates = []
+    context.tmp['product_templates'] = templates
+    context.tmp['new_product_templates'] = templates
 
 
 class DuplicateCatalog(event.Plugin):
@@ -255,8 +237,8 @@ class DuplicateProductTemplateInstances(event.Plugin):
       puts.append(Contents(parent=instance.key, contents=instance._contents, id=instance.key_id_str))
     ndb.put_multi(puts)
 
-    
- 
+
+
 class Read(event.Plugin):
   
   read_from_start = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=False)
@@ -410,20 +392,30 @@ class Delete(event.Plugin):
       context.log_entities.extend([(entity, ) for entity in entities])
     
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_product_templates(context.models['38'], catalog_key=context.entities['35'].key)
-    instances = get_product_instances(context.models['39'], [template.key for template in templates])
+    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_key=context.entities['35'].key)
+    template_images = []
+    template_variants = []
+    template_contents = []
+    instances = []
+    instance_images = []
+    instance_contents = []
     blob_templates_images = []
-    for image in templates['images']:
-      blob_templates_images.extend(image.images)
     blob_instances_images = []
-    for image in instances['images']:
-      blob_instances_images.extend(image.images)
+    for template in templates:
+      template_images.append(template._images_entity)
+      template_variants.append(template._variants_entity)
+      template_contents.append(template._contents_entity)
+      blob_templates_images.extend(template._images)
+      for instance in template._instances:
+        instances.append(instance)
+        instance_images.append(instance._images_entity)
+        instance_contents.append(instance._contents_entity)
+        blob_instances_images.extend(instance._images)
     context.blob_delete.extend([image.image for image in blob_instances_images])
     context.blob_delete.extend([image.image for image in blob_templates_images])
     context.blob_delete.extend([image.image for image in catalog_images])
-    delete(instances['contents'], instances['images'], instances['instances'],
-          templates['contents'], templates['variants'], templates['images'],
-          templates['templates'], catalog_images)
+    delete(instance_contents, instance_images, instances,
+           template_contents, template_variants, template_images, templates, catalog_images)
 
 
 class CronPublish(event.Plugin):
@@ -526,14 +518,14 @@ class SearchWrite(event.Plugin):
       fields.append(search.AtomField(name='code', value=template.code))
       return search.Document(doc_id=template.key_urlsafe, fields=fields)
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False, load_categories=True)
+    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_images=catalog_images, complete=False, categories=True)
     write_index = True
-    if not len(templates['templates']):
+    if not len(templates):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
-    for template in templates['templates']:
+    for template in templates:
       documents.append(index_product_template(template))
-    for template in templates['templates']:
+    for template in templates:
       if template._product_category.state != 'indexable':
         write_index = False
     indexing = False
@@ -570,8 +562,8 @@ class SearchDelete(event.Plugin):
     documents = []
     documents.append(context.entities['35'].key_urlsafe)
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_product_templates(context.models['38'], catalog_images=catalog_images, complete=False)
-    for template in templates['templates']:
+    templates = get_catalog_products(context.models['38'], catalog_images=catalog_images, complete=False)
+    for template in templates:
       documents.append(template.key_urlsafe)
     unindexing = False
     if len(documents):
