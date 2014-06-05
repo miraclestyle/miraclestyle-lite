@@ -24,32 +24,50 @@ def parse(blob_keys):
     if isinstance(blob_key, blobstore.BlobKey):
       results.append(blob_key)
   return results
-'''  
-  dont know what to do with this? where to place it else?
-  this is used for duplications for product template.images, product instance images and catalog images
-  basically for any list that contains blob.Image compatible instances
-  
-  These functions will perform copying images in paralel
-  e.g. if there's 100 images they will not be processed in serial mode but in paralel.
-'''
-@ndb.tasklet
-def duplicate_image_async(context, image, i, field_target, field_source):
-  field = '%s.%s' % (field_target, i)
-  field2 = '%s.%s' % (field_source, i)
-  @ndb.tasklet
-  def generate(): # in order to simulate yield mechanisms the "yield" keyword must be called on something that has .get_result() and its Future-like class.
-    copyimage = CopyImage(set_image=field, blob_transform=field2) ## internal usage of CopyImage
-    copyimage.run(context)
-    raise ndb.Return(True)
-  yield generate()
-  raise ndb.Return(True)
 
-def duplicate_images_async(context, images, field_target, field_source): # this is not a tasklet, this function builds futures and waits for them to complete
-  futures = []
-  for i,image in enumerate(images):
-    future = duplicate_image_async(context, image, i, field_target, field_source)
-    futures.append(future)
-  return ndb.Future.wait_all(futures)
+
+def alter_image(original_image, **config):
+  results = {}
+  new_image = copy.deepcopy(original_image)
+  original_gs_object_name = new_image.gs_object_name
+  new_gs_object_name = new_image.gs_object_name
+  if config.get('copy'):
+    new_gs_object_name = '%s_%s' % (new_image.gs_object_name, config['sufix'])
+  blob_key = None
+  try:
+    writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+    if config.get('copy'):
+      readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
+      blob = readonly_blob.read()
+    else:
+      blob = writable_blob.read()
+    if config.get('transform'):
+      image = images.Image(image_data=blob)
+      image.resize(config['width'],
+                   config['height'],
+                   crop_to_fit=config['crop_to_fit'],
+                   crop_offset_x=config['crop_offset_x'],
+                   crop_offset_y=config['crop_offset_y'])
+      blob = image.execute_transforms(output_encoding=image.format)
+      new_image.width = config['width']
+      new_image.height = config['height']
+      new_image.size = len(blob)
+    writable_blob.write(blob)
+    if config.get('copy'):
+      readonly_blob.close()
+    writable_blob.close()
+    if original_gs_object_name != new_gs_object_name:
+      new_image.gs_object_name = new_gs_object_name
+      blob_key = blobstore.create_gs_key(new_gs_object_name)
+      new_image.image = blobstore.BlobKey(blob_key)
+      new_image.serving_url = images.get_serving_url(new_image.image)
+  except Exception as e:
+    util.logger(e, 'exception')
+    if blob_key != None:
+      results['blob_delete'] = blob_key
+  finally:
+    results['new_image'] = new_image
+    return results
 
 
 class URL(ndb.BaseModel):
@@ -86,101 +104,51 @@ class Update(ndb.BaseModel):
           context.blob_unused.remove(blob_key)
 
 
-class CopyTransformImage(ndb.BaseModel):
+class AlterImage(ndb.BaseModel):
   
-  blob_transform = ndb.SuperStringProperty('1', indexed=False)
-  set_image = ndb.SuperStringProperty('2', indexed=False)
-  
-  def run(self, context):
-    if self.blob_transform:
-      blob_transform = get_attr(context, self.blob_transform)
-    else:
-      blob_transform = context.blob_transform
-    if blob_transform:
-      new_image = copy.deepcopy(blob_transform)
-      gs_object_name = '%s_cover' % new_image.gs_object_name
-      blob_key = None
-      try:
-        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
-          blob = readonly_blob.read()
-          with cloudstorage.open(gs_object_name[3:], 'w') as writable_blob:
-            image = images.Image(image_data=blob)
-            # @todo Transforming variables have to be implemented as plugin properties!
-            image_width = 240
-            image_height = 360
-            image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
-            blob = image.execute_transforms(output_encoding=image.format)
-            new_image.gs_object_name = gs_object_name
-            new_image.width = image_width
-            new_image.height = image_height
-            new_image.size = len(blob)
-            writable_blob.write(blob)
-        blob_key = blobstore.create_gs_key(gs_object_name)
-        new_image.image = blobstore.BlobKey(blob_key)
-        new_image.serving_url = images.get_serving_url(new_image.image)
-      except Exception as e:
-        util.logger(e, 'exception')
-        if blob_key != None:
-          context.blob_delete.append(blob_key)
-      finally:
-        set_attr(context, self.set_image, new_image)
-
-class CopyImage(event.Plugin):
-  
-  blob_transform = ndb.SuperStringProperty('5', indexed=False)
-  set_image = ndb.SuperStringProperty('6', indexed=False)
+  source = ndb.SuperStringProperty('1', indexed=False)
+  destination = ndb.SuperStringProperty('2', indexed=False)
+  config = ndb.SuperJsonProperty('3', indexed=False, required=True, default={})
   
   def run(self, context):
-    if self.blob_transform:
-      blob_transform = get_attr(context, self.blob_transform)
+    if self.source:
+      original_image = get_attr(context, self.source)
     else:
-      blob_transform = context.blob_transform
-    if blob_transform:
-      new_image = copy.deepcopy(blob_transform)
-      gs_object_name = '%s_copy' % new_image.gs_object_name
-      try:
-        with cloudstorage.open(new_image.gs_object_name[3:], 'r') as readonly_blob:
-          blob = readonly_blob.read()
-          with cloudstorage.open(gs_object_name[3:], 'w') as writable_blob:
-            new_image.gs_object_name = gs_object_name
-            writable_blob.write(blob)
-        blob_key = blobstore.create_gs_key(gs_object_name)
-        new_image.image = blobstore.BlobKey(blob_key)
-        new_image.serving_url = images.get_serving_url(new_image.image)
-      except Exception as e:
-        util.logger(e, 'exception')
-        context.blob_delete.append(blob_key)
-      finally:
-        set_attr(context, self.set_image, new_image)
+      original_image = context.blob_transform
+    if original_image:
+      results = alter_image(original_image, self.config)
+      if results.get('blob_delete'):
+        context.blob_delete.append(results['blob_delete'])
+      if results.get('new_image'):
+        set_attr(context, self.destination, results['new_image'])
 
 
-class TransformImage(ndb.BaseModel):
+class AlterImages(ndb.BaseModel):
   
-  blob_transform = ndb.SuperStringProperty('1', indexed=False)
-  set_image = ndb.SuperStringProperty('2', indexed=False)
+  source = ndb.SuperStringProperty('1', indexed=False)
+  destination = ndb.SuperStringProperty('2', indexed=False)
+  config = ndb.SuperJsonProperty('3', indexed=False, required=True, default={})
   
   def run(self, context):
-    if self.blob_transform:
-      blob_transform = get_attr(context, self.blob_transform)
-    else:
-      blob_transform = context.blob_transform
-    if blob_transform:
-      try:
-        with cloudstorage.open(blob_transform.gs_object_name[3:], 'w') as writable_blob:
-          blob = writable_blob.read()
-          image = images.Image(image_data=blob)
-          # @todo Transforming variables have to be implemented as plugin properties!
-          image_width = 240
-          image_height = 100
-          if image.width != image_width or image.height != image_height:
-            image.resize(image_width, image_height, crop_to_fit=True, crop_offset_x=0.0, crop_offset_y=0.0)
-            blob = image.execute_transforms(output_encoding=image.format)
-            blob_transform.width = image_width
-            blob_transform.height = image_height
-            blob_transform.size = len(blob)
-            writable_blob.write(blob)
-      except Exception as e:
-        util.logger(e, 'exception')
-        context.blob_delete.append(blob_transform.image)
-      finally:
-        set_attr(context, self.set_image, blob_transform)
+    @ndb.tasklet
+    def alter_image_async(source, destination):
+      @ndb.tasklet
+      def generate():
+        original_image = get_attr(context, source)
+        results = alter_image(original_image, self.config)
+        if results.get('blob_delete'):
+          context.blob_delete.append(results['blob_delete'])
+        if results.get('new_image'):
+          set_attr(context, destination, results['new_image'])
+        raise ndb.Return(True)
+      yield generate()
+      raise ndb.Return(True)
+    
+    futures = []
+    images = get_attr(context, self.source)
+    for i, image in enumerate(images):
+      source = '%s.%s' % (self.source, i)
+      destination = '%s.%s' % (self.destination, i)
+      future = alter_image_async(source, destination)
+      futures.append(future)
+    return ndb.Future.wait_all(futures)
