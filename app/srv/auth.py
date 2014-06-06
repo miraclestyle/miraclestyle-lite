@@ -508,7 +508,10 @@ class Domain(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            blob.TransformImage(blob_transform='input.domain_logo', set_image='input.domain_logo'),
+            blob.AlterImage(source='input.domain_logo',
+                            destination='input.domain_logo',
+                            config={'transform': True, 'width': 240, 'height': 100,
+                                    'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
             auth.DomainCreate(),
             blob.Update(blob_write='input.domain_logo.image'),
             rule.Read(),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
@@ -567,7 +570,10 @@ class Domain(ndb.BaseExpando):
             rule.Write(),
             common.Write(),
             common.Set(dynamic_values={'tmp.new_logo': 'entities.6.logo'}),
-            blob.TransformImage(blob_transform='entities.6.logo', set_image='entities.6.logo'),
+            blob.AlterImage(source='entities.6.logo',
+                            destination='entities.6.logo',
+                            config={'transform': True, 'width': 240, 'height': 100,
+                                    'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
             log.Entity(),
             log.Write(),
             rule.Read(),
