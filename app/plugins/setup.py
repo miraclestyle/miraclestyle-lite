@@ -8,8 +8,8 @@ Created on Apr 15, 2014
 import time
 import datetime
 
-from app import ndb, settings, util
-from app.srv import event, log, nav, rule# @todo We need event import for event.Action.build_key. Is there a workaround?
+from app import ndb, settings, util  # @todo We have settings used in plugins file!! How to get rid of it?
+from app.srv import event, log, nav, rule  # @todo We need event import for event.Action.build_key. Is there a workaround?
 from app.plugins import log as plugin_log
 from app.plugins import callback as plugin_callback
 

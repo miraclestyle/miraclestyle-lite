@@ -8,7 +8,7 @@ Created on Jun 2, 2014
 import copy
 import collections
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 

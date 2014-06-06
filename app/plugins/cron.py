@@ -7,7 +7,7 @@ Created on May 29, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 

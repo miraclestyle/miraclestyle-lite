@@ -11,7 +11,7 @@ import hashlib
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib.list_manipulator import sort_by_list

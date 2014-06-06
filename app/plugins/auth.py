@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import os
 import hashlib
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.srv.setup import Configuration
 from app.lib import oauth2
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -49,16 +49,18 @@ class UserLoginPrepare(ndb.BaseModel):
 
 class UserLoginOAuth(ndb.BaseModel):
   
+  login_methods = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
   def run(self, context):
     User = context.models['0']
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
-    oauth2_cfg = settings.LOGIN_METHODS[login_method]['oauth2']
+    oauth2_cfg = self.login_methods[login_method]['oauth2']
     client = oauth2.Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
-    for urls_login_method, cfg in settings.LOGIN_METHODS.items():
+    for urls_login_method, cfg in self.login_methods.items():
       urls_oauth2_cfg = cfg['oauth2']
       urls_client = oauth2.Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()

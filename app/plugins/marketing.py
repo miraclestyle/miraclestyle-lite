@@ -11,7 +11,7 @@ import datetime
 
 from google.appengine.api import search
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.srv import event
 from app.plugins import blob
 from app.lib.attribute_manipulator import set_attr, get_attr
@@ -33,25 +33,10 @@ def get_catalog_images(CatalogImage, catalog_key):
   return catalog_images
 
 
-def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=None, complete=True, categories=False):
+def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=None, include_instances=True, include_categories=False):
   
   @ndb.tasklet
-  def complete_instance_async(entity):
-    keys = [ndb.Key('73', str(entity.key.id()), parent=entity.key),
-            ndb.Key('75', str(entity.key.id()), parent=entity.key)]
-    results = yield ndb.get_multi_async(keys)
-    images = results[0]
-    contents = contents[1]
-    if images:
-      entity._images_entity = images
-      entity._images = images.images
-    if contents:
-      entity._contents_entity = contents
-      entity._contents = contents.contents
-    raise ndb.Return(entity)
-  
-  @ndb.tasklet
-  def complete_template_async(entity):
+  def instances_async(entity):
     instances = []
     more = True
     offset = 0
@@ -63,24 +48,8 @@ def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=No
         offset = offset + limit
       else:
         more = False
-    keys = [ndb.Key('73', str(entity.key.id()), parent=entity.key),
-            ndb.Key('74', str(entity.key.id()), parent=entity.key),
-            ndb.Key('75', str(entity.key.id()), parent=entity.key)]
-    results = yield ndb.get_multi_async(keys)
-    images = results[0]
-    variants = results[1]
-    contents = contents[2]
     if instances:
-      entity._instances = yield map(complete_instance_async, instances)
-    if images:
-      entity._images_entity = images
-      entity._images = images.images
-    if variants:
-      entity._variants_entity = variants
-      entity._variants = variants.variants
-    if contents:
-      entity._contents_entity = contents
-      entity._contents = contents.contents
+      entity._instances = instances
     raise ndb.Return(entity)
   
   @ndb.tasklet
@@ -90,8 +59,8 @@ def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=No
     raise ndb.Return(entity)
   
   @ndb.tasklet
-  def complete_template_mapper(entities):
-    results = yield map(complete_template_async, entities)
+  def instances_mapper(entities):
+    results = yield map(instances_async, entities)
     raise ndb.Return(results)
   
   @ndb.tasklet
@@ -119,10 +88,10 @@ def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=No
         offset = offset + limit
       else:
         more = False
-  if categories:
+  if include_instances:
+    templates = instances_mapper(templates).get_result()
+  if include_categories:
     templates = categories_mapper(templates).get_result()
-  if complete:
-    templates = complete_template_mapper(templates).get_result()
   return templates
 
 
@@ -241,13 +210,14 @@ class DuplicateProductTemplateInstances(event.Plugin):
 
 class Read(event.Plugin):
   
-  read_from_start = ndb.SuperBooleanProperty('5', indexed=False, required=True, default=False)
+  read_from_start = ndb.SuperBooleanProperty('1', indexed=False, required=True, default=False)
+  catalog_page = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
   
   def run(self, context):
     start = context.input.get('images_cursor')
     if not start:
       start = 0
-    end = start + settings.CATALOG_PAGE + 1  # Always ask for one extra image, so we can determine if there are more images to get in next round.
+    end = start + self.catalog_page + 1  # Always ask for one extra image, so we can determine if there are more images to get in next round.
     if self.read_from_start:
       start = 0
     images = ndb.get_multi([ndb.Key('36', str(i), parent=context.entities['35'].key) for i in range(start, end)])
@@ -263,7 +233,7 @@ class Read(event.Plugin):
       results.pop(len(results) - 1)  # We respect catalog page amount, so if there are more images, remove the last one.
     context.entities['35']._images = results
     context.values['35']._images = copy.deepcopy(context.entities['35']._images)
-    context.tmp['images_cursor'] = start + settings.CATALOG_PAGE  # @todo Next images cursor. Not sure if this is needed or the client does the mageic?
+    context.tmp['images_cursor'] = start + self.catalog_page  # @todo Next images cursor. Not sure if this is needed or the client does the mageic?
     context.tmp['images_more'] = more
 
 
@@ -393,29 +363,14 @@ class Delete(event.Plugin):
     
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_catalog_products(context.models['38'], context.models['39'], catalog_key=context.entities['35'].key)
-    template_images = []
-    template_variants = []
-    template_contents = []
     instances = []
-    instance_images = []
-    instance_contents = []
-    blob_templates_images = []
-    blob_instances_images = []
+    context.blob_delete.extend([image.image for image in catalog_images])
     for template in templates:
-      template_images.append(template._images_entity)
-      template_variants.append(template._variants_entity)
-      template_contents.append(template._contents_entity)
-      blob_templates_images.extend(template._images)
+      context.blob_delete.extend([image.image for image in template.images])
       for instance in template._instances:
         instances.append(instance)
-        instance_images.append(instance._images_entity)
-        instance_contents.append(instance._contents_entity)
-        blob_instances_images.extend(instance._images)
-    context.blob_delete.extend([image.image for image in blob_instances_images])
-    context.blob_delete.extend([image.image for image in blob_templates_images])
-    context.blob_delete.extend([image.image for image in catalog_images])
-    delete(instance_contents, instance_images, instances,
-           template_contents, template_variants, template_images, templates, catalog_images)
+        context.blob_delete.extend([image.image for image in instance.images])
+    delete(instances, templates, catalog_images)
 
 
 class CronPublish(event.Plugin):
@@ -518,16 +473,17 @@ class SearchWrite(event.Plugin):
       fields.append(search.AtomField(name='code', value=template.code))
       return search.Document(doc_id=template.key_urlsafe, fields=fields)
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_images=catalog_images, complete=False, categories=True)
+    templates = get_catalog_products(context.models['38'], context.models['39'],
+                                     catalog_images=catalog_images, include_instances=False, include_categories=True)
     write_index = True
     if not len(templates):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
     for template in templates:
       documents.append(index_product_template(template))
-    for template in templates:
       if template._product_category.state != 'indexable':
         write_index = False
+        break
     indexing = False
     if write_index and len(documents):
       indexing = True
@@ -562,7 +518,8 @@ class SearchDelete(event.Plugin):
     documents = []
     documents.append(context.entities['35'].key_urlsafe)
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_catalog_products(context.models['38'], catalog_images=catalog_images, complete=False)
+    templates = get_catalog_products(context.models['38'], context.models['39'],
+                                     catalog_images=catalog_images, include_instances=False)
     for template in templates:
       documents.append(template.key_urlsafe)
     unindexing = False

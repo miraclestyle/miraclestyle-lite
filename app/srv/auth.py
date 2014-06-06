@@ -96,7 +96,7 @@ class User(ndb.BaseExpando):
             auth.UserIPAddress(),
             rule.Prepare(skip_user_roles=True, strict=False),
             rule.Exec(),
-            auth.UserLoginOAuth(),
+            auth.UserLoginOAuth(login_methods=settings.LOGIN_METHODS),
             rule.Prepare(skip_user_roles=True, strict=False),
             rule.Exec()
             ]

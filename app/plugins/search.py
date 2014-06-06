@@ -10,7 +10,7 @@ import string
 
 from google.appengine.api import search
 
-from app import ndb, settings
+from app import ndb, memcache, util
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta
 
 

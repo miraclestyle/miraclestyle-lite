@@ -9,7 +9,7 @@ import time
 import hashlib
 import copy
 
-from app import ndb, settings, memcache, util
+from app import ndb, memcache, util
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
