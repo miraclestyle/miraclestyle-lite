@@ -66,7 +66,7 @@ class Widget(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -89,7 +89,7 @@ class Widget(ndb.BaseExpando):
         'search_form': ndb.SuperBooleanProperty(default=True),
         'filters': ndb.SuperJsonProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -119,7 +119,7 @@ class Widget(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -143,7 +143,7 @@ class Widget(ndb.BaseExpando):
         'search_form': ndb.SuperBooleanProperty(default=True),
         'filters': ndb.SuperJsonProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -173,7 +173,7 @@ class Widget(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='62', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -234,7 +234,7 @@ class Widget(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -257,7 +257,7 @@ class Widget(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='62', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -278,7 +278,7 @@ class Widget(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

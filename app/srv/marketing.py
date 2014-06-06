@@ -73,6 +73,7 @@ class Catalog(ndb.BaseExpando):
                               Action.build_key('35', 'upload_images')], False, 'context.entity.state != "unpublished"'),
       ActionPermission('35', [Action.build_key('35', 'process_images'),
                               Action.build_key('35', 'process_cover'),
+                              Action.build_key('35', 'process_duplicate'),
                               Action.build_key('35', 'delete'),
                               Action.build_key('35', 'publish'),
                               Action.build_key('35', 'sudo'),
@@ -121,13 +122,17 @@ class Catalog(ndb.BaseExpando):
         'domain': ndb.SuperKeyProperty(kind='6', required=True),
         'upload_url': ndb.SuperStringProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
-        common.Set(dynamic_values={'output.entity': 'entities.35'})
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
+            common.Set(dynamic_values={'output.entity': 'entities.35'})
+            ]
+          )
         ]
       ),
     Action(
@@ -138,23 +143,32 @@ class Catalog(ndb.BaseExpando):
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Set(static_values={'values.35.state': 'unpublished'},
-                   dynamic_values={'values.35.name': 'input.name',
-                                   'values.35.publish_date': 'input.publish_date',
-                                   'values.35.discontinue_date': 'input.discontinue_date'}),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Set(static_values={'values.35.state': 'unpublished'},
+                       dynamic_values={'values.35.name': 'input.name',
+                                       'values.35.publish_date': 'input.publish_date',
+                                       'values.35.discontinue_date': 'input.discontinue_date'})
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -163,16 +177,20 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'images_cursor': ndb.SuperIntegerProperty(default=0)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.Read(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.35',
-                                   'output.images_cursor': 'tmp.images_cursor',
-                                   'output.images_more': 'tmp.images_more'})
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            marketing.Read(catalog_page=settings.CATALOG_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35',
+                                       'output.images_cursor': 'tmp.images_cursor',
+                                       'output.images_more': 'tmp.images_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -181,33 +199,42 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'sort_images': ndb.SuperStringProperty(repeated=True),
-        'pricetags': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True), # must be like this because we need to match the pricetags with order..... 
+        'pricetags': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),  # must be like this because we need to match the pricetags with order.....
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
         'images_cursor': ndb.SuperIntegerProperty(default=0)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.Read(read_from_start=True),
-        marketing.UpdateSet(),
-        rule.Write(transactional=True),
-        marketing.UpdateWrite(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35',
-                                                       'output.images_cursor': 'tmp.images_cursor',
-                                                       'output.images_more': 'tmp.images_more'}),
-        blob.Update(transactional=True),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_cover', 'action_model': '35'},
-                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            marketing.Read(read_from_start=True, catalog_page=settings.CATALOG_PAGE),
+            marketing.UpdateSet()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            marketing.UpdateWrite(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35',
+                                                           'output.images_cursor': 'tmp.images_cursor',
+                                                           'output.images_more': 'tmp.images_more'}),
+            blob.Update(),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'process_cover', 'action_model': '35'},
+                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -216,24 +243,33 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         '_images': ndb.SuperLocalStructuredImageProperty(CatalogImage, repeated=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.UploadImagesSet(),
-        rule.Write(transactional=True),
-        marketing.UploadImagesWrite(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        blob.Update(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_images', 'action_model': '35'},
-                         dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
-                                       'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            marketing.UploadImagesSet()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            marketing.UploadImagesWrite(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            blob.Update(),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'process_images', 'action_model': '35'},
+                             dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
+                                           'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -242,19 +278,28 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'catalog_image_keys': ndb.SuperKeyProperty(kind='36', repeated=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.ProcessImages(transactional=True),
-        log.Write(transactional=True),
-        blob.Update(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_cover', 'action_model': '35'},
-                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            marketing.ProcessImages(),
+            log.Write(),
+            blob.Update(),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'process_cover', 'action_model': '35'},
+                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -262,24 +307,35 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        marketing.Read(read_from_start=True),
-        marketing.ProcessCoverSet(),
-        common.Set(transactional=True, dynamic_values={'tmp.original_cover': 'entities.35.cover'}),
-        rule.Write(transactional=True),
-        common.Set(transactional=True, dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
-        marketing.ProcessCoverTransform(transactional=True),
-        blob.CopyTransformImage(transactional=True, set_image='entities.35.cover'),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        blob.Update(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            marketing.Read(read_from_start=True, catalog_page=settings.CATALOG_PAGE),
+            marketing.ProcessCoverSet()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Set(dynamic_values={'tmp.original_cover': 'entities.35.cover'}),
+            rule.Write(),
+            common.Set(dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
+            marketing.ProcessCoverTransform(),
+            blob.AlterImage(destination='entities.35.cover', copy=True, sufix='cover',
+                            transform=True, width=240, height=360, crop_to_fit=True,
+                            crop_offset_x=0.0, crop_offset_y=0.0),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            blob.Update(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -288,20 +344,29 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        marketing.Delete(transactional=True),
-        common.Delete(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        blob.Update(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            marketing.Delete(),
+            common.Delete(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            blob.Update(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -340,17 +405,21 @@ class Catalog(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Search(page_size=settings.SEARCH_PAGE),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Search(page_size=settings.SEARCH_PAGE),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -359,16 +428,20 @@ class Catalog(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='35', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.35',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       ),
     Action(
@@ -378,21 +451,30 @@ class Catalog(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True)
         #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(static_values={'values.35.state': 'locked'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(static_values={'values.35.state': 'locked'}),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -402,24 +484,33 @@ class Catalog(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True)
         #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(static_values={'values.35.state': 'published'}),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'index', 'action_model': '35'},
-                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(static_values={'values.35.state': 'published'}),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=True, strict=False),  # @todo Should run out of transaction!!!
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'index', 'action_model': '35'},
+                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -429,24 +520,33 @@ class Catalog(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True)
         #'note': ndb.SuperTextProperty()  # @todo Decide on this!
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(static_values={'values.35.state': 'discontinued'}),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'unindex', 'action_model': '35'},
-                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(static_values={'values.35.state': 'discontinued'}),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'unindex', 'action_model': '35'},
+                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -458,27 +558,35 @@ class Catalog(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        common.Set(dynamic_values={'values.35.state': 'input.state'}),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=True, strict=False),
-        log.Entity(transactional=True,
-                   dynamic_arguments={# 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
-                                      'message': 'input.message',
-                                      'note': 'input.note'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_model': '35'},
-                         dynamic_data={'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'}),  # @todo What happens if input.index_state is not supplied (e.g. None)?
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            common.Set(dynamic_values={'values.35.state': 'input.state'}),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=True, strict=False),  # @todo Should run out of transaction!!!
+            log.Entity(dynamic_arguments={# 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+                                          'message': 'input.message',
+                                          'note': 'input.note'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_model': '35'},
+                             dynamic_data={'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'}),  # @todo What happens if input.index_state is not supplied (e.g. None)?
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -488,18 +596,27 @@ class Catalog(ndb.BaseExpando):
         'message': ndb.SuperTextProperty(required=True),
         'note': ndb.SuperTextProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        common.Write(transactional=True),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Write(),
+            log.Entity(dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -508,19 +625,27 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
-                              documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
-        log.Entity(transactional=True,
-                   static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                   dynamic_arguments={'message': 'tmp.message'}),
-        log.Write(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
+                                  documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            log.Entity(static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                       dynamic_arguments={'message': 'tmp.message'}),
+            log.Write(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -529,19 +654,27 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
-                               documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX),
-        log.Entity(transactional=True,
-                   static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                   dynamic_arguments={'message': 'tmp.message'}),
-        log.Write(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
+                                   documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            log.Entity(static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                       dynamic_arguments={'message': 'tmp.message'}),
+            log.Write(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -549,15 +682,53 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)  # @todo This is unlikely to be a definitive solution (how are we gonna run cron per domain?)!
         },
-      _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        marketing.CronPublish(page_size=10),
-        marketing.CronDiscontinue(page_size=10),
-        marketing.CronDelete(page_size=10, catalog_life=settings.CATALOG_LIFE),
-        callback.Exec()
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            marketing.CronPublish(page_size=10),
+            marketing.CronDiscontinue(page_size=10),
+            marketing.CronDelete(page_size=10, catalog_life=settings.CATALOG_LIFE),
+            callback.Exec()
+            ]
+          )
+        ]
+      ),
+    Action(
+      key=Action.build_key('35', 'duplicate'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            rule.Read()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
+            log.Entity(dynamic_arguments={'message': 'input.message'}),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.35'}),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'process_duplicate', 'action_model': '35'},
+                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
         ]
       ),
     Action(
@@ -565,43 +736,25 @@ class Catalog(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        marketing.DuplicateRead(),
-        marketing.DuplicateCatalog(),
-        marketing.DuplicateProductTemplateInstances(), # DuplicateCatalog, and DuplicateProductTemplateInstances should be done in transaction
-        log.Write(transactional=True),
-        callback.Notify(transactional=True),
-        callback.Exec(transactional=True)
-        ]
-      ),          
-    Action(
-      key=Action.build_key('35', 'duplicate'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='35', required=True)
-        },
-      _plugins=[
-        common.Context(),
-        common.Read(),
-        rule.Prepare(skip_user_roles=False, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        rule.Prepare(transactional=True, skip_user_roles=False, strict=False),
-        log.Entity(transactional=True, dynamic_arguments={'message': 'input.message'}),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.35'}),
-        callback.Notify(transactional=True),
-        callback.Payload(transactional=True, queue='callback',
-                         static_data={'action_id': 'process_duplicate', 'action_model': '35'},
-                         dynamic_data={'key': 'entities.35.key_urlsafe'}),
-        callback.Exec(transactional=True)
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            marketing.DuplicateRead()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            marketing.Duplicatewrite(),
+            log.Write(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
         ]
       )
     ]
@@ -670,21 +823,25 @@ class CatalogIndex(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
-        common.Context(),
-        common.Prepare(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        search.Search(index_name=settings.CATALOG_INDEX, page_size=settings.SEARCH_PAGE),
-        search.DictConverter(),
-        #search.Entities(),
-        #rule.Prepare(skip_user_roles=True, strict=False),
-        #rule.Read(),
-        common.Set(dynamic_values={'output.entities': 'entities',
-                                   'output.search_documents_total_matches': 'search_documents_total_matches',
-                                   'output.search_documents_count': 'search_documents_count',
-                                   'output.search_cursor': 'search_cursor',
-                                   'output.search_more': 'search_more'})
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            search.Search(index_name=settings.CATALOG_INDEX, page_size=settings.SEARCH_PAGE),
+            search.DictConverter(),
+            #search.Entities(),
+            #rule.Prepare(skip_user_roles=True, strict=False),
+            #rule.Read(),
+            common.Set(dynamic_values={'output.entities': 'entities',
+                                       'output.search_documents_total_matches': 'search_documents_total_matches',
+                                       'output.search_documents_count': 'search_documents_count',
+                                       'output.search_cursor': 'search_cursor',
+                                       'output.search_more': 'search_more'})
+            ]
+          )
         ]
       )
     ]

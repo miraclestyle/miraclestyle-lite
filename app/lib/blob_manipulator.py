@@ -14,6 +14,10 @@ from google.appengine.api import images
 from app import util
 
 
+def create_upload_url(upload_url, gs_bucket_name):
+  return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
+
+
 def parse(blob_keys):
   results = []
   if not isinstance(blob_keys, (list, tuple)):

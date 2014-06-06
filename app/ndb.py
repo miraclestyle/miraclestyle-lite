@@ -318,8 +318,8 @@ class _BaseModel(object):
     return actions
   
   @classmethod
-  def get_plugins(cls, action):
-    return getattr(action, '_plugins', [])
+  def get_plugin_groups(cls, action):
+    return getattr(action, '_plugin_groups', [])
   
   @classmethod
   def get_fields(cls):

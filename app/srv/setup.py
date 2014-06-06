@@ -38,7 +38,7 @@ class Configuration(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='57')
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -53,7 +53,7 @@ class Configuration(ndb.BaseExpando):
     Action(
       key=Action.build_key('57', 'cron_install'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

@@ -48,7 +48,7 @@ class Exec(ndb.BaseModel):
   def run(self, context):
     queues = {}
     url = '/task/io_engine_run'
-    if self.transactional:
+    if ndb.in_transaction():
       context.callback_payloads = context.callback_payloads[:5]
     if len(context.callback_payloads):
       for payload in context.callback_payloads:
@@ -68,5 +68,5 @@ class Exec(ndb.BaseModel):
     if len(queues):
       for queue_name, tasks in queues.items():
         queue = taskqueue.Queue(name=queue_name)
-        queue.add(tasks, transactional=self.transactional)
+        queue.add(tasks, transactional=ndb.in_transaction())
     context.callback_payloads = []

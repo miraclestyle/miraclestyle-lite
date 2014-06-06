@@ -54,7 +54,7 @@ class Category(ndb.BaseModel):
     Action(
       key=Action.build_key('17', 'update'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -89,7 +89,7 @@ class Category(ndb.BaseModel):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -172,7 +172,7 @@ class Instance(ndb.BaseExpando):
         'parent': ndb.SuperKeyProperty(kind='38', required=True),
         'upload_url': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -201,7 +201,7 @@ class Instance(ndb.BaseExpando):
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'parent': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -242,7 +242,7 @@ class Instance(ndb.BaseExpando):
         'variant_signature': ndb.SuperJsonProperty(required=True),
         'parent': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -271,7 +271,7 @@ class Instance(ndb.BaseExpando):
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -314,7 +314,7 @@ class Instance(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='39', required=True),
         'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -349,7 +349,7 @@ class Instance(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -379,7 +379,7 @@ class Instance(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='39', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -484,7 +484,7 @@ class Template(ndb.BaseExpando):
         'parent': ndb.SuperKeyProperty(kind='35', required=True),
         'upload_url': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -516,7 +516,7 @@ class Template(ndb.BaseExpando):
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'parent': ndb.SuperKeyProperty(kind='35', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -559,7 +559,7 @@ class Template(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -592,7 +592,7 @@ class Template(ndb.BaseExpando):
         'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -639,7 +639,7 @@ class Template(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='38', required=True),
         'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -674,7 +674,7 @@ class Template(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -704,7 +704,7 @@ class Template(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -755,7 +755,7 @@ class Template(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -778,7 +778,7 @@ class Template(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='38', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -800,7 +800,7 @@ class Template(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='38', required=True),
         'instances_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -821,6 +821,6 @@ class Template(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugins=[]
+      _plugin_groups=[]
       )
     ]

@@ -53,7 +53,7 @@ class Country(ndb.BaseModel):
     Action(
       key=Action.build_key('15', 'update'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -85,7 +85,7 @@ class Country(ndb.BaseModel):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -157,7 +157,7 @@ class CountrySubdivision(ndb.BaseModel):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

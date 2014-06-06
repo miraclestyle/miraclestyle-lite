@@ -5,16 +5,10 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import copy
-import cloudstorage
-
-from google.appengine.ext import blobstore
-from google.appengine.api import images
-
 from app import ndb, memcache, util
 from app.srv import event  # @todo We need this import for event.TerminateAction() exception. Is there a workaround?
 from app.lib.attribute_manipulator import set_attr, get_attr
-from app.lib.blob_manipulator import parse, alter_image
+from app.lib.blob_manipulator import create_upload_url, parse, alter_image
 
 
 class URL(ndb.BaseModel):
@@ -24,7 +18,7 @@ class URL(ndb.BaseModel):
   def run(self, context):
     upload_url = context.input.get('upload_url')
     if upload_url:
-      context.output['upload_url'] = blobstore.create_upload_url(upload_url, gs_bucket_name=self.gs_bucket_name)
+      context.output['upload_url'] = create_upload_url(upload_url, self.gs_bucket_name)
       raise event.TerminateAction()
 
 

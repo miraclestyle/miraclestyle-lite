@@ -62,7 +62,7 @@ class Journal(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -81,7 +81,7 @@ class Journal(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='49', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -107,7 +107,7 @@ class Journal(ndb.BaseExpando):
         'entry_fields': ndb.SuperJsonProperty(required=True),
         'line_fields': ndb.SuperJsonProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -138,7 +138,7 @@ class Journal(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='49', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -192,7 +192,7 @@ class Journal(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -215,7 +215,7 @@ class Journal(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='49', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -237,7 +237,7 @@ class Journal(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='49', required=True),
         'message': ndb.SuperTextProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -252,7 +252,7 @@ class Journal(ndb.BaseExpando):
           plugins=[
             rule.Write(),
             common.Write(),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
             log.Entity(dynamic_arguments={'message': 'input.message'}),
             log.Write(),
             rule.Read(),
@@ -269,7 +269,7 @@ class Journal(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='49', required=True),
         'message': ndb.SuperTextProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -284,7 +284,7 @@ class Journal(ndb.BaseExpando):
           plugins=[
             rule.Write(),
             common.Write(),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
             log.Entity(dynamic_arguments={'message': 'input.message'}),
             log.Write(),
             rule.Read(),
@@ -362,7 +362,7 @@ class Category(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -379,7 +379,7 @@ class Category(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='47', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -404,7 +404,7 @@ class Category(ndb.BaseExpando):
         'active': ndb.SuperBooleanProperty(required=True, default=True),
         'description': ndb.SuperTextProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -435,7 +435,7 @@ class Category(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='47', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -489,7 +489,7 @@ class Category(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -512,7 +512,7 @@ class Category(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='47', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

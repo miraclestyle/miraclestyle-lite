@@ -27,7 +27,7 @@ class CronConfig(ndb.BaseModel):
     Action(
       key=Action.build_key('83', 'process_catalogs'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

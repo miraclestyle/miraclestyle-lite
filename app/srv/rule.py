@@ -144,7 +144,7 @@ class DomainRole(Role):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -164,7 +164,7 @@ class DomainRole(Role):
         'permissions': ndb.SuperJsonProperty(required=True),
         'active': ndb.SuperBooleanProperty(default=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -194,7 +194,7 @@ class DomainRole(Role):
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -215,7 +215,7 @@ class DomainRole(Role):
         'permissions': ndb.SuperJsonProperty(required=True),
         'active': ndb.SuperBooleanProperty(default=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -245,7 +245,7 @@ class DomainRole(Role):
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -296,7 +296,7 @@ class DomainRole(Role):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -319,7 +319,7 @@ class DomainRole(Role):
         'key': ndb.SuperKeyProperty(kind='60', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -396,7 +396,7 @@ class DomainUser(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6')
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -416,7 +416,7 @@ class DomainUser(ndb.BaseExpando):
         'email': ndb.SuperStringProperty(required=True),
         'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -445,7 +445,7 @@ class DomainUser(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -465,7 +465,7 @@ class DomainUser(ndb.BaseExpando):
         'name': ndb.SuperStringProperty(required=True),
         'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -495,7 +495,7 @@ class DomainUser(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -548,7 +548,7 @@ class DomainUser(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -571,7 +571,7 @@ class DomainUser(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='8', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -592,7 +592,7 @@ class DomainUser(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -611,7 +611,7 @@ class DomainUser(ndb.BaseExpando):
             log.Write(),
             common.Set(dynamic_values={'entities.6': 'entities.8.namespace_entity',
                                        'values.6': 'entities.8.namespace_entity'}),
-            rule.Prepare(prepare_entities=['8', '6'], skip_user_roles=False, strict=False),
+            rule.Prepare(prepare_entities=['8', '6'], skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
             rule.Read(read_entities=['8', '6']),
             common.Set(dynamic_values={'output.entity': 'entities.8',
                                        'output.domain': 'entities.6'}),
@@ -626,7 +626,7 @@ class DomainUser(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

@@ -75,7 +75,7 @@ class Unit(ndb.BaseExpando):
     Action(
       key=Action.build_key('19', 'update_currency'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -90,7 +90,7 @@ class Unit(ndb.BaseExpando):
     Action(
       key=Action.build_key('19', 'update_unit'),
       arguments={},
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -125,7 +125,7 @@ class Unit(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

@@ -154,9 +154,9 @@ class Engine:
       for plugin in plugins:
         util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
-    if hasattr(context.model, 'get_plugins') and callable(context.model.get_plugins):
+    if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
       try:
-        plugin_groups = context.model.get_plugins(context.action)  # @todo Shall we rename get_plugins to get_plugin_groups?
+        plugin_groups = context.model.get_plugin_groups(context.action)
         if len(plugin_groups):
           for group in plugin_groups:
             if len(group.plugins):

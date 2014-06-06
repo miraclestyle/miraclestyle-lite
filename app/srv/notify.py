@@ -156,7 +156,7 @@ class Notification(ndb.BaseExpando):
       arguments={
         'domain': ndb.SuperKeyProperty(kind='6', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -178,7 +178,7 @@ class Notification(ndb.BaseExpando):
         'active': ndb.SuperBooleanProperty(),
         'templates': ndb.SuperJsonProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -208,7 +208,7 @@ class Notification(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -231,7 +231,7 @@ class Notification(ndb.BaseExpando):
         'active': ndb.SuperBooleanProperty(),
         'templates': ndb.SuperJsonProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -261,7 +261,7 @@ class Notification(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(required=True, kind='61')
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -317,7 +317,7 @@ class Notification(ndb.BaseExpando):
           ),
         'search_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -340,7 +340,7 @@ class Notification(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='61', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -363,7 +363,7 @@ class Notification(ndb.BaseExpando):
         'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
         'caller_action': ndb.SuperVirtualKeyProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -386,7 +386,7 @@ class Notification(ndb.BaseExpando):
         'body': ndb.SuperTextProperty(required=True),
         'caller_entity': ndb.SuperKeyProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -408,7 +408,7 @@ class Notification(ndb.BaseExpando):
         'body': ndb.SuperTextProperty(required=True),
         'caller_entity': ndb.SuperKeyProperty(required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),

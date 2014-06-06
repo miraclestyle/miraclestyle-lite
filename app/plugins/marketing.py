@@ -16,6 +16,7 @@ from app.srv import event
 from app.plugins import blob
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib.list_manipulator import sort_by_list
+from app.lib.blob_manipulator import alter_image
 
 
 def get_catalog_images(CatalogImage, catalog_key):
@@ -107,105 +108,104 @@ class DuplicateRead(event.Plugin):
     templates = get_catalog_products(context.models['38'], context.models['39'], catalog_images=catalog_images)
     if not templates:
       templates = []
-    context.tmp['product_templates'] = templates
-    context.tmp['new_product_templates'] = templates
+    context.tmp['original_product_templates'] = templates
+    context.tmp['copy_product_templates'] = templates  # @todo Is this supposed to be deep copy!?
 
 
-class DuplicateCatalog(event.Plugin):
+# @todo Not sure if multiple cloudstorage operations can run  inside single transaction?!!
+class DuplicateWrite(event.Plugin):
   
   def run(self, context):
-    # this should be one  transaction
-    # with PluginGroup concept this can be done trough plugins other then creating separate transaction functions inside a plugin
-    catalog = context.entities['35']
-    new_catalog = copy.deepcopy(catalog)
-    new_catalog.created = datetime.datetime.now()
-    new_catalog.updated = datetime.datetime.now()
-    new_catalog.state = 'unpublished'
-    new_catalog.set_key(None, namespace=catalog.key.namespace())
-    context.tmp['new_catalog'] = new_catalog
-    # copy the catalog cover
-    blob.CopyImage(set_image='tmp.new_catalog.cover', blob_transform='entities.35.cover').run(context) # direct copy of cover
-    new_catalog.put()
-    context.log_entities.append((new_catalog, )) # LOG NEW CATALOG
-    # copy the catalog images
-    blob.duplicate_images_async(context, new_catalog._images, 'tmp.new_catalog._images', 'entities.35._images')
-    for i,image in enumerate(new_catalog._images):
-      image.set_key(str(i), parent=new_catalog.key)
-      context.log_entities.append((image, ))# LOG CATALOG IMAGE
-    ndb.put_multi(new_catalog._images)
-    # copy product templates
-    @ndb.tasklet
-    def async_product_template(product, i):
-      field = 'tmp.new_product_templates.%s._images' % i
-      field_source = 'tmp.product_templates.%s._images' % i
+    def copy_images(source, destination):
       @ndb.tasklet
-      def generate(): # For future.wait_all to work the tasklets that build the futures must yield another tasklet which is actaully a future with .get_result()
-        blob.duplicate_images_async(context, get_attr(context, field), field, field_source)
-        product.set_key(None, parent=new_catalog.key)
-        context.log_entities.append((product, ))# LOG PRODUCT TEMPLATE
+      def alter_image_async(source, destination):
+        @ndb.tasklet
+        def generate():
+          original_image = get_attr(context, source)
+          results = alter_image(original_image, copy=True, sufix='copy')
+          if results.get('blob_delete'):
+            context.blob_delete.append(results['blob_delete'])
+          if results.get('new_image'):
+            set_attr(context, destination, results['new_image'])
+          raise ndb.Return(True)
+        yield generate()
+        raise ndb.Return(True)
+
+      futures = []
+      images = get_attr(context, source)
+      for i, image in enumerate(images):
+        source = '%s.%s' % (source, i)
+        destination = '%s.%s' % (destination, i)
+        future = alter_image_async(source, destination)
+        futures.append(future)
+      return ndb.Future.wait_all(futures)
+    
+    @ndb.tasklet
+    def copy_template_async(template, source, destination):
+      @ndb.tasklet
+      def generate():
+        copy_images(source, destination)
+        template.set_key(None, parent=new_catalog.key)
+        context.log_entities.append((template, ))
         raise ndb.Return(True)
       yield generate()
       raise ndb.Return(True)
- 
-    def helper_product_template(products):
-      futures = []
-      for i,product in enumerate(products):
-        futures.append(async_product_template(product, i))
-      return ndb.Future.wait_all(futures)
     
-    helper_product_template(context.tmp['new_product_templates'])
-    ndb.put_multi(context.tmp['new_product_templates'])
- 
-    Images = context.models['73']
-    Variants = context.models['74']
-    Contents = context.models['75']
-    
-    puts = []
-    for product_template in context.tmp['new_product_templates']:
-      puts.append(Images(parent=product_template.key, images=product_template._images, id=product_template.key_id_str))
-      puts.append(Variants(parent=product_template.key, variants=product_template._variants, id=product_template.key_id_str))
-      puts.append(Contents(parent=product_template.key, contents=product_template._contents, id=product_template.key_id_str))
-    ndb.put_multi(puts)
-    
-    
-class DuplicateProductTemplateInstances(event.Plugin):
-  
-  def run(self, context):
-    # copy product instances of every product template
     @ndb.tasklet
-    def async_product_instance(product_template, instance, instance_i, product_template_i):
-      field = 'tmp.new_product_templates.%s._instances.%s._images' % (product_template_i, instance_i)
-      field_source = 'tmp.product_templates.%s._instances.%s._images' % (product_template_i, instance_i)
+    def copy_istance_async(template, instance, source, destination):
       @ndb.tasklet
-      def generator():
-        blob.duplicate_images_async(context, get_attr(context, field), field, field_source)
-        instance.set_key(instance.key.id(), parent=product_template.key)
-        context.log_entities.append((instance, )) # LOG INSTANCES
+      def generate():
+        copy_images(source, destination)
+        instance.set_key(instance.key.id(), parent=template.key)
+        context.log_entities.append((instance, ))
         raise ndb.Return(True)
-      yield generator()
-      raise ndb.Return(instance)
- 
-    def helper_product_instance(product_template, instances, product_template_i):
+      yield generate()
+      raise ndb.Return(True)
+    
+    def copy_template_mapper(templates):
       futures = []
-      for instance_i,instance in enumerate(instances):
-        futures.append(async_product_instance(product_template, instance, instance_i, product_template_i))
+      for i, template in enumerate(templates):
+        source = 'tmp.original_product_templates.%s.images' % i
+        destination = 'tmp.copy_product_templates.%s.images' % i
+        futures.append(copy_template_async(template, source, destination))
       return ndb.Future.wait_all(futures)
- 
+    
+    def copy_instance_mapper(template, template_i):
+      futures = []
+      for instance_i, instance in enumerate(template._instances):
+        source = 'tmp.original_product_templates.%s._instances.%s.images' % (template_i, instance_i)
+        destination = 'tmp.copy_product_templates.%s._instances.%s.images' % (template_i, instance_i)
+        futures.append(copy_istance_async(template, instance, source, destination))
+      return ndb.Future.wait_all(futures)
+    
+    catalog = context.entities['35']
+    new_catalog = copy.deepcopy(catalog)
+    new_catalog.created = datetime.datetime.now()
+    new_catalog.updated = datetime.datetime.now()  # @todo This field updates automatically, no need for setting the date!
+    new_catalog.state = 'unpublished'
+    new_catalog.set_key(None, namespace=catalog.key.namespace())
+    cover_results = alter_image(context.entities['35'].cover, copy=True, sufix='cover')
+    if cover_results.get('blob_delete'):
+      context.blob_delete.append(cover_results['blob_delete'])
+    if cover_results.get('new_image'):
+      new_catalog.cover = cover_results['new_image']
+    else:
+      new_catalog.cover = None
+    new_catalog.put()
+    context.log_entities.append((new_catalog, ))
+    context.tmp['new_catalog'] = new_catalog
+    copy_images('entities.35._images', 'tmp.new_catalog._images')
+    for i, image in enumerate(new_catalog._images):
+      image.set_key(str(i), parent=new_catalog.key)
+      context.log_entities.append((image, ))
+    ndb.put_multi(new_catalog._images)
+    copy_template_mapper(context.tmp['copy_product_templates'])
+    ndb.put_multi(context.tmp['copy_product_templates'])
     instances = []
-    for product_template_i,product_template in enumerate(context.tmp['new_product_templates']):
-      helper_product_instance(product_template, product_template._instances, product_template_i)
-      instances.extend(product_template._instances)
+    for template_i, template in enumerate(context.tmp['copy_product_templates']):
+      copy_instance_mapper(template, template_i)
+      instances.extend(template._instances)
     ndb.put_multi(instances)
-    
-    Images = context.models['73']
-    Contents = context.models['75']
-    
-    puts = []
-    for instance in instances:
-      puts.append(Images(parent=instance.key, images=instance._images, id=instance.key_id_str))
-      puts.append(Contents(parent=instance.key, contents=instance._contents, id=instance.key_id_str))
-    ndb.put_multi(puts)
-
 
 
 class Read(event.Plugin):
