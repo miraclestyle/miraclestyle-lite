@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
-
 '''
 Created on Jul 8, 2013
 
-@copyright: Vertazzar (Edis Šehalić)
-@author: Vertazzar (Edis Šehalić)
-@module settings.py
-
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import os
+
 
 """ APP settings file. """
 
 APPDIR = os.path.dirname(os.path.abspath(__file__))
 
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ' # this format is used for input and output
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 
 # This is for key-based encryption we can change before we go into production
 # - however changing this, automatically corrupts data (keys) and renders them unusable and undecryptable
@@ -26,35 +24,42 @@ SALT = u'salt'
 HASH_BINDER = u'-'
 
 REAL_DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEBUG = True # REAL_DEBUG override because we are under development either way
+DEBUG = True  # REAL_DEBUG override because we are under development either way
 DO_LOGS = True
 
 NOTIFY_EMAIL = 'edis.sehalic@gmail.com'
 
-# user settings
+
+# Task queue settings.
+OUTLET_TEMPLATES_PER_TASK = 10
+RECIPIENTS_PER_TASK = 50
+
+# Cron settings.
+DOMAINS_PER_CRON = 10
+
+# User settings.
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
 USER_ANONYMOUS_KEYNAME = 'anonymous_user'
 ROOT_ADMINS = ('edis.sehalic@gmail.com', 'elvinkosova@gmail.com')
 
+# Record settings.
+RECORDS_PAGE = 10
+SEARCH_PAGE = 10
+
+# Blob cloud storage settings.
 COMPANY_LOGO_BUCKET = 'user_input/company_logo'
 CATALOG_IMAGE_BUCKET = 'user_input/catalog_image'
 PRODUCT_TEMPLATE_BUCKET = 'user_input/product_template_image'
 PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
 
-# task queue
-OUTLET_TEMPLATES_PER_TASK = 10
-RECIPIENTS_PER_TASK = 50
-
-# records
-RECORDS_PAGE = 10
-SEARCH_PAGE = 10
-
+# Catalog settings.
 CATALOG_PAGE = 10
-CATALOG_LIFE = 180
+CATALOG_UNPUBLISHED_LIFE = 1  # @todo This will be something like 7 days
+CATALOG_DISCONTINUED_LIFE = 1  # @todo This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
 
-DOMAINS_PER_CRON = 10
+
 
 _http = 'http://'
 

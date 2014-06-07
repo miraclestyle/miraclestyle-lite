@@ -411,13 +411,20 @@ class CronDiscontinue(ndb.BaseModel):
 class CronDelete(ndb.BaseModel):
   
   page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
-  catalog_life = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=180)
+  catalog_unpublished_life = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=180)
+  catalog_discontinued_life = ndb.SuperIntegerProperty('3', indexed=False, required=True, default=180)
   
   def run(self, context):
     Catalog = context.models['35']
-    catalogs = Catalog.query(Catalog.state == 'discontinued',
-                             Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_life)),
-                             namespace=context.namespace).fetch(limit=self.page_size)
+    catalogs = []
+    unpublished_catalogs = Catalog.query(Catalog.state == 'unpublished',
+                                         Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_unpublished_life)),
+                                         namespace=context.namespace).fetch(limit=self.page_size)
+    discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
+                                          Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_discontinued_life)),
+                                          namespace=context.namespace).fetch(limit=self.page_size)
+    catalogs.extend(unpublished_catalogs)
+    catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:
       data = {'action_id': 'delete',
               'action_model': '35',
