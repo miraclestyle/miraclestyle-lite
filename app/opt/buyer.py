@@ -8,7 +8,7 @@ Created on May 18, 2014
 from app import ndb, settings
 from app.srv import log as ndb_log
 from app.srv import auth as ndb_auth
-from app.srv.event import Action
+from app.srv.event import Action, PluginGroup
 from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.plugins import common, rule, log, callback, buyer
 
@@ -67,18 +67,27 @@ class Addresses(ndb.BaseModel):
         'addresses': ndb.SuperLocalStructuredProperty(Address, repeated=True)
         },
       _plugins=[
-        common.Context(),
-        buyer.AddressRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'values.77.addresses': 'input.addresses'}),
-        buyer.AddressSet(),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.77'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.AddressRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'values.77.addresses': 'input.addresses'}),
+            buyer.AddressSet()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.77'})
+            ]
+          )
         ]
       ),
     Action(
@@ -87,12 +96,16 @@ class Addresses(ndb.BaseModel):
         'user': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
-        common.Context(),
-        buyer.AddressRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.77'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.AddressRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.77'})
+            ]
+          )
         ]
       ),
     Action(
@@ -102,15 +115,19 @@ class Addresses(ndb.BaseModel):
         'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        buyer.AddressRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.77',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.AddressRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.77',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       )
     ]
@@ -146,17 +163,26 @@ class Collection(ndb.BaseModel):
         'domains': ndb.SuperKeyProperty(kind='6', repeated=True)
         },
       _plugins=[
-        common.Context(),
-        buyer.CollectionRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        common.Set(dynamic_values={'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}),
-        rule.Write(transactional=True),
-        common.Write(transactional=True),
-        log.Entity(transactional=True),
-        log.Write(transactional=True),
-        rule.Read(transactional=True),
-        common.Set(transactional=True, dynamic_values={'output.entity': 'entities.10'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.CollectionRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'})
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(),
+            common.Write(),
+            log.Entity(),
+            log.Write(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.10'})
+            ]
+          )
         ]
       ),
     Action(
@@ -165,12 +191,16 @@ class Collection(ndb.BaseModel):
         'user': ndb.SuperKeyProperty(kind='0', required=True)
         },
       _plugins=[
-        common.Context(),
-        buyer.CollectionRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.10'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.CollectionRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.10'})
+            ]
+          )
         ]
       ),
     Action(
@@ -180,15 +210,19 @@ class Collection(ndb.BaseModel):
         'log_read_cursor': ndb.SuperStringProperty()
         },
       _plugins=[
-        common.Context(),
-        buyer.CollectionRead(),
-        rule.Prepare(skip_user_roles=True, strict=False),
-        rule.Exec(),
-        log.Read(page_size=settings.RECORDS_PAGE),
-        rule.Read(),
-        common.Set(dynamic_values={'output.entity': 'entities.10',
-                                   'output.log_read_cursor': 'log_read_cursor',
-                                   'output.log_read_more': 'log_read_more'})
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            buyer.CollectionRead(),
+            rule.Prepare(skip_user_roles=True, strict=False),
+            rule.Exec(),
+            log.Read(page_size=settings.RECORDS_PAGE),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.10',
+                                       'output.log_read_cursor': 'log_read_cursor',
+                                       'output.log_read_more': 'log_read_more'})
+            ]
+          )
         ]
       )
     ]
