@@ -412,7 +412,7 @@ class CronDelete(ndb.BaseModel):
   
   page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
   catalog_unpublished_life = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=180)
-  catalog_discontinued_life = ndb.SuperIntegerProperty('3', indexed=False, required=True, default=180)
+  catalog_discontinued_life = ndb.SuperIntegerProperty('3', indexed=False, required=True, default=7)
   
   def run(self, context):
     Catalog = context.models['35']
