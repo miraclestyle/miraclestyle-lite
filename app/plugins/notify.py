@@ -42,11 +42,14 @@ class Set(ndb.BaseModel):
     context.values['61'].templates = templates
 
 
+# @todo We have to consider http://sendgrid.com/partner/google
 class MailSend(ndb.BaseModel):
   
   def run(self, context):
-    mail.send_mail(context.input['sender'], context.input['recipient'],
-                   context.input['subject'], context.input['body'])
+    mail.send_mail(sender=context.input['sender'],
+                   bcc=context.input['recipient'],
+                   subject=context.input['subject'],
+                   html=context.input['body'])  # 'html' can be replaced with 'body' argument if we decide to implement plain text.
 
 
 class HttpSend(ndb.BaseModel):
