@@ -15,6 +15,7 @@ from app import ndb, memcache, util
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib.list_manipulator import sort_by_list
+from app.lib.blob_manipulator import alter_image
 
 
 def build_key_from_signature(context):
@@ -53,21 +54,102 @@ class InstanceRead(ndb.BaseModel):
 class TemplateReadInstances(ndb.BaseModel):
   
   page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
+  read_all = ndb.SuperBooleanProperty('2', indexed=False, default=False)
   
   def run(self, context):
     Instance = context.models['39']
-    cursor = Cursor(urlsafe=context.input.get('instances_cursor'))
     ancestor = context.entities[context.model.get_kind()].key
-    _instances, cursor, more = Instance.query(ancestor=ancestor).fetch_page(self.page_size, start_cursor=cursor)
+    cursor = Cursor(urlsafe=context.input.get('instances_cursor'))
+    if self.read_all:
+      _instances = []
+      more = True
+      offset = 0
+      limit = 1000
+      while more:
+        entities = Instance.query(ancestor=ancestor).fetch(limit=limit, offset=offset)
+        if len(entities):
+          _instances.extend(entities)
+          offset = offset + limit
+        else:
+          more = False
+    else:
+      _instances, cursor, more = Instance.query(ancestor=ancestor).fetch_page(self.page_size, start_cursor=cursor)
     if cursor:
       cursor = cursor.urlsafe()
+      context.tmp['instances_cursor'] = cursor
     if _instances:
       context.entities[context.model.get_kind()]._instances = _instances
     else:
       context.entities[context.model.get_kind()]._instances = []
     context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
-    context.tmp['instances_cursor'] = cursor
     context.tmp['instances_more'] = more
+
+
+class TemplateDelete(ndb.BaseModel):
+  
+  def run(self, context):
+    instance_images = []
+    instance_images.extend([instance.images for instance in context.entities[context.model.get_kind()]._instances])
+    context.log_entities.extend([(instance, ) for instance in context.entities[context.model.get_kind()]._instances])
+    context.blob_delete = [image.image for image in instance_images]
+    ndb.delete_multi([instance.key for instance in context.entities[context.model.get_kind()]._instances])
+
+
+class DuplicateWrite(ndb.BaseModel):
+  
+  def run(self, context):
+    def copy_images(source, destination):
+      @ndb.tasklet
+      def alter_image_async(source, destination):
+        @ndb.tasklet
+        def generate():
+          original_image = get_attr(context, source)
+          results = alter_image(original_image, copy=True, sufix='copy')
+          if results.get('blob_delete'):
+            context.blob_delete.append(results['blob_delete'])
+          if results.get('new_image'):
+            set_attr(context, destination, results['new_image'])
+          raise ndb.Return(True)
+        yield generate()
+        raise ndb.Return(True)
+      
+      futures = []
+      images = get_attr(context, source)
+      for i, image in enumerate(images):
+        source = '%s.%s' % (source, i)
+        destination = '%s.%s' % (destination, i)
+        future = alter_image_async(source, destination)
+        futures.append(future)
+      return ndb.Future.wait_all(futures)
+    
+    @ndb.tasklet
+    def copy_istance_async(instance, source, destination):
+      @ndb.tasklet
+      def generate():
+        copy_images(source, destination)
+        instance.set_key(instance.key.id(), parent=copy_template.key)
+        context.log_entities.append((instance, ))
+        raise ndb.Return(True)
+      yield generate()
+      raise ndb.Return(True)
+    
+    def copy_instance_mapper(instances):
+      futures = []
+      for i, instance in enumerate(instances):
+        source = 'entities[context.model.get_kind()]._instances.%s.images' % i
+        destination = 'tmp.new_template._instances.%s.images' % i
+        futures.append(copy_istance_async(instance, source, destination))
+      return ndb.Future.wait_all(futures)
+    
+    template = context.entities[context.model.get_kind()]
+    copy_template = copy.deepcopy(template)
+    copy_template.set_key(None, parent=template.key.parent(), namespace=template.key.namespace())
+    copy_template.put()
+    context.log_entities.append((copy_template, ))
+    context.tmp['copy_template'] = copy_template
+    copy_images('entities[context.model.get_kind()].images', 'tmp.copy_template.images')
+    copy_instance_mapper(copy_template._instances)
+    ndb.put_multi(copy_template._instances)
 
 
 class UploadImagesSet(ndb.BaseModel):

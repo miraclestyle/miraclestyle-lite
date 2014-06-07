@@ -96,7 +96,7 @@ def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=No
   return templates
 
 
-class DuplicateRead(event.Plugin):
+class DuplicateRead(ndb.BaseModel):
   
   def run(self, context):
     catalog = context.entities['35']
@@ -113,7 +113,7 @@ class DuplicateRead(event.Plugin):
 
 
 # @todo Not sure if multiple cloudstorage operations can run  inside single transaction?!!
-class DuplicateWrite(event.Plugin):
+class DuplicateWrite(ndb.BaseModel):
   
   def run(self, context):
     def copy_images(source, destination):
@@ -130,7 +130,7 @@ class DuplicateWrite(event.Plugin):
           raise ndb.Return(True)
         yield generate()
         raise ndb.Return(True)
-
+      
       futures = []
       images = get_attr(context, source)
       for i, image in enumerate(images):
@@ -208,7 +208,7 @@ class DuplicateWrite(event.Plugin):
     ndb.put_multi(instances)
 
 
-class Read(event.Plugin):
+class Read(ndb.BaseModel):
   
   read_from_start = ndb.SuperBooleanProperty('1', indexed=False, required=True, default=False)
   catalog_page = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
@@ -237,7 +237,7 @@ class Read(event.Plugin):
     context.tmp['images_more'] = more
 
 
-class UpdateSet(event.Plugin):
+class UpdateSet(ndb.BaseModel):
   
   def run(self, context):
     context.values['35'].name = context.input.get('name')
@@ -258,7 +258,7 @@ class UpdateSet(event.Plugin):
     context.entities['35']._images = []
 
 
-class UpdateWrite(event.Plugin):
+class UpdateWrite(ndb.BaseModel):
   
   def run(self, context):
     if context.entities['35']._field_permissions['_images']['writable']:
@@ -271,7 +271,7 @@ class UpdateWrite(event.Plugin):
       context.log_entities.extend([(image, ) for image in context.entities['35']._images])
 
 
-class UploadImagesSet(event.Plugin):
+class UploadImagesSet(ndb.BaseModel):
   
   def run(self, context):
     CatalogImage = context.models['36']
@@ -286,7 +286,7 @@ class UploadImagesSet(event.Plugin):
     context.values['35']._images = _images
 
 
-class UploadImagesWrite(event.Plugin):
+class UploadImagesWrite(ndb.BaseModel):
   
   def run(self, context):
     if len(context.entities['35']._images):
@@ -299,7 +299,7 @@ class UploadImagesWrite(event.Plugin):
           context.log_entities.append((image, ))
 
 
-class ProcessImages(event.Plugin):
+class ProcessImages(ndb.BaseModel):
   
   def run(self, context):
     if len(context.input.get('catalog_image_keys')):
@@ -324,7 +324,7 @@ class ProcessImages(event.Plugin):
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
 
 
-class ProcessCoverSet(event.Plugin):
+class ProcessCoverSet(ndb.BaseModel):
   
   def run(self, context):
     if len(context.entities['35']._images):
@@ -337,7 +337,7 @@ class ProcessCoverSet(event.Plugin):
       context.values['35'].cover = None
 
 
-class ProcessCoverTransform(event.Plugin):
+class ProcessCoverTransform(ndb.BaseModel):
   
   def run(self, context):
     if context.tmp.get('original_cover') and context.tmp.get('new_cover'):
@@ -350,7 +350,7 @@ class ProcessCoverTransform(event.Plugin):
       context.blob_transform = context.tmp['new_cover']
 
 
-class Delete(event.Plugin):
+class Delete(ndb.BaseModel):
   
   def run(self, context):
     
@@ -373,9 +373,9 @@ class Delete(event.Plugin):
     delete(instances, templates, catalog_images)
 
 
-class CronPublish(event.Plugin):
+class CronPublish(ndb.BaseModel):
   
-  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
   
   def run(self, context):
     Catalog = context.models['35']
@@ -391,9 +391,9 @@ class CronPublish(event.Plugin):
         context.callback_payloads.append(('callback', data))
 
 
-class CronDiscontinue(event.Plugin):
+class CronDiscontinue(ndb.BaseModel):
   
-  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
+  page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
   
   def run(self, context):
     Catalog = context.models['35']
@@ -408,10 +408,10 @@ class CronDiscontinue(event.Plugin):
       context.callback_payloads.append(('callback', data))
 
 
-class CronDelete(event.Plugin):
+class CronDelete(ndb.BaseModel):
   
-  page_size = ndb.SuperIntegerProperty('5', indexed=False, required=True, default=10)
-  catalog_life = ndb.SuperIntegerProperty('6', indexed=False, required=True, default=180)
+  page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
+  catalog_life = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=180)
   
   def run(self, context):
     Catalog = context.models['35']
@@ -425,10 +425,10 @@ class CronDelete(event.Plugin):
       context.callback_payloads.append(('callback', data))
 
 
-class SearchWrite(event.Plugin):
+class SearchWrite(ndb.BaseModel):
   
-  index_name = ndb.SuperStringProperty('5', indexed=False)
-  documents_per_index = ndb.SuperIntegerProperty('6', indexed=False)
+  index_name = ndb.SuperStringProperty('1', indexed=False)
+  documents_per_index = ndb.SuperIntegerProperty('2', indexed=False)
   
   def run(self, context):
     documents = []
@@ -509,10 +509,10 @@ class SearchWrite(event.Plugin):
         context.tmp['message'] = 'No documents to index!'
 
 
-class SearchDelete(event.Plugin):
+class SearchDelete(ndb.BaseModel):
   
-  index_name = ndb.SuperStringProperty('5', indexed=False)
-  documents_per_index = ndb.SuperIntegerProperty('6', indexed=False)
+  index_name = ndb.SuperStringProperty('1', indexed=False)
+  documents_per_index = ndb.SuperIntegerProperty('2', indexed=False)
   
   def run(self, context):
     documents = []
