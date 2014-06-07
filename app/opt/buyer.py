@@ -66,7 +66,7 @@ class Addresses(ndb.BaseModel):
         'user': ndb.SuperKeyProperty(kind='0', required=True),
         'addresses': ndb.SuperLocalStructuredProperty(Address, repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -95,7 +95,7 @@ class Addresses(ndb.BaseModel):
       arguments={
         'user': ndb.SuperKeyProperty(kind='0', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -114,7 +114,7 @@ class Addresses(ndb.BaseModel):
         'user': ndb.SuperKeyProperty(kind='0', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -162,7 +162,7 @@ class Collection(ndb.BaseModel):
         'notify': ndb.SuperBooleanProperty(default=True),
         'domains': ndb.SuperKeyProperty(kind='6', repeated=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -190,7 +190,7 @@ class Collection(ndb.BaseModel):
       arguments={
         'user': ndb.SuperKeyProperty(kind='0', required=True)
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
@@ -209,7 +209,7 @@ class Collection(ndb.BaseModel):
         'user': ndb.SuperKeyProperty(kind='0', required=True),
         'log_read_cursor': ndb.SuperStringProperty()
         },
-      _plugins=[
+      _plugin_groups=[
         PluginGroup(
           plugins=[
             common.Context(),
