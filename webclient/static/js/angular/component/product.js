@@ -237,8 +237,57 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	
 	                        }
 	                    });
-	        	  	
-	        	  },
+	        	  }, 
+	        	 _do_user_admin : function (entity, action) {
+	        	 	
+	        	 	    var that = this;
+
+                        var handle = function () {
+
+                            var modalInstance = $modal.open({
+                                templateUrl: logic_template('product/user_admin.html'),
+                                windowClass: 'modal-medium',
+                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                              
+
+                                    $scope.rule = that.rule;
+                                    $scope.action = action;
+                                    $scope.log = {
+                                        'message': '',
+                                        'key': that.entity['key'],
+                                        'state' : that.entity['state'],
+                                        'note' : '',
+                                    };
+
+                                    $scope.save = function () {
+
+                                        Endpoint.post(action, that.entity['kind'], $scope.log)
+                                            .success(function (data) {
+
+                                                EntityEditor.update_entity(that, data, ['_images']);
+
+                                                $scope.cancel();
+
+                                            });
+
+                                    };
+
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss();
+                                    };
+                                }
+                            });
+
+                        };
+
+                        handle();
+
+                    },
+                    
+                    duplicate : function()
+                    {
+                    	this._do_user_admin(this.entity, 'duplicate');
+                    },
 	      		 
 	      		
 	    	};
