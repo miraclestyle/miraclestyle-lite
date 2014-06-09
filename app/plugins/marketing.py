@@ -420,6 +420,7 @@ class CronDelete(ndb.BaseModel):
   def run(self, context):
     Catalog = context.models['35']
     catalogs = []
+    locked_catalogs = []
     if context.domain.state != 'active':
       locked_catalogs = Catalog.query(Catalog.state == 'locked',
                                       namespace=context.namespace).fetch(limit=self.page_size)
