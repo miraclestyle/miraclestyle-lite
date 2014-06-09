@@ -691,7 +691,9 @@ class Catalog(ndb.BaseExpando):
             rule.Exec(),
             marketing.CronPublish(page_size=10),
             marketing.CronDiscontinue(page_size=10),
-            marketing.CronDelete(page_size=10, catalog_life=settings.CATALOG_LIFE),
+            marketing.CronDelete(page_size=10,
+                                 catalog_unpublished_life=settings.CATALOG_UNPUBLISHED_LIFE,
+                                 catalog_discontinued_life=settings.CATALOG_DISCONTINUED_LIFE),
             callback.Exec()
             ]
           )
@@ -709,17 +711,6 @@ class Catalog(ndb.BaseExpando):
             common.Read(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec(),
-            rule.Read()
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            rule.Write(),
-            common.Write(),
-            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
-            log.Entity(dynamic_arguments={'message': 'input.message'}),
-            log.Write(),
             rule.Read(),
             common.Set(dynamic_values={'output.entity': 'entities.35'}),
             callback.Notify(),
@@ -761,9 +752,14 @@ class Catalog(ndb.BaseExpando):
   
   @property
   def _has_expired(self):
-    if not self.updated:
+    if not self.created or not self.updated:
       return False
-    return self.updated < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_LIFE))
+    if self.state == 'unpublished':
+      return self.created < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_UNPUBLISHED_LIFE))
+    elif self.state == 'discontinued':
+      return self.updated < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_DISCONTINUED_LIFE))
+    else:
+      return False
   
   @property
   def _is_eligible(self):

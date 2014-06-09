@@ -353,6 +353,7 @@ class DomainUser(ndb.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
+    '_primary_email': ndb.SuperStringProperty(),
     '_records': ndb_log.SuperLocalStructuredRecordProperty('8', repeated=True)
     }
   
@@ -379,12 +380,11 @@ class DomainUser(ndb.BaseExpando):
                        'not context.user._is_taskqueue'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
                        'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
-      FieldPermission('8', ['name', 'roles', 'state', '_records'], False, False,
+      FieldPermission('8', ['name', 'roles', 'state', '_primary_email', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
+      FieldPermission('8', ['state'], False, None, 'True'),
       FieldPermission('8', ['roles'], False, None,
                       'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
-      FieldPermission('8', ['state'], False, None,
-                      'context.entity.namespace_entity.state == "active"'),
       FieldPermission('8', ['state'], True, None,
                       '(context.action.key_id_str == "invite" and context.value and context.value.state == "invited") or (context.action.key_id_str == "accept" and context.value and context.value.state == "accepted")')
       ]
@@ -450,6 +450,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec(),
             rule.Read(),
@@ -470,6 +471,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             rule.DomainUserUpdate(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec()
@@ -500,6 +502,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             rule.DomainUserRemove(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec()
@@ -576,6 +579,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec(),
             log.Read(page_size=settings.RECORDS_PAGE),
@@ -597,6 +601,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             common.Set(static_values={'values.8.state': 'accepted'}),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec()
@@ -631,6 +636,7 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
+            rule.DomainUserRead(),
             rule.DomainUserCleanRoles(),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec()

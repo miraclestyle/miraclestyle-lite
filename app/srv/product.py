@@ -444,8 +444,6 @@ class Template(ndb.BaseExpando):
                               Action.build_key('38', 'read'),
                               Action.build_key('38', 'update'),
                               Action.build_key('38', 'upload_images'),
-                              Action.build_key('38', 'process_images'),
-                              Action.build_key('38', 'delete'),
                               Action.build_key('38', 'search'),
                               Action.build_key('38', 'read_records'),
                               Action.build_key('38', 'read_instances'),
@@ -455,11 +453,13 @@ class Template(ndb.BaseExpando):
                               Action.build_key('38', 'upload_images'),
                               Action.build_key('38', 'duplicate')], False, 'context.entity.parent_entity.state != "unpublished"'),
       ActionPermission('38', [Action.build_key('38', 'delete'),
-                              Action.build_key('38', 'process_images')], False, 'True'),
+                              Action.build_key('38', 'process_images'),
+                              Action.build_key('38', 'process_duplicate')], False, 'True'),
       ActionPermission('38', [Action.build_key('38', 'read'),
                               Action.build_key('38', 'read_instances')], True, 'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
       ActionPermission('38', [Action.build_key('38', 'delete'),
-                              Action.build_key('38', 'process_images')], True, 'context.user._is_taskqueue'),
+                              Action.build_key('38', 'process_images'),
+                              Action.build_key('38', 'process_duplicate')], True, 'context.user._is_taskqueue'),
       FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
                              'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records'], False, False,
                       'context.entity.namespace_entity.state != "active"'),
@@ -710,12 +710,14 @@ class Template(ndb.BaseExpando):
             common.Context(),
             common.Read(),
             rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            rule.Exec(),
+            product.TemplateReadInstances(read_all=True)
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
+            product.TemplateDelete(),
             product.DeleteImages(),
             common.Delete(),
             log.Entity(),
@@ -821,6 +823,48 @@ class Template(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True)
         },
-      _plugin_groups=[]
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.38'}),
+            callback.Notify(),
+            callback.Payload(queue='callback',
+                             static_data={'action_id': 'process_duplicate', 'action_model': '38'},
+                             dynamic_data={'key': 'entities.38.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
+        ]
+      ),
+    Action(
+      key=Action.build_key('38', 'process_duplicate'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            product.TemplateReadInstances(read_all=True)
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            product.DuplicateWrite(),
+            log.Write(),
+            callback.Notify(),
+            callback.Exec()
+            ]
+          )
+        ]
       )
     ]

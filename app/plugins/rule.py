@@ -366,6 +366,14 @@ class DomainUserInvite(ndb.BaseModel):
     context.values['0'] = user
 
 
+class DomainUserRead(ndb.BaseModel):
+  
+  def run(self, context):
+    user_key = ndb.Key('0', int(context.entities['8'].key_id_str))  # @todo We assume the original user key was integer. This has to be verified!
+    user = user_key.get()
+    context.entities['8']._primary_email = user._primary_email
+
+
 class DomainUserUpdate(ndb.BaseModel):
   
   def run(self, context):
