@@ -195,5 +195,6 @@ class Engine:
         throw = False
       if throw:
         raise  # Here we raise all other unhandled exceptions!
-    cls.process_blob_output(context)  # This is the most efficient strategy to handle blobs we can think of!
+    finally:# this must be enclosed in finally. otherwise beats the purpose of cls.process_blob_output because exceptions may raise
+      cls.process_blob_output(context)  # This is the most efficient strategy to handle blobs we can think of!
     return context.output
