@@ -817,8 +817,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             
                             $scope.save = function () {
                             	
-                            	$scope.pre_save();
-                             
+                            	if (angular.isFunction($scope.pre_save))
+	                               $scope.pre_save();
+                            	  
                                 Endpoint.post(action, $scope.options['kind'], $scope.entity)
                                 .success(function (data) {
                                 	
@@ -827,6 +828,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 	 	
                                         $scope.action = action = 'update';
                 					    $scope.action2 = action2 = 'read';
+                					    
+                					    $scope.history['args']['key'] = data['entity']['key'];
                                 	
                                 		if (data['errors'])
                                 		{
@@ -874,14 +877,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                                        	_resolve_options(options['options_after_update']);
 	                                        	$scope.resolve_handle(data);
 	                                        }
-	                                        
-	                                        console.log($scope);
-	                                        
+	                                    
+	                                        if (angular.isFunction($scope.after_save))
 	                                        $scope.after_save();
                                         	
                                         }
-                                        
-                                         
+                                
                                 });
                             };
  
@@ -890,11 +891,18 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             $scope.resolve_handle(data);
                              
                             $scope.cancel = function () {
+                            	try
+                            	{
+                            		if (angular.isFunction($scope.resolve_cancel))
+	                            	$scope.resolve_cancel($modalInstance);
+	                            	
+	                                $modalInstance.dismiss('cancel');
+	                                
+                            	}catch(e)
+                            	{
+                            		console.log(e);
+                            	}
                             	
-                            	if ($scope.resolve_cancel)
-                            	$scope.resolve_cancel($modalInstance);
-                            	
-                                $modalInstance.dismiss('cancel');
                             };
 
                         }

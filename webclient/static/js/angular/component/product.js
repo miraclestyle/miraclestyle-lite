@@ -166,6 +166,13 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        		  	cfg['args'] = create;
 	        		  	cfg['complete'] = function (entity)
 	        		  	{
+	        		  		angular.forEach(that.entity._instances, function (e) {
+	        		  			if (e.key == entity.key)
+	        		  			{
+	        		  				 create = false;
+	        		  			}
+	        		  		});
+	        		  		
 	        		  	    if (create)
 	        		  	    {
 	        		  	    	that.entity._instances.push(entity);
@@ -308,6 +315,11 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         {
 			            this.entity['parent'] = catalog_key;
+			            this.uploadConfig = {
+			            	'args' : {
+			            		'parent' : catalog_key,
+			            	}
+			            };
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('product/manage.html'),
