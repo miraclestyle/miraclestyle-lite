@@ -11,49 +11,37 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	 'form_info' : {'action' : Endpoint.url},
 	        	 'accordions' : {
 	        	 	'general' : true,
-	        	 	'images' : false,
-	        	 	'variants' : false,
-	        	 	'contents' : false,
 	        	 	'instances' : false,
 	        	 },
 	        	 'gridConfig' : function (scope)
 	            	{
-	            		scope.$watch('accordions.images', function (new_value, old) {
-	            			if (new_value)
-	            			{
-	            				$(window).trigger('gridinit');
-	            			}
-	            			
-	            		});
-	            		
 	            		return {
 	            			margin : 10
 	            		};
 	             },
 	        	 'completed' : function (data)
 	        	 {
-	        	 	this.entity._images = data['entity']['_images'];
+	        	 	this.entity.images = data['entity']['images'];
 	        	 },
 	        	'pre_save' : function ()
 	        	{
 	        		var that = this;
 	        		var new_order = [];
-	        		angular.forEach(this.entity._images, function (item, index) {
+	        		angular.forEach(this.entity.images, function (item, index) {
 	        			new_order.push(item.image);
 	        		});
 	        		this.entity.sort_images = new_order;
 	        	},
 	            'removeImage' : function (image)
 	        	 {
-	        	 	this.entity._images.remove(image);
-	        	 	this.entity.images_cursor = this.entity._images.length;
+	        	 	this.entity.images.remove(image);
 	        	 },
 	        	 'removeContent' : function (content) {
-	        	 	this.entity._contents.remove(content);
+	        	 	this.entity.contents.remove(content);
 	        	 },
 	        	 'removeVariant' : function (variant)
 	        	 {
-	        	 	this.entity._variants.remove(variant);
+	        	 	this.entity.variants.remove(variant);
 	        	 },
 	        	 'manageContent' : function (content) { 
 	        	 	
@@ -71,7 +59,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	           
 	                                 if (new_content)
 	                                 {
-	                                 	that.entity._contents.push($scope.content);
+	                                 	that.entity.contents.push($scope.content);
 	                                 }
 	                                 else
 	                                 {
@@ -114,7 +102,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	                            	  
 	                                 if (new_variant)
 	                                 {
-	                                 	that.entity._variants.push(this.variant);
+	                                 	that.entity.variants.push(this.variant);
 	                                 }
 	                                 else
 	                                 {
@@ -203,7 +191,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	  							
 	  							$scope.variants = [];
 	  				 
-	  							angular.forEach(that.entity._variants, function (v) {
+	  							angular.forEach(that.entity.variants, function (v) {
 	 
 	  								$scope.variants.push({
 	  									'name' : v.name,

@@ -14,10 +14,10 @@ from app.lib.attribute_manipulator import set_attr, get_attr
 
 
 def generate_internal_id(address):
-  internal_id = '%s-%s-%s-%s-%s-%s-%s-%s' % (str(time.time()), util.random_chars(10),
+  internal_id = u'%s-%s-%s-%s-%s-%s-%s-%s' % (str(time.time()), util.random_chars(10),
                                              address.name, address.city, address.postal_code,
                                              address.street, address.default_shipping, address.default_billing)
-  address.internal_id = hashlib.md5(internal_id).hexdigest()
+  address.internal_id = hashlib.md5(internal_id.encode('utf8')).hexdigest()
 
 
 class AddressRead(ndb.BaseModel):

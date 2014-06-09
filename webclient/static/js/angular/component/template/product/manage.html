@@ -178,17 +178,13 @@
 		</div>
 		</div>
 		
-		
-	</div>
+		<h2 class="fieldset with-button">
+			<span class="fieldset-text">Variants</span>
+			<span class="fieldset-button">
+				<button ng-show="rule.field.variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
+			</span>
+		</h2>
  
-	<div ng-show="entity.id" is-open="accordions.variants" accordion-group heading="Variants">
-		
-		<div class="clearfix">
-			<div class="pull-right">
-				<button ng-show="rule.field._variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
-			</div>
-		</div>
-		
 		<table class="table">
 			<thead>
 				<tr>
@@ -197,10 +193,10 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="variant in entity._variants track by $index">
+				<tr ng-repeat="variant in entity.variants track by $index">
 					<td>{{variant.name}}</td>
 					<td>
-						<span ng-show="rule.field._variants.writable">
+						<span ng-show="rule.field.variants.writable">
 						<button type="button" ng-click="removeVariant(variant)" class="button">Remove</button>
 						<button type="button" ng-click="manageVariant(variant)" class="button">Edit</button>
 						</span>
@@ -208,23 +204,21 @@
 				</tr>
 			</tbody>
 		</table>
-		 
-	</div>
-	 
-	<div ng-show="entity.id" is-open="accordions.images" accordion-group heading="Images">
-		<div class="form-control clearfix mb15">
-		  <div class="pull-right">
-		  <div ng-show="rule.field._images.writable" class="button fake-button">
-		  	 <span>Add Images</span>
-		  	 <input class="upload" name="_images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
-		  </div>
-		  </div>
-		</div>
+		
+		<h2 class="fieldset with-button">
+			<span class="fieldset-text">Images</span>
+			<span class="fieldset-button">
+				 <div ng-show="rule.field.images.writable" class="button fake-button">
+				  	 <span>Add Images</span>
+				  	 <input class="upload" name="images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
+				 </div>
+			</span>
+		</h2>
 		
 		<div ng-show="$isUploading">Images are uploading... please wait...</div>
 		
-		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix grid-wrapper">
-			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
+		<div ui-sortable="sortableOptions" ng-model="entity.images" class="clearfix grid-wrapper">
+			<div ng-repeat="image in entity.images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
 				<div class="img spaceout">
 					<img ng-src="{{image.serving_url}}=s360" />
 				</div>
@@ -232,15 +226,12 @@
 			</div>
 		</div>
 		
-	</div>
-	
-	<div ng-show="entity.id" is-open="accordions.contents" accordion-group heading="Contents">
-		
-		 <div class="clearfix">
-			<div class="pull-right">
-				<button ng-show="rule.field._contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
-			</div>
-		</div>
+		<h2 class="fieldset with-button">
+			<span class="fieldset-text">Contents</span>
+			<span class="fieldset-button">
+				<button ng-show="rule.field.contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+			</span>
+		</h2>
 		
 		<table class="table">
 			<thead>
@@ -263,7 +254,8 @@
 		</table>
 		 
 	</div>
-	
+ 
+ 
 	<div ng-show="entity.id" is-open="accordions.instances" accordion-group heading="Product Instances">
 		 
 		 <div class="clearfix">
