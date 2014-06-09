@@ -7,7 +7,7 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from app import ndb, memcache, util
+from app import ndb, memcache, util, settings
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
@@ -46,8 +46,9 @@ class CountryUpdate(ndb.BaseModel):
             path = parent
         names.reverse()
         return separator.join(names)
-      
+      i = 0
       for child in root[1]:
+        i += 1
         dat = dict()
         dat['id'] = child.attrib['id']
         for child2 in child:
@@ -57,9 +58,13 @@ class CountryUpdate(ndb.BaseModel):
           if child2.text:
             dat[name] = child2.text
         to_put.append(Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
+        if i == 100 and settings.DEBUG:
+          break
       processed_keys = {}
       processed_ids = {}
+      i = 0
       for child in [c for c in root[2]] + [c for c in root[3]]:
+        i += 1
         dat = dict()
         dat['id'] = child.attrib['id']
         for child2 in child:
@@ -83,4 +88,6 @@ class CountryUpdate(ndb.BaseModel):
         processed_keys[new_sub_divison.key_urlsafe] = new_sub_divison
         processed_ids[dat['id']] = new_sub_divison
         to_put.append(new_sub_divison)
+        if i == 100 and settings.DEBUG:
+          break
       ndb.put_multi(to_put)

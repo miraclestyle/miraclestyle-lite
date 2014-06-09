@@ -11,7 +11,7 @@ import hashlib
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, memcache, util
+from app import ndb, memcache, util, settings
 from app.srv import event
 from app.lib.attribute_manipulator import set_attr, get_attr
 from app.lib.list_manipulator import sort_by_list
@@ -211,6 +211,8 @@ class CategoryUpdate(ndb.BaseModel):
     parent = None
     dig = 0
     for i, item in enumerate(data):
+      if i == 100 and settings.DEBUG: # better then editing a file
+        break
       new_cat = {}
       current = item.split(sep)
       try:
