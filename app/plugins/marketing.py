@@ -181,7 +181,6 @@ class DuplicateWrite(ndb.BaseModel):
     catalog = context.entities['35']
     new_catalog = copy.deepcopy(catalog)
     new_catalog.created = datetime.datetime.now()
-    new_catalog.updated = datetime.datetime.now()  # @todo This field updates automatically, no need for setting the date!
     new_catalog.state = 'unpublished'
     new_catalog.set_key(None, namespace=catalog.key.namespace())
     cover_results = alter_image(context.entities['35'].cover, copy=True, sufix='cover')
