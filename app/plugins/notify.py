@@ -46,10 +46,21 @@ class Set(ndb.BaseModel):
 class MailSend(ndb.BaseModel):
   
   def run(self, context):
+    '''
+     the first 4 arguments that are specified must be named correctly, otherwise the mail_send will throw an error
+     if function explicitly asks for arguments
+     def func(arg1, arg2, arg3, **kwds):
+       pass
+       
+     then you must call the function like this func(arg1='foo', arg2='bar', arg3='baaz', # if you dont call these it will throw an error other=1, kwd=2, arguments=3) etc..
+    '''
     mail.send_mail(sender=context.input['sender'],
-                   bcc=context.input['recipient'],
-                   subject=context.input['subject'],
-                   html=context.input['body'])  # 'html' can be replaced with 'body' argument if we decide to implement plain text.
+              to=context.input['recipient'],
+              subject=context.input['subject'],
+              body=context.input['body'])  # 'html' can be replaced with 'body' argument if we decide to implement plain text.
+    # as for html ones
+    # html keyword can be used, along with the body one
+    # http://stackoverflow.com/questions/2860614/send-html-e-mail-in-app-engine-python
 
 
 class HttpSend(ndb.BaseModel):

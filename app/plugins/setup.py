@@ -92,7 +92,7 @@ class DomainSetup(Setup):
     from app.srv import auth, nav, notify, marketing, product
     objects = [auth.Domain, rule.DomainRole, rule.DomainUser, nav.Widget, notify.Notification,
                marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-               product.Template, product.Images, product.Instance, product.Variants, product.Contents,
+               product.Template, product.Instance
                ]
     for obj in objects:
       if hasattr(obj, '_actions'):

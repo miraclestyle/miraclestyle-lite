@@ -131,53 +131,57 @@
 		</div>
 		</div>
 		
-		<h2 class="fieldset with-button">
-			<span class="fieldset-text">Images</span>
-			<span class="fieldset-button">
-				 <div ng-show="rule.field.images.writable" class="button fake-button">
-				  	 <span>Add Images</span>
-				  	 <input class="upload" name="images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
-				 </div>
-			</span>
-		</h2>
-		
-		<div ng-show="$isUploading">Images are uploading... please wait...</div>
-		
-		<div ui-sortable="sortableOptions" ng-model="entity.images" class="clearfix grid-wrapper">
-			<div ng-repeat="image in entity.images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
-				<div class="img spaceout">
-					<img ng-src="{{image.serving_url}}=s360" />
+		<div ng-show="entity.id">
+			<h2 class="fieldset with-button">
+				<span class="fieldset-text">Images</span>
+				<span class="fieldset-button">
+					 <div ng-show="rule.field.images.writable" class="button fake-button">
+					  	 <span>Add Images</span>
+					  	 <input class="upload" name="images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
+					 </div>
+				</span>
+			</h2>
+			
+			<div ng-show="$isUploading">Images are uploading... please wait...</div>
+			
+			<div ui-sortable="sortableOptions" ng-model="entity.images" class="clearfix grid-wrapper">
+				<div ng-repeat="image in entity.images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
+					<div class="img spaceout">
+						<img ng-src="{{image.serving_url}}=s360" />
+					</div>
+					<button ng-show="rule.field.images.writable" type="button" class="button" ng-click="removeImage(image)">Remove</button>
 				</div>
-				<button type="button" class="button" ng-click="removeImage(image)">Remove</button>
 			</div>
 		</div>
 		
-		<h2 class="fieldset with-button">
-			<span class="fieldset-text">Contents</span>
-			<span class="fieldset-button">
-				<button ng-show="rule.field.contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
-			</span>
-		</h2>
-		
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="content in entity._contents track by $index">
-					<td>{{content.title}}</td>
-					<td>
-						<span ng-show="rule.field._contents.writable">
-						<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
-						<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div ng-show="entity.id">
+			<h2 class="fieldset with-button">
+				<span class="fieldset-text">Contents</span>
+				<span class="fieldset-button">
+					<button ng-show="rule.field.contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+				</span>
+			</h2>
+			
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="content in entity.contents track by $index">
+						<td>{{content.title}}</td>
+						<td>
+							<span ng-show="rule.field.contents.writable">
+							<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
+							<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
+							</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 		
 		
 	</div>

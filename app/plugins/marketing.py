@@ -43,7 +43,7 @@ def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=No
     offset = 0
     limit = 1000
     while more:
-      entities = yield Instance.query(ancestor=template_key).fetch_async(limit=limit, offset=offset)
+      entities = yield Instance.query(ancestor=entity.key).fetch_async(limit=limit, offset=offset)
       if len(entities):
         instances.extend(entities)
         offset = offset + limit
@@ -109,7 +109,7 @@ class DuplicateRead(ndb.BaseModel):
     if not templates:
       templates = []
     context.tmp['original_product_templates'] = templates
-    context.tmp['copy_product_templates'] = templates  # @todo Is this supposed to be deep copy!?
+    context.tmp['copy_product_templates'] = copy.deepcopy(templates)  # this is now deepcopy
 
 
 # @todo Not sure if multiple cloudstorage operations can run  inside single transaction?!!

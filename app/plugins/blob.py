@@ -57,7 +57,7 @@ class AlterImage(ndb.BaseModel):
     else:
       original_image = context.blob_transform
     if original_image:
-      results = alter_image(original_image, self.config)
+      results = alter_image(original_image, **self.config)
       if results.get('blob_delete'):
         context.blob_delete.append(results['blob_delete'])
       if results.get('new_image'):
@@ -76,7 +76,7 @@ class AlterImages(ndb.BaseModel):
       @ndb.tasklet
       def generate():
         original_image = get_attr(context, source)
-        results = alter_image(original_image, self.config)
+        results = alter_image(original_image, **self.config)
         if results.get('blob_delete'):
           context.blob_delete.append(results['blob_delete'])
         if results.get('new_image'):

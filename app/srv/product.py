@@ -312,7 +312,7 @@ class Instance(ndb.BaseExpando):
       key=Action.build_key('39', 'upload_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
+        'images': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, repeated=True)
         },
       _plugin_groups=[
         PluginGroup(
@@ -637,7 +637,7 @@ class Template(ndb.BaseExpando):
       key=Action.build_key('38', 'upload_images'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
+        'images': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image, repeated=True)
         },
       _plugin_groups=[
         PluginGroup(

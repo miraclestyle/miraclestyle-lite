@@ -136,7 +136,7 @@ class DuplicateWrite(ndb.BaseModel):
     def copy_instance_mapper(instances):
       futures = []
       for i, instance in enumerate(instances):
-        source = 'entities[context.model.get_kind()]._instances.%s.images' % i
+        source = 'entities.%s._instances.%s.images' % (context.model.get_kind(), i)
         destination = 'tmp.new_template._instances.%s.images' % i
         futures.append(copy_istance_async(instance, source, destination))
       return ndb.Future.wait_all(futures)
@@ -147,7 +147,7 @@ class DuplicateWrite(ndb.BaseModel):
     copy_template.put()
     context.log_entities.append((copy_template, ))
     context.tmp['copy_template'] = copy_template
-    copy_images('entities[context.model.get_kind()].images', 'tmp.copy_template.images')
+    copy_images('entities.%s.images' % context.model.get_kind(), 'tmp.copy_template.images')
     copy_instance_mapper(copy_template._instances)
     ndb.put_multi(copy_template._instances)
 
@@ -176,7 +176,7 @@ class WriteImages(ndb.BaseModel):
   
   def run(self, context):
     context.blob_write = [image.image for image in context.entities[context.model.get_kind()].images]
-    if not context.entities[context.model.get_kind()]._field_permissions['_images']['writable']:
+    if not context.entities[context.model.get_kind()]._field_permissions['images']['writable']:
       context.blob_delete = []
 
 

@@ -37,12 +37,18 @@ def alter_image(original_image, **config):
     new_gs_object_name = '%s_%s' % (new_image.gs_object_name, config['sufix'])
   blob_key = None
   try:
-    writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+    # apparently calling .read on writable_blob e.g. cloudstorage.open(foo, 'w') will throw # AttributeError: 'StreamingBuffer' object has no attribute 'read'
+    # also calling write apparently deletes the file
+    # so you must do the .read() before doing anything to the file
     if config.get('copy'):
       readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
       blob = readonly_blob.read()
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w') 
     else:
-      blob = writable_blob.read()
+      readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r') # thats why we implement ReadBuffer here then so the blob can be manipulated
+      blob = readonly_blob.read()
+      readonly_blob.close()
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
     if config.get('transform'):
       image = images.Image(image_data=blob)
       image.resize(config['width'],
@@ -58,7 +64,7 @@ def alter_image(original_image, **config):
     if config.get('copy'):
       readonly_blob.close()
     writable_blob.close()
-    if original_gs_object_name != new_gs_object_name:
+    if original_gs_object_name != new_gs_object_name or new_image.serving_url is None: # serving_url will be none when uploading with domain_logo
       new_image.gs_object_name = new_gs_object_name
       blob_key = blobstore.create_gs_key(new_gs_object_name)
       new_image.image = blobstore.BlobKey(blob_key)

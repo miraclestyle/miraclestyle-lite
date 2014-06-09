@@ -131,3 +131,8 @@ indexes:
   ancestor: yes
   properties:
   - name: "2"
+  
+- kind: "35"
+  properties:
+  - name: "6"
+  - name: "1"
