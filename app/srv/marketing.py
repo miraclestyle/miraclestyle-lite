@@ -325,9 +325,10 @@ class Catalog(ndb.BaseExpando):
             rule.Write(),
             common.Set(dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
             marketing.ProcessCoverTransform(),
-            blob.AlterImage(destination='entities.35.cover', config={'copy': True, 'sufix': 'cover',
-                            'transform' : True, 'width': 240, 'height': 360, 'crop_to_fit': True,
-                            'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
+            blob.AlterImage(destination='entities.35.cover',
+                            config={'copy': True, 'sufix': 'cover', 'transform': True,
+                                    'width': 240, 'height': 360, 'crop_to_fit': True,
+                                    'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
             common.Write(),
             log.Entity(),
             log.Write(),
@@ -750,6 +751,7 @@ class Catalog(ndb.BaseExpando):
       )
     ]
   
+  # @todo Since Catalog.delete is called via callback this validator isn't required as long as CronDelete plugin respects these rules!
   @property
   def _has_expired(self):
     if not self.created or not self.updated:
@@ -758,6 +760,8 @@ class Catalog(ndb.BaseExpando):
       return self.created < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_UNPUBLISHED_LIFE))
     elif self.state == 'discontinued':
       return self.updated < (datetime.datetime.now() - datetime.timedelta(days=settings.CATALOG_DISCONTINUED_LIFE))
+    elif self.state == 'locked' and self.namespace_entity.state != 'active':
+      return True
     else:
       return False
   
