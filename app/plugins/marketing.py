@@ -109,7 +109,7 @@ class DuplicateRead(ndb.BaseModel):
     if not templates:
       templates = []
     context.tmp['original_product_templates'] = templates
-    context.tmp['copy_product_templates'] = copy.deepcopy(templates)  # this is now deepcopy
+    context.tmp['copy_product_templates'] = copy.deepcopy(templates)
 
 
 # @todo Not sure if multiple cloudstorage operations can run  inside single transaction?!!
@@ -134,9 +134,7 @@ class DuplicateWrite(ndb.BaseModel):
       futures = []
       images = get_attr(context, source)
       for i, image in enumerate(images):
-        format_source = '%s.%s' % (source, i)
-        format_destination = '%s.%s' % (destination, i) # you override the initial variable by saying destination = '%s.%s' % (destination, i)
-        future = alter_image_async(format_source, format_destination)
+        future = alter_image_async('%s.%s' % (source, i), '%s.%s' % (destination, i))
         futures.append(future)
       return ndb.Future.wait_all(futures)
     
