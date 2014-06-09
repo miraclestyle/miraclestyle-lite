@@ -134,9 +134,9 @@ class DuplicateWrite(ndb.BaseModel):
       futures = []
       images = get_attr(context, source)
       for i, image in enumerate(images):
-        source = '%s.%s' % (source, i)
-        destination = '%s.%s' % (destination, i)
-        future = alter_image_async(source, destination)
+        format_source = '%s.%s' % (source, i)
+        format_destination = '%s.%s' % (destination, i) # you override the initial variable by saying destination = '%s.%s' % (destination, i)
+        future = alter_image_async(format_source, format_destination)
         futures.append(future)
       return ndb.Future.wait_all(futures)
     
