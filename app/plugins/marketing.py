@@ -378,9 +378,11 @@ class CronPublish(ndb.BaseModel):
   
   def run(self, context):
     Catalog = context.models['35']
-    catalogs = Catalog.query(Catalog.state == 'locked',
-                             Catalog.publish_date <= datetime.datetime.now(),
-                             namespace=context.namespace).fetch(limit=self.page_size)
+    catalogs = []
+    if context.domain.state == 'active':
+      catalogs = Catalog.query(Catalog.state == 'locked',
+                               Catalog.publish_date <= datetime.datetime.now(),
+                               namespace=context.namespace).fetch(limit=self.page_size)
     for catalog in catalogs:
       if catalog._is_eligible:
         data = {'action_id': 'publish',
@@ -396,9 +398,13 @@ class CronDiscontinue(ndb.BaseModel):
   
   def run(self, context):
     Catalog = context.models['35']
-    catalogs = Catalog.query(Catalog.state == 'published',
-                             Catalog.discontinue_date <= datetime.datetime.now(),
-                             namespace=context.namespace).fetch(limit=self.page_size)
+    if context.domain.state == 'active':
+      catalogs = Catalog.query(Catalog.state == 'published',
+                               Catalog.discontinue_date <= datetime.datetime.now(),
+                               namespace=context.namespace).fetch(limit=self.page_size)
+    else:
+      catalogs = Catalog.query(Catalog.state == 'published',
+                               namespace=context.namespace).fetch(limit=self.page_size)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
               'action_model': '35',
@@ -416,12 +422,16 @@ class CronDelete(ndb.BaseModel):
   def run(self, context):
     Catalog = context.models['35']
     catalogs = []
+    if context.domain.state != 'active':
+      locked_catalogs = Catalog.query(Catalog.state == 'locked',
+                                      namespace=context.namespace).fetch(limit=self.page_size)
     unpublished_catalogs = Catalog.query(Catalog.state == 'unpublished',
                                          Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_unpublished_life)),
                                          namespace=context.namespace).fetch(limit=self.page_size)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
                                           Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=self.catalog_discontinued_life)),
                                           namespace=context.namespace).fetch(limit=self.page_size)
+    catalogs.extend(locked_catalogs)
     catalogs.extend(unpublished_catalogs)
     catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:
