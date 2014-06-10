@@ -1,68 +1,6 @@
 import dis
 from decimal import Decimal
-
-def memoize(maxsize):
-    """
-    Decorator to 'memoize' a function - caching its results with a
-    near LRU implementation.
-
-    The cache keeps a list of keys logicaly separated in 4 segment :
-
-    segment 1 | ...        | segment4
-    [k,k,k,k,k,k,k, .. ,k,k,k,k,k,k,k]
-
-    For each segment there is a pointer that loops on it.  When a key
-    is accessed from the cache it is promoted to the first segment (at
-    the pointer place of segment one), the key under the pointer is
-    moved to the next segment, the pointer is then incremented and so
-    on. A key that is removed from the last segment is removed from
-    the cache.
-
-    :param: maxsize the size of the cache (must be greater than or
-    equal to 4)
-    """
-    assert maxsize >= 4, "Memoize cannot work if maxsize is less than 4"
-
-    def wrap(fct):
-        cache = {}
-        keys = [None for i in xrange(maxsize)]
-        seg_size = maxsize // 4
-
-        pointers = [i * seg_size for i in xrange(4)]
-        max_pointers = [(i + 1) * seg_size for i in xrange(3)] + [maxsize]
-
-        def wrapper(*args):
-            key = repr(args)
-            res = cache.get(key)
-            if res:
-                pos, res = res
-                keys[pos] = None
-            else:
-                res = fct(*args)
-
-            value = res
-            for segment, pointer in enumerate(pointers):
-                newkey = keys[pointer]
-                keys[pointer] = key
-                cache[key] = (pointer, value)
-
-                pointers[segment] = pointer + 1
-                if pointers[segment] == max_pointers[segment]:
-                    pointers[segment] = segment * seg_size
-
-                if newkey is None:
-                    break
-                segment, value = cache.pop(newkey)
-                key = newkey
-
-            return res
-
-        wrapper.__doc__ = fct.__doc__
-        wrapper.__name__ = fct.__name__
-
-        return wrapper
-    return wrap
-
+ 
 _ALLOWED_CODES = set(dis.opmap[x] for x in [
         'POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
         'BUILD_MAP', 'BUILD_TUPLE', 'LOAD_CONST', 'RETURN_VALUE',
@@ -80,8 +18,6 @@ _ALLOWED_CODES = set(dis.opmap[x] for x in [
 
 # 'CALL_FUNCTION', removed
 
-
-@memoize(1000)
 def _compile_source(source):
     comp = compile(source, '', 'eval')
     codes = []

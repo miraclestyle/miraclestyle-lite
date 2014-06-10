@@ -371,7 +371,6 @@ class Notification(ndb.BaseExpando):
       key=Action.build_key('61', 'send_mail'),
       arguments={
         'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
-        'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
         'body': ndb.SuperTextProperty(required=True),
         'caller_entity': ndb.SuperKeyProperty(required=True)
@@ -393,7 +392,6 @@ class Notification(ndb.BaseExpando):
       key=Action.build_key('61', 'send_http'),
       arguments={
         'recipient': ndb.SuperStringProperty(required=True),
-        'sender': ndb.SuperStringProperty(required=True),
         'subject': ndb.SuperTextProperty(required=True),
         'body': ndb.SuperTextProperty(required=True),
         'caller_entity': ndb.SuperKeyProperty(required=True)

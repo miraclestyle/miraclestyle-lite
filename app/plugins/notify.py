@@ -55,6 +55,7 @@ class MailSend(ndb.BaseModel):
     message.subject = context.input['subject']
     message.body = context.input['body']  # We can add html argument in addition to body if we want to send html version!
     message.bcc = context.input['recipient']
+    message.check_initialized()
     message.send()
 
 
