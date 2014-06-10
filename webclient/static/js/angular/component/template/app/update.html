@@ -56,12 +56,12 @@
 	<div class="form-control">
 		<label class="form-label">Primary Contact</label>
 		<div class="form-input">
-			<select name="primary_contact" ng-disabled="!rule.field.primary_contact.writable" 
-				    ng-required="rule.input[action].primary_contact.required"
-				    ui-select2 ng-model="entity.primary_contact" data-placeholder="Select primary contact for this App">
-				    <option value=""></option>
-				    <option value="{{entity.primary_contact}}">{{entity._primary_contact_email}}</option>
-			</select>
+			<input 
+			       name="primary_contact" 
+			       ng-required="rule.input[action].primary_contact.required" 
+			       ui-select2="select2Options.domain_user"
+			       ng-model="entity.primary_contact"
+			       data-placeholder="Select a domain user" />
 		</div>
 	</div>	 
 	

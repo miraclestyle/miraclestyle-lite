@@ -739,6 +739,8 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
     if self._repeated:
       return [long(v) for v in value]
     else:
+      if not self._required and value is None:
+        return value
       return long(value)
 
 

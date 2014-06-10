@@ -84,6 +84,7 @@ class Engine:
   @classmethod
   def process_blob_output(cls, context):
     if len(context.blob_unused):
+      util.logger('DELETED BLOBS: %s' % [str(b) for b in context.blob_unused])
       blobstore.delete(context.blob_unused)
       context.blob_unused = []
   

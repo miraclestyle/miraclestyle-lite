@@ -568,12 +568,12 @@ class Domain(ndb.BaseExpando):
           plugins=[
             common.Set(dynamic_values={'tmp.original_logo': 'entities.6.logo'}),
             rule.Write(),
-            common.Write(),
             common.Set(dynamic_values={'tmp.new_logo': 'entities.6.logo'}),
             blob.AlterImage(source='entities.6.logo',
                             destination='entities.6.logo',
                             config={'transform': True, 'width': 240, 'height': 100,
                                     'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
+            common.Write(),       
             log.Entity(),
             log.Write(),
             rule.Read(),

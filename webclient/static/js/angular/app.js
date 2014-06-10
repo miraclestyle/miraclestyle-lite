@@ -637,8 +637,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     		'templateUrl' : '',
     		'args' : {},
     		'kind' : '',
-    		'pre_save' : angular.noop,
-    		'after_save' : angular.noop,
     	};
     	
     	var resolve_options = function (options)
@@ -782,15 +780,17 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         templateUrl: options['templateUrl'],
                         controller: function ($scope, $modalInstance, RuleEngine) {
                   
-                        	var _resolve_options = function(opts)
+                        	var _resolve_options = function(opts, do_scope)
                         	{
                         	 
 	                            $scope.resolve_handle = opts['handle'];
 	                            $scope.resolve_complete = opts['complete'];
 	                            $scope.resolve_cancel = opts['cancel'];
-	                            $scope.pre_save = opts['pre_save'];
-	                            $scope.after_save = opts['after_save'];
 	                            update($scope.options, opts);
+	                            if (do_scope)
+	                            {
+	                            	update($scope, opts['scope']);
+	                            }
                         	};
                         	
                         	var entity = options['entity'];
@@ -874,8 +874,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                                        
 	                                        if (options['options_after_update'])
 	                                        {
-	                                        	_resolve_options(options['options_after_update']);
+	                                        	_resolve_options(options['options_after_update'], true);
 	                                        	$scope.resolve_handle(data);
+	                                         
 	                                        }
 	                                    
 	                                        if (angular.isFunction($scope.after_save))
