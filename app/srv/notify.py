@@ -34,18 +34,16 @@ class CustomTemplate(Template):
   
   _kind = 59
   
-  message_sender = ndb.SuperStringProperty('1', required=True, indexed=False)
-  message_recievers = ndb.SuperPickleProperty('2', required=True, indexed=False)
-  message_subject = ndb.SuperStringProperty('3', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('4', required=True)
-  outlet = ndb.SuperStringProperty('5', required=True, default='send_mail', indexed=False)
+  message_recievers = ndb.SuperPickleProperty('1', required=True, indexed=False)
+  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
+  message_body = ndb.SuperTextProperty('3', required=True)
+  outlet = ndb.SuperStringProperty('4', required=True, default='send_mail', indexed=False)
   
   def run(self, context):
     template_values = {'entity': context.tmp['caller_entity']}
     data = {'action_id': self.outlet,
             'action_model': '61',
             'recipient': self.message_recievers(context.tmp['caller_entity'], context.tmp['caller_user']),
-            'sender': self.message_sender,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
@@ -56,23 +54,19 @@ class MailTemplate(Template):
   
   _kind = 58
   
-  message_sender = ndb.SuperKeyProperty('1', kind='8', required=True, indexed=False)
-  message_reciever = ndb.SuperKeyProperty('2', kind='60', required=True, indexed=False)  # All users that have this role.
-  message_subject = ndb.SuperStringProperty('3', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('4', required=True)
+  message_reciever = ndb.SuperKeyProperty('1', kind='60', required=True, indexed=False)  # All users that have this role.
+  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
+  message_body = ndb.SuperTextProperty('3', required=True)
   
   def run(self, context):
     DomainUser = context.models['8']  # @todo Hope it can be like this!
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
     recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
-    sender_key = ndb.Key('0', long(self.message_sender.id()))
-    sender = sender_key.get()
     template_values = {'entity': context.tmp['caller_entity']}
     data = {'action_id': 'send_mail',
             'action_model': '61',
             'recipient': [reciever._primary_email for reciever in recievers],
-            'sender': sender._primary_email,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
@@ -91,19 +85,15 @@ class HttpTemplate(Template):
   
   _kind = 63
   
-  message_sender = ndb.SuperKeyProperty('1', kind='8', required=True, indexed=False)
-  message_reciever = ndb.SuperStringProperty('2', required=True, indexed=False)
-  message_subject = ndb.SuperStringProperty('3', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('4', required=True)
+  message_reciever = ndb.SuperStringProperty('1', required=True, indexed=False)
+  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
+  message_body = ndb.SuperTextProperty('3', required=True)
   
   def run(self, context):
-    sender_key = ndb.Key('0', long(self.message_sender.id()))
-    sender = sender_key.get()
     template_values = {'entity': context.tmp['caller_entity']}
     data = {'action_id': 'send_http',
             'action_model': '61',
             'recipient': self.message_reciever,
-            'sender': sender._primary_email,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
@@ -394,7 +384,7 @@ class Notification(ndb.BaseExpando):
             common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec(),
-            notify.MailSend()
+            notify.MailSend(message_sender=settings.NOTIFY_EMAIL)
             ]
           )
         ]

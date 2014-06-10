@@ -45,14 +45,17 @@ class Set(ndb.BaseModel):
 # @todo We have to consider http://sendgrid.com/partner/google
 class MailSend(ndb.BaseModel):
   
+  message_sender = ndb.SuperStringProperty('1', required=True, indexed=False)
+  
   def run(self, context):
     # @todo We have to somehow hide recipients of the message from each other. Perhaps like this?
-    # @todo On top of that, sender field is tricky! https://developers.google.com/appengine/docs/python/mail/emailmessagefields
-    mail.send_mail(sender=context.input['sender'],
-                   to=context.input['sender'],
-                   subject=context.input['subject'],
-                   body=context.input['body'],  # We can add html argument in addition to body if we want to send html version!
-                   bcc=context.input['recipient'])
+    message = mail.EmailMessage()
+    message.sender = self.message_sender
+    message.to = self.message_sender
+    message.subject = context.input['subject']
+    message.body = context.input['body']  # We can add html argument in addition to body if we want to send html version!
+    message.bcc = context.input['recipient']
+    message.send()
 
 
 class HttpSend(ndb.BaseModel):

@@ -573,7 +573,7 @@ class Domain(ndb.BaseExpando):
                             destination='entities.6.logo',
                             config={'transform': True, 'width': 240, 'height': 100,
                                     'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
-            common.Write(),       
+            common.Write(),
             log.Entity(),
             log.Write(),
             rule.Read(),

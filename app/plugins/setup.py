@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import time
 import datetime
 
-from app import ndb, settings, util  # @todo We have settings used in plugins file!! How to get rid of it?
+from app import ndb, util
 from app.srv import event, log, nav, rule  # @todo We need event import for event.Action.build_key. Is there a workaround?
 from app.plugins import log as plugin_log
 from app.plugins import callback as plugin_callback
@@ -213,7 +213,6 @@ class DomainSetup(Setup):
     custom_notify = CustomTemplate(name='Send domain link after domain is completed',
                                    action=event.Action.build_key('57', 'install'),
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
-                                   message_sender=settings.NOTIFY_EMAIL,
                                    message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                    message_recievers=self.create_domain_notify_message_recievers)
     self.context.tmp['caller_entity'] = entity
