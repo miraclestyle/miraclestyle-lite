@@ -1,6 +1,6 @@
 import dis
 from decimal import Decimal
- 
+
 _ALLOWED_CODES = set(dis.opmap[x] for x in [
         'POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
         'BUILD_MAP', 'BUILD_TUPLE', 'LOAD_CONST', 'RETURN_VALUE',

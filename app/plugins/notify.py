@@ -48,13 +48,11 @@ class MailSend(ndb.BaseModel):
   message_sender = ndb.SuperStringProperty('1', required=True, indexed=False)
   
   def run(self, context):
-    # @todo We have to somehow hide recipients of the message from each other. Perhaps like this?
     message = mail.EmailMessage()
     message.sender = self.message_sender
-    #message.to = self.message_sender
+    message.bcc = context.input['recipient']
     message.subject = context.input['subject']
     message.body = context.input['body']  # We can add html argument in addition to body if we want to send html version!
-    message.bcc = context.input['recipient']
     message.check_initialized()
     message.send()
 
