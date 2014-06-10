@@ -83,6 +83,7 @@ class CountryUpdate(ndb.BaseModel):
           if parent:
             kw['parent_record'] = parent.key
         new_sub_divison = CountrySubdivision(**kw)
+        new_sub_divison.complete_name = ''
         if 'parent' in dat:
           new_sub_divison.complete_name = make_complete_name_for_subdivision(new_sub_divison, dat['parent'], processed_keys)
         processed_keys[new_sub_divison.key_urlsafe] = new_sub_divison

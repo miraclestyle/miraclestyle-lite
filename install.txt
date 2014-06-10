@@ -1,0 +1,17 @@
+### INSTALL NOTES ##
+
+For complete installation of the app, login as admin and run these paths
+
+## Create locations
+/endpoint?action_model=15&action_id=update
+
+## Create product categories
+/endpoint?action_model=17&action_id=update
+
+## Create UOMS
+/endpoint?action_model=19&action_id=update_unit
+/endpoint?action_model=19&action_id=update_currency
+
+
+
+## Note, it will only create 100 records for locations and product categories if the settings.DEBUG = True
