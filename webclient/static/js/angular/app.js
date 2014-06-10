@@ -156,7 +156,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 								      
 								       callback(items); 
 				                	   
-				                	}catch(e){}
+				                	}catch(e){
+				                		
+				                	}
 				                	
 				                },  opts['endpoint']);
 				      
@@ -447,7 +449,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			var loading_key = key + '_loading';
 			var loading = cache.get(loading_key);
 			var cached = cache.get(key);
-			
+ 
 			if (!cached)
 			{
 				if (!loading)
@@ -935,7 +937,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     
     var active_filter = [{'value' : true, 'operator':'==', 'field' : 'active'}];
    	
-   	$rootScope.select2Options = {
+   	$rootScope.commonSelect2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',
    			cache : 'country',
@@ -1001,7 +1003,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	var measurements = ['length', 'surface', 'time', 'unit', 'volume', 'weight'];
 	
 	angular.forEach(measurements, function (v) {
-		$rootScope.select2Options[v] = Select2Options.factory({
+		$rootScope.commonSelect2Options[v] = Select2Options.factory({
    			kind : '19',
    			filters : [{'value' : true, 'operator':'==', 'field' : 'active'},
    					   {'value' : ['18', v], 'operator':'==', 'field' : 'ancestor'}],

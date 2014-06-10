@@ -46,7 +46,7 @@
 			<input type="text" name="country" 
 				    ng-required="rule.input.update.addresses.model.country.required"
 				    ng-disabled="!rule.field.addresses.country.writable"
-				    ui-select2="select2Options.country"
+				    ui-select2="commonSelect2Options.country"
 					ng-model="entity.country" data-placeholder="Select a country" />
 		</div>
 	 </div>
@@ -57,7 +57,7 @@
 			<input type="text" name="region" 
 				    ng-required="rule.input.update.addresses.model.region.required"
 				    ng-disabled="!rule.field.addresses.region.writable"
-				    ui-select2="select2Options.region"
+				    ui-select2="commonSelect2Options.region"
 				    data-country="entity.country"
 					ng-model="entity.region" data-placeholder="Select a region" />
 		</div>

@@ -170,7 +170,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
                     var modalInstance = $modal.open({
                         templateUrl: logic_template('app/update.html'),
-                        controller: function ($scope, $modalInstance, RuleEngine) {
+                        controller: function ($scope, $modalInstance, RuleEngine, Select2Options) {
 
                             update(entity, data['entity']);
 							
@@ -185,6 +185,15 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
                                 }
                             };
                             
+                            $scope.select2_domain_user = Select2Options.factory({
+					   			kind : '8',
+					   			args_callback : function (element, args)
+						   	    {
+						   				args['domain'] = $scope.entity.key;
+						   	    }
+					   	    });
+ 
+                           
                             $scope.createUploadUrlOnSelectOptions = {
                             	'complete' : function (data)
 	                            {
@@ -337,7 +346,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             var nav = $rootScope.nav;
             var menu = null;
             angular.forEach(nav.menu, function (value) {
-            	if (!value.search_form)
+            	if (!value.search_form && !menu)
             	{
             		menu = value;
             	}
