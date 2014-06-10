@@ -14,6 +14,15 @@ from app.lib import oauth2
 from app.lib.attribute_manipulator import set_attr, get_attr
 
 
+def primary_contact_validator(prop, value):
+  domain_user = value.get()
+  role_ids = [role.id() for role in domain_user.roles]
+  if 'admin' in role_ids:
+    return value
+  else:
+    raise ndb.PropertyError('invalid_domain_user')
+
+
 def new_session(model, entity):
   Session = model
   session_ids = [session.session_id for session in entity.sessions]

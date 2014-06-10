@@ -4,7 +4,8 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
-handlers:    
+
+handlers:
 
 - url: /webclient/static
   static_dir: webclient/static
@@ -14,30 +15,31 @@ handlers:
   static_files: static/favicon.ico
   upload: webclient/static/favicon.ico
   expiration: "364d 5h"
-  
+
 - url: /robots\.txt
   static_files: static/robots.txt
   upload: webclient/static/robots.txt
   expiration: "364d 5h"
-  
+
 - url: /poly
   script: test2.app
-  
+
 - url: /.*
   script: webclient.wsgi.app
-  
-  
+
+
 libraries:
- 
+
 - name: webapp2
-  version: latest 
- 
+  version: latest
+
 - name: jinja2
   version: latest
 
 - name: PIL
   version: latest
-  
-  
+
+
 builtins:
+
 - appstats: on

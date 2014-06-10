@@ -423,7 +423,7 @@ class Domain(ndb.BaseExpando):
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
   name = ndb.SuperStringProperty('3', required=True)
-  primary_contact = ndb.SuperKeyProperty('4', kind='0', required=True, indexed=False)  # @todo Only accounts that are members of admin role can be primary contacts!
+  primary_contact = ndb.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
   state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
   logo = ndb.SuperLocalStructuredProperty(ndb_blob.Image, '6', required=True)
   
@@ -549,7 +549,7 @@ class Domain(ndb.BaseExpando):
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
         'logo': ndb.SuperLocalStructuredImageProperty(ndb_blob.Image),
-        'primary_contact': ndb.SuperKeyProperty(required=True, kind='0')
+        'primary_contact': ndb.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
         },
       _plugin_groups=[
         PluginGroup(
