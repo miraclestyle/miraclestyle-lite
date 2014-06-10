@@ -69,7 +69,7 @@ def alter_image(original_image, **config):
     util.logger(e, 'exception')
     if blob_key != None:
       results['blob_delete'] = blob_key
-  else: # eelse is used when the exception was not thrown
+  else:
     results['new_image'] = new_image
   finally:
     return results

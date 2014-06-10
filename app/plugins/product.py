@@ -211,7 +211,7 @@ class CategoryUpdate(ndb.BaseModel):
     parent = None
     dig = 0
     for i, item in enumerate(data):
-      if i == 100 and settings.DEBUG: # better then editing a file
+      if i == 100 and settings.DEBUG:
         break
       new_cat = {}
       current = item.split(sep)

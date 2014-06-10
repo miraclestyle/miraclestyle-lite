@@ -46,6 +46,7 @@ class CountryUpdate(ndb.BaseModel):
             path = parent
         names.reverse()
         return separator.join(names)
+      
       i = 0
       for child in root[1]:
         i += 1

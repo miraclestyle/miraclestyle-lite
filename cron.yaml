@@ -1,4 +1,4 @@
 cron:
 - description: Domain catalog processing
   url: /cron/process_catalogs
-  schedule: every 1 mins
+  schedule: every 10 mins
