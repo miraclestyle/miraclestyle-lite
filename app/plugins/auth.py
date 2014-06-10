@@ -200,7 +200,6 @@ class DomainCreate(ndb.BaseModel):
   
   def run(self, context):
     config_input = context.input.copy()
-    config_input['domain_primary_contact'] = context.user.key
     config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
     config.put()
     context.entities[config.get_kind()] = config
