@@ -90,7 +90,8 @@ class DomainSetup(Setup):
     permissions = []
     objects = [self.context.models['6'], self.context.models['60'], self.context.models['8'],
                self.context.models['62'], self.context.models['61'], self.context.models['35'],
-               self.context.models['38'], self.context.models['39']]
+               self.context.models['38'], self.context.models['39'], self.context.models['17'],
+               self.context.models['15'], self.context.models['16'], self.context.models['19']]
     for obj in objects:
       if hasattr(obj, '_actions'):
         actions = []
