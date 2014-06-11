@@ -78,8 +78,8 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-   'client_id'    : '283384992095.apps.googleusercontent.com',
-   'client_secret': '5MJ6bqGPbyD_bt2hYKFqShE2',
+   'client_id'    : '206755588982-194qvci376p5pj9ulujen5jt1jt5mdtg.apps.googleusercontent.com',
+   'client_secret': 'HdIWuYgYF22bYiBJH94LYS8V',
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',

@@ -210,8 +210,7 @@ class DomainSetup(Setup):
     self.context.log_entities.append((entity, ))
     self.context.tmp['log_write'].run(self.context)
     CustomTemplate = self.context.models['59']
-    custom_notify = CustomTemplate(name='Send domain link after domain is completed',
-                                   action=event.Action.build_key('57', 'install'),
+    custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                    message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
                                    message_recievers=self.create_domain_notify_message_recievers)
