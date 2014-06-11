@@ -57,8 +57,8 @@ class Unit(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('19', [Action.build_key('19', 'update_currency'),
-                              Action.build_key('19', 'update_unit'),
-                              Action.build_key('19', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+                              Action.build_key('19', 'update_unit')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      ActionPermission('19', [Action.build_key('19', 'search')], True, 'not context.user._is_guest'),
       FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
                              'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
                              'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
@@ -130,11 +130,11 @@ class Unit(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=True, strict=False),
             rule.Exec(),
             common.Search(page_size=-1),
             uom.RemoveCurrencies(),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=True, strict=False),
             rule.Read(),
             common.Set(dynamic_values={'output.entities': 'entities',
                                        'output.search_cursor': 'search_cursor',

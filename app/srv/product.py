@@ -42,8 +42,8 @@ class Category(ndb.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('17', [Action.build_key('17', 'update'),
-                              Action.build_key('17', 'search')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      ActionPermission('17', [Action.build_key('17', 'update')], True, 'context.user._root_admin or context.user._is_taskqueue'),
+      ActionPermission('17', [Action.build_key('17', 'search')], True, 'not context.user._is_guest'),
       FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, None, 'True'),
       FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
                       'context.user._root_admin or context.user._is_taskqueue')
@@ -94,10 +94,10 @@ class Category(ndb.BaseModel):
           plugins=[
             common.Context(),
             common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=True, strict=False),
             rule.Exec(),
             common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Prepare(skip_user_roles=True, strict=False),
             rule.Read(),
             common.Set(dynamic_values={'output.entities': 'entities',
                                        'output.search_cursor': 'search_cursor',
