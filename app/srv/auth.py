@@ -483,7 +483,7 @@ class Domain(ndb.BaseExpando):
             common.Prepare(),
             rule.Prepare(skip_user_roles=True, strict=False),
             rule.Exec(),
-            blob.URL(gs_bucket_name=settings.COMPANY_LOGO_BUCKET),
+            blob.URL(gs_bucket_name=settings.DOMAIN_LOGO_BUCKET),
             common.Set(dynamic_values={'output.entity': 'entities.6'})
             ]
           )

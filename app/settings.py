@@ -47,10 +47,10 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
-COMPANY_LOGO_BUCKET = 'user_input/company_logo'
-CATALOG_IMAGE_BUCKET = 'user_input/catalog_image'
-PRODUCT_TEMPLATE_BUCKET = 'user_input/product_template_image'
-PRODUCT_INSTANCE_BUCKET = 'user_input/product_instance_image'
+DOMAIN_LOGO_BUCKET = 'user_storage/domain_logo'
+CATALOG_IMAGE_BUCKET = 'user_storage/catalog_image'
+PRODUCT_TEMPLATE_BUCKET = 'user_storage/product_image'
+PRODUCT_INSTANCE_BUCKET = 'user_storage/product_instance_image'
 
 # Catalog settings.
 CATALOG_PAGE = 10
