@@ -6,6 +6,8 @@ Created on Oct 10, 2013
 '''
 import inspect
 
+from google.appengine.ext.ndb import metadata
+
 from webclient import handler 
 
 from app import ndb, memcache, util
@@ -14,42 +16,48 @@ from app.srv import io
 class Reset(handler.Angular):
   
   def respond(self):
-      
-      from app.opt import buyer
-      from app.srv import auth, log, setup, rule, nav, event, notify, marketing, product, location, uom
- 
-      models = [auth.Domain, log.Record, setup.Configuration, auth.User, rule.DomainRole, rule.DomainUser,
-                setup.Configuration, nav.Widget, event.Action, notify.Template,
-                marketing.Catalog, marketing.CatalogImage, marketing.CatalogPricetag,
-                product.Template, product.Images, product.Instance, product.Variants, product.Contents,
-                buyer.Addresses, buyer.Collection
-                ]
+    
+      models = io.Engine.get_schema()
+       
+      kinds = metadata.get_kinds()
+      namespaces = metadata.get_namespaces()
       keys_to_delete = []
+      
+      ignore = ['15', '16', '17', '18', '19']
+      @ndb.tasklet
+      def wipe(kind):
+          util.logger(kind)
+          @ndb.tasklet
+          def generator():
+            model = models.get(kind)
+            if model:
+              keys = yield model.query().fetch_async(keys_only=True)
+              keys_to_delete.extend(keys)
+              for namespace in namespaces:
+                  keys = yield model.query(namespace=namespace).fetch_async(keys_only=True)
+                  keys_to_delete.extend(keys)
+                  
+          yield generator()
+              
       if self.request.get('delete'):
-        for mod in models:
-          keys_to_delete.extend(mod.query().fetch(keys_only=True))
-            
-      if self.request.get('system'):
-        for mod in [location.Country, location.CountrySubdivision, uom.Unit, uom.Measurement]:
-          keys_to_delete.extend(mod.query().fetch(keys_only=True))
+        futures = []
+        for kind in kinds:
+          if kind not in ignore:
+            futures.append(wipe(kind))
+        ndb.Future.wait_all(futures)
+ 
+      if self.request.get('and_system'):
+        futures = []
+        for kind in kinds:
+          if kind in ignore:
+            futures.append(wipe(kind))
+        ndb.Future.wait_all(futures)
             
       if keys_to_delete:
          ndb.delete_multi(keys_to_delete)
              
       memcache.flush_all()
-        
-      paths = {}
-      
-      for mod in models:
-          path = inspect.getfile(mod)
-          pathsplit = path.split('/app/')
-          if pathsplit and pathsplit[1]:
-             modelpath = '%s.%s' % (pathsplit[1].split('.')[0], mod.__name__)
-             modelpath = modelpath.replace('/', '.')
-             paths[mod.get_kind()] = modelpath
-        
-      return {'models' : dict([(model.get_kind(), model.__name__) for model in models]), 'paths' : paths}
-  
+ 
       
 class Endpoint(handler.Angular):
     
