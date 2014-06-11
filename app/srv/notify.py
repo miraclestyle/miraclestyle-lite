@@ -59,7 +59,7 @@ class MailTemplate(Template):
   message_body = ndb.SuperTextProperty('3', required=True)
   
   def run(self, context):
-    DomainUser = context.models['8']  # @todo Hope it can be like this!
+    DomainUser = context.models['8']
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
     recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
@@ -370,7 +370,7 @@ class Notification(ndb.BaseExpando):
     Action(
       key=Action.build_key('61', 'send_mail'),
       arguments={
-        'recipient': ndb.SuperStringProperty(repeated=True),  # @todo This field is mandatory in mail.send_mail() function, which this action eventually calls!
+        'recipient': ndb.SuperStringProperty(repeated=True),
         'subject': ndb.SuperTextProperty(required=True),
         'body': ndb.SuperTextProperty(required=True),
         'caller_entity': ndb.SuperKeyProperty(required=True)

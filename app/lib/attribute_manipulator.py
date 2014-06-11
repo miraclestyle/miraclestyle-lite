@@ -33,6 +33,7 @@ def prepare_attr(entity, field_path):
           return None
   return (entity, last_field)
 
+
 def set_attr(entity, field_path, value):
   entity, last_field = prepare_attr(entity, field_path)
   if isinstance(entity, dict):
@@ -42,6 +43,7 @@ def set_attr(entity, field_path, value):
   else:
     setattr(entity, last_field, value)
 
+
 def get_attr(entity, field_path):
   entity, last_field = prepare_attr(entity, field_path)
   if isinstance(entity, dict):
@@ -50,6 +52,7 @@ def get_attr(entity, field_path):
     return entity[int(last_field)]
   else:
     return getattr(entity, last_field)
+
 
 def get_meta(entity, field_path):
   entity, last_field = prepare_attr(entity, field_path)

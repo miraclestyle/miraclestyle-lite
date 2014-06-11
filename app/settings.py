@@ -27,7 +27,7 @@ REAL_DEBUG = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True  # REAL_DEBUG override because we are under development either way
 DO_LOGS = True
 
-NOTIFY_EMAIL = 'edis.sehalic@gmail.com'
+NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
 
 
 # Task queue settings.
