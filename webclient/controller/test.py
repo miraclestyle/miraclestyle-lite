@@ -7,6 +7,7 @@ Created on Oct 10, 2013
 import inspect
 
 from google.appengine.ext.ndb import metadata
+from google.appengine.api import search
 
 from webclient import handler 
 
@@ -55,7 +56,13 @@ class Reset(handler.Angular):
             
       if keys_to_delete:
          ndb.delete_multi(keys_to_delete)
-             
+      # empty catalog index!
+      index = search.Index(name='catalogs')
+      while True:
+        document_ids = [document.doc_id for document in index.get_range(ids_only=True)]
+        if not document_ids:
+          break
+        index.delete(document_ids)
       memcache.flush_all()
  
       
