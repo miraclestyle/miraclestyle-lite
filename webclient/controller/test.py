@@ -19,7 +19,8 @@ class Reset(handler.Angular):
     
       models = io.Engine.get_schema()
        
-      kinds = metadata.get_kinds()
+      kinds = metadata.get_kinds() + models.keys()
+      kinds = set(kinds)
       namespaces = metadata.get_namespaces()
       keys_to_delete = []
       
@@ -30,7 +31,7 @@ class Reset(handler.Angular):
           @ndb.tasklet
           def generator():
             model = models.get(kind)
-            if model:
+            if model and not kind.startswith('__'):
               keys = yield model.query().fetch_async(keys_only=True)
               keys_to_delete.extend(keys)
               for namespace in namespaces:
