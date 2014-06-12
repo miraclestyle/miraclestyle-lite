@@ -273,7 +273,6 @@ class Template(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Prepare(parent_path='input.parent'),
-            common.Prepare(parent_path='input.parent'),
             rule.Prepare(skip_user_roles=False, strict=False),
             rule.Exec(),
             common.Set(dynamic_values={'values.38.product_category': 'input.product_category',
