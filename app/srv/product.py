@@ -731,7 +731,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             common.Context(),
-            common.Read(read_entities={'39': 'key'}),
+            common.Read(read_entities={'39': 'input.key'}),
             common.Prepare(kind_id='38', parent_path='entities.39.parent_entity.key_parent'),
             rule.Prepare(prepare_entities=['38', '39'], skip_user_roles=False, strict=False),
             rule.Exec(),
@@ -775,7 +775,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             common.Context(),
-            common.Read(read_entities={'39': 'key'}),
+            common.Read(read_entities={'39': 'input.key'}),
             common.Prepare(kind_id='38', parent_path='entities.39.parent_entity.key_parent'),
             rule.Prepare(prepare_entities=['38', '39'], skip_user_roles=False, strict=False),
             rule.Exec(),
@@ -811,7 +811,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             common.Context(),
-            common.Read(read_entities={'39': 'key'}),
+            common.Read(read_entities={'39': 'input.key'}),
             common.Prepare(kind_id='38', parent_path='entities.39.parent_entity.key_parent'),
             rule.Prepare(prepare_entities=['38', '39'], skip_user_roles=False, strict=False),
             rule.Exec()
@@ -843,7 +843,7 @@ class Template(ndb.BaseExpando):
           plugins=[
             common.Context(),
             common.Read(),
-            common.Read(read_entities={'39': 'key'}),
+            common.Read(read_entities={'39': 'input.key'}),
             common.Prepare(kind_id='38', parent_path='entities.39.parent_entity.key_parent'),
             rule.Prepare(prepare_entities=['38', '39'], skip_user_roles=False, strict=False),
             rule.Exec()
