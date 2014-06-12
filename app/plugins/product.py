@@ -21,23 +21,16 @@ from app.lib.blob_manipulator import alter_image
 def build_key_from_signature(context):
   variant_signature = context.input.get('variant_signature')
   key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
-  product_instance_key = context.model.build_key(key_id, parent=context.input.get('parent'))
+  product_instance_key = ndb.Key('39', key_id, parent=context.input.get('parent'))
   return product_instance_key
-
-
-class Prepare(ndb.BaseModel):
-  
-  def run(self, context):
-    context.entities[context.model.get_kind()] = context.model(parent=context.input.get('parent'))
-    context.values[context.model.get_kind()] = context.model(parent=context.input.get('parent'))
 
 
 class InstancePrepare(ndb.BaseModel):
   
   def run(self, context):
     product_instance_key = build_key_from_signature(context)
-    context.entities[context.model.get_kind()] = context.model(key=product_instance_key)
-    context.values[context.model.get_kind()] = context.model(key=product_instance_key)
+    context.entities['39'] = context.model(key=product_instance_key)
+    context.values['39'] = context.model(key=product_instance_key)
 
 
 class InstanceRead(ndb.BaseModel):
@@ -47,8 +40,8 @@ class InstanceRead(ndb.BaseModel):
     product_instance = product_instance_key.get()
     if not product_instance:
       raise event.TerminateAction('not_found_%s' % product_instance_key.urlsafe())
-    context.entities[context.model.get_kind()] = product_instance
-    context.values[context.model.get_kind()] = copy.deepcopy(product_instance)
+    context.entities['39'] = product_instance
+    context.values['39'] = copy.deepcopy(product_instance)
 
 
 class TemplateReadInstances(ndb.BaseModel):
@@ -152,46 +145,76 @@ class DuplicateWrite(ndb.BaseModel):
 
 class UploadImagesSet(ndb.BaseModel):
   
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  
   def run(self, context):
+    if self.kind_id:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
     images = context.input.get('images')
     if not images:
       raise event.TerminateAction()
-    context.values[context.model.get_kind()].images.extend(images)
+    context.values[kind_id].images.extend(images)
 
 
 class UpdateSet(ndb.BaseModel):
   
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  
   def run(self, context):
-    entity_images = context.entities[context.model.get_kind()].images
+    if self.kind_id:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    entity_images = context.entities[kind_id].images
     updated_images, delete_images = sort_by_list(entity_images, context.input.get('sort_images'), 'image')
     for image in delete_images:
       context.blob_delete.append(image.image)
       updated_images.remove(image)
-    context.values[context.model.get_kind()].images = updated_images
+    context.values[kind_id].images = updated_images
 
 
 class WriteImages(ndb.BaseModel):
   
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  
   def run(self, context):
-    context.blob_write = [image.image for image in context.entities[context.model.get_kind()].images]
-    if not context.entities[context.model.get_kind()]._field_permissions['images']['writable']:
+    if self.kind_id:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    context.blob_write = [image.image for image in context.entities[kind_id].images]
+    if not context.entities[kind_id]._field_permissions['images']['writable']:
       context.blob_delete = []
 
 
 class ProcessImages(ndb.BaseModel):
   
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  
   def run(self, context):
-    images = context.values[context.model.get_kind()].images
+    if self.kind_id:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    images = context.values[kind_id].images
     if len(images):
       images = ndb.validate_images(images)
       context.blob_delete.extend([image.image for image in images])
-      context.values[context.model.get_kind()].images = images
+      context.values[kind_id].images = images
 
 
 class DeleteImages(ndb.BaseModel):
   
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  
   def run(self, context):
-    context.blob_delete = [image.image for image in context.entities[context.model.get_kind()].images]
+    if self.kind_id:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    context.blob_delete = [image.image for image in context.entities[kind_id].images]
 
 
 class CategoryUpdate(ndb.BaseModel):
