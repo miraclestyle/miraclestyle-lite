@@ -86,6 +86,94 @@ class JournalSet(ndb.BaseModel):
     context.values[context.model.get_kind()].line_fields = line_fields
 
 
+class JournalReadActions(ndb.BaseModel):
+  
+  page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
+  read_all = ndb.SuperBooleanProperty('2', indexed=False, default=False)
+  
+  def run(self, context):
+    Action = context.models['56']
+    ancestor = context.entities[context.model.get_kind()].key
+    cursor = Cursor(urlsafe=context.input.get('actions_cursor'))
+    if self.read_all:
+      __actions = []
+      more = True
+      offset = 0
+      limit = 1000
+      while more:
+        entities = Action.query(ancestor=ancestor).fetch(limit=limit, offset=offset)
+        if len(entities):
+          __actions.extend(entities)
+          offset = offset + limit
+        else:
+          more = False
+    else:
+      __actions, cursor, more = Action.query(ancestor=ancestor).fetch_page(self.page_size, start_cursor=cursor)
+    if cursor:
+      cursor = cursor.urlsafe()
+      context.tmp['actions_cursor'] = cursor
+    if __actions:
+      context.entities[context.model.get_kind()].__actions = __actions
+    else:
+      context.entities[context.model.get_kind()].__actions = []
+    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
+    context.tmp['actions_more'] = more
+
+
+class EntryActionArguments(ndb.BaseModel):
+  
+  def run(self, context):
+    context.tmp['available_arguments'] = __JOURNAL_FIELDS.keys()  # @todo Perhaps have another dict for action arguments?
+
+
+class EntryActionRead(ndb.BaseModel):
+  
+  def run(self, context):
+    context.entities['100']._code = context.entities['100'].key_id_str[4:]  # @todo Slice depends on the actual kind length (currently kind is 3 characters long)!
+    context.values['100']._code = copy.deepcopy(context.entities['100']._code)
+
+
+class EntryActionUpdateRead(ndb.BaseModel):
+  
+  def run(self, context):
+    '''key.id() = prefix_<user supplied value>
+    key.id() defines constraint of unique action code (<user supplied value> part of the key.id) per journal.
+    It also ensures that code can not be changed for action once it has been defined! Max code length is entirely
+    up to us!
+    
+    '''
+    code = '100_%s' % context.input.get('_code')  # @todo Not sure if we need to salt key id here?
+    entity_key = ndb.Key('100', code, parent=context.input.get('parent'))
+    entity = entity_key.get()
+    if entity is None:
+      entity = context.model(key=entity_key)
+    context.entities['100'] = entity
+    context.values['100'] = copy.deepcopy(context.entities['100'])
+
+
+class EntryActionSet(ndb.BaseModel):
+  
+  def run(self, context):
+    
+    def build_field(model, field):
+      return model(name=field.get('name'),
+                   verbose_name=field.get('verbose_name'),
+                   required=field.get('required'),
+                   repeated=field.get('repeated'),
+                   indexed=field.get('indexed'),
+                   default=field.get('default'),
+                   choices=field.get('choices'))
+    
+    input_arguments = context.input.get('arguments')
+    arguments = []
+    for field in input_arguments:
+      model = __JOURNAL_FIELDS.get(field.get('type'))
+      arguments.append(build_field(model, field))
+    context.values['100'].name = context.input.get('name')
+    context.values['100'].arguments = arguments
+    context.values['100'].active = context.input.get('active')
+
+
 class CategoryUpdateRead(ndb.BaseModel):
   
   def run(self, context):

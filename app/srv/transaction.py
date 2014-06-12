@@ -13,6 +13,17 @@ from app.srv import uom as ndb_uom
 from app.plugins import common, rule, log, callback, notify
 
 
+
+class EntryAction(Action):
+  
+  _kind = 100
+  
+  _virtual_fields = {
+    '_records': ndb_log.SuperLocalStructuredRecordProperty('49', repeated=True),
+    '_code': ndb.SuperStringProperty()
+    }
+  
+
 # @todo sequencing counter is missing, and has to be determined how to solve that!
 class Journal(ndb.BaseExpando):
   
@@ -29,7 +40,8 @@ class Journal(ndb.BaseExpando):
   
   _virtual_fields = {
     '_records': ndb_log.SuperLocalStructuredRecordProperty('49', repeated=True),
-    '_code': ndb.SuperStringProperty()
+    '_code': ndb.SuperStringProperty(),
+    '__actions': ndb.SuperPickleProperty(default={}, compressed=False)
     }
   
   _global_role = GlobalRole(
@@ -232,6 +244,28 @@ class Journal(ndb.BaseExpando):
         ]
       ),
     Action(
+      key=Action.build_key('49', 'read_actions'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'actions_cursor': ndb.SuperStringProperty()
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(),
+            rule.Prepare(skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.JournalReadActions(),
+            rule.Read(),
+            common.Set(dynamic_values={'output.entity': 'entities.49',
+                                       'output.actions_cursor': 'tmp.actions_cursor',
+                                       'output.actions_more': 'tmp.actions_more'})
+            ]
+          )
+        ]
+      ),
+    Action(
       key=Action.build_key('49', 'activate'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='49', required=True),
@@ -290,6 +324,116 @@ class Journal(ndb.BaseExpando):
             rule.Read(),
             common.Set(dynamic_values={'output.entity': 'entities.49'}),
             callback.Notify(),
+            callback.Exec()
+            ]
+          )
+        ]
+      ),
+    
+    
+    Action(
+      key=Action.build_key('49', 'action_prepare'),
+      arguments={
+        'parent': ndb.SuperKeyProperty(kind='49', required=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),  # @todo Not sure if Read plugin (to load parent journal) is needed here?
+            common.Prepare(kind_id='100', parent_path='input.parent'),
+            transaction.EntryActionArguments(),
+            rule.Prepare(prepare_entities=['49', '100'], skip_user_roles=False, strict=False),
+            rule.Exec(),
+            common.Set(dynamic_values={'output.entity': 'entities.100',
+                                       'output.available_arguments': 'tmp.available_arguments'})
+            ]
+          )
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'action_read'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='100', required=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Read(read_entities={'100': 'input.key'}),
+            common.Read(read_entities={'49': 'entities.56.key_parent'}),
+            transaction.EntryActionArguments(),
+            rule.Prepare(prepare_entities=['49', '100'], skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.EntryActionRead(),
+            rule.Read(read_entities=['100']),
+            common.Set(dynamic_values={'output.entity': 'entities.100',
+                                       'output.available_arguments': 'tmp.available_arguments'})
+            ]
+          )
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'update'),
+      arguments={
+        #'key': ndb.SuperKeyProperty(kind='49', required=True),
+        'parent': ndb.SuperKeyProperty(kind='49', required=True),
+        '_code': ndb.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
+        'name': ndb.SuperStringProperty(required=True),
+        'arguments': ndb.SuperJsonProperty(required=True),
+        'active': ndb.SuperBooleanProperty(required=True, default=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),  # @todo Not sure if Read plugin (to load parent journal) is needed here?
+            transaction.EntryActionUpdateRead(),
+            transaction.EntryActionSet(),
+            rule.Prepare(prepare_entities=['49', '100'], skip_user_roles=False, strict=False),
+            rule.Exec(),
+            transaction.EntryActionRead()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            rule.Write(write_entities=['100']),
+            common.Write(write_entities=['100']),
+            log.Entity(log_entities=['100']),
+            log.Write(),
+            rule.Read(read_entities=['100']),
+            common.Set(dynamic_values={'output.entity': 'entities.100'}),
+            callback.Notify(dynamic_data={'caller_entity': 'entities.100.key_urlsafe'}),
+            callback.Exec()
+            ]
+          )
+        ]
+      ),
+    Action(
+      key=Action.build_key('49', 'delete'),
+      arguments={
+        'key': ndb.SuperKeyProperty(kind='100', required=True)
+        },
+      _plugin_groups=[
+        PluginGroup(
+          plugins=[
+            common.Context(),
+            common.Prepare(),  # @todo Not sure if Read plugin (to load parent journal) is needed here?
+            common.Read(read_entities={'100': 'input.key'}),
+            rule.Prepare(prepare_entities=['49', '100'], skip_user_roles=False, strict=False),
+            rule.Exec()
+            ]
+          ),
+        PluginGroup(
+          transactional=True,
+          plugins=[
+            common.Delete(delete_entities=['100']),
+            log.Entity(log_entities=['100']),
+            log.Write(),
+            rule.Read(read_entities=['100']),
+            common.Set(dynamic_values={'output.entity': 'entities.100'}),
+            callback.Notify(dynamic_data={'caller_entity': 'entities.100.key_urlsafe'}),
             callback.Exec()
             ]
           )
