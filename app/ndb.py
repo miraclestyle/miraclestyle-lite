@@ -223,7 +223,35 @@ def factory(module_model_path):
 def _get_entity(self):
   return self.get()
 
+def _get_id(self):
+  return self.id()
+
+def _get_string_id(self):
+  return self.string_id()
+
+def _get_integer_id(self):
+  return self.integer_id()
+
+def _get_namespace(self):
+  return self.namespace()
+
+def _get_kind(self):
+  return self.kind()
+
+def _get_parent(self):
+  return self.parent()
+
+def _get_urlsafe(self):
+  return self.urlsafe()
+
 Key.entity = property(_get_entity)
+Key.prefix_id = property(_get_id)
+Key.prefix_string_id = property(_get_string_id)
+Key.prefix_integer_id = property(_get_integer_id)
+Key.prefix_namespace = property(_get_namespace)
+Key.prefix_kind = property(_get_kind)
+Key.prefix_parent = property(_get_parent)
+Key.prefix_urlsafe = property(_get_urlsafe)
 
 
 class _BaseModel(object):
@@ -383,14 +411,16 @@ class _BaseModel(object):
     return self.key.id()
   
   @property
-  def key_urlsafe(self):
+  def key_id_str(self):  # @todo Should be renamed to  'key_string_id' in order follow ndb.Key convention!
     if self.key is None:
       return None
-    return self.key.urlsafe()
+    return self.key.string_id()
   
   @property
-  def key_id_str(self):
-    return str(self.key_id)
+  def key_integer_id(self):
+    if self.key is None:
+      return None
+    return self.key.integer_id()
   
   @property
   def key_namespace(self):
@@ -399,10 +429,22 @@ class _BaseModel(object):
     return self.key.namespace()
   
   @property
+  def key_kind(self):
+    if self.key is None:
+      return None
+    return self.key.kind()
+  
+  @property
   def key_parent(self):
     if self.key is None:
       return None
     return self.key.parent()
+  
+  @property
+  def key_urlsafe(self):
+    if self.key is None:
+      return None
+    return self.key.urlsafe()
   
   @property
   def namespace_entity(self):
@@ -421,7 +463,7 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
-    
+  
   def __deepcopy__(self, memo):
     """
      This hook for deepcopy will only instance a new entity that has the same ``properties``
