@@ -99,10 +99,10 @@ class Read(ndb.BaseModel):
     if len(self.read_entities):
       for key, value in self.read_entities.items():
         keys.append(key)
-        values.append(context.input.get(value))
+        values.append(get_attr(context, value))
     else:
       keys.append(context.model.get_kind())
-      values.append(context.input.get('key'))
+      values.append(get_attr(context, 'input.key'))
     entities = ndb.get_multi(values)
     for i, key in enumerate(keys):
       context.entities[key] = entities[i]
