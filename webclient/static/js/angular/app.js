@@ -763,19 +763,28 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                  
                 var action = 'update';
                 var action2 = 'read';
+                var pre_action = action;
+                var pre_action2 = action2;
                 var args = {};
                 
-                if ('action' in options) action = options['action'];
-                if ('action2' in options) action2 = options['action2'];
+                if ('action' in options)
+                {
+                	pre_action = options['action'];
+                	action = options['action'];
+                } 
+                if ('action2' in options) 
+                {
+                	pre_action2 = options['action2'];
+                	action2 = options['action2'];
+                }
+                
            
                 if (create)
                 {	
                 	action = (options['create_action'] ? options['create_action'] : 'create');
                 	action2 = (options['create_action2'] ? options['create_action2'] : 'prepare');
                 }
-                
-               
-                
+                 
                 args = options['args'];
             
                 var handle = function (data) {
@@ -799,12 +808,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         	
                         	var entity = options['entity'];
                         	
-                        	update(entity, data['entity']);
+                        	update(entity, (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']));
                         	
                         	$scope.options = options;
                         	$scope.container = {};
                         	 
- 							$scope.rule = RuleEngine.factory(data['entity']);
+ 							$scope.rule = RuleEngine.factory(entity);
  							$scope.live_entity = entity;
                             $scope.entity = angular.copy(entity);
                             $scope.action = action;
@@ -818,25 +827,31 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                        };
 	                         
 	                        _resolve_options(options);
-                            
+	                        
+	                        var initial_action = action;
+                            var initial_action2 = action2;
+            
                             $scope.save = function () {
                             	
                             	if (angular.isFunction($scope.pre_save))
 	                               $scope.pre_save();
-                            	  
+	                        
                                 Endpoint.post(action, $scope.options['kind'], (('save_data' in $scope) ? $scope.save_data : $scope.entity))
                                 .success(function (data) {
                                 	
-                                	 	var initial_action = action;
-                                	 	var initial_action2 = action2;
+                                	    var entity_from_db = (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']);
                                 	 	
-                                	 	action2 = initial_action;
-                                	 	action = initial_action2;
+                                	 	if (create)
+                                	 	{
+                                	 		action2 = pre_action2;
+                                	 		action = pre_action;
+                                	 	}
+                                	 	
                                 	 	
                                         $scope.action = action;
                 					    $scope.action2 = action2;
                 					    
-                					    $scope.history['args']['key'] = data['entity']['key'];
+                					    $scope.history['args']['key'] = entity_from_db['key'];
                                 	
                                 		if (data['errors'])
                                 		{
@@ -867,7 +882,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 			return false;
                                 		}
                                 	  
-                                        that.update_entity($scope, data);
+                                        that.update_entity($scope, {'entity' : entity_from_db});
                                         
                                         if (!data['errors'])
                                         {
