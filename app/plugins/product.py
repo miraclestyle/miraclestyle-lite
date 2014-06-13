@@ -82,7 +82,7 @@ class InstanceWriteImages(ndb.BaseModel):
   
   def run(self, context):
     context.blob_write = [image.image for image in context.entities[context.model.get_kind()]._instance.images]
-    if not context.entities[context.model.get_kind()]._instance._field_permissions['images']['writable']:
+    if not context.entities[context.model.get_kind()]._field_permissions['_instance.images']['writable']:
       context.blob_delete = []
 
 
