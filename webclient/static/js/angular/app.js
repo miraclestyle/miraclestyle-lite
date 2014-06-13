@@ -756,9 +756,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
             	return this.manage(false, options);
             },
             manage: function (create, options) {
-            	
-            	console.log(create, options);
-            	
+  
             	options = resolve_options(options);
             	
                 var that = this;
@@ -826,7 +824,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             	if (angular.isFunction($scope.pre_save))
 	                               $scope.pre_save();
                             	  
-                                Endpoint.post(action, $scope.options['kind'], $scope.entity)
+                                Endpoint.post(action, $scope.options['kind'], (('save_data' in $scope) ? $scope.save_data : $scope.entity))
                                 .success(function (data) {
                                 	
                                 	 	var initial_action = action;

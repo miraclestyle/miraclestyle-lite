@@ -21,7 +21,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	             },
 	        	 'completed' : function (data)
 	        	 {
-	        	 	this.entity.images = data['entity']['images'];
+	        	 	this.entity.images.extend(data['entity']['images']);
 	        	 },
 	        	'pre_save' : function ()
 	        	{
@@ -124,13 +124,19 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	  {
 	        	  	  var that = this;
 	        	  	  EntityEditor.remove({
-	        	  	  	kind : instance.kind,
+	        	  	  	kind : that.entity.kind,
 	        	  	  	entity : instance,
 	        	  	  	complete : function (entity)
 	        	  	  	{
 	        	  	  		that.entity._instances.remove(instance);
 	        	  	  	}
 	        	  	  });
+	        	  },
+	        	  'newManageInstance' : function (just_instance)
+	        	  {
+	        	  	  var that = this;
+	        	  	  that.entity._instance = just_instance;
+	        	  	  this.manageInstance(that.entity);
 	        	  },
 	        	  'manageInstance' : function (instance, create)
 	        	  {
@@ -144,22 +150,134 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 		                	 'create_action2' : 'instance_prepare',
 		                	 'close' : false,
 		                	 'entity' : instance,
-		                	 'scope' : make_scope(),
+		                	 'scope' : angular.extend(make_scope(), 
+		                	 { 'completed' : function (data)
+					        	 {
+					        	 	this.save_data.images.extend(data['entity']['images']);
+					        	 },
+					        	 'removeImage' : function (image)
+					        	 {
+					        	 	this.save_data.images.remove(image);
+					        	 },
+					        	 'removeContent' : function (content) {
+					        	 	this.save_data.contents.remove(content);
+					        	 },
+					        	 
+					        	 'pre_save' : function ()
+					        	 {
+					        		var that = this;
+					        		var new_order = [];
+					        		angular.forEach(this.entity._instance.images, function (item, index) {
+					        			new_order.push(item.image);
+					        		});
+					        		this.save_data.sort_images = new_order;
+					           	 },
+					 
+						         'manageContent' : function (content) { 
+						        	 	
+						        	 	var that = this;
+						        	 	 
+						        	 	var modalInstance = $modal.open({
+						                        templateUrl: logic_template('product/manage_content.html'),
+						                        controller: function ($scope, $modalInstance, RuleEngine) {
+						 
+						                            $scope.content = angular.copy(content ? content : {});
+						                      
+						                            var new_content = content ? false : true;
+						             
+						                            $scope.save = function () {
+						           
+						                                 if (new_content)
+						                                 {
+						                                 	that.save_data.contents.push($scope.content);
+						                                 }
+						                                 else
+						                                 {
+						                                 	update(content, $scope.content);
+						                                 }
+						                                 
+						                                 $scope.cancel();
+						                            };
+						
+						                            $scope.cancel = function () {
+						                                $modalInstance.dismiss('cancel');
+						                            };
+						
+						                        }
+						                    });
+						        	 	
+						        	  },
+					        	 
+					        	 'manageVariant' : function (variant) {
+					        	 	
+					        	 	var that = this;
+					        	 	 
+					        	 	var modalInstance = $modal.open({
+					                        templateUrl: logic_template('product/manage_variant.html'),
+					                        controller: function ($scope, $modalInstance, RuleEngine) {
+					 
+					                            $scope.variant = angular.copy(variant ? variant : {});
+					          
+					                            if ($scope.variant && ('options' in $scope.variant))
+					                            {
+					                            	$scope.variant._options = $scope.variant.options.join("\n");
+					                            }
+					                   
+					                            var new_variant = variant ? false : true;
+					                   
+					                            $scope.save = function () {
+					                            	
+					                            	 if (!this.variant._options) this.variant._options = '';
+					                            	 
+					                            	 this.variant.options = this.variant._options.split("\n");
+					                            	  
+					                                 if (new_variant)
+					                                 {
+					                                 	that.save_data.push(this.variant);
+					                                 }
+					                                 else
+					                                 {
+					                                 	update(variant, this.variant);
+					                                 }
+					                                 
+					                                 $scope.cancel();
+					                            };
+					
+					                            $scope.cancel = function () {
+					                                $modalInstance.dismiss('cancel');
+					                            };
+					
+					                        }
+					                    });
+					        	 	
+					        	  },
+					        	 
+					        	 
+					         }),
 		                	 'handle' : function (data)
 					         { 
 					            this.update_mode = true;
+					            if (!this.entity._instance) this.entity._instance = {'images' : [], 'contents' : []};
+					            
+					            this.save_data = this.entity._instance;
 					            
 					            this.uploadConfig = {
 					            	'args' : {
-					            		'parent' : that.entity.key,
+					            		'parent' : that.entity.catalog_key,
 					            	}
 					            };
 					            
 					            if (create)
 					            {
-	                            	this.entity.variant_signature = create['variant_signature'];
-		                            this.entity.parent = create['parent'];
+	                            	this.save_data.variant_signature = create['variant_signature'];
+		                            this.save_data.parent = create['parent'];
 					            }
+					            else
+					            {
+					            	 this.save_data.parent = that.entity.key;
+					            }
+					            
+					            
 					            
 					         },
 		                	 'templateUrl' : logic_template('product/manage_instance.html'),
@@ -167,6 +285,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 		               };
 	        	  	    
 	        		  if (create) {
+	        		  	cfg['data'] = {'entity' : angular.copy(that.entity)};
 	        		  	cfg['args'] = create;
 	        		  	cfg['complete'] = function (entity)
 	        		  	{
@@ -187,6 +306,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        		  }
 	        		  else
 	        		  {
+	        		  	cfg['data'] = {'entity' : instance};
 	        		  	cfg['args'] = {'variant_signature' : instance['variant_signature'], 'parent' : that.entity.key};
 	        		  	EntityEditor.update(cfg);
 	        		  }
@@ -227,7 +347,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	                            	 	'parent' : parent,
 	                            	 }).success(function (data) {
 	                            	 	
-	                            	 	if (!data['entity'])
+	                            	 	if (!data['entity']['_instance'])
 	                            	 	{ 
 		                            	 	that.manageInstance({}, {'variant_signature' : variant_signature, 'parent' : parent});
 	                            	 	}
@@ -343,6 +463,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 	 'handle' : function (data)
 			         {
 			            this.update_mode = true;
+			            this.entity.catalog_key = catalog_key;
 			            
 			            this.uploadConfig = {
 			            	'args' : {
