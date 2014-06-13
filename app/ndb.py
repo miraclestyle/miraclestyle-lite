@@ -226,11 +226,11 @@ def _get_entity(self):
 def _get_id(self):
   return self.id()
 
-def _get_string_id(self):
-  return self.string_id()
+def _get_id_str(self):
+  return str(self.id())
 
-def _get_integer_id(self):
-  return self.integer_id()
+def _get_id_int(self):
+  return int(self.id())
 
 def _get_namespace(self):
   return self.namespace()
@@ -245,13 +245,13 @@ def _get_urlsafe(self):
   return self.urlsafe()
 
 Key.entity = property(_get_entity)
-Key.prefix_id = property(_get_id)
-Key.prefix_string_id = property(_get_string_id)
-Key.prefix_integer_id = property(_get_integer_id)
-Key.prefix_namespace = property(_get_namespace)
-Key.prefix_kind = property(_get_kind)
-Key.prefix_parent = property(_get_parent)
-Key.prefix_urlsafe = property(_get_urlsafe)
+Key._id = property(_get_id)
+Key._id_str = property(_get_id_str)
+Key._id_int = property(_get_id_int)
+Key._namespace = property(_get_namespace)
+Key._kind = property(_get_kind)
+Key._parent = property(_get_parent)
+Key._urlsafe = property(_get_urlsafe)
 
 
 class _BaseModel(object):
@@ -409,7 +409,7 @@ class _BaseModel(object):
     if self.key is None:
       return None
     return self.key.id()
-    
+  
   @property
   def key_id_str(self):
     if self.key is None:
@@ -417,16 +417,10 @@ class _BaseModel(object):
     return str(self.key.id())
   
   @property
-  def key_str_id(self):
+  def key_id_int(self):
     if self.key is None:
       return None
-    return self.key.string_id()
-  
-  @property
-  def key_integer_id(self):
-    if self.key is None:
-      return None
-    return self.key.integer_id()
+    return int(self.key.id())
   
   @property
   def key_namespace(self):
