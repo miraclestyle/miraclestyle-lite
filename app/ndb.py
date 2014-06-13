@@ -409,9 +409,15 @@ class _BaseModel(object):
     if self.key is None:
       return None
     return self.key.id()
+    
+  @property
+  def key_id_str(self):
+    if self.key is None:
+      return None
+    return str(self.key.id())
   
   @property
-  def key_id_str(self):  # @todo Should be renamed to  'key_string_id' in order follow ndb.Key convention!
+  def key_str_id(self):
     if self.key is None:
       return None
     return self.key.string_id()

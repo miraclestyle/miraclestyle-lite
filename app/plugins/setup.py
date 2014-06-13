@@ -58,6 +58,7 @@ class DomainSetup(Setup):
   
   @classmethod
   def create_domain_notify_message_recievers(cls, entity, user):
+    
     primary_contact = entity.primary_contact.get()
     user = ndb.Key('0', int(primary_contact.key_id_str)).get()
     return [user._primary_email]

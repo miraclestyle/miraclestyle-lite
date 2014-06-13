@@ -53,7 +53,7 @@ class Reset(handler.Angular):
           if kind in ignore:
             futures.append(wipe(kind))
         ndb.Future.wait_all(futures)
-            
+     
       if keys_to_delete:
          ndb.delete_multi(keys_to_delete)
       # empty catalog index!

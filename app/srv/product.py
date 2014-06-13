@@ -787,7 +787,7 @@ class Template(ndb.BaseExpando):
           plugins=[
             rule.Write(write_entities=['39']),
             common.Write(write_entities=['39']),
-            product.WriteImages(kind='39'),
+            product.WriteImages(kind_id='39'),
             log.Entity(log_entities=['39']),
             log.Write(),
             rule.Read(read_entities=['39']),

@@ -757,6 +757,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
             },
             manage: function (create, options) {
             	
+            	console.log(create, options);
+            	
             	options = resolve_options(options);
             	
                 var that = this;
@@ -764,15 +766,17 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                 var action = 'update';
                 var action2 = 'read';
                 var args = {};
-           
-                if (create)
-                {	
-                	action = 'create';
-                	action2 = 'prepare';
-                }
                 
                 if ('action' in options) action = options['action'];
                 if ('action2' in options) action2 = options['action2'];
+           
+                if (create)
+                {	
+                	action = (options['create_action'] ? options['create_action'] : 'create');
+                	action2 = (options['create_action2'] ? options['create_action2'] : 'prepare');
+                }
+                
+               
                 
                 args = options['args'];
             
@@ -828,8 +832,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 	 	var initial_action = action;
                                 	 	var initial_action2 = action2;
                                 	 	
-                                        $scope.action = action = 'update';
-                					    $scope.action2 = action2 = 'read';
+                                	 	action2 = initial_action;
+                                	 	action = initial_action2;
+                                	 	
+                                        $scope.action = action;
+                					    $scope.action2 = action2;
                 					    
                 					    $scope.history['args']['key'] = data['entity']['key'];
                                 	

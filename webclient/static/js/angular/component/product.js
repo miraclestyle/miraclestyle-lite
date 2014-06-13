@@ -137,7 +137,11 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	  	    var that = this;
 	     
 	        	  	    var cfg = {
-		                	 'kind' : '39',
+		                	 'kind' : '38',
+		                	 'action' : 'instance_update',
+		                	 'action2' : 'instance_read',
+		                	 'create_action' : 'instance_create',
+		                	 'create_action2' : 'instance_prepare',
 		                	 'close' : false,
 		                	 'entity' : instance,
 		                	 'scope' : make_scope(),
@@ -218,7 +222,7 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	                            	 
 	                            	 var parent = that.entity.key;
 	                            	 
-	                            	 Endpoint.post('read', '39', {
+	                            	 Endpoint.post('instance_read', '38', {
 	                            	 	'variant_signature' : variant_signature,
 	                            	 	'parent' : parent,
 	                            	 }).success(function (data) {
