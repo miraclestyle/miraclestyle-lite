@@ -17,6 +17,7 @@ from google.appengine.api import urlfetch
 class OAuth2ResourceError(Exception):
   pass
 
+
 def build_url(base, additional_params=None):
   '''Construct an URL from the base, containing all parameters in
   the query portion of the base plus any additional parameters.
