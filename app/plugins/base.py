@@ -12,14 +12,15 @@ import collections
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import taskqueue
+from google.appengine.api import search
 
 from app import ndb, util
-from app.tools.attribute_manipulator import set_attr, get_attr
+from app.tools.attribute_manipulator import set_attr, get_attr, get_meta
 from app.tools.blob_manipulator import create_upload_url, parse, alter_image
-from app.tools.rule_manipulator import prepare, read, write
+from app.tools.rule_manipulator import prepare, read, write, _is_structured_field
 
 
-class Context(ndb.BaseModel):  # @todo Remodel with config prop!
+class Context(ndb.BaseModel):  # @todo Not migrated!
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
@@ -60,7 +61,7 @@ class Context(ndb.BaseModel):  # @todo Remodel with config prop!
       context.search_documents_count = None
 
 
-class Set(ndb.BaseModel):  # @todo Remodel with config prop!
+class Set(ndb.BaseModel):  # @todo Not migrated!
   
   static_values = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   dynamic_values = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
@@ -72,7 +73,7 @@ class Set(ndb.BaseModel):  # @todo Remodel with config prop!
       set_attr(context, key, get_attr(context, value))
 
 
-class Prepare(ndb.BaseModel):  # @todo Remodel with config prop!
+class Prepare(ndb.BaseModel):  # @todo Not migrated!
   
   kind_id = ndb.SuperStringProperty('1', indexed=False)
   namespace_path = ndb.SuperStringProperty('2', indexed=False)
@@ -94,7 +95,7 @@ class Prepare(ndb.BaseModel):  # @todo Remodel with config prop!
     context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
 
 
-class Read(ndb.BaseModel):  # @todo Remodel with config prop!
+class Read(ndb.BaseModel):  # @todo Not migrated!
   
   read_entities = ndb.SuperJsonProperty('1', indexed=False, default={})
   
@@ -114,7 +115,7 @@ class Read(ndb.BaseModel):  # @todo Remodel with config prop!
       context.values[key] = copy.deepcopy(context.entities[key])
 
 
-class Write(ndb.BaseModel):  # @todo Remodel with config prop!
+class Write(ndb.BaseModel):  # @todo Not migrated!
   
   write_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
@@ -129,7 +130,7 @@ class Write(ndb.BaseModel):  # @todo Remodel with config prop!
     ndb.put_multi(entities)
 
 
-class Delete(ndb.BaseModel):  # @todo Remodel with config prop!
+class Delete(ndb.BaseModel):  # @todo Not migrated!
   
   delete_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
   
@@ -144,11 +145,10 @@ class Delete(ndb.BaseModel):  # @todo Remodel with config prop!
     ndb.delete_multi(keys)
 
 
-class Search(ndb.BaseModel):  # @todo Remodel with config prop!
+class Search(ndb.BaseModel):  # @todo Not migrated!
   
   kind_id = ndb.SuperStringProperty('1', indexed=False)
   page_size = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
-  search = ndb.SuperJsonProperty('3', indexed=False, default={})  # @todo Transform this field to include optional query parameters to add to query.
   
   def run(self, context):
     namespace = None
@@ -160,12 +160,12 @@ class Search(ndb.BaseModel):  # @todo Remodel with config prop!
     if context.entities[kind_id].key:
       namespace = context.entities[kind_id].key_namespace
     value = None
-    search = context.input.get('search')
-    if search:
+    search_argument = context.input.get('search')
+    if search_argument:
       args = []
       kwds = {}
-      filters = search.get('filters')
-      order_by = search.get('order_by')
+      filters = search_argument.get('filters')
+      order_by = search_argument.get('order_by')
       for _filter in filters:
         if _filter['field'] == 'ancestor':
           kwds['ancestor'] = _filter['value']
@@ -335,7 +335,7 @@ class RecordWrite(ndb.BaseModel):
     context.records = []
 
 
-class CallbackNotify(ndb.BaseModel):  # @todo Remodel with config prop!
+class CallbackNotify(ndb.BaseModel):  # @todo Not migrated!
   
   dynamic_data = ndb.SuperJsonProperty('1', required=True, indexed=False, default={})
   
@@ -381,7 +381,7 @@ class CallbackExec(ndb.BaseModel):
     context.callbacks = []
 
 
-class BlobURL(ndb.BaseModel):  # @todo Remodel with config prop!
+class BlobURL(ndb.BaseModel):  # @todo Not migrated!
   
   gs_bucket_name = ndb.SuperStringProperty('1', indexed=False, required=True)
   
@@ -392,7 +392,7 @@ class BlobURL(ndb.BaseModel):  # @todo Remodel with config prop!
       raise event.TerminateAction()
 
 
-class BlobUpdate(ndb.BaseModel):  # @todo Remodel with config prop!
+class BlobUpdate(ndb.BaseModel):  # @todo Not migrated!
   
   blob_delete = ndb.SuperStringProperty('1', indexed=False)
   blob_write = ndb.SuperStringProperty('2', indexed=False)
@@ -415,7 +415,7 @@ class BlobUpdate(ndb.BaseModel):  # @todo Remodel with config prop!
           context.blob_unused.remove(blob_key)
 
 
-class BlobAlterImage(ndb.BaseModel):  # @todo Remodel with config prop!
+class BlobAlterImage(ndb.BaseModel):  # @todo Not migrated!
   
   source = ndb.SuperStringProperty('1', indexed=False)
   destination = ndb.SuperStringProperty('2', indexed=False)
@@ -434,7 +434,7 @@ class BlobAlterImage(ndb.BaseModel):  # @todo Remodel with config prop!
         set_attr(context, self.destination, results['new_image'])
 
 
-class BlobAlterImages(ndb.BaseModel):  # @todo Remodel with config prop!
+class BlobAlterImages(ndb.BaseModel):  # @todo Not migrated!
   
   source = ndb.SuperStringProperty('1', indexed=False)
   destination = ndb.SuperStringProperty('2', indexed=False)
@@ -546,3 +546,212 @@ class RuleExec(ndb.BaseModel):
         raise ActionDenied(context)
     else:
       raise ActionDenied(context)
+
+
+__SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
+                   'SuperImageKeyProperty': search.AtomField,
+                   'SuperBlobKeyProperty': search.AtomField,
+                   'SuperBooleanProperty': search.AtomField,
+                   'SuperStringProperty': search.TextField,
+                   'SuperJsonProperty': search.TextField,
+                   'SuperTextProperty': search.HtmlField,
+                   'SuperFloatProperty': search.NumberField,
+                   'SuperIntegerProperty': search.NumberField,
+                   'SuperDecimalProperty': search.NumberField,
+                   'SuperDateTimeProperty': search.DateField,
+                   'geo': search.GeoField}
+
+
+def get_search_field(field_type):
+  global __SEARCH_FIELDS
+  return __SEARCH_FIELDS.get(field_type)
+
+
+class DocumentWrite(ndb.BaseModel):  # @todo This plugin can be improved to deal with multiple entities at the time!
+  
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.config, dict):
+      self.config = {}
+    entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
+    entity = get_attr(context, entity_path)
+    if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      doc_id = entity.key_urlsafe
+      if entity.key_namespace != None:
+        index_name = self.config.get('index_name', str(entity.key_namespace) + '-' + str(entity.get_kind()))
+      else:
+        index_name = self.config.get('index_name', str(entity.get_kind()))
+      fields = []
+      fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
+      fields.append(search.AtomField(name='kind', value=entity.get_kind()))
+      fields.append(search.AtomField(name='id', value=entity.key_id_str))
+      if entity.key_namespace != None:
+        fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
+      if entity.key_parent != None:
+        fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
+      for field_name in self.config.get('fields', [])
+        field_meta = get_meta(entity, field_name)
+        field_value = get_attr(entity, field_name)
+        field = None
+        if field_meta._repeated:
+          if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+            field_value = ' '.join(map(lambda x: x.urlsafe(), field_value))
+            field = get_search_field('SuperStringProperty')
+          elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty']:
+            field_value = ' '.join(map(lambda x: str(x), field_value))
+            field = get_search_field('SuperStringProperty')
+          elif field_meta.__class__.__name__ in ['SuperStringProperty', 'SuperFloatProperty', 'SuperIntegerProperty', 'SuperDecimalProperty', 'SuperDateTimeProperty']:
+            field_value = ' '.join(field_value)
+            field = get_search_field('SuperStringProperty')
+          elif field_meta.__class__.__name__ in ['SuperTextProperty']:
+            field_value = ' '.join(field_value)
+            field = get_search_field('SuperTextProperty')
+        else:
+          if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+            field_value = field_value.urlsafe()
+          elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty', 'SuperJsonProperty']:
+            field_value = str(field_value)
+          field = get_search_field(field_meta.__class__.__name__)
+        if field != None:
+          fields.append(field(name=field_name, value=field_value))
+      if doc_id != None and len(fields):
+        try:
+          index = search.Index(name=index_name)
+          index.put(search.Document(doc_id=doc_id, fields=fields))  # Batching puts is more efficient than adding documents one at a time.
+        except:
+          pass
+
+
+class DocumentDelete(ndb.BaseModel):  # @todo This plugin can be improved to deal with multiple entities at the time!
+  
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.config, dict):
+      self.config = {}
+    entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
+    entity = get_attr(context, entity_path)
+    if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      doc_id = entity.key_urlsafe
+      if entity.key_namespace != None:
+        index_name = self.config.get('index_name', str(entity.key_namespace) + '-' + str(entity.get_kind()))
+      else:
+        index_name = self.config.get('index_name', str(entity.get_kind()))
+      if doc_id != None:
+        try:
+          index = search.Index(name=index_name)
+          index.delete(doc_id)  # Batching deletes is more efficient than handling them one at a time.
+        except:
+          pass
+
+
+class DocumentSearch(ndb.BaseModel):  # @todo Not migrated!
+  
+  kind_id = ndb.SuperStringProperty('1', indexed=False)
+  index_name = ndb.SuperStringProperty('2', indexed=False)
+  fields = ndb.SuperStringProperty('3', indexed=False, repeated=True)
+  page_size = ndb.SuperIntegerProperty('4', indexed=False, required=True, default=10)
+  
+  def run(self, context):
+    if self.kind_id != None:
+      kind_id = self.kind_id
+    else:
+      kind_id = context.model.get_kind()
+    namespace = context.entities[kind_id].key_namespace
+    if self.index_name != None:
+      index_name = self.index_name
+    elif namespace != None:
+      index_name = namespace + '-' + kind_id
+    else:
+      index_name = kind_id
+    index = search.Index(name=index_name)
+    # Query String implementation start!
+    query_string = ''
+    sort_options = None
+    search_argument = context.input.get('search')
+    if search_argument:
+      filters = search_argument.get('filters')
+      args = []
+      for _filter in filters:
+        field = _filter['field']
+        op = _filter['operator']
+        value = _filter['value']
+        if field == 'query_string':
+          args.append(value)
+          break
+        if field == 'ancestor':
+          args.append('(' + field + '=' + value + ')')
+          continue
+        if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+          args.append('(' + field + '=' + value + ')')
+        elif op == '!=':
+          args.append('(NOT ' + field + '=' + value + ')')
+        elif op == '>':
+          args.append('(' + field + '>' + value + ')')
+        elif op == '<':
+          args.append('(' + field + '<' + value + ')')
+        elif op == '>=':
+          args.append('(' + field + '>=' + value + ')')
+        elif op == '<=':
+          args.append('(' + field + '<=' + value + ')')
+        elif op == 'IN':
+          args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
+      query_string = ' AND '.join(args)
+      # Query String implementation start!
+      order_by = search_argument.get('order_by')
+      property_config = search_argument.get('property')
+      if order_by['operator'] == 'asc':
+        default_value=property_config._order_by[order_by['field']]['default_value']['asc']
+        direction = search.SortExpression.ASCENDING
+      else:
+        default_value=property_config._order_by[order_by['field']]['default_value']['desc']
+        direction = search.SortExpression.DESCENDING
+      order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
+      sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
+    cursor = context.input.get('search_cursor')
+    if cursor:
+      cursor = search.Cursor(web_safe_string=cursor)
+    options = search.QueryOptions(limit=self.page_size, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
+    query = search.Query(query_string=query_string, options=options)
+    context.search_documents = []
+    context.search_cursor = None
+    context.search_more = False
+    try:
+      result = index.search(query)
+      context.search_documents_total_matches = result.number_found
+      if len(result.results):
+        context.search_documents_count = len(result.results)
+        context.search_documents = result.results
+      if result.cursor != None:
+        context.search_cursor = result.cursor.web_safe_string
+        context.search_more = True
+      else:
+        context.search_cursor = None
+        context.search_more = False
+    except:
+      raise
+
+
+class DocumentDictConverter(ndb.BaseModel):
+  
+  def run(self, context):
+    entities = []
+    if len(context.search_documents):
+      for document in context.search_documents:
+        dic = {}
+        dic['doc_id'] = document.doc_id
+        dic['language'] = document.language
+        dic['rank'] = document.rank
+        fields = document.fields
+        for field in fields:
+          dic[field.name] = field.value
+        entities.append(dic)
+    context.entities = entities
+
+
+class DocumentEntityConverter(ndb.BaseModel):
+  
+  def run(self, context):
+    if len(context.search_documents):
+      context.entities = ndb.get_multi([document.doc_id for document in context.search_documents])
