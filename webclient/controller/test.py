@@ -11,9 +11,7 @@ from google.appengine.api import search
 
 from webclient import handler 
 
-from app import ndb, memcache, util
-from app.srv import io
-
+from app import ndb, memcache, util, io
 class Reset(handler.Angular):
   
   def respond(self):

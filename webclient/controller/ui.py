@@ -6,7 +6,7 @@ Created on Feb 5, 2014
 '''
 import json
 
-from app.srv import io
+from app import io
 
 from webclient import handler
 from webclient.util import JSONEncoderHTML

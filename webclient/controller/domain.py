@@ -6,7 +6,7 @@ Created on Mar 11, 2014
 '''
 from webclient import handler
 
-from app.srv import io
+from app import io
  
 handler.register((r'/app/<app_id>', handler.AngularBlank, 'app_view'),
                  (r'/app/<app_id>/search/<kind>/<filter>', handler.AngularBlank, 'app_view_search'))

@@ -4,8 +4,7 @@ Created on Feb 17, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from app import util
-from app.srv import io
+from app import util, io
 from webclient import handler
 
 class IOEngineRun(handler.Base):

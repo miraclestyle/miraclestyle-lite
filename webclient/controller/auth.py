@@ -6,7 +6,7 @@ Created on Oct 14, 2013
 '''
 from webclient import handler
 
-from app.srv import io
+from app import io
  
 
 class Login(handler.Angular):
