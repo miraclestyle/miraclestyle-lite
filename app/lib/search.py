@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Created on Jun 14, 2014
+Created on Jun 16, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
@@ -143,4 +143,8 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fie
   except:
     raise
   finally:
-    return (documents, documents_count, total_matches, search_cursor, search_more)
+    return {'documents': documents,
+            'documents_count': documents_count,
+            'total_matches': total_matches,
+            'search_cursor': search_cursor,
+            'search_more': search_more}

@@ -18,6 +18,7 @@ from app import ndb, util
 from app.tools.attribute_manipulator import set_attr, get_attr, get_meta
 from app.tools.blob_manipulator import create_upload_url, parse, alter_image
 from app.tools.rule_manipulator import prepare, read, write, _is_structured_field
+from app.tools.search import ndb_search, document_search
 
 
 class Context(ndb.BaseModel):  # @todo Not migrated!
@@ -115,124 +116,90 @@ class Read(ndb.BaseModel):  # @todo Not migrated!
       context.values[key] = copy.deepcopy(context.entities[key])
 
 
-class Write(ndb.BaseModel):  # @todo Not migrated!
+class Write(ndb.BaseModel):
   
-  write_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     entities = []
-    if len(self.write_entities):
-      for kind_id in self.write_entities:
-        if kind_id in context.entities:
-          entities.append(context.entities[kind_id])
-    else:
-      entities.append(context.entities[context.model.get_kind()])
+    if not isinstance(self.config, dict):
+      self.config = {}
+    entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
+    # @todo How do we incorporate parent and/or namespace in keys of entities that have already been instantiated? Or perhaps we don't need this feature at all?
+    #parent_path = self.config.get('parent', None)
+    #namespace_path = self.config.get('namespace', None)
+    #if parent_path != None:
+      #parent = get_attr(context, parent_path)
+    #if namespace_path != None:
+      #namespace = get_attr(context, namespace_path)
+    for entity_path in entity_paths:
+      entities = get_attr(context, entity_path)
+      if isinstance(entities, dict):
+        for key, entity in entities.items():
+          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):  # @todo Implement correct validation expression here!
+            entities.append(entity)
+      elif isinstance(entities, list):
+        for entity in entities:
+          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):  # @todo Implement correct validation expression here!
+            entities.append(entity)
+      elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):  # @todo Implement correct validation expression here!
+        entities.append(entities)
     ndb.put_multi(entities)
 
 
-class Delete(ndb.BaseModel):  # @todo Not migrated!
+class Delete(ndb.BaseModel):
   
-  delete_entities = ndb.SuperStringProperty('1', indexed=False, repeated=True)
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     keys = []
-    if len(self.delete_entities):
-      for kind_id in self.delete_entities:
-        if kind_id in context.entities:
-          keys.append(context.entities[kind_id].key)
-    else:
-      keys.append(context.entities[context.model.get_kind()].key)
+    if not isinstance(self.config, dict):
+      self.config = {}
+    entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
+    for entity_path in entity_paths:
+      entities = get_attr(context, entity_path)
+      if isinstance(entities, dict):
+        for key, entity in entities.items():
+          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+            keys.append(entity.key)
+          elif entity and isinstance(entity, ndb.Key):
+            keys.append(entity)
+      elif isinstance(entities, list):
+        for entity in entities:
+          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+            keys.append(entity.key)
+          elif entity and isinstance(entity, ndb.Key):
+            keys.append(entity)
+      elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):
+        keys.append(entities.key)
+      elif entities and isinstance(entities, ndb.Key):
+        keys.append(entities)
     ndb.delete_multi(keys)
 
 
-class Search(ndb.BaseModel):  # @todo Not migrated!
+class Search(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('1', indexed=False)
-  page_size = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    namespace = None
-    if self.kind_id != None:
-      kind_id = self.kind_id
-    else:
-      kind_id = context.model.get_kind()
-    model = context.models[kind_id]
-    if context.entities[kind_id].key:
-      namespace = context.entities[kind_id].key_namespace
-    value = None
-    search_argument = context.input.get('search')
-    if search_argument:
-      args = []
-      kwds = {}
-      filters = search_argument.get('filters')
-      order_by = search_argument.get('order_by')
-      for _filter in filters:
-        if _filter['field'] == 'ancestor':
-          kwds['ancestor'] = _filter['value']
-          continue
-        field = getattr(model, _filter['field'])
-        op = _filter['operator']
-        value = _filter['value']
-        if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-          args.append(field == value)
-        elif op == '!=':
-          args.append(field != value)
-        elif op == '>':
-          args.append(field > value)
-        elif op == '<':
-          args.append(field < value)
-        elif op == '>=':
-          args.append(field >= value)
-        elif op == 'IN':
-          args.append(field.IN(value))
-        elif op == 'contains':
-          letters = list(string.printable)
-          try:
-            last = letters[letters.index(value[-1].lower()) + 1]
-            args.append(field >= value)
-            args.append(field < last)
-          except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
-            args.append(field == value)
-      query = model.query(namespace=namespace, **kwds)
-      query = query.filter(*args)
-      if order_by:
-        order_by_field = getattr(model, order_by['field'])
-        if order_by['operator'] == 'asc':
-          query = query.order(order_by_field)
-        else:
-          query = query.order(-order_by_field)
-    cursor = Cursor(urlsafe=context.input.get('search_cursor'))
-    def value_is_key(value):
-      if isinstance(value, list) and len(value):
-        for v in value:
-          if not isinstance(v, ndb.Key):
-            return False
-        return True
-      elif isinstance(value, ndb.Key):
-        return True
-      else:
-        return False
-    if value_is_key(value):
-      # this has to be done like this because there is no way to order the fetched items
-      # in the order the keys were provided, the MultiQuery disallowes that http://stackoverflow.com/questions/12449197/badargumenterror-multiquery-with-cursors-requires-key-order-in-ndb
-      keys = value
-      if not isinstance(keys, list):
-        keys = [value]
-      entities = ndb.get_multi(keys)
-      cursor = None
-      more = False
-    else:
-      if self.page_size != None and self.page_size > 0:
-        entities, cursor, more = query.fetch_page(self.page_size, start_cursor=cursor)
-        if cursor:
-          cursor = cursor.urlsafe()
-      else:
-        entities = query.fetch()
-        cursor = None
-        more = False
-    context.entities = entities
-    context.search_cursor = cursor
-    context.search_more = more
+    if not isinstance(self.config, dict):
+      self.config = {}
+    model_path = self.config.get('model', 'models.' + str(context.model.get_kind()))
+    argument_path = self.config.get('argument', 'input.search')
+    urlsafe_cursor_path = self.config.get('read_cursor', 'input.search_cursor')
+    namespace_path = self.config.get('namespace', 'namespace')
+    page_size = self.config.get('page', 10)
+    write_entities_path = self.config.get('write_entities', 'entities')
+    write_cursor_path = self.config.get('write_cursor', 'search_cursor')
+    write_more_path = self.config.get('write_more', 'search_more')
+    model = get_attr(context, model_path)
+    argument = get_attr(context, argument_path)
+    urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
+    namespace = get_attr(context, namespace_path)
+    entities, cursor, more = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
+    set_attr(context, write_entities_path, entities)
+    set_attr(context, write_cursor_path, cursor)
+    set_attr(context, write_more_path, more)
 
 
 class RecordRead(ndb.BaseModel):
@@ -240,48 +207,50 @@ class RecordRead(ndb.BaseModel):
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    @ndb.tasklet
+    def async(entity):
+      if entity.key_namespace and entity.agent.id() != 'system':
+        domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
+        agent = yield domain_user_key.get_async()
+        agent = agent.name
+      else:
+        agent = yield entity.agent.get_async()
+        agent = agent._primary_email
+      entity._agent = agent
+      action_parent = entity.action.parent()
+      modelclass = entity._kind_map.get(action_parent.kind())
+      action_id = entity.action.id()
+      if modelclass and hasattr(modelclass, '_actions'):
+        for action in modelclass._actions:
+          if entity.action == action.key:
+            entity._action = '%s.%s' % (modelclass.__name__, action_id)
+            break
+      raise ndb.Return(entity)
+    
+    @ndb.tasklet
+    def helper(entities):
+      results = yield map(async, entities)
+      raise ndb.Return(results)
+    
     if not isinstance(self.config, dict):
       self.config = {}
     entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
-    page_size = self.config.get('page', 10)
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      @ndb.tasklet
-      def async(entity):
-        if entity.key_namespace and entity.agent.id() != 'system':
-          domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
-          agent = yield domain_user_key.get_async()
-          agent = agent.name
-        else:
-          agent = yield entity.agent.get_async()
-          agent = agent._primary_email
-        entity._agent = agent
-        action_parent = entity.action.parent()
-        modelclass = entity._kind_map.get(action_parent.kind())
-        action_id = entity.action.id()
-        if modelclass and hasattr(modelclass, '_actions'):
-          for action in modelclass._actions:
-            if entity.action == action.key:
-              entity._action = '%s.%s' % (modelclass.__name__, action_id)
-              break
-        raise ndb.Return(entity)
-      
-      @ndb.tasklet
-      def helper(entities):
-        results = yield map(async, entities)
-        raise ndb.Return(results)
-      
-      cursor = Cursor(urlsafe=context.input.get('records_cursor'))
       model = context.models['5']
-      query = model.query(ancestor=entity.key).order(-model.logged)
-      entities, cursor, more = query.fetch_page(page_size, start_cursor=cursor)
-      if cursor:
-        cursor = cursor.urlsafe()
+      argument = {'filters': [{'field': 'ancestor', 'operator': '==' 'value': entity.key}], 'order_by': {'field': 'logged', 'operator': 'desc'}}
+      urlsafe_cursor_path = self.config.get('read_cursor', 'input.records_cursor')
+      page_size = self.config.get('page', 10)
+      write_entities_path = self.config.get('write_entities', entity_path + '._records')
+      write_cursor_path = self.config.get('write_cursor', 'records_cursor')
+      write_more_path = self.config.get('write_more', 'records_more')
+      urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
+      entities, cursor, more = ndb_search(model, argument, page_size, urlsafe_cursor)
       entities = helper(entities)
       entities = [entity for entity in entities.get_result()]
-      set_attr(context, entity_path + '._records', entities)
-      context.records_cursor = cursor
-      context.records_more = more
+      set_attr(context, write_entities_path, entities)
+      set_attr(context, write_cursor_path, cursor)
+      set_attr(context, write_more_path, more)
 
 
 class RecordWrite(ndb.BaseModel):
@@ -335,17 +304,18 @@ class RecordWrite(ndb.BaseModel):
     context.records = []
 
 
-class CallbackNotify(ndb.BaseModel):  # @todo Not migrated!
+class CallbackNotify(ndb.BaseModel):
   
-  dynamic_data = ndb.SuperJsonProperty('1', required=True, indexed=False, default={})
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.dynamic_data, dict):
-      self.dynamic_data = {}
+    if not isinstance(self.config, dict):
+      self.config = {}
+    dynamic_data = self.config.get('dynamic', {})
     static_data = {}
     static_data.update({'action_id': 'initiate', 'action_model': '61'})
     static_data['caller_entity'] = context.entities[context.model.get_kind()].key_urlsafe
-    context.callbacks.append(('notify', static_data, self.dynamic_data))
+    context.callbacks.append(('notify', static_data, dynamic_data))
 
 
 class CallbackExec(ndb.BaseModel):
@@ -478,24 +448,26 @@ class RulePrepare(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
-    values_path = self.config.get('values', 'values.' + str(context.model.get_kind()))
-    entity_path = self.config.get('entity', 'entities.' + str(context.model.get_kind()))
+    values_path = self.config.get('from', 'values.' + str(context.model.get_kind()))
+    entity_path = self.config.get('to', 'entities.' + str(context.model.get_kind()))
+    skip_user_roles = self.config.get('skip_user_roles', False)  # @todo Not sure if we should rename 'skip_user_roles' to 'skip'?
+    strict = self.config.get('strict', False)
     values = get_attr(context, values_path)
     entities = get_attr(context, entity_path)
     if isinstance(entities, dict):
       for key, entity in entities.items():
-        context.entity = entities.get('key')
-        context.value = values.get('key')
-        prepare(context, self.config.get('skip_user_roles', False), self.config.get('strict', False))  # @todo Not sure if we should rename 'skip_user_roles' to 'skip'?
+        context.entity = entities.get(key)
+        context.value = values.get(key)
+        prepare(context, skip_user_roles, strict)
     elif isinstance(entities, list):
       for entity in entities:
         context.entity = entity
         context.value = None
-        prepare(context, self.config.get('skip_user_roles', False), self.config.get('strict', False))
+        prepare(context, skip_user_roles, strict)
     else:
       context.entity = entities
       context.value = values
-      prepare(context, self.config.get('skip_user_roles', False), self.config.get('strict', False))
+      prepare(context, skip_user_roles, strict)
 
 
 class RuleRead(ndb.BaseModel):
@@ -524,8 +496,8 @@ class RuleWrite(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
-    values_path = self.config.get('values', 'values.' + str(context.model.get_kind()))
-    entity_path = self.config.get('entity', 'entities.' + str(context.model.get_kind()))
+    values_path = self.config.get('from', 'values.' + str(context.model.get_kind()))
+    entity_path = self.config.get('to', 'entities.' + str(context.model.get_kind()))
     values = get_attr(context, values_path)
     entity = get_attr(context, entity_path)
     if values and entity:
@@ -540,9 +512,11 @@ class RuleExec(ndb.BaseModel):
     if not isinstance(self.config, dict):
       self.config = {}
     entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
+    action_path = self.config.get('action', 'action.key_urlsafe')
     entity = get_attr(context, entity_path)
+    action = get_attr(context, action_path)
     if entity and hasattr(entity, '_action_permissions'):
-      if not entity._action_permissions[context.action.key.urlsafe()]['executable']:
+      if not entity._action_permissions[action]['executable']:
         raise ActionDenied(context)
     else:
       raise ActionDenied(context)
@@ -646,91 +620,37 @@ class DocumentDelete(ndb.BaseModel):  # @todo This plugin can be improved to dea
           pass
 
 
-class DocumentSearch(ndb.BaseModel):  # @todo Not migrated!
+class DocumentSearch(ndb.BaseModel):
   
-  kind_id = ndb.SuperStringProperty('1', indexed=False)
-  index_name = ndb.SuperStringProperty('2', indexed=False)
-  fields = ndb.SuperStringProperty('3', indexed=False, repeated=True)
-  page_size = ndb.SuperIntegerProperty('4', indexed=False, required=True, default=10)
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if self.kind_id != None:
-      kind_id = self.kind_id
+    if not isinstance(self.config, dict):
+      self.config = {}
+    kind_id = self.config.get('kind', str(context.model.get_kind()))
+    namespace_path = self.config.get('namespace', 'namespace')
+    namespace = get_attr(context, namespace_path)
+    if namespace != None:
+      index_name = self.config.get('index', namespace + '-' + kind_id)
     else:
-      kind_id = context.model.get_kind()
-    namespace = context.entities[kind_id].key_namespace
-    if self.index_name != None:
-      index_name = self.index_name
-    elif namespace != None:
-      index_name = namespace + '-' + kind_id
-    else:
-      index_name = kind_id
-    index = search.Index(name=index_name)
-    # Query String implementation start!
-    query_string = ''
-    sort_options = None
-    search_argument = context.input.get('search')
-    if search_argument:
-      filters = search_argument.get('filters')
-      args = []
-      for _filter in filters:
-        field = _filter['field']
-        op = _filter['operator']
-        value = _filter['value']
-        if field == 'query_string':
-          args.append(value)
-          break
-        if field == 'ancestor':
-          args.append('(' + field + '=' + value + ')')
-          continue
-        if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-          args.append('(' + field + '=' + value + ')')
-        elif op == '!=':
-          args.append('(NOT ' + field + '=' + value + ')')
-        elif op == '>':
-          args.append('(' + field + '>' + value + ')')
-        elif op == '<':
-          args.append('(' + field + '<' + value + ')')
-        elif op == '>=':
-          args.append('(' + field + '>=' + value + ')')
-        elif op == '<=':
-          args.append('(' + field + '<=' + value + ')')
-        elif op == 'IN':
-          args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
-      query_string = ' AND '.join(args)
-      # Query String implementation start!
-      order_by = search_argument.get('order_by')
-      property_config = search_argument.get('property')
-      if order_by['operator'] == 'asc':
-        default_value=property_config._order_by[order_by['field']]['default_value']['asc']
-        direction = search.SortExpression.ASCENDING
-      else:
-        default_value=property_config._order_by[order_by['field']]['default_value']['desc']
-        direction = search.SortExpression.DESCENDING
-      order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
-      sort_options = search.SortOptions(expressions=[order], limit=self.page_size)
-    cursor = context.input.get('search_cursor')
-    if cursor:
-      cursor = search.Cursor(web_safe_string=cursor)
-    options = search.QueryOptions(limit=self.page_size, returned_fields=self.fields, sort_options=sort_options, cursor=cursor)
-    query = search.Query(query_string=query_string, options=options)
-    context.search_documents = []
-    context.search_cursor = None
-    context.search_more = False
-    try:
-      result = index.search(query)
-      context.search_documents_total_matches = result.number_found
-      if len(result.results):
-        context.search_documents_count = len(result.results)
-        context.search_documents = result.results
-      if result.cursor != None:
-        context.search_cursor = result.cursor.web_safe_string
-        context.search_more = True
-      else:
-        context.search_cursor = None
-        context.search_more = False
-    except:
-      raise
+      index_name = self.config.get('index', kind_id)
+    argument_path = self.config.get('argument', 'input.search')
+    urlsafe_cursor_path = self.config.get('read_cursor', 'input.search_cursor')
+    page_size = self.config.get('page', 10)
+    fields = self.config.get('fields', None)
+    write_documents_path = self.config.get('write_documents', 'search_documents')
+    write_documents_count_path = self.config.get('write_documents_count', 'search_documents_count')
+    write_documents_total_matches_path = self.config.get('write_documents_total_matches', 'search_documents_total_matches')
+    write_cursor_path = self.config.get('write_cursor', 'search_cursor')
+    write_more_path = self.config.get('write_more', 'search_more')
+    argument = get_attr(context, argument_path)
+    urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
+    results = document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None)
+    set_attr(context, write_documents_path, results['documents'])
+    set_attr(context, write_documents_count_path, results['documents_count'])
+    set_attr(context, write_documents_total_matches_path, results['total_matches'])
+    set_attr(context, write_cursor_path, results['search_cursor'])
+    set_attr(context, write_more_path, results['search_more'])
 
 
 class DocumentDictConverter(ndb.BaseModel):
