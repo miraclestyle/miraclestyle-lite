@@ -509,7 +509,8 @@ class SearchWrite(ndb.BaseModel):
           try:
             index = search.Index(name=self.index_name)
             index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
-          except:
+          except Exception as e:
+            util.logger('INDEX FAILED, ERROR: %s' % e)
             indexing = False
             pass
     if indexing:

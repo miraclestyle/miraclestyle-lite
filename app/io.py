@@ -151,6 +151,7 @@ class Engine:
   @classmethod
   def execute_action(cls, context, input):
     util.logger('Execute action: %s.%s' % (context.model.__name__, context))
+    util.logger('Arguments: %s' % (context.input))
     def execute_plugins(plugins):
       for plugin in plugins:
         util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
@@ -172,6 +173,7 @@ class Engine:
   
   @classmethod
   def run(cls, input):
+    util.logger('Payload: %s' % input)
     context = Context()
     cls.process_blob_input(context, input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
