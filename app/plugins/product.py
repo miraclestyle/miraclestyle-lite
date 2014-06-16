@@ -278,6 +278,6 @@ class CategoryUpdate(ndb.BaseModel):
         new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
         new_cat['name'] = last
         new_cat['complete_name'] = ' / '.join(current[:current_total+1])
-        new_cat['state'] = 'searchable'
+        new_cat['state'] = 'indexable'
         write_data.append(Category(**new_cat))
     ndb.put_multi(write_data)
