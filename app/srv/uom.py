@@ -62,7 +62,7 @@ class Unit(ndb.BaseExpando):
       FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
                              'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
                              'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
-                             'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, None, 'True'),
+                             'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
       FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
                              'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
                              'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',

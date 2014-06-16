@@ -44,7 +44,7 @@ class Category(ndb.BaseModel):
     permissions=[
       ActionPermission('17', [Action.build_key('17', 'update')], True, 'context.user._root_admin or context.user._is_taskqueue'),
       ActionPermission('17', [Action.build_key('17', 'search')], True, 'not context.user._is_guest'),
-      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, None, 'True'),
+      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
       FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
                       'context.user._root_admin or context.user._is_taskqueue')
       ]
