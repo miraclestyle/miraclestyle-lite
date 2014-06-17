@@ -13,7 +13,7 @@ from google.appengine.api import search
 from app import ndb, util
 
 
-def ndb_search(model, argument, page_size=10, urlsafe_cursor=None, namespace=None):
+def ndb_search(model, argument, page_size=10, urlsafe_cursor=None, namespace=None, fetch_all=True, offset=0, limit=1000):
   keys = None
   args = []
   kwds = {}
@@ -70,10 +70,23 @@ def ndb_search(model, argument, page_size=10, urlsafe_cursor=None, namespace=Non
       if cursor:
         cursor = cursor.urlsafe()
     else:
-      entities = query.fetch()
+      if fetch_all:
+        offset = 0
+        limit = 1000
+      entities = []
+      more = True
+      while more:
+        _entities = query.fetch(limit=limit, offset=offset)
+        if len(_entities):
+          entities.extend(_entities)
+          offset = offset + limit
+          if not fetch_all:
+            more = False
+        else:
+          more = False
       cursor = None
       more = False
-  return (entities, cursor, more)
+  return {'entities': entities, 'cursor': cursor, 'more': more}
 
 
 def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None):
