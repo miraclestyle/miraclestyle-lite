@@ -10,18 +10,17 @@ import copy
 import string
 import collections
 
-from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import taskqueue
 from google.appengine.api import search
 
 from app import ndb, util
-from app.tools.attribute_manipulator import set_attr, get_attr, get_meta
-from app.tools.blob_manipulator import create_upload_url, parse, alter_image
-from app.tools.rule_manipulator import prepare, read, write, _is_structured_field
-from app.tools.search import ndb_search, document_search
+from app.lib.attribute_manipulator import set_attr, get_attr, get_meta  # @todo To rename lib to tools!
+from app.lib.blob_manipulator import create_upload_url, parse, alter_image  # @todo To rename lib to tools!
+from app.lib.rule_manipulator import prepare, read, write, _is_structured_field  # @todo To rename lib to tools!
+from app.lib.search import ndb_search, document_search  # @todo To rename lib to tools!
 
 
-class Context(ndb.BaseModel):  # @todo Not migrated!
+class Context(ndb.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
@@ -62,24 +61,24 @@ class Context(ndb.BaseModel):  # @todo Not migrated!
       context.search_documents_count = None
 
 
-class Set(ndb.BaseModel):  # @todo Not migrated!
+class Set(ndb.BaseModel):
   
-  static_values = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  dynamic_values = ndb.SuperJsonProperty('2', indexed=False, required=True, default={})
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    for key, value in self.static_values.items():
+    if not isinstance(self.config, dict):
+      self.config = {}
+    static_values = self.config.get('static', {})
+    dynamic_values = self.config.get('dynamic', {})
+    for key, value in static_values.items():
       set_attr(context, key, value)
-    for key, value in self.dynamic_values.items():
+    for key, value in dynamic_values.items():
       set_attr(context, key, get_attr(context, value))
 
 
-class Prepare(ndb.BaseModel):  # @todo Not migrated!
+class Prepare(ndb.BaseModel):
   
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
-  kind_id = ndb.SuperStringProperty('1', indexed=False)
-  namespace_path = ndb.SuperStringProperty('2', indexed=False)
-  parent_path = ndb.SuperStringProperty('3', indexed=False)
   
   def run(self, context):
     if not isinstance(self.config, list):
@@ -87,35 +86,23 @@ class Prepare(ndb.BaseModel):  # @todo Not migrated!
     if not len(self.config):
       self.config = [{'model': 'models.'  + context.model.get_kind(),
                       'parent': None,
-                      'namespace': None,
+                      'namespace': 'namespace',
                       'save': 'entities.' + context.model.get_kind(),
                       'copy': 'values.' + context.model.get_kind()}]
     for config in self.config:
       model_path = config.get('model')
       model = get_attr(context, model_path)
-      parent_path = self.config.get('parent')
-      namespace_path = self.config.get('namespace')
-      if parent_path != None:
-        parent = get_attr(context, parent_path)
+      parent_path = config.get('parent')
+      namespace_path = config.get('namespace')
+      parent = get_attr(context, parent_path)
+      namespace = get_attr(context, namespace_path)
+      if parent != None:
+        namespace = None
       save_path = config.get('save')
       copy_path = config.get('copy')
-      set_attr(context, save_path, entity)
+      set_attr(context, save_path, model(parent=parent, namespace=namespace))
       if copy_path != None:
-        set_attr(context, copy_path, copy.deepcopy(entity))
-        
-    parent = None
-    if self.kind_id != None:
-      kind_id = self.kind_id
-    else:
-      kind_id = context.model.get_kind()
-    if self.namespace_path != None:
-      namespace = get_attr(context, self.namespace_path)
-    else:
-      namespace = context.namespace
-    if self.parent_path != None:
-      parent = get_attr(context, self.parent_path)
-    context.entities[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
-    context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
+        set_attr(context, copy_path, model(parent=parent, namespace=namespace))
 
 
 class Read(ndb.BaseModel):
@@ -166,13 +153,13 @@ class Write(ndb.BaseModel):
       entities = get_attr(context, entity_path)
       if isinstance(entities, dict):
         for key, entity in entities.items():
-          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):  # @todo Implement correct validation expression here!
+          if entity and isinstance(entity, ndb.Model):
             entities.append(entity)
       elif isinstance(entities, list):
         for entity in entities:
-          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):  # @todo Implement correct validation expression here!
+          if entity and isinstance(entity, ndb.Model):
             entities.append(entity)
-      elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):  # @todo Implement correct validation expression here!
+      elif entities and isinstance(entities, ndb.Model):
         entities.append(entities)
     # @todo Is this proper way to incorporate parent and/or namespace in keys of entities that have already been instantiated?
     if parent != None:
@@ -276,7 +263,7 @@ class RecordRead(ndb.BaseModel):
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
       model = context.models['5']
-      argument = {'filters': [{'field': 'ancestor', 'operator': '==' 'value': entity.key}],
+      argument = {'filters': [{'field': 'ancestor', 'operator': '==', 'value': entity.key}],
                   'order_by': {'field': 'logged', 'operator': 'desc'}}
       urlsafe_cursor_path = self.config.get('read_cursor', 'input.records_cursor')
       page_size = self.config.get('page', 10)
@@ -284,12 +271,12 @@ class RecordRead(ndb.BaseModel):
       write_cursor_path = self.config.get('write_cursor', 'records_cursor')
       write_more_path = self.config.get('write_more', 'records_more')
       urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
-      entities, cursor, more = ndb_search(model, argument, page_size, urlsafe_cursor)
-      entities = helper(entities)
+      result = ndb_search(model, argument, page_size, urlsafe_cursor)
+      entities = helper(result['entities'])
       entities = [entity for entity in entities.get_result()]
       set_attr(context, write_entities_path, entities)
-      set_attr(context, write_cursor_path, cursor)
-      set_attr(context, write_more_path, more)
+      set_attr(context, write_cursor_path, result['cursor'])
+      set_attr(context, write_more_path, result['more'])
 
 
 class RecordWrite(ndb.BaseModel):
@@ -390,14 +377,19 @@ class CallbackExec(ndb.BaseModel):
     context.callbacks = []
 
 
-class BlobURL(ndb.BaseModel):  # @todo Not migrated!
+class BlobURL(ndb.BaseModel):
   
-  gs_bucket_name = ndb.SuperStringProperty('1', indexed=False, required=True)
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    upload_url = context.input.get('upload_url')
+    if not isinstance(self.config, dict):
+      self.config = {}
+    gs_bucket_name = self.config.get('bucket', None)
+    upload_url_path = self.config.get('url', 'input.upload_url')
+    save_path = self.config.get('save', 'output.upload_url')
+    upload_url = get_attr(context, upload_url_path)
     if upload_url:
-      context.output['upload_url'] = create_upload_url(upload_url, self.gs_bucket_name)
+      set_attr(context, save_path, create_upload_url(upload_url, gs_bucket_name))
       raise event.TerminateAction()
 
 
@@ -493,6 +485,7 @@ class RulePrepare(ndb.BaseModel):
     strict = self.config.get('strict', False)
     values = get_attr(context, values_path)
     entities = get_attr(context, entity_path)
+    util.logger('RulePrepare entity: %s' % entities)
     if isinstance(entities, dict):
       for key, entity in entities.items():
         context.entity = entities.get(key)
@@ -603,7 +596,7 @@ class DocumentWrite(ndb.BaseModel):  # @todo This plugin can be improved to deal
         fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
       if entity.key_parent != None:
         fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
-      for field_name in self.config.get('fields', [])
+      for field_name in self.config.get('fields', []):
         field_meta = get_meta(entity, field_name)
         field_value = get_attr(entity, field_name)
         field = None

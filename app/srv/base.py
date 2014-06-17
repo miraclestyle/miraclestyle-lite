@@ -6,8 +6,8 @@ Created on Jun 14, 2014
 '''
 
 from app import ndb
-from app.tools.safe_eval import safe_eval
-from app.tools.attribute_manipulator import set_attr, get_attr
+from app.lib.safe_eval import safe_eval  # @todo To rename lib to tools!
+from app.lib.attribute_manipulator import set_attr, get_attr  # @todo To rename lib to tools!
 
 
 class TerminateAction(Exception):
