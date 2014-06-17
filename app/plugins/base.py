@@ -76,11 +76,33 @@ class Set(ndb.BaseModel):  # @todo Not migrated!
 
 class Prepare(ndb.BaseModel):  # @todo Not migrated!
   
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   kind_id = ndb.SuperStringProperty('1', indexed=False)
   namespace_path = ndb.SuperStringProperty('2', indexed=False)
   parent_path = ndb.SuperStringProperty('3', indexed=False)
   
   def run(self, context):
+    if not isinstance(self.config, list):
+      self.config = []
+    if not len(self.config):
+      self.config = [{'model': 'models.'  + context.model.get_kind(),
+                      'parent': None,
+                      'namespace': None,
+                      'save': 'entities.' + context.model.get_kind(),
+                      'copy': 'values.' + context.model.get_kind()}]
+    for config in self.config:
+      model_path = config.get('model')
+      model = get_attr(context, model_path)
+      parent_path = self.config.get('parent')
+      namespace_path = self.config.get('namespace')
+      if parent_path != None:
+        parent = get_attr(context, parent_path)
+      save_path = config.get('save')
+      copy_path = config.get('copy')
+      set_attr(context, save_path, entity)
+      if copy_path != None:
+        set_attr(context, copy_path, copy.deepcopy(entity))
+        
     parent = None
     if self.kind_id != None:
       kind_id = self.kind_id
@@ -96,24 +118,35 @@ class Prepare(ndb.BaseModel):  # @todo Not migrated!
     context.values[kind_id] = context.models[kind_id](parent=parent, namespace=namespace)
 
 
-class Read(ndb.BaseModel):  # @todo Not migrated!
+class Read(ndb.BaseModel):
   
-  read_entities = ndb.SuperJsonProperty('1', indexed=False, default={})
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
     keys = []
-    values = []
-    if len(self.read_entities):
-      for key, value in self.read_entities.items():
-        keys.append(key)
-        values.append(get_attr(context, value))
-    else:
-      keys.append(context.model.get_kind())
-      values.append(get_attr(context, 'input.key'))
-    entities = ndb.get_multi(values)
-    for i, key in enumerate(keys):
-      context.entities[key] = entities[i]
-      context.values[key] = copy.deepcopy(context.entities[key])
+    if not isinstance(self.config, list):
+      self.config = []
+    if not len(self.config):
+      self.config = [{'source': 'input.key',
+                      'save': 'entities.' + context.model.get_kind(),
+                      'copy': 'values.' + context.model.get_kind()}]
+    for config in self.config:
+      source_path = config.get('source')
+      source = get_attr(context, source_path)
+      if source and isinstance(source, ndb.Key):
+        keys.append(source)
+    ndb.get_multi(keys)
+    for config in self.config:
+      source_path = config.get('source')
+      source = get_attr(context, source_path)
+      entity = None
+      if source and isinstance(source, ndb.Key):
+        entity = source.get()
+      save_path = config.get('save')
+      copy_path = config.get('copy')
+      set_attr(context, save_path, entity)
+      if copy_path != None:
+        set_attr(context, copy_path, copy.deepcopy(entity))
 
 
 class Write(ndb.BaseModel):
@@ -125,13 +158,10 @@ class Write(ndb.BaseModel):
     if not isinstance(self.config, dict):
       self.config = {}
     entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
-    # @todo How do we incorporate parent and/or namespace in keys of entities that have already been instantiated? Or perhaps we don't need this feature at all?
-    #parent_path = self.config.get('parent', None)
-    #namespace_path = self.config.get('namespace', None)
-    #if parent_path != None:
-      #parent = get_attr(context, parent_path)
-    #if namespace_path != None:
-      #namespace = get_attr(context, namespace_path)
+    parent_path = self.config.get('parent', None)
+    namespace_path = self.config.get('namespace', None)
+    parent = get_attr(context, parent_path)
+    namespace = get_attr(context, namespace_path)
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
       if isinstance(entities, dict):
@@ -144,6 +174,14 @@ class Write(ndb.BaseModel):
             entities.append(entity)
       elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):  # @todo Implement correct validation expression here!
         entities.append(entities)
+    # @todo Is this proper way to incorporate parent and/or namespace in keys of entities that have already been instantiated?
+    if parent != None:
+      namespace = None
+    for entity in entities:
+      if hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):
+        entity.set_key(entity.key.id(), parent=parent, namespace=namespace)
+      else:
+        entity.set_key(None, parent=parent, namespace=namespace)
     ndb.put_multi(entities)
 
 
@@ -196,10 +234,10 @@ class Search(ndb.BaseModel):
     argument = get_attr(context, argument_path)
     urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
     namespace = get_attr(context, namespace_path)
-    entities, cursor, more = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
-    set_attr(context, write_entities_path, entities)
-    set_attr(context, write_cursor_path, cursor)
-    set_attr(context, write_more_path, more)
+    result = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
+    set_attr(context, write_entities_path, result['entities'])
+    set_attr(context, write_cursor_path, result['cursor'])
+    set_attr(context, write_more_path, result['more'])
 
 
 class RecordRead(ndb.BaseModel):
@@ -238,7 +276,8 @@ class RecordRead(ndb.BaseModel):
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
       model = context.models['5']
-      argument = {'filters': [{'field': 'ancestor', 'operator': '==' 'value': entity.key}], 'order_by': {'field': 'logged', 'operator': 'desc'}}
+      argument = {'filters': [{'field': 'ancestor', 'operator': '==' 'value': entity.key}],
+                  'order_by': {'field': 'logged', 'operator': 'desc'}}
       urlsafe_cursor_path = self.config.get('read_cursor', 'input.records_cursor')
       page_size = self.config.get('page', 10)
       write_entities_path = self.config.get('write_entities', entity_path + '._records')
@@ -645,12 +684,12 @@ class DocumentSearch(ndb.BaseModel):
     write_more_path = self.config.get('write_more', 'search_more')
     argument = get_attr(context, argument_path)
     urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
-    results = document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None)
-    set_attr(context, write_documents_path, results['documents'])
-    set_attr(context, write_documents_count_path, results['documents_count'])
-    set_attr(context, write_documents_total_matches_path, results['total_matches'])
-    set_attr(context, write_cursor_path, results['search_cursor'])
-    set_attr(context, write_more_path, results['search_more'])
+    result = document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None)
+    set_attr(context, write_documents_path, result['documents'])
+    set_attr(context, write_documents_count_path, result['documents_count'])
+    set_attr(context, write_documents_total_matches_path, result['total_matches'])
+    set_attr(context, write_cursor_path, result['search_cursor'])
+    set_attr(context, write_more_path, result['search_more'])
 
 
 class DocumentDictConverter(ndb.BaseModel):

@@ -13,7 +13,7 @@ from google.appengine.api import search
 from app import ndb, util
 
 
-def ndb_search(model, argument, page_size=10, urlsafe_cursor=None, namespace=None, fetch_all=True, offset=0, limit=1000):
+def ndb_search(model, argument, page_size=None, urlsafe_cursor=None, namespace=None, fetch_all=True, offset=0, limit=1000):
   keys = None
   args = []
   kwds = {}

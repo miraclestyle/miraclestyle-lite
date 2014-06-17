@@ -24,7 +24,7 @@ def prepare_attr(entity, field_path):
       elif isinstance(entity, list):
         try:
           entity = entity[int(field)]
-        except KeyError as e:
+        except IndexError as e:
           return None
       else:
         try:
@@ -42,7 +42,10 @@ def set_attr(entity, field_path, value):
   if isinstance(entity, dict):
     entity[last_field] = value
   elif isinstance(entity, list):
-    entity[int(last_field)] = value
+    try:
+      entity[int(last_field)] = value
+    except:
+      return None
   else:
     setattr(entity, last_field, value)
 
