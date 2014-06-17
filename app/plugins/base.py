@@ -141,12 +141,12 @@ class Write(ndb.BaseModel):
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    entities = []
+    entities_to_write = []
     if not isinstance(self.config, dict):
       self.config = {}
     entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
     parent_path = self.config.get('parent', None)
-    namespace_path = self.config.get('namespace', None)
+    namespace_path = self.config.get('namespace', 'namespace')
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
     for entity_path in entity_paths:
@@ -154,22 +154,20 @@ class Write(ndb.BaseModel):
       if isinstance(entities, dict):
         for key, entity in entities.items():
           if entity and isinstance(entity, ndb.Model):
-            entities.append(entity)
+            entities_to_write.append(entity)
       elif isinstance(entities, list):
         for entity in entities:
           if entity and isinstance(entity, ndb.Model):
-            entities.append(entity)
+            entities_to_write.append(entity)
       elif entities and isinstance(entities, ndb.Model):
-        entities.append(entities)
+        entities_to_write.append(entities)
     # @todo Is this proper way to incorporate parent and/or namespace in keys of entities that have already been instantiated?
     if parent != None:
       namespace = None
-    for entity in entities:
-      if hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):
-        entity.set_key(entity.key.id(), parent=parent, namespace=namespace)
-      else:
+    for entity in entities_to_write:
+      if not hasattr(entity, 'key'):
         entity.set_key(None, parent=parent, namespace=namespace)
-    ndb.put_multi(entities)
+    ndb.put_multi(entities_to_write)
 
 
 class Delete(ndb.BaseModel):
@@ -295,11 +293,11 @@ class RecordWrite(ndb.BaseModel):
     for records_path in records_paths:
       result = get_attr(context, records_path)
       if isinstance(result, dict):
-        context.records.extend([record for key, record in result.items()])
-      if isinstance(result, list):
-        context.records.extend(result)
+        context.records.extend([(record, ) for key, record in result.items()])
+      elif isinstance(result, list):
+        context.records.extend([(record, ) for record in result])
       else:
-        context.records.append(result)
+        context.records.append((result, ))
     write_arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
       write_arguments[key] = get_attr(context, value)

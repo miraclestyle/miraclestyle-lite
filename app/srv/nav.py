@@ -190,7 +190,7 @@ class Widget(ndb.BaseExpando):
           plugins=[
             Delete(),
             #log.Entity(),
-            RecordWrite(config={'records': ['entites']}),
+            RecordWrite(config={'records': ['entities']}),
             RuleRead(),
             Set(config={'dynamic': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
