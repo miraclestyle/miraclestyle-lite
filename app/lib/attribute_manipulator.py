@@ -6,7 +6,7 @@ Created on Apr 24, 2014
 '''
 
 def prepare_attr(entity, field_path):
-  fields = field_path.split('.')
+  fields = str(field_path).split('.')
   last_field = fields[-1]
   drill = fields[:-1]
   i = -1
@@ -35,7 +35,10 @@ def prepare_attr(entity, field_path):
 
 
 def set_attr(entity, field_path, value):
-  entity, last_field = prepare_attr(entity, field_path)
+  result = prepare_attr(entity, field_path)
+  if result == None:
+    return None
+  entity, last_field = result
   if isinstance(entity, dict):
     entity[last_field] = value
   elif isinstance(entity, list):
@@ -45,13 +48,19 @@ def set_attr(entity, field_path, value):
 
 
 def get_attr(entity, field_path):
-  entity, last_field = prepare_attr(entity, field_path)
+  result = prepare_attr(entity, field_path)
+  if result == None:
+    return None
+  entity, last_field = result
   if isinstance(entity, dict):
-    return entity.get(last_field)
+    return entity.get(last_field, None)
   elif isinstance(entity, list):
-    return entity[int(last_field)]
+    try:
+      return entity[int(last_field)]
+    except:
+      return None
   else:
-    return getattr(entity, last_field)
+    return getattr(entity, last_field, None)
 
 
 def get_meta(entity, field_path):
