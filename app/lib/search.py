@@ -89,8 +89,8 @@ def ndb_search(model, argument, page_size=None, urlsafe_cursor=None, namespace=N
   return {'entities': entities, 'cursor': cursor, 'more': more}
 
 
-def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None):
-  index = search.Index(name=index_name)
+def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, namespace=None, fields=None):
+  index = search.Index(name=index_name, namespace=namespace)
   # Query String implementation start!
   query_string = ''
   sort_options = None

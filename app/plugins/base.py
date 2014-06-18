@@ -582,10 +582,9 @@ class DocumentWrite(ndb.BaseModel):  # @todo This plugin can be improved to deal
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
       doc_id = entity.key_urlsafe
-      if entity.key_namespace != None:
-        index_name = self.config.get('index_name', str(entity.key_namespace) + '-' + str(entity.get_kind()))
-      else:
-        index_name = self.config.get('index_name', str(entity.get_kind()))
+      namespace_path = self.config.get('namespace', entity_path + '.key_namespace')
+      namespace = get_attr(context, namespace_path)
+      index_name = self.config.get('index_name', str(entity.get_kind()))
       fields = []
       fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
       fields.append(search.AtomField(name='kind', value=entity.get_kind()))
@@ -621,7 +620,7 @@ class DocumentWrite(ndb.BaseModel):  # @todo This plugin can be improved to deal
           fields.append(field(name=field_name, value=field_value))
       if doc_id != None and len(fields):
         try:
-          index = search.Index(name=index_name)
+          index = search.Index(name=index_name, namespace=namespace)
           index.put(search.Document(doc_id=doc_id, fields=fields))  # Batching puts is more efficient than adding documents one at a time.
         except:
           pass
@@ -638,13 +637,12 @@ class DocumentDelete(ndb.BaseModel):  # @todo This plugin can be improved to dea
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
       doc_id = entity.key_urlsafe
-      if entity.key_namespace != None:
-        index_name = self.config.get('index_name', str(entity.key_namespace) + '-' + str(entity.get_kind()))
-      else:
-        index_name = self.config.get('index_name', str(entity.get_kind()))
+      namespace_path = self.config.get('namespace', entity_path + '.key_namespace')
+      namespace = get_attr(context, namespace_path)
+      index_name = self.config.get('index_name', str(entity.get_kind()))
       if doc_id != None:
         try:
-          index = search.Index(name=index_name)
+          index = search.Index(name=index_name, namespace=namespace)
           index.delete(doc_id)  # Batching deletes is more efficient than handling them one at a time.
         except:
           pass
@@ -657,13 +655,9 @@ class DocumentSearch(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
-    kind_id = self.config.get('kind', str(context.model.get_kind()))
     namespace_path = self.config.get('namespace', 'namespace')
     namespace = get_attr(context, namespace_path)
-    if namespace != None:
-      index_name = self.config.get('index', namespace + '-' + kind_id)
-    else:
-      index_name = self.config.get('index', kind_id)
+    index_name = self.config.get('index', str(context.model.get_kind()))
     argument_path = self.config.get('argument', 'input.search')
     urlsafe_cursor_path = self.config.get('read_cursor', 'input.search_cursor')
     page_size = self.config.get('page', 10)
@@ -675,7 +669,7 @@ class DocumentSearch(ndb.BaseModel):
     write_more_path = self.config.get('write_more', 'search_more')
     argument = get_attr(context, argument_path)
     urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
-    result = document_search(index_name, argument, page_size=10, urlsafe_cursor=None, fields=None)
+    result = document_search(index_name, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor, namespace=namespace, fields=fields)
     set_attr(context, write_documents_path, result['documents'])
     set_attr(context, write_documents_count_path, result['documents_count'])
     set_attr(context, write_documents_total_matches_path, result['total_matches'])
