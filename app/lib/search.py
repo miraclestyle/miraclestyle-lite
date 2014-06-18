@@ -106,7 +106,7 @@ def ndb_search(model, argument, page_size=None, urlsafe_cursor=None, namespace=N
           more = False
       cursor = None
       more = False
-  return {'entities': entities, 'cursor': cursor, 'more': more}
+  return {'entities': entities, 'search_cursor': cursor, 'search_more': more}
 
 
 def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, namespace=None, fields=None):
@@ -277,7 +277,7 @@ def documents_write(indexes, documents_per_index=200):
                 index = search.Index(name=name, namespace=namespace)
               index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
             except Exception as e:
-              util.logger('INDEX FAILED, ERROR: %s' % e)
+              util.logger('INDEX FAILED! ERROR: %s' % e)
               pass
 
 
@@ -296,5 +296,5 @@ def documents_delete(indexes, documents_per_index=200):
                 index = search.Index(name=name, namespace=namespace)
               index.delete(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
             except Exception as e:
-              util.logger('INDEX FAILED, ERROR: %s' % e)
+              util.logger('INDEX FAILED! ERROR: %s' % e)
               pass
