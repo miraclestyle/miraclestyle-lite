@@ -18,13 +18,22 @@ def create_upload_url(upload_url, gs_bucket_name):
   return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
 
 
-def parse(blob_keys):
+def parse(entities):
   results = []
-  if not isinstance(blob_keys, (list, tuple)):
-    blob_keys = [blob_keys]
-  for blob_key in blob_keys:
-    if isinstance(blob_key, blobstore.BlobKey):
-      results.append(blob_key)
+  def process_entity(entity):
+    if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
+      results.append(entity.image)
+    elif entity and isinstance(entity, blobstore.BlobKey):
+      results.append(entity)
+  
+  if isinstance(entities, dict):
+    for key, entity in entities.items():
+      process_entity(entity)
+  elif isinstance(entities, (list, tuple)):
+    for entity in entities:
+      process_entity(entity)
+  else:
+    process_entity(entities)
   return results
 
 

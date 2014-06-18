@@ -351,7 +351,7 @@ class CallbackExec(ndb.BaseModel):
     context.callbacks = []
 
 
-class BlobURL(ndb.BaseModel):  # @todo Not migrated!
+class BlobURL(ndb.BaseModel):
   
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -359,68 +359,37 @@ class BlobURL(ndb.BaseModel):  # @todo Not migrated!
     if not isinstance(self.config, dict):
       self.config = {}
     gs_bucket_name = self.config.get('bucket', None)
-    upload_url_path = self.config.get('url', 'input.upload_url')
-    save_path = self.config.get('save', 'output.upload_url')
-    upload_url = get_attr(context, upload_url_path)
+    upload_url = context.input.get('upload_url')
     if upload_url:
-      set_attr(context, save_path, create_upload_url(upload_url, gs_bucket_name))
-      raise event.TerminateAction()
+      context.blob_url = create_upload_url(upload_url, gs_bucket_name)
+      raise event.TerminateAction()  # @todo Migrate this to ndb probably!
 
 
-class BlobUpdate(ndb.BaseModel):  # @todo Not migrated!
-  
-  blob_delete = ndb.SuperStringProperty('1', indexed=False)
-  blob_write = ndb.SuperStringProperty('2', indexed=False)
-  
-  def run(self, context):
-    if self.blob_delete:
-      blob_delete = get_attr(context, self.blob_delete)
-    else:
-      blob_delete = context.blob_delete
-    if blob_delete:
-      context.blob_unused.extend(parse(blob_delete))
-    if self.blob_write:
-      blob_write = get_attr(context, self.blob_write)
-    else:
-      blob_write = context.blob_write
-    if blob_write:
-      blob_write = parse(blob_write)
-      for blob_key in blob_write:
-        if blob_key in context.blob_unused:
-          context.blob_unused.remove(blob_key)
-
-
-class BlobAlterImage(ndb.BaseModel):  # @todo Not migrated!
-  
-  source = ndb.SuperStringProperty('1', indexed=False)
-  destination = ndb.SuperStringProperty('2', indexed=False)
-  config = ndb.SuperJsonProperty('3', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if self.source:
-      original_image = get_attr(context, self.source)
-    else:
-      original_image = context.blob_transform
-    if original_image:
-      results = alter_image(original_image, **self.config)
-      if results.get('blob_delete'):
-        context.blob_delete.append(results['blob_delete'])
-      if results.get('new_image'):
-        set_attr(context, self.destination, results['new_image'])
-
-
-class BlobAlterImages(ndb.BaseModel):
+class BlobUpdate(ndb.BaseModel):
   
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    @ndb.tasklet
-    def alter_image_async(image, config):
-      result = yield alter_image(image, **config)
-      raise ndb.Return(result)
-    
-    futures = []
-    write_entities = []
+    if not isinstance(self.config, dict):
+      self.config = {}
+    delete_path = self.config.get('delete', 'blob_delete')
+    write_path = self.config.get('write', 'blob_write')
+    blob_delete = get_attr(context, delete_path)
+    blob_write = get_attr(context, write_path)
+    if blob_delete:
+      context.blob_unused.extend(parse(blob_delete))
+    if blob_write:
+      blob_keys = parse(blob_write)
+      for blob_key in blob_keys:
+        if blob_key in context.blob_unused:
+          context.blob_unused.remove(blob_key)
+
+
+class BlobAlterImage(ndb.BaseModel):
+  
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
     read_path = self.config.get('read', None)
@@ -428,26 +397,31 @@ class BlobAlterImages(ndb.BaseModel):
     config = self.config.get('config', None)
     entities = get_attr(context, read_path)
     if isinstance(entities, dict):
+      write_entities = {}
       for key, entity in entities.items():
         if entity and isinstance(entity, context.models['69']):
-          future = alter_image_async(entity, **config)
-          futures.append(future)
+          result = alter_image(entity, **config)
+          if result.get('save'):
+            write_entities[key] = result['save']
+          if result.get('delete'):
+            context.blob_delete.append(result['delete'])
+      set_attr(context, write_path, write_entities)
     elif isinstance(entities, list):
+      write_entities = []
       for entity in entities:
         if entity and isinstance(entity, context.models['69']):
-          future = alter_image_async(entity, **config)
-          futures.append(future)
+          result = alter_image(entity, **config)
+          if result.get('save'):
+            write_entities.append(result['save'])
+          if result.get('delete'):
+            context.blob_delete.append(result['delete'])
+      set_attr(context, write_path, write_entities)
     elif entities and isinstance(entities, context.models['69']):
-      future = alter_image_async(entities, **config)
-      futures.append(future)
-    ndb.Future.wait_all(futures)
-    for future in futures:
-      result = future.get_result()
+      result = alter_image(entities, **config)
       if result.get('save'):
-        write_entities.append(result['save'])
+        set_attr(context, write_path, result['save'])
       if result.get('delete'):
         context.blob_delete.append(result['delete'])
-    set_attr(context, write_path, write_entities)
 
 
 class ActionDenied(Exception):
