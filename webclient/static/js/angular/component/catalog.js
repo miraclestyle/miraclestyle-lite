@@ -169,7 +169,7 @@ MainApp
 	        	},
                 'completed': function (data) {
                     this.entity._images.extend(data['entity']['_images']);
-                    this.entity.images_cursor = this.entity._images.length;
+                    this.entity.search_cursor = this.entity._images.length;
                 },
                 'removeImage': function (image) {
                 	console.log(this);
@@ -178,16 +178,16 @@ MainApp
                 'getImages': function () {
                     var that = this;
 
-                    if(that.entity.images_more && !that.entity.loading_new) {
+                    if(that.entity.search_more && !that.entity.loading_new) {
 
-                        that.entity.images_cursor = that.entity._images.length;
+                        that.entity.search_cursor = that.entity._images.length;
 
                         that.entity.loading_new = true;
 
                         Endpoint.post('read', kind, that.entity).then(function (response) {
                             var data = response.data;
                             that.entity._images.extend(data['entity']['_images']);
-                            that.entity.images_more = data['images_more'];
+                            that.entity.search_more = data['search_more'];
                             that.entity.loading_new = false;
                         });
 
@@ -207,7 +207,7 @@ MainApp
                 	
                     var that = this;
 
-                    this.entity.images_more = data['images_more'];
+                    this.entity.search_more = data['search_more'];
 
                     this.addProducts = function () {
                     	
@@ -231,20 +231,20 @@ MainApp
                                     $scope.entity = angular.copy(that.entity);
 
                                     $scope.getImages = function () {
-                                        if($scope.entity.images_more && !$scope.entity.loading_new) {
-                                            $scope.entity.images_cursor = $scope.entity._images.length;
+                                        if($scope.entity.search_more && !$scope.entity.loading_new) {
+                                            $scope.entity.search_cursor = $scope.entity._images.length;
 
                                             $scope.entity.loading_new = true;
 
                                             Endpoint.post('read', kind, $scope.entity).then(function (response) {
                                                 var data = response.data;
                                                 var imgs = data['entity']['_images'];
-                                                var more = data['images_more'];
+                                                var more = data['search_more'];
                                                 $scope.entity._images.extend(imgs);
                                                 $scope.live_entity._images.extend(imgs);
                                                 
-                                                $scope.live_entity.images_more = more;
-                                                $scope.entity.images_more = more;
+                                                $scope.live_entity.search_more = more;
+                                                $scope.entity.search_more = more;
                                                 $scope.entity.loading_new = false;
                                             });
 

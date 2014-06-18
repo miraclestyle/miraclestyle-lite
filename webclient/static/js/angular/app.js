@@ -566,13 +566,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	if (!$scope.history) return false;
  
     $scope.logs = [];
-    $scope.history.args.log_read_more = true;
+    $scope.history.args.search_more = true;
     
 	$scope.commander = {'isOpen' : false, 'first' : false, 'loading' : false};
 	  
 	var loadMore = function (that)
 	{ 
-			if (!$scope.commander.loading && $scope.history.args.log_read_more)
+			if (!$scope.commander.loading && $scope.history.args.search_more)
 			{
 				$scope.commander.loading = true;
 				
@@ -584,12 +584,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 					     $scope.logs.push(value);
 					});
  
-					$scope.history.args.log_read_cursor = data.log_read_cursor;
-					$scope.history.args.log_read_more = data.log_read_more;
+					$scope.history.args.search_cursor = data.search_cursor;
+					$scope.history.args.search_more = data.search_more;
 					
-					if (!$scope.history.args.log_read_cursor)
+					if (!$scope.history.args.search_cursor)
 				    {
-				    	delete $scope.history.args.log_read_cursor;
+				    	delete $scope.history.args.search_more;
 				    }	
 					 
 					$scope.commander.loading = false;
