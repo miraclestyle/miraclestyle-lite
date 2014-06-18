@@ -409,35 +409,45 @@ class BlobAlterImage(ndb.BaseModel):  # @todo Not migrated!
         set_attr(context, self.destination, results['new_image'])
 
 
-class BlobAlterImages(ndb.BaseModel):  # @todo Not migrated!
+class BlobAlterImages(ndb.BaseModel):
   
-  source = ndb.SuperStringProperty('1', indexed=False)
-  destination = ndb.SuperStringProperty('2', indexed=False)
-  config = ndb.SuperJsonProperty('3', indexed=False, required=True, default={})
+  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     @ndb.tasklet
-    def alter_image_async(source, destination):
-      @ndb.tasklet
-      def generate():
-        original_image = get_attr(context, source)
-        results = alter_image(original_image, **self.config)
-        if results.get('blob_delete'):
-          context.blob_delete.append(results['blob_delete'])
-        if results.get('new_image'):
-          set_attr(context, destination, results['new_image'])
-        raise ndb.Return(True)
-      yield generate()
-      raise ndb.Return(True)
+    def alter_image_async(image, config):
+      result = yield alter_image(image, **config)
+      raise ndb.Return(result)
     
     futures = []
-    images = get_attr(context, self.source)
-    for i, image in enumerate(images):
-      source = '%s.%s' % (self.source, i)
-      destination = '%s.%s' % (self.destination, i)
-      future = alter_image_async(source, destination)
+    write_entities = []
+    if not isinstance(self.config, dict):
+      self.config = {}
+    read_path = self.config.get('read', None)
+    write_path = self.config.get('write', None)
+    config = self.config.get('config', None)
+    entities = get_attr(context, read_path)
+    if isinstance(entities, dict):
+      for key, entity in entities.items():
+        if entity and isinstance(entity, context.models['69']):
+          future = alter_image_async(entity, **config)
+          futures.append(future)
+    elif isinstance(entities, list):
+      for entity in entities:
+        if entity and isinstance(entity, context.models['69']):
+          future = alter_image_async(entity, **config)
+          futures.append(future)
+    elif entities and isinstance(entities, context.models['69']):
+      future = alter_image_async(entities, **config)
       futures.append(future)
-    return ndb.Future.wait_all(futures)
+    ndb.Future.wait_all(futures)
+    for future in futures:
+      result = future.get_result()
+      if result.get('save'):
+        write_entities.append(result['save'])
+      if result.get('delete'):
+        context.blob_delete.append(result['delete'])
+    set_attr(context, write_path, write_entities)
 
 
 class ActionDenied(Exception):

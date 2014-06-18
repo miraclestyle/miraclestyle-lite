@@ -28,16 +28,16 @@ def parse(blob_keys):
   return results
 
 
-def alter_image(original_image, **config):
-  results = {}
+def alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
+  result = {}
   new_image = copy.deepcopy(original_image)
   original_gs_object_name = new_image.gs_object_name
   new_gs_object_name = new_image.gs_object_name
-  if config.get('copy'):
-    new_gs_object_name = '%s_%s' % (new_image.gs_object_name, config['sufix'])
+  if make_copy:
+    new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
   blob_key = None
   try:
-    if config.get('copy'):
+    if make_copy:
       readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
       blob = readonly_blob.read()
       readonly_blob.close()
@@ -47,16 +47,16 @@ def alter_image(original_image, **config):
       blob = readonly_blob.read()
       readonly_blob.close()
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-    if config.get('transform'):
+    if transform:
       image = images.Image(image_data=blob)
-      image.resize(config['width'],
-                   config['height'],
-                   crop_to_fit=config['crop_to_fit'],
-                   crop_offset_x=config['crop_offset_x'],
-                   crop_offset_y=config['crop_offset_y'])
+      image.resize(width,
+                   height,
+                   crop_to_fit=crop_to_fit,
+                   crop_offset_x=crop_offset_x,
+                   crop_offset_y=crop_offset_y)
       blob = image.execute_transforms(output_encoding=image.format)
-      new_image.width = config['width']
-      new_image.height = config['height']
+      new_image.width = width
+      new_image.height = height
       new_image.size = len(blob)
     writable_blob.write(blob)
     writable_blob.close()
@@ -68,8 +68,8 @@ def alter_image(original_image, **config):
   except Exception as e:
     util.logger(e, 'exception')
     if blob_key != None:
-      results['blob_delete'] = blob_key
+      result['delete'] = blob_key
   else:
-    results['new_image'] = new_image
+    result['save'] = new_image
   finally:
-    return results
+    return result
