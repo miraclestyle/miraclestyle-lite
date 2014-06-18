@@ -6,11 +6,31 @@ Created on Jun 16, 2014
 '''
 
 import string
+import math
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import search
 
 from app import ndb, util
+
+
+__SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
+                   'SuperImageKeyProperty': search.AtomField,
+                   'SuperBlobKeyProperty': search.AtomField,
+                   'SuperBooleanProperty': search.AtomField,
+                   'SuperStringProperty': search.TextField,
+                   'SuperJsonProperty': search.TextField,
+                   'SuperTextProperty': search.HtmlField,
+                   'SuperFloatProperty': search.NumberField,
+                   'SuperIntegerProperty': search.NumberField,
+                   'SuperDecimalProperty': search.NumberField,
+                   'SuperDateTimeProperty': search.DateField,
+                   'geo': search.GeoField}
+
+
+def get_search_field(field_type):
+  global __SEARCH_FIELDS
+  return __SEARCH_FIELDS.get(field_type)
 
 
 def ndb_search(model, argument, page_size=None, urlsafe_cursor=None, namespace=None, fetch_all=True, offset=0, limit=1000):
@@ -161,3 +181,120 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, nam
             'total_matches': total_matches,
             'search_cursor': search_cursor,
             'search_more': search_more}
+
+
+def document_from_entity(entity, fields={}):
+  if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+    doc_id = entity.key_urlsafe
+    doc_fields = []
+    doc_fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
+    doc_fields.append(search.AtomField(name='kind', value=entity.get_kind()))
+    doc_fields.append(search.AtomField(name='id', value=entity.key_id_str))
+    if entity.key_namespace != None:
+      doc_fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
+    if entity.key_parent != None:
+      doc_fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
+    for field_name, field_path in fields.items():
+      field_meta = get_meta(entity, field_path)
+      field_value = get_attr(entity, field_path)
+      field = None
+      if field_meta._repeated:
+        if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+          field_value = ' '.join(map(lambda x: x.urlsafe(), field_value))
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty']:
+          field_value = ' '.join(map(lambda x: str(x), field_value))
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperStringProperty', 'SuperFloatProperty', 'SuperIntegerProperty', 'SuperDecimalProperty', 'SuperDateTimeProperty']:
+          field_value = ' '.join(field_value)
+          field = get_search_field('SuperStringProperty')
+        elif field_meta.__class__.__name__ in ['SuperTextProperty']:
+          field_value = ' '.join(field_value)
+          field = get_search_field('SuperTextProperty')
+      else:
+        if field_meta.__class__.__name__ in ['SuperKeyProperty']:
+          field_value = field_value.urlsafe()
+        elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty', 'SuperJsonProperty']:
+          field_value = str(field_value)
+        field = get_search_field(field_meta.__class__.__name__)
+      if field != None:
+        doc_fields.append(field(name=field_name, value=field_value))
+    if doc_id != None and len(doc_fields):
+      return search.Document(doc_id=doc_id, fields=doc_fields)
+
+
+def documents_to_indexes(documents, index_name=None):
+  indexes = {}
+  for document in documents:
+    namespace = 'global'
+    if index_name != None:
+      name = index_name
+    else:
+      fields = document.fields
+      for field in fields:
+        if field.name == 'namespace':
+          namespace = field.value
+        if field.name == 'kind':
+          name = field.value
+    if namespace not in indexes:
+      indexes[namespace] = {}
+    if name not in indexes[namespace]:
+      indexes[namespace][name] = []
+    indexes[namespace][name].append(document)
+  return indexes
+
+
+def entities_to_indexes(entities, index_name=None):
+  indexes = {}
+  for entity in entities:
+    namespace = 'global'
+    if index_name != None:
+      name = index_name
+    else:
+      if entity.key_namespace != None:
+        namespace = entity.key_namespace
+      name = entity.get_kind()
+    if namespace not in indexes:
+      indexes[namespace] = {}
+    if name not in indexes[namespace]:
+      indexes[namespace][name] = []
+    indexes[namespace][name].append(entity.key_urlsafe)
+  return indexes
+
+
+def documents_write(indexes, documents_per_index=200):
+  for namespace, names in indexes.items():
+    for name, documents in names.items():
+      if len(documents):
+        cycles = int(math.ceil(len(documents) / documents_per_index))
+        for i in range(0, cycles + 1):
+          documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+          if len(documents_partition):
+            try:
+              if namespace == 'global':
+                index = search.Index(name=name, namespace=None)
+              else:
+                index = search.Index(name=name, namespace=namespace)
+              index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
+            except Exception as e:
+              util.logger('INDEX FAILED, ERROR: %s' % e)
+              pass
+
+
+def documents_delete(indexes, documents_per_index=200):
+  for namespace, names in indexes.items():
+    for name, documents in names.items():
+      if len(documents):
+        cycles = int(math.ceil(len(documents) / documents_per_index))
+        for i in range(0, cycles + 1):
+          documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+          if len(documents_partition):
+            try:
+              if namespace == 'global':
+                index = search.Index(name=name, namespace=None)
+              else:
+                index = search.Index(name=name, namespace=namespace)
+              index.delete(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
+            except Exception as e:
+              util.logger('INDEX FAILED, ERROR: %s' % e)
+              pass

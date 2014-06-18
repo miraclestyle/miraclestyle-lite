@@ -11,13 +11,12 @@ import string
 import collections
 
 from google.appengine.api import taskqueue
-from google.appengine.api import search
 
 from app import ndb, util
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta  # @todo To rename lib to tools!
 from app.lib.blob_manipulator import create_upload_url, parse, alter_image  # @todo To rename lib to tools!
 from app.lib.rule_manipulator import prepare, read, write, _is_structured_field  # @todo To rename lib to tools!
-from app.lib.search import ndb_search, document_search  # @todo To rename lib to tools!
+from app.lib.search import ndb_search, document_search, document_from_entity, documents_to_indexes, entities_to_indexes, documents_write, documents_delete  # @todo To rename lib to tools!
 
 
 class Context(ndb.BaseModel):
@@ -141,7 +140,7 @@ class Write(ndb.BaseModel):
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    entities_to_write = []
+    write_entities = []
     if not isinstance(self.config, dict):
       self.config = {}
     entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
@@ -154,20 +153,20 @@ class Write(ndb.BaseModel):
       if isinstance(entities, dict):
         for key, entity in entities.items():
           if entity and isinstance(entity, ndb.Model):
-            entities_to_write.append(entity)
+            write_entities.append(entity)
       elif isinstance(entities, list):
         for entity in entities:
           if entity and isinstance(entity, ndb.Model):
-            entities_to_write.append(entity)
+            write_entities.append(entity)
       elif entities and isinstance(entities, ndb.Model):
-        entities_to_write.append(entities)
-    # @todo Is this proper way to incorporate parent and/or namespace in keys of entities that have already been instantiated?
+        write_entities.append(entities)
+    # @todo This parent/namespace block needs improvement!
     if parent != None:
       namespace = None
-    for entity in entities_to_write:
+    for entity in write_entities:
       if not hasattr(entity, 'key'):
         entity.set_key(None, parent=parent, namespace=namespace)
-    ndb.put_multi(entities_to_write)
+    ndb.put_multi(write_entities)
 
 
 class Delete(ndb.BaseModel):
@@ -175,7 +174,7 @@ class Delete(ndb.BaseModel):
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    keys = []
+    delete_keys = []
     if not isinstance(self.config, dict):
       self.config = {}
     entity_paths = self.config.get('paths', ['entities.' + str(context.model.get_kind())])
@@ -184,20 +183,20 @@ class Delete(ndb.BaseModel):
       if isinstance(entities, dict):
         for key, entity in entities.items():
           if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-            keys.append(entity.key)
+            delete_keys.append(entity.key)
           elif entity and isinstance(entity, ndb.Key):
-            keys.append(entity)
+            delete_keys.append(entity)
       elif isinstance(entities, list):
         for entity in entities:
           if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-            keys.append(entity.key)
+            delete_keys.append(entity.key)
           elif entity and isinstance(entity, ndb.Key):
-            keys.append(entity)
+            delete_keys.append(entity)
       elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):
-        keys.append(entities.key)
+        delete_keys.append(entities.key)
       elif entities and isinstance(entities, ndb.Key):
-        keys.append(entities)
-    ndb.delete_multi(keys)
+        delete_keys.append(entities)
+    ndb.delete_multi(delete_keys)
 
 
 class Search(ndb.BaseModel):
@@ -219,7 +218,7 @@ class Search(ndb.BaseModel):
     argument = get_attr(context, argument_path)
     urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
     namespace = get_attr(context, namespace_path)
-    result = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
+    result = ndb_search(model, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor, namespace=namespace)
     set_attr(context, write_entities_path, result['entities'])
     set_attr(context, write_cursor_path, result['cursor'])
     set_attr(context, write_more_path, result['more'])
@@ -269,7 +268,7 @@ class RecordRead(ndb.BaseModel):
       write_cursor_path = self.config.get('write_cursor', 'records_cursor')
       write_more_path = self.config.get('write_more', 'records_more')
       urlsafe_cursor = get_attr(context, urlsafe_cursor_path)
-      result = ndb_search(model, argument, page_size, urlsafe_cursor)
+      result = ndb_search(model, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor)
       entities = helper(result['entities'])
       entities = [entity for entity in entities.get_result()]
       set_attr(context, write_entities_path, entities)
@@ -287,7 +286,7 @@ class RecordWrite(ndb.BaseModel):
     model = context.models['5']
     records = []
     write_arguments = {}
-    records_paths = self.config.get('records', [])
+    records_paths = self.config.get('paths', [])
     static_arguments = self.config.get('static', {})
     dynamic_arguments = self.config.get('dynamic', {})
     for records_path in records_paths:
@@ -552,100 +551,51 @@ class RuleExec(ndb.BaseModel):
       raise ActionDenied(context)
 
 
-__SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
-                   'SuperImageKeyProperty': search.AtomField,
-                   'SuperBlobKeyProperty': search.AtomField,
-                   'SuperBooleanProperty': search.AtomField,
-                   'SuperStringProperty': search.TextField,
-                   'SuperJsonProperty': search.TextField,
-                   'SuperTextProperty': search.HtmlField,
-                   'SuperFloatProperty': search.NumberField,
-                   'SuperIntegerProperty': search.NumberField,
-                   'SuperDecimalProperty': search.NumberField,
-                   'SuperDateTimeProperty': search.DateField,
-                   'geo': search.GeoField}
-
-
-def get_search_field(field_type):
-  global __SEARCH_FIELDS
-  return __SEARCH_FIELDS.get(field_type)
-
-
-class DocumentWrite(ndb.BaseModel):  # @todo This plugin can be improved to deal with multiple entities at the time!
+class DocumentWrite(ndb.BaseModel):
   
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
+    documents = []
     entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
-    entity = get_attr(context, entity_path)
-    if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      doc_id = entity.key_urlsafe
-      namespace_path = self.config.get('namespace', entity_path + '.key_namespace')
-      namespace = get_attr(context, namespace_path)
-      index_name = self.config.get('index_name', str(entity.get_kind()))
-      fields = []
-      fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
-      fields.append(search.AtomField(name='kind', value=entity.get_kind()))
-      fields.append(search.AtomField(name='id', value=entity.key_id_str))
-      if entity.key_namespace != None:
-        fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
-      if entity.key_parent != None:
-        fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
-      for field_name in self.config.get('fields', []):
-        field_meta = get_meta(entity, field_name)
-        field_value = get_attr(entity, field_name)
-        field = None
-        if field_meta._repeated:
-          if field_meta.__class__.__name__ in ['SuperKeyProperty']:
-            field_value = ' '.join(map(lambda x: x.urlsafe(), field_value))
-            field = get_search_field('SuperStringProperty')
-          elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty']:
-            field_value = ' '.join(map(lambda x: str(x), field_value))
-            field = get_search_field('SuperStringProperty')
-          elif field_meta.__class__.__name__ in ['SuperStringProperty', 'SuperFloatProperty', 'SuperIntegerProperty', 'SuperDecimalProperty', 'SuperDateTimeProperty']:
-            field_value = ' '.join(field_value)
-            field = get_search_field('SuperStringProperty')
-          elif field_meta.__class__.__name__ in ['SuperTextProperty']:
-            field_value = ' '.join(field_value)
-            field = get_search_field('SuperTextProperty')
-        else:
-          if field_meta.__class__.__name__ in ['SuperKeyProperty']:
-            field_value = field_value.urlsafe()
-          elif field_meta.__class__.__name__ in ['SuperImageKeyProperty', 'SuperBlobKeyProperty', 'SuperBooleanProperty', 'SuperJsonProperty']:
-            field_value = str(field_value)
-          field = get_search_field(field_meta.__class__.__name__)
-        if field != None:
-          fields.append(field(name=field_name, value=field_value))
-      if doc_id != None and len(fields):
-        try:
-          index = search.Index(name=index_name, namespace=namespace)
-          index.put(search.Document(doc_id=doc_id, fields=fields))  # Batching puts is more efficient than adding documents one at a time.
-        except:
-          pass
+    fields = self.config.get('fields', {})
+    max_doc = self.config.get('max_doc', 200)
+    entities = get_attr(context, entity_path)
+    if isinstance(entities, dict):
+      for key, entity in entities.items():
+        documents.append(document_from_entity(entity, fields))
+    elif isinstance(entities, list):
+      for entity in entities:
+        documents.append(document_from_entity(entity, fields))
+    else:
+      documents.append(document_from_entity(entities, fields))
+    indexes = documents_to_indexes(documents)
+    documents_write(indexes, documents_per_index=max_doc)
 
 
-class DocumentDelete(ndb.BaseModel):  # @todo This plugin can be improved to deal with multiple entities at the time!
+class DocumentDelete(ndb.BaseModel):
   
   config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
+    documents = []
     entity_path = self.config.get('path', 'entities.' + str(context.model.get_kind()))
-    entity = get_attr(context, entity_path)
-    if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      doc_id = entity.key_urlsafe
-      namespace_path = self.config.get('namespace', entity_path + '.key_namespace')
-      namespace = get_attr(context, namespace_path)
-      index_name = self.config.get('index_name', str(entity.get_kind()))
-      if doc_id != None:
-        try:
-          index = search.Index(name=index_name, namespace=namespace)
-          index.delete(doc_id)  # Batching deletes is more efficient than handling them one at a time.
-        except:
-          pass
+    max_doc = self.config.get('max_doc', 200)
+    entities = get_attr(context, entity_path)
+    if isinstance(entities, dict):
+      for key, entity in entities.items():
+        documents.append(entity)
+    elif isinstance(entities, list):
+      for entity in entities:
+        documents.append(entity)
+    else:
+      documents.append(entities)
+    indexes = entities_to_indexes(documents)
+    documents_delete(indexes, documents_per_index=max_doc)
 
 
 class DocumentSearch(ndb.BaseModel):

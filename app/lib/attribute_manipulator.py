@@ -67,6 +67,9 @@ def get_attr(entity, field_path):
 
 
 def get_meta(entity, field_path):
-  entity, last_field = prepare_attr(entity, field_path)
+  result = prepare_attr(entity, field_path)
+  if result == None:
+    return None
+  entity, last_field = result
   if not isinstance(entity, dict) and not isinstance(entity, list):
     return getattr(entity.__class__, last_field)
