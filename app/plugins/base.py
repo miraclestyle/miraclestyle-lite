@@ -416,7 +416,7 @@ class BlobAlterImage(ndb.BaseModel):
           if result.get('delete'):
             context.blob_delete.append(result['delete'])
       set_attr(context, write_path, write_entities)
-    elif entities and isinstance(entities, context.models['69']):
+    elif entities and hasattr(entities, 'image'):  # @todo isinstance(entity, context.models['69']) fails, we need better validation technique for this!
       result = alter_image(entities, **config)
       if result.get('save'):
         set_attr(context, write_path, result['save'])

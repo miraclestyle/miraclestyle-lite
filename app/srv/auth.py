@@ -13,6 +13,7 @@ from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
 from app.srv import log as ndb_log
 from app.srv import blob as ndb_blob
 from app.plugins import common, rule, log, callback, blob, auth
+from app.plugins.base import BlobAlterImage
 
 
 class Session(ndb.BaseModel):
@@ -508,10 +509,14 @@ class Domain(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            blob.AlterImage(source='input.domain_logo',
-                            destination='input.domain_logo',
-                            config={'transform': True, 'width': 240, 'height': 100,
-                                    'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
+            BlobAlterImage(config={'read': 'input.domain_logo',
+                                   'write': 'input.domain_logo',
+                                   'config': {'transform': True, 'width': 240, 'height': 100,
+                                              'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            #blob.AlterImage(source='input.domain_logo',
+                            #destination='input.domain_logo',
+                            #config={'transform': True, 'width': 240, 'height': 100,
+                                    #'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
             auth.DomainCreate(),
             blob.Update(blob_write='input.domain_logo.image'),
             rule.Read(),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
@@ -569,10 +574,14 @@ class Domain(ndb.BaseExpando):
             common.Set(dynamic_values={'tmp.original_logo': 'entities.6.logo'}),
             rule.Write(),
             common.Set(dynamic_values={'tmp.new_logo': 'entities.6.logo'}),
-            blob.AlterImage(source='entities.6.logo',
-                            destination='entities.6.logo',
-                            config={'transform': True, 'width': 240, 'height': 100,
-                                    'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
+            BlobAlterImage(config={'read': 'entities.6.logo',
+                                   'write': 'entities.6.logo',
+                                   'config': {'transform': True, 'width': 240, 'height': 100,
+                                              'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            #blob.AlterImage(source='entities.6.logo',
+                            #destination='entities.6.logo',
+                            #config={'transform': True, 'width': 240, 'height': 100,
+                                    #'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
             common.Write(),
             log.Entity(),
             log.Write(),
