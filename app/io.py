@@ -6,13 +6,11 @@ Created on Dec 17, 2013
 '''
 
 import cgi
-import importlib
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
 from app import ndb, util
-from app.srv import event
 
 
 class InputError(Exception):
@@ -62,8 +60,7 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models, so it must be called before executing anything!'''
-    from app.opt import buyer
-    from app.srv import auth, blob, cron, event, location, log, marketing, nav, notify, product, rule, setup, uom
+    from app.models import auth, base, buyer, cron, location, marketing, nav, notify, product, rule, setup, uom
   
   @classmethod
   def get_schema(cls):
@@ -166,7 +163,7 @@ class Engine:
                 ndb.transaction(lambda: execute_plugins(group.plugins), xg=True)
               else:
                 execute_plugins(group.plugins)
-      except event.TerminateAction as e:
+      except ndb.TerminateAction as e:
         pass
       except Exception as e:
         raise
