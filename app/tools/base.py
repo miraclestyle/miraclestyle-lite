@@ -18,7 +18,7 @@ from google.appengine.api import images
 from google.appengine.ext import blobstore
 
 from app import ndb, util
-from app.tools.manipulator import normalize
+from app.tools.manipulator import get_attr, get_meta, normalize
 
 
 def record(model, records, agent_key, action_key, global_arguments={}):
