@@ -83,6 +83,7 @@ class TestTasklet(handler.Angular):
       def generator(i):
         time.sleep(0.5)
         print 'doing %s' % i
+        raise ndb.Return('foo %s' % i)
  
       for i in range(1, 10):
         result = yield generator(i)

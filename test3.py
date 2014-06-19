@@ -1,10 +1,14 @@
-import cProfile, pstats, StringIO, time
-pr = cProfile.Profile()
-pr.enable()
-time.sleep(1.5)
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print s.getvalue()
+def normalize(source):
+  if isinstance(source, basestring):
+    return [source]
+  if isinstance(source, (list, tuple)):
+    return source
+  if isinstance(source, dict):
+    return [v for k,v in source.items()]
+  try:
+    iterate = iter(source)
+    return [item for item in iterate]
+  except ValueError as e:
+    pass
+  finally:
+    return [source]
