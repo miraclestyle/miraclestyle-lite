@@ -6,7 +6,6 @@ Created on Apr 16, 2014
 '''
 
 from app import ndb, util
-from app.tools.manipulator import set_attr, get_attr
 
 
 class DomainUserError(Exception):

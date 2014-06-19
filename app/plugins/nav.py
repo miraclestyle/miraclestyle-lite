@@ -6,7 +6,6 @@ Created on Apr 15, 2014
 '''
 
 from app import ndb, util
-from app.tools.manipulator import set_attr, get_attr
 
 
 class Set(ndb.BaseModel):

@@ -9,7 +9,6 @@ import copy
 import collections
 
 from app import ndb, util
-from app.tools.manipulator import set_attr, get_attr
 
 
 __JOURNAL_FIELDS = collections.OrderedDict([('String', ndb.SuperStringProperty),
