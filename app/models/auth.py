@@ -11,12 +11,6 @@ from app import ndb, settings, memcache
 from app.models.base import *
 from app.plugins.base import *
 from app.plugins import auth
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log
-from app.srv import blob as ndb_blob
-from app.plugins import common, rule, log, callback, blob, auth
-from app.plugins.base import BlobAlterImage
 
 
 class Session(ndb.BaseModel):
