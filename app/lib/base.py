@@ -7,11 +7,64 @@ Created on Jun 16, 2014
 
 import string
 import math
+import json
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import search
+from google.appengine.api import taskqueue
 
 from app import ndb, util
+
+
+def record(model, records, agent_key, action_key, global_arguments={}):
+  if len(records):
+    for config in records:
+      if config and isinstance(config, (list, tuple)) and config[0] and isinstance(config[0], ndb.Model):
+        arguments = {}
+        kwargs = {}
+        entity = config[0]
+        try:
+          entity_arguments = config[1]
+        except:
+          entity_arguments = {}
+        arguments.update(global_arguments)
+        arguments.update(entity_arguments)
+        log_entity = arguments.pop('log_entity', True)
+        if len(arguments):
+          for key, value in arguments.items():
+            if entity._field_permissions['_records'][key]['writable']:
+              kwargs[key] = value
+        record = model(parent=entity.key, agent=agent_key, action=action_key, **kwargs)
+        if log_entity is True:
+          if entity:
+            record.log_entity(entity)
+        records.append(record)
+  if len(records):
+    recorded = ndb.put_multi(records)
+    return recorded
+  return
+
+
+def callback(url, callbacks, agent_key_urlsafe=None, action_key_urlsafe=None):
+  queues = {}
+  if ndb.in_transaction():
+    callbacks = callbacks[:5]
+  if len(callbacks):
+    for callback in callbacks:
+      if isinstance(callback, (list, tuple)):
+        if len(callback) == 2:
+        queue_name, data = callback
+        if data.get('caller_user') == None:
+          data['caller_user'] = agent_key_urlsafe
+        if data.get('caller_action') == None:
+          data['caller_action'] = action_key_urlsafe
+        if queue_name not in queues:
+          queues[queue_name] = []
+        queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))
+  if len(queues):
+    for queue_name, tasks in queues.items():
+      queue = taskqueue.Queue(name=queue_name)
+      queue.add(tasks, transactional=ndb.in_transaction())
 
 
 __SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,

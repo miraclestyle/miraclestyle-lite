@@ -11,8 +11,7 @@ from app import ndb, util
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta  # @todo To rename lib to tools!
 from app.lib.blob_manipulator import create_upload_url, parse, alter_image  # @todo To rename lib to tools!
 from app.lib.rule_manipulator import prepare, read, write, _is_structured_field  # @todo To rename lib to tools!
-from app.lib.search import ndb_search, document_search, document_from_entity, documents_to_indexes, entities_to_indexes, documents_write, documents_delete  # @todo To rename lib to tools!
-from app.lib.callback import callback  # @todo To rename lib to tools!
+from app.lib.base import *  # @todo To rename lib to tools!
 
 
 class Context(ndb.BaseModel):
@@ -39,9 +38,11 @@ class Context(ndb.BaseModel):
     if not hasattr(context, 'values'):
       context.values = {}
     if not hasattr(context, 'callbacks'):
-      context.callbacks = []
+      context.callbacks = []  # This variable allways receives tuples of two values! Example: [(a, b), (a, b)]
     if not hasattr(context, 'records'):
-      context.records = []
+      context.records = []  # This variable allways receives tuples of at least one value and maximum of two! Example: [(a, ), (a, b)]
+    if not hasattr(context, 'blob_url'):
+      context.blob_url = None
     if not hasattr(context, 'blob_delete'):
       context.blob_delete = []
     if not hasattr(context, 'blob_write'):
@@ -88,7 +89,7 @@ class Prepare(ndb.BaseModel):
       model_path = config.get('model')
       model = get_attr(context, model_path)
       parent_path = config.get('parent')
-      namespace_path = config.get('namespace')
+      namespace_path = config.get('namespace', 'namespace')
       parent = get_attr(context, parent_path)
       namespace = get_attr(context, namespace_path)
       if parent != None:
@@ -146,11 +147,11 @@ class Write(ndb.BaseModel):
     namespace = get_attr(context, namespace_path)
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
-      if isinstance(entities, dict):
+      if entities and isinstance(entities, dict):
         for key, entity in entities.items():
           if entity and isinstance(entity, ndb.Model):
             write_entities.append(entity)
-      elif isinstance(entities, list):
+      elif entities and isinstance(entities, list):
         for entity in entities:
           if entity and isinstance(entity, ndb.Model):
             write_entities.append(entity)
@@ -176,13 +177,13 @@ class Delete(ndb.BaseModel):
     entity_paths = self.config.get('paths', ['entities.' + context.model.get_kind()])
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
-      if isinstance(entities, dict):
+      if entities and isinstance(entities, dict):
         for key, entity in entities.items():
           if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
             delete_keys.append(entity.key)
           elif entity and isinstance(entity, ndb.Key):
             delete_keys.append(entity)
-      elif isinstance(entities, list):
+      elif entities and isinstance(entities, list):
         for entity in entities:
           if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
             delete_keys.append(entity.key)
@@ -289,39 +290,16 @@ class RecordWrite(ndb.BaseModel):
     dynamic_arguments = self.config.get('d', {})
     for records_path in records_paths:
       result = get_attr(context, records_path)
-      if isinstance(result, dict):
+      if result and isinstance(result, dict):
         context.records.extend([(record, ) for key, record in result.items()])
-      elif isinstance(result, list):
+      elif result and isinstance(result, list):
         context.records.extend([(record, ) for record in result])
-      else:
+      elif result:
         context.records.append((result, ))
     write_arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
       write_arguments[key] = get_attr(context, value)
-    if len(context.records):
-      for config in context.records:
-        arguments = {}
-        kwargs = {}
-        entity = config[0]
-        try:
-          entity_arguments = config[1]
-        except:
-          entity_arguments = {}
-        arguments.update(write_arguments)
-        arguments.update(entity_arguments)
-        log_entity = arguments.pop('log_entity', True)
-        if len(arguments):
-          for key, value in arguments.items():
-            if entity._field_permissions['_records'][key]['writable']:
-              kwargs[key] = value
-        record = model(parent=entity.key, agent=context.user.key, action=context.action.key, **kwargs)
-        if log_entity is True:
-          log_entity = entity
-        if log_entity:
-          record.log_entity(log_entity)
-        records.append(record)
-    if len(records):
-      recorded = ndb.put_multi(records)
+    record(context.models['5'], context.records, context.user.key, context.action.key, write_arguments)
     context.records = []
 
 
@@ -343,11 +321,12 @@ class CallbackExec(ndb.BaseModel):
       self.config = []
     queues = {}
     url = '/task/io_engine_run'
-    context.callbacks.extend(self.config)
-    caller_user=context.user.key_urlsafe
-    caller_action=context.action.key_urlsafe
-    transactional=ndb.in_transaction()
-    callback(url, context.callbacks, caller_user=caller_user, caller_action=caller_action, transactional=transactional)
+    for config in self.config:
+      queue_name, static_data, dynamic_data = config
+      for key, value in dynamic_data.items():
+        static_data[key] = get_attr(context, value)
+      context.callbacks.append((queue_name, static_data))
+    callback(url, context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
     context.callbacks = []
 
 
@@ -396,27 +375,27 @@ class BlobAlterImage(ndb.BaseModel):
     write_path = self.config.get('write', None)
     config = self.config.get('config', None)
     entities = get_attr(context, read_path)
-    if isinstance(entities, dict):
+    if entities and isinstance(entities, dict):
       write_entities = {}
       for key, entity in entities.items():
-        if entity and isinstance(entity, context.models['69']):
+        if entity and hasattr(entity, 'image'):
           result = alter_image(entity, **config)
           if result.get('save'):
             write_entities[key] = result['save']
           if result.get('delete'):
             context.blob_delete.append(result['delete'])
       set_attr(context, write_path, write_entities)
-    elif isinstance(entities, list):
+    elif entities and isinstance(entities, list):
       write_entities = []
       for entity in entities:
-        if entity and isinstance(entity, context.models['69']):
+        if entity and hasattr(entity, 'image'):
           result = alter_image(entity, **config)
           if result.get('save'):
             write_entities.append(result['save'])
           if result.get('delete'):
             context.blob_delete.append(result['delete'])
       set_attr(context, write_path, write_entities)
-    elif entities and hasattr(entities, 'image'):  # @todo isinstance(entity, context.models['69']) fails, we need better validation technique for this!
+    elif entities and hasattr(entities, 'image'):
       result = alter_image(entities, **config)
       if result.get('save'):
         set_attr(context, write_path, result['save'])
