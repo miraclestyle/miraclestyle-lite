@@ -10,7 +10,6 @@ import hashlib
 
 from app import ndb, util
 from app.tools import oauth2
-from app.tools.manipulator import set_attr, get_attr
 
 
 def primary_contact_validator(prop, value):

@@ -8,7 +8,6 @@ Created on May 29, 2014
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, util
-from app.tools.manipulator import set_attr, get_attr
 
 
 class ProcessCatalogs(ndb.BaseModel):

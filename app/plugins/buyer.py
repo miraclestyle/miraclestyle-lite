@@ -10,7 +10,6 @@ import hashlib
 import copy
 
 from app import ndb, util
-from app.tools.manipulator import set_attr, get_attr
 
 
 def generate_internal_id(address):

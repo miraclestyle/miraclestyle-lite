@@ -11,7 +11,6 @@ from google.appengine.api import mail, urlfetch
 
 from app import ndb, util
 from app.tools.safe_eval import safe_eval
-from app.tools.manipulator import set_attr, get_attr
 
 
 class Set(ndb.BaseModel):
