@@ -8,15 +8,22 @@ Created on Jun 16, 2014
 import string
 import math
 import json
+import copy
+import cloudstorage
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import search
 from google.appengine.api import taskqueue
+from google.appengine.api import images
+from google.appengine.ext import blobstore
 
 from app import ndb, util
+from app.lib.attribute_manipulator import normalize
 
 
 def record(model, records, agent_key, action_key, global_arguments={}):
+  records = normalize(records)
+  write_records = []
   if len(records):
     for config in records:
       if config and isinstance(config, (list, tuple)) and config[0] and isinstance(config[0], ndb.Model):
@@ -38,21 +45,19 @@ def record(model, records, agent_key, action_key, global_arguments={}):
         if log_entity is True:
           if entity:
             record.log_entity(entity)
-        records.append(record)
-  if len(records):
-    recorded = ndb.put_multi(records)
-    return recorded
-  return
+        write_records.append(record)
+  if len(write_records):
+    return ndb.put_multi(write_records)
 
 
-def callback(url, callbacks, agent_key_urlsafe=None, action_key_urlsafe=None):
+def callback(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
+  callbacks = normalize(callbacks)
   queues = {}
   if ndb.in_transaction():
     callbacks = callbacks[:5]
   if len(callbacks):
     for callback in callbacks:
-      if isinstance(callback, (list, tuple)):
-        if len(callback) == 2:
+      if callback and isinstance(callback, (list, tuple)) and len(callback) == 2:
         queue_name, data = callback
         if data.get('caller_user') == None:
           data['caller_user'] = agent_key_urlsafe
@@ -276,78 +281,177 @@ def document_from_entity(entity, fields={}):
       return search.Document(doc_id=doc_id, fields=doc_fields)
 
 
+def document_to_dict(document):
+  if document and isinstance(document, search.Document):
+    dic = {}
+    dic['doc_id'] = document.doc_id
+    dic['language'] = document.language
+    dic['rank'] = document.rank
+    fields = document.fields
+    for field in fields:
+      dic[field.name] = field.value
+    return dic
+
+
+def documents_to_dict(documents):
+  documents = normalize(documents)
+  results = []
+  if len(documents):
+    for document in documents:
+      dic = document_to_dict(document)
+      if dic:
+        results.append(dic)
+  return results
+
+
 def documents_to_indexes(documents, index_name=None):
+  documents = normalize(documents)
   indexes = {}
-  for document in documents:
-    namespace = 'global'
-    if index_name != None:
-      name = index_name
-    else:
-      fields = document.fields
-      for field in fields:
-        if field.name == 'namespace':
-          namespace = field.value
-        if field.name == 'kind':
-          name = field.value
-    if namespace not in indexes:
-      indexes[namespace] = {}
-    if name not in indexes[namespace]:
-      indexes[namespace][name] = []
-    indexes[namespace][name].append(document)
+  if len(documents):
+    for document in documents:
+      if document and isinstance(document, search.Document):
+        namespace = 'global'
+        if index_name != None:
+          name = index_name
+        else:
+          fields = document.fields
+          for field in fields:
+            if field.name == 'namespace':
+              namespace = field.value
+            if field.name == 'kind':
+              name = field.value
+        if namespace not in indexes:
+          indexes[namespace] = {}
+        if name not in indexes[namespace]:
+          indexes[namespace][name] = []
+        indexes[namespace][name].append(document)
   return indexes
 
 
 def entities_to_indexes(entities, index_name=None):
+  entities = normalize(entities)
   indexes = {}
-  for entity in entities:
-    namespace = 'global'
-    if index_name != None:
-      name = index_name
-    else:
-      if entity.key_namespace != None:
-        namespace = entity.key_namespace
-      name = entity.get_kind()
-    if namespace not in indexes:
-      indexes[namespace] = {}
-    if name not in indexes[namespace]:
-      indexes[namespace][name] = []
-    indexes[namespace][name].append(entity.key_urlsafe)
+  if len(entities):
+    for entity in entities:
+      if entity and isinstance(entity, ndb.Model):
+        namespace = 'global'
+        if index_name != None:
+          name = index_name
+        else:
+          if entity.key_namespace != None:
+            namespace = entity.key_namespace
+          name = entity.get_kind()
+        if namespace not in indexes:
+          indexes[namespace] = {}
+        if name not in indexes[namespace]:
+          indexes[namespace][name] = []
+        indexes[namespace][name].append(entity.key_urlsafe)
   return indexes
 
 
-def documents_write(indexes, documents_per_index=200):
-  for namespace, names in indexes.items():
-    for name, documents in names.items():
-      if len(documents):
-        cycles = int(math.ceil(len(documents) / documents_per_index))
-        for i in range(0, cycles + 1):
-          documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
-          if len(documents_partition):
-            try:
-              if namespace == 'global':
-                index = search.Index(name=name, namespace=None)
-              else:
-                index = search.Index(name=name, namespace=namespace)
-              index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
-            except Exception as e:
-              util.logger('INDEX FAILED! ERROR: %s' % e)
-              pass
+def documents_write(documents, index_name=None, documents_per_index=200):
+  indexes = documents_to_indexes(documents, index_name)
+  if len(indexes):
+    for namespace, names in indexes.items():
+      for name, documents in names.items():
+        if len(documents):
+          cycles = int(math.ceil(len(documents) / documents_per_index))
+          for i in range(0, cycles + 1):
+            documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+            if len(documents_partition):
+              try:
+                if namespace == 'global':
+                  index = search.Index(name=name, namespace=None)
+                else:
+                  index = search.Index(name=name, namespace=namespace)
+                index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
+              except Exception as e:
+                util.logger('INDEX FAILED! ERROR: %s' % e)
+                pass
 
 
-def documents_delete(indexes, documents_per_index=200):
-  for namespace, names in indexes.items():
-    for name, documents in names.items():
-      if len(documents):
-        cycles = int(math.ceil(len(documents) / documents_per_index))
-        for i in range(0, cycles + 1):
-          documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
-          if len(documents_partition):
-            try:
-              if namespace == 'global':
-                index = search.Index(name=name, namespace=None)
-              else:
-                index = search.Index(name=name, namespace=namespace)
-              index.delete(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
-            except Exception as e:
-              util.logger('INDEX FAILED! ERROR: %s' % e)
-              pass
+def documents_delete(documents, index_name=None, documents_per_index=200):
+  indexes = entities_to_indexes(documents, index_name)
+  # indexes.update(documents_to_indexes(documents, index_name))  @todo We can incorporate this as well!
+  if len(indexes):
+    for namespace, names in indexes.items():
+      for name, documents in names.items():
+        if len(documents):
+          cycles = int(math.ceil(len(documents) / documents_per_index))
+          for i in range(0, cycles + 1):
+            documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+            if len(documents_partition):
+              try:
+                if namespace == 'global':
+                  index = search.Index(name=name, namespace=None)
+                else:
+                  index = search.Index(name=name, namespace=namespace)
+                index.delete(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
+              except Exception as e:
+                util.logger('INDEX FAILED! ERROR: %s' % e)
+                pass
+
+
+def blob_create_upload_url(upload_url, gs_bucket_name):
+  return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
+
+
+def blob_parse(entities):
+  entities = normalize(entities)
+  results = []
+  if len(entities):
+    for entity in entities:
+      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
+        results.append(entity.image)
+      elif entity and isinstance(entity, blobstore.BlobKey):
+        results.append(entity)
+  return results
+
+
+def blob_alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
+  result = {}
+  if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
+    new_image = copy.deepcopy(original_image)
+    original_gs_object_name = new_image.gs_object_name
+    new_gs_object_name = new_image.gs_object_name
+    if make_copy:
+      new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
+    blob_key = None
+    try:
+      if make_copy:
+        readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
+        blob = readonly_blob.read()
+        readonly_blob.close()
+        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+      else:
+        readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
+        blob = readonly_blob.read()
+        readonly_blob.close()
+        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+      if transform:
+        image = images.Image(image_data=blob)
+        image.resize(width,
+                     height,
+                     crop_to_fit=crop_to_fit,
+                     crop_offset_x=crop_offset_x,
+                     crop_offset_y=crop_offset_y)
+        blob = image.execute_transforms(output_encoding=image.format)
+        new_image.width = width
+        new_image.height = height
+        new_image.size = len(blob)
+      writable_blob.write(blob)
+      writable_blob.close()
+      if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
+        new_image.gs_object_name = new_gs_object_name
+        blob_key = blobstore.create_gs_key(new_gs_object_name)
+        new_image.image = blobstore.BlobKey(blob_key)
+        new_image.serving_url = images.get_serving_url(new_image.image)
+    except Exception as e:
+      util.logger(e, 'exception')
+      if blob_key != None:
+        result['delete'] = blob_key
+    else:
+      result['save'] = new_image
+    finally:
+      return result
+  return result

@@ -9,7 +9,6 @@ import copy
 
 from app import ndb, util
 from app.lib.attribute_manipulator import set_attr, get_attr, get_meta  # @todo To rename lib to tools!
-from app.lib.blob_manipulator import create_upload_url, parse, alter_image  # @todo To rename lib to tools!
 from app.lib.rule_manipulator import prepare, read, write, _is_structured_field  # @todo To rename lib to tools!
 from app.lib.base import *  # @todo To rename lib to tools!
 
@@ -147,16 +146,11 @@ class Write(ndb.BaseModel):
     namespace = get_attr(context, namespace_path)
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
-      if entities and isinstance(entities, dict):
-        for key, entity in entities.items():
-          if entity and isinstance(entity, ndb.Model):
-            write_entities.append(entity)
-      elif entities and isinstance(entities, list):
+      entities = normalize(entities)
+      if len(entities):
         for entity in entities:
           if entity and isinstance(entity, ndb.Model):
             write_entities.append(entity)
-      elif entities and isinstance(entities, ndb.Model):
-        write_entities.append(entities)
     # @todo This parent/namespace block needs improvement!
     if parent != None:
       namespace = None
@@ -177,22 +171,14 @@ class Delete(ndb.BaseModel):
     entity_paths = self.config.get('paths', ['entities.' + context.model.get_kind()])
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
-      if entities and isinstance(entities, dict):
-        for key, entity in entities.items():
-          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-            delete_keys.append(entity.key)
-          elif entity and isinstance(entity, ndb.Key):
-            delete_keys.append(entity)
-      elif entities and isinstance(entities, list):
+      entities = normalize(entities)
+      if len(entities):
         for entity in entities:
           if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
             delete_keys.append(entity.key)
           elif entity and isinstance(entity, ndb.Key):
             delete_keys.append(entity)
-      elif entities and hasattr(entities, 'key') and isinstance(entities.key, ndb.Key):
-        delete_keys.append(entities.key)
-      elif entities and isinstance(entities, ndb.Key):
-        delete_keys.append(entities)
+    delete_keys = set(delete_keys)
     ndb.delete_multi(delete_keys)
 
 
@@ -216,12 +202,12 @@ class Search(ndb.BaseModel):
     else:
       namespace = None
     if document_search:
-      result = document_search(index_name, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor, namespace=namespace, fields=fields)
+      result = document_search(index_name, argument, page_size, urlsafe_cursor, namespace, fields)
       context.search_documents = result['documents']
       context.search_documents_count = result['documents_count']
       context.search_documents_total_matches = result['total_matches']
     else:
-      result = ndb_search(model, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor, namespace=namespace)
+      result = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
       context.entities = result['entities']
     context.search_cursor = result['search_cursor']
     context.search_more = result['search_more']
@@ -267,7 +253,7 @@ class RecordRead(ndb.BaseModel):
       argument = {'filters': [{'field': 'ancestor', 'operator': '==', 'value': entity.key}],
                   'order_by': {'field': 'logged', 'operator': 'desc'}}
       urlsafe_cursor = context.input.get('search_cursor')
-      result = ndb_search(model, argument, page_size=page_size, urlsafe_cursor=urlsafe_cursor)
+      result = ndb_search(model, argument, page_size, urlsafe_cursor)
       entities = helper(result['entities'])
       entities = [entity for entity in entities.get_result()]
       set_attr(context, entity_path + '._records', entities)
@@ -283,23 +269,18 @@ class RecordWrite(ndb.BaseModel):
     if not isinstance(self.config, dict):
       self.config = {}
     model = context.models['5']
-    records = []
-    write_arguments = {}
+    arguments = {}
     records_paths = self.config.get('paths', [])
     static_arguments = self.config.get('s', {})
     dynamic_arguments = self.config.get('d', {})
     for records_path in records_paths:
-      result = get_attr(context, records_path)
-      if result and isinstance(result, dict):
-        context.records.extend([(record, ) for key, record in result.items()])
-      elif result and isinstance(result, list):
-        context.records.extend([(record, ) for record in result])
-      elif result:
-        context.records.append((result, ))
-    write_arguments.update(static_arguments)
+      records = get_attr(context, records_path)
+      records = normalize(records)
+      context.records.extend([(record, ) for record in records])
+    arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
-      write_arguments[key] = get_attr(context, value)
-    record(context.models['5'], context.records, context.user.key, context.action.key, write_arguments)
+      arguments[key] = get_attr(context, value)
+    record(context.models['5'], context.records, context.user.key, context.action.key, arguments)
     context.records = []
 
 
@@ -309,7 +290,7 @@ class CallbackNotify(ndb.BaseModel):
     static_data = {}
     static_data.update({'action_id': 'initiate', 'action_model': '61'})
     static_data['caller_entity'] = context.entities[context.model.get_kind()].key_urlsafe
-    context.callbacks.append(('notify', static_data, {}))
+    context.callbacks.append(('notify', static_data))
 
 
 class CallbackExec(ndb.BaseModel):
@@ -320,13 +301,12 @@ class CallbackExec(ndb.BaseModel):
     if not isinstance(self.config, list):
       self.config = []
     queues = {}
-    url = '/task/io_engine_run'
     for config in self.config:
       queue_name, static_data, dynamic_data = config
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
       context.callbacks.append((queue_name, static_data))
-    callback(url, context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
+    callback('/task/io_engine_run', context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
     context.callbacks = []
 
 
@@ -340,7 +320,7 @@ class BlobURL(ndb.BaseModel):
     gs_bucket_name = self.config.get('bucket', None)
     upload_url = context.input.get('upload_url')
     if upload_url:
-      context.blob_url = create_upload_url(upload_url, gs_bucket_name)
+      context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       raise event.TerminateAction()  # @todo Migrate this to ndb probably!
 
 
@@ -356,9 +336,9 @@ class BlobUpdate(ndb.BaseModel):
     blob_delete = get_attr(context, delete_path)
     blob_write = get_attr(context, write_path)
     if blob_delete:
-      context.blob_unused.extend(parse(blob_delete))
+      context.blob_unused.extend(blob_parse(blob_delete))
     if blob_write:
-      blob_keys = parse(blob_write)
+      blob_keys = blob_parse(blob_write)
       for blob_key in blob_keys:
         if blob_key in context.blob_unused:
           context.blob_unused.remove(blob_key)
@@ -379,7 +359,7 @@ class BlobAlterImage(ndb.BaseModel):
       write_entities = {}
       for key, entity in entities.items():
         if entity and hasattr(entity, 'image'):
-          result = alter_image(entity, **config)
+          result = blob_alter_image(entity, **config)
           if result.get('save'):
             write_entities[key] = result['save']
           if result.get('delete'):
@@ -389,14 +369,14 @@ class BlobAlterImage(ndb.BaseModel):
       write_entities = []
       for entity in entities:
         if entity and hasattr(entity, 'image'):
-          result = alter_image(entity, **config)
+          result = blob_alter_image(entity, **config)
           if result.get('save'):
             write_entities.append(result['save'])
           if result.get('delete'):
             context.blob_delete.append(result['delete'])
       set_attr(context, write_path, write_entities)
     elif entities and hasattr(entities, 'image'):
-      result = alter_image(entities, **config)
+      result = blob_alter_image(entities, **config)
       if result.get('save'):
         set_attr(context, write_path, result['save'])
       if result.get('delete'):
@@ -422,7 +402,7 @@ class RulePrepare(ndb.BaseModel):
     strict = self.config.get('strict', False)
     values = get_attr(context, values_path)
     entities = get_attr(context, entity_path)
-    util.logger('RulePrepare entity: %s' % entities)
+    # @todo Can we apply normalize here?
     if isinstance(entities, dict):
       for key, entity in entities.items():
         context.entity = entities.get(key)
@@ -448,14 +428,10 @@ class RuleRead(ndb.BaseModel):
       self.config = {}
     entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
     entities = get_attr(context, entity_path)
-    if isinstance(entities, dict):
-      for key, entity in entities.items():
+    entities = normalize(entities)  # @todo We assume that original structure remains structurally anchanged!
+    for entity in entities:
+      if entity and hasattr(entity, '_field_permissions'):
         read(entity)
-    elif isinstance(entities, list):
-      for entity in entities:
-        read(entity)
-    else:
-      read(entities)
 
 
 class RuleWrite(ndb.BaseModel):
@@ -465,12 +441,12 @@ class RuleWrite(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
-    values_path = self.config.get('from', 'values.' + context.model.get_kind())
+    value_path = self.config.get('from', 'values.' + context.model.get_kind())
     entity_path = self.config.get('to', 'entities.' + context.model.get_kind())
-    values = get_attr(context, values_path)
+    value = get_attr(context, value_path)
     entity = get_attr(context, entity_path)
-    if values and entity:
-      write(entity, values)
+    if entity and value and hasattr(entity, '_field_permissions'):
+      write(entity, value)
 
 
 class RuleExec(ndb.BaseModel):
@@ -498,21 +474,13 @@ class DocumentWrite(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.config, dict):
       self.config = {}
-    documents = []
     entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
     fields = self.config.get('fields', {})
     max_doc = self.config.get('max_doc', 200)
     entities = get_attr(context, entity_path)
-    if isinstance(entities, dict):
-      for key, entity in entities.items():
-        documents.append(document_from_entity(entity, fields))
-    elif isinstance(entities, list):
-      for entity in entities:
-        documents.append(document_from_entity(entity, fields))
-    else:
-      documents.append(document_from_entity(entities, fields))
-    indexes = documents_to_indexes(documents)
-    documents_write(indexes, documents_per_index=max_doc)
+    entities = normalize(entities)
+    documents = [document_from_entity(entity, fields) for entity in entities]
+    documents_write(documents, documents_per_index=max_doc)
 
 
 class DocumentDelete(ndb.BaseModel):
@@ -526,33 +494,14 @@ class DocumentDelete(ndb.BaseModel):
     entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
     max_doc = self.config.get('max_doc', 200)
     entities = get_attr(context, entity_path)
-    if isinstance(entities, dict):
-      for key, entity in entities.items():
-        documents.append(entity)
-    elif isinstance(entities, list):
-      for entity in entities:
-        documents.append(entity)
-    else:
-      documents.append(entities)
-    indexes = entities_to_indexes(documents)
-    documents_delete(indexes, documents_per_index=max_doc)
+    documents_delete(entities, documents_per_index=max_doc)
 
 
 class DocumentDictConverter(ndb.BaseModel):
   
   def run(self, context):
-    entities = []
     if len(context.search_documents):
-      for document in context.search_documents:
-        dic = {}
-        dic['doc_id'] = document.doc_id
-        dic['language'] = document.language
-        dic['rank'] = document.rank
-        fields = document.fields
-        for field in fields:
-          dic[field.name] = field.value
-        entities.append(dic)
-    context.entities = entities
+      context.entities = documents_to_dict(context.search_documents)
 
 
 class DocumentEntityConverter(ndb.BaseModel):

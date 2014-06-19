@@ -78,6 +78,24 @@ def get_meta(entity, field_path):
     return getattr(entity.__class__, last_field)
 
 
+def normalize(source):
+  if isinstance(source, list):
+    return source
+  if isinstance(source, tuple):
+    return list(source)
+  if isinstance(source, basestring):
+    return [source]
+  if isinstance(source, dict):
+    return [item for key, item in source.items()]
+  try:
+    items = iter(source)
+    return [item for item in items]
+  except ValueError as e:
+    pass
+  finally:
+    return [source]
+
+
 def sort_by_list(unsorted_list, sorting_list, field):
   total = len(unsorted_list) + 1
   to_delete = []
