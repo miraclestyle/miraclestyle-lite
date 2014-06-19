@@ -8,10 +8,9 @@ Created on Apr 15, 2014
 import os
 import hashlib
 
-from app import ndb, memcache, util
-from app.srv.setup import Configuration
-from app.lib import oauth2
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app import ndb, util
+from app.tools import oauth2
+from app.tools.manipulator import set_attr, get_attr
 
 
 def primary_contact_validator(prop, value):
@@ -124,7 +123,7 @@ class UserLoginUpdate(ndb.BaseModel):
       context.entities['0'] = entity
       context.user = entity
       context.tmp['session'] = session
-      context.log_entities.append((entity, {'ip_address' : context.tmp['ip_address']}))
+      context.records.append((entity, {'ip_address' : context.tmp['ip_address']}))
 
 
 class UserLoginOutput(ndb.BaseModel):
@@ -200,6 +199,7 @@ class DomainCreate(ndb.BaseModel):
   
   def run(self, context):
     config_input = context.input.copy()
+    Configuration = context.models['57']
     config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
     config.put()
     context.entities[config.get_kind()] = config

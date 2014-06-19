@@ -8,8 +8,8 @@ Created on May 13, 2014
 from decimal import Decimal
 from xml.etree import ElementTree
 
-from app import ndb, memcache, util
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app import ndb, util
+from app.tools.manipulator import set_attr, get_attr
 
 
 class CurrencyUpdate(ndb.BaseModel):

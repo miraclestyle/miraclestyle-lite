@@ -6,7 +6,7 @@ Created on Feb 24, 2014
 '''
 
 from app import ndb, settings
-from app.srv.base import *
+from app.models.base import *
 from app.plugins.base import *
 from app.plugins import nav
 

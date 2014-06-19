@@ -9,9 +9,7 @@ import time
 import datetime
 
 from app import ndb, util
-from app.srv import event, log, nav, rule  # @todo We need event import for event.Action.build_key. Is there a workaround?
-from app.plugins import log as plugin_log
-from app.plugins import callback as plugin_callback
+from app.tools.base import record, callback
 
 
 __SYSTEM_SETUPS = {}
@@ -41,8 +39,6 @@ class Setup():
   
   def run(self):
     iterations = 100
-    self.context.tmp['log_write'] = plugin_log.Write(static_arguments={}, dynamic_arguments={})  # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.tmp['callback_exec'] = plugin_callback.Exec(static_data={}, dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})  # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
     while self.config.state == 'active':
       iterations -= 1
       runner = getattr(self, self.__get_next_operation())
@@ -76,15 +72,16 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity.put()
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.log_entities.append((entity, ))
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
     self.config.put()
   
   def execute_create_domain_role(self):
     config_input = self.config.next_operation_input
+    ActionPermission = context.models['79']
+    FieldPermission = context.models['80']
+    DomainRole = context.models['60']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     permissions = []
@@ -97,20 +94,18 @@ class DomainSetup(Setup):
         actions = []
         for action_instance in obj._actions:
           actions.append(action_instance.key)
-        permissions.append(rule.ActionPermission(kind=obj.get_kind(),
-                                                 actions=actions,
-                                                 executable=True,
-                                                 condition='True'))
+        permissions.append(ActionPermission(kind=obj.get_kind(),
+                                            actions=actions,
+                                            executable=True,
+                                            condition='True'))
       props = obj.get_fields()
       prop_names = []
       for prop_name, prop in props.items():
         prop_names.append(prop_name)
-      permissions.append(rule.FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
-    entity = rule.DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
+      permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
+    entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity.put()
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.log_entities.append((entity, ))
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_1'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
@@ -118,35 +113,34 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_1(self):
     config_input = self.config.next_operation_input
+    Widget = context.models['62']
+    Filter = context.models['65']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
-    entities = [nav.Widget(id='system_search',
-                           namespace=namespace,
-                           name='Search',
-                           role=role_key,
-                           search_form=True,
-                           filters=[]),
-                nav.Widget(id='system_marketing',
-                           namespace=namespace,
-                           name='Marketing',
-                           role=role_key,
-                           search_form=False,
-                           filters=[nav.Filter(name='Catalogs', kind='35')]),
-                nav.Widget(id='system_security',
-                           namespace=namespace,
-                           name='Security',
-                           role=role_key,
-                           search_form=False,
-                           filters=[nav.Filter(name='Roles', kind='60'),
-                                    nav.Filter(name='Users', kind='8')])]
+    entities = [Widget(id='system_search',
+                       namespace=namespace,
+                       name='Search',
+                       role=role_key,
+                       search_form=True,
+                       filters=[]),
+                Widget(id='system_marketing',
+                       namespace=namespace,
+                       name='Marketing',
+                       role=role_key,
+                       search_form=False,
+                       filters=[Filter(name='Catalogs', kind='35')]),
+                Widget(id='system_security',
+                       namespace=namespace,
+                       name='Security',
+                       role=role_key,
+                       search_form=False,
+                       filters=[Filter(name='Roles', kind='60'),
+                                Filter(name='Users', kind='8')])]
     for i, entity in enumerate(entities):
       entity.sequence = i
     ndb.put_multi(entities)
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    for entity in entities:
-      self.context.log_entities.append((entity, ))
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_2'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
@@ -155,29 +149,28 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_2(self):
     config_input = self.config.next_operation_input
+    Widget = context.models['62']
+    Filter = context.models['65']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
     sequence = config_input.get('sequence')
-    entities = [nav.Widget(id='system_user_interface',
-                           namespace=namespace,
-                           name='User Interface',
-                           role=role_key,
-                           search_form=False,
-                           filters=[nav.Filter(name='Menu Widgets', kind='62')]),
-                nav.Widget(id='system_notifications',
-                           namespace=namespace,
-                           name='Notifications',
-                           role=role_key,
-                           search_form=False,
-                           filters=[nav.Filter(name='Templates', kind='61')])]
+    entities = [Widget(id='system_user_interface',
+                       namespace=namespace,
+                       name='User Interface',
+                       role=role_key,
+                       search_form=False,
+                       filters=[Filter(name='Menu Widgets', kind='62')]),
+                Widget(id='system_notifications',
+                       namespace=namespace,
+                       name='Notifications',
+                       role=role_key,
+                       search_form=False,
+                       filters=[Filter(name='Templates', kind='61')])]
     for i, entity in enumerate(entities):
       entity.sequence = (i+1) + sequence
     ndb.put_multi(entities)
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    for entity in entities:
-      self.context.log_entities.append((entity, ))
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
@@ -185,18 +178,17 @@ class DomainSetup(Setup):
   
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
+    DomainUser = context.models['8']
     user = self.config.parent_entity
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    entity = rule.DomainUser(namespace=namespace, id=user.key_id_str,
-                             name='Administrator', state='accepted',
-                             roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
+    entity = DomainUser(namespace=namespace, id=user.key_id_str,
+                        name='Administrator', state='accepted',
+                        roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
     entity.put()
     user.domains.append(domain_key)
     user.put()
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.log_entities.extend([(entity, ), (user, )])
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'add_domain_primary_contact'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'user_key': entity.key}
@@ -208,19 +200,16 @@ class DomainSetup(Setup):
     entity = domain_key.get()
     entity.primary_contact = config_input.get('user_key')
     entity.put()
-    # We use log plugin for logging. @todo Decide if this this is optimal solution!
-    self.context.log_entities.append((entity, ))
-    self.context.tmp['log_write'].run(self.context)
+    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
-                                   message_body='Your application has been created. Check your apps page (this message can be changed) app.srv.notify.py #L-232. Thanks.',
+                                   message_body='Your application has been created. Check your apps page (this message can be changed). Thanks.',
                                    message_recievers=self.create_domain_notify_message_recievers)
     self.context.tmp['caller_entity'] = entity
     self.context.tmp['caller_user'] = self.context.user
     custom_notify.run(self.context)
-    # We use callback plugin for triggering notifications. @todo Decide if this this is optimal solution!
-    self.context.tmp['callback_exec'].run(self.context)
+    callback('/task/io_engine_run', self.context.callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
     self.config.state = 'completed'
     self.config.put()
 

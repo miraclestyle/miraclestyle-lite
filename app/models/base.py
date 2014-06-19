@@ -6,12 +6,8 @@ Created on Jun 14, 2014
 '''
 
 from app import ndb
-from app.lib.safe_eval import safe_eval  # @todo To rename lib to tools!
-from app.lib.attribute_manipulator import set_attr, get_attr  # @todo To rename lib to tools!
-
-
-class TerminateAction(Exception):
-  pass
+from app.tools.safe_eval import safe_eval
+from app.tools.manipulator import set_attr, get_attr
 
 
 class Action(ndb.BaseExpando):

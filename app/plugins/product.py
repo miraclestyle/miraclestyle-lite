@@ -11,11 +11,9 @@ import hashlib
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, memcache, util, settings
-from app.srv import event
-from app.lib.attribute_manipulator import set_attr, get_attr
-from app.lib.list_manipulator import sort_by_list
-from app.lib.blob_manipulator import alter_image
+from app import ndb, util, settings  # @todo settings has to GET OUT OF HERE!!!
+from app.tools.base import blob_alter_image
+from app.tools.manipulator import set_attr, get_attr, sort_by_list
 
 
 def build_key_from_signature(context):
@@ -47,14 +45,14 @@ class InstanceWrite(ndb.BaseModel):
   def run(self, context):
     _instance = context.entities[context.model.get_kind()]._instance
     _instance.put()
-    context.log_entities.append((_instance, ))
+    context.records.append((_instance, ))
 
 
 class InstanceDelete(ndb.BaseModel):
   
   def run(self, context):
     _instance = context.entities[context.model.get_kind()]._instance
-    context.log_entities.append((_instance, ))
+    context.records.append((_instance, ))
     _instance.key.delete()
 
 
@@ -63,7 +61,7 @@ class InstanceUploadImagesSet(ndb.BaseModel):
   def run(self, context):
     images = context.input.get('images')
     if not images:
-      raise event.TerminateAction()
+      raise ndb.TerminateAction()
     context.values[context.model.get_kind()]._instance.images.extend(images)
 
 
@@ -141,7 +139,7 @@ class TemplateDelete(ndb.BaseModel):
   def run(self, context):
     instance_images = []
     instance_images.extend([instance.images for instance in context.entities[context.model.get_kind()]._instances])
-    context.log_entities.extend([(instance, ) for instance in context.entities[context.model.get_kind()]._instances])
+    context.records.extend([(instance, ) for instance in context.entities[context.model.get_kind()]._instances])
     context.blob_delete = [image.image for image in instance_images]
     ndb.delete_multi([instance.key for instance in context.entities[context.model.get_kind()]._instances])
 
@@ -155,7 +153,7 @@ class DuplicateWrite(ndb.BaseModel):
         @ndb.tasklet
         def generate():
           original_image = get_attr(context, source)
-          results = alter_image(original_image, copy=True, sufix='copy')
+          results = blob_alter_image(original_image, copy=True, sufix='copy')
           if results.get('blob_delete'):
             context.blob_delete.append(results['blob_delete'])
           if results.get('new_image'):
@@ -177,7 +175,7 @@ class DuplicateWrite(ndb.BaseModel):
       def generate():
         copy_images(source, destination)
         instance.set_key(instance.key.id(), parent=copy_template.key)
-        context.log_entities.append((instance, ))
+        context.records.append((instance, ))
         raise ndb.Return(True)
       yield generate()
       raise ndb.Return(True)
@@ -194,7 +192,7 @@ class DuplicateWrite(ndb.BaseModel):
     copy_template = copy.deepcopy(template)
     copy_template.set_key(None, parent=template.key.parent(), namespace=template.key.namespace())
     copy_template.put()
-    context.log_entities.append((copy_template, ))
+    context.records.append((copy_template, ))
     context.tmp['copy_template'] = copy_template
     copy_images('entities.%s.images' % context.model.get_kind(), 'tmp.copy_template.images')
     copy_instance_mapper(copy_template._instances)
@@ -206,7 +204,7 @@ class UploadImagesSet(ndb.BaseModel):
   def run(self, context):
     images = context.input.get('images')
     if not images:
-      raise event.TerminateAction()
+      raise ndb.TerminateAction()
     context.values[context.model.get_kind()].images.extend(images)
 
 

@@ -11,12 +11,9 @@ import datetime
 
 from google.appengine.api import search
 
-from app import ndb, memcache, util
-from app.srv import event
-from app.plugins import blob
-from app.lib.attribute_manipulator import set_attr, get_attr
-from app.lib.list_manipulator import sort_by_list
-from app.lib.blob_manipulator import alter_image
+from app import ndb, util
+from app.tools.base import blob_alter_image
+from app.tools.manipulator import set_attr, get_attr, sort_by_list
 
 
 def get_catalog_images(CatalogImage, catalog_key):
@@ -122,7 +119,7 @@ class DuplicateWrite(ndb.BaseModel):
         @ndb.tasklet
         def generate():
           original_image = get_attr(context, source)
-          results = alter_image(original_image, copy=True, sufix='copy')
+          results = blob_alter_image(original_image, copy=True, sufix='copy')
           if results.get('blob_delete'):
             context.blob_delete.append(results['blob_delete'])
           if results.get('new_image'):
@@ -144,7 +141,7 @@ class DuplicateWrite(ndb.BaseModel):
       def generate():
         copy_images(source, destination)
         template.set_key(None, parent=new_catalog.key)
-        context.log_entities.append((template, ))
+        context.records.append((template, ))
         raise ndb.Return(True)
       yield generate()
       raise ndb.Return(True)
@@ -155,7 +152,7 @@ class DuplicateWrite(ndb.BaseModel):
       def generate():
         copy_images(source, destination)
         instance.set_key(instance.key.id(), parent=template.key)
-        context.log_entities.append((instance, ))
+        context.records.append((instance, ))
         raise ndb.Return(True)
       yield generate()
       raise ndb.Return(True)
@@ -181,7 +178,7 @@ class DuplicateWrite(ndb.BaseModel):
     new_catalog.created = datetime.datetime.now()
     new_catalog.state = 'unpublished'
     new_catalog.set_key(None, namespace=catalog.key.namespace())
-    cover_results = alter_image(context.entities['35'].cover, copy=True, sufix='cover')
+    cover_results = blob_alter_image(context.entities['35'].cover, copy=True, sufix='cover')
     if cover_results.get('blob_delete'):
       context.blob_delete.append(cover_results['blob_delete'])
     if cover_results.get('new_image'):
@@ -189,12 +186,12 @@ class DuplicateWrite(ndb.BaseModel):
     else:
       new_catalog.cover = None
     new_catalog.put()
-    context.log_entities.append((new_catalog, ))
+    context.records.append((new_catalog, ))
     context.tmp['new_catalog'] = new_catalog
     copy_images('entities.35._images', 'tmp.new_catalog._images')
     for i, image in enumerate(new_catalog._images):
       image.set_key(str(i), parent=new_catalog.key)
-      context.log_entities.append((image, ))
+      context.records.append((image, ))
     ndb.put_multi(new_catalog._images)
     copy_template_mapper(context.tmp['copy_product_templates'])
     ndb.put_multi(context.tmp['copy_product_templates'])
@@ -261,11 +258,11 @@ class UpdateWrite(ndb.BaseModel):
     if context.entities['35']._field_permissions['_images']['writable']:
       if len(context.tmp['delete_images']):
         ndb.delete_multi([image.key for image in context.tmp['delete_images']])
-        context.log_entities.extend([(image, ) for image in context.tmp['delete_images']])
+        context.records.extend([(image, ) for image in context.tmp['delete_images']])
         context.blob_delete = [image.image for image in context.tmp['delete_images']]
     if len(context.entities['35']._images):
       ndb.put_multi(context.entities['35']._images)
-      context.log_entities.extend([(image, ) for image in context.entities['35']._images])
+      context.records.extend([(image, ) for image in context.entities['35']._images])
 
 
 class UploadImagesSet(ndb.BaseModel):
@@ -274,7 +271,7 @@ class UploadImagesSet(ndb.BaseModel):
     CatalogImage = context.models['36']
     _images = context.input.get('_images')
     if not _images:  # If no images were saved, do nothing.
-      raise event.TerminateAction()
+      raise ndb.TerminateAction()
     i = CatalogImage.query(ancestor=context.entities['35'].key).count()  # Get last sequence.
     for image in _images:
       image.set_key(str(i), parent=context.entities['35'].key)
@@ -293,7 +290,7 @@ class UploadImagesWrite(ndb.BaseModel):
         if image:
           context.tmp['catalog_image_keys'].append(image.key.urlsafe())
           context.blob_write.append(image.image)
-          context.log_entities.append((image, ))
+          context.records.append((image, ))
 
 
 class ProcessImages(ndb.BaseModel):
@@ -317,7 +314,7 @@ class ProcessImages(ndb.BaseModel):
           catalog_images = ndb.validate_images(catalog_images)
           ndb.put_multi(catalog_images)
           for catalog_image in catalog_images:
-            context.log_entities.append((catalog_image, ))
+            context.records.append((catalog_image, ))
             context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
 
 
@@ -356,7 +353,7 @@ class Delete(ndb.BaseModel):
       for argument in args:
         entities.extend(argument)
       ndb.delete_multi([entity.key for entity in entities])
-      context.log_entities.extend([(entity, ) for entity in entities])
+      context.records.extend([(entity, ) for entity in entities])
     
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_catalog_products(context.models['38'], context.models['39'], catalog_key=context.entities['35'].key)
@@ -387,7 +384,7 @@ class CronPublish(ndb.BaseModel):
                 'action_model': '35',
                 'message': 'Published by Cron.',
                 'key': catalog.key.urlsafe()}
-        context.callback_payloads.append(('callback', data))
+        context.callbacks.append(('callback', data))
 
 
 class CronDiscontinue(ndb.BaseModel):
@@ -408,7 +405,7 @@ class CronDiscontinue(ndb.BaseModel):
               'action_model': '35',
               'message': 'Expired',
               'key': catalog.key.urlsafe()}
-      context.callback_payloads.append(('callback', data))
+      context.callbacks.append(('callback', data))
 
 
 class CronDelete(ndb.BaseModel):
@@ -437,7 +434,7 @@ class CronDelete(ndb.BaseModel):
       data = {'action_id': 'delete',
               'action_model': '35',
               'key': catalog.key.urlsafe()}
-      context.callback_payloads.append(('callback', data))
+      context.callbacks.append(('callback', data))
 
 
 class SearchWrite(ndb.BaseModel):

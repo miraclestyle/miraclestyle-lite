@@ -8,8 +8,8 @@ Created on Jun 2, 2014
 import copy
 import collections
 
-from app import ndb, memcache, util
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app import ndb, util
+from app.tools.manipulator import set_attr, get_attr
 
 
 __JOURNAL_FIELDS = collections.OrderedDict([('String', ndb.SuperStringProperty),

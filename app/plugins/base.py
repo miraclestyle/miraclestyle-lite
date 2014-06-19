@@ -8,9 +8,9 @@ Created on Jun 14, 2014
 import copy
 
 from app import ndb, util
-from app.lib.attribute_manipulator import set_attr, get_attr, get_meta  # @todo To rename lib to tools!
-from app.lib.rule_manipulator import prepare, read, write, _is_structured_field  # @todo To rename lib to tools!
-from app.lib.base import *  # @todo To rename lib to tools!
+from app.tools.base import *
+from app.tools.manipulator import set_attr, get_attr
+from app.tools.rule_manipulator import prepare, read, write
 
 
 class Context(ndb.BaseModel):
@@ -321,7 +321,7 @@ class BlobURL(ndb.BaseModel):
     upload_url = context.input.get('upload_url')
     if upload_url:
       context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
-      raise event.TerminateAction()  # @todo Migrate this to ndb probably!
+      raise ndb.TerminateAction()
 
 
 class BlobUpdate(ndb.BaseModel):

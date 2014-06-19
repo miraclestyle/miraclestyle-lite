@@ -7,8 +7,8 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from app import ndb, memcache, util, settings
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app import ndb, util, settings  # @todo settings has to GET OUT OF HERE!!!
+from app.tools.manipulator import set_attr, get_attr
 
 
 class CountryUpdate(ndb.BaseModel):

@@ -7,8 +7,8 @@ Created on May 29, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, memcache, util
-from app.lib.attribute_manipulator import set_attr, get_attr
+from app import ndb, util
+from app.tools.manipulator import set_attr, get_attr
 
 
 class ProcessCatalogs(ndb.BaseModel):
@@ -32,7 +32,7 @@ class ProcessCatalogs(ndb.BaseModel):
       data = {'action_id': 'cron',
               'action_model': '35',
               'domain': key.urlsafe()}
-      context.callback_payloads.append(('callback', data))
+      context.callbacks.append(('callback', data))
     config.data['current_cursor'] = cursor
     config.data['current_more'] = more
     config.put()

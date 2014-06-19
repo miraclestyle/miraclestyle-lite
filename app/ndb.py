@@ -31,6 +31,10 @@ ctx.set_memcache_policy(False)
 # ctx.set_cache_policy(False)
 
 
+class TerminateAction(Exception):
+  pass
+
+
 class PropertyError(Exception):
   pass
 
