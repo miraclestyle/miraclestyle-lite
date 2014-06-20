@@ -478,7 +478,8 @@ class Domain(ndb.BaseExpando):
             RulePrepare(config={'skip_user_roles': True}),
             RuleExec(),
             BlobURL(config={'bucket': settings.DOMAIN_LOGO_BUCKET}),
-            Set(config={'d': {'output.entity': 'entities.6'}})
+            Set(config={'d': {'output.entity': 'entities.6',
+                              'output.upload_url': 'blob_url'}})
             ]
           )
         ]

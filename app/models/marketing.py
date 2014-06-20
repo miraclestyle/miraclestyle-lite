@@ -8,11 +8,9 @@ Created on May 6, 2014
 import datetime
 
 from app import ndb, settings
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log
-from app.srv import blob as ndb_blob
-from app.plugins import common, rule, log, callback, blob, marketing, search
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import marketing
 
 
 class CatalogPricetag(ndb.BaseModel):
@@ -25,7 +23,7 @@ class CatalogPricetag(ndb.BaseModel):
   value = ndb.SuperStringProperty('4', required=True, indexed=False)
 
 
-class CatalogImage(ndb_blob.Image):
+class CatalogImage(Image):
   
   _kind = 36
   
@@ -52,7 +50,7 @@ class Catalog(ndb.BaseExpando):
   
   _virtual_fields = {
     '_images': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),
-    '_records': ndb_log.SuperLocalStructuredRecordProperty('35', repeated=True)
+    '_records': SuperLocalStructuredRecordProperty('35', repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -125,12 +123,13 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            blob.URL(gs_bucket_name=settings.CATALOG_IMAGE_BUCKET),
-            common.Set(dynamic_values={'output.entity': 'entities.35'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            BlobURL(config={'bucket': settings.CATALOG_IMAGE_BUCKET}),
+            Set(config={'d': {'output.entity': 'entities.35',
+                              'output.upload_url': 'blob_url'}})
             ]
           )
         ]
@@ -146,27 +145,26 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Set(static_values={'values.35.state': 'unpublished'},
-                       dynamic_values={'values.35.name': 'input.name',
-                                       'values.35.publish_date': 'input.publish_date',
-                                       'values.35.discontinue_date': 'input.discontinue_date'})
+            Context(),
+            Prepare(),
+            Set(config={'s': {'values.35.state': 'unpublished'},
+                        'd': {'values.35.name': 'input.name',
+                              'values.35.publish_date': 'input.publish_date',
+                              'values.35.discontinue_date': 'input.discontinue_date'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.35']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -175,20 +173,20 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'read'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        'search_cursor': ndb.SuperIntegerProperty(default=0)
         },
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.Read(catalog_page=settings.CATALOG_PAGE),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35',
-                                       'output.images_cursor': 'tmp.images_cursor',
-                                       'output.images_more': 'tmp.images_more'})
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -202,15 +200,15 @@ class Catalog(ndb.BaseExpando):
         'pricetags': ndb.SuperLocalStructuredProperty(CatalogImage, repeated=True),  # must be like this because we need to match the pricetags with order.....
         'publish_date': ndb.SuperDateTimeProperty(required=True),
         'discontinue_date': ndb.SuperDateTimeProperty(required=True),
-        'images_cursor': ndb.SuperIntegerProperty(default=0)
+        'search_cursor': ndb.SuperIntegerProperty(default=0)
         },
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.Read(read_from_start=True, catalog_page=settings.CATALOG_PAGE),
             marketing.UpdateSet()
             ]
@@ -218,21 +216,19 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
+            RuleWrite(),
             marketing.UpdateWrite(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35',
-                                                           'output.images_cursor': 'tmp.images_cursor',
-                                                           'output.images_more': 'tmp.images_more'}),
-            blob.Update(),  # @todo Not sure if the workflow is ok. Take a look at marketing.py plugins!
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'process_cover', 'action_model': '35'},
-                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            Write(),
+            RecordWrite(config={'paths': ['entities.35']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}}),
+            BlobUpdate(),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'process_cover', 'action_model': '35'},
+                                  {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -246,28 +242,27 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.UploadImagesSet()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
+            RuleWrite(),
             marketing.UploadImagesWrite(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            blob.Update(),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'process_images', 'action_model': '35'},
-                             dynamic_data={'catalog_image_keys': 'tmp.catalog_image_keys',
-                                           'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            RecordWrite(),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            BlobUpdate(),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'process_images', 'action_model': '35'},
+                                  {'catalog_image_keys': 'tmp.catalog_image_keys',
+                                   'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -281,23 +276,22 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
             marketing.ProcessImages(),
-            log.Write(),
-            blob.Update(),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'process_cover', 'action_model': '35'},
-                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            RecordWrite(),
+            BlobUpdate(),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'process_cover', 'action_model': '35'},
+                                  {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -310,10 +304,10 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.Read(read_from_start=True, catalog_page=settings.CATALOG_PAGE),
             marketing.ProcessCoverSet()
             ]
@@ -321,20 +315,20 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            common.Set(dynamic_values={'tmp.original_cover': 'entities.35.cover'}),
-            rule.Write(),
-            common.Set(dynamic_values={'tmp.new_cover': 'entities.35.cover'}),
+            Set(config={'d': {'tmp.original_cover': 'entities.35.cover'}}),
+            RuleWrite(),
+            Set(config={'d': {'tmp.new_cover': 'entities.35.cover'}}),
             marketing.ProcessCoverTransform(),
-            blob.AlterImage(destination='entities.35.cover',
-                            config={'copy': True, 'sufix': 'cover', 'transform': True,
-                                    'width': 240, 'height': 360, 'crop_to_fit': True,
-                                    'crop_offset_x': 0.0, 'crop_offset_y': 0.0}),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            blob.Update(),
-            callback.Notify(),
-            callback.Exec()
+            BlobAlterImage(config={'read': 'blob_transform',
+                                   'write': 'entities.35.cover',
+                                   'config': {'copy': True, 'sufix': 'cover', 'transform': True,
+                                              'width': 240, 'height': 360, 'crop_to_fit': True,
+                                              'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            Write(),
+            RecordWrite(config={'paths': ['entities.35']}),
+            BlobUpdate(),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -348,24 +342,23 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
             marketing.Delete(),
-            common.Delete(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            blob.Update(),
-            callback.Notify(),
-            callback.Exec()
+            Delete(),
+            RecordWrite(config={'paths': ['entities.35']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            BlobUpdate(),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -409,16 +402,16 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Search(config={'page': settings.SEARCH_PAGE}),
+            RulePrepare(config={'to': 'entities'}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -432,15 +425,15 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            log.Read(page_size=settings.RECORDS_PAGE),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35',
-                                       'output.log_read_cursor': 'log_read_cursor',
-                                       'output.log_read_more': 'log_read_more'})
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -455,25 +448,24 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            common.Set(static_values={'values.35.state': 'locked'}),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            Set(config={'s': {'values.35.state': 'locked'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
-            log.Entity(dynamic_arguments={'message': 'input.message'}),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RulePrepare(),  # @todo Should run out of transaction!!!
+            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -488,28 +480,26 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            common.Set(static_values={'values.35.state': 'published'}),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            Set(config={'s': {'values.35.state': 'published'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            rule.Prepare(skip_user_roles=True, strict=False),  # @todo Should run out of transaction!!!
-            log.Entity(dynamic_arguments={'message': 'input.message'}),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'index', 'action_model': '35'},
-                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RulePrepare(),  # @todo Should run out of transaction!!!
+            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'index', 'action_model': '35'},
+                                  {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -524,28 +514,26 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            common.Set(static_values={'values.35.state': 'discontinued'}),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            Set(config={'s': {'values.35.state': 'discontinued'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            rule.Prepare(skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
-            log.Entity(dynamic_arguments={'message': 'input.message'}),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'unindex', 'action_model': '35'},
-                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RulePrepare(),  # @todo Should run out of transaction!!!
+            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'unindex', 'action_model': '35'},
+                                  {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -562,30 +550,28 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            common.Set(dynamic_values={'values.35.state': 'input.state'}),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            Set(config={'d': {'values.35.state': 'input.state'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            rule.Prepare(skip_user_roles=True, strict=False),  # @todo Should run out of transaction!!!
-            log.Entity(dynamic_arguments={# 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
-                                          'message': 'input.message',
-                                          'note': 'input.note'}),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_model': '35'},
-                             dynamic_data={'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'}),  # @todo What happens if input.index_state is not supplied (e.g. None)?
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RulePrepare(),  # @todo Should run out of transaction!!!
+            RecordWrite(config={'paths': ['entities.35'],
+                                'd': {'message': 'input.message',
+                                      'note': 'input.note'}}),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_model': '35'},
+                                  {'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
             ]
           )
         ]
@@ -600,22 +586,22 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            common.Write(),
-            log.Entity(dynamic_arguments={'message': 'input.message', 'note': 'input.note'}),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Exec()
+            Write(),
+            RecordWrite(config={'paths': ['entities.35'],
+                                'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -629,10 +615,10 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
                                   documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
             ]
@@ -640,11 +626,11 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            log.Entity(static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                       dynamic_arguments={'message': 'tmp.message'}),
-            log.Write(),
-            callback.Notify(),
-            callback.Exec()
+            RecordWrite(config={'paths': ['entities.35'],
+                                's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                                'd': {'message': 'tmp.message'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -658,10 +644,10 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
                                    documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
             ]
@@ -669,11 +655,11 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            log.Entity(static_arguments={'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                       dynamic_arguments={'message': 'tmp.message'}),
-            log.Write(),
-            callback.Notify(),
-            callback.Exec()
+            RecordWrite(config={'paths': ['entities.35'],
+                                's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                                'd': {'message': 'tmp.message'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -686,16 +672,16 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
             marketing.CronPublish(page_size=10),
             marketing.CronDiscontinue(page_size=10),
             marketing.CronDelete(page_size=10,
                                  catalog_unpublished_life=settings.CATALOG_UNPUBLISHED_LIFE,
                                  catalog_discontinued_life=settings.CATALOG_DISCONTINUED_LIFE),
-            callback.Exec()
+            CallbackExec()
             ]
           )
         ]
@@ -708,17 +694,16 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.35'}),
-            callback.Notify(),
-            callback.Payload(queue='callback',
-                             static_data={'action_id': 'process_duplicate', 'action_model': '35'},
-                             dynamic_data={'key': 'entities.35.key_urlsafe'}),
-            callback.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.35'}}),
+            CallbackNotify(),
+            CallbackExec(config=[('callback',
+                                  {'action_id': 'process_duplicate', 'action_model': '35'},
+                                  {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -731,10 +716,10 @@ class Catalog(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             marketing.DuplicateRead()
             ]
           ),
@@ -742,9 +727,9 @@ class Catalog(ndb.BaseExpando):
           transactional=True,
           plugins=[
             marketing.DuplicateWrite(),
-            log.Write(),
-            callback.Notify(),
-            callback.Exec()
+            RecordWrite(),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -826,20 +811,20 @@ class CatalogIndex(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            search.Search(index_name=settings.CATALOG_INDEX, page_size=settings.SEARCH_PAGE),
-            search.DictConverter(),
-            #search.Entities(),
-            #rule.Prepare(skip_user_roles=True, strict=False),
-            #rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_documents_total_matches': 'search_documents_total_matches',
-                                       'output.search_documents_count': 'search_documents_count',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Search(config={'index': settings.CATALOG_INDEX, 'page': settings.SEARCH_PAGE, 'document': True}),
+            DocumentDictConverter(),
+            #DocumentEntityConverter(),
+            #RulePrepare(config={'to': 'entities'}),
+            #RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_documents_total_matches': 'search_documents_total_matches',
+                              'output.search_documents_count': 'search_documents_count',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
