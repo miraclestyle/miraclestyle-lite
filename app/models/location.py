@@ -6,9 +6,9 @@ Created on Jan 9, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.plugins import common, rule, callback, log, location
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import location
 
 
 def get_location(location):
@@ -56,10 +56,10 @@ class Country(ndb.BaseModel):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
             location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
             ]
           )
@@ -88,16 +88,16 @@ class Country(ndb.BaseModel):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            common.Search(page_size=-1),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
+            Search(config={'page': -1}),
+            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -160,16 +160,16 @@ class CountrySubdivision(ndb.BaseModel):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
+            Search(config={'page': settings.SEARCH_PAGE}),
+            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]

@@ -6,9 +6,9 @@ Created on Apr 30, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.plugins import common, rule, log, callback, setup as plugin_setup
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import setup as plugins_setup
 
 
 class Configuration(ndb.BaseExpando):
@@ -41,11 +41,11 @@ class Configuration(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            plugin_setup.Install()
+            Context(),
+            Read(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
+            plugins_setup.Install()
             ]
           )
         ]
@@ -56,11 +56,11 @@ class Configuration(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            plugin_setup.CronInstall()
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
+            plugins_setup.CronInstall()
             ]
           )
         ]

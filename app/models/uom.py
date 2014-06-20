@@ -6,9 +6,9 @@ Created on Jan 1, 2014
 '''
 
 from app import ndb, settings
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import ActionPermission, FieldPermission, GlobalRole
-from app.plugins import common, callback, rule, uom
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import uom
 
 
 class Measurement(ndb.BaseModel):
@@ -78,10 +78,10 @@ class Unit(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
             uom.CurrencyUpdate(file_path=settings.CURRENCY_DATA_FILE)
             ]
           )
@@ -93,10 +93,10 @@ class Unit(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
             uom.UnitUpdate(file_path=settings.UOM_DATA_FILE)
             ]
           )
@@ -128,17 +128,17 @@ class Unit(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Exec(),
-            common.Search(page_size=-1),
+            Context(),
+            Prepare(),
+            RulePrepare(config={'skip_user_roles': True}),
+            RuleExec(),
+            Search(config={'page': -1}),
             uom.RemoveCurrencies(),
-            rule.Prepare(skip_user_roles=True, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]

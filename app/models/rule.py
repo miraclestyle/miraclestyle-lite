@@ -6,109 +6,9 @@ Created on Dec 20, 2013
 '''
 
 from app import ndb, settings
-from app.lib.safe_eval import safe_eval
-from app.lib.attribute_manipulator import set_attr, get_attr
-from app.srv.event import Action, PluginGroup
-from app.srv import log as ndb_log
-from app.plugins import common, rule, log, callback
-
-
-class Permission(ndb.BasePolyExpando):
-  '''Base class for all permissions.
-  If the futuer deems scaling to be a problem, possible solutions could be to:
-  a) Create DomainUserPermissions entity, that will fan-out on DomainUser entity,
-  and will contain all permissions for the domain user (based on it's domain role membership) in it;
-  b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...),
-  and store each permission in datasotre as child entity of DomainUser;
-  c) Some other similar pattern.
-  
-  '''
-  _kind = 78
-  
-  _default_indexed = False
-
-
-class ActionPermission(Permission):
-  
-  _kind = 79
-  
-  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
-  actions = ndb.SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
-  executable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
-  condition = ndb.SuperStringProperty('4', required=True, indexed=False)
-  
-  def __init__(self, *args, **kwargs):
-    super(ActionPermission, self).__init__(**kwargs)
-    if len(args):
-      kind, actions, executable, condition = args
-      if not isinstance(actions, (tuple, list)):
-        actions = [actions]
-      self.kind = kind
-      self.actions = actions
-      self.executable = executable
-      self.condition = condition
-  
-  def run(self, role, context):
-    if (self.kind == context.entity.get_kind()):
-      for action in self.actions:
-        if (action.urlsafe() in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
-          context.entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
-
-
-class FieldPermission(Permission):
-  
-  _kind = 80
-  
-  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
-  fields = ndb.SuperStringProperty('2', repeated=True, indexed=False)
-  writable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
-  visible = ndb.SuperBooleanProperty('4', required=True, default=True, indexed=False)
-  condition = ndb.SuperStringProperty('5', required=True, indexed=False)
-  
-  def __init__(self, *args, **kwargs):
-    super(FieldPermission, self).__init__(**kwargs)
-    if len(args):
-      kind, fields, writable, visible, condition = args
-      if not isinstance(fields, (tuple, list)):
-        fields = [fields]
-      self.kind = kind
-      self.fields = fields
-      self.writable = writable
-      self.visible = visible
-      self.condition = condition
-  
-  def run(self, role, context):
-    if (self.kind == context.entity.get_kind()):
-      for field in self.fields:
-        parsed_field = get_attr(context.entity._field_permissions, field)  # Retrieves field value from foo.bar.far
-        if parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
-          if (self.writable != None):
-            parsed_field['writable'].append(self.writable)
-          if (self.visible != None):
-            parsed_field['visible'].append(self.visible)
-
-
-class Role(ndb.BaseExpando):
-  
-  _kind = 66
-  
-  # feature proposition (though it should create overhead due to the required drilldown process!)
-  # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
-  # complete_name = ndb.SuperTextProperty('2')
-  name = ndb.SuperStringProperty('1', required=True)
-  active = ndb.SuperBooleanProperty('2', required=True, default=True)
-  permissions = ndb.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
-  
-  _default_indexed = False
-  
-  def run(self, context):
-    for permission in self.permissions:
-      permission.run(self, context)
-
-
-class GlobalRole(Role):
-  
-  _kind = 67
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import rule
 
 
 class DomainRole(Role):
@@ -116,7 +16,7 @@ class DomainRole(Role):
   _kind = 60
   
   _virtual_fields = {
-    '_records': ndb_log.SuperLocalStructuredRecordProperty('60', repeated=True)
+    '_records': SuperLocalStructuredRecordProperty('60', repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -147,11 +47,11 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Set(dynamic_values={'output.entity': 'entities.60'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Set(config={'d': {'output.entity': 'entities.60'}})
             ]
           )
         ]
@@ -167,24 +67,23 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
             rule.DomainRoleSet()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.60'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.60']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.60'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -197,12 +96,12 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.60'})
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.60'}})
             ]
           )
         ]
@@ -218,24 +117,23 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             rule.DomainRoleSet()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.60'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.60']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.60'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -248,22 +146,21 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            common.Delete(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.60'}),
-            callback.Notify(),
-            callback.Exec()
+            Delete(),
+            RecordWrite(config={'paths': ['entities.60']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.60'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -299,16 +196,16 @@ class DomainRole(Role):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec()
+            Search(config={'page': settings.SEARCH_PAGE}),
+            RulePrepare(config={'to': 'entities'}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -317,20 +214,20 @@ class DomainRole(Role):
       key=Action.build_key('60', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='60', required=True),
-        'log_read_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            log.Read(page_size=settings.RECORDS_PAGE),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.60',
-                                       'output.log_read_cursor': 'log_read_cursor',
-                                       'output.log_read_more': 'log_read_more'})
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.60',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -354,7 +251,7 @@ class DomainUser(ndb.BaseExpando):
   
   _virtual_fields = {
     '_primary_email': ndb.SuperStringProperty(),
-    '_records': ndb_log.SuperLocalStructuredRecordProperty('8', repeated=True)
+    '_records': SuperLocalStructuredRecordProperty('8', repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -399,11 +296,11 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Set(dynamic_values={'output.entity': 'entities.8'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Set(config={'d': {'output.entity': 'entities.8'}})
             ]
           )
         ]
@@ -419,23 +316,22 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
+            Context(),
             rule.DomainUserInvite(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(write_entities=['8', '0']),
-            log.Entity(log_entities=['8', '0']),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.8'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(config={'paths': ['entities.8', 'entities.0']}),
+            RecordWrite(config={'paths': ['entities.8', 'entities.0']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.8'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -448,13 +344,13 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.8'})
+            RulePrepare(),
+            RuleExec(),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.8'}})
             ]
           )
         ]
@@ -469,25 +365,24 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
             rule.DomainUserUpdate(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.8'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.8']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.8'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -500,25 +395,24 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
             rule.DomainUserRemove(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            common.Write(write_entities=['0']),
-            common.Delete(),
-            log.Entity(log_entities=['8', '0']),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.8'}),
-            callback.Notify(),
-            callback.Exec()
+            Write(config={'paths': ['entities.0']}),
+            Delete(),
+            RecordWrite(config={'paths': ['entities.8', 'entities.0']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.8'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -554,16 +448,16 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Search(config={'page': settings.SEARCH_PAGE}),
+            RulePrepare(config={'to': 'entities'}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -577,16 +471,16 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            log.Read(page_size=settings.RECORDS_PAGE),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.8',
-                                       'output.log_read_cursor': 'log_read_cursor',
-                                       'output.log_read_more': 'log_read_more'})
+            RulePrepare(),
+            RuleExec(),
+            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.8',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -599,29 +493,30 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
-            common.Set(static_values={'values.8.state': 'accepted'}),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Set(config={'s': {'values.8.state': 'accepted'}}),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.8']}),
             log.Entity(),
             log.Write(),
-            common.Set(dynamic_values={'entities.6': 'entities.8.namespace_entity',
-                                       'values.6': 'entities.8.namespace_entity'}),
-            rule.Prepare(prepare_entities=['8', '6'], skip_user_roles=False, strict=False),  # @todo Should run out of transaction!!!
-            rule.Read(read_entities=['8', '6']),
-            common.Set(dynamic_values={'output.entity': 'entities.8',
-                                       'output.domain': 'entities.6'}),
-            callback.Notify(),
-            callback.Exec()
+            Set(config={'d': {'entities.6': 'entities.8.namespace_entity',
+                              'values.6': 'entities.8.namespace_entity'}}),
+            RulePrepare(config={'to': 'entities', 'from': 'values'}),  # @todo Should run out of transaction!!!
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entity': 'entities.8',
+                              'output.domain': 'entities.6'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -634,21 +529,20 @@ class DomainUser(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
+            Context(),
+            Read(),
             rule.DomainUserRead(),
             rule.DomainUserCleanRoles(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.8']})
             ]
           )
         ]
