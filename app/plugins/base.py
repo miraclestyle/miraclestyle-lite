@@ -155,6 +155,7 @@ class Write(ndb.BaseModel):
     if parent != None:
       namespace = None
     for entity in write_entities:
+      util.logger('Entity to be written: %s' % entity)
       if not hasattr(entity, 'key'):
         entity.set_key(None, parent=parent, namespace=namespace)
     ndb.put_multi(write_entities)
@@ -192,7 +193,7 @@ class Search(ndb.BaseModel):
     index_name = self.config.get('index', None)
     page_size = self.config.get('page', 10)
     fields = self.config.get('fields', None)
-    document_search = self.config.get('document', False)
+    search_document = self.config.get('document', False)
     model =  context.models[context.model.get_kind()]
     argument = context.input.get('search')
     urlsafe_cursor = context.input.get('search_cursor')
@@ -201,7 +202,7 @@ class Search(ndb.BaseModel):
       index_name = context.model.get_kind()
     else:
       namespace = None
-    if document_search:
+    if search_document:
       result = document_search(index_name, argument, page_size, urlsafe_cursor, namespace, fields)
       context.search_documents = result['documents']
       context.search_documents_count = result['documents_count']
@@ -276,7 +277,7 @@ class RecordWrite(ndb.BaseModel):
     for records_path in records_paths:
       records = get_attr(context, records_path)
       records = normalize(records)
-      context.records.extend([(record, ) for record in records])
+      context.records.extend([(entity, ) for entity in records])
     arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
       arguments[key] = get_attr(context, value)
@@ -321,7 +322,7 @@ class BlobURL(ndb.BaseModel):
     upload_url = context.input.get('upload_url')
     if upload_url:
       context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
-      raise ndb.TerminateAction()
+      #raise ndb.TerminateAction()
 
 
 class BlobUpdate(ndb.BaseModel):

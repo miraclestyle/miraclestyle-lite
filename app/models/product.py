@@ -231,7 +231,7 @@ class Template(ndb.BaseExpando):
                              'save': 'entities.38', 'copy': 'values.38'}]),
             RulePrepare(),
             RuleExec(),
-            BlobURL(config={'bucket': settings.PRODUCT_TEMPLATE_BUCKET})
+            BlobURL(config={'bucket': settings.PRODUCT_TEMPLATE_BUCKET}),
             Set(config={'d': {'output.entity': 'entities.38',
                               'output.upload_url': 'blob_url'}})
             ]

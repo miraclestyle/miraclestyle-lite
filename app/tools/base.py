@@ -210,8 +210,7 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, nam
     direction = search.SortExpression.DESCENDING
   order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
   sort_options = search.SortOptions(expressions=[order], limit=page_size)
-  if urlsafe_cursor:
-    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+  cursor = search.Cursor(web_safe_string=urlsafe_cursor)
   options = search.QueryOptions(limit=page_size, returned_fields=fields, sort_options=sort_options, cursor=cursor)
   query = search.Query(query_string=query_string, options=options)
   total_matches = 0
@@ -298,6 +297,7 @@ def documents_to_dict(documents):
   results = []
   if len(documents):
     for document in documents:
+      util.logger('Document being converted: %s' % document)
       dic = document_to_dict(document)
       if dic:
         results.append(dic)

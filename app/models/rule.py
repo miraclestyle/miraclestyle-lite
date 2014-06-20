@@ -199,7 +199,7 @@ class DomainRole(Role):
             Context(),
             Prepare(),
             RulePrepare(),
-            RuleExec()
+            RuleExec(),
             Search(config={'page': settings.SEARCH_PAGE}),
             RulePrepare(config={'to': 'entities'}),
             RuleRead(config={'path': 'entities'}),
@@ -507,8 +507,6 @@ class DomainUser(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RecordWrite(config={'paths': ['entities.8']}),
-            log.Entity(),
-            log.Write(),
             Set(config={'d': {'entities.6': 'entities.8.namespace_entity',
                               'values.6': 'entities.8.namespace_entity'}}),
             RulePrepare(config={'to': 'entities', 'from': 'values'}),  # @todo Should run out of transaction!!!
