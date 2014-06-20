@@ -72,16 +72,16 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity.put()
-    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
     self.config.put()
   
   def execute_create_domain_role(self):
     config_input = self.config.next_operation_input
-    ActionPermission = context.models['79']
-    FieldPermission = context.models['80']
-    DomainRole = context.models['60']
+    ActionPermission = self.context.models['79']
+    FieldPermission = self.context.models['80']
+    DomainRole = self.context.models['60']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     permissions = []
@@ -105,7 +105,7 @@ class DomainSetup(Setup):
       permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity.put()
-    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_1'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
@@ -113,8 +113,8 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_1(self):
     config_input = self.config.next_operation_input
-    Widget = context.models['62']
-    Filter = context.models['65']
+    Widget = self.context.models['62']
+    Filter = self.context.models['65']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
@@ -140,7 +140,7 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity.sequence = i
     ndb.put_multi(entities)
-    record(context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_2'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
@@ -149,8 +149,8 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_2(self):
     config_input = self.config.next_operation_input
-    Widget = context.models['62']
-    Filter = context.models['65']
+    Widget = self.context.models['62']
+    Filter = self.context.models['65']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
@@ -170,7 +170,7 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity.sequence = (i+1) + sequence
     ndb.put_multi(entities)
-    record(context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
@@ -178,7 +178,7 @@ class DomainSetup(Setup):
   
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
-    DomainUser = context.models['8']
+    DomainUser = self.context.models['8']
     user = self.config.parent_entity
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
@@ -188,7 +188,7 @@ class DomainSetup(Setup):
     entity.put()
     user.domains.append(domain_key)
     user.put()
-    record(context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'add_domain_primary_contact'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'user_key': entity.key}
@@ -200,7 +200,7 @@ class DomainSetup(Setup):
     entity = domain_key.get()
     entity.primary_contact = config_input.get('user_key')
     entity.put()
-    record(context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',

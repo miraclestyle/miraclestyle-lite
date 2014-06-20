@@ -420,7 +420,7 @@ class Catalog(ndb.BaseExpando):
       key=Action.build_key('35', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='35', required=True),
-        'log_read_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugin_groups=[
         PluginGroup(
