@@ -466,7 +466,7 @@ class DomainUser(ndb.BaseExpando):
       key=Action.build_key('8', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='8', required=True),
-        'log_read_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugin_groups=[
         PluginGroup(

@@ -9,11 +9,11 @@ import math
 
 from jinja2.sandbox import SandboxedEnvironment
 
+
 from app import ndb, settings
-from app.srv.event import Action, PluginGroup
-from app.srv.rule import GlobalRole, ActionPermission, FieldPermission
-from app.srv import log as ndb_log
-from app.plugins import common, rule, log, callback, notify
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins import notify
 
 
 sandboxed_jinja = SandboxedEnvironment()
@@ -47,7 +47,7 @@ class CustomTemplate(Template):
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-    context.callback_payloads.append(('send', data))
+    context.callbacks.append(('send', data))
 
 
 class MailTemplate(Template):
@@ -78,7 +78,7 @@ class MailTemplate(Template):
       if recipients:
         new_data = data_copy.copy()
         new_data['recipient'] = recipients
-        context.callback_payloads.append(('send', new_data))
+        context.callbacks.append(('send', new_data))
 
 
 class HttpTemplate(Template):
@@ -97,7 +97,7 @@ class HttpTemplate(Template):
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
             'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-    context.callback_payloads.append(('send', data))
+    context.callbacks.append(('send', data))
 
 
 class Notification(ndb.BaseExpando):
@@ -113,7 +113,7 @@ class Notification(ndb.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    '_records': ndb_log.SuperLocalStructuredRecordProperty('61', repeated=True)
+    '_records': SuperLocalStructuredRecordProperty('61', repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -149,11 +149,11 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Set(dynamic_values={'output.entity': 'entities.61'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Set(config={'d': {'output.entity': 'entities.61'}})
             ]
           )
         ]
@@ -171,24 +171,23 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
             notify.Set()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.61'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.61']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.61'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -201,12 +200,12 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.61'})
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.61'}})
             ]
           )
         ]
@@ -224,24 +223,23 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
             notify.Set()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            rule.Write(),
-            common.Write(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.61'}),
-            callback.Notify(),
-            callback.Exec()
+            RuleWrite(),
+            Write(),
+            RecordWrite(config={'paths': ['entities.61']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.61'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -254,22 +252,21 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec()
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            common.Delete(),
-            log.Entity(),
-            log.Write(),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.61'}),
-            callback.Notify(),
-            callback.Exec()
+            Delete(),
+            RecordWrite(config={'paths': ['entities.61']}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.61'}}),
+            CallbackNotify(),
+            CallbackExec()
             ]
           )
         ]
@@ -310,16 +307,16 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Prepare(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            common.Search(page_size=settings.SEARCH_PAGE),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entities': 'entities',
-                                       'output.search_cursor': 'search_cursor',
-                                       'output.search_more': 'search_more'})
+            Context(),
+            Prepare(),
+            RulePrepare(),
+            RuleExec(),
+            Search(config={'page': settings.SEARCH_PAGE}),
+            RulePrepare(config={'to': 'entities'}),
+            RuleRead(config={'path': 'entities'}),
+            Set(config={'d': {'output.entities': 'entities',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -328,20 +325,20 @@ class Notification(ndb.BaseExpando):
       key=Action.build_key('61', 'read_records'),
       arguments={
         'key': ndb.SuperKeyProperty(kind='61', required=True),
-        'log_read_cursor': ndb.SuperStringProperty()
+        'search_cursor': ndb.SuperStringProperty()
         },
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Read(),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
-            log.Read(page_size=settings.RECORDS_PAGE),
-            rule.Read(),
-            common.Set(dynamic_values={'output.entity': 'entities.61',
-                                       'output.log_read_cursor': 'log_read_cursor',
-                                       'output.log_read_more': 'log_read_more'})
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RuleRead(),
+            Set(config={'d': {'output.entity': 'entities.61',
+                              'output.search_cursor': 'search_cursor',
+                              'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -356,13 +353,15 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
-            common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(config=[{'model': 'models.61', 'parent': None,
+                             'namespace': 'tmp.caller_entity.key_namespace',
+                             'save': 'entities.61', 'copy': 'values.61'}]),
+            RulePrepare(),
+            RuleExec(),
             notify.Initiate(),
-            callback.Exec(dynamic_data={'caller_user': 'user.key_urlsafe', 'caller_action': 'action.key_urlsafe'})
+            CallbackExec()
             ]
           )
         ]
@@ -378,11 +377,13 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
-            common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(config=[{'model': 'models.61', 'parent': None,
+                             'namespace': 'tmp.caller_entity.key_namespace',
+                             'save': 'entities.61', 'copy': 'values.61'}]),
+            RulePrepare(),
+            RuleExec(),
             notify.MailSend(message_sender=settings.NOTIFY_EMAIL)
             ]
           )
@@ -399,11 +400,13 @@ class Notification(ndb.BaseExpando):
       _plugin_groups=[
         PluginGroup(
           plugins=[
-            common.Context(),
-            common.Set(dynamic_values={'tmp.caller_entity': 'input.caller_entity.entity'}),
-            common.Prepare(namespace_path='tmp.caller_entity.key_namespace'),
-            rule.Prepare(skip_user_roles=False, strict=False),
-            rule.Exec(),
+            Context(),
+            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(config=[{'model': 'models.61', 'parent': None,
+                             'namespace': 'tmp.caller_entity.key_namespace',
+                             'save': 'entities.61', 'copy': 'values.61'}]),
+            RulePrepare(),
+            RuleExec(),
             notify.HttpSend()
             ]
           )
