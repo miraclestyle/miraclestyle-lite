@@ -617,7 +617,7 @@ class Domain(ndb.BaseExpando):
             RuleExec(),
             Search(config={'page': settings.SEARCH_PAGE}),
             auth.DomainSearch(),
-            RulePrepare(config{'to': 'entities', 'skip_user_roles': True}),
+            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
             RuleRead(config={'path': 'entities'}),
             Set(config={'d': {'output.entities': 'entities',
                               'output.search_cursor': 'search_cursor',
@@ -765,7 +765,7 @@ class Domain(ndb.BaseExpando):
             Write(),
             RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
-            Set(config{'d': {'output.entity': 'entities.6'}}),
+            Set(config={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]

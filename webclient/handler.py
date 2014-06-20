@@ -255,7 +255,7 @@ class Base(webapp2.RequestHandler):
         
         if self.LOAD_CURRENT_USER:
           
-           from app.srv import auth
+           from app.models import auth
            
            auth.User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
            
