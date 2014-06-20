@@ -151,7 +151,7 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities']}),
+            RecordWrite(config={'paths': ['entities.0']}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.0'}}),
             CallbackNotify(),
@@ -256,7 +256,7 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities'],
+            RecordWrite(config={'paths': ['entities.0'],
                                 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.0'}}),
@@ -287,7 +287,7 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities'], 'd': {'ip_address': 'tmp.ip_address'}}),
+            RecordWrite(config={'paths': ['entities.0'], 'd': {'ip_address': 'tmp.ip_address'}}),
             auth.UserLogoutOutput()
             ]
           )
@@ -567,7 +567,7 @@ class Domain(ndb.BaseExpando):
                                    'config': {'transform': True, 'width': 240, 'height': 100,
                                               'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             Write(),
-            RecordWrite(config={'paths': ['entities']}),
+            RecordWrite(config={'paths': ['entities.6']}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.6'}}),
             BlobUpdate(config={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),
@@ -670,7 +670,7 @@ class Domain(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities'], 'd': {'message': 'input.message'}}),
+            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
@@ -701,7 +701,7 @@ class Domain(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities'], 'd': {'message': 'input.message'}}),
+            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
@@ -734,7 +734,7 @@ class Domain(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(config={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
@@ -763,7 +763,7 @@ class Domain(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(config={'paths': ['entities'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
             Set(config{'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),

@@ -103,7 +103,7 @@ class Widget(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities']}),
+            RecordWrite(config={'paths': ['entities.62']}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
@@ -156,7 +156,7 @@ class Widget(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities']}),
+            RecordWrite(config={'paths': ['entities.62']}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
@@ -183,7 +183,7 @@ class Widget(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(config={'paths': ['entities']}),
+            RecordWrite(config={'paths': ['entities.62']}),
             RuleRead(),
             Set(config={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
