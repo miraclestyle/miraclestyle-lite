@@ -47,10 +47,10 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
-DOMAIN_LOGO_BUCKET = 'user_storage/domain_logo'
-CATALOG_IMAGE_BUCKET = 'user_storage/catalog_image'
-PRODUCT_TEMPLATE_BUCKET = 'user_storage/product_image'
-PRODUCT_INSTANCE_BUCKET = 'user_storage/product_instance_image'
+DOMAIN_LOGO_BUCKET = 'universal-trail-608.appspot.com/domain_logo'
+CATALOG_IMAGE_BUCKET = 'universal-trail-608.appspot.com/catalog_image'
+PRODUCT_TEMPLATE_BUCKET = 'universal-trail-608.appspot.com/product_image'
+PRODUCT_INSTANCE_BUCKET = 'universal-trail-608.appspot.com/product_instance_image'
 
 # Catalog settings.
 CATALOG_PAGE = 10
