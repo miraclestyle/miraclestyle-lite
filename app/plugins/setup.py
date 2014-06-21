@@ -72,7 +72,7 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity.put()
-    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
     self.config.put()
@@ -105,7 +105,7 @@ class DomainSetup(Setup):
       permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity.put()
-    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_1'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
@@ -140,7 +140,7 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity.sequence = i
     ndb.put_multi(entities)
-    record(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_2'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
@@ -170,7 +170,7 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity.sequence = (i+1) + sequence
     ndb.put_multi(entities)
-    record(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
@@ -188,7 +188,7 @@ class DomainSetup(Setup):
     entity.put()
     user.domains.append(domain_key)
     user.put()
-    record(self.context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'add_domain_primary_contact'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'user_key': entity.key}
@@ -200,7 +200,7 @@ class DomainSetup(Setup):
     entity = domain_key.get()
     entity.primary_contact = config_input.get('user_key')
     entity.put()
-    record(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
@@ -209,7 +209,7 @@ class DomainSetup(Setup):
     self.context.tmp['caller_entity'] = entity
     self.context.tmp['caller_user'] = self.context.user
     custom_notify.run(self.context)
-    callback('/task/io_engine_run', self.context.callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
+    callback_exec('/task/io_engine_run', self.context.callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
     self.config.state = 'completed'
     self.config.put()
 

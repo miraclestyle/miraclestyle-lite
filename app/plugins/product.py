@@ -12,7 +12,7 @@ import hashlib
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, util, settings  # @todo settings has to GET OUT OF HERE!!!
-from app.tools.base import blob_alter_image
+from app.tools.base import _blob_alter_image
 from app.tools.manipulator import set_attr, get_attr, sort_by_list
 
 
@@ -153,7 +153,7 @@ class DuplicateWrite(ndb.BaseModel):
         @ndb.tasklet
         def generate():
           original_image = get_attr(context, source)
-          results = blob_alter_image(original_image, copy=True, sufix='copy')
+          results = _blob_alter_image(original_image, copy=True, sufix='copy')
           if results.get('blob_delete'):
             context.blob_delete.append(results['blob_delete'])
           if results.get('new_image'):

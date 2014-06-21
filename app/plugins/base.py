@@ -271,17 +271,17 @@ class RecordWrite(ndb.BaseModel):
       self.config = {}
     model = context.models['5']
     arguments = {}
-    records_paths = self.config.get('paths', [])
+    entity_paths = self.config.get('paths', [])
     static_arguments = self.config.get('s', {})
     dynamic_arguments = self.config.get('d', {})
-    for records_path in records_paths:
-      records = get_attr(context, records_path)
-      records = normalize(records)
-      context.records.extend([(entity, ) for entity in records])
     arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
       arguments[key] = get_attr(context, value)
-    record(context.models['5'], context.records, context.user.key, context.action.key, arguments)
+    for entity_path in entity_paths:
+      entities = get_attr(context, entity_path)
+      entities = normalize(entities)
+      context.records.extend([(entity, arguments) for entity in entities])
+    record_write(context.models['5'], context.records, context.user.key, context.action.key)
     context.records = []
 
 
@@ -307,7 +307,7 @@ class CallbackExec(ndb.BaseModel):
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
       context.callbacks.append((queue_name, static_data))
-    callback('/task/io_engine_run', context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
+    callback_exec('/task/io_engine_run', context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
     context.callbacks = []
 
 
@@ -336,13 +336,7 @@ class BlobUpdate(ndb.BaseModel):
     write_path = self.config.get('write', 'blob_write')
     blob_delete = get_attr(context, delete_path)
     blob_write = get_attr(context, write_path)
-    if blob_delete:
-      context.blob_unused.extend(blob_parse(blob_delete))
-    if blob_write:
-      blob_keys = blob_parse(blob_write)
-      for blob_key in blob_keys:
-        if blob_key in context.blob_unused:
-          context.blob_unused.remove(blob_key)
+    context.blob_unused = blob_update(context.blob_unused, blob_delete, blob_write)
 
 
 class BlobAlterImage(ndb.BaseModel):
@@ -356,32 +350,9 @@ class BlobAlterImage(ndb.BaseModel):
     write_path = self.config.get('write', None)
     config = self.config.get('config', None)
     entities = get_attr(context, read_path)
-    if entities and isinstance(entities, dict):
-      write_entities = {}
-      for key, entity in entities.items():
-        if entity and hasattr(entity, 'image'):
-          result = blob_alter_image(entity, **config)
-          if result.get('save'):
-            write_entities[key] = result['save']
-          if result.get('delete'):
-            context.blob_delete.append(result['delete'])
-      set_attr(context, write_path, write_entities)
-    elif entities and isinstance(entities, list):
-      write_entities = []
-      for entity in entities:
-        if entity and hasattr(entity, 'image'):
-          result = blob_alter_image(entity, **config)
-          if result.get('save'):
-            write_entities.append(result['save'])
-          if result.get('delete'):
-            context.blob_delete.append(result['delete'])
-      set_attr(context, write_path, write_entities)
-    elif entities and hasattr(entities, 'image'):
-      result = blob_alter_image(entities, **config)
-      if result.get('save'):
-        set_attr(context, write_path, result['save'])
-      if result.get('delete'):
-        context.blob_delete.append(result['delete'])
+    write_entities, blob_delete = blob_alter_image(entities, config)
+    context.blob_delete.extend(blob_delete)
+    set_attr(context, write_path, write_entities)
 
 
 class ActionDenied(Exception):
@@ -480,8 +451,8 @@ class DocumentWrite(ndb.BaseModel):
     max_doc = self.config.get('max_doc', 200)
     entities = get_attr(context, entity_path)
     entities = normalize(entities)
-    documents = [document_from_entity(entity, fields) for entity in entities]
-    documents_write(documents, documents_per_index=max_doc)
+    documents = document_from_entity(entities, fields)
+    document_write(documents, documents_per_index=max_doc)
 
 
 class DocumentDelete(ndb.BaseModel):
@@ -495,14 +466,14 @@ class DocumentDelete(ndb.BaseModel):
     entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
     max_doc = self.config.get('max_doc', 200)
     entities = get_attr(context, entity_path)
-    documents_delete(entities, documents_per_index=max_doc)
+    document_delete(entities, documents_per_index=max_doc)
 
 
 class DocumentDictConverter(ndb.BaseModel):
   
   def run(self, context):
     if len(context.search_documents):
-      context.entities = documents_to_dict(context.search_documents)
+      context.entities = document_to_dict(context.search_documents)
 
 
 class DocumentEntityConverter(ndb.BaseModel):

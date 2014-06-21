@@ -12,7 +12,7 @@ import datetime
 from google.appengine.api import search
 
 from app import ndb, util
-from app.tools.base import blob_alter_image
+from app.tools.base import _blob_alter_image
 from app.tools.manipulator import set_attr, get_attr, sort_by_list
 
 
@@ -119,7 +119,7 @@ class DuplicateWrite(ndb.BaseModel):
         @ndb.tasklet
         def generate():
           original_image = get_attr(context, source)
-          results = blob_alter_image(original_image, copy=True, sufix='copy')
+          results = _blob_alter_image(original_image, copy=True, sufix='copy')
           if results.get('blob_delete'):
             context.blob_delete.append(results['blob_delete'])
           if results.get('new_image'):
@@ -178,7 +178,7 @@ class DuplicateWrite(ndb.BaseModel):
     new_catalog.created = datetime.datetime.now()
     new_catalog.state = 'unpublished'
     new_catalog.set_key(None, namespace=catalog.key.namespace())
-    cover_results = blob_alter_image(context.entities['35'].cover, copy=True, sufix='cover')
+    cover_results = _blob_alter_image(context.entities['35'].cover, copy=True, sufix='cover')
     if cover_results.get('blob_delete'):
       context.blob_delete.append(cover_results['blob_delete'])
     if cover_results.get('new_image'):

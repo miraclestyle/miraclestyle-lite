@@ -21,36 +21,32 @@ from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
 
-def record(model, records, agent_key, action_key, global_arguments={}):
+def record_write(model, records, agent_key, action_key):
   records = normalize(records)
   write_records = []
   if len(records):
     for config in records:
-      if config and isinstance(config, (list, tuple)) and config[0] and isinstance(config[0], ndb.Model):
+      if config and isinstance(config, (list, tuple)) and config[0] and isinstance(config[0], ndb.Model) and hasattr(config[0], 'key') and isinstance(config[0].key, ndb.Key):
         arguments = {}
-        kwargs = {}
         entity = config[0]
         try:
           entity_arguments = config[1]
         except:
           entity_arguments = {}
-        arguments.update(global_arguments)
-        arguments.update(entity_arguments)
-        log_entity = arguments.pop('log_entity', True)
-        if len(arguments):
-          for key, value in arguments.items():
+        log_entity = entity_arguments.pop('log_entity', True)
+        if len(entity_arguments):
+          for key, value in entity_arguments.items():
             if entity._field_permissions['_records'][key]['writable']:
-              kwargs[key] = value
-        record = model(parent=entity.key, agent=agent_key, action=action_key, **kwargs)
+              arguments[key] = value
+        record = model(parent=entity.key, agent=agent_key, action=action_key, **arguments)
         if log_entity is True:
-          if entity:
-            record.log_entity(entity)
+          record.log_entity(entity)
         write_records.append(record)
   if len(write_records):
     return ndb.put_multi(write_records)
 
 
-def callback(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
+def callback_exec(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
   callbacks = normalize(callbacks)
   queues = {}
   if ndb.in_transaction():
@@ -240,7 +236,7 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, nam
             'search_more': search_more}
 
 
-def document_from_entity(entity, fields={}):
+def _document_from_entity(entity, fields={}):
   if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
     doc_id = entity.key_urlsafe
     doc_fields = []
@@ -280,31 +276,29 @@ def document_from_entity(entity, fields={}):
       return search.Document(doc_id=doc_id, fields=doc_fields)
 
 
-def document_to_dict(document):
-  if document and isinstance(document, search.Document):
-    dic = {}
-    dic['doc_id'] = document.doc_id
-    dic['language'] = document.language
-    dic['rank'] = document.rank
-    fields = document.fields
-    for field in fields:
-      dic[field.name] = field.value
-    return dic
+def document_from_entity(entities, fields={}):
+  documents = [_document_from_entity(entity, fields) for entity in entities]
+  return documents
 
 
-def documents_to_dict(documents):
+def document_to_dict(documents):
   documents = normalize(documents)
   results = []
   if len(documents):
     for document in documents:
-      util.logger('Document being converted: %s' % document)
-      dic = document_to_dict(document)
-      if dic:
+      if document and isinstance(document, search.Document):
+        dic = {}
+        dic['doc_id'] = document.doc_id
+        dic['language'] = document.language
+        dic['rank'] = document.rank
+        fields = document.fields
+        for field in fields:
+          dic[field.name] = field.value
         results.append(dic)
   return results
 
 
-def documents_to_indexes(documents, index_name=None):
+def document_index_from_document(documents, index_name=None):
   documents = normalize(documents)
   indexes = {}
   if len(documents):
@@ -328,7 +322,7 @@ def documents_to_indexes(documents, index_name=None):
   return indexes
 
 
-def entities_to_indexes(entities, index_name=None):
+def document_index_from_entity(entities, index_name=None):
   entities = normalize(entities)
   indexes = {}
   if len(entities):
@@ -349,8 +343,8 @@ def entities_to_indexes(entities, index_name=None):
   return indexes
 
 
-def documents_write(documents, index_name=None, documents_per_index=200):
-  indexes = documents_to_indexes(documents, index_name)
+def document_write(documents, index_name=None, documents_per_index=200):
+  indexes = document_index_from_document(documents, index_name)
   if len(indexes):
     for namespace, names in indexes.items():
       for name, documents in names.items():
@@ -370,9 +364,9 @@ def documents_write(documents, index_name=None, documents_per_index=200):
                 pass
 
 
-def documents_delete(documents, index_name=None, documents_per_index=200):
-  indexes = entities_to_indexes(documents, index_name)
-  # indexes.update(documents_to_indexes(documents, index_name))  @todo We can incorporate this as well!
+def document_delete(documents, index_name=None, documents_per_index=200):
+  indexes = document_index_from_entity(documents, index_name)
+  # indexes.update(document_index_from_document(documents, index_name))  @todo We can incorporate this as well!
   if len(indexes):
     for namespace, names in indexes.items():
       for name, documents in names.items():
@@ -396,7 +390,7 @@ def blob_create_upload_url(upload_url, gs_bucket_name):
   return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
 
 
-def blob_parse(entities):
+def _blob_parse(entities):
   entities = normalize(entities)
   results = []
   if len(entities):
@@ -408,7 +402,18 @@ def blob_parse(entities):
   return results
 
 
-def blob_alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
+def blob_update(blob_unused, blob_delete=None, blob_write=None):
+  if blob_delete:
+    blob_unused.extend(_blob_parse(blob_delete))
+  if blob_write:
+    blob_keys = _blob_parse(blob_write)
+    for blob_key in blob_keys:
+      if blob_key in blob_unused:
+        blob_unused.remove(blob_key)
+  return blob_unused
+
+
+def _blob_alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
   result = {}
   if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
     new_image = copy.deepcopy(original_image)
@@ -455,3 +460,34 @@ def blob_alter_image(original_image, make_copy=False, copy_name=None, transform=
     finally:
       return result
   return result
+
+
+def blob_alter_image(entities, config):
+  if entities and isinstance(entities, dict):
+    write_entities = {}
+    blob_delete = []
+    for key, entity in entities.items():
+      if entity and hasattr(entity, 'image'):
+        result = _blob_alter_image(entity, **config)
+        if result.get('save'):
+          write_entities[key] = result['save']
+        if result.get('delete'):
+          blob_delete.append(result['delete'])
+    return (write_entities, blob_delete)
+  elif entities and isinstance(entities, list):
+    write_entities = []
+    blob_delete= []
+    for entity in entities:
+      if entity and hasattr(entity, 'image'):
+        result = _blob_alter_image(entity, **config)
+        if result.get('save'):
+          write_entities.append(result['save'])
+        if result.get('delete'):
+          blob_delete.append(result['delete'])
+    return (write_entities, blob_delete)
+  elif entities and hasattr(entities, 'image'):
+    blob_delete = []
+    result = _blob_alter_image(entities, **config)
+    if result.get('delete'):
+      blob_delete.append(result['delete'])
+    return (result.get('save'), blob_delete)
