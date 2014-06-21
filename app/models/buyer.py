@@ -71,9 +71,9 @@ class Addresses(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.AddressRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Set(config={'d': {'values.77.addresses': 'input.addresses'}}),
+            Set(cfg={'d': {'values.77.addresses': 'input.addresses'}}),
             buyer.AddressSet()
             ]
           ),
@@ -82,9 +82,9 @@ class Addresses(ndb.BaseModel):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.77']}),
+            RecordWrite(cfg={'paths': ['entities.77']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.77'}})
+            Set(cfg={'d': {'output.entity': 'entities.77'}})
             ]
           )
         ]
@@ -99,10 +99,10 @@ class Addresses(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.AddressRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.77'}})
+            Set(cfg={'d': {'output.entity': 'entities.77'}})
             ]
           )
         ]
@@ -118,13 +118,13 @@ class Addresses(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.AddressRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.77',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.77',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -166,9 +166,9 @@ class Collection(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.CollectionRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Set(config={'d': {'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}})
+            Set(cfg={'d': {'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}})
             ]
           ),
         PluginGroup(
@@ -176,9 +176,9 @@ class Collection(ndb.BaseModel):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.10']}),
+            RecordWrite(cfg={'paths': ['entities.10']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.10'}})
+            Set(cfg={'d': {'output.entity': 'entities.10'}})
             ]
           )
         ]
@@ -193,10 +193,10 @@ class Collection(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.CollectionRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.10'}})
+            Set(cfg={'d': {'output.entity': 'entities.10'}})
             ]
           )
         ]
@@ -212,13 +212,13 @@ class Collection(ndb.BaseModel):
           plugins=[
             Context(),
             buyer.CollectionRead(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.10',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.10',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]

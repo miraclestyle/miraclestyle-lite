@@ -92,10 +92,10 @@ class User(ndb.BaseExpando):
             Context(),
             auth.UserLoginPrepare(),
             auth.UserIPAddress(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             auth.UserLoginOAuth(login_methods=settings.LOGIN_METHODS),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
@@ -103,7 +103,7 @@ class User(ndb.BaseExpando):
           transactional=True,
           plugins=[
             auth.UserLoginUpdate(),
-            RulePrepare(config={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
+            RulePrepare(cfg={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
             RuleRead(),
             RecordWrite(),
             auth.UserLoginOutput()
@@ -121,10 +121,10 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.0'}})
+            Set(cfg={'d': {'output.entity': 'entities.0'}})
             ]
           )
         ]
@@ -142,7 +142,7 @@ class User(ndb.BaseExpando):
             Context(),
             Read(),
             auth.UserUpdate(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
@@ -151,9 +151,9 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.0']}),
+            RecordWrite(cfg={'paths': ['entities.0']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.0'}}),
+            Set(cfg={'d': {'output.entity': 'entities.0'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -196,14 +196,14 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -219,13 +219,13 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.0',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.0',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -245,8 +245,8 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'d': {'values.0.state': 'input.state'}}),
-            RulePrepare(config={'skip_user_roles': True}),
+            Set(cfg={'d': {'values.0.state': 'input.state'}}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             auth.UserSudo()
             ]
@@ -256,10 +256,10 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.0'],
-                                'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RecordWrite(cfg={'paths': ['entities.0'],
+                             'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.0'}}),
+            Set(cfg={'d': {'output.entity': 'entities.0'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -276,9 +276,9 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.0.sessions': []}}),
+            Set(cfg={'s': {'values.0.sessions': []}}),
             auth.UserIPAddress(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
@@ -287,7 +287,7 @@ class User(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.0'], 'd': {'ip_address': 'tmp.ip_address'}}),
+            RecordWrite(cfg={'paths': ['entities.0'], 'd': {'ip_address': 'tmp.ip_address'}}),
             auth.UserLogoutOutput()
             ]
           )
@@ -303,14 +303,14 @@ class User(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             auth.UserReadDomains(),
-            RulePrepare(config={'to': 'tmp.domains'}),
-            RuleRead(config={'path': 'tmp.domains'}),
-            RulePrepare(config={'to': 'tmp.domain_users'}),
-            RuleRead(config={'path': 'tmp.domain_users'}),
-            Set(config={'d': {'output.domains': 'tmp.domains', 'output.domain_users': 'tmp.domain_users'}})
+            RulePrepare(cfg={'to': 'tmp.domains'}),
+            RuleRead(cfg={'path': 'tmp.domains'}),
+            RulePrepare(cfg={'to': 'tmp.domain_users'}),
+            RuleRead(cfg={'path': 'tmp.domain_users'}),
+            Set(cfg={'d': {'output.domains': 'tmp.domains', 'output.domain_users': 'tmp.domain_users'}})
             ]
           )
         ]
@@ -475,11 +475,11 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            BlobURL(config={'bucket': settings.DOMAIN_LOGO_BUCKET}),
-            Set(config={'d': {'output.entity': 'entities.6',
-                              'output.upload_url': 'blob_url'}})
+            BlobURL(cfg={'bucket': settings.DOMAIN_LOGO_BUCKET}),
+            Set(cfg={'d': {'output.entity': 'entities.6',
+                           'output.upload_url': 'blob_url'}})
             ]
           )
         ]
@@ -496,24 +496,24 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            BlobAlterImage(config={'read': 'input.domain_logo',
-                                   'write': 'input.domain_logo',
-                                   'config': {'transform': True, 'width': 240, 'height': 100,
-                                              'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            BlobAlterImage(cfg={'read': 'input.domain_logo',
+                                'write': 'input.domain_logo',
+                                'config': {'transform': True, 'width': 240, 'height': 100,
+                                           'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             auth.DomainCreate(),
-            BlobUpdate(config={'write': 'input.domain_logo.image'}),
+            BlobUpdate(cfg={'write': 'input.domain_logo.image'}),
             RuleRead(),  # @todo Not sure if required, since the entity is just instantiated like in prepare action?
-            Set(config={'d': {'output.entity': 'entities.6'}}),
-            CallbackExec(config=[('callback',
-                                 {'action_id': 'install', 'action_model': '57'},
-                                 {'key': 'entities.57.key_urlsafe'})])
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'install', 'action_model': '57'},
+                               {'key': 'entities.57.key_urlsafe'})])
             ]
           )
         ]
@@ -532,7 +532,7 @@ class Domain(ndb.BaseExpando):
             RuleExec(),
             auth.DomainRead(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}})
+            Set(cfg={'d': {'output.entity': 'entities.6'}})
             ]
           )
         ]
@@ -550,9 +550,9 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'d': {'values.6.name': 'input.name',
-                              'values.6.primary_contact': 'input.primary_contact',
-                              'values.6.logo': 'input.logo'}}),
+            Set(cfg={'d': {'values.6.name': 'input.name',
+                           'values.6.primary_contact': 'input.primary_contact',
+                           'values.6.logo': 'input.logo'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -560,18 +560,18 @@ class Domain(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            Set(config={'d': {'tmp.original_logo': 'entities.6.logo'}}),
+            Set(cfg={'d': {'tmp.original_logo': 'entities.6.logo'}}),
             RuleWrite(),
-            Set(config={'d': {'tmp.new_logo': 'entities.6.logo'}}),
-            BlobAlterImage(config={'read': 'entities.6.logo',
-                                   'write': 'entities.6.logo',
-                                   'config': {'transform': True, 'width': 240, 'height': 100,
-                                              'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
+            BlobAlterImage(cfg={'read': 'entities.6.logo',
+                                'write': 'entities.6.logo',
+                                'config': {'transform': True, 'width': 240, 'height': 100,
+                                           'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             Write(),
-            RecordWrite(config={'paths': ['entities.6']}),
+            RecordWrite(cfg={'paths': ['entities.6']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}}),
-            BlobUpdate(config={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            BlobUpdate(cfg={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -614,15 +614,15 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
+            Search(cfg={'page': settings.SEARCH_PAGE}),
             auth.DomainSearch(),
-            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -640,11 +640,11 @@ class Domain(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.6',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -660,7 +660,7 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.6.state': 'suspended'}}),
+            Set(cfg={'s': {'values.6.state': 'suspended'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -671,9 +671,9 @@ class Domain(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -691,7 +691,7 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.6.state': 'active'}}),
+            Set(cfg={'s': {'values.6.state': 'active'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -702,9 +702,9 @@ class Domain(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -724,8 +724,8 @@ class Domain(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'d': {'values.6.state': 'input.state'}}),
-            RulePrepare(config={'skip_user_roles': True}),
+            Set(cfg={'d': {'values.6.state': 'input.state'}}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
@@ -734,10 +734,10 @@ class Domain(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RulePrepare(config={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RulePrepare(cfg={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
+            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -764,9 +764,9 @@ class Domain(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(config={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]

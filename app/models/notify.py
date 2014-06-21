@@ -153,7 +153,7 @@ class Notification(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'output.entity': 'entities.61'}})
+            Set(cfg={'d': {'output.entity': 'entities.61'}})
             ]
           )
         ]
@@ -183,9 +183,9 @@ class Notification(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.61']}),
+            RecordWrite(cfg={'paths': ['entities.61']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': 'entities.61'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -205,7 +205,7 @@ class Notification(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.61'}})
+            Set(cfg={'d': {'output.entity': 'entities.61'}})
             ]
           )
         ]
@@ -235,9 +235,9 @@ class Notification(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.61']}),
+            RecordWrite(cfg={'paths': ['entities.61']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': 'entities.61'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -262,9 +262,9 @@ class Notification(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(config={'paths': ['entities.61']}),
+            RecordWrite(cfg={'paths': ['entities.61']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': 'entities.61'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -311,12 +311,12 @@ class Notification(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities'}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities'}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -334,11 +334,11 @@ class Notification(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.61',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.61',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -354,10 +354,10 @@ class Notification(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(config=[{'model': 'models.61', 'parent': None,
-                             'namespace': 'tmp.caller_entity.key_namespace',
-                             'save': 'entities.61', 'copy': 'values.61'}]),
+            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(cfg=[{'model': 'models.61', 'parent': None,
+                          'namespace': 'tmp.caller_entity.key_namespace',
+                          'save': 'entities.61', 'copy': 'values.61'}]),
             RulePrepare(),
             RuleExec(),
             notify.Initiate(),
@@ -378,10 +378,10 @@ class Notification(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(config=[{'model': 'models.61', 'parent': None,
-                             'namespace': 'tmp.caller_entity.key_namespace',
-                             'save': 'entities.61', 'copy': 'values.61'}]),
+            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(cfg=[{'model': 'models.61', 'parent': None,
+                          'namespace': 'tmp.caller_entity.key_namespace',
+                          'save': 'entities.61', 'copy': 'values.61'}]),
             RulePrepare(),
             RuleExec(),
             notify.MailSend(message_sender=settings.NOTIFY_EMAIL)
@@ -401,10 +401,10 @@ class Notification(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Set(config={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(config=[{'model': 'models.61', 'parent': None,
-                             'namespace': 'tmp.caller_entity.key_namespace',
-                             'save': 'entities.61', 'copy': 'values.61'}]),
+            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
+            Prepare(cfg=[{'model': 'models.61', 'parent': None,
+                          'namespace': 'tmp.caller_entity.key_namespace',
+                          'save': 'entities.61', 'copy': 'values.61'}]),
             RulePrepare(),
             RuleExec(),
             notify.HttpSend()

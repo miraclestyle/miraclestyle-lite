@@ -57,13 +57,13 @@ class Context(ndb.BaseModel):
 
 class Set(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    static_values = self.config.get('s', {})
-    dynamic_values = self.config.get('d', {})
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    static_values = self.cfg.get('s', {})
+    dynamic_values = self.cfg.get('d', {})
     for key, value in static_values.items():
       set_attr(context, key, value)
     for key, value in dynamic_values.items():
@@ -72,18 +72,18 @@ class Set(ndb.BaseModel):
 
 class Prepare(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
-    if not isinstance(self.config, list):
-      self.config = []
-    if not len(self.config):
-      self.config = [{'model': 'models.'  + context.model.get_kind(),
+    if not isinstance(self.cfg, list):
+      self.cfg = []
+    if not len(self.cfg):
+      self.cfg = [{'model': 'models.'  + context.model.get_kind(),
                       'parent': None,
                       'namespace': 'namespace',
                       'save': 'entities.' + context.model.get_kind(),
                       'copy': 'values.' + context.model.get_kind()}]
-    for config in self.config:
+    for config in self.cfg:
       model_path = config.get('model')
       model = get_attr(context, model_path)
       parent_path = config.get('parent')
@@ -101,23 +101,23 @@ class Prepare(ndb.BaseModel):
 
 class Read(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
     keys = []
-    if not isinstance(self.config, list):
-      self.config = []
-    if not len(self.config):
-      self.config = [{'source': 'input.key',
+    if not isinstance(self.cfg, list):
+      self.cfg = []
+    if not len(self.cfg):
+      self.cfg = [{'source': 'input.key',
                       'save': 'entities.' + context.model.get_kind(),
                       'copy': 'values.' + context.model.get_kind()}]
-    for config in self.config:
+    for config in self.cfg:
       source_path = config.get('source')
       source = get_attr(context, source_path)
       if source and isinstance(source, ndb.Key):
         keys.append(source)
     ndb.get_multi(keys)
-    for config in self.config:
+    for config in self.cfg:
       source_path = config.get('source')
       source = get_attr(context, source_path)
       entity = None
@@ -132,15 +132,15 @@ class Read(ndb.BaseModel):
 
 class Write(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     write_entities = []
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_paths = self.config.get('paths', ['entities.' + context.model.get_kind()])
-    parent_path = self.config.get('parent', None)
-    namespace_path = self.config.get('namespace', 'namespace')
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_paths = self.cfg.get('paths', ['entities.' + context.model.get_kind()])
+    parent_path = self.cfg.get('parent', None)
+    namespace_path = self.cfg.get('namespace', 'namespace')
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
     for entity_path in entity_paths:
@@ -162,13 +162,13 @@ class Write(ndb.BaseModel):
 
 class Delete(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     delete_keys = []
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_paths = self.config.get('paths', ['entities.' + context.model.get_kind()])
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_paths = self.cfg.get('paths', ['entities.' + context.model.get_kind()])
     for entity_path in entity_paths:
       entities = get_attr(context, entity_path)
       entities = normalize(entities)
@@ -184,15 +184,15 @@ class Delete(ndb.BaseModel):
 
 class Search(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    index_name = self.config.get('index', None)
-    page_size = self.config.get('page', 10)
-    fields = self.config.get('fields', None)
-    search_document = self.config.get('document', False)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    index_name = self.cfg.get('index', None)
+    page_size = self.cfg.get('page', 10)
+    fields = self.cfg.get('fields', None)
+    search_document = self.cfg.get('document', False)
     model =  context.models[context.model.get_kind()]
     argument = context.input.get('search')
     urlsafe_cursor = context.input.get('search_cursor')
@@ -215,7 +215,7 @@ class Search(ndb.BaseModel):
 
 class RecordRead(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     @ndb.tasklet
@@ -243,10 +243,10 @@ class RecordRead(ndb.BaseModel):
       results = yield map(async, entities)
       raise ndb.Return(results)
     
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
-    page_size = self.config.get('page', 10)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    page_size = self.cfg.get('page', 10)
     entity = get_attr(context, entity_path)
     if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
       model = context.models['5']
@@ -263,16 +263,16 @@ class RecordRead(ndb.BaseModel):
 
 class RecordWrite(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     model = context.models['5']
     arguments = {}
-    entity_paths = self.config.get('paths', [])
-    static_arguments = self.config.get('s', {})
-    dynamic_arguments = self.config.get('d', {})
+    entity_paths = self.cfg.get('paths', [])
+    static_arguments = self.cfg.get('s', {})
+    dynamic_arguments = self.cfg.get('d', {})
     arguments.update(static_arguments)
     for key, value in dynamic_arguments.items():
       arguments[key] = get_attr(context, value)
@@ -295,13 +295,13 @@ class CallbackNotify(ndb.BaseModel):
 
 class CallbackExec(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
-    if not isinstance(self.config, list):
-      self.config = []
+    if not isinstance(self.cfg, list):
+      self.cfg = []
     queues = {}
-    for config in self.config:
+    for config in self.cfg:
       queue_name, static_data, dynamic_data = config
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
@@ -312,12 +312,12 @@ class CallbackExec(ndb.BaseModel):
 
 class BlobURL(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    gs_bucket_name = self.config.get('bucket', None)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    gs_bucket_name = self.cfg.get('bucket', None)
     upload_url = context.input.get('upload_url')
     if upload_url:
       context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
@@ -326,13 +326,13 @@ class BlobURL(ndb.BaseModel):
 
 class BlobUpdate(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    delete_path = self.config.get('delete', 'blob_delete')
-    write_path = self.config.get('write', 'blob_write')
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    delete_path = self.cfg.get('delete', 'blob_delete')
+    write_path = self.cfg.get('write', 'blob_write')
     blob_delete = get_attr(context, delete_path)
     blob_write = get_attr(context, write_path)
     context.blob_unused = blob_update(context.blob_unused, blob_delete, blob_write)
@@ -340,14 +340,14 @@ class BlobUpdate(ndb.BaseModel):
 
 class BlobAlterImage(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    read_path = self.config.get('read', None)
-    write_path = self.config.get('write', None)
-    config = self.config.get('config', None)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    read_path = self.cfg.get('read', None)
+    write_path = self.cfg.get('write', None)
+    config = self.cfg.get('config', None)
     entities = get_attr(context, read_path)
     write_entities, blob_delete = blob_alter_image(entities, config)
     context.blob_delete.extend(blob_delete)
@@ -362,15 +362,15 @@ class ActionDenied(Exception):
 
 class RulePrepare(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    values_path = self.config.get('from', 'values.' + context.model.get_kind())
-    entity_path = self.config.get('to', 'entities.' + context.model.get_kind())
-    skip_user_roles = self.config.get('skip_user_roles', False)
-    strict = self.config.get('strict', False)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    values_path = self.cfg.get('from', 'values.' + context.model.get_kind())
+    entity_path = self.cfg.get('to', 'entities.' + context.model.get_kind())
+    skip_user_roles = self.cfg.get('skip_user_roles', False)
+    strict = self.cfg.get('strict', False)
     values = get_attr(context, values_path)
     entities = get_attr(context, entity_path)
     # @todo Can we apply normalize here?
@@ -392,12 +392,12 @@ class RulePrepare(ndb.BaseModel):
 
 class RuleRead(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
     entities = get_attr(context, entity_path)
     entities = normalize(entities)  # @todo We assume that original structure remains structurally anchanged!
     for entity in entities:
@@ -407,13 +407,13 @@ class RuleRead(ndb.BaseModel):
 
 class RuleWrite(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    value_path = self.config.get('from', 'values.' + context.model.get_kind())
-    entity_path = self.config.get('to', 'entities.' + context.model.get_kind())
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    value_path = self.cfg.get('from', 'values.' + context.model.get_kind())
+    entity_path = self.cfg.get('to', 'entities.' + context.model.get_kind())
     value = get_attr(context, value_path)
     entity = get_attr(context, entity_path)
     if entity and value and hasattr(entity, '_field_permissions'):
@@ -422,13 +422,13 @@ class RuleWrite(ndb.BaseModel):
 
 class RuleExec(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
-    action_path = self.config.get('action', 'action.key_urlsafe')
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    action_path = self.cfg.get('action', 'action.key_urlsafe')
     entity = get_attr(context, entity_path)
     action = get_attr(context, action_path)
     if entity and hasattr(entity, '_action_permissions'):
@@ -440,14 +440,14 @@ class RuleExec(ndb.BaseModel):
 
 class DocumentWrite(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
-    entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
-    fields = self.config.get('fields', {})
-    max_doc = self.config.get('max_doc', 200)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    fields = self.cfg.get('fields', {})
+    max_doc = self.cfg.get('max_doc', 200)
     entities = get_attr(context, entity_path)
     entities = normalize(entities)
     documents = document_from_entity(entities, fields)
@@ -456,14 +456,14 @@ class DocumentWrite(ndb.BaseModel):
 
 class DocumentDelete(ndb.BaseModel):
   
-  config = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    if not isinstance(self.config, dict):
-      self.config = {}
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     documents = []
-    entity_path = self.config.get('path', 'entities.' + context.model.get_kind())
-    max_doc = self.config.get('max_doc', 200)
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    max_doc = self.cfg.get('max_doc', 200)
     entities = get_attr(context, entity_path)
     document_delete(entities, documents_per_index=max_doc)
 

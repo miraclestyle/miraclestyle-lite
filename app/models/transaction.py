@@ -80,8 +80,8 @@ class Journal(ndb.BaseExpando):
             transaction.JournalFields(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'output.entity': 'entities.49',
-                              'output.available_fields': 'tmp.available_fields'}})
+            Set(cfg={'d': {'output.entity': 'entities.49',
+                           'output.available_fields': 'tmp.available_fields'}})
             ]
           )
         ]
@@ -101,8 +101,8 @@ class Journal(ndb.BaseExpando):
             RuleExec(),
             transaction.JournalRead(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49',
-                              'output.available_fields': 'tmp.available_fields'}})
+            Set(cfg={'d': {'output.entity': 'entities.49',
+                           'output.available_fields': 'tmp.available_fields'}})
             ]
           )
         ]
@@ -133,9 +133,9 @@ class Journal(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.49']}),
+            RecordWrite(cfg={'paths': ['entities.49']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49'}}),
+            Set(cfg={'d': {'output.entity': 'entities.49'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -160,9 +160,9 @@ class Journal(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(config={'paths': ['entities.49']}),
+            RecordWrite(cfg={'paths': ['entities.49']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49'}}),
+            Set(cfg={'d': {'output.entity': 'entities.49'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -207,12 +207,12 @@ class Journal(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities'}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities'}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -230,11 +230,11 @@ class Journal(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.49',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -254,9 +254,9 @@ class Journal(ndb.BaseExpando):
             RuleExec(),
             transaction.JournalReadActions(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.49',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -272,7 +272,7 @@ class Journal(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.49.state': 'active'}}),
+            Set(cfg={'s': {'values.49.state': 'active'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -283,9 +283,9 @@ class Journal(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.49'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.49'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49'}}),
+            Set(cfg={'d': {'output.entity': 'entities.49'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -303,7 +303,7 @@ class Journal(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.49.state': 'decommissioned'}}),
+            Set(cfg={'s': {'values.49.state': 'decommissioned'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -314,9 +314,9 @@ class Journal(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.49'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.49'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.49'}}),
+            Set(cfg={'d': {'output.entity': 'entities.49'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -397,7 +397,7 @@ class Category(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'output.entity': 'entities.47'}})
+            Set(cfg={'d': {'output.entity': 'entities.47'}})
             ]
           )
         ]
@@ -416,7 +416,7 @@ class Category(ndb.BaseExpando):
             RuleExec(),
             transaction.CategoryRead(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.47'}})
+            Set(cfg={'d': {'output.entity': 'entities.47'}})
             ]
           )
         ]
@@ -448,9 +448,9 @@ class Category(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.47']}),
+            RecordWrite(cfg={'paths': ['entities.47']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.47'}}),
+            Set(cfg={'d': {'output.entity': 'entities.47'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -475,9 +475,9 @@ class Category(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(config={'paths': ['entities.47']}),
+            RecordWrite(cfg={'paths': ['entities.47']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.47'}}),
+            Set(cfg={'d': {'output.entity': 'entities.47'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -522,12 +522,12 @@ class Category(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities'}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities'}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -545,11 +545,11 @@ class Category(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.47',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.47',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]

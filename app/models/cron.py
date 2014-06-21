@@ -32,7 +32,7 @@ class CronConfig(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             cron.ProcessCatalogs(page_size=settings.DOMAINS_PER_CRON),
             CallbackExec()

@@ -58,7 +58,7 @@ class Country(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
             ]
@@ -90,14 +90,14 @@ class Country(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(config={'page': -1}),
-            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': -1}),
+            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -162,14 +162,14 @@ class CountrySubdivision(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]

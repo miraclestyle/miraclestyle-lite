@@ -57,7 +57,7 @@ class Category(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             product.CategoryUpdate(file_path=settings.PRODUCT_CATEGORY_DATA_FILE)
             ]
@@ -92,14 +92,14 @@ class Category(ndb.BaseModel):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -227,13 +227,13 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Prepare(config=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                             'save': 'entities.38', 'copy': 'values.38'}]),
+            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
+                          'save': 'entities.38', 'copy': 'values.38'}]),
             RulePrepare(),
             RuleExec(),
-            BlobURL(config={'bucket': settings.PRODUCT_TEMPLATE_BUCKET}),
-            Set(config={'d': {'output.entity': 'entities.38',
-                              'output.upload_url': 'blob_url'}})
+            BlobURL(cfg={'bucket': settings.PRODUCT_TEMPLATE_BUCKET}),
+            Set(cfg={'d': {'output.entity': 'entities.38',
+                           'output.upload_url': 'blob_url'}})
             ]
           )
         ]
@@ -261,24 +261,24 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Prepare(config=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                             'save': 'entities.38', 'copy': 'values.38'}]),
+            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
+                          'save': 'entities.38', 'copy': 'values.38'}]),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'values.38.product_category': 'input.product_category',
-                              'values.38.name': 'input.name',
-                              'values.38.description': 'input.description',
-                              'values.38.product_uom': 'input.product_uom',
-                              'values.38.unit_price': 'input.unit_price',
-                              'values.38.availability': 'input.availability',
-                              'values.38.code': 'input.code',
-                              'values.38.weight': 'input.weight',
-                              'values.38.weight_uom': 'input.weight_uom',
-                              'values.38.volume': 'input.volume',
-                              'values.38.volume_uom': 'input.volume_uom',
-                              'values.38.variants': 'input.variants',
-                              'values.38.contents': 'input.contents',
-                              'values.38.low_stock_quantity': 'input.low_stock_quantity'}})
+            Set(cfg={'d': {'values.38.product_category': 'input.product_category',
+                           'values.38.name': 'input.name',
+                           'values.38.description': 'input.description',
+                           'values.38.product_uom': 'input.product_uom',
+                           'values.38.unit_price': 'input.unit_price',
+                           'values.38.availability': 'input.availability',
+                           'values.38.code': 'input.code',
+                           'values.38.weight': 'input.weight',
+                           'values.38.weight_uom': 'input.weight_uom',
+                           'values.38.volume': 'input.volume',
+                           'values.38.volume_uom': 'input.volume_uom',
+                           'values.38.variants': 'input.variants',
+                           'values.38.contents': 'input.contents',
+                           'values.38.low_stock_quantity': 'input.low_stock_quantity'}})
             ]
           ),
         PluginGroup(
@@ -286,9 +286,9 @@ class Template(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.38']}),
+            RecordWrite(cfg={'paths': ['entities.38']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -308,7 +308,7 @@ class Template(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}})
+            Set(cfg={'d': {'output.entity': 'entities.38'}})
             ]
           )
         ]
@@ -340,20 +340,20 @@ class Template(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'values.38.product_category': 'input.product_category',
-                              'values.38.name': 'input.name',
-                              'values.38.description': 'input.description',
-                              'values.38.product_uom': 'input.product_uom',
-                              'values.38.unit_price': 'input.unit_price',
-                              'values.38.availability': 'input.availability',
-                              'values.38.code': 'input.code',
-                              'values.38.weight': 'input.weight',
-                              'values.38.weight_uom': 'input.weight_uom',
-                              'values.38.volume': 'input.volume',
-                              'values.38.volume_uom': 'input.volume_uom',
-                              'values.38.variants': 'input.variants',
-                              'values.38.contents': 'input.contents',
-                              'values.38.low_stock_quantity': 'input.low_stock_quantity'}}),
+            Set(cfg={'d': {'values.38.product_category': 'input.product_category',
+                           'values.38.name': 'input.name',
+                           'values.38.description': 'input.description',
+                           'values.38.product_uom': 'input.product_uom',
+                           'values.38.unit_price': 'input.unit_price',
+                           'values.38.availability': 'input.availability',
+                           'values.38.code': 'input.code',
+                           'values.38.weight': 'input.weight',
+                           'values.38.weight_uom': 'input.weight_uom',
+                           'values.38.volume': 'input.volume',
+                           'values.38.volume_uom': 'input.volume_uom',
+                           'values.38.variants': 'input.variants',
+                           'values.38.contents': 'input.contents',
+                           'values.38.low_stock_quantity': 'input.low_stock_quantity'}}),
             product.UpdateSet()
             ]
           ),
@@ -363,9 +363,9 @@ class Template(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             product.WriteImages(),
-            RecordWrite(config={'paths': ['entities.38']}),
+            RecordWrite(cfg={'paths': ['entities.38']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -394,14 +394,14 @@ class Template(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.38']}),
+            RecordWrite(cfg={'paths': ['entities.38']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_images', 'action_model': '38'},
-                                  {'key': 'entities.38.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_images', 'action_model': '38'},
+                               {'key': 'entities.38.key_urlsafe'})])
             ]
           )
         ]
@@ -427,7 +427,7 @@ class Template(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             product.WriteImages(),
-            RecordWrite(config={'paths': ['entities.38']}),
+            RecordWrite(cfg={'paths': ['entities.38']}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -456,9 +456,9 @@ class Template(ndb.BaseExpando):
             product.TemplateDelete(),
             product.DeleteImages(),
             Delete(),
-            RecordWrite(config={'paths': ['entities.38']}),
+            RecordWrite(cfg={'paths': ['entities.38']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -496,16 +496,16 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Prepare(config=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                             'save': 'entities.38', 'copy': 'values.38'}]),
+            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
+                          'save': 'entities.38', 'copy': 'values.38'}]),
             RulePrepare(),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities'}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities'}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -523,11 +523,11 @@ class Template(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.38',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -547,9 +547,9 @@ class Template(ndb.BaseExpando):
             RuleExec(),
             product.TemplateReadInstances(page_size=settings.SEARCH_PAGE),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.38',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -567,11 +567,11 @@ class Template(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_duplicate', 'action_model': '38'},
-                                  {'key': 'entities.38.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_duplicate', 'action_model': '38'},
+                               {'key': 'entities.38.key_urlsafe'})])
             ]
           )
         ]
@@ -622,31 +622,31 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstancePrepare(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'values.38._instance.variant_signature': 'input.variant_signature',
-                              'values.38._instance.code': 'input.code',
-                              'values.38._instance.description': 'input.description',
-                              'values.38._instance.unit_price': 'input.unit_price',
-                              'values.38._instance.availability': 'input.availability',
-                              'values.38._instance.weight': 'input.weight',
-                              'values.38._instance.weight_uom': 'input.weight_uom',
-                              'values.38._instance.volume': 'input.volume',
-                              'values.38._instance.volume_uom': 'input.volume_uom',
-                              'values.38._instance.contents': 'input.contents',
-                              'values.38._instance.low_stock_quantity': 'input.low_stock_quantity'}})
+            Set(cfg={'d': {'values.38._instance.variant_signature': 'input.variant_signature',
+                           'values.38._instance.code': 'input.code',
+                           'values.38._instance.description': 'input.description',
+                           'values.38._instance.unit_price': 'input.unit_price',
+                           'values.38._instance.availability': 'input.availability',
+                           'values.38._instance.weight': 'input.weight',
+                           'values.38._instance.weight_uom': 'input.weight_uom',
+                           'values.38._instance.volume': 'input.volume',
+                           'values.38._instance.volume_uom': 'input.volume_uom',
+                           'values.38._instance.contents': 'input.contents',
+                           'values.38._instance.low_stock_quantity': 'input.low_stock_quantity'}})
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
             RuleWrite(),
-            Write(config={'paths': ['entities.38._instance']}),
-            RecordWrite(config={'paths': ['entities.38._instance']}),
+            Write(cfg={'paths': ['entities.38._instance']}),
+            RecordWrite(cfg={'paths': ['entities.38._instance']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -663,12 +663,12 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstanceRead(),
             RulePrepare(),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}})
+            Set(cfg={'d': {'output.entity': 'entities.38'}})
             ]
           )
         ]
@@ -695,20 +695,20 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstanceRead(),
             RulePrepare(),
             RuleExec(),
-            Set(config={'d': {'values.38._instance.code': 'input.code',
-                              'values.38._instance.description': 'input.description',
-                              'values.38._instance.unit_price': 'input.unit_price',
-                              'values.38._instance.availability': 'input.availability',
-                              'values.38._instance.weight': 'input.weight',
-                              'values.38._instance.weight_uom': 'input.weight_uom',
-                              'values.38._instance.volume': 'input.volume',
-                              'values.38._instance.volume_uom': 'input.volume_uom',
-                              'values.38._instance.contents': 'input.contents',
-                              'values.38._instance.low_stock_quantity': 'input.low_stock_quantity'}}),
+            Set(cfg={'d': {'values.38._instance.code': 'input.code',
+                           'values.38._instance.description': 'input.description',
+                           'values.38._instance.unit_price': 'input.unit_price',
+                           'values.38._instance.availability': 'input.availability',
+                           'values.38._instance.weight': 'input.weight',
+                           'values.38._instance.weight_uom': 'input.weight_uom',
+                           'values.38._instance.volume': 'input.volume',
+                           'values.38._instance.volume_uom': 'input.volume_uom',
+                           'values.38._instance.contents': 'input.contents',
+                           'values.38._instance.low_stock_quantity': 'input.low_stock_quantity'}}),
             product.InstanceUpdateSet(),
             ]
           ),
@@ -716,11 +716,11 @@ class Template(ndb.BaseExpando):
           transactional=True,
           plugins=[
             RuleWrite(),
-            Write(config={'paths': ['entities.38._instance']}),
-            RecordWrite(config={'paths': ['entities.38._instance']}),
+            Write(cfg={'paths': ['entities.38._instance']}),
+            RecordWrite(cfg={'paths': ['entities.38._instance']}),
             product.InstanceWriteImages(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -740,7 +740,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstanceRead(),
             RulePrepare(),
             RuleExec(),
@@ -751,17 +751,17 @@ class Template(ndb.BaseExpando):
           transactional=True,
           plugins=[
             RuleWrite(),
-            Write(config={'paths': ['entities.38._instance']}),
-            RecordWrite(config={'paths': ['entities.38._instance']}),
+            Write(cfg={'paths': ['entities.38._instance']}),
+            RecordWrite(cfg={'paths': ['entities.38._instance']}),
             product.InstanceWriteImages(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'instance_process_images', 'action_model': '38'},
-                                  {'parent': 'entities.38.key_urlsafe',
-                                   'variant_signature': 'entities.38._instance.variant_signature'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'instance_process_images', 'action_model': '38'},
+                               {'parent': 'entities.38.key_urlsafe',
+                                'variant_signature': 'entities.38._instance.variant_signature'})])
             ]
           )
         ]
@@ -777,7 +777,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstanceRead(),
             RulePrepare(),
             RuleExec()
@@ -788,8 +788,8 @@ class Template(ndb.BaseExpando):
           plugins=[
             product.InstanceProcessImages(),
             RuleWrite(),
-            Write(config={'paths': ['entities.38._instance']}),
-            RecordWrite(config={'paths': ['entities.38._instance']}),
+            Write(cfg={'paths': ['entities.38._instance']}),
+            RecordWrite(cfg={'paths': ['entities.38._instance']}),
             product.InstanceWriteImages(),
             BlobUpdate(),
             CallbackNotify(),
@@ -809,7 +809,7 @@ class Template(ndb.BaseExpando):
         PluginGroup(
           plugins=[
             Context(),
-            Read(config=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
+            Read(cfg=[{'source': 'input.parent', 'save': 'entities.38', 'copy': 'values.38'}]),
             product.InstanceRead(),
             RulePrepare(),
             RuleExec()
@@ -819,10 +819,10 @@ class Template(ndb.BaseExpando):
           transactional=True,
           plugins=[
             product.InstanceDeleteImages(),
-            RecordWrite(config={'paths': ['entities.38._instance']}),
-            Delete(config={'paths': ['entities.38._instance']}),
+            RecordWrite(cfg={'paths': ['entities.38._instance']}),
+            Delete(cfg={'paths': ['entities.38._instance']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': 'entities.38'}}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()

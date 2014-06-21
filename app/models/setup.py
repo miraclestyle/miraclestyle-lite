@@ -43,7 +43,7 @@ class Configuration(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             plugins_setup.Install()
             ]
@@ -58,7 +58,7 @@ class Configuration(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            RulePrepare(config={'skip_user_roles': True}),
+            RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             plugins_setup.CronInstall()
             ]

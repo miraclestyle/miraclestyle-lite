@@ -127,9 +127,9 @@ class Catalog(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            BlobURL(config={'bucket': settings.CATALOG_IMAGE_BUCKET}),
-            Set(config={'d': {'output.entity': 'entities.35',
-                              'output.upload_url': 'blob_url'}})
+            BlobURL(cfg={'bucket': settings.CATALOG_IMAGE_BUCKET}),
+            Set(cfg={'d': {'output.entity': 'entities.35',
+                           'output.upload_url': 'blob_url'}})
             ]
           )
         ]
@@ -147,10 +147,10 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            Set(config={'s': {'values.35.state': 'unpublished'},
-                        'd': {'values.35.name': 'input.name',
-                              'values.35.publish_date': 'input.publish_date',
-                              'values.35.discontinue_date': 'input.discontinue_date'}}),
+            Set(cfg={'s': {'values.35.state': 'unpublished'},
+                     'd': {'values.35.name': 'input.name',
+                           'values.35.publish_date': 'input.publish_date',
+                           'values.35.discontinue_date': 'input.discontinue_date'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -160,9 +160,9 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             RuleWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.35']}),
+            RecordWrite(cfg={'paths': ['entities.35']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -184,9 +184,9 @@ class Catalog(ndb.BaseExpando):
             RuleExec(),
             marketing.Read(catalog_page=settings.CATALOG_PAGE),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.35',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -219,16 +219,16 @@ class Catalog(ndb.BaseExpando):
             RuleWrite(),
             marketing.UpdateWrite(),
             Write(),
-            RecordWrite(config={'paths': ['entities.35']}),
+            RecordWrite(cfg={'paths': ['entities.35']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}}),
             BlobUpdate(),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_cover', 'action_model': '35'},
-                                  {'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_cover', 'action_model': '35'},
+                               {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -256,13 +256,13 @@ class Catalog(ndb.BaseExpando):
             marketing.UploadImagesWrite(),
             RecordWrite(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             BlobUpdate(),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_images', 'action_model': '35'},
-                                  {'catalog_image_keys': 'tmp.catalog_image_keys',
-                                   'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_images', 'action_model': '35'},
+                               {'catalog_image_keys': 'tmp.catalog_image_keys',
+                                'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -289,9 +289,9 @@ class Catalog(ndb.BaseExpando):
             RecordWrite(),
             BlobUpdate(),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_cover', 'action_model': '35'},
-                                  {'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_cover', 'action_model': '35'},
+                               {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -315,17 +315,17 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            Set(config={'d': {'tmp.original_cover': 'entities.35.cover'}}),
+            Set(cfg={'d': {'tmp.original_cover': 'entities.35.cover'}}),
             RuleWrite(),
-            Set(config={'d': {'tmp.new_cover': 'entities.35.cover'}}),
+            Set(cfg={'d': {'tmp.new_cover': 'entities.35.cover'}}),
             marketing.ProcessCoverTransform(),
-            BlobAlterImage(config={'read': 'blob_transform',
-                                   'write': 'entities.35.cover',
-                                   'config': {'copy': True, 'sufix': 'cover', 'transform': True,
-                                              'width': 240, 'height': 360, 'crop_to_fit': True,
-                                              'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            BlobAlterImage(cfg={'read': 'blob_transform',
+                                'write': 'entities.35.cover',
+                                'config': {'copy': True, 'sufix': 'cover', 'transform': True,
+                                           'width': 240, 'height': 360, 'crop_to_fit': True,
+                                           'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             Write(),
-            RecordWrite(config={'paths': ['entities.35']}),
+            RecordWrite(cfg={'paths': ['entities.35']}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -353,9 +353,9 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             marketing.Delete(),
             Delete(),
-            RecordWrite(config={'paths': ['entities.35']}),
+            RecordWrite(cfg={'paths': ['entities.35']}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
@@ -406,12 +406,12 @@ class Catalog(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Search(config={'page': settings.SEARCH_PAGE}),
-            RulePrepare(config={'to': 'entities'}),
-            RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'to': 'entities'}),
+            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -429,11 +429,11 @@ class Catalog(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(config={'page': settings.RECORDS_PAGE}),
+            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            Set(cfg={'d': {'output.entity': 'entities.35',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
@@ -450,7 +450,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.35.state': 'locked'}}),
+            Set(cfg={'s': {'values.35.state': 'locked'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -461,9 +461,9 @@ class Catalog(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -482,7 +482,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.35.state': 'published'}}),
+            Set(cfg={'s': {'values.35.state': 'published'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -493,13 +493,13 @@ class Catalog(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'index', 'action_model': '35'},
-                                  {'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'index', 'action_model': '35'},
+                               {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -516,7 +516,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'s': {'values.35.state': 'discontinued'}}),
+            Set(cfg={'s': {'values.35.state': 'discontinued'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -527,13 +527,13 @@ class Catalog(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
+            RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'unindex', 'action_model': '35'},
-                                  {'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'unindex', 'action_model': '35'},
+                               {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -552,7 +552,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(config={'d': {'values.35.state': 'input.state'}}),
+            Set(cfg={'d': {'values.35.state': 'input.state'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -563,15 +563,15 @@ class Catalog(ndb.BaseExpando):
             RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(config={'paths': ['entities.35'],
-                                'd': {'message': 'input.message',
-                                      'note': 'input.note'}}),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+            RecordWrite(cfg={'paths': ['entities.35'],
+                             'd': {'message': 'input.message',
+                                   'note': 'input.note'}}),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_model': '35'},
-                                  {'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
+            CallbackExec(cfg=[('callback',
+                               {'action_model': '35'},
+                               {'action_id': 'input.index_state', 'key': 'entities.35.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
             ]
           )
         ]
@@ -596,10 +596,10 @@ class Catalog(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(config={'paths': ['entities.35'],
-                                'd': {'message': 'input.message', 'note': 'input.note'}}),
+            RecordWrite(cfg={'paths': ['entities.35'],
+                             'd': {'message': 'input.message', 'note': 'input.note'}}),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -626,9 +626,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RecordWrite(config={'paths': ['entities.35'],
-                                's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                                'd': {'message': 'tmp.message'}}),
+            RecordWrite(cfg={'paths': ['entities.35'],
+                             's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                             'd': {'message': 'tmp.message'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -655,9 +655,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RecordWrite(config={'paths': ['entities.35'],
-                                's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
-                                'd': {'message': 'tmp.message'}}),
+            RecordWrite(cfg={'paths': ['entities.35'],
+                             's': {'log_entity': False},  # @todo Perhaps entity should be logged in order to refresh updated field?
+                             'd': {'message': 'tmp.message'}}),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -699,11 +699,11 @@ class Catalog(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RuleRead(),
-            Set(config={'d': {'output.entity': 'entities.35'}}),
+            Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
-            CallbackExec(config=[('callback',
-                                  {'action_id': 'process_duplicate', 'action_model': '35'},
-                                  {'key': 'entities.35.key_urlsafe'})])
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_duplicate', 'action_model': '35'},
+                               {'key': 'entities.35.key_urlsafe'})])
             ]
           )
         ]
@@ -815,16 +815,16 @@ class CatalogIndex(ndb.BaseExpando):
             Prepare(),
             RulePrepare(),
             RuleExec(),
-            Search(config={'index': settings.CATALOG_INDEX, 'page': settings.SEARCH_PAGE, 'document': True}),
+            Search(cfg={'index': settings.CATALOG_INDEX, 'page': settings.SEARCH_PAGE, 'document': True}),
             DocumentDictConverter(),
             #DocumentEntityConverter(),
-            #RulePrepare(config={'to': 'entities'}),
-            #RuleRead(config={'path': 'entities'}),
-            Set(config={'d': {'output.entities': 'entities',
-                              'output.search_documents_total_matches': 'search_documents_total_matches',
-                              'output.search_documents_count': 'search_documents_count',
-                              'output.search_cursor': 'search_cursor',
-                              'output.search_more': 'search_more'}})
+            #RulePrepare(cfg={'to': 'entities'}),
+            #RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output.search_documents_total_matches': 'search_documents_total_matches',
+                           'output.search_documents_count': 'search_documents_count',
+                           'output.search_cursor': 'search_cursor',
+                           'output.search_more': 'search_more'}})
             ]
           )
         ]
