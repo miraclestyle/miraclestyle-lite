@@ -10,7 +10,6 @@ import copy
 from app import ndb, util
 from app.tools.base import *
 from app.tools.manipulator import set_attr, get_attr
-from app.tools.rule_manipulator import prepare, read, write
 
 
 class Context(ndb.BaseModel):
@@ -379,16 +378,16 @@ class RulePrepare(ndb.BaseModel):
       for key, entity in entities.items():
         context.entity = entities.get(key)
         context.value = values.get(key)
-        prepare(context, skip_user_roles, strict)
+        rule_prepare(context, skip_user_roles, strict)
     elif isinstance(entities, list):
       for entity in entities:
         context.entity = entity
         context.value = None
-        prepare(context, skip_user_roles, strict)
+        rule_prepare(context, skip_user_roles, strict)
     else:
       context.entity = entities
       context.value = values
-      prepare(context, skip_user_roles, strict)
+      rule_prepare(context, skip_user_roles, strict)
 
 
 class RuleRead(ndb.BaseModel):
@@ -403,7 +402,7 @@ class RuleRead(ndb.BaseModel):
     entities = normalize(entities)  # @todo We assume that original structure remains structurally anchanged!
     for entity in entities:
       if entity and hasattr(entity, '_field_permissions'):
-        read(entity)
+        rule_read(entity)
 
 
 class RuleWrite(ndb.BaseModel):
@@ -418,7 +417,7 @@ class RuleWrite(ndb.BaseModel):
     value = get_attr(context, value_path)
     entity = get_attr(context, entity_path)
     if entity and value and hasattr(entity, '_field_permissions'):
-      write(entity, value)
+      rule_write(entity, value)
 
 
 class RuleExec(ndb.BaseModel):

@@ -6,8 +6,7 @@ Created on Jun 14, 2014
 '''
 
 from app import ndb
-from app.tools.safe_eval import safe_eval
-from app.tools.manipulator import set_attr, get_attr
+from app.tools.manipulator import set_attr, get_attr, safe_eval
 
 
 class Action(ndb.BaseExpando):

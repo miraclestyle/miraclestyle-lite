@@ -9,7 +9,7 @@ import time
 import datetime
 
 from app import ndb, util
-from app.tools.base import record, callback
+from app.tools.base import record_write, callback_exec
 
 
 __SYSTEM_SETUPS = {}

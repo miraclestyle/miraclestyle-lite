@@ -10,7 +10,7 @@ import json
 from google.appengine.api import mail, urlfetch
 
 from app import ndb, util
-from app.tools.safe_eval import safe_eval
+from app.tools.manipulator import safe_eval
 
 
 class Set(ndb.BaseModel):
