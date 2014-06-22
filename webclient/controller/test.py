@@ -47,6 +47,48 @@ class CartItem(ndb.Model):
 class SpecialOffer(ndb.Model):
   inventory = ndb.KeyProperty()
 
+class UploadTest(handler.Base):
+  
+  def respond(self):
+    item = self.request.params.get('yes')
+    name = self.request.get('name')
+ 
+    if 'yes' in self.request.params:
+      blob = item.file.read()
+      import cgi
+      import cloudstorage as gcs
+      from app import settings
+      from google.appengine.api import images
+      from google.appengine.ext import blobstore
+      from google.appengine.api import blobstore as ggg
+      from app.models.base import Image
+ 
+      filename = '/%s/%s' % (settings.DOMAIN_LOGO_BUCKET, 'test_%s' % name)
+      filename2 = '/gs%s' % filename
+ 
+      with gcs.open(filename, 'w') as f:
+        f.write(blob)
+        m = images.Image(image_data=blob)
+        w = m.width
+        h = m.height
+      blob_key = blobstore.create_gs_key(filename2)
+      blob_key = blobstore.BlobKey(blob_key)
+ 
+      f = Image(id='test_%s' % name, width=w, height=h, image=blob_key, size=len(blob),
+                gs_object_name=filename, content_type=item.type, serving_url=images.get_serving_url(blob_key))
+      f.put()
+      self.response.write(f)
+        
+      
+      
+    self.response.write(self.request.params)
+    self.response.write('''<form method="post" enctype="multipart/form-data">
+    <p><input type="file" name="yes" /></p>
+    <input type="hidden" name="name" value="%s" />
+    <p><input type="submit" value="Send" />
+    </p></form>''' % name)
+  
+  
 class TestTasklet(handler.Angular):
   
   def respond(self):
@@ -210,4 +252,5 @@ class Endpoint(handler.Angular):
  
 handler.register(('/endpoint', Endpoint), 
                  ('/reset', Reset),
-                 ('/test_tasklet', TestTasklet))
+                 ('/test_tasklet', TestTasklet),
+                 ('/upload_test', UploadTest))
