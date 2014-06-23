@@ -34,11 +34,11 @@ class Set(ndb.BaseModel):
         else:
           del template[key]
       templates.append(model(**template))
-    context.values['61'].name = context.input.get('name')
-    context.values['61'].action = context.input.get('action')
-    context.values['61'].condition = context.input.get('condition')
-    context.values['61'].active = context.input.get('active')
-    context.values['61'].templates = templates
+    context.entities['61'].name = context.input.get('name')
+    context.entities['61'].action = context.input.get('action')
+    context.entities['61'].condition = context.input.get('condition')
+    context.entities['61'].active = context.input.get('active')
+    context.entities['61'].templates = templates
 
 
 # @todo We have to consider http://sendgrid.com/partner/google

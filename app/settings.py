@@ -36,6 +36,7 @@ RECIPIENTS_PER_TASK = 50
 
 # Cron settings.
 DOMAINS_PER_CRON = 10
+SETUP_ELAPSED_TIME = 15
 
 # User settings.
 USER_AUTHENTICATED_KEYNAME = 'authenticated_user'

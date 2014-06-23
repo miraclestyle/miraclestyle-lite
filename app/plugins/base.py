@@ -33,8 +33,6 @@ class Context(ndb.BaseModel):
       context.namespace = context.domain.key_namespace
     if not hasattr(context, 'entities'):
       context.entities = {}
-    if not hasattr(context, 'values'):
-      context.values = {}
     if not hasattr(context, 'callbacks'):
       context.callbacks = []  # This variable allways receives tuples of two values! Example: [(a, b), (a, b)]
     if not hasattr(context, 'records'):
@@ -79,10 +77,9 @@ class Prepare(ndb.BaseModel):
       self.cfg = []
     if not len(self.cfg):
       self.cfg = [{'model': 'models.'  + context.model.get_kind(),
-                      'parent': None,
-                      'namespace': 'namespace',
-                      'save': 'entities.' + context.model.get_kind(),
-                      'copy': 'values.' + context.model.get_kind()}]
+                   'parent': None,
+                   'namespace': 'namespace',
+                   'path': 'entities.' + context.model.get_kind()}]
     for config in self.cfg:
       model_path = config.get('model')
       model = get_attr(context, model_path)
@@ -92,11 +89,8 @@ class Prepare(ndb.BaseModel):
       namespace = get_attr(context, namespace_path)
       if parent != None:
         namespace = None
-      save_path = config.get('save')
-      copy_path = config.get('copy')
+      save_path = config.get('path')
       set_attr(context, save_path, model(parent=parent, namespace=namespace))
-      if copy_path != None:
-        set_attr(context, copy_path, model(parent=parent, namespace=namespace))
 
 
 class Read(ndb.BaseModel):
@@ -109,8 +103,7 @@ class Read(ndb.BaseModel):
       self.cfg = []
     if not len(self.cfg):
       self.cfg = [{'source': 'input.key',
-                      'save': 'entities.' + context.model.get_kind(),
-                      'copy': 'values.' + context.model.get_kind()}]
+                   'path': 'entities.' + context.model.get_kind()}]
     for config in self.cfg:
       source_path = config.get('source')
       source = get_attr(context, source_path)
@@ -123,11 +116,8 @@ class Read(ndb.BaseModel):
       entity = None
       if source and isinstance(source, ndb.Key):
         entity = source.get()
-      save_path = config.get('save')
-      copy_path = config.get('copy')
-      set_attr(context, save_path, entity)
-      if copy_path != None:
-        set_attr(context, copy_path, copy.deepcopy(entity))
+        save_path = config.get('path')
+        set_attr(context, save_path, entity)
 
 
 class Write(ndb.BaseModel):
@@ -367,61 +357,10 @@ class RulePrepare(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    #values_path = self.cfg.get('from', 'values.' + context.model.get_kind())
-    entity_path = self.cfg.get('to', 'entities.' + context.model.get_kind())
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
     skip_user_roles = self.cfg.get('skip_user_roles', False)
     strict = self.cfg.get('strict', False)
-    #values = get_attr(context, values_path)
-    entities = get_attr(context, entity_path)
-    # @todo Can we apply normalize here?
-    if isinstance(entities, dict):
-      for key, entity in entities.items():
-        context.entity = entities.get(key)
-        #context.value = values.get(key)
-        rule_prepare(context, skip_user_roles, strict)
-    elif isinstance(entities, list):
-      for entity in entities:
-        context.entity = entity
-        #context.value = None
-        rule_prepare(context, skip_user_roles, strict)
-    else:
-      context.entity = entities
-      #context.value = values
-      rule_prepare(context, skip_user_roles, strict)
-
-
-class RuleRead(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    return # pass
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
-    entities = get_attr(context, entity_path)
-    entities = normalize(entities)  # @todo We assume that original structure remains structurally anchanged!
-    for entity in entities:
-      if entity and hasattr(entity, '_field_permissions'):
-        #rule_read(entity)
-        pass
-
-
-class RuleWrite(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    return # pass
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    value_path = self.cfg.get('from', 'values.' + context.model.get_kind())
-    entity_path = self.cfg.get('to', 'entities.' + context.model.get_kind())
-    value = get_attr(context, value_path)
-    entity = get_attr(context, entity_path)
-    if entity and value and hasattr(entity, '_field_permissions'):
-      #rule_write(entity, value)
-      pass
+    rule_prepare(context, entity_path, skip_user_roles, strict)
 
 
 class RuleExec(ndb.BaseModel):

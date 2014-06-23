@@ -97,7 +97,7 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
                       'context.entity.state != "unpublished"'),
       FieldPermission('35', ['state'], True, None,
-                      '(context.action.key_id_str == "create" and context.entity and context.entity.state == "unpublished") or (context.action.key_id_str == "lock" and context.entity and context.entity.state == "locked") or (context.action.key_id_str == "publish" and context.entity and context.entity.state == "published") or (context.action.key_id_str == "discontinue" and context.entity and context.entity.state == "discontinued") or (context.action.key_id_str == "sudo" and context.entity and (context.entity.state == "published" or context.entity.state == "discontinued"))'),
+                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued") or (context.action.key_id_str == "sudo" and context.value and (context.value.state == "published" or context.value.state == "discontinued"))'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
                       'context.entity.state == "published" or context.entity.state == "discontinued"'),
       FieldPermission('35', ['_records.note'], True, True,
@@ -158,10 +158,8 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.35']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
@@ -183,7 +181,6 @@ class Catalog(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             marketing.Read(catalog_page=settings.CATALOG_PAGE),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -216,11 +213,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             marketing.UpdateWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.35']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}}),
@@ -252,10 +247,8 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             marketing.UploadImagesWrite(),
             RecordWrite(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             BlobUpdate(),
             CallbackNotify(),
@@ -316,7 +309,6 @@ class Catalog(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Set(cfg={'d': {'tmp.original_cover': 'entities.35.cover'}}),
-            RuleWrite(),
             Set(cfg={'d': {'tmp.new_cover': 'entities.35.cover'}}),
             marketing.ProcessCoverTransform(),
             BlobAlterImage(cfg={'read': 'blob_transform',
@@ -354,7 +346,6 @@ class Catalog(ndb.BaseExpando):
             marketing.Delete(),
             Delete(),
             RecordWrite(cfg={'paths': ['entities.35']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             BlobUpdate(),
             CallbackNotify(),
@@ -408,7 +399,6 @@ class Catalog(ndb.BaseExpando):
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
             RulePrepare(cfg={'to': 'entities'}),
-            RuleRead(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -430,7 +420,6 @@ class Catalog(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -458,11 +447,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
             RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
@@ -490,11 +477,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
             RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
@@ -524,11 +509,9 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
             RecordWrite(cfg={'paths': ['entities.35'], 'd': {'message': 'input.message'}}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
@@ -560,13 +543,11 @@ class Catalog(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RulePrepare(),  # @todo Should run out of transaction!!!
             RecordWrite(cfg={'paths': ['entities.35'],
                              'd': {'message': 'input.message',
                                    'note': 'input.note'}}),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
@@ -598,7 +579,6 @@ class Catalog(ndb.BaseExpando):
             Write(),
             RecordWrite(cfg={'paths': ['entities.35'],
                              'd': {'message': 'input.message', 'note': 'input.note'}}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec()
@@ -698,7 +678,6 @@ class Catalog(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.35'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
@@ -818,8 +797,7 @@ class CatalogIndex(ndb.BaseExpando):
             Search(cfg={'index': settings.CATALOG_INDEX, 'page': settings.SEARCH_PAGE, 'document': True}),
             DocumentDictConverter(),
             #DocumentEntityConverter(),
-            #RulePrepare(cfg={'to': 'entities'}),
-            #RuleRead(cfg={'path': 'entities'}),
+            #RulePrepare(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_documents_total_matches': 'search_documents_total_matches',
                            'output.search_documents_count': 'search_documents_count',

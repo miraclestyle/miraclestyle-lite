@@ -12,12 +12,17 @@ from app import ndb, util, settings  # @todo settings has to GET OUT OF HERE!!!
 
 class CountryUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    update_file_path = self.cfg.get('file', None)
+    if not update_file_path:
+      return
     Country = context.models['15']
     CountrySubdivision = context.models['16']
-    with file(self.file_path) as f:
+    with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
       to_put = []

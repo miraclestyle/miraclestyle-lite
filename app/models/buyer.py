@@ -73,17 +73,15 @@ class Addresses(ndb.BaseModel):
             buyer.AddressRead(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Set(cfg={'d': {'values.77.addresses': 'input.addresses'}}),
+            Set(cfg={'d': {'entities.77.addresses': 'input.addresses'}}),
             buyer.AddressSet()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.77']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.77'}})
             ]
           )
@@ -101,7 +99,6 @@ class Addresses(ndb.BaseModel):
             buyer.AddressRead(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.77'}})
             ]
           )
@@ -121,7 +118,6 @@ class Addresses(ndb.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.77',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -168,16 +164,14 @@ class Collection(ndb.BaseModel):
             buyer.CollectionRead(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Set(cfg={'d': {'values.10.notify': 'input.notify', 'values.10.domains': 'input.domains'}})
+            Set(cfg={'d': {'entities.10.notify': 'input.notify', 'entities.10.domains': 'input.domains'}})
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.10']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.10'}})
             ]
           )
@@ -195,7 +189,6 @@ class Collection(ndb.BaseModel):
             buyer.CollectionRead(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.10'}})
             ]
           )
@@ -215,7 +208,6 @@ class Collection(ndb.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.10',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})

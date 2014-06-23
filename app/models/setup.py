@@ -15,6 +15,8 @@ class Configuration(ndb.BaseExpando):
   
   _kind = 57
   
+  _use_rule = False
+  
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
   configuration_input = ndb.SuperPickleProperty('3', required=True, compressed=False, indexed=False)
@@ -60,7 +62,7 @@ class Configuration(ndb.BaseExpando):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            plugins_setup.CronInstall()
+            plugins_setup.CronInstall(cfg={'time': settings.SETUP_ELAPSED_TIME})
             ]
           )
         ]

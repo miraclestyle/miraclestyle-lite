@@ -92,6 +92,9 @@ class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
 class Record(ndb.BaseExpando):
   
   _kind = 5
+  
+  _use_rule = False
+  
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = ndb.SuperDateTimeProperty('l', auto_now_add=True)
   agent = ndb.SuperKeyProperty('u', kind='0', required=True)

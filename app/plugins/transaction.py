@@ -47,14 +47,12 @@ class JournalUpdateRead(ndb.BaseModel):
     if entity is None:
       entity = context.model(key=entity_key)
     context.entities[context.model.get_kind()] = entity
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class JournalRead(ndb.BaseModel):
   
   def run(self, context):
     context.entities[context.model.get_kind()]._code = context.entities[context.model.get_kind()].key_id_str[3:]
-    context.values[context.model.get_kind()]._code = copy.deepcopy(context.entities[context.model.get_kind()]._code)
 
 
 class JournalSet(ndb.BaseModel):
@@ -80,9 +78,9 @@ class JournalSet(ndb.BaseModel):
     for field in input_line_fields:
       model = __JOURNAL_FIELDS.get(field.get('type'))
       line_fields.append(build_field(model, field))
-    context.values[context.model.get_kind()].name = context.input.get('name')
-    context.values[context.model.get_kind()].entry_fields = entry_fields
-    context.values[context.model.get_kind()].line_fields = line_fields
+    context.entities[context.model.get_kind()].name = context.input.get('name')
+    context.entities[context.model.get_kind()].entry_fields = entry_fields
+    context.entities[context.model.get_kind()].line_fields = line_fields
 
 
 class JournalReadActions(ndb.BaseModel):
@@ -115,7 +113,6 @@ class JournalReadActions(ndb.BaseModel):
       context.entities[context.model.get_kind()].__actions = __actions
     else:
       context.entities[context.model.get_kind()].__actions = []
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
     context.tmp['actions_more'] = more
 
 
@@ -129,7 +126,6 @@ class EntryActionRead(ndb.BaseModel):
   
   def run(self, context):
     context.entities['100']._code = context.entities['100'].key_id_str[4:]  # @todo Slice depends on the actual kind length (currently kind is 3 characters long)!
-    context.values['100']._code = copy.deepcopy(context.entities['100']._code)
 
 
 class EntryActionUpdateRead(ndb.BaseModel):
@@ -147,7 +143,6 @@ class EntryActionUpdateRead(ndb.BaseModel):
     if entity is None:
       entity = context.model(key=entity_key)
     context.entities['100'] = entity
-    context.values['100'] = copy.deepcopy(context.entities['100'])
 
 
 class EntryActionSet(ndb.BaseModel):
@@ -168,9 +163,9 @@ class EntryActionSet(ndb.BaseModel):
     for field in input_arguments:
       model = __JOURNAL_FIELDS.get(field.get('type'))
       arguments.append(build_field(model, field))
-    context.values['100'].name = context.input.get('name')
-    context.values['100'].arguments = arguments
-    context.values['100'].active = context.input.get('active')
+    context.entities['100'].name = context.input.get('name')
+    context.entities['100'].arguments = arguments
+    context.entities['100'].active = context.input.get('active')
 
 
 class CategoryUpdateRead(ndb.BaseModel):
@@ -189,25 +184,23 @@ class CategoryUpdateRead(ndb.BaseModel):
     if entity is None:
       entity = context.model(key=entity_key)
     context.entities[context.model.get_kind()] = entity
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class CategoryRead(ndb.BaseModel):
   
   def run(self, context):
     context.entities[context.model.get_kind()]._code = context.entities[context.model.get_kind()].key_id_str[3:]
-    context.values[context.model.get_kind()]._code = copy.deepcopy(context.entities[context.model.get_kind()]._code)
 
 
 class CategorySet(ndb.BaseModel):
   
   def run(self, context):
-    context.values[context.model.get_kind()].parent_record = context.input.get('parent_record')
-    context.values[context.model.get_kind()].name = context.input.get('name')
-    context.values[context.model.get_kind()].active = context.input.get('active')
-    context.values[context.model.get_kind()].description = context.input.get('description')
-    complete_name = ndb.make_complete_name(context.values[context.model.get_kind()], 'name', parent_property='parent_record')
-    context.values[context.model.get_kind()].complete_name = complete_name
+    context.entities[context.model.get_kind()].parent_record = context.input.get('parent_record')
+    context.entities[context.model.get_kind()].name = context.input.get('name')
+    context.entities[context.model.get_kind()].active = context.input.get('active')
+    context.entities[context.model.get_kind()].description = context.input.get('description')
+    complete_name = ndb.make_complete_name(context.entities[context.model.get_kind()], 'name', parent_property='parent_record')
+    context.entities[context.model.get_kind()].complete_name = complete_name
 
 
 '''

@@ -13,12 +13,17 @@ from app import ndb, util
 
 class CurrencyUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    update_file_path = self.cfg.get('file', None)
+    if not update_file_path:
+      return
     Measurement = context.models['18']
     Unit = context.models['19']
-    with file(self.file_path) as f:
+    with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
       measurements = [{'name': 'Currency', 'id': 'currency'}]
@@ -82,12 +87,17 @@ class CurrencyUpdate(ndb.BaseModel):
 
 class UnitUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    update_file_path = self.cfg.get('file', None)
+    if not update_file_path:
+      return
     Measurement = context.models['18']
     Unit = context.models['19']
-    with file(self.file_path) as f:
+    with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
       measurements = []

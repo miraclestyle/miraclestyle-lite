@@ -229,8 +229,13 @@ class Install(ndb.BaseModel):
 
 class CronInstall(ndb.BaseModel):
   
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
   def run(self, context):
-    time_difference = datetime.datetime.now()-datetime.timedelta(minutes=15)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    elapsed_time = self.cfg.get('time', 10)
+    time_difference = datetime.datetime.now()-datetime.timedelta(minutes=elapsed_time)
     configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(50)
     for config in configurations:
       context.user = config.parent_entity

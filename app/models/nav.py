@@ -55,7 +55,7 @@ class Widget(ndb.BaseExpando):
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
                       'context.entity._is_system'),
       FieldPermission('62', ['role'], False, None,
-                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.entity and context.entity.role and context.entity.key_namespace != context.entity.role.entity.key_namespace)')
+                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)')
       ]
     )
   
@@ -93,7 +93,12 @@ class Widget(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            nav.Set(),
+            Set(cfg={'d': {'entities.62.name': 'input.name',
+                           'entities.62.sequence': 'input.sequence',
+                           'entities.62.active': 'input.active',
+                           'entities.62.role': 'input.role',
+                           'entities.62.search_form': 'input.search_form',
+                           'entities.62.filters': 'input.filters'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -101,10 +106,8 @@ class Widget(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.62']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
             CallbackExec()
@@ -124,7 +127,6 @@ class Widget(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.62'}})
             ]
           )
@@ -146,7 +148,12 @@ class Widget(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            nav.Set(),
+            Set(cfg={'d': {'entities.62.name': 'input.name',
+                           'entities.62.sequence': 'input.sequence',
+                           'entities.62.active': 'input.active',
+                           'entities.62.role': 'input.role',
+                           'entities.62.search_form': 'input.search_form',
+                           'entities.62.filters': 'input.filters'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -154,10 +161,8 @@ class Widget(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.62']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
             CallbackExec()
@@ -184,7 +189,6 @@ class Widget(ndb.BaseExpando):
           plugins=[
             Delete(),
             RecordWrite(cfg={'paths': ['entities.62']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.62'}}),
             CallbackNotify(),
             CallbackExec()
@@ -238,8 +242,7 @@ class Widget(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'to': 'entities'}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -261,7 +264,6 @@ class Widget(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.62',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})

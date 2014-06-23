@@ -60,7 +60,7 @@ class Country(ndb.BaseModel):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            location.CountryUpdate(file_path=settings.LOCATION_DATA_FILE)
+            location.CountryUpdate(cfg={'file': settings.LOCATION_DATA_FILE})
             ]
           )
         ]
@@ -93,8 +93,7 @@ class Country(ndb.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': -1}),
-            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -165,8 +164,7 @@ class CountrySubdivision(ndb.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})

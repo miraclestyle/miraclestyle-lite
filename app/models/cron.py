@@ -15,6 +15,8 @@ class CronConfig(ndb.BaseModel):
   
   _kind = 83
   
+  _use_rule = False
+  
   data = ndb.SuperJsonProperty('1', indexed=False, default={})
   
   _global_role = GlobalRole(
@@ -34,7 +36,7 @@ class CronConfig(ndb.BaseModel):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            cron.ProcessCatalogs(page_size=settings.DOMAINS_PER_CRON),
+            cron.ProcessCatalogs(cfg={'page': settings.DOMAINS_PER_CRON}),
             CallbackExec()
             ]
           )

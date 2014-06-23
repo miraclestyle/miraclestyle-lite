@@ -77,10 +77,8 @@ class DomainRole(Role):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.60']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.60'}}),
             CallbackNotify(),
             CallbackExec()
@@ -100,7 +98,6 @@ class DomainRole(Role):
             Read(),
             RulePrepare(),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.60'}})
             ]
           )
@@ -127,10 +124,8 @@ class DomainRole(Role):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.60']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.60'}}),
             CallbackNotify(),
             CallbackExec()
@@ -157,7 +152,6 @@ class DomainRole(Role):
           plugins=[
             Delete(),
             RecordWrite(cfg={'paths': ['entities.60']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.60'}}),
             CallbackNotify(),
             CallbackExec()
@@ -201,8 +195,7 @@ class DomainRole(Role):
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'to': 'entities'}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -224,7 +217,6 @@ class DomainRole(Role):
             RulePrepare(),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.60',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -272,7 +264,7 @@ class DomainUser(ndb.BaseExpando):
       ActionPermission('8', Action.build_key('8', 'accept'), False,
                        'context.user.key_id_str != context.entity.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'accept'), True,
-                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity._original.state == "invited"'),
+                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity.state == "invited"'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), False,
                        'not context.user._is_taskqueue'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
@@ -283,7 +275,7 @@ class DomainUser(ndb.BaseExpando):
       FieldPermission('8', ['roles'], False, None,
                       'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
       FieldPermission('8', ['state'], True, None,
-                      '(context.action.key_id_str == "invite" and context.entity and context.entity.state == "invited") or (context.action.key_id_str == "accept" and context.entity and context.entity.state == "accepted")')
+                      '(context.action.key_id_str == "invite" and context.value and context.value.state == "invited") or (context.action.key_id_str == "accept" and context.value and context.value.state == "accepted")')
       ]
     )
   
@@ -318,17 +310,15 @@ class DomainUser(ndb.BaseExpando):
           plugins=[
             Context(),
             rule.DomainUserInvite(),
-            RulePrepare(),
+            RulePrepare(cfg={'path': 'entities'}),
             RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
-            Write(cfg={'paths': ['entities.8', 'entities.0']}),
+            Write(cfg={'paths': ['entities.8', 'entities.0']}),  # @todo Is this a problem now?
             RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.8'}}),
             CallbackNotify(),
             CallbackExec()
@@ -349,7 +339,6 @@ class DomainUser(ndb.BaseExpando):
             rule.DomainUserRead(),
             RulePrepare(),
             RuleExec(),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.8'}})
             ]
           )
@@ -376,10 +365,8 @@ class DomainUser(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.8']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.8'}}),
             CallbackNotify(),
             CallbackExec()
@@ -399,17 +386,16 @@ class DomainUser(ndb.BaseExpando):
             Read(),
             rule.DomainUserRead(),
             rule.DomainUserRemove(),
-            RulePrepare(),
+            RulePrepare(cfg={'path': 'entities'}),
             RuleExec()
             ]
           ),
         PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'paths': ['entities.0']}),
+            Write(cfg={'paths': ['entities.0']}),  # @todo Is this a problem now?
             Delete(),
             RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.8'}}),
             CallbackNotify(),
             CallbackExec()
@@ -453,8 +439,7 @@ class DomainUser(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'to': 'entities'}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -477,7 +462,6 @@ class DomainUser(ndb.BaseExpando):
             RulePrepare(),
             RuleExec(),
             RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            RuleRead(),
             Set(cfg={'d': {'output.entity': 'entities.8',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})
@@ -504,13 +488,10 @@ class DomainUser(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.8']}),
-            Set(cfg={'d': {'entities.6': 'entities.8.namespace_entity',
-                           'entities.6': 'entities.8.namespace_entity'}}),
-            RulePrepare(cfg={'to': 'entities', 'from': 'entities'}),  # @todo Should run out of transaction!!!
-            RuleRead(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'entities.6': 'entities.8.namespace_entity'}}),
+            RulePrepare(cfg={'path': 'entities'}),  # @todo Should run out of transaction!!!
             Set(cfg={'d': {'output.entity': 'entities.8',
                            'output.domain': 'entities.6'}}),
             CallbackNotify(),
@@ -538,7 +519,6 @@ class DomainUser(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            RuleWrite(),
             Write(),
             RecordWrite(cfg={'paths': ['entities.8']})
             ]

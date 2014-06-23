@@ -47,19 +47,18 @@ class AddressRead(ndb.BaseModel):
       
       entity.addresses = helper(entity.addresses).get_result()
     context.entities[context.model.get_kind()] = entity
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
 
 
 class AddressSet(ndb.BaseModel):
   
   def run(self, context):
-    if context.values['77'].addresses:
+    if context.entities['77'].addresses:
       default_billing = 0
       default_shipping = 0
-      for i, address in enumerate(context.values['77'].addresses):
+      for i, address in enumerate(context.entities['77'].addresses):
         try:
           # Ensure that the internal id is never changed by the client.
-          address.internal_id = context.entities['77'].addresses[i].internal_id
+          address.internal_id = context.entities['77']._original.addresses[i].internal_id
         except IndexError as e:
           # This is a new record, so force-feed it the internal_id.
           generate_internal_id(address)
@@ -69,8 +68,8 @@ class AddressSet(ndb.BaseModel):
           default_billing = i
         address.default_shipping = False
         address.default_billing = False
-      context.values['77'].addresses[default_shipping].default_shipping = True
-      context.values['77'].addresses[default_billing].default_billing = True
+      context.entities['77'].addresses[default_shipping].default_shipping = True
+      context.entities['77'].addresses[default_billing].default_billing = True
 
 
 class CollectionRead(ndb.BaseModel):
@@ -85,4 +84,3 @@ class CollectionRead(ndb.BaseModel):
     if entity.domains and len(entity.domains):
       entity._domains = ndb.get_multi(entity.domains)
     context.entities[context.model.get_kind()] = entity
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])

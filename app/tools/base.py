@@ -123,7 +123,7 @@ def _rule_compile(global_permissions, local_permissions, strict):
   return permissions
 
 
-def rule_prepare(context, skip_user_roles, strict):
+def _rule_prepare(context, skip_user_roles, strict):
   '''This method generates permissions situation for the context.entity object,
   at the time of execution.
   
@@ -166,6 +166,22 @@ def rule_prepare(context, skip_user_roles, strict):
     context.entity._field_permissions = _rule_compile(global_field_permissions, local_field_permissions, strict)
     context.entity.add_output('_action_permissions')
     context.entity.add_output('_field_permissions')
+
+
+def rule_prepare(context, entity_path, skip_user_roles, strict):
+  entities = get_attr(context, entity_path)
+  # @todo Can we apply normalize here?
+  if isinstance(entities, dict):
+    for key, entity in entities.items():
+      context.entity = entities.get(key)
+      _rule_prepare(context, skip_user_roles, strict)
+  elif isinstance(entities, list):
+    for entity in entities:
+      context.entity = entity
+      _rule_prepare(context, skip_user_roles, strict)
+  else:
+    context.entity = entities
+    _rule_prepare(context, skip_user_roles, strict)
 
 
 def record_write(model, records, agent_key, action_key):

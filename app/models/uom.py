@@ -82,7 +82,7 @@ class Unit(ndb.BaseExpando):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            uom.CurrencyUpdate(file_path=settings.CURRENCY_DATA_FILE)
+            uom.CurrencyUpdate(cfg={'file': settings.CURRENCY_DATA_FILE})
             ]
           )
         ]
@@ -97,7 +97,7 @@ class Unit(ndb.BaseExpando):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            uom.UnitUpdate(file_path=settings.UOM_DATA_FILE)
+            uom.UnitUpdate(cfg={'file': settings.UOM_DATA_FILE})
             ]
           )
         ]
@@ -134,8 +134,7 @@ class Unit(ndb.BaseExpando):
             RuleExec(),
             Search(cfg={'page': -1}),
             uom.RemoveCurrencies(),
-            RulePrepare(cfg={'to': 'entities', 'skip_user_roles': True}),
-            RuleRead(cfg={'path': 'entities'}),
+            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output.search_cursor': 'search_cursor',
                            'output.search_more': 'search_more'}})

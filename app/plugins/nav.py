@@ -8,21 +8,6 @@ Created on Apr 15, 2014
 from app import ndb, util
 
 
-class Set(ndb.BaseModel):
-  
-  def run(self, context):
-    filters = []
-    input_filters = context.input.get('filters')
-    for input_filter in input_filters:
-      filters.append(input_filter)
-    context.entities['62'].name = context.input.get('name')
-    context.entities['62'].sequence = context.input.get('sequence')
-    context.entities['62'].active = context.input.get('active')
-    context.entities['62'].role = context.input.get('role')
-    context.entities['62'].search_form = context.input.get('search_form')
-    context.entities['62'].filters = filters
-
-
 class BuildMenu(ndb.BaseModel):
   
   def run(self, context):

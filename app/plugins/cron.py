@@ -12,9 +12,12 @@ from app import ndb, util
 
 class ProcessCatalogs(ndb.BaseModel):
   
-  page_size = ndb.SuperIntegerProperty('1', indexed=False, default=10)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    page_size = self.cfg.get('page', 10)
     CronConfig = context.models['83']
     Domain = context.models['6']
     config_key = CronConfig.build_key('process_catalogs_config')
@@ -24,7 +27,7 @@ class ProcessCatalogs(ndb.BaseModel):
     cursor = None
     if config.data.get('current_cursor') and config.data.get('current_more'):
       cursor = Cursor(urlsafe=config.data.get('current_cursor'))
-    entities, cursor, more = Domain.query().order(Domain.created).fetch_page(self.page_size, start_cursor=cursor, keys_only=True)
+    entities, cursor, more = Domain.query().order(Domain.created).fetch_page(page_size, start_cursor=cursor, keys_only=True)
     if cursor:
       cursor = cursor.urlsafe()
     for key in entities:
