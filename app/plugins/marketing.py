@@ -226,7 +226,7 @@ class Read(ndb.BaseModel):
     if more:
       results.pop(len(results) - 1)  # We respect catalog page amount, so if there are more images, remove the last one.
     context.entities['35']._images = results
-    context.values['35']._images = copy.deepcopy(context.entities['35']._images)
+    #context.values['35']._images = copy.deepcopy(context.entities['35']._images)
     context.tmp['images_cursor'] = start + self.catalog_page  # @todo Next images cursor. Not sure if this is needed or the client does the mageic?
     context.tmp['images_more'] = more
 
@@ -234,9 +234,9 @@ class Read(ndb.BaseModel):
 class UpdateSet(ndb.BaseModel):
   
   def run(self, context):
-    context.values['35'].name = context.input.get('name')
-    context.values['35'].discontinue_date = context.input.get('discontinue_date')
-    context.values['35'].publish_date = context.input.get('publish_date')
+    context.entities['35'].name = context.input.get('name')
+    context.entities['35'].discontinue_date = context.input.get('discontinue_date')
+    context.entities['35'].publish_date = context.input.get('publish_date')
     pricetags = context.input.get('pricetags')
     sort_images = context.input.get('sort_images')
     entity_images, delete_images = sort_by_list(context.entities['35']._images, sort_images, 'image')
@@ -244,9 +244,9 @@ class UpdateSet(ndb.BaseModel):
     for delete in delete_images:
       entity_images.remove(delete)
       context.tmp['delete_images'].append(delete)
-    context.values['35']._images = entity_images
-    if context.values['35']._images:
-      for i, image in enumerate(context.values['35']._images):
+    context.entities['35']._images = entity_images
+    if context.entities['35']._images:
+      for i, image in enumerate(context.entities['35']._images):
         image.set_key(str(i), parent=context.entities['35'].key)
         image.pricetags = pricetags[i].pricetags
     context.entities['35']._images = []
@@ -276,8 +276,8 @@ class UploadImagesSet(ndb.BaseModel):
     for image in _images:
       image.set_key(str(i), parent=context.entities['35'].key)
       i += 1
-    context.entities['35']._images = []
-    context.values['35']._images = _images
+    #context.entities['35']._images = []
+    context.entities['35']._images = _images
 
 
 class UploadImagesWrite(ndb.BaseModel):
@@ -324,11 +324,11 @@ class ProcessCoverSet(ndb.BaseModel):
     if len(context.entities['35']._images):
       if context.entities['35'].cover:
         if context.entities['35'].cover.gs_object_name[:-6] != context.entities['35']._images[0].gs_object_name:
-          context.values['35'].cover = context.entities['35']._images[0]
+          context.entities['35'].cover = context.entities['35']._images[0]
       else:
-        context.values['35'].cover = context.entities['35']._images[0]
+        context.entities['35'].cover = context.entities['35']._images[0]
     else:
-      context.values['35'].cover = None
+      context.entities['35'].cover = None
 
 
 class ProcessCoverTransform(ndb.BaseModel):

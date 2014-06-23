@@ -21,7 +21,7 @@ from google.appengine.ext import blobstore
 from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
- 
+
 def _rule_reset_actions(action_permissions, actions):
   for action_key in actions:
     action_permissions[action_key] = {'executable': []}
@@ -121,8 +121,8 @@ def _rule_compile(global_permissions, local_permissions, strict):
     _rule_compile_global_permissions(global_permissions)
     permissions = global_permissions
   return permissions
- 
- 
+
+
 def rule_prepare(context, skip_user_roles, strict):
   '''This method generates permissions situation for the context.entity object,
   at the time of execution.

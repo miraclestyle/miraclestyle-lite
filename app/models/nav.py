@@ -55,7 +55,7 @@ class Widget(ndb.BaseExpando):
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
                       'context.entity._is_system'),
       FieldPermission('62', ['role'], False, None,
-                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)')
+                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.entity and context.entity.role and context.entity.key_namespace != context.entity.role.entity.key_namespace)')
       ]
     )
   

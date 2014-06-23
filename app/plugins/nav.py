@@ -16,12 +16,12 @@ class Set(ndb.BaseModel):
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
       filters.append(Filter(**input_filter))
-    context.values['62'].name = context.input.get('name')
-    context.values['62'].sequence = context.input.get('sequence')
-    context.values['62'].active = context.input.get('active')
-    context.values['62'].role = context.input.get('role')
-    context.values['62'].search_form = context.input.get('search_form')
-    context.values['62'].filters = filters
+    context.entities['62'].name = context.input.get('name')
+    context.entities['62'].sequence = context.input.get('sequence')
+    context.entities['62'].active = context.input.get('active')
+    context.entities['62'].role = context.input.get('role')
+    context.entities['62'].search_form = context.input.get('search_form')
+    context.entities['62'].filters = filters
 
 
 class BuildMenu(ndb.BaseModel):

@@ -50,7 +50,7 @@ class UserLoginPrepare(ndb.BaseModel):
   def run(self, context):
     User = context.models['0']
     context.entities['0'] = User.current_user()
-    context.values['0'] = User.current_user()
+    #context.values['0'] = User.current_user()
     context.user = User.current_user()
 
 
@@ -176,7 +176,7 @@ class UserUpdate(ndb.BaseModel):
   def run(self, context):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
-    for identity in context.values['0'].identities:
+    for identity in context.entities['0'].identities:
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
@@ -190,8 +190,8 @@ class UserUpdate(ndb.BaseModel):
 class UserSudo(ndb.BaseModel):
   
   def run(self, context):
-    if context.entities['0']._field_permissions['state']['writable'] and context.values['0'].state == 'suspended':
-      context.values['0'].sessions = []
+    if context.entities['0']._field_permissions['state']['writable'] and context.entities['0'].state == 'suspended':
+      context.entities['0'].sessions = []
 
 
 class DomainCreate(ndb.BaseModel):

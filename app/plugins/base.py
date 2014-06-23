@@ -367,26 +367,26 @@ class RulePrepare(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    values_path = self.cfg.get('from', 'values.' + context.model.get_kind())
+    #values_path = self.cfg.get('from', 'values.' + context.model.get_kind())
     entity_path = self.cfg.get('to', 'entities.' + context.model.get_kind())
     skip_user_roles = self.cfg.get('skip_user_roles', False)
     strict = self.cfg.get('strict', False)
-    values = get_attr(context, values_path)
+    #values = get_attr(context, values_path)
     entities = get_attr(context, entity_path)
     # @todo Can we apply normalize here?
     if isinstance(entities, dict):
       for key, entity in entities.items():
         context.entity = entities.get(key)
-        context.value = values.get(key)
+        #context.value = values.get(key)
         rule_prepare(context, skip_user_roles, strict)
     elif isinstance(entities, list):
       for entity in entities:
         context.entity = entity
-        context.value = None
+        #context.value = None
         rule_prepare(context, skip_user_roles, strict)
     else:
       context.entity = entities
-      context.value = values
+      #context.value = values
       rule_prepare(context, skip_user_roles, strict)
 
 

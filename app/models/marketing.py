@@ -97,7 +97,7 @@ class Catalog(ndb.BaseExpando):
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
                       'context.entity.state != "unpublished"'),
       FieldPermission('35', ['state'], True, None,
-                      '(context.action.key_id_str == "create" and context.value and context.value.state == "unpublished") or (context.action.key_id_str == "lock" and context.value and context.value.state == "locked") or (context.action.key_id_str == "publish" and context.value and context.value.state == "published") or (context.action.key_id_str == "discontinue" and context.value and context.value.state == "discontinued") or (context.action.key_id_str == "sudo" and context.value and (context.value.state == "published" or context.value.state == "discontinued"))'),
+                      '(context.action.key_id_str == "create" and context.entity and context.entity.state == "unpublished") or (context.action.key_id_str == "lock" and context.entity and context.entity.state == "locked") or (context.action.key_id_str == "publish" and context.entity and context.entity.state == "published") or (context.action.key_id_str == "discontinue" and context.entity and context.entity.state == "discontinued") or (context.action.key_id_str == "sudo" and context.entity and (context.entity.state == "published" or context.entity.state == "discontinued"))'),
       FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
                       'context.entity.state == "published" or context.entity.state == "discontinued"'),
       FieldPermission('35', ['_records.note'], True, True,
@@ -147,10 +147,10 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Prepare(),
-            Set(cfg={'s': {'values.35.state': 'unpublished'},
-                     'd': {'values.35.name': 'input.name',
-                           'values.35.publish_date': 'input.publish_date',
-                           'values.35.discontinue_date': 'input.discontinue_date'}}),
+            Set(cfg={'s': {'entities.35.state': 'unpublished'},
+                     'd': {'entities.35.name': 'input.name',
+                           'entities.35.publish_date': 'input.publish_date',
+                           'entities.35.discontinue_date': 'input.discontinue_date'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -450,7 +450,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'values.35.state': 'locked'}}),
+            Set(cfg={'s': {'entities.35.state': 'locked'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -482,7 +482,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'values.35.state': 'published'}}),
+            Set(cfg={'s': {'entities.35.state': 'published'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -516,7 +516,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'values.35.state': 'discontinued'}}),
+            Set(cfg={'s': {'entities.35.state': 'discontinued'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -552,7 +552,7 @@ class Catalog(ndb.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'values.35.state': 'input.state'}}),
+            Set(cfg={'d': {'entities.35.state': 'input.state'}}),
             RulePrepare(),
             RuleExec()
             ]
