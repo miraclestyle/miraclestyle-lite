@@ -16,7 +16,7 @@ class Filter(ndb.BaseModel):
   _kind = 65
   
   name = ndb.SuperStringProperty('1', required=True, indexed=False)
-  kind = ndb.SuperStringProperty('2', required=True, indexed=False)
+  model = ndb.SuperStringProperty('2', required=True, indexed=False)
   query = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
 
 

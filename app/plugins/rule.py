@@ -23,13 +23,13 @@ class DomainRoleSet(ndb.BaseModel):
     permissions = []
     for permission in input_permissions:
       if permission.get('type') == 'FieldPermission':
-        permissions.append(FieldPermission(permission.get('kind'),
+        permissions.append(FieldPermission(permission.get('model'),
                                            permission.get('fields'),
                                            permission.get('writable'),
                                            permission.get('visible'),
                                            permission.get('condition')))
       elif permission.get('type') == 'ActionPermission':
-        permissions.append(ActionPermission(permission.get('kind'),
+        permissions.append(ActionPermission(permission.get('model'),
                                             [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
