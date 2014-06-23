@@ -18,7 +18,7 @@
     <div class="form-control">
 		<label class="form-label">Model</label>
 		<div class="form-input">
-			<select name="kind" ng-required="true" ui-select2 ng-model="filter.kind" data-placeholder="Select a kind">
+			<select name="kind" ng-required="true" ui-select2 ng-model="filter.model" data-placeholder="Select a model">
 					<option value=""></option>
 				    <option ng-repeat="(kind_key, kind) in kinds" value="{{kind_key}}">{{kind}}</option>
 			</select>

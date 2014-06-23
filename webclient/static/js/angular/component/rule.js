@@ -8,10 +8,9 @@ MainApp.filter('permissionResolveActionName', function() {
  
        var outputs = [];
        angular.forEach(input.actions, function (value) {
-    	    outputs.push(KINDS.friendlyActionName(input.kind, value));
+    	    outputs.push(KINDS.friendlyActionName(input.model, value));
        });
- 
-       
+  
        return outputs;
     };
 }).factory('AppUser', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',

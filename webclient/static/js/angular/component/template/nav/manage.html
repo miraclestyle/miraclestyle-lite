@@ -73,7 +73,7 @@
 					<tbody>
 						<tr ng-repeat="filter in entity.filters">
 							<td>{{filter.name}}</td>
-							<td>{{FRIENDLY_KIND_NAMES[filter.kind]}}</td>
+							<td>{{FRIENDLY_KIND_NAMES[filter.model]}}</td>
 							<td>{{filter.query}}</td>
 							<td>
 								<button ng-click="removeFilter(filter)" type="button" class="button">Remove</button>

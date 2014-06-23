@@ -2,7 +2,7 @@
 	<ul class="menu">
 	    <li ng-repeat="menu_filter in menu_item.filters">
 	    	<button type="button" ng-click="toggleMainMenu(1)"
-	    		    ui-sref="app_view_search({app_id : nav.domain.key, query: JSON.stringify(menu_filter.query), kind : menu_filter.kind})" 
+	    		    ui-sref="app_view_search({app_id : nav.domain.key, query: JSON.stringify(menu_filter.query), kind : menu_filter.model})" 
 	    		    ui-sref-active="active" class="button block" ng-bind="menu_filter.name"></button>
 	    </li>
 </ul>

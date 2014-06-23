@@ -42,7 +42,7 @@
 					</thead>
 					<tbody>
 						<tr ng-repeat="perm in entity.permissions track by $index">
-							<td>{{FRIENDLY_KIND_NAMES[perm.kind]}}</td>
+							<td>{{FRIENDLY_KIND_NAMES[perm.model]}}</td>
 							<td>
 								<span ng-show="perm.fields != null">{{perm.fields|join:', '}}</span>
 								<span ng-show="perm.actions != null">{{perm|permissionResolveActionName|join:', '}}</span>

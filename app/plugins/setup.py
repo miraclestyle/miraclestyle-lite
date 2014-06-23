@@ -94,7 +94,7 @@ class DomainSetup(Setup):
         actions = []
         for action_instance in obj._actions:
           actions.append(action_instance.key)
-        permissions.append(ActionPermission(kind=obj.get_kind(),
+        permissions.append(ActionPermission(model=obj.get_kind(),
                                             actions=actions,
                                             executable=True,
                                             condition='True'))

@@ -5,20 +5,20 @@
 	<div class="form-control">
 		<label class="form-label">Type</label>
 		<div class="form-input">
-			<select ng-change="get_meta()" name="type" ng-required="true" ui-select2 ng-model="permission.type" data-placeholder="Select a type">
+			<select ng-change="get_meta()" name="type" ng-required="true" ui-select2 ng-model="permission.model" data-placeholder="Select a model">
 					<option value=""></option>
 				    <option ng-repeat="(type_key, type) in types" value="{{type_key}}">{{type}}</option>
 			</select>
 		</div>
 	</div>
 	
-	<div ng-show="permission.type">
+	<div ng-show="permission.model">
  
 	 
     <div class="form-control">
-		<label class="form-label">Kind</label>
+		<label class="form-label">Model</label>
 		<div class="form-input">
-			<select name="kind" ng-change="get_meta()" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a kind">
+			<select name="model" ng-change="get_meta()" ng-required="true" ui-select2 ng-model="permission.model" data-placeholder="Select a model">
 					<option value=""></option>
 				    <option ng-repeat="(kind_key, kind) in kinds" value="{{kind_key}}">{{kind}}</option>
 			</select>
@@ -26,11 +26,11 @@
 	</div>
 	
 	
-	<div ng-show="permission.type == 'ActionPermission'">
+	<div ng-show="permission.model == '79'">
 		<div class="form-control">
 		<label class="form-label">Action</label>
 		<div class="form-input">
-			<select name="kind" multiple="true" ng-required="permission.type == 'ActionPermission'" ui-select2 ng-model="permission.actions" data-placeholder="Select a action">
+			<select name="kind" multiple="true" ng-required="permission.model == '79'" ui-select2 ng-model="permission.actions" data-placeholder="Select a action">
  
 				    <option ng-repeat="(action_key, action) in actions" value="{{action_key}}">{{action}}</option>
 			</select>
@@ -47,11 +47,11 @@
 		
 	</div>
 	
-	<div ng-show="permission.type == 'FieldPermission'">
+	<div ng-show="permission.model == '80'">
 		<div class="form-control">
 		<label class="form-label">Field</label>
 		<div class="form-input">
-			<select name="fields" multiple="true" ng-required="permission.type == 'FieldPermission'" ui-select2 ng-model="permission.fields" data-placeholder="Select a field">
+			<select name="fields" multiple="true" ng-required="permission.model == '80'" ui-select2 ng-model="permission.fields" data-placeholder="Select a field">
 				    <option ng-repeat="(field_key, field) in fields" value="{{field_key}}">{{field}}</option>
 			</select>
 		</div>
