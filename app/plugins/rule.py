@@ -22,17 +22,18 @@ class DomainRoleSet(ndb.BaseModel):
     input_permissions = context.input.get('permissions')
     permissions = []
     for permission in input_permissions:
-      if str(permission.get('model')) == '80':
+      if str(permission.get('kind')) == '80':
         permissions.append(FieldPermission(permission.get('model'),
                                            permission.get('fields'),
                                            permission.get('writable'),
                                            permission.get('visible'),
                                            permission.get('condition')))
-      elif str(permission.get('model')) == '79':
+      elif str(permission.get('kind')) == '79':
         permissions.append(ActionPermission(permission.get('model'),
                                             [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
+    print permissions
     context.entities['60'].name = context.input.get('name')
     context.entities['60'].active = context.input.get('active')
     context.entities['60'].permissions = permissions

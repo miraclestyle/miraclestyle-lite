@@ -1,6 +1,6 @@
 PERMISSION_TYPES = {
-	'FieldPermission' : 'Field',
-	'ActionPermission' : 'Action',
+	'80' : 'Field',
+	'79' : 'Action',
 };
 
 MainApp.filter('permissionResolveActionName', function() {
@@ -123,9 +123,9 @@ MainApp.filter('permissionResolveActionName', function() {
                             $scope.get_meta = function ()
                             {
                             	 
-                            	if ($scope.permission.kind == null) return;
+                            	if ($scope.permission.model == null) return;
                             	
-                            	var info = KINDS.get($scope.permission.kind);
+                            	var info = KINDS.get($scope.permission.model);
                             	
                             	var actions = {};
                             	var fields = {};
@@ -149,6 +149,16 @@ MainApp.filter('permissionResolveActionName', function() {
              
                             $scope.save = function () {
                             	
+                            	if (new_permission)
+                            	{
+                            	   angular.forEach(['executable', 'writable', 'visible'], function (value) {
+	                            	   	if (!value in $scope.permission)
+	                            	    {
+	                            	   	  $scope.permission[executable] = false;
+	                            	    }
+                            	   });
+                            	   	
+                            	}
                              
                                  if (new_permission)
                                  {

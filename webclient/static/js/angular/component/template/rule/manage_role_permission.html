@@ -5,16 +5,15 @@
 	<div class="form-control">
 		<label class="form-label">Type</label>
 		<div class="form-input">
-			<select ng-change="get_meta()" name="type" ng-required="true" ui-select2 ng-model="permission.model" data-placeholder="Select a model">
+			<select ng-change="get_meta()" name="type" ng-required="true" ui-select2 ng-model="permission.kind" data-placeholder="Select a model">
 					<option value=""></option>
 				    <option ng-repeat="(type_key, type) in types" value="{{type_key}}">{{type}}</option>
 			</select>
 		</div>
 	</div>
 	
-	<div ng-show="permission.model">
- 
-	 
+	<div ng-show="permission.kind">
+  
     <div class="form-control">
 		<label class="form-label">Model</label>
 		<div class="form-input">
@@ -26,7 +25,7 @@
 	</div>
 	
 	
-	<div ng-show="permission.model == '79'">
+	<div ng-show="permission.kind == '79'">
 		<div class="form-control">
 		<label class="form-label">Action</label>
 		<div class="form-input">
@@ -47,7 +46,7 @@
 		
 	</div>
 	
-	<div ng-show="permission.model == '80'">
+	<div ng-show="permission.kind == '80'">
 		<div class="form-control">
 		<label class="form-label">Field</label>
 		<div class="form-input">
