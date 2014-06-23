@@ -207,7 +207,7 @@ class ActionPermission(Permission):
   
   _kind = 79
   
-  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
+  model = ndb.SuperStringProperty('1', required=True, indexed=False)
   actions = ndb.SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
   executable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
   condition = ndb.SuperStringProperty('4', required=True, indexed=False)
@@ -215,16 +215,16 @@ class ActionPermission(Permission):
   def __init__(self, *args, **kwargs):
     super(ActionPermission, self).__init__(**kwargs)
     if len(args):
-      kind, actions, executable, condition = args
+      model, actions, executable, condition = args
       if not isinstance(actions, (tuple, list)):
         actions = [actions]
-      self.kind = kind
+      self.model = model
       self.actions = actions
       self.executable = executable
       self.condition = condition
   
   def run(self, role, context):
-    if (self.kind == context.entity.get_kind()):
+    if (self.model == context.entity.get_kind()):
       for action in self.actions:
         if (action.urlsafe() in context.entity.get_actions()) and (safe_eval(self.condition, {'context': context, 'action': action})) and (self.executable != None):
           context.entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
@@ -234,7 +234,7 @@ class FieldPermission(Permission):
   
   _kind = 80
   
-  kind = ndb.SuperStringProperty('1', required=True, indexed=False)
+  model = ndb.SuperStringProperty('1', required=True, indexed=False)
   fields = ndb.SuperStringProperty('2', repeated=True, indexed=False)
   writable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
   visible = ndb.SuperBooleanProperty('4', required=True, default=True, indexed=False)
@@ -243,17 +243,17 @@ class FieldPermission(Permission):
   def __init__(self, *args, **kwargs):
     super(FieldPermission, self).__init__(**kwargs)
     if len(args):
-      kind, fields, writable, visible, condition = args
+      model, fields, writable, visible, condition = args
       if not isinstance(fields, (tuple, list)):
         fields = [fields]
-      self.kind = kind
+      self.model = model
       self.fields = fields
       self.writable = writable
       self.visible = visible
       self.condition = condition
   
   def run(self, role, context):
-    if (self.kind == context.entity.get_kind()):
+    if (self.model == context.entity.get_kind()):
       for field in self.fields:
         parsed_field = get_attr(context.entity._field_permissions, field)
         if parsed_field and (safe_eval(self.condition, {'context': context, 'field': field})):
