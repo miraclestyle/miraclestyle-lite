@@ -395,6 +395,7 @@ class RuleRead(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    return # pass
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
@@ -402,7 +403,8 @@ class RuleRead(ndb.BaseModel):
     entities = normalize(entities)  # @todo We assume that original structure remains structurally anchanged!
     for entity in entities:
       if entity and hasattr(entity, '_field_permissions'):
-        rule_read(entity)
+        #rule_read(entity)
+        pass
 
 
 class RuleWrite(ndb.BaseModel):
@@ -410,6 +412,7 @@ class RuleWrite(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    return # pass
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     value_path = self.cfg.get('from', 'values.' + context.model.get_kind())
@@ -417,7 +420,8 @@ class RuleWrite(ndb.BaseModel):
     value = get_attr(context, value_path)
     entity = get_attr(context, entity_path)
     if entity and value and hasattr(entity, '_field_permissions'):
-      rule_write(entity, value)
+      #rule_write(entity, value)
+      pass
 
 
 class RuleExec(ndb.BaseModel):

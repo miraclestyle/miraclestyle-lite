@@ -257,8 +257,88 @@ Key._kind = property(_get_kind)
 Key._parent = property(_get_parent)
 Key._urlsafe = property(_get_urlsafe)
 
+def is_structured_field(field):
+  '''Checks if the provided field is instance of one of the structured properties,
+  and if the '_modelclass' is set.
+  
+  '''
+  return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty)) and field._modelclass
 
+
+def _rule_write(permissions, entity, field_key, field, field_value):
+  '''If the field is writable, ignore substructure permissions and override field fith new values.
+  Otherwise go one level down and check again.
+  
+  '''
+  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
+  if (field_key in permissions) and (permissions[field_key]['writable']):
+    try:
+      if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
+        return
+      setattr(entity, field_key, field_value)
+    except TypeError as e:
+      util.logger('write: setattr error: %s' % e)
+    except ComputedPropertyError:
+      pass
+  else:
+    if is_structured_field(field):
+      child_entity = getattr(entity, field_key)
+      for child_field_key, child_field in field.get_model_fields().items():
+        if field._repeated:
+          for i, child_entity_item in enumerate(child_entity):
+            try:
+              child_field_value = getattr(field_value[i], child_field_key)
+              _rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+            except IndexError as e:
+              pass
+        else:
+          if field_value != None:
+            _rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+
+
+def _rule_read(permissions, entity, field_key, field):
+  '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
+  Otherwise go one level down and check again.
+  
+  '''
+  if (not field_key in permissions) or (not permissions[field_key]['visible']):
+    entity.remove_output(field_key)
+  else:
+    if is_structured_field(field):
+      child_entity = getattr(entity, field_key)
+      if field._repeated:
+        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+          for child_entity_item in child_entity:
+            child_fields = child_entity_item.get_fields()
+            child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
+            for child_field_key, child_field in child_fields.items():
+              _rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
+      else:
+        child_entity = getattr(entity, field_key)
+        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+          child_fields = child_entity.get_fields()
+          child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
+          for child_field_key, child_field in child_fields.items():
+            _rule_read(permissions[field_key], child_entity, child_field_key, child_field)
+
+
+def rule_write(entity, values):
+  entity_fields = entity.get_fields()
+  for field_key, field in entity_fields.items():
+    if hasattr(values, field_key):
+      field_value = getattr(values, field_key)
+      _rule_write(entity._field_permissions, entity, field_key, field, field_value)
+
+
+def rule_read(entity):
+  entity_fields = entity.get_fields()
+  for field_key, field in entity_fields.items():
+    _rule_read(entity._field_permissions, entity, field_key, field)
+ 
+ 
 class _BaseModel(object):
+  
+  _use_rule = True # all models by default support rule engine
   
   def __init__(self, *args, **kwargs):
     super(_BaseModel, self).__init__(*args, **kwargs)
@@ -285,6 +365,8 @@ class _BaseModel(object):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
+    if self._use_rule and hasattr(self, '_field_permissions'):
+      rule_read(self) # apply rule read before output
     dic = {}
     dic['kind'] = self.get_kind()
     if self.key:
@@ -467,6 +549,29 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
+    
+  def make_original(self):
+    """
+     This function will make a copy of the current state of the entity
+     and put it into _original field.
+    """
+    if self._use_rule:
+      self._original = None
+      original = copy.deepcopy(self)
+      self._original = original
+    
+  def _pre_post_hook(self):
+    """
+     On every .put() either async, or any other this will run
+    """
+    if self._use_rule and hasattr(self, '_original'):
+      rule_write(self, self._original)
+      
+  @classmethod
+  def _from_pb(cls, pb, set_key=True, ent=None, key=None):
+    entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
+    entity.make_original()
+    return entity
   
   def __deepcopy__(self, memo):
     """
@@ -904,14 +1009,7 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
       except:
         blob = blobstore.BlobKey(value)
       return blob
-
-
-class SuperRawProperty(SuperStringProperty):
-  
-  def format(self, value):
-    value = _property_value(self, value)
-    return value
-
+ 
 
 class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
   

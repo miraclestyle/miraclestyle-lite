@@ -21,72 +21,7 @@ from google.appengine.ext import blobstore
 from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
-
-def _is_structured_field(field):
-  '''Checks if the provided field is instance of one of the structured properties,
-  and if the '_modelclass' is set.
-  
-  '''
-  return isinstance(field, (ndb.SuperStructuredProperty, ndb.SuperLocalStructuredProperty)) and field._modelclass
-
-
-def _rule_write(permissions, entity, field_key, field, field_value):
-  '''If the field is writable, ignore substructure permissions and override field fith new values.
-  Otherwise go one level down and check again.
-  
-  '''
-  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
-  if (field_key in permissions) and (permissions[field_key]['writable']):
-    try:
-      if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
-        return
-      setattr(entity, field_key, field_value)
-    except TypeError as e:
-      util.logger('write: setattr error: %s' % e)
-    except ndb.ComputedPropertyError:
-      pass
-  else:
-    if _is_structured_field(field):
-      child_entity = getattr(entity, field_key)
-      for child_field_key, child_field in field.get_model_fields().items():
-        if field._repeated:
-          for i, child_entity_item in enumerate(child_entity):
-            try:
-              child_field_value = getattr(field_value[i], child_field_key)
-              _rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
-            except IndexError as e:
-              pass
-        else:
-          if field_value != None:
-            _rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
-
-
-def _rule_read(permissions, entity, field_key, field):
-  '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
-  Otherwise go one level down and check again.
-  
-  '''
-  if (not field_key in permissions) or (not permissions[field_key]['visible']):
-    entity.remove_output(field_key)
-  else:
-    if _is_structured_field(field):
-      child_entity = getattr(entity, field_key)
-      if field._repeated:
-        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-          for child_entity_item in child_entity:
-            child_fields = child_entity_item.get_fields()
-            child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
-            for child_field_key, child_field in child_fields.items():
-              _rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
-      else:
-        child_entity = getattr(entity, field_key)
-        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-          child_fields = child_entity.get_fields()
-          child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
-          for child_field_key, child_field in child_fields.items():
-            _rule_read(permissions[field_key], child_entity, child_field_key, child_field)
-
-
+ 
 def _rule_reset_actions(action_permissions, actions):
   for action_key in actions:
     action_permissions[action_key] = {'executable': []}
@@ -96,7 +31,7 @@ def _rule_reset_fields(field_permissions, fields):
   for field_key, field in fields.items():
     if field_key not in field_permissions:
       field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-    if _is_structured_field(field):
+    if ndb.is_structured_field(field):
       model_fields = field.get_model_fields()
       if field._code_name in model_fields:
         model_fields.pop(field._code_name)  # @todo Test this behaviour!
@@ -186,22 +121,8 @@ def _rule_compile(global_permissions, local_permissions, strict):
     _rule_compile_global_permissions(global_permissions)
     permissions = global_permissions
   return permissions
-
-
-def rule_write(entity, values):
-  entity_fields = entity.get_fields()
-  for field_key, field in entity_fields.items():
-    if hasattr(values, field_key):
-      field_value = getattr(values, field_key)
-      _rule_write(entity._field_permissions, entity, field_key, field, field_value)
-
-
-def rule_read(entity):
-  entity_fields = entity.get_fields()
-  for field_key, field in entity_fields.items():
-    _rule_read(entity._field_permissions, entity, field_key, field)
-
-
+ 
+ 
 def rule_prepare(context, skip_user_roles, strict):
   '''This method generates permissions situation for the context.entity object,
   at the time of execution.
