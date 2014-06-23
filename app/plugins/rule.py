@@ -33,7 +33,7 @@ class DomainRoleSet(ndb.BaseModel):
                                             [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
-    print permissions
+
     context.entities['60'].name = context.input.get('name')
     context.entities['60'].active = context.input.get('active')
     context.entities['60'].permissions = permissions

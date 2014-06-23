@@ -263,39 +263,8 @@ def is_structured_field(field):
   
   '''
   return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty)) and field._modelclass
-
-
-def _rule_write(permissions, entity, field_key, field, field_value):
-  '''If the field is writable, ignore substructure permissions and override field fith new values.
-  Otherwise go one level down and check again.
-  
-  '''
-  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
-  if (field_key in permissions) and (permissions[field_key]['writable']):
-    try:
-      if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
-        return
-      setattr(entity, field_key, field_value)
-    except TypeError as e:
-      util.logger('write: setattr error: %s' % e)
-    except ComputedPropertyError:
-      pass
-  else:
-    if is_structured_field(field):
-      child_entity = getattr(entity, field_key)
-      for child_field_key, child_field in field.get_model_fields().items():
-        if field._repeated:
-          for i, child_entity_item in enumerate(child_entity):
-            try:
-              child_field_value = getattr(field_value[i], child_field_key)
-              _rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
-            except IndexError as e:
-              pass
-        else:
-          if field_value != None:
-            _rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
-
-
+ 
+ 
 def _rule_read(permissions, entity, field_key, field):
   '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
   Otherwise go one level down and check again.
@@ -322,12 +291,41 @@ def _rule_read(permissions, entity, field_key, field):
             _rule_read(permissions[field_key], child_entity, child_field_key, child_field)
 
 
-def rule_write(entity, values):
+def _rule_write(permissions, entity, field_key, field, field_value):
+  '''If the field is writable, ignore substructure permissions and override field fith new values.
+  Otherwise go one level down and check again.
+  
+  '''
+  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
+  if (field_key in permissions) and not (permissions[field_key]['writable']):
+    try:
+      #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
+      #  return
+      setattr(entity, field_key, field_value)
+    except TypeError as e:
+      util.logger('write: setattr error: %s' % e)
+    except ComputedPropertyError:
+      pass
+  else:
+    if is_structured_field(field):
+      child_entity = getattr(entity, field_key)
+      for child_field_key, child_field in field.get_model_fields().items():
+        if field._repeated:
+          for i, child_entity_item in enumerate(child_entity):
+            try:
+              child_field_value = getattr(field_value[i], child_field_key)
+              _rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+            except IndexError as e:
+              pass
+        else:
+          _rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+
+
+def rule_write(entity, original):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
-    if hasattr(values, field_key):
-      field_value = getattr(values, field_key)
-      _rule_write(entity._field_permissions, entity, field_key, field, field_value)
+    field_value = getattr(original, field_key)
+    _rule_write(entity._field_permissions, entity, field_key, field, field_value)
 
 
 def rule_read(entity):
@@ -560,21 +558,12 @@ class _BaseModel(object):
       original = copy.deepcopy(self)
       self._original = original
     
-  def _pre_post_hook(self):
+  def _pre_put_hook(self):
     """
      This hook will run before every put
     """
     if self._use_rule and hasattr(self, '_original'):
-      rule_write(self._original, self)
-      for f in self._original.get_fields():
-        if hasattr(self._original, f):
-          d = getattr(self._original, f, None)
-          try:
-           setattr(self, f, d)
-          except ComputedPropertyError as e:
-            pass # this is intentional
-          except Exception as e:
-           util.logger('could not setattr %s.%s' % (self.__class__.__name__, f))
+      rule_write(self, self._original)
       
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
@@ -611,7 +600,8 @@ class _BaseModel(object):
         except ComputedPropertyError as e:
           pass # this is intentional
         except Exception as e:
-         util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
+         #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
+         pass
     return new_entity
 
 
