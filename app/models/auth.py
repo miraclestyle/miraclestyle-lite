@@ -560,7 +560,7 @@ class Domain(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            Set(cfg={'d': {'tmp.original_logo': 'entities.6.logo'}}),
+            Set(cfg={'d': {'tmp.original_logo': 'entities.6._original.logo'}}),
             RuleWrite(),
             Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
             BlobAlterImage(cfg={'read': 'entities.6.logo',

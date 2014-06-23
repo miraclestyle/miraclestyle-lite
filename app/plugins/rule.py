@@ -33,9 +33,9 @@ class DomainRoleSet(ndb.BaseModel):
                                             [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
-    context.values['60'].name = context.input.get('name')
-    context.values['60'].active = context.input.get('active')
-    context.values['60'].permissions = permissions
+    context.entities['60'].name = context.input.get('name')
+    context.entities['60'].active = context.input.get('active')
+    context.entities['60'].permissions = permissions
 
 
 class DomainUserInvite(ndb.BaseModel):
@@ -52,16 +52,16 @@ class DomainUserInvite(ndb.BaseModel):
     if already_invited:
       raise DomainUserError('already_invited')
     context.entities['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
-    context.values['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
+    #context.entities['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
     input_roles = ndb.get_multi(context.input.get('roles'))
     roles = []
     for role in input_roles:
       if role.key.namespace() == context.namespace:
         roles.append(role.key)
-    context.values['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
+    context.entities['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
     user.domains.append(context.domain.key)
     context.entities['0'] = user
-    context.values['0'] = user
+    #context.values['0'] = user
 
 
 class DomainUserRead(ndb.BaseModel):
@@ -81,8 +81,8 @@ class DomainUserUpdate(ndb.BaseModel):
     for role in input_roles:
       if role.key.namespace() == context.entities['8'].key_namespace:
         roles.append(role.key)
-    context.values['8'].name = context.input.get('name')
-    context.values['8'].roles = roles
+    context.entities['8'].name = context.input.get('name')
+    context.entities['8'].roles = roles
 
 
 class DomainUserRemove(ndb.BaseModel):
@@ -99,4 +99,4 @@ class DomainUserCleanRoles(ndb.BaseModel):
     roles = ndb.get_multi(context.entities['8'].roles)
     for role in roles:
       if role is None:
-        context.values['8'].roles.remove(role)
+        context.entities['8'].roles.remove(role)

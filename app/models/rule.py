@@ -283,7 +283,7 @@ class DomainUser(ndb.BaseExpando):
       FieldPermission('8', ['roles'], False, None,
                       'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
       FieldPermission('8', ['state'], True, None,
-                      '(context.action.key_id_str == "invite" and context.value and context.value.state == "invited") or (context.action.key_id_str == "accept" and context.value and context.value.state == "accepted")')
+                      '(context.action.key_id_str == "invite" and context.entity and context.entity.state == "invited") or (context.action.key_id_str == "accept" and context.entity and context.entity.state == "accepted")')
       ]
     )
   
@@ -496,7 +496,7 @@ class DomainUser(ndb.BaseExpando):
             Context(),
             Read(),
             rule.DomainUserRead(),
-            Set(cfg={'s': {'values.8.state': 'accepted'}}),
+            Set(cfg={'s': {'entities.8.state': 'accepted'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -508,8 +508,8 @@ class DomainUser(ndb.BaseExpando):
             Write(),
             RecordWrite(cfg={'paths': ['entities.8']}),
             Set(cfg={'d': {'entities.6': 'entities.8.namespace_entity',
-                           'values.6': 'entities.8.namespace_entity'}}),
-            RulePrepare(cfg={'to': 'entities', 'from': 'values'}),  # @todo Should run out of transaction!!!
+                           'entities.6': 'entities.8.namespace_entity'}}),
+            RulePrepare(cfg={'to': 'entities', 'from': 'entities'}),  # @todo Should run out of transaction!!!
             RuleRead(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entity': 'entities.8',
                            'output.domain': 'entities.6'}}),
