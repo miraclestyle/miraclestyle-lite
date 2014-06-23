@@ -272,7 +272,7 @@ class DomainUser(ndb.BaseExpando):
       ActionPermission('8', Action.build_key('8', 'accept'), False,
                        'context.user.key_id_str != context.entity.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'accept'), True,
-                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity.state == "invited"'),
+                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity._original.state == "invited"'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), False,
                        'not context.user._is_taskqueue'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
