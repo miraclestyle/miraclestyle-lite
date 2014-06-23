@@ -129,14 +129,14 @@ class DomainSetup(Setup):
                        name='Marketing',
                        role=role_key,
                        search_form=False,
-                       filters=[Filter(name='Catalogs', kind='35')]),
+                       filters=[Filter(name='Catalogs', model='35')]),
                 Widget(id='system_security',
                        namespace=namespace,
                        name='Security',
                        role=role_key,
                        search_form=False,
-                       filters=[Filter(name='Roles', kind='60'),
-                                Filter(name='Users', kind='8')])]
+                       filters=[Filter(name='Roles', model='60'),
+                                Filter(name='Users', model='8')])]
     for i, entity in enumerate(entities):
       entity.sequence = i
     ndb.put_multi(entities)
@@ -160,13 +160,13 @@ class DomainSetup(Setup):
                        name='User Interface',
                        role=role_key,
                        search_form=False,
-                       filters=[Filter(name='Menu Widgets', kind='62')]),
+                       filters=[Filter(name='Menu Widgets', model='62')]),
                 Widget(id='system_notifications',
                        namespace=namespace,
                        name='Notifications',
                        role=role_key,
                        search_form=False,
-                       filters=[Filter(name='Templates', kind='61')])]
+                       filters=[Filter(name='Templates', model='61')])]
     for i, entity in enumerate(entities):
       entity.sequence = (i+1) + sequence
     ndb.put_multi(entities)

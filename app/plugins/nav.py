@@ -11,11 +11,10 @@ from app import ndb, util
 class Set(ndb.BaseModel):
   
   def run(self, context):
-    Filter = context.models['65']
     filters = []
     input_filters = context.input.get('filters')
     for input_filter in input_filters:
-      filters.append(Filter(**input_filter))
+      filters.append(input_filter)
     context.entities['62'].name = context.input.get('name')
     context.entities['62'].sequence = context.input.get('sequence')
     context.entities['62'].active = context.input.get('active')

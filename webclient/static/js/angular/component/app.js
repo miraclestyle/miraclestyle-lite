@@ -357,7 +357,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	 var menu = menu['filters'][0];
 	             var params = {
 	                'domain_key': nav.domain.key,
-	                'kind': menu['kind'],
+	                'kind': menu['model'],
 	                'query': JSON.stringify(menu['query'])
 	            };
 	  

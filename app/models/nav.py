@@ -86,7 +86,7 @@ class Widget(ndb.BaseExpando):
         'active': ndb.SuperBooleanProperty(default=True),
         'role': ndb.SuperKeyProperty(kind='60', required=True),
         'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperJsonProperty()
+        'filters': ndb.SuperLocalStructuredProperty(Filter, repeated=True)
         },
       _plugin_groups=[
         PluginGroup(
@@ -139,7 +139,7 @@ class Widget(ndb.BaseExpando):
         'active': ndb.SuperBooleanProperty(default=True),
         'role': ndb.SuperKeyProperty(kind='60', required=True),
         'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperJsonProperty()
+        'filters': ndb.SuperLocalStructuredProperty(Filter, repeated=True)
         },
       _plugin_groups=[
         PluginGroup(

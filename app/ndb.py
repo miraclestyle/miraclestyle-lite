@@ -562,10 +562,19 @@ class _BaseModel(object):
     
   def _pre_post_hook(self):
     """
-     On every .put() either async, or any other this will run
+     This hook will run before every put
     """
     if self._use_rule and hasattr(self, '_original'):
-      rule_write(self, self._original)
+      rule_write(self._original, self)
+      for f in self._original.get_fields():
+        if hasattr(self._original, f):
+          d = getattr(self._original, f, None)
+          try:
+           setattr(self, f, d)
+          except ComputedPropertyError as e:
+            pass # this is intentional
+          except Exception as e:
+           util.logger('could not setattr %s.%s' % (self.__class__.__name__, f))
       
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
