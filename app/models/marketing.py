@@ -599,8 +599,8 @@ class Catalog(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            marketing.SearchWrite(index_name=settings.CATALOG_INDEX,
-                                  documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+            marketing.SearchWrite(cfg={'index': settings.CATALOG_INDEX,
+                                       'max_doc': settings.CATALOG_DOCUMENTS_PER_INDEX})
             ]
           ),
         PluginGroup(
@@ -628,8 +628,8 @@ class Catalog(ndb.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            marketing.SearchDelete(index_name=settings.CATALOG_INDEX,
-                                   documents_per_index=settings.CATALOG_DOCUMENTS_PER_INDEX)
+            marketing.SearchDelete(cfg={'index': settings.CATALOG_INDEX,
+                                        'max_doc': settings.CATALOG_DOCUMENTS_PER_INDEX})
             ]
           ),
         PluginGroup(

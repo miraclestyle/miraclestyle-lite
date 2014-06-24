@@ -439,51 +439,30 @@ class CronDelete(ndb.BaseModel):
 
 class SearchWrite(ndb.BaseModel):
   
-  index_name = ndb.SuperStringProperty('1', indexed=False)
-  documents_per_index = ndb.SuperIntegerProperty('2', indexed=False)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     documents = []
-    fields = []
-    fields.append(search.AtomField(name='key', value=context.entities['35'].key_urlsafe))
-    fields.append(search.AtomField(name='kind', value='35'))
-    fields.append(search.AtomField(name='id', value=context.entities['35'].key_id_str))
-    fields.append(search.AtomField(name='namespace', value=context.entities['35'].key_namespace))
-    fields.append(search.DateField(name='created', value=context.entities['35'].created))
-    fields.append(search.DateField(name='updated', value=context.entities['35'].updated))
-    fields.append(search.TextField(name='name', value=context.entities['35'].name))
-    fields.append(search.DateField(name='publish_date', value=context.entities['35'].publish_date))
-    fields.append(search.DateField(name='discontinue_date', value=context.entities['35'].discontinue_date))
-    fields.append(search.AtomField(name='state', value=context.entities['35'].state))
-    fields.append(search.AtomField(name='cover', value=context.entities['35'].cover.serving_url))
-    fields.append(search.AtomField(name='cover_width', value=str(context.entities['35'].cover.width)))
-    fields.append(search.AtomField(name='cover_height', value=str(context.entities['35'].cover.height)))
-    fields.append(search.TextField(name='seller_name', value=context.entities['35'].namespace_entity.name))
-    fields.append(search.AtomField(name='seller_logo', value=context.entities['35'].namespace_entity.logo.serving_url))
-    fields.append(search.AtomField(name='seller_logo_width', value=str(context.entities['35'].namespace_entity.logo.width)))
-    fields.append(search.AtomField(name='seller_logo_height', value=str(context.entities['35'].namespace_entity.logo.height)))
-    #fields.append(search.NumberField(name='seller_feedback', value=context.entities['35'].namespace_entity.feedback))
-    documents.append(search.Document(doc_id=context.entities['35'].key_urlsafe, fields=fields))
-    def index_product_template(template):
-      fields = []
-      fields.append(search.AtomField(name='key', value=template.key_urlsafe))
-      fields.append(search.AtomField(name='kind', value='38'))
-      fields.append(search.AtomField(name='id', value=template.key_id_str))
-      fields.append(search.AtomField(name='namespace', value=template.key_namespace))
-      fields.append(search.AtomField(name='ancestor', value=template.key_parent.urlsafe()))
-      fields.append(search.TextField(name='catalog_name', value=template.parent_entity.name))
-      fields.append(search.TextField(name='seller_name', value=template.namespace_entity.name))
-      fields.append(search.AtomField(name='seller_logo', value=template.namespace_entity.logo.serving_url))
-      fields.append(search.AtomField(name='seller_logo_width', value=str(template.namespace_entity.logo.width)))
-      fields.append(search.AtomField(name='seller_logo_height', value=str(template.namespace_entity.logo.height)))
-      fields.append(search.AtomField(name='product_category', value=template.product_category.urlsafe()))
-      fields.append(search.AtomField(name='product_category_parent_record', value=template._product_category.parent_record.urlsafe()))
-      fields.append(search.TextField(name='product_category_name', value=template._product_category.name))
-      fields.append(search.TextField(name='product_category_complete_name', value=template._product_category.complete_name))
-      fields.append(search.TextField(name='name', value=template.name))
-      fields.append(search.HtmlField(name='description', value=template.description))
-      fields.append(search.AtomField(name='code', value=template.code))
-      return search.Document(doc_id=template.key_urlsafe, fields=fields)
+    index_name = self.cfg.get('index', None)
+    max_doc = self.cfg.get('max_doc', 200)
+    catalog_fields = {'created': 'created', 'updated': 'updated', 'name': 'name',
+                      'publish_date': 'publish_date', 'discontinue_date': 'discontinue_date',
+                      'state': 'state', 'cover': 'cover.serving_url', 'cover_width': 'cover.width',
+                      'cover_height': 'cover.height', 'seller_name': 'namespace_entity.name',
+                      'seller_logo': 'namespace_entity.logo.serving_url',
+                      'seller_logo_width': 'namespace_entity.logo.width',
+                      'seller_logo_height': 'namespace_entity.logo.height'}  # name='seller_feedback', value=context.entities['35'].namespace_entity.feedback
+    product_fields = {'catalog_name': 'parent_entity.name', 'seller_name': 'namespace_entity.name',
+                      'seller_logo': 'namespace_entity.logo.serving_url',
+                      'seller_logo_width': 'namespace_entity.logo.width',
+                      'seller_logo_height': 'namespace_entity.logo.height',
+                      'product_category': 'product_category._urlsafe',
+                      'product_category_parent_record': '_product_category.parent_record._urlsafe',
+                      'product_category_name': '_product_category.name',
+                      'product_category_complete_name': '_product_category.complete_name',
+                      'name': 'name', 'description': 'description', 'code': 'code'}
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_catalog_products(context.models['38'], context.models['39'],
                                      catalog_images=catalog_images, include_instances=False, include_categories=True)
@@ -492,66 +471,29 @@ class SearchWrite(ndb.BaseModel):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
     for template in templates:
-      documents.append(index_product_template(template))
       if template._product_category.state != 'indexable':
         write_index = False
         break
-    indexing = False
-    if write_index and len(documents):
-      indexing = True
-      documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
-      for i in range(0, documents_per_cycle+1):
-        documents_partition = documents[self.documents_per_index*i:self.documents_per_index*(i+1)]
-        if documents_partition:
-          try:
-            index = search.Index(name=self.index_name)
-            index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
-          except Exception as e:
-            util.logger('INDEX FAILED, ERROR: %s' % e)
-            indexing = False
-            pass
-    if indexing:
-      context.tmp['message'] = 'Indexing succeeded!'
-    else:
-      if len(documents):
-        if write_index:
-          context.tmp['message'] = 'Indexing failed!'
-        else:
-          context.tmp['message'] = 'Indexing not allowed!'
-      else:
-        context.tmp['message'] = 'No documents to index!'
+    results = None
+    if write_index:
+      documents.extend(document_from_entity([context.entities['35']], catalog_fields))
+      documents.extend(document_from_entity(templates, product_fields))
+      results = document_write(documents, index_name=index_name, documents_per_index=max_doc)
 
 
 class SearchDelete(ndb.BaseModel):
   
-  index_name = ndb.SuperStringProperty('1', indexed=False)
-  documents_per_index = ndb.SuperIntegerProperty('2', indexed=False)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    documents = []
-    documents.append(context.entities['35'].key_urlsafe)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entities = []
+    index_name = self.cfg.get('index', None)
+    max_doc = self.cfg.get('max_doc', 200)
+    entities.append(context.entities['35'])
     catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
     templates = get_catalog_products(context.models['38'], context.models['39'],
                                      catalog_images=catalog_images, include_instances=False)
-    for template in templates:
-      documents.append(template.key_urlsafe)
-    unindexing = False
-    if len(documents):
-      unindexing = True
-      documents_per_cycle = int(math.ceil(len(documents) / self.documents_per_index))
-      for i in range(0, documents_per_cycle+1):
-        documents_partition = documents[self.documents_per_index*i:self.documents_per_index*(i+1)]
-        if documents_partition:
-          try:
-            index = search.Index(name=self.index_name)
-            index.delete(documents_partition)  # Batching deletes is more efficient than handling them one at a time.
-          except:
-            unindexing = False
-            pass
-    if unindexing:
-      context.tmp['message'] = 'Unindexing succeeded!'
-    else:
-      if len(documents):
-        context.tmp['message'] = 'Unindexing failed!'
-      else:
-        context.tmp['message'] = 'No documents to unindex!'
+    entities.extend(templates)
+    results = document_delete(entities, index_name=index_name, documents_per_index=max_doc)
