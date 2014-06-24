@@ -124,16 +124,16 @@ class Notification(ndb.BaseExpando):
                               Action.build_key('61', 'update'),
                               Action.build_key('61', 'delete'),
                               Action.build_key('61', 'search'),
-                              Action.build_key('61', 'read_records')], False, 'context.entity.namespace_entity.state != "active"'),
+                              Action.build_key('61', 'read_records')], False, 'context.entity.namespace_entity._original.state != "active"'),
       ActionPermission('61', [Action.build_key('61', 'initiate'),
                               Action.build_key('61', 'send_mail'),
                               Action.build_key('61', 'send_http')], False, 'True'),
       ActionPermission('61', [Action.build_key('61', 'initiate'),
                               Action.build_key('61', 'send_mail'),
                               Action.build_key('61', 'send_http')], True,
-                       'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
+                       'context.entity.namespace_entity._original.state == "active" and context.user._is_taskqueue'),
       FieldPermission('61', ['name', 'action', 'condition', 'active', 'templates', '_records'], False, False,
-                      'context.entity.namespace_entity.state != "active"')
+                      'context.entity.namespace_entity._original.state != "active"')
       ]
     )
   
@@ -373,7 +373,7 @@ class Notification(ndb.BaseExpando):
                           'path': 'entities.61'}]),
             RulePrepare(),
             RuleExec(),
-            notify.MailSend(message_sender=settings.NOTIFY_EMAIL)
+            notify.MailSend(cfg={'sender': settings.NOTIFY_EMAIL})
             ]
           )
         ]

@@ -64,7 +64,7 @@ class User(ndb.BaseExpando):
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
                       'not context.user._is_guest and context.user.key == context.entity.key'),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      'not context.user._is_guest and context.user.key == context.entity.key'),
+                      'not context.user._is_guest and context.user.key == context.entity.key'),  # @todo Perhaps 'domain' field should not be writable?
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
@@ -421,16 +421,16 @@ class Domain(ndb.BaseExpando):
       ActionPermission('6', [Action.build_key('6', 'prepare'),
                              Action.build_key('6', 'create')], True, 'not context.user._is_guest'),
       ActionPermission('6', Action.build_key('6', 'update'), False,
-                       'context.entity.state != "active"'),
+                       'context.entity._original.state != "active"'),
       ActionPermission('6', Action.build_key('6', 'suspend'), False,
-                       'context.entity.state != "active"'),
+                       'context.entity._original.state != "active"'),
       ActionPermission('6', Action.build_key('6', 'activate'), False,
-                       'context.entity.state == "active" or context.entity.state == "su_suspended"'),
+                       'context.entity._original.state == "active" or context.entity._original.state == "su_suspended"'),
       FieldPermission('6', ['created', 'updated', 'state'], False, None, 'True'),
       FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
-                      'context.entity.state != "active"'),
+                      'context.entity._original.state != "active"'),
       FieldPermission('6', ['state'], True, None,
-                      '(context.action.key_id_str == "activate" and context.value and context.value.state == "active") or (context.action.key_id_str == "suspend" and context.value and context.value.state == "suspended")'),
+                      '(context.action.key_id_str == "activate" and context.entity.state == "active") or (context.action.key_id_str == "suspend" and context.entity.state == "suspended")'),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively);
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
@@ -448,7 +448,7 @@ class Domain(ndb.BaseExpando):
       FieldPermission('6', ['_records.note'], False, False,
                       'not context.user._root_admin'),
       FieldPermission('6', ['state'], True, None,
-                      '(context.action.key_id_str == "sudo") and context.user._root_admin and context.value and (context.value.state == "active" or context.value.state == "su_suspended")')
+                      '(context.action.key_id_str == "sudo") and context.user._root_admin and (context.entity.state == "active" or context.entity.state == "su_suspended")')
       ]
     )
   
@@ -547,12 +547,12 @@ class Domain(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Set(cfg={'d': {'tmp.original_logo': 'entities.6._original.logo'}}),
-            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
             BlobAlterImage(cfg={'read': 'entities.6.logo',
                                 'write': 'entities.6.logo',
                                 'config': {'transform': True, 'width': 240, 'height': 100,
                                            'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             Write(),
+            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
             RecordWrite(cfg={'paths': ['entities.6']}),
             Set(cfg={'d': {'output.entity': 'entities.6'}}),
             BlobUpdate(cfg={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),

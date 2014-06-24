@@ -20,7 +20,7 @@ class CurrencyUpdate(ndb.BaseModel):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      return
+      raise ndb.TerminateAction()
     Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:
@@ -94,7 +94,7 @@ class UnitUpdate(ndb.BaseModel):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      return
+      raise ndb.TerminateAction()
     Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:

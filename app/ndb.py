@@ -92,7 +92,7 @@ def _validate_prop(prop, value):
   if hasattr(prop, '_choices') and prop._choices:
     if value not in prop._choices:
       raise PropertyError('not_in_specified_choices')
-    
+
 def _apply_value_filters(prop, value):
   if prop._value_filters:
     if isinstance(prop._value_filters, (list, tuple)):
@@ -263,8 +263,8 @@ def is_structured_field(field):
   
   '''
   return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty)) and field._modelclass
- 
- 
+
+
 def _rule_read(permissions, entity, field_key, field):
   '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
   Otherwise go one level down and check again.
@@ -332,15 +332,16 @@ def rule_read(entity):
   entity_fields = entity.get_fields()
   for field_key, field in entity_fields.items():
     _rule_read(entity._field_permissions, entity, field_key, field)
- 
- 
+
+
 class _BaseModel(object):
   
-  _use_rule = True # all models by default support rule engine
+  _use_field_rules = True # all models by default support rule engine
   
   def __init__(self, *args, **kwargs):
     super(_BaseModel, self).__init__(*args, **kwargs)
     self._output = []
+    self.make_original()
     for key in self.get_fields():
       self.add_output(key)
   
@@ -363,7 +364,7 @@ class _BaseModel(object):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     """
-    if self._use_rule and hasattr(self, '_field_permissions'):
+    if self._use_field_rules and hasattr(self, '_field_permissions'):
       rule_read(self) # apply rule read before output
     dic = {}
     dic['kind'] = self.get_kind()
@@ -547,24 +548,24 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
-    
+  
   def make_original(self):
     """
      This function will make a copy of the current state of the entity
      and put it into _original field.
     """
-    if self._use_rule:
+    if self._use_field_rules:
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
-    
+  
   def _pre_put_hook(self):
     """
      This hook will run before every put
     """
-    if self._use_rule and hasattr(self, '_original'):
+    if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
-      
+  
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
     entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)

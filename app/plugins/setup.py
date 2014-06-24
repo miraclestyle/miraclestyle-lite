@@ -71,6 +71,7 @@ class DomainSetup(Setup):
     entity = Domain(name=config_input.get('name'),
                     state='active',
                     logo=config_input.get('logo'))
+    entity._use_field_rules = False
     entity.put()
     record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_domain_role'
@@ -104,6 +105,7 @@ class DomainSetup(Setup):
         prop_names.append(prop_name)
       permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
+    entity._use_field_rules = False
     entity.put()
     record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'create_widget_step_1'
@@ -138,6 +140,7 @@ class DomainSetup(Setup):
                        filters=[Filter(name='Roles', model='60'),
                                 Filter(name='Users', model='8')])]
     for i, entity in enumerate(entities):
+      entity._use_field_rules = False
       entity.sequence = i
     ndb.put_multi(entities)
     record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
@@ -168,6 +171,7 @@ class DomainSetup(Setup):
                        search_form=False,
                        filters=[Filter(name='Templates', model='61')])]
     for i, entity in enumerate(entities):
+      entity._use_field_rules = False
       entity.sequence = (i+1) + sequence
     ndb.put_multi(entities)
     record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
@@ -185,8 +189,10 @@ class DomainSetup(Setup):
     entity = DomainUser(namespace=namespace, id=user.key_id_str,
                         name='Administrator', state='accepted',
                         roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
+    entity._use_field_rules = False
     entity.put()
     user.domains.append(domain_key)
+    user._use_field_rules = False
     user.put()
     record_write(self.context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
     self.config.next_operation = 'add_domain_primary_contact'
@@ -199,6 +205,7 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     entity = domain_key.get()
     entity.primary_contact = config_input.get('user_key')
+    entity._use_field_rules = False
     entity.put()
     record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
     CustomTemplate = self.context.models['59']

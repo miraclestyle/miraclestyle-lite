@@ -27,12 +27,12 @@ class DomainRole(Role):
                               Action.build_key('60', 'update'),
                               Action.build_key('60', 'delete'),
                               Action.build_key('60', 'search'),
-                              Action.build_key('60', 'read_records')], False, 'context.entity.namespace_entity.state != "active"'),
+                              Action.build_key('60', 'read_records')], False, 'context.entity.namespace_entity._original.state != "active"'),
       ActionPermission('60', [Action.build_key('60', 'create'),
                               Action.build_key('60', 'update'),
                               Action.build_key('60', 'delete')], False, 'context.entity._is_system'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, False,
-                      'context.entity.namespace_entity.state != "active"'),
+                      'context.entity.namespace_entity._original.state != "active"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
                       'context.entity._is_system')
       ]
@@ -228,6 +228,7 @@ class DomainRole(Role):
   
   @property
   def _is_system(self):
+    # return self.key_id_str.startswith('system_') @todo Perhaps we will have more than one system role!
     return self.key_id_str == 'admin'
 
 
@@ -256,26 +257,25 @@ class DomainUser(ndb.BaseExpando):
                              Action.build_key('8', 'search'),
                              Action.build_key('8', 'read_records'),
                              Action.build_key('8', 'accept'),
-                             Action.build_key('8', 'clean_roles')], False, 'context.entity.namespace_entity.state != "active"'),
+                             Action.build_key('8', 'clean_roles')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
       ActionPermission('8', Action.build_key('8', 'remove'), False,
-                       'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
+                       'context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'remove'), True,
-                       '(context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str) and not (context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str)'),
+                       '(context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str) and not (context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity.key_id_str)'),
       ActionPermission('8', Action.build_key('8', 'accept'), False,
-                       'context.user.key_id_str != context.entity.key_id_str'),
+                       'context.user.key_id_str != context.entity._original.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'accept'), True,
-                       'context.entity.namespace_entity.state == "active" and context.user.key_id_str == context.entity.key_id_str and context.entity.state == "invited"'),
-      ActionPermission('8', Action.build_key('8', 'clean_roles'), False,
-                       'not context.user._is_taskqueue'),
+                       'context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str and context.entity._original.state == "invited"'),
+      ActionPermission('8', Action.build_key('8', 'clean_roles'), False, 'False'),
       ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
-                       'context.entity.namespace_entity.state == "active" and context.user._is_taskqueue'),
+                       'context.entity._original.namespace_entity._original.state == "active" and context.user._is_taskqueue'),
       FieldPermission('8', ['name', 'roles', 'state', '_primary_email', '_records'], False, False,
-                      'context.entity.namespace_entity.state != "active"'),
+                      'context.entity._original.namespace_entity._original.state != "active"'),
       FieldPermission('8', ['state'], False, None, 'True'),
       FieldPermission('8', ['roles'], False, None,
-                      'context.entity.key_id_str == context.entity.namespace_entity.primary_contact.entity.key_id_str'),
+                      'context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
       FieldPermission('8', ['state'], True, None,
-                      '(context.action.key_id_str == "invite" and context.value and context.value.state == "invited") or (context.action.key_id_str == "accept" and context.value and context.value.state == "accepted")')
+                      '(context.action.key_id_str == "invite" and context.entity.state == "invited") or (context.action.key_id_str == "accept" and context.entity.state == "accepted")')
       ]
     )
   
@@ -317,7 +317,7 @@ class DomainUser(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'paths': ['entities.8', 'entities.0']}),  # @todo Is this a problem now?
+            Write(cfg={'paths': ['entities.8', 'entities.0']}),
             RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
             Set(cfg={'d': {'output.entity': 'entities.8'}}),
             CallbackNotify(),
@@ -393,7 +393,7 @@ class DomainUser(ndb.BaseExpando):
         PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'paths': ['entities.0']}),  # @todo Is this a problem now?
+            Write(cfg={'paths': ['entities.0']}),
             Delete(),
             RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
             Set(cfg={'d': {'output.entity': 'entities.8'}}),

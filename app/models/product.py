@@ -59,7 +59,7 @@ class Category(ndb.BaseModel):
             Prepare(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            product.CategoryUpdate(file_path=settings.PRODUCT_CATEGORY_DATA_FILE)
+            product.CategoryUpdate(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
             ]
           )
         ]

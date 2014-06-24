@@ -59,6 +59,7 @@ class DomainUserInvite(ndb.BaseModel):
       if role.key.namespace() == context.namespace:
         roles.append(role.key)
     context.entities['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
+    user._use_field_rules = False
     user.domains.append(context.domain.key)
     context.entities['0'] = user
 
@@ -87,6 +88,7 @@ class DomainUserUpdate(ndb.BaseModel):
 class DomainUserRemove(ndb.BaseModel):
   
   def run(self, context):
+    context.entities['0']._use_field_rules = False
     context.entities['0'].domains.remove(ndb.Key(urlsafe=context.entities['8'].key_namespace))
 
 

@@ -46,16 +46,16 @@ class Widget(ndb.BaseExpando):
                               Action.build_key('62', 'delete'),
                               Action.build_key('62', 'search'),
                               Action.build_key('62', 'read_records'),
-                              Action.build_key('62', 'build_menu')], False, 'context.entity.namespace_entity.state != "active"'),
+                              Action.build_key('62', 'build_menu')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
       ActionPermission('62', [Action.build_key('62', 'create'),
                               Action.build_key('62', 'update'),
                               Action.build_key('62', 'delete')], False, 'context.entity._is_system'),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
-                      'context.entity.namespace_entity.state != "active"'),
+                      'context.entity._original.namespace_entity._original.state != "active"'),
       FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
                       'context.entity._is_system'),
       FieldPermission('62', ['role'], False, None,
-                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.value and context.value.role and context.entity.key_namespace != context.value.role.entity.key_namespace)')
+                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.entity.role and context.entity._original.key_namespace != context.entity.role.entity._original.key_namespace)')
       ]
     )
   

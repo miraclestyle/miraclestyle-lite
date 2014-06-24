@@ -93,7 +93,7 @@ class Record(ndb.BaseExpando):
   
   _kind = 5
   
-  _use_rule = False
+  _use_field_rules = False
   
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = ndb.SuperDateTimeProperty('l', auto_now_add=True)

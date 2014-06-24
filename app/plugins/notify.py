@@ -44,11 +44,16 @@ class Set(ndb.BaseModel):
 # @todo We have to consider http://sendgrid.com/partner/google
 class MailSend(ndb.BaseModel):
   
-  message_sender = ndb.SuperStringProperty('1', required=True, indexed=False)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    message_sender = self.cfg.get('sender', None)
+    if not message_sender:
+      raise ndb.TerminateAction()
     message = mail.EmailMessage()
-    message.sender = self.message_sender
+    message.sender = message_sender
     message.bcc = context.input['recipient']
     message.subject = context.input['subject']
     message.body = context.input['body']  # We can add html argument in addition to body if we want to send html version!

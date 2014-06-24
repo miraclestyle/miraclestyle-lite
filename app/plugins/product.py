@@ -245,13 +245,18 @@ class DeleteImages(ndb.BaseModel):
 
 class CategoryUpdate(ndb.BaseModel):
   
-  file_path = ndb.SuperStringProperty('1', indexed=False, required=True)
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     # this code builds leaf categories for selection with complete names, 3.8k of them
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    update_file_path = self.cfg.get('file', None)
+    if not update_file_path:
+      raise ndb.TerminateAction()
     Category = context.models['17']
     data = []
-    with file(self.file_path) as f:
+    with file(update_file_path) as f:
       for line in f:
         if not line.startswith('#'):
           data.append(line.replace('\n', ''))

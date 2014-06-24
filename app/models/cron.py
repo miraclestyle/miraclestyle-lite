@@ -15,7 +15,7 @@ class CronConfig(ndb.BaseModel):
   
   _kind = 83
   
-  _use_rule = False
+  _use_field_rules = False
   
   data = ndb.SuperJsonProperty('1', indexed=False, default={})
   

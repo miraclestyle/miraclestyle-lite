@@ -12,7 +12,6 @@ from app.plugins.base import *
 from app.plugins import buyer
 
 
-
 class Address(ndb.BaseExpando):
   
   _kind = 9

@@ -19,7 +19,7 @@ class CountryUpdate(ndb.BaseModel):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      return
+      raise ndb.TerminateAction()
     Country = context.models['15']
     CountrySubdivision = context.models['16']
     with file(update_file_path) as f:

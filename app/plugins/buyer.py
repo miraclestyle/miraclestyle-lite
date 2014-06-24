@@ -14,8 +14,8 @@ from app import ndb, util
 
 def generate_internal_id(address):
   internal_id = u'%s-%s-%s-%s-%s-%s-%s-%s' % (str(time.time()), util.random_chars(10),
-                                             address.name, address.city, address.postal_code,
-                                             address.street, address.default_shipping, address.default_billing)
+                                              address.name, address.city, address.postal_code,
+                                              address.street, address.default_shipping, address.default_billing)
   address.internal_id = hashlib.md5(internal_id.encode('utf8')).hexdigest()
 
 
