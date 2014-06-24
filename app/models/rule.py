@@ -27,12 +27,12 @@ class DomainRole(Role):
                               Action.build_key('60', 'update'),
                               Action.build_key('60', 'delete'),
                               Action.build_key('60', 'search'),
-                              Action.build_key('60', 'read_records')], False, 'context.entity.namespace_entity._original.state != "active"'),
+                              Action.build_key('60', 'read_records')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
       ActionPermission('60', [Action.build_key('60', 'create'),
                               Action.build_key('60', 'update'),
                               Action.build_key('60', 'delete')], False, 'context.entity._is_system'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, False,
-                      'context.entity.namespace_entity._original.state != "active"'),
+                      'context.entity._original.namespace_entity._original.state != "active"'),
       FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
                       'context.entity._is_system')
       ]
@@ -261,7 +261,7 @@ class DomainUser(ndb.BaseExpando):
       ActionPermission('8', Action.build_key('8', 'remove'), False,
                        'context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'remove'), True,
-                       '(context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str) and not (context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity.key_id_str)'),
+                       '(context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str) and not (context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str)'),
       ActionPermission('8', Action.build_key('8', 'accept'), False,
                        'context.user.key_id_str != context.entity._original.key_id_str'),
       ActionPermission('8', Action.build_key('8', 'accept'), True,

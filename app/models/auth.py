@@ -56,15 +56,15 @@ class User(ndb.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       ActionPermission('0', Action.build_key('0', 'login'), True,
-                       'context.entity._is_guest or context.entity.state == "active"'),
+                       'context.entity._is_guest or context.entity._original.state == "active"'),
       ActionPermission('0', [Action.build_key('0', 'read'),
                              Action.build_key('0', 'update'),
                              Action.build_key('0', 'logout'),
-                             Action.build_key('0', 'read_domains')], True, 'not context.entity._is_guest and context.user.key == context.entity.key'),
+                             Action.build_key('0', 'read_domains')], True, 'not context.entity._is_guest and context.user.key == context.entity._original.key'),
       FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                      'not context.user._is_guest and context.user.key == context.entity.key'),
+                      'not context.user._is_guest and context.user.key == context.entity._original.key'),
       FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      'not context.user._is_guest and context.user.key == context.entity.key'),  # @todo Perhaps 'domain' field should not be writable?
+                      'not context.user._is_guest and context.user.key == context.entity._original.key'),  # @todo Perhaps 'domain' field should not be writable?
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
