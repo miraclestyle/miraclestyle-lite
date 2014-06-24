@@ -39,6 +39,27 @@ class PropertyError(Exception):
   pass
 
 
+class ImageManager(object):
+  
+  def get(self):
+    """
+      The get method should just perform the logic that will retrieve the items either from datastore or the property
+    """
+    pass
+  
+  def delete(self):
+    pass
+  
+  def process(self):
+    pass
+  
+  def upload(self):
+    pass
+  
+  def update(self):
+    pass
+
+
 def validate_images(objects):
   """'objects' argument is a list of valid blob.Image 
   object(s) that require validation!
@@ -339,9 +360,13 @@ class _BaseModel(object):
   _use_field_rules = True # all models by default support rule engine
   
   def __init__(self, *args, **kwargs):
+    had = '_deepcopy' in kwargs
+    if had:
+      kwargs.pop('_deepcopy')
     super(_BaseModel, self).__init__(*args, **kwargs)
     self._output = []
-    self.make_original()
+    if not had:
+      self.make_original()
     for key in self.get_fields():
       self.add_output(key)
   
@@ -589,7 +614,7 @@ class _BaseModel(object):
     """
     klass = self.__class__
   
-    new_entity = klass()
+    new_entity = klass(_deepcopy=True)
     new_entity.key = self.key
     
     for f in self.get_fields():
