@@ -82,7 +82,10 @@ class CurrencyUpdate(ndb.BaseModel):
             'active': True
             })
           uoms.append(new_uom)
-      ndb.put_multi([Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms])
+      to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
+      for entity in to_put:
+        entity._use_field_rules = False
+      ndb.put_multi(to_put)
 
 
 class UnitUpdate(ndb.BaseModel):
@@ -129,7 +132,10 @@ class UnitUpdate(ndb.BaseModel):
                           'rounding': rounding,
                           'digits': digits})
           uoms.append(new_uom)
-      ndb.put_multi([Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms])
+      to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
+      for entity in to_put:
+        entity._use_field_rules = False
+      ndb.put_multi(to_put)
 
 
 class RemoveCurrencies(ndb.BaseModel):

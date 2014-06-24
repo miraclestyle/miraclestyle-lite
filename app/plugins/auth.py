@@ -104,6 +104,7 @@ class UserLoginUpdate(ndb.BaseModel):
         entity.identities.append(Identity(identity=context.tmp['identity_id'], email=context.tmp['email'], primary=True))
         entity.state = 'active'
         session = new_session(context.models['70'], entity)
+        entity._use_field_rules = False
         entity.put()
       else:
         if context.tmp['email'] not in entity.emails:

@@ -93,6 +93,7 @@ class CountryUpdate(ndb.BaseModel):
           new_sub_divison.complete_name = make_complete_name_for_subdivision(new_sub_divison, dat['parent'], processed_keys)
         processed_keys[new_sub_divison.key_urlsafe] = new_sub_divison
         processed_ids[dat['id']] = new_sub_divison
+        new_sub_divison._use_field_rules = False
         to_put.append(new_sub_divison)
         if i == 100 and settings.DEBUG:
           break
