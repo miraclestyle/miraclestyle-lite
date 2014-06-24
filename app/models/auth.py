@@ -547,12 +547,12 @@ class Domain(ndb.BaseExpando):
           transactional=True,
           plugins=[
             Set(cfg={'d': {'tmp.original_logo': 'entities.6._original.logo'}}),
+            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
             BlobAlterImage(cfg={'read': 'entities.6.logo',
                                 'write': 'entities.6.logo',
                                 'config': {'transform': True, 'width': 240, 'height': 100,
                                            'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
             Write(),
-            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
             RecordWrite(cfg={'paths': ['entities.6']}),
             Set(cfg={'d': {'output.entity': 'entities.6'}}),
             BlobUpdate(cfg={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),

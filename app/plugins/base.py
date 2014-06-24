@@ -116,7 +116,6 @@ class Read(ndb.BaseModel):
       entity = None
       if source and isinstance(source, ndb.Key):
         entity = source.get()
-        print [entity.key, entity._original.key, entity._original], entity.key == entity._original.key
         save_path = config.get('path')
         set_attr(context, save_path, entity)
 

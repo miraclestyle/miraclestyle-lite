@@ -7,6 +7,7 @@ encoding//app/models/buyer.py=utf-8
 encoding//app/models/location.py=utf-8
 encoding//app/models/marketing.py=utf-8
 encoding//app/models/nav.py=utf-8
+encoding//app/models/notify.py=utf-8
 encoding//app/models/rule.py=utf-8
 encoding//app/models/setup.py=utf-8
 encoding//app/ndb.py=utf-8

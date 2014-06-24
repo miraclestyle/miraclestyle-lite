@@ -941,6 +941,8 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       returns = [Key(urlsafe=v) for v in value]
       single = False
     else:
+      if not self._required and value is None:
+        return value
       returns = [Key(urlsafe=value)]
       single = True
     for k in returns:

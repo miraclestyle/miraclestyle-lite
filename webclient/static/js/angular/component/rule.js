@@ -154,7 +154,7 @@ MainApp.filter('permissionResolveActionName', function() {
                             	   angular.forEach(['executable', 'writable', 'visible'], function (value) {
 	                            	   	if (!value in $scope.permission)
 	                            	    {
-	                            	   	  $scope.permission[executable] = false;
+	                            	   	  $scope.permission[value] = null;
 	                            	    }
                             	   });
                             	   	

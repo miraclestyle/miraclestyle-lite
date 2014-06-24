@@ -212,7 +212,7 @@ class ActionPermission(Permission):
   
   model = ndb.SuperStringProperty('1', required=True, indexed=False)
   actions = ndb.SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
-  executable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
+  executable = ndb.SuperBooleanProperty('3', required=False, default=None, indexed=False)
   condition = ndb.SuperStringProperty('4', required=True, indexed=False)
   
   def __init__(self, *args, **kwargs):
@@ -239,8 +239,8 @@ class FieldPermission(Permission):
   
   model = ndb.SuperStringProperty('1', required=True, indexed=False)
   fields = ndb.SuperStringProperty('2', repeated=True, indexed=False)
-  writable = ndb.SuperBooleanProperty('3', required=True, default=True, indexed=False)
-  visible = ndb.SuperBooleanProperty('4', required=True, default=True, indexed=False)
+  writable = ndb.SuperBooleanProperty('3', required=False, default=None, indexed=False)
+  visible = ndb.SuperBooleanProperty('4', required=False, default=None, indexed=False)
   condition = ndb.SuperStringProperty('5', required=True, indexed=False)
   
   def __init__(self, *args, **kwargs):
