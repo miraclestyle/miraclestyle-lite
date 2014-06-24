@@ -590,6 +590,12 @@ class _BaseModel(object):
     """
     if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
+      
+  @classmethod
+  def _post_get_hook(cls, key, future):
+    entity = future.get_result()
+    if entity is not None:
+      entity.make_original()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
@@ -615,7 +621,7 @@ class _BaseModel(object):
     klass = self.__class__
   
     new_entity = klass(_deepcopy=True)
-    new_entity.key = self.key
+    new_entity.key = copy.deepcopy(self.key)
     
     for f in self.get_fields():
       if hasattr(self, f):
