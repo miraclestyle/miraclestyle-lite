@@ -31,6 +31,11 @@ ctx.set_memcache_policy(False)
 # ctx.set_cache_policy(False)
 
 
+#############################################
+########## System wide exceptions. ##########
+#############################################
+
+
 class TerminateAction(Exception):
   pass
 
@@ -39,72 +44,12 @@ class PropertyError(Exception):
   pass
 
 
-class ImageManager(object):
-  
-  def get(self):
-    """
-      The get method should just perform the logic that will retrieve the items either from datastore or the property
-    """
-    pass
-  
-  def delete(self):
-    pass
-  
-  def process(self):
-    pass
-  
-  def upload(self):
-    pass
-  
-  def update(self):
-    pass
+##########################################################
+########## Reusable data processiong functions. ##########
+##########################################################
 
 
-def validate_images(objects):
-  """'objects' argument is a list of valid blob.Image 
-  object(s) that require validation!
-  
-  """
-  to_delete = []
-  for obj in objects:
-    if obj.width or obj.height:
-      continue
-    cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
-    # This will throw an error if the file does not exist in cloudstorage.
-    image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-    # This will throw an error if the file is not an image, or is corrupted.
-    try:
-      image = images.Image(image_data=image_data)
-      width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
-      height = image.height
-    except images.NotImageError as e:
-      # cannot do objects.remove while in for loop objects
-      to_delete.append(obj)
-    for o in to_delete:
-      objects.remove(o)
-    cloudstorage_file.close()
-    obj.populate(**{'width': width,
-                    'height': height})
-    del image_data, image  # Free memory
-  
-  @tasklet
-  def async(obj):
-    if obj.serving_url is None:
-      obj.serving_url = yield images.get_serving_url_async(obj.image)
-    raise Return(obj)
-  
-  @tasklet
-  def helper(objects):
-    results = yield map(async, objects)
-    raise Return(results)
-  
-  return helper(objects).get_result()
-
-def _validate_prop(prop, value):
-  """This helper function will raise exception based on ndb property specifications
-  (max_size, required, choices).
-  
-  """
+def _property_value_validate(prop, value):
   if prop._max_size:
     if len(value) > prop._max_size:
       raise PropertyError('max_size_exceeded')
@@ -114,32 +59,37 @@ def _validate_prop(prop, value):
     if value not in prop._choices:
       raise PropertyError('not_in_specified_choices')
 
-def _apply_value_filters(prop, value):
+
+def _property_value_filter(prop, value):
   if prop._value_filters:
     if isinstance(prop._value_filters, (list, tuple)):
-      for f in prop._value_filters:
-        value = f(prop, value)
+      for value_filter in prop._value_filters:
+        value = value_filter(prop, value)
     else:
       value = prop._value_filters(prop, value)
   return value
 
-def _property_value(prop, value):
+
+def _property_value_format(prop, value):
   if value is None:
     if prop._default is not None:
       value = prop._default
   if prop._repeated:
+    out = []
     if not isinstance(value, (list, tuple)):
       value = [value]
-    out = []
     for v in value:
-      _validate_prop(prop, v)
+      _property_value_validate(prop, v)
       out.append(v)
-    return _apply_value_filters(prop, out)
+    return _property_value_filter(prop, out)
   else:
-    _validate_prop(prop, value)
-    return _apply_value_filters(prop, value)
+    _property_value_validate(prop, value)
+    return _property_value_filter(prop, value)
+
 
 def _structured_property_field_format(fields, values):
+  if values.get('key'):
+    values['key'] = Key(urlsafe=values.get('key'))
   for value_key, value in values.items():
     field = fields.get(value_key)
     if field:
@@ -148,64 +98,30 @@ def _structured_property_field_format(fields, values):
     else:
       del values[value_key]
 
+
 def _structured_property_format(prop, value):
-  value = _property_value(prop, value)
+  value = _property_value_format(prop, value)
   out = []
   if not prop._repeated:
     value = [value]
   fields = prop.get_model_fields()
   for v in value:
-    v_key = None
-    if v.get('key'):
-      v_key = Key(urlsafe=v.get('key'))
-    _structured_property_field_format(fields, v)  # Not sure if this function's code should be embeded here?
+    _structured_property_field_format(fields, v)
     entity = prop._modelclass(**v)
-    if v_key:
-      entity._key = v_key
     out.append(entity)
-  value = out
   if not prop._repeated:
     try:
-      value = out[0]
+      out = out[0]
     except IndexError as e:
-      value = None
-  return value
+      out = None
+  return out
 
-def _structured_image_property_format(prop, value):
-  """This function is used for structured and also for local property,
-  because its formatting logic is identical
-  
-  """
-  value = _property_value(prop, value)
-  if prop._repeated:
-    blobs = value
-  else:
-    blobs = [value]
-  out = []
-  for blob in blobs:
-    # These will throw errors if the 'blob' is not cgi.FileStorage.
-    if not isinstance(blob, cgi.FieldStorage) and not prop._required:
-      continue
-    file_info = blobstore.parse_file_info(blob)
-    blob_info = blobstore.parse_blob_info(blob)
-    meta_required = ('image/jpeg', 'image/jpg', 'image/png')
-    if file_info.content_type not in meta_required:
-      raise PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-    out.append(prop._modelclass(**{'size': file_info.size,
-                                      'content_type': file_info.content_type,
-                                      'gs_object_name': file_info.gs_object_name,
-                                      'image': blob_info.key()}))
-  if prop._validate_images:
-    out = validate_images(out)
-  if prop._repeated:
-    return out
-  else:
-    if len(out):
-      return out[0]
-    else:
-      return None
 
 def make_complete_name(entity, name_property, parent_property=None, separator=None):
+  '''Returns a string build by joining individual string values,
+  extracted from the same property traced in a chain of interrelated entities.
+  
+  '''
   if separator is None:
     separator = unicode(' / ')
   path = entity
@@ -228,55 +144,23 @@ def make_complete_name(entity, name_property, parent_property=None, separator=No
   names.reverse()
   return separator.join(names)
 
-def factory(module_model_path):
-  """Retrieves model by its module path
-  (e.g. model = factory('app.srv.log.Record'), where 'model' will be Record class).
+
+def factory(complete_path):
+  '''Retrieves model by its module path,
+  (e.g. model = factory('app.models.base.Record'), where 'model' will be Record class).
   
-  """
-  custom_kinds = module_model_path.split('.')
-  far = custom_kinds[-1]
-  del custom_kinds[-1]
+  '''
+  path_elements = complete_path.split('.')
+  module_path = ".".join(path_elements[:-1])
+  model_name = path_elements[-1]
   try:
-    module = importlib.import_module(".".join(custom_kinds))
-    model = getattr(module, far)
+    module = importlib.import_module(module_path)
+    model = getattr(module, model_name)
   except Exception as e:
-    util.logger('Failed to import %s. Error: %s.' % (module_model_path, e), 'exception')
+    util.logger('Failed to import %s. Error: %s.' % (complete_path, e), 'exception')
     return None
   return model
 
-# Monkeypatch ndb.Key
-def _get_entity(self):
-  return self.get()
-
-def _get_id(self):
-  return self.id()
-
-def _get_id_str(self):
-  return str(self.id())
-
-def _get_id_int(self):
-  return int(self.id())
-
-def _get_namespace(self):
-  return self.namespace()
-
-def _get_kind(self):
-  return self.kind()
-
-def _get_parent(self):
-  return self.parent()
-
-def _get_urlsafe(self):
-  return self.urlsafe()
-
-Key.entity = property(_get_entity)
-Key._id = property(_get_id)
-Key._id_str = property(_get_id_str)
-Key._id_int = property(_get_id_int)
-Key._namespace = property(_get_namespace)
-Key._kind = property(_get_kind)
-Key._parent = property(_get_parent)
-Key._urlsafe = property(_get_urlsafe)
 
 def is_structured_field(field):
   '''Checks if the provided field is instance of one of the structured properties,
@@ -355,17 +239,62 @@ def rule_read(entity):
     _rule_read(entity._field_permissions, entity, field_key, field)
 
 
+#############################################
+########## Monkeypatch of ndb.Key! ##########
+#############################################
+
+
+def _get_entity(self):
+  return self.get()
+
+def _get_id(self):
+  return self.id()
+
+def _get_id_str(self):
+  return str(self.id())
+
+def _get_id_int(self):
+  return long(self.id())
+
+def _get_namespace(self):
+  return self.namespace()
+
+def _get_kind(self):
+  return self.kind()
+
+def _get_parent(self):
+  return self.parent()
+
+def _get_urlsafe(self):
+  return self.urlsafe()
+
+
+Key.entity = property(_get_entity)
+Key._id = property(_get_id)
+Key._id_str = property(_get_id_str)
+Key._id_int = property(_get_id_int)
+Key._namespace = property(_get_namespace)
+Key._kind = property(_get_kind)
+Key._parent = property(_get_parent)
+Key._urlsafe = property(_get_urlsafe)
+
+
+#############################################################
+########## Base extension class of all ndb models! ##########
+#############################################################
+
+
 class _BaseModel(object):
   
-  _use_field_rules = True # all models by default support rule engine
+  _use_field_rules = True  # All models by default respect rule engine!
   
   def __init__(self, *args, **kwargs):
-    had = '_deepcopy' in kwargs
-    if had:
+    made_copy = '_deepcopy' in kwargs
+    if made_copy:
       kwargs.pop('_deepcopy')
     super(_BaseModel, self).__init__(*args, **kwargs)
     self._output = []
-    if not had:
+    if not made_copy:
       self.make_original()
     for key in self.get_fields():
       self.add_output(key)
@@ -385,12 +314,12 @@ class _BaseModel(object):
         self._output.remove(name)
   
   def get_output(self):
-    """This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
+    '''This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
-    """
+    '''
     if self._use_field_rules and hasattr(self, '_field_permissions'):
-      rule_read(self) # apply rule read before output
+      rule_read(self)  # Apply rule read before output.
     dic = {}
     dic['kind'] = self.get_kind()
     if self.key:
@@ -407,17 +336,14 @@ class _BaseModel(object):
   
   @classmethod
   def get_meta(cls):
-    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
-    """
+    '''
     dic = {}
     dic['_actions'] = getattr(cls, '_actions', {})
     dic.update(cls.get_fields())
     return dic
-  
-  def loaded(self):
-    return self.key != None and self.key.id()
   
   @classmethod
   def build_key(cls, *args, **kwargs):
@@ -431,12 +357,12 @@ class _BaseModel(object):
   
   @classmethod
   def _get_kind(cls):
-    """Return the kind name for this class.
+    '''Return the kind name for this class.
     Return value defaults to cls.__name__.
     Users may override this method to give a class different on-disk name than its class name.
     We overide this method in order to numerise kinds and conserve datastore space.
     
-    """
+    '''
     if hasattr(cls, '_kind'):
       if cls._kind < 0:
         raise TypeError('Invalid _kind %s, for %s.' % (cls._kind, cls.__name__))
@@ -530,7 +456,7 @@ class _BaseModel(object):
   def key_id_int(self):
     if self.key is None:
       return None
-    return int(self.key.id())
+    return long(self.key.id())
   
   @property
   def key_namespace(self):
@@ -575,22 +501,22 @@ class _BaseModel(object):
       return None
   
   def make_original(self):
-    """
-     This function will make a copy of the current state of the entity
-     and put it into _original field.
-    """
+    '''This function will make a copy of the current state of the entity
+    and put it into _original field.
+    
+    '''
     if self._use_field_rules:
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
   
   def _pre_put_hook(self):
-    """
-     This hook will run before every put
-    """
+    '''This hook will run before every put.
+    
+    '''
     if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
-      
+  
   @classmethod
   def _post_get_hook(cls, key, future):
     entity = future.get_result()
@@ -604,51 +530,45 @@ class _BaseModel(object):
     return entity
   
   def __deepcopy__(self, memo):
-    """
-     This hook for deepcopy will only instance a new entity that has the same ``properties``
-     as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
-     This function can be overriden by models who need to include additional fields that should also be copied. 
-     e.g.
-     
-     entity = super(Entity, self).__deepcopy__()
-     entity._my_unexisting_field = self._my_unexisting_field
-     
-     return entity
-     
-     We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
-     
-    """
+    '''This hook for deepcopy will only instance a new entity that has the same ``properties``
+    as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
+    This function can be overriden by models who need to include additional fields that should also be copied.
+    e.g.
+    entity = super(Entity, self).__deepcopy__()
+    entity._my_unexisting_field = self._my_unexisting_field
+    return entity
+    We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
+    
+    '''
     klass = self.__class__
-  
     new_entity = klass(_deepcopy=True)
     new_entity.key = copy.deepcopy(self.key)
-    
     for f in self.get_fields():
       if hasattr(self, f):
         d = getattr(self, f, None)
         d = copy.deepcopy(d)
         try:
-         setattr(new_entity, f, d)
+          setattr(new_entity, f, d)
         except ComputedPropertyError as e:
           pass # this is intentional
         except Exception as e:
-         #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
-         pass
+          #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
+          pass
     return new_entity
 
 
 class BaseModel(_BaseModel, Model):
-  """Base class for all 'ndb.Model' entities."""
+  '''Base class for all 'ndb.Model' entities.'''
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
   
   @classmethod
   def _get_hierarchy(cls):
-    """Internal helper method to return the list of polymorphic base classes.
+    '''Internal helper method to return the list of polymorphic base classes.
     This returns a list of class objects, e.g. [Animal, Feline, Cat].
     
-    """
+    '''
     bases = []
     for base in cls.mro():  # pragma: no branch
       if hasattr(base, '_get_hierarchy') and base.__name__ not in ('BasePoly', 'BasePolyExpando'):
@@ -659,18 +579,18 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
   
   @classmethod
   def _get_kind(cls):
-    """Override.
+    '''Override.
     Make sure that the kind returned is the root class of the
     polymorphic hierarchy.
     
-    """
+    '''
     bases = cls._get_hierarchy()
     if not bases:
       # We have to jump through some hoops to call the superclass'
       # _get_kind() method.  First, this is called by the metaclass
       # before the PolyModel name is defined, so it can't use
-      # super(PolyModel, cls)._get_kind().  Second, we can't just call
-      # Model._get_kind() because that always returns 'Model'.  Hence
+      # super(PolyModel, cls)._get_kind(). Second, we can't just call
+      # Model._get_kind() because that always returns 'Model'. Hence
       # the 'im_func' hack.
       return Model._get_kind.im_func(cls)
     else:
@@ -690,7 +610,7 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 
 class BaseExpando(_BaseModel, Expando):
-  """Base class for all 'ndb.Expando' entities."""
+  '''Base class for all 'ndb.Expando' entities.'''
   
   @classmethod
   def get_expando_fields(cls):
@@ -733,7 +653,7 @@ class BaseExpando(_BaseModel, Expando):
     return super(BaseExpando, self).__delattr__(name)
   
   def _get_property_for(self, p, indexed=True, depth=0):
-    """Internal helper method to get the Property for a protobuf-level property."""
+    '''Internal helper method to get the Property for a protobuf-level property.'''
     name = p.name()
     parts = name.split('.')
     if len(parts) <= depth:
@@ -763,27 +683,16 @@ class BasePolyExpando(BasePoly, BaseExpando):
   pass
 
 
+#########################################################
+########## Superior properties implementation! ##########
+#########################################################
+
+
 class _BaseProperty(object):
+  '''Base property class for all superior properties.'''
   
   _max_size = None
   _value_filters = None
-  
-  def get_meta(self):
-    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
-    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
-    """
-    choices = self._choices
-    if choices:
-      choices = list(self._choices)
-    dic = {'verbose_name': getattr(self, '_verbose_name'),
-           'required': self._required,
-           'max_size': self._max_size,
-           'choices':  choices,
-           'default': self._default,
-           'repeated': self._repeated,
-           'type': self.__class__.__name__}
-    return dic
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
@@ -792,10 +701,27 @@ class _BaseProperty(object):
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
       kwargs['kind'] = factory(custom_kind)
     super(_BaseProperty, self).__init__(*args, **kwargs)
+  
+  def get_meta(self):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    '''
+    choices = self._choices
+    if choices:
+      choices = list(self._choices)
+    dic = {'verbose_name': getattr(self, '_verbose_name'),
+           'required': self._required,
+           'max_size': self._max_size,
+           'choices': choices,
+           'default': self._default,
+           'repeated': self._repeated,
+           'type': self.__class__.__name__}
+    return dic
 
 
 class BaseProperty(_BaseProperty, Property):
-  """Base property class for all properties capable of having _max_size option."""
+  '''Base property class for all properties capable of having _max_size option.'''
 
 
 class SuperComputedProperty(_BaseProperty, ComputedProperty):
@@ -811,10 +737,10 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
-    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
-    """
+    '''
     dic = super(SuperLocalStructuredProperty, self).get_meta()
     dic['model'] = self._modelclass.get_fields()
     return dic
@@ -835,10 +761,10 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     super(SuperStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
-    """This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
-    """
+    '''
     dic = super(SuperStructuredProperty, self).get_meta()
     dic['model'] = self._modelclass.get_fields()
     return dic
@@ -857,27 +783,24 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
-    single = False
+    value = _property_value_format(self, value)
+    out = []
     if not self._repeated:
       value = [value]
-      single = True
-    out = []
     for v in value:
       out.append(datetime.datetime.strptime(v, settings.DATETIME_FORMAT))
-    if single:
+    if not prop._repeated:
       try:
-        return out[0]
+        out = out[0]
       except IndexError as e:
-        return None
-    else:
-      return out
+        out = None
+    return out
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if isinstance(value, basestring):
       return json.loads(value)
     else:
@@ -887,7 +810,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
 class SuperTextProperty(_BaseProperty, TextProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -897,7 +820,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 class SuperStringProperty(_BaseProperty, StringProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -907,7 +830,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
 class SuperFloatProperty(_BaseProperty, FloatProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       return [float(v) for v in value]
     else:
@@ -917,7 +840,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       return [long(v) for v in value]
     else:
@@ -927,94 +850,100 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
-  """This property is used on models to reference ndb.Key property.
+  '''This property is used on models to reference ndb.Key property.
   Its format function will convert urlsafe string into a ndb.Key and check if the key
   exists in the datastore. If the key does not exist, it will throw an error.
   If key existence feature isn't required, SuperVirtualKeyProperty() can be used in exchange.
   
-  """
+  '''
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
-      returns = [Key(urlsafe=v) for v in value]
-      single = False
+      out = [Key(urlsafe=v) for v in value]
     else:
       if not self._required and value is None:
         return value
-      returns = [Key(urlsafe=value)]
-      single = True
-    for k in returns:
-      if self._kind and k.kind() != self._kind:
+      out = [Key(urlsafe=value)]
+    for key in out:
+      if self._kind and key.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    items = get_multi(returns, use_cache=True)
-    for i, item in enumerate(items):
-      if item is None:
-        raise PropertyError('not_found_%s' % returns[i].urlsafe())
-    if single:
-      return returns[0]
-    else:
-      return returns
+    entities = get_multi(out, use_cache=True)
+    for i, entity in enumerate(entities):
+      if entity is None:
+        raise PropertyError('not_found_%s' % out[i].urlsafe())
+    if not prop._repeated:
+      try:
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
 
 
 class SuperVirtualKeyProperty(SuperKeyProperty):
-  """This property is exact as SuperKeyProperty, except its format function is not making any calls
+  '''This property is exact as SuperKeyProperty, except its format function is not making any calls
   to the datastore to check the existence of the provided urlsafe key. It will simply format the
   provided urlsafe key into a ndb.Key.
   
-  """
+  '''
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
-      returns = [Key(urlsafe=v) for v in value]
-      single = False
+      out = [Key(urlsafe=v) for v in value]
     else:
-      returns = [Key(urlsafe=value)]
-      single = True
-    for k in returns:
-      if self._kind and k.kind() != self._kind:
+      if not self._required and value is None:
+        return value
+      out = [Key(urlsafe=value)]
+    for key in out:
+      if self._kind and key.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    if single:
-      return returns[0]
-    else:
-      return returns
+    if not prop._repeated:
+      try:
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
+
 
 class SuperKeyFromPathProperty(SuperKeyProperty):
   
   def format(self, value):
     try:
-      # first it attempts to construct the key from urlsafe
+      # First it attempts to construct the key from urlsafe
       return super(SuperKeyProperty, self).format(value)
     except:
-      # failed to build from urlsafe, proceed with keyFromPath
-      value = _property_value(self, value)
-      assert isinstance(value, list) == True
+      # Failed to build from urlsafe, proceed with KeyFromPath.
+      value = _property_value_format(self, value)
       out = []
+      assert isinstance(value, list) == True
       if self._repeated:
-        for possible in value:
-          for v in possible:
-            k = Key(*v)
-            if self._kind and k.kind() != self._kind:
+        for v in value:
+          for key_path in v:
+            key = Key(*key_path)
+            if self._kind and key.kind() != self._kind:
               raise PropertyError('invalid_kind')
-            out.append(k)
-          gets = get_multi(out)
-          for i, get in enumerate(gets):
-             if get is None:
-               raise PropertyError('not_found_%s' % out[i].urlsafe())
+            out.append(key)
+          entities = get_multi(out, use_cache=True)  # @todo Added use_cache, not sure if that's ok?
+          for i, entity in enumerate(entities):
+            if entity is None:
+              raise PropertyError('not_found_%s' % out[i].urlsafe())
       else:
         out = Key(*value)
         if self._kind and out.kind() != self._kind:
           raise PropertyError('invalid_kind')
-        assert out.get() != None
+        entity = out.get()
+        if entity is None:
+          raise PropertyError('not_found_%s' % out.urlsafe())
       return out
+
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       return [bool(long(v)) for v in value]
     else:
@@ -1024,91 +953,30 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
   def format(self, value):
-    value = _property_value(self, value)
-    if self._repeated:
-      out = []
-      for v in value:
-        # This alone will raise error if the upload is malformed.
-        try:
-          blob = blobstore.parse_blob_info(v).key()
-        except:
-          blob = blobstore.BlobKey(v)
-        out.append(blob)
-      return out
-    else:
+    value = _property_value_format(self, value)
+    out = []
+    if not self._repeated:
+      value = [value]
+    for v in value:
       # This alone will raise error if the upload is malformed.
       try:
-        blob = blobstore.parse_blob_info(value).key()
+        blob = blobstore.parse_blob_info(v).key()
       except:
-        blob = blobstore.BlobKey(value)
-      return blob
- 
-
-class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
-  
-  def format(self, value):
-    value = _property_value(self, value)
-    if self._repeated:
-      blobs = value
-      out = []
-      to_delete = []
-      for v in value:
-        try:
-          out.append(blobstore.parse_blob_info(v).key())
-        except:
-          to_delete.append(v)
-          out.append(blobstore.BlobInfo(v))
-      value = out
-      for d in to_delete:
-         blobs.remove(d)
-    else:
-      blobs = [value]
+        blob = blobstore.BlobKey(v)
+      out.append(blob)
+    if not prop._repeated:
       try:
-        value = blobstore.parse_blob_info(value).key()
-      except:
-        return blobstore.BlobKey(value)
-    for blob in blobs:
-      info = blobstore.parse_file_info(blob)
-      meta_required = ('image/jpeg', 'image/jpg', 'image/png')
-      if info.content_type not in meta_required:
-        raise PropertyError('invalid_file_type')
-      # This code below is used to validate if the blob that's uploaded to gcs is an image.
-      gs_object_name = info.gs_object_name
-      cloudstorage_file = cloudstorage.open(filename=gs_object_name[3:])
-      image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-      # Will throw error if the file is not an image, or it's just corrupted.
-      load_image = images.Image(image_data=image_data)
-      # Closes the pipeline.
-      cloudstorage_file.close()
-      del load_image, cloudstorage_file  # Free memory.
-    return value
-
-
-class SuperLocalStructuredImageProperty(SuperLocalStructuredProperty):
-  
-  def __init__(self, *args, **kwargs):
-    self._validate_images = kwargs.pop('validate_images', None)
-    super(SuperLocalStructuredImageProperty, self).__init__(*args, **kwargs)
-  
-  def format(self, value):
-    return _structured_image_property_format(self, value)
-
-
-class SuperStructuredImageProperty(SuperStructuredProperty):
-  
-  def __init__(self, *args, **kwargs):
-    self._validate_images = kwargs.pop('validate_images', None)
-    super(SuperStructuredImageProperty, self).__init__(*args, **kwargs)
-  
-  def format(self, value):
-    return _structured_image_property_format(self, value)
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
 
 
 class SuperDecimalProperty(SuperStringProperty):
-  """Decimal property that accepts only 'decimal.Decimal'"""
+  '''Decimal property that accepts only decimal.Decimal.'''
   
   def format(self, value):
-    value = _property_value(self, value)
+    value = _property_value_format(self, value)
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]
     else:
@@ -1119,7 +987,7 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
-      raise PropertyError('expected_decimal') # Perhaps, here should be some other type of exception?
+      raise PropertyError('expected_decimal')  # Perhaps, here should be some other type of exception?
   
   def _to_base_type(self, value):
     return str(value)
@@ -1131,73 +999,25 @@ class SuperDecimalProperty(SuperStringProperty):
 class SuperSearchProperty(SuperJsonProperty):
   
   def __init__(self, *args, **kwargs):
-    """Filters work like this:
-      filters = {
-        'field' : {
-          'operators' : ['==', '>', '<', '>=', '<=', 'contains'], # possible operators
-          'type' : SuperStringProperty(required=True), # possible value types, you can even specify which one is required.
-        }
-      }
-      
-      indexes = [
-        {
-          'filter' : ['field1', 'field2', 'field3'],
-          'order_by' : ['field1', 'asc'],
-        },
-        {
-          'filter' : ['field1', 'field2'],
-          'order_by' : ['field1', 'asc'],
-        },
-      ]
-      
-      order_by = {
-        'field' : {
-          'operators' : ['asc', 'desc']
-        },
-      }
-      
-      search = SuperSearchProperty(filters=filters, indexes=indexes, order_by=order_by)
-      
-      Values provided will be validated trough def format() 
-      
-      Value sent will be
-      
-      'search' : {
-        'filters' : [
-          {
-            'field' : 'name',
-            'operator' : '==',
-            'value' : 'Test',
-          }
-        ],
-        'order_by' : [
-          {
-            'field' : 'name',
-            'operator' : 'asc',
-          } 
-        ],
-      }
-      
-      and in programming area you would get
-      
-      
-     context.output['search'] = {
-        'filters' : [
-          {
-            'field' : 'name',
-            'operator' : '==',
-            'value' : 'Test',
-          }
-        ],
-        'order_by' : 
-          {
-            'field' : 'name',
-            'operator' : 'asc',
-          } 
-        ,
-      }
+    '''Filters work like this:
+    First you configure SuperSearchProperty with filters, indexes and order_by parameters.
+    This configuration takes place at the property definition place.
+    filters = {'field': {'operators': ['==', '>', '<', '>=', '<=', 'contains'],  With 'operators'' you define possible filter operators.
+                         'type': SuperStringProperty(required=True)}} With 'type'' you define a filter value property.
     
-    """
+    indexes = [{'filter': ['field1', 'field2', 'field3'], 'order_by': [['field1', ['asc', 'desc']]]},
+               {'filter': ['field1', 'field2'], 'order_by': [['field1', ['asc', 'desc']]]}]
+    
+    order_by = {'field': {'operators': ['asc', 'desc']}}
+    
+    search = SuperSearchProperty(filters=filters, indexes=indexes, order_by=order_by)
+    
+    Search values that are provided with input will be validated trough SuperSearchProperty().format() function.
+    Example of search values that are provided in input after processing:
+    context.output['search'] = {'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
+                                'order_by': {'field': 'name', 'operator': 'asc'}}
+    
+    '''
     filters = kwargs.pop('filters', {})
     order_by = kwargs.pop('order_by', {})
     indexes = kwargs.pop('indexes', {})
@@ -1207,6 +1027,10 @@ class SuperSearchProperty(SuperJsonProperty):
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    '''
     dic = super(SuperSearchProperty, self).get_meta()
     dic['filters'] = self._filters
     dic['order_by'] = self._order_by
@@ -1217,7 +1041,7 @@ class SuperSearchProperty(SuperJsonProperty):
     value = super(SuperSearchProperty, self).format(value)
     search = {'filters': value.get('filters'),
               'order_by': value.get('order_by'),
-              'property' : self}
+              'property': self}
     for_composite_filter = []
     for config in search['filters']:
       key = config.get('field')
