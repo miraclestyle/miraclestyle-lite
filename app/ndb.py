@@ -426,8 +426,8 @@ class _BaseModel(object):
     return super(BaseExpando, self).__delattr__(name)
   
   def __deepcopy__(self, memo):
-    '''This hook for deepcopy will only instance a new entity that has the same ``properties``
-    as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
+    '''This hook for deepcopy will only instance a new entity that has the same properties
+    as the one that is being copied. Manually added _foo, _bar and other python properties will not be copied.
     This function can be overriden by models who need to include additional fields that should also be copied.
     e.g.
     entity = super(Entity, self).__deepcopy__()
@@ -446,9 +446,9 @@ class _BaseModel(object):
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
-          pass # this is intentional
+          pass  # This is intentional
         except Exception as e:
-          #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
+          #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, field))
           pass
     return new_entity
   
