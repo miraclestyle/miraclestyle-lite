@@ -151,7 +151,7 @@ def factory(complete_path):
   
   '''
   path_elements = complete_path.split('.')
-  module_path = ".".join(path_elements[:-1])
+  module_path = '.'.join(path_elements[:-1])
   model_name = path_elements[-1]
   try:
     module = importlib.import_module(module_path)
@@ -244,9 +244,6 @@ def rule_read(entity):
 #############################################
 
 
-def _get_entity(self):
-  return self.get()
-
 def _get_id(self):
   return self.id()
 
@@ -268,8 +265,22 @@ def _get_parent(self):
 def _get_urlsafe(self):
   return self.urlsafe()
 
+def _get_entity(self):
+  return self.get()
 
-Key.entity = property(_get_entity)
+def _get_namespace_entity(self):
+  if self.namespace():
+    return Key(urlsafe=self.namespace()).get()
+  else:
+    return None
+
+def _get_parent_entity(self):
+  if self.parent():
+    return self.parent().get()
+  else:
+    return None
+
+
 Key._id = property(_get_id)
 Key._id_str = property(_get_id_str)
 Key._id_int = property(_get_id_int)
@@ -277,11 +288,14 @@ Key._namespace = property(_get_namespace)
 Key._kind = property(_get_kind)
 Key._parent = property(_get_parent)
 Key._urlsafe = property(_get_urlsafe)
+Key.entity = property(_get_entity)
+Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
+key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 
-#############################################################
-########## Base extension class of all ndb models! ##########
-#############################################################
+################################################################
+########## Base extension classes for all ndb models! ##########
+################################################################
 
 
 class _BaseModel(object):
@@ -289,71 +303,15 @@ class _BaseModel(object):
   _use_field_rules = True  # All models by default respect rule engine!
   
   def __init__(self, *args, **kwargs):
-    made_copy = '_deepcopy' in kwargs
-    if made_copy:
+    _deepcopied = '_deepcopy' in kwargs
+    if _deepcopied:
       kwargs.pop('_deepcopy')
     super(_BaseModel, self).__init__(*args, **kwargs)
-    self._output = []
-    if not made_copy:
+    if not _deepcopied:
       self.make_original()
+    self._output = []
     for key in self.get_fields():
       self.add_output(key)
-  
-  def add_output(self, names):
-    if not isinstance(names, (list, tuple)):
-      names = [names]
-    for name in names:
-      if name not in self._output:
-        self._output.append(name)
-  
-  def remove_output(self, names):
-    if not isinstance(names, (list, tuple)):
-      names = [names]
-    for name in names:
-      if name in self._output:
-        self._output.remove(name)
-  
-  def get_output(self):
-    '''This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
-    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
-    '''
-    if self._use_field_rules and hasattr(self, '_field_permissions'):
-      rule_read(self)  # Apply rule read before output.
-    dic = {}
-    dic['kind'] = self.get_kind()
-    if self.key:
-      dic['key'] = self.key.urlsafe()
-      dic['id'] = self.key.id()
-    names = self._output
-    for name in names:
-      value = getattr(self, name, None)
-      dic[name] = value
-    for k, v in dic.items():
-      if isinstance(v, Key):
-        dic[k] = v.urlsafe()
-    return dic
-  
-  @classmethod
-  def get_meta(cls):
-    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
-    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
-    '''
-    dic = {}
-    dic['_actions'] = getattr(cls, '_actions', {})
-    dic.update(cls.get_fields())
-    return dic
-  
-  @classmethod
-  def build_key(cls, *args, **kwargs):
-    new_args = [cls._get_kind()]
-    new_args.extend(args)
-    return Key(*new_args, **kwargs)
-  
-  def set_key(self, *args, **kwargs):
-    self._key = self.build_key(*args, **kwargs)
-    return self._key
   
   @classmethod
   def _get_kind(cls):
@@ -411,6 +369,33 @@ class _BaseModel(object):
     else:
       return False
   
+  @classmethod
+  def get_meta(cls):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    '''
+    dic = {}
+    dic['_actions'] = getattr(cls, '_actions', {})
+    dic.update(cls.get_fields())
+    return dic
+  
+  def _pre_put_hook(self):
+    if self._use_field_rules and hasattr(self, '_original'):
+      rule_write(self, self._original)
+  
+  @classmethod
+  def _post_get_hook(cls, key, future):
+    entity = future.get_result()
+    if entity is not None:
+      entity.make_original()
+  
+  @classmethod
+  def _from_pb(cls, pb, set_key=True, ent=None, key=None):
+    entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
+    entity.make_original()
+    return entity
+  
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
     if virtual_fields:
@@ -439,6 +424,43 @@ class _BaseModel(object):
       if prop:
         prop._delete_value(self)
     return super(BaseExpando, self).__delattr__(name)
+  
+  def __deepcopy__(self, memo):
+    '''This hook for deepcopy will only instance a new entity that has the same ``properties``
+    as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
+    This function can be overriden by models who need to include additional fields that should also be copied.
+    e.g.
+    entity = super(Entity, self).__deepcopy__()
+    entity._my_unexisting_field = self._my_unexisting_field
+    return entity
+    We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
+    
+    '''
+    model = self.__class__
+    new_entity = model(_deepcopy=True)
+    new_entity.key = copy.deepcopy(self.key)
+    for field in self.get_fields():
+      if hasattr(self, field):
+        value = getattr(self, field, None)
+        value = copy.deepcopy(value)
+        try:
+          setattr(new_entity, field, value)
+        except ComputedPropertyError as e:
+          pass # this is intentional
+        except Exception as e:
+          #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
+          pass
+    return new_entity
+  
+  @classmethod
+  def build_key(cls, *args, **kwargs):
+    new_args = [cls._get_kind()]
+    new_args.extend(args)
+    return Key(*new_args, **kwargs)
+  
+  def set_key(self, *args, **kwargs):
+    self._key = self.build_key(*args, **kwargs)
+    return self._key
   
   @property
   def key_id(self):
@@ -510,51 +532,40 @@ class _BaseModel(object):
       original = copy.deepcopy(self)
       self._original = original
   
-  def _pre_put_hook(self):
-    '''This hook will run before every put.
+  def add_output(self, names):
+    if not isinstance(names, (list, tuple)):
+      names = [names]
+    for name in names:
+      if name not in self._output:
+        self._output.append(name)
+  
+  def remove_output(self, names):
+    if not isinstance(names, (list, tuple)):
+      names = [names]
+    for name in names:
+      if name in self._output:
+        self._output.remove(name)
+  
+  def get_output(self):
+    '''This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     '''
-    if self._use_field_rules and hasattr(self, '_original'):
-      rule_write(self, self._original)
-  
-  @classmethod
-  def _post_get_hook(cls, key, future):
-    entity = future.get_result()
-    if entity is not None:
-      entity.make_original()
-  
-  @classmethod
-  def _from_pb(cls, pb, set_key=True, ent=None, key=None):
-    entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
-    entity.make_original()
-    return entity
-  
-  def __deepcopy__(self, memo):
-    '''This hook for deepcopy will only instance a new entity that has the same ``properties``
-    as the one that you are copying. Manually added _foo, _bar and other python properties will not be copied.
-    This function can be overriden by models who need to include additional fields that should also be copied.
-    e.g.
-    entity = super(Entity, self).__deepcopy__()
-    entity._my_unexisting_field = self._my_unexisting_field
-    return entity
-    We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
-    
-    '''
-    klass = self.__class__
-    new_entity = klass(_deepcopy=True)
-    new_entity.key = copy.deepcopy(self.key)
-    for f in self.get_fields():
-      if hasattr(self, f):
-        d = getattr(self, f, None)
-        d = copy.deepcopy(d)
-        try:
-          setattr(new_entity, f, d)
-        except ComputedPropertyError as e:
-          pass # this is intentional
-        except Exception as e:
-          #util.logger('__deepcopy__ - could not copy %s.%s' % (self.__class__.__name__, f))
-          pass
-    return new_entity
+    if self._use_field_rules and hasattr(self, '_field_permissions'):
+      rule_read(self)  # Apply rule read before output.
+    dic = {}
+    dic['kind'] = self.get_kind()
+    if self.key:
+      dic['key'] = self.key.urlsafe()
+      dic['id'] = self.key.id()
+    names = self._output
+    for name in names:
+      value = getattr(self, name, None)
+      dic[name] = value
+    for k, v in dic.items():
+      if isinstance(v, Key):
+        dic[k] = v.urlsafe()
+    return dic
 
 
 class BaseModel(_BaseModel, Model):
@@ -562,6 +573,14 @@ class BaseModel(_BaseModel, Model):
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
+  
+  @classmethod
+  def _class_name(cls):
+    if hasattr(cls, '_kind'):
+      if cls._kind < 0:
+        raise TypeError('Invalid _kind %s, for %s.' % (cls._kind, cls.__name__))
+      return str(cls._kind)
+    return cls.__name__
   
   @classmethod
   def _get_hierarchy(cls):
@@ -599,14 +618,6 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
   @classmethod
   def get_kind(cls):
     return cls._class_name()
-  
-  @classmethod
-  def _class_name(cls):
-    if hasattr(cls, '_kind'):
-      if cls._kind < 0:
-        raise TypeError('Invalid _kind %s, for %s.' % (cls._kind, cls.__name__))
-      return str(cls._kind)
-    return cls.__name__
 
 
 class BaseExpando(_BaseModel, Expando):
