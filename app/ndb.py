@@ -800,7 +800,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       value = [value]
     for v in value:
       out.append(datetime.datetime.strptime(v, settings.DATETIME_FORMAT))
-    if not prop._repeated:
+    if not self._repeated:
       try:
         out = out[0]
       except IndexError as e:
@@ -884,7 +884,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     for i, entity in enumerate(entities):
       if entity is None:
         raise PropertyError('not_found_%s' % out[i].urlsafe())
-    if not prop._repeated:
+    if not self._repeated:
       try:
         out = out[0]
       except IndexError as e:
@@ -911,7 +911,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
     for key in out:
       if self._kind and key.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    if not prop._repeated:
+    if not self._repeated:
       try:
         out = out[0]
       except IndexError as e:
@@ -975,7 +975,7 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
       except:
         blob = blobstore.BlobKey(v)
       out.append(blob)
-    if not prop._repeated:
+    if not self._repeated:
       try:
         out = out[0]
       except IndexError as e:
