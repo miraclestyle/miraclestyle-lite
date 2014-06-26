@@ -124,8 +124,12 @@ class StorageEntityManager(object):
  
   def set(self, instance):
     test = instance
-    if isinstance(test, list) and len(test): # if there isnt any instances well dont do the isinstane test
-      test = test[0]
+    if isinstance(test, list): # if there isnt any instances well dont do the isinstane test
+      if len(test):
+        test = test[0]
+      else:
+        test = False
+    if test != False:
       assert isinstance(test, self._property._modelclass) # we always check if the instance passed are instances
     # of the model we specified in property config
     self._property_value = instance
