@@ -6,6 +6,7 @@ Created on Oct 10, 2013
 '''
 import inspect
 import time
+import random
 
 from google.appengine.ext.ndb import metadata, eventloop
 from google.appengine.api import search
@@ -32,7 +33,6 @@ def process_search():
   yield results_search_callback(entities) # possible other arguments
   raise ndb.Return(entities)
 
-#entities = process_search().get_result()
 
 class Account(ndb.Model):
   name = ndb.StringProperty()
@@ -46,6 +46,149 @@ class CartItem(ndb.Model):
   
 class SpecialOffer(ndb.Model):
   inventory = ndb.KeyProperty()
+ 
+ 
+class TestEntitySingleStorage(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  names = ndb.SuperStringProperty(repeated=True)
+  
+class TestEntityChildrenStorage(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  name = ndb.SuperStringProperty()
+  
+class TestEntityRangeStorage(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  name = ndb.SuperStringProperty()
+  
+class TestEntityLocalStructuredStorage(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  name = ndb.SuperStringProperty()
+  
+class TestEntityStructuredStorage(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  name = ndb.SuperStringProperty()
+  
+class TestEntity(ndb.BaseModel):
+  
+  _use_memcache = False
+  _use_cache = False
+  _use_field_rules = False
+  
+  _virtual_fields = dict(_magic_single_entity = ndb.SuperEntityStorageProperty(TestEntitySingleStorage, storage='single'),
+                         _magic_children_entity = ndb.SuperEntityStorageProperty(TestEntityChildrenStorage, storage='children_multi'),
+                         _magic_range_children_entity = ndb.SuperEntityStorageProperty(TestEntityRangeStorage, storage='range_children_multi')
+                        )
+  
+  local_structured_repeated = ndb.SuperLocalStructuredProperty(TestEntityLocalStructuredStorage, repeated=True)
+  structured_repeated = ndb.SuperStructuredProperty(TestEntityStructuredStorage, repeated=True)
+  
+  local_structured = ndb.SuperLocalStructuredProperty(TestEntityLocalStructuredStorage)
+  structured = ndb.SuperStructuredProperty(TestEntityStructuredStorage)
+ 
+  
+class TestEntityManager(handler.Base):
+  
+  def respond(self):
+    new_id = self.request.get('new_id')
+    if self.request.get('make'):
+      entity = TestEntity(id=new_id)
+      entity.put()
+    else:
+      entity = TestEntity.build_key(new_id).get()
+      entity._magic_single_entity.read()
+      entity._magic_children_entity.read()
+      entity._magic_range_children_entity.read(start_cursor=0, limit=10)
+      
+      entity.local_structured.read()
+      entity.structured.read()
+      
+      entity.local_structured_repeated.read()
+      entity.structured_repeated.read()
+     
+    if self.request.get('do_put1'):
+      storage = entity._magic_single_entity.read()
+      storage.names.append('magic_single')
+      entity.put()
+    
+    if self.request.get('do_put2'):
+      storages = entity._magic_children_entity.read()
+      storages.append(TestEntityChildrenStorage(name='magic_single2')) # is it not imperative that you specify parent= ? @todo
+      entity.put()
+      
+    if self.request.get('do_put3'):
+      storages = entity._magic_range_children_entity.read()
+      storages.append(TestEntityRangeStorage(name='magic_single3')) # is it not imperative that you specify parent= ? @todo
+      entity.put()
+      
+    if self.request.get('do_put4'):
+      entity.local_structured_repeated = [TestEntityLocalStructuredStorage(name='magic_local4')]
+      entity.structured_repeated = [TestEntityStructuredStorage(name='magic_local4')]
+      entity.put()
+      
+    if self.request.get('do_put5'):
+      entity.local_structured = TestEntityLocalStructuredStorage(name='magic_local5')
+      entity.structured = TestEntityStructuredStorage(name='magic_local5')
+      entity.put()
+      
+    if self.request.get('search1'):
+      self.response.write(TestEntity.query(TestEntity.structured.name == 'magic_local5').fetch())
+    
+    o = self.response.write
+    self.response.headers['content-type'] = 'text/plain'
+    space = "\n"*2
+    
+    o('entity' + space)
+    o(entity)
+    o(space)
+    
+    o('single' + space)
+    o(entity._magic_single_entity)
+    o(space)
+    
+    o('children' + space)
+    o(entity._magic_children_entity)
+    o(space)
+    
+    o('range' + space)
+    o(entity._magic_range_children_entity)
+    o(space)
+    
+    o('local' + space)
+    o(entity.local_structured)
+    o(space)
+    
+    o('struct' + space)
+    o(entity.structured)
+    o(space)
+    
+    o('localr' + space)
+    o(entity.local_structured_repeated)
+    o(space)
+    
+    o('structr' + space)
+    o(entity.structured_repeated)
+    o(space)
+    
 
 class UploadTest(handler.Base):
   
@@ -253,4 +396,5 @@ class Endpoint(handler.Angular):
 handler.register(('/endpoint', Endpoint), 
                  ('/reset', Reset),
                  ('/test_tasklet', TestTasklet),
-                 ('/upload_test', UploadTest))
+                 ('/upload_test', UploadTest),
+                 ('/TestEntityManager', TestEntityManager))

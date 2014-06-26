@@ -477,7 +477,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         # Domain
         'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': ndb.SuperLocalStructuredImageProperty(Image, required=True)
+        'domain_logo': SuperLocalStructuredImageProperty(Image, required=True)
         },
       _plugin_groups=[
         PluginGroup(
@@ -528,7 +528,7 @@ class Domain(ndb.BaseExpando):
       arguments={
         'key': ndb.SuperKeyProperty(kind='6', required=True),
         'name': ndb.SuperStringProperty(required=True),
-        'logo': ndb.SuperLocalStructuredImageProperty(Image),
+        'logo': SuperLocalStructuredImageProperty(Image),
         'primary_contact': ndb.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
         },
       _plugin_groups=[

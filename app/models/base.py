@@ -237,12 +237,12 @@ def validate_images(objects):
   def async(obj):
     if obj.serving_url is None:
       obj.serving_url = yield images.get_serving_url_async(obj.image)
-    raise Return(obj)
+    raise ndb.Return(obj)
   
   @ndb.tasklet
   def helper(objects):
     results = yield map(async, objects)
-    raise Return(results)
+    raise ndb.Return(results)
   
   return helper(objects).get_result()
 
@@ -297,7 +297,7 @@ class SuperStructuredImageProperty(ndb.SuperStructuredProperty):
     return _structured_image_property_format(self, value)
 
 
-class SuperImageKeyProperty(_BaseProperty, BlobKeyProperty):
+class SuperImageKeyProperty(ndb._BaseProperty, ndb.BlobKeyProperty):
   
   def format(self, value):
     value = ndb._property_value_format(self, value)
@@ -341,7 +341,7 @@ class Image(ndb.BaseModel):
   
   _kind = 69
   
-  image = ndb.SuperImageKeyProperty('1', required=True, indexed=False)
+  image = SuperImageKeyProperty('1', required=True, indexed=False)
   content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
   size = ndb.SuperFloatProperty('3', required=True, indexed=False)
   width = ndb.SuperIntegerProperty('4', indexed=False)

@@ -43,7 +43,217 @@ class TerminateAction(Exception):
 class PropertyError(Exception):
   pass
 
+#############################################
+########## Helper classes. ##########
+#############################################
 
+class StorageEntityManager(object):
+  
+  '''
+    StorageEntityManager is the proxy class for all properties that want to implement 
+    read, write, delete, concept.
+    
+    Example:
+    
+    entity = entity_key.get()
+    
+    entity._images = [image, image, image] # override data
+    entity._images.read().append(image) # or mutate
+    # note that .read() must be used because getter retrieves StorageEntityManager
+    
+    !! Note: You can only retrieve StorageEntityManager instance by accessing the property like so:
+    entity_manager = entity._images
+    entity_manager.read()
+    entity_manager.write()
+    entity_manager.delete()
+    
+     entity._images.set() can be called by either
+     setattr(entity, '_images', [image, image])
+     or
+     entity._images = [image, image, image]
+    
+    Process after performing entity.put() who has this property
+    
+    entity.put() 
+        => post_put_hook()
+           - all properties who have StorageEntityEditor capability will perform .update() function.
+          
+  '''
+  
+  def __init__(self, property, entity, **kwds):
+ 
+    self._kwds = kwds
+    self._entity = entity
+    self._property = property
+    if isinstance(self._property._modelclass, basestring): # in case the model class is a kind str
+      self._property._modelclass = Model._kind_map(self._property._modelclass)
+    self._property_value_specific = {} # property specific output data. like "more" in range querying @todo
+    # we might want to change this to something else, but right now it is the most elegant
+  
+  @property 
+  def value_specifics(self):
+    return self._property_value_specific
+ 
+  @property  
+  def is_single_storage(self):
+    return self._property._storage == 'single'
+  
+  @property
+  def is_children_multi_storage(self):
+    return self._property._storage == 'children_multi'
+  
+  @property
+  def is_multi_storage(self):
+    return self.is_children_multi_storage or self.is_range_children_multi_storage
+  
+  @property
+  def is_range_children_multi_storage(self):
+    return self._property._storage == 'range_children_multi'
+  
+  @property
+  def is_local_storage(self):
+    return self._property._storage == 'local'
+  
+  @property
+  def is_structured_storage(self):
+    return self._property._storage == 'structured'
+  
+  @property
+  def is_self_storage(self):
+    return self.is_structured_storage or self.is_local_storage
+ 
+  def set(self, instance):
+    test = instance
+    if isinstance(test, list) and len(test): # if there isnt any instances well dont do the isinstane test
+      test = test[0]
+      assert isinstance(test, self._property._modelclass) # we always check if the instance passed are instances
+    # of the model we specified in property config
+    self._property_value = instance
+       
+  def _mark_for_delete(self, data, prop=None):
+    # marks entity or entities for deletation by setting the _state='deleted'
+    if not prop:
+      prop = self._property
+    if not prop._repeated:
+      data = [data]
+    for entity in data:
+      entity._state = 'deleted'
+    
+  def delete(self):
+    '''
+      This will mark all entities for this configuration to be deleted.
+    ''' 
+    if not self.is_structured_storage:
+      self._mark_for_delete(self._property_value)
+    else:
+      name = self._property._code_name
+      if not name:
+        name = self._property._name
+      struct = getattr(self._entity, name)
+      self._mark_for_delete(struct, getattr(self._entity.__class__, name))
+         
+  def read(self, **kwds):
+    if (not hasattr(self, '_property_value')) or kwds.get('force_read'): # force_read keyword will always call _read
+      # however not sure if we'll need force_read keyword ever? @todo
+      self._read(**kwds)
+    return self._property_value
+ 
+  def _read(self, **kwds):
+    if self.is_children_multi_storage:
+      # right now we just go ancestor.fetch() but it is possible that we'll need to implement 
+      # some additional options like sorting order.
+      # that can be accomplished with property options since we have that at full disposal
+      self._property_value = self._property._modelclass.query(ancestor=self._entity.key).fetch()
+    elif self.is_range_children_multi_storage:
+      limit = kwds.get('limit')
+      start_cursor = kwds.get('start_cursor')
+      end_cursor = limit + start_cursor + 1
+      if kwds.get('read_from_start'):
+        start_cursor = 0
+      keys = [Key(self._property._modelclass.get_kind(), str(i), parent=self._entity.key) for i in xrange(start_cursor, end_cursor)]
+      more = True
+      entities = get_multi(keys)
+      output_entities = []
+      for i,entity in enumerate(entities):
+        if entity is not None:
+          output_entities.append(entity)
+      if entities[-1] is None:
+        more = False
+      del entities[-1]
+      self._property_value = output_entities
+      self._property_value_specific['more'] = more # this can be avoided by implementing different logic
+    elif self.is_single_storage:
+      # single storage always follows the same pattern, it uses its own kind, entity id, and entity_key as a ancestor
+      single_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+      single_entity = single_key.get()
+      if not single_entity:
+        single_entity = self._property._modelclass(key=single_key)
+      self._property_value = single_entity
+    elif self.is_self_storage:
+      name = self._property._code_name
+      if not name:
+        name = self._property._name
+      local_storage = self._property._get_user_value(self._entity)
+      mapper = local_storage
+      if mapper is not None:
+        if not self._property._repeated:
+          mapper = [mapper]
+        for i,entity in enumerate(mapper):
+          entity.set_key(str(i)) # upon read mode, every structured or local structured will recieve its sequence id
+          # trough it, we can use it for rule engine enhancements
+      else:
+        if self._property._repeated:
+          local_storage = [] # by default all repeated local storages must be a list in order to perform proper appends
+      self._property_value = local_storage
+      
+  def update(self):
+    # update function will perform all puts that are needed for its entity.
+    if hasattr(self, '_property_value'):
+      
+      if self.is_range_children_multi_storage:
+        # upon setting new items we must assign the sequence id accordingly.
+        last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
+        for i,entity in enumerate(self._property_value):
+          parent = entity.key_parent
+          namespace = entity.key_namespace
+          if entity.key_id is None:
+            last_sequence += 1
+            entity.set_key(str(last_sequence), parent=parent, namespace=namespace)
+          else:
+            # not sure if this the rule engine will do? @todo
+            entity.set_key(str(i), parent=parent, namespace=namespace)
+      # @todo is it imperative that we force parent=entity.key ? or we'll do something with the rule engine/input validation?
+      if self.is_multi_storage:
+         # ensure that every entity has the ancestor upon setting them
+         for entity in self._property_value:
+           if entity.key_parent == self._entity.key:
+             continue # skip the overrides
+           namespace = entity.key_namespace
+           key_id = entity.key_id
+           entity.set_key(key_id, parent=self._entity.key, namespace=namespace)
+         put_multi(self._property_value)
+      elif self.is_single_storage:
+        # ensure that every entity has the entity ancestor upon setting it
+        if self._property_value.key_parent != self._entity.key:
+          namespace = self._property_value.key_namespace
+          key_id = self._property_value.key_id
+          self._property_value.set_key(key_id, ancestor=self._entity.key, namespace=namespace)
+          self._property_value.put()
+      elif self.is_structured_storage:
+        # we do not call anything when we work with local structured storage
+        # that is intentional because local structured storage is on entity and it mutates on it
+        pass
+    else:
+      # Cannot complete update for entity because _property_value is not available e.g. wasnt set or wasnt read.
+      pass
+    
+  def __repr__(self):
+    return 'StorageEntityManager(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self._entity, self._property, getattr(self, '_property_value', None), self._kwds)  
+    
+  def get_output(self):
+    return self._property_value
+ 
+ 
 ##########################################################
 ########## Reusable data processiong functions. ##########
 ##########################################################
@@ -88,6 +298,7 @@ def _property_value_format(prop, value):
 
 
 def _structured_property_field_format(fields, values):
+  _state = values.get('_state')
   if values.get('key'):
     values['key'] = Key(urlsafe=values.get('key'))
   for value_key, value in values.items():
@@ -97,6 +308,8 @@ def _structured_property_field_format(fields, values):
         values[value_key] = field.format(value)
     else:
       del values[value_key]
+      
+  values['_state'] = _state # always keep track of _state for rule engine
 
 
 def _structured_property_format(prop, value):
@@ -290,7 +503,7 @@ Key._parent = property(_get_parent)
 Key._urlsafe = property(_get_urlsafe)
 Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
-key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
+Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 
 ################################################################
@@ -300,6 +513,7 @@ key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 class _BaseModel(object):
   
+  _state = None # this field is used for rule engine internally
   _use_field_rules = True  # All models by default respect rule engine!
   
   def __init__(self, *args, **kwargs):
@@ -383,6 +597,14 @@ class _BaseModel(object):
   def _pre_put_hook(self):
     if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
+      
+  def _post_put_hook(self, future):
+    entity = self
+    for field in entity.get_fields():
+      value = getattr(entity, field)
+      if isinstance(value, StorageEntityManager): # this is fine
+        value.update()
+      
   
   @classmethod
   def _post_get_hook(cls, key, future):
@@ -423,7 +645,8 @@ class _BaseModel(object):
       prop = virtual_fields.get(name)
       if prop:
         prop._delete_value(self)
-    return super(BaseExpando, self).__delattr__(name)
+    if isinstance(self, BaseExpando):
+      return super(BaseExpando, self).__delattr__(name)
   
   def __deepcopy__(self, memo):
     '''This hook for deepcopy will only instance a new entity that has the same properties
@@ -442,6 +665,8 @@ class _BaseModel(object):
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
+        if isinstance(value, StorageEntityManager): # this is a possible general problem
+          value = value.read()
         value = copy.deepcopy(value)
         try:
           setattr(new_entity, field, value)
@@ -555,12 +780,15 @@ class _BaseModel(object):
       rule_read(self)  # Apply rule read before output.
     dic = {}
     dic['kind'] = self.get_kind()
+    dic['_state'] = self._state
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
     names = self._output
     for name in names:
       value = getattr(self, name, None)
+      if isinstance(value, StorageEntityManager): # this is a possible general problem
+        value = value.read()
       dic[name] = value
     for k, v in dic.items():
       if isinstance(v, Key):
@@ -746,6 +974,7 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     if isinstance(args[0], basestring):
       args[0] = Model._kind_map.get(args[0])
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
+    self._storage = 'local'
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -761,6 +990,28 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def format(self, value):
     return _structured_property_format(self, value)
+  
+  def _retrieve_value(self, entity, default=None):
+    """Internal helper to retrieve the value for this Property from an entity.
+
+    This returns None if no value is set, or the default argument if
+    given.  For a repeated Property this returns a list if a value is
+    set, otherwise None.  No additional transformations are applied.
+    """
+    entity_manager = entity._values.get(self._name, default)
+    if isinstance(entity_manager, StorageEntityManager):
+      return entity_manager.read()
+    return entity_manager
+
+  def _get_value(self, entity):
+    # __get__
+    manager = '%s_manager' % self._name
+    if manager in entity._values:
+      return entity._values[manager]
+    util.logger('LocalStructured._get_value.%s %s' % (manager, entity))
+    value = StorageEntityManager(entity=entity, property=self)
+    entity._values[manager] = value
+    return value
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
@@ -770,6 +1021,7 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
     if isinstance(args[0], basestring):
       args[0] = Model._kind_map.get(args[0])
     super(SuperStructuredProperty, self).__init__(*args, **kwargs)
+    self._storage = 'structured'
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -785,6 +1037,29 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
   def format(self, value):
     return _structured_property_format(self, value)
+   
+  def _retrieve_value(self, entity, default=None):
+    """Internal helper to retrieve the value for this Property from an entity.
+
+    This returns None if no value is set, or the default argument if
+    given.  For a repeated Property this returns a list if a value is
+    set, otherwise None.  No additional transformations are applied.
+    """
+    entity_manager = entity._values.get(self._name, default)
+    if isinstance(entity_manager, StorageEntityManager):
+      return entity_manager.read()
+    return entity_manager
+  
+  def _get_value(self, entity):
+    # __get__
+    manager = '%s_manager' % self._name
+    if manager in entity._values:
+      return entity._values[manager]
+    util.logger('StructuredProperty._get_value.%s %s' % (manager, entity))
+    value = StorageEntityManager(entity=entity, property=self)
+    entity._values[manager] = value
+    return value
+ 
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -1090,3 +1365,54 @@ class SuperSearchProperty(SuperJsonProperty):
         composite_order_by = True
     assert composite_filter is True and composite_order_by is True
     return search
+
+
+class SuperEntityStorageProperty(Property):
+  '''
+   This property is not meant to be used as property storage. It should be always defined as virtual property.
+   E.g. the property that never gets saved to the datastore.
+  '''
+ 
+  _indexed = False
+  _modelclass = None
+  _repeated = False
+ 
+  def __init__(self, modelclass,
+               name=None, compressed=False, keep_keys=True,
+               **kwds):
+    ## here we can construct more configurations
+    self._storage = kwds.pop('storage')
+    self._modelclass = modelclass
+ 
+    if self._storage in ['children_multi', 'range_children_multi']:
+      self._repeated = True # always enforce repeated on multi entity storage engine
+    
+    super(SuperEntityStorageProperty, self).__init__(name, **kwds)
+    
+  def format(self, value):
+    return _structured_property_format(self, value)
+  
+  def _set_value(self, entity, value):
+    # __set__
+    entity_manager = self._get_user_value(entity)
+    entity_manager.set(value)
+
+  def _delete_value(self, entity):
+    # __delete__
+    entity_manager = self._get_value(entity)
+    entity_manager.delete()
+
+  def _get_value(self, entity):
+    # __get__
+    manager = '%s_manager' % self._name
+    if manager in entity._values:
+      return entity._values[manager]
+    util.logger('SuperEntityStorageProperty._get_value.%s %s' % (manager, entity))
+    value = StorageEntityManager(entity=entity, property=self)
+    entity._values[manager] = value
+    return value
+  
+  def _prepare_for_put(self, entity):
+    self._get_value(entity)  # For its side effects.
+    
+    
