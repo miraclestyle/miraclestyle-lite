@@ -43,101 +43,72 @@ class TerminateAction(Exception):
 class PropertyError(Exception):
   pass
 
-#############################################
+
+#####################################
 ########## Helper classes. ##########
-#############################################
+#####################################
+
+
 class EntityManager(object):
   
   def __init__(self, property, entity, **kwds):
- 
-    self._kwds = kwds
-    self._entity = entity
     self._property = property
-    
+    self._entity = entity
+    self._kwds = kwds
+  
   def __repr__(self):
-    return '%s(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__, self._entity, self._property, getattr(self, '_property_value', None), self._kwds)  
- 
+    return '%s(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
+                                                                       self._entity, self._property,
+                                                                       getattr(self, '_property_value', None), self._kwds)
+  
   def has_value(self):
     return hasattr(self, '_property_value')
-    
+  
   def get_output(self):
     return getattr(self, '_property_value', None)
 
+
 class StorageEntityManager(EntityManager):
+  '''StorageEntityManager is the proxy class for all properties that want to implement read, update, delete, concept.
+  Example:
+  entity = entity_key.get()
+  entity._images = [image, image, image] # override data
+  entity._images.read().append(image) # or mutate
+  # note that .read() must be used because getter retrieves StorageEntityManager
+  !! Note: You can only retrieve StorageEntityManager instance by accessing the property like so:
+  entity_manager = entity._images
+  entity_manager.read()
+  entity_manager.update()
+  entity_manager.delete()
+  entity._images.set() can be called by either
+  setattr(entity, '_images', [image, image])
+  or
+  entity._images = [image, image, image]
+  Process after performing entity.put() which has this property
+  entity.put()
+  => post_put_hook()
+  - all properties who have StorageEntityEditor capability will perform .update() function.
   
-  '''
-    StorageEntityManager is the proxy class for all properties that want to implement 
-    read, write, delete, concept.
-    
-    Example:
-    
-    entity = entity_key.get()
-    
-    entity._images = [image, image, image] # override data
-    entity._images.read().append(image) # or mutate
-    # note that .read() must be used because getter retrieves StorageEntityManager
-    
-    !! Note: You can only retrieve StorageEntityManager instance by accessing the property like so:
-    entity_manager = entity._images
-    entity_manager.read()
-    entity_manager.write()
-    entity_manager.delete()
-    
-     entity._images.set() can be called by either
-     setattr(entity, '_images', [image, image])
-     or
-     entity._images = [image, image, image]
-    
-    Process after performing entity.put() who has this property
-    
-    entity.put() 
-        => post_put_hook()
-           - all properties who have StorageEntityEditor capability will perform .update() function.
-          
   '''
   
   def __init__(self, property, entity, **kwds):
     super(StorageEntityManager, self).__init__(property, entity, **kwds)
-    if isinstance(self._property._modelclass, basestring): # in case the model class is a kind str
+    if isinstance(self._property._modelclass, basestring):  # In case the model class is a kind str
       self._property._modelclass = Model._kind_map(self._property._modelclass)
-    self._property_value_specific = {} # property specific output data. like "more" in range querying @todo
-    # we might want to change this to something else, but right now it is the most elegant
-  
-  @property 
-  def value_specifics(self):
-    return self._property_value_specific
- 
-  @property  
-  def is_single_storage(self):
-    return self._property._storage == 'single'
+    self._property_value_options = {}  # Property specific output data. Like "more" in range querying.
+    # @todo We might want to change this to something else, but right now it is the most elegant.
   
   @property
-  def is_children_multi_storage(self):
-    return self._property._storage == 'children_multi'
+  def value_options(self):
+    return self._property_value_options
   
   @property
-  def is_multi_storage(self):
-    return self.is_children_multi_storage or self.is_range_children_multi_storage
+  def storage_type(self):
+    return self._property._storage  # Possible values: local, remote_single, remote_multi, remote_multi_sequenced
   
-  @property
-  def is_range_children_multi_storage(self):
-    return self._property._storage == 'range_children_multi'
-  
-  @property
-  def is_local_storage(self):
-    return self._property._storage == 'local'
-  
-  @property
-  def is_structured_storage(self):
-    return self._property._storage == 'structured'
-  
-  @property
-  def is_self_storage(self):
-    return self.is_structured_storage or self.is_local_storage
- 
   def set(self, instance):
     test = instance
-    if isinstance(test, list): # if there isnt any instances well dont do the isinstane test
+    if isinstance(test, list): # if there isn't any instances well dont do the isinstane test
       if len(test):
         test = test[0]
       else:
@@ -353,8 +324,7 @@ def _structured_property_field_format(fields, values):
         values[value_key] = field.format(value)
     else:
       del values[value_key]
-      
-  values['_state'] = _state # always keep track of _state for rule engine
+  values['_state'] = _state  # Always keep track of _state for rule engine!
 
 
 def _structured_property_format(prop, value):
@@ -558,7 +528,7 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 class _BaseModel(object):
   
-  _state = None # this field is used for rule engine internally
+  _state = None  # This field is used by rule engine!
   _use_field_rules = True  # All models by default respect rule engine!
   
   def __init__(self, *args, **kwargs):
