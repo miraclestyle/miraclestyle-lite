@@ -198,6 +198,15 @@ class TestGetsRef(ndb.BaseModel):
   
   name = ndb.StringProperty()
   
+  
+class TestGetsRefEmail(ndb.BaseModel):
+  
+  _use_field_rules = False
+  _use_memcache = False
+  _use_cache = False
+  
+  name = ndb.StringProperty()
+  
 
 class TestGets(ndb.BaseModel):
   
@@ -205,18 +214,47 @@ class TestGets(ndb.BaseModel):
   _use_memcache = False
   _use_cache = False
   
-  referenced = ndb.SuperKeyProperty(kind=TestGetsRef)    
+  referenced = ndb.SuperKeyProperty(kind=TestGetsRef)
+  referenced2 = ndb.SuperKeyProperty(kind=TestGetsRefEmail)
+    
+  _virtual_fields = {
+   '_referenced_name' : ndb.SuperAsyncProperty(kind=TestGetsRef, 
+                                          callback=lambda self: self.referenced.get_async(),
+                                          format_callback=lambda self, entity: self._get_reference_name(entity)),
+                     
+   '_referenced2_email' : ndb.SuperAsyncProperty(kind=TestGetsRefEmail, 
+                                          callback=lambda self: self.referenced2.get_async(),
+                                          format_callback=lambda self, entity: self._get_reference_email(entity))                  
+  }
+  
+  def _get_reference_email(self, entity):
+    if entity:
+      return entity.name
+    else:
+      return None
+  
+  def _get_reference_name(self, entity):
+    if entity:
+      return entity.name
+    else:
+      return None
+
     
 class TestGetAsync(handler.Base):
   
   def respond(self):
     ranger = xrange(0, 10)
+    sig = self.request.get('new_id')
+    
     if self.request.get('make'):
       for i in ranger:
         TestGetsRef(id='A_%s' % i, name='Test_%s' % i).put()
+        TestGetsRefEmail(id='B_%s' % i, name='TestB_%s' % i).put()
         
       for i in ranger:
-        TestGets(referenced=ndb.Key(TestGetsRef.get_kind(), 'A_%s' % i)).put()
+        TestGets(id='%s_%s' % (sig, i), 
+                 referenced=ndb.Key(TestGetsRef.get_kind(), 'A_%s' % i),
+                 referenced2=ndb.Key(TestGetsRefEmail.get_kind(), 'B_%s' % i)).put()
         
     if self.request.get('query'):
       results = TestGets.query().fetch()
@@ -241,6 +279,14 @@ class TestGetAsync(handler.Base):
         print 'get_result'
         print result._referenced
         print time.time()
+        
+    if self.request.get('query2'):
+       results = TestGets.query().fetch()
+       for result in results:
+         print 'get_result'
+         print result._referenced_name
+         print result._referenced2_email
+         print time.time()
     
 
 class UploadTest(handler.Base):

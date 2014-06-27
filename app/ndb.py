@@ -46,8 +46,24 @@ class PropertyError(Exception):
 #############################################
 ########## Helper classes. ##########
 #############################################
+class EntityManager(object):
+  
+  def __init__(self, property, entity, **kwds):
+ 
+    self._kwds = kwds
+    self._entity = entity
+    self._property = property
+    
+  def __repr__(self):
+    return '%s(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__, self._entity, self._property, getattr(self, '_property_value', None), self._kwds)  
+ 
+  def has_value(self):
+    return hasattr(self, '_property_value')
+    
+  def get_output(self):
+    return getattr(self, '_property_value', None)
 
-class StorageEntityManager(object):
+class StorageEntityManager(EntityManager):
   
   '''
     StorageEntityManager is the proxy class for all properties that want to implement 
@@ -81,10 +97,7 @@ class StorageEntityManager(object):
   '''
   
   def __init__(self, property, entity, **kwds):
- 
-    self._kwds = kwds
-    self._entity = entity
-    self._property = property
+    super(StorageEntityManager, self).__init__(property, entity, **kwds)
     if isinstance(self._property._modelclass, basestring): # in case the model class is a kind str
       self._property._modelclass = Model._kind_map(self._property._modelclass)
     self._property_value_specific = {} # property specific output data. like "more" in range querying @todo
@@ -157,7 +170,7 @@ class StorageEntityManager(object):
       self._mark_for_delete(struct, getattr(self._entity.__class__, name))
          
   def read(self, **kwds):
-    if (not hasattr(self, '_property_value')) or kwds.get('force_read'): # force_read keyword will always call _read
+    if (not self.has_value()) or kwds.get('force_read'): # force_read keyword will always call _read
       # however not sure if we'll need force_read keyword ever? @todo
       self._read(**kwds)
     return self._property_value
@@ -212,7 +225,7 @@ class StorageEntityManager(object):
       
   def update(self):
     # update function will perform all puts that are needed for its entity.
-    if hasattr(self, '_property_value'):
+    if self.has_value():
       
       if self.is_range_children_multi_storage:
         # upon setting new items we must assign the sequence id accordingly.
@@ -250,13 +263,41 @@ class StorageEntityManager(object):
     else:
       # Cannot complete update for entity because _property_value is not available e.g. wasnt set or wasnt read.
       pass
-    
-  def __repr__(self):
-    return 'StorageEntityManager(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self._entity, self._property, getattr(self, '_property_value', None), self._kwds)  
-    
-  def get_output(self):
+     
+
+class AsyncEntityManager(EntityManager):
+  
+  def _make_async_call(self):
+    self._property_value = self._property._callback(self._entity)
     return self._property_value
- 
+  
+  def has_future(self):
+    return isinstance(self._property_value, Future)
+  
+  def get_async(self): # this function will only be called by the _make_async_calls() function in ndb base model
+    if self.has_value():
+      return self._property_value
+    else:
+      self._make_async_call()
+    return self._property_value
+  
+  def get(self):
+    if not self.has_value(): # if .read was called directly, it will force immidiate get
+      self._make_async_call()
+    if self.has_future():
+      self._property_value = self._property_value.get_result()
+      if self._property._format_callback:
+        self._property_value = self._property._format_callback(self._entity, self._property_value)
+    return self._property_value
+     
+  def set(self, value):
+    if isinstance(value, Key):
+      self._property_value = value.get_async()
+    elif isinstance(value, BaseModel):
+      self._property_value = value
+  
+  def delete(self):
+    self._property_value = None 
  
 ##########################################################
 ########## Reusable data processiong functions. ##########
@@ -608,18 +649,27 @@ class _BaseModel(object):
       value = getattr(entity, field)
       if isinstance(value, StorageEntityManager): # this is fine
         value.update()
-      
-  
+        
+  def _make_async_calls(self):
+    entity = self
+    if entity.key and entity.key.id(): # check if we have complete key
+      for field, field_definition in entity.get_fields().items():
+        if isinstance(field_definition, SuperAsyncProperty):
+          manager = field_definition._get_value(entity, internal=True)
+          manager.get_async() # always call get_async
+       
   @classmethod
   def _post_get_hook(cls, key, future):
     entity = future.get_result()
     if entity is not None:
       entity.make_original()
+    entity._make_async_calls()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
     entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
     entity.make_original()
+    entity._make_async_calls()
     return entity
   
   def __getattr__(self, name):
@@ -1418,3 +1468,43 @@ class SuperEntityStorageProperty(Property):
     self._get_value(entity)  # For its side effects.
     
     
+class SuperAsyncProperty(SuperKeyProperty):
+  '''
+   @docstring
+  '''
+  
+  def __init__(self, *args, **kwargs):
+    self._callback = kwargs.pop('callback')
+    self._format_callback = kwargs.pop('format_callback', None)
+    self._kind = kwargs.pop('kind', None)
+    if not callable(self._callback):
+      raise PropertyError('`callback` must be a callable, got %s' % self._callback)
+    if self._format_callback != None and not callable(self._format_callback):
+      raise PropertyError('`format_callback` must be either None or callable, got %s' % self._format_callback)
+    super(SuperAsyncProperty, self).__init__(*args, **kwargs)
+  
+  def _set_value(self, entity, value):
+    # __set__
+    async_manager = self._get_value(entity, internal=True)
+    async_manager.set(value)
+
+  def _delete_value(self, entity):
+    # __delete__
+    async_manager = self._get_value(entity, internal=True)
+    async_manager.delete()
+
+  def _get_value(self, entity, internal=None):
+    # __get__
+    manager = '%s_manager' % self._name
+    if manager in entity._values:
+      async_manager = entity._values[manager]
+    else:
+      util.logger('SuperAsyncProperty._get_value.%s %s' % (manager, entity))
+      async_manager = AsyncEntityManager(entity=entity, property=self)
+      entity._values[manager] = async_manager
+    if internal: # if is internal is true, always retrieve manager
+      return async_manager
+    if not async_manager.has_value():
+      return async_manager
+    else:
+      return async_manager.get()
