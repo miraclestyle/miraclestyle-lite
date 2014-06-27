@@ -7,11 +7,12 @@ Created on Oct 10, 2013
 import inspect
 import time
 import random
+import json
 
 from google.appengine.ext.ndb import metadata, eventloop
 from google.appengine.api import search
 
-from webclient import handler 
+from webclient import handler
 
 from app import ndb, memcache, util, io
 
@@ -221,10 +222,14 @@ class TestGets(ndb.BaseModel):
    '_referenced_name' : ndb.SuperAsyncProperty(kind=TestGetsRef, 
                                           callback=lambda self: self.referenced.get_async(),
                                           format_callback=lambda self, entity: self._get_reference_name(entity)),
-                     
+                 
    '_referenced2_email' : ndb.SuperAsyncProperty(kind=TestGetsRefEmail, 
                                           callback=lambda self: self.referenced2.get_async(),
-                                          format_callback=lambda self, entity: self._get_reference_email(entity))                  
+                                          format_callback=lambda self, entity: self._get_reference_email(entity)),
+   '_referenced' : ndb.SuperAsyncProperty(kind=TestGetsRef, 
+                                          target_field='referenced'),
+   '_referenced2' : ndb.SuperAsyncProperty(kind=TestGetsRefEmail, 
+                                          target_field='referenced2'),           
   }
   
   def _get_reference_email(self, entity):
@@ -246,6 +251,17 @@ class TestGetAsync(handler.Base):
     ranger = xrange(0, 10)
     sig = self.request.get('new_id')
     
+    self.response.headers['content-type'] = 'text/plain'
+    
+    def respond(*args):
+      for a in args:
+        self.response.write(json.dumps(a, cls=handler.JSONEncoderHTML, indent=4))
+    
+    if self.request.get('delete'):
+      ndb.delete_multi(TestGetsRef.query().fetch(keys_only=True) 
+                       + TestGetsRefEmail.query().fetch(keys_only=True)
+                       + TestGets.query().fetch(keys_only=True))
+    
     if self.request.get('make'):
       for i in ranger:
         TestGetsRef(id='A_%s' % i, name='Test_%s' % i).put()
@@ -255,38 +271,15 @@ class TestGetAsync(handler.Base):
         TestGets(id='%s_%s' % (sig, i), 
                  referenced=ndb.Key(TestGetsRef.get_kind(), 'A_%s' % i),
                  referenced2=ndb.Key(TestGetsRefEmail.get_kind(), 'B_%s' % i)).put()
-        
-    if self.request.get('query'):
-      results = TestGets.query().fetch()
-      for result in results:
-        print 'get_async'
-        result._referenced = result.referenced.get_async()
-        print time.time()
-        
-      for result in results:
-        print 'get_result'
-        print result._referenced.get_result()
-        print time.time()
-        
-    if self.request.get('query1'):
-      results = TestGets.query().fetch()
-      for result in results:
-        print 'get_async'
-        result._referenced = result.referenced.get()
-        print time.time()
-        
-      for result in results:
-        print 'get_result'
-        print result._referenced
-        print time.time()
-        
+  
     if self.request.get('query2'):
        results = TestGets.query().fetch()
        for result in results:
-         print 'get_result'
-         print result._referenced_name
-         print result._referenced2_email
-         print time.time()
+         respond(result)
+         
+    if self.request.get('get'):
+      result = TestGets.build_key('%s_%s' % (sig, self.request.get('get'))).get()
+      respond(result)
     
 
 class UploadTest(handler.Base):

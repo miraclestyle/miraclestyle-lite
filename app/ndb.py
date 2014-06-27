@@ -268,7 +268,15 @@ class StorageEntityManager(EntityManager):
 class AsyncEntityManager(EntityManager):
   
   def _make_async_call(self):
-    self._property_value = self._property._callback(self._entity)
+    if self._property._callback:
+      self._property_value = self._property._callback(self._entity)
+    elif self._property._target_field:
+      field = getattr(self._entity, self._property._target_field)
+      if not isinstance(field, Key):
+        raise PropertyError('Target field must be instance of Key. Got %s' % field) 
+      if self._property._kind != None and field.kind() != self._property._kind:
+        raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
+      self._property_value = field.get_async()
     return self._property_value
   
   def has_future(self):
@@ -282,7 +290,7 @@ class AsyncEntityManager(EntityManager):
     return self._property_value
   
   def get(self):
-    if not self.has_value(): # if .read was called directly, it will force immidiate get
+    if not self.has_value(): # if .read was called directly, it will force immidiate get-wait
       self._make_async_call()
     if self.has_future():
       self._property_value = self._property_value.get_result()
@@ -1453,7 +1461,7 @@ class SuperEntityStorageProperty(Property):
     # __delete__
     entity_manager = self._get_value(entity)
     entity_manager.delete()
-
+  
   def _get_value(self, entity):
     # __get__
     manager = '%s_manager' % self._name
@@ -1474,10 +1482,15 @@ class SuperAsyncProperty(SuperKeyProperty):
   '''
   
   def __init__(self, *args, **kwargs):
-    self._callback = kwargs.pop('callback')
+    self._callback = kwargs.pop('callback', None)
     self._format_callback = kwargs.pop('format_callback', None)
     self._kind = kwargs.pop('kind', None)
-    if not callable(self._callback):
+    self._target_field = kwargs.pop('target_field', None)
+    
+    if not self._target_field and not self._callback:
+      raise PropertyError('You must provide either: `callback` or `target_field`')
+    
+    if self._callback != None and not callable(self._callback):
       raise PropertyError('`callback` must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):
       raise PropertyError('`format_callback` must be either None or callable, got %s' % self._format_callback)
@@ -1487,11 +1500,25 @@ class SuperAsyncProperty(SuperKeyProperty):
     # __set__
     async_manager = self._get_value(entity, internal=True)
     async_manager.set(value)
+    return super(SuperAsyncProperty, self)._set_value(entity, value)
 
   def _delete_value(self, entity):
     # __delete__
     async_manager = self._get_value(entity, internal=True)
     async_manager.delete()
+    return super(SuperAsyncProperty, self)._delete_value(entity)
+  
+  def _retrieve_value(self, entity, default=None):
+    """Internal helper to retrieve the value for this Property from an entity.
+
+    This returns None if no value is set, or the default argument if
+    given.  For a repeated Property this returns a list if a value is
+    set, otherwise None.  No additional transformations are applied.
+    """
+    entity_manager = entity._values.get(self._name, default)
+    if isinstance(entity_manager, AsyncEntityManager):
+      return entity_manager.get()
+    return entity_manager
 
   def _get_value(self, entity, internal=None):
     # __get__
