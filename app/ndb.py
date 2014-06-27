@@ -669,7 +669,7 @@ class _BaseModel(object):
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
-        if isinstance(value, StorageEntityManager): # this is a possible general problem
+        if isinstance(value, StorageEntityManager):
           value = value.read()
         value = copy.deepcopy(value)
         try:
@@ -791,8 +791,6 @@ class _BaseModel(object):
     names = self._output
     for name in names:
       value = getattr(self, name, None)
-      if isinstance(value, StorageEntityManager): # this is a possible general problem
-        value = value.read()
       dic[name] = value
     for k, v in dic.items():
       if isinstance(v, Key):

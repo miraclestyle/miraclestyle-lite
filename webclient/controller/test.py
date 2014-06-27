@@ -188,6 +188,59 @@ class TestEntityManager(handler.Base):
     o('structr' + space)
     o(entity.structured_repeated)
     o(space)
+
+
+class TestGetsRef(ndb.BaseModel):
+  
+  _use_field_rules = False
+  _use_memcache = False
+  _use_cache = False
+  
+  name = ndb.StringProperty()
+  
+
+class TestGets(ndb.BaseModel):
+  
+  _use_field_rules = False
+  _use_memcache = False
+  _use_cache = False
+  
+  referenced = ndb.SuperKeyProperty(kind=TestGetsRef)    
+    
+class TestGetAsync(handler.Base):
+  
+  def respond(self):
+    ranger = xrange(0, 10)
+    if self.request.get('make'):
+      for i in ranger:
+        TestGetsRef(id='A_%s' % i, name='Test_%s' % i).put()
+        
+      for i in ranger:
+        TestGets(referenced=ndb.Key(TestGetsRef.get_kind(), 'A_%s' % i)).put()
+        
+    if self.request.get('query'):
+      results = TestGets.query().fetch()
+      for result in results:
+        print 'get_async'
+        result._referenced = result.referenced.get_async()
+        print time.time()
+        
+      for result in results:
+        print 'get_result'
+        print result._referenced.get_result()
+        print time.time()
+        
+    if self.request.get('query1'):
+      results = TestGets.query().fetch()
+      for result in results:
+        print 'get_async'
+        result._referenced = result.referenced.get()
+        print time.time()
+        
+      for result in results:
+        print 'get_result'
+        print result._referenced
+        print time.time()
     
 
 class UploadTest(handler.Base):
@@ -397,4 +450,5 @@ handler.register(('/endpoint', Endpoint),
                  ('/reset', Reset),
                  ('/test_tasklet', TestTasklet),
                  ('/upload_test', UploadTest),
-                 ('/TestEntityManager', TestEntityManager))
+                 ('/TestEntityManager', TestEntityManager),
+                 ('/TestGetAsync', TestGetAsync))
