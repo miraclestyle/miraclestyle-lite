@@ -51,9 +51,9 @@ class PropertyError(Exception):
 
 class EntityManager(object):
   
-  def __init__(self, property, entity, **kwds):
-    self._property = property
-    self._entity = entity
+  def __init__(self, property_instance, storage_entity, **kwds):
+    self._property = property_instance
+    self._entity = storage_entity  # storage entity of the property
     self._kwds = kwds
   
   def __repr__(self):
@@ -68,7 +68,7 @@ class EntityManager(object):
     return getattr(self, '_property_value', None)
 
 
-class StorageEntityManager(EntityManager):
+class StructuredPropertyStorageManager(EntityManager):
   '''StorageEntityManager is the proxy class for all properties that want to implement read, update, delete, concept.
   Example:
   entity = entity_key.get()
@@ -91,55 +91,84 @@ class StorageEntityManager(EntityManager):
   
   '''
   
-  def __init__(self, property, entity, **kwds):
-    super(StorageEntityManager, self).__init__(property, entity, **kwds)
+  def __init__(self, property_instance, storage_entity, **kwds):
+    super(StorageEntityManager, self).__init__(property_instance, storage_entity, **kwds)
     if isinstance(self._property._modelclass, basestring):  # In case the model class is a kind str
       self._property._modelclass = Model._kind_map(self._property._modelclass)
-    self._property_value_options = {}  # Property specific output data. Like "more" in range querying.
+    self._property_value_options = {}
     # @todo We might want to change this to something else, but right now it is the most elegant.
   
   @property
   def value_options(self):
+    ''' '_property_value_options' is used for storing and returning information that
+    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
+    
+    '''
     return self._property_value_options
   
   @property
   def storage_type(self):
-    return self._property._storage  # Possible values: local, remote_single, remote_multi, remote_multi_sequenced
-  
-  def set(self, instance):
-    test = instance
-    if isinstance(test, list): # if there isn't any instances well dont do the isinstane test
-      if len(test):
-        test = test[0]
-      else:
-        test = False
-    if test != False:
-      assert isinstance(test, self._property._modelclass) # we always check if the instance passed are instances
-    # of the model we specified in property config
-    self._property_value = instance
-       
-  def _mark_for_delete(self, data, prop=None):
-    # marks entity or entities for deletation by setting the _state='deleted'
-    if not prop:
-      prop = self._property
-    if not prop._repeated:
-      data = [data]
-    for entity in data:
-      entity._state = 'deleted'
+    ''' Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi', 'remote_multi_sequenced' values stored.
+    'local' is a structured value stored in a parent entity.
+    'remote_single' is a single child (fan-out) entity of the parent entity.
+    'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.
+    'remote_multi_sequenced' is exactly as the above, however, their id-s represent sequenced numberes, and they are usually accessed via get_multi.
     
-  def delete(self):
     '''
-      This will mark all entities for this configuration to be deleted.
-    ''' 
-    if not self.is_structured_storage:
-      self._mark_for_delete(self._property_value)
-    else:
-      name = self._property._code_name
-      if not name:
-        name = self._property._name
-      struct = getattr(self._entity, name)
-      self._mark_for_delete(struct, getattr(self._entity.__class__, name))
-         
+    return self._property._storage  # @todo Prehaps _storage renamte to _storage_type
+  
+  def set(self, property_value):
+    '''We always verify that the property_value is instance
+    of the model that is specified in the property configuration.
+    
+    '''
+    property_value_copy = property_value
+    if isinstance(property_value_copy, list):
+      if len(property_value_copy):
+        property_value_copy = property_value_copy[0]
+      else:
+        property_value_copy = False
+    if property_value_copy != False:
+      assert isinstance(property_value_copy, self._property._modelclass)
+    self._property_value = property_value
+  
+  def _mark_for_delete(self, property_value, property_instance=None):
+    '''Mark each of property values for deletion by setting the '_state'' to 'deleted'!
+    
+    '''
+    if not property_instance:
+      property_instance = self._property
+    if not property_instance._repeated:
+      property_value = [property_value]
+    for value in property_value:
+      value._state = 'deleted'
+  
+  def delete_local(self):
+    self._mark_for_delete(self._property_value)
+  
+  def delete_remote(self):
+    property_name = self._property._code_name
+    if not property_name:
+      property_name = self._property._name
+    property_value = getattr(self._entity, property_name)
+    self._mark_for_delete(property_value, getattr(self._entity.__class__, property_name))
+  
+  def delete_remote_single(self):
+    self.delete_remote()
+  
+  def delete_remote_multi(self):
+    self.delete_remote()
+  
+  def delete_remote_multi_sequenced(self):
+    self.delete_remote()
+  
+  def delete(self):
+    '''Calls storage type specific delete function, in order to mark property values for deletion.
+    
+    '''
+    delete_function = getattr(self, 'delete_%s' % self.storage_type)
+    self.delete_function()
+  
   def read(self, **kwds):
     if (not self.has_value()) or kwds.get('force_read'): # force_read keyword will always call _read
       # however not sure if we'll need force_read keyword ever? @todo
