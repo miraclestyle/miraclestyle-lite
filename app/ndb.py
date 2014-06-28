@@ -68,7 +68,7 @@ class EntityManager(object):
     return getattr(self, '_property_value', None)
 
 
-class StructuredPropertyStorageManager(EntityManager):
+class SuperPropertyStorageManager(EntityManager):
   '''StorageEntityManager is the proxy class for all properties that want to implement read, update, delete, concept.
   Example:
   entity = entity_key.get()
@@ -169,12 +169,44 @@ class StructuredPropertyStorageManager(EntityManager):
     delete_function = getattr(self, 'delete_%s' % self.storage_type)
     self.delete_function()
   
+  def read_local(self, **kwds):
+    '''Every structured/local structured value requires a sequence id for future identification purposes!
+    
+    '''
+    property_name = self._property._code_name  # @todo Why do we need property_name here???
+    if not property_name:
+      property_name = self._property._name
+    property_value = self._property._get_user_value(self._entity)
+    property_value_copy = property_value  # @todo Why do we need this copy here???
+    if property_value_copy is not None:
+      if not self._property._repeated:
+        property_value_copy = [property_value_copy]
+      for i, value in enumerate(property_value_copy):
+        value.set_key(str(i))
+    else:
+      if self._property._repeated:
+        property_value = []
+    self._property_value = property_value
+  
+  def read_remote_single(self, **kwds):
+    # @todo Incorporate single instance read.
+  
+  def read_remote_multi(self, **kwds):
+    # @todo Incorporate ndb_search once we migrate it from tools/base.py
+  
+  def read_remote_multi_sequenced(self, **kwds):
+    # @todo Incorporate read fro marketing here
+  
   def read(self, **kwds):
-    if (not self.has_value()) or kwds.get('force_read'): # force_read keyword will always call _read
-      # however not sure if we'll need force_read keyword ever? @todo
-      self._read(**kwds)
+    '''Calls storage type specific read function, in order populate _property_value with values.
+    'force_read' keyword will always call storage type specific read function.
+    However we are not sure if we are gonna need to force read operation.
+    '''
+    if (not self.has_value()) or kwds.get('force_read'):
+      read_function = getattr(self, 'read_%s' % self.storage_type)
+      self.read_function(**kwds)
     return self._property_value
- 
+  
   def _read(self, **kwds):
     if self.is_children_multi_storage:
       # right now we just go ancestor.fetch() but it is possible that we'll need to implement 
