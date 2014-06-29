@@ -44,6 +44,55 @@ class PropertyError(Exception):
   pass
 
 
+
+def search(query, fetch_all=False, limit=10, cursor=None):
+  try:
+    cursor = Cursor(urlsafe=cursor)
+  except:
+    pass
+  if fetch_all or isinstance(cursor, (int, long)):
+    if fetch_all:
+      cursor = 0
+      limit = 1000
+    entities = []
+    more = True
+    while True:
+      _entities = query.fetch(limit=limit, offset=cursor)
+      if len(_entities):
+        entities.extend(_entities)
+        cursor = cursor + limit
+        if not fetch_all:
+          break
+      else:
+        more = False
+        break
+  elif isinstance(cursor, Cursor):
+    entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+    if cursor:
+      cursor = cursor.urlsafe()
+  return {'entities': entities, 'cursor': cursor, 'more': more}
+
+
+def search_ancestor_sequence(model, parent_key, limit=10, start_cursor=None, read_from_start=False):
+  if not start_cursor:
+    start_cursor = 0
+  end_cursor = start_cursor + limit + 1
+  if read_from_start:
+    start_cursor = 0
+  keys = [Key(model.get_kind(), str(i), parent=parent_key) for i in xrange(start_cursor, end_cursor)]
+  more = True
+  entities = get_multi(keys)
+  if entities[-1] == None:  # @todo What happens if the latest fetched entity is none however, there are more entities beyond it?
+    more = False
+  results = []
+  for entity in entities:
+    if entity != None:
+      results.append(entity)
+  if more:
+    del results[-1]  # @todo Or results.pop(len(results) - 1)
+  return {'entities': results, 'more': more, 'cursor': start_cursor + limit}
+
+
 #####################################
 ########## Helper classes. ##########
 #####################################
@@ -197,133 +246,93 @@ class SuperPropertyStorageManager(EntityManager):
     self._property_value = property_value
   
   def read_remote_multi(self, **kwds):
-    # @todo Incorporate ndb_search once we migrate it from tools/base.py
+    fetch_all = kwds.get('fetch_all', False)
+    limit = kwds.get('limit')
+    urlsafe_cursor = kwds.get('cursor')
+    order = kwds.get('order')
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    if order:
+      order_field = getattr(self._property._modelclass, order['field'])
+      if order['direction'] == 'asc':
+        query = query.order(order_field)
+      else:
+        query = query.order(-order_field)
+    results = search(query, fetch_all, limit, urlsafe_cursor)
+    self._property_value = results['entities']
+    self._property_value_options['cursor'] = results['cursor']
+    self._property_value_options['more'] = results['more']
   
   def read_remote_multi_sequenced(self, **kwds):
     '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
+    It then uses those keys for retreving, storing and deleting entities of those keys.
     This technique has lowest impact on data storage and retreval, and should be used whenever possible!
     
     '''
     limit = kwds.get('limit')
     start_cursor = kwds.get('start_cursor')
-    if not start_cursor:
-      start_cursor = 0
-    end_cursor = start_cursor + limit + 1
-    if kwds.get('read_from_start'):
-      start_cursor = 0
-    keys = [Key(self._property._modelclass.get_kind(), str(i), parent=self._entity.key) for i in xrange(start_cursor, end_cursor)]
-    more = True
-    entities = get_multi(keys)
-    if entities[-1] == None:  # @todo What happens if the laset fetched entity is none however, there are more entities beyond it?
-      more = False
-    property_value = []
-    for i, entity in enumerate(entities):
-      if entity != None:
-        property_value.append(entity)
-    if more:
-      del property_value[-1]  # @todo Or property_value.pop(len(property_value) - 1)
-    self._property_value = property_value
-    self._property_value_options['more'] = more
+    read_from_start = kwds.get('read_from_start')
+    results = search_ancestor_sequence(self._property._modelclass, self._entity.key, limit, start_cursor, read_from_start)
+    self._property_value = results['entities']
+    self._property_value_options['cursor'] = results['cursor']
+    self._property_value_options['more'] = results['more']
   
   def read(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
     However we are not sure if we are gonna need to force read operation.
+    
     '''
     if (not self.has_value()) or kwds.get('force_read'):
       read_function = getattr(self, 'read_%s' % self.storage_type)
       self.read_function(**kwds)
     return self._property_value
   
-  def _read(self, **kwds):
-    if self.is_children_multi_storage:
-      # right now we just go ancestor.fetch() but it is possible that we'll need to implement 
-      # some additional options like sorting order.
-      # that can be accomplished with property options since we have that at full disposal
-      self._property_value = self._property._modelclass.query(ancestor=self._entity.key).fetch()
-    elif self.is_range_children_multi_storage:
-      limit = kwds.get('limit')
-      start_cursor = kwds.get('start_cursor')
-      end_cursor = limit + start_cursor + 1
-      if kwds.get('read_from_start'):
-        start_cursor = 0
-      keys = [Key(self._property._modelclass.get_kind(), str(i), parent=self._entity.key) for i in xrange(start_cursor, end_cursor)]
-      more = True
-      entities = get_multi(keys)
-      output_entities = []
-      for i,entity in enumerate(entities):
-        if entity is not None:
-          output_entities.append(entity)
-      if entities[-1] is None:
-        more = False
-      del entities[-1]
-      self._property_value = output_entities
-      self._property_value_specific['more'] = more # this can be avoided by implementing different logic
-    elif self.is_single_storage:
-      # single storage always follows the same pattern, it uses its own kind, entity id, and entity_key as a ancestor
-      single_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
-      single_entity = single_key.get()
-      if not single_entity:
-        single_entity = self._property._modelclass(key=single_key)
-      self._property_value = single_entity
-    elif self.is_self_storage:
-      name = self._property._code_name
-      if not name:
-        name = self._property._name
-      local_storage = self._property._get_user_value(self._entity)
-      mapper = local_storage
-      if mapper is not None:
-        if not self._property._repeated:
-          mapper = [mapper]
-        for i,entity in enumerate(mapper):
-          entity.set_key(str(i)) # upon read mode, every structured or local structured will recieve its sequence id
-          # trough it, we can use it for rule engine enhancements
+  def update_local(self):
+    '''We do not call anything when we work with local storage.
+    That is intentional behavior because local storage is on entity and it mutates on it.
+    
+    '''
+    pass
+  
+  def update_remote_single(self):
+    '''Ensure that every entity has the entity ancestor by enforcing it.
+    
+    '''
+    if self._property_value.key_parent != self._entity.key:
+      key_id = self._property_value.key_id
+      self._property_value.set_key(key_id, parent=self._entity.key)
+      self._property_value.put()
+  
+  def update_remote_multi(self):
+    '''Ensure that every entity has the entity ancestor by enforcing it.
+    
+    '''
+    for entity in self._property_value:
+      if entity.key_parent != self._entity.key:
+        key_id = entity.key_id
+        entity.set_key(key_id, parent=self._entity.key)
+    put_multi(self._property_value)
+  
+  def update_remote_multi_sequenced(self):
+    '''Ensure that every entity has the entity ancestor by enforcing it.
+    
+    '''
+    last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
+    for i, entity in enumerate(self._property_value):
+      if entity.key_id is None:
+        last_sequence += 1  # @todo Is this matematically correct? Do we produce gaps with this?
+        entity.set_key(str(last_sequence), parent=self._entity.key)
       else:
-        if self._property._repeated:
-          local_storage = [] # by default all repeated local storages must be a list in order to perform proper appends
-      self._property_value = local_storage
-      
+        entity.set_key(str(i), parent=self._entity.key)
+    put_multi(self._property_value)
+  
   def update(self):
-    # update function will perform all puts that are needed for its entity.
     if self.has_value():
-      
-      if self.is_range_children_multi_storage:
-        # upon setting new items we must assign the sequence id accordingly.
-        last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
-        for i,entity in enumerate(self._property_value):
-          parent = entity.key_parent
-          namespace = entity.key_namespace
-          if entity.key_id is None:
-            last_sequence += 1
-            entity.set_key(str(last_sequence), parent=parent, namespace=namespace)
-          else:
-            # not sure if this the rule engine will do? @todo
-            entity.set_key(str(i), parent=parent, namespace=namespace)
-      # @todo is it imperative that we force parent=entity.key ? or we'll do something with the rule engine/input validation?
-      if self.is_multi_storage:
-         # ensure that every entity has the ancestor upon setting them
-         for entity in self._property_value:
-           if entity.key_parent == self._entity.key:
-             continue # skip the overrides
-           namespace = entity.key_namespace
-           key_id = entity.key_id
-           entity.set_key(key_id, parent=self._entity.key, namespace=namespace)
-         put_multi(self._property_value)
-      elif self.is_single_storage:
-        # ensure that every entity has the entity ancestor upon setting it
-        if self._property_value.key_parent != self._entity.key:
-          namespace = self._property_value.key_namespace
-          key_id = self._property_value.key_id
-          self._property_value.set_key(key_id, ancestor=self._entity.key, namespace=namespace)
-          self._property_value.put()
-      elif self.is_structured_storage:
-        # we do not call anything when we work with local structured storage
-        # that is intentional because local structured storage is on entity and it mutates on it
-        pass
+      update_function = getattr(self, 'update_%s' % self.storage_type)
+      self.update_function()
     else:
-      # Cannot complete update for entity because _property_value is not available e.g. wasnt set or wasnt read.
       pass
-     
+
 
 class AsyncEntityManager(EntityManager):
   
@@ -365,8 +374,8 @@ class AsyncEntityManager(EntityManager):
       self._property_value = value
   
   def delete(self):
-    self._property_value = None 
- 
+    self._property_value = None
+
 ##########################################################
 ########## Reusable data processiong functions. ##########
 ##########################################################
@@ -709,22 +718,22 @@ class _BaseModel(object):
   def _pre_put_hook(self):
     if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
-      
+  
   def _post_put_hook(self, future):
     entity = self
     for field in entity.get_fields():
       value = getattr(entity, field)
-      if isinstance(value, StorageEntityManager): # this is fine
+      if isinstance(value, StorageEntityManager):
         value.update()
-        
+  
   def _make_async_calls(self):
     entity = self
-    if entity.key and entity.key.id(): # check if we have complete key
-      for field, field_definition in entity.get_fields().items():
-        if isinstance(field_definition, SuperAsyncProperty):
-          manager = field_definition._get_value(entity, internal=True)
-          manager.get_async() # always call get_async
-       
+    if entity.key and entity.key.id():
+      for field, field_instance in entity.get_fields().items():
+        if isinstance(field_instance, SuperAsyncProperty):
+          manager = field_instance._get_value(entity, internal=True)
+          manager.get_async()
+  
   @classmethod
   def _post_get_hook(cls, key, future):
     entity = future.get_result()
@@ -1111,12 +1120,12 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
     return _structured_property_format(self, value)
   
   def _retrieve_value(self, entity, default=None):
-    """Internal helper to retrieve the value for this Property from an entity.
+    '''Internal helper to retrieve the value for this Property from an entity.
 
     This returns None if no value is set, or the default argument if
     given.  For a repeated Property this returns a list if a value is
     set, otherwise None.  No additional transformations are applied.
-    """
+    '''
     entity_manager = entity._values.get(self._name, default)
     if isinstance(entity_manager, StorageEntityManager):
       return entity_manager.read()
