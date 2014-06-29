@@ -98,7 +98,7 @@ def search_ancestor_sequence(model, parent_key, limit=10, start_cursor=None, rea
 #####################################
 
 
-class EntityManager(object):
+class SuperPropertyManager(object):
   
   def __init__(self, property_instance, storage_entity, **kwds):
     self._property = property_instance
@@ -113,11 +113,14 @@ class EntityManager(object):
   def has_value(self):
     return hasattr(self, '_property_value')
   
+  def has_future(self):
+    return isinstance(self._property_value, Future)
+  
   def get_output(self):
     return getattr(self, '_property_value', None)
 
 
-class SuperPropertyStorageManager(EntityManager):
+class SuperStructuredPropertyManager(SuperPropertyManager):
   '''StorageEntityManager is the proxy class for all properties that want to implement read, update, delete, concept.
   Example:
   entity = entity_key.get()
@@ -192,33 +195,33 @@ class SuperPropertyStorageManager(EntityManager):
     for value in property_value:
       value._state = 'deleted'
   
-  def delete_local(self):
+  def _delete_local(self):
     self._mark_for_delete(self._property_value)
   
-  def delete_remote(self):
+  def _delete_remote(self):
     property_name = self._property._code_name
     if not property_name:
       property_name = self._property._name
     property_value = getattr(self._entity, property_name)
     self._mark_for_delete(property_value, getattr(self._entity.__class__, property_name))
   
-  def delete_remote_single(self):
-    self.delete_remote()
+  def _delete_remote_single(self):
+    self._delete_remote()
   
-  def delete_remote_multi(self):
-    self.delete_remote()
+  def _delete_remote_multi(self):
+    self._delete_remote()
   
-  def delete_remote_multi_sequenced(self):
-    self.delete_remote()
+  def _delete_remote_multi_sequenced(self):
+    self._delete_remote()
   
   def delete(self):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
     
     '''
-    delete_function = getattr(self, 'delete_%s' % self.storage_type)
-    self.delete_function()
+    delete_function = getattr(self, '_delete_%s' % self.storage_type)
+    delete_function()
   
-  def read_local(self, **kwds):
+  def _read_local(self, **kwds):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
     
     '''
@@ -234,7 +237,7 @@ class SuperPropertyStorageManager(EntityManager):
         property_value = []
     self._property_value = property_value
   
-  def read_remote_single(self, **kwds):
+  def _read_remote_single(self, **kwds):
     '''Remote single storage always follows the same pattern,
     it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
     
@@ -245,7 +248,7 @@ class SuperPropertyStorageManager(EntityManager):
       property_value = self._property._modelclass(key=property_value_key)
     self._property_value = property_value
   
-  def read_remote_multi(self, **kwds):
+  def _read_remote_multi(self, **kwds):
     fetch_all = kwds.get('fetch_all', False)
     limit = kwds.get('limit')
     urlsafe_cursor = kwds.get('cursor')
@@ -262,7 +265,7 @@ class SuperPropertyStorageManager(EntityManager):
     self._property_value_options['cursor'] = results['cursor']
     self._property_value_options['more'] = results['more']
   
-  def read_remote_multi_sequenced(self, **kwds):
+  def _read_remote_multi_sequenced(self, **kwds):
     '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
     It then uses those keys for retreving, storing and deleting entities of those keys.
     This technique has lowest impact on data storage and retreval, and should be used whenever possible!
@@ -276,25 +279,31 @@ class SuperPropertyStorageManager(EntityManager):
     self._property_value_options['cursor'] = results['cursor']
     self._property_value_options['more'] = results['more']
   
-  def read(self, **kwds):
+  def read_async(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
     However we are not sure if we are gonna need to force read operation.
     
     '''
     if (not self.has_value()) or kwds.get('force_read'):
-      read_function = getattr(self, 'read_%s' % self.storage_type)
-      self.read_function(**kwds)
+      read_function = getattr(self, '_read_%s' % self.storage_type)
+      read_function(**kwds)
     return self._property_value
   
-  def update_local(self):
+  def read(self, **kwds):
+    self.read_async(**kwds)
+    if self.has_future():
+      self._property_value = self._property_value.get_result()
+    return self._property_value
+  
+  def _update_local(self):
     '''We do not call anything when we work with local storage.
     That is intentional behavior because local storage is on entity and it mutates on it.
     
     '''
     pass
   
-  def update_remote_single(self):
+  def _update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -303,7 +312,7 @@ class SuperPropertyStorageManager(EntityManager):
       self._property_value.set_key(key_id, parent=self._entity.key)
       self._property_value.put()
   
-  def update_remote_multi(self):
+  def _update_remote_multi(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -313,60 +322,54 @@ class SuperPropertyStorageManager(EntityManager):
         entity.set_key(key_id, parent=self._entity.key)
     put_multi(self._property_value)
   
-  def update_remote_multi_sequenced(self):
+  def _update_remote_multi_sequenced(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
     last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
       if entity.key_id is None:
-        last_sequence += 1  # @todo Is this matematically correct? Do we produce gaps with this?
         entity.set_key(str(last_sequence), parent=self._entity.key)
+        last_sequence += 1
       else:
         entity.set_key(str(i), parent=self._entity.key)
     put_multi(self._property_value)
   
   def update(self):
     if self.has_value():
-      update_function = getattr(self, 'update_%s' % self.storage_type)
-      self.update_function()
+      update_function = getattr(self, '_update_%s' % self.storage_type)
+      update_function()
     else:
       pass
 
 
-class AsyncEntityManager(EntityManager):
+class SuperKeyPropertyManager(SuperPropertyManager):
   
-  def _make_async_call(self):
+  def _read(self):
     if self._property._callback:
       self._property_value = self._property._callback(self._entity)
     elif self._property._target_field:
       field = getattr(self._entity, self._property._target_field)
       if not isinstance(field, Key):
-        raise PropertyError('Target field must be instance of Key. Got %s' % field) 
+        raise PropertyError('Target field must be instance of Key. Got %s' % field)
       if self._property._kind != None and field.kind() != self._property._kind:
         raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
     return self._property_value
   
-  def has_future(self):
-    return isinstance(self._property_value, Future)
-  
-  def get_async(self): # this function will only be called by the _make_async_calls() function in ndb base model
-    if self.has_value():
-      return self._property_value
-    else:
-      self._make_async_call()
+  def read_async(self):
+    if not self.has_value():
+      self._read()
     return self._property_value
   
-  def get(self):
-    if not self.has_value(): # if .read was called directly, it will force immidiate get-wait
-      self._make_async_call()
+  def read(self):
+    self.read_async()
     if self.has_future():
       self._property_value = self._property_value.get_result()
       if self._property._format_callback:
         self._property_value = self._property._format_callback(self._entity, self._property_value)
     return self._property_value
-     
+  
   def set(self, value):
     if isinstance(value, Key):
       self._property_value = value.get_async()
@@ -375,6 +378,7 @@ class AsyncEntityManager(EntityManager):
   
   def delete(self):
     self._property_value = None
+
 
 ##########################################################
 ########## Reusable data processiong functions. ##########
