@@ -173,11 +173,8 @@ class SuperPropertyStorageManager(EntityManager):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
     
     '''
-    property_name = self._property._code_name  # @todo Why do we need property_name here???
-    if not property_name:
-      property_name = self._property._name
     property_value = self._property._get_user_value(self._entity)
-    property_value_copy = property_value  # @todo Why do we need this copy here???
+    property_value_copy = property_value
     if property_value_copy is not None:
       if not self._property._repeated:
         property_value_copy = [property_value_copy]
@@ -189,13 +186,44 @@ class SuperPropertyStorageManager(EntityManager):
     self._property_value = property_value
   
   def read_remote_single(self, **kwds):
-    # @todo Incorporate single instance read.
+    '''Remote single storage always follows the same pattern,
+    it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
+    
+    '''
+    property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    property_value = property_value_key.get()
+    if not property_value:
+      property_value = self._property._modelclass(key=property_value_key)
+    self._property_value = property_value
   
   def read_remote_multi(self, **kwds):
     # @todo Incorporate ndb_search once we migrate it from tools/base.py
   
   def read_remote_multi_sequenced(self, **kwds):
-    # @todo Incorporate read fro marketing here
+    '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
+    This technique has lowest impact on data storage and retreval, and should be used whenever possible!
+    
+    '''
+    limit = kwds.get('limit')
+    start_cursor = kwds.get('start_cursor')
+    if not start_cursor:
+      start_cursor = 0
+    end_cursor = start_cursor + limit + 1
+    if kwds.get('read_from_start'):
+      start_cursor = 0
+    keys = [Key(self._property._modelclass.get_kind(), str(i), parent=self._entity.key) for i in xrange(start_cursor, end_cursor)]
+    more = True
+    entities = get_multi(keys)
+    if entities[-1] == None:  # @todo What happens if the laset fetched entity is none however, there are more entities beyond it?
+      more = False
+    property_value = []
+    for i, entity in enumerate(entities):
+      if entity != None:
+        property_value.append(entity)
+    if more:
+      del property_value[-1]  # @todo Or property_value.pop(len(property_value) - 1)
+    self._property_value = property_value
+    self._property_value_options['more'] = more
   
   def read(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
