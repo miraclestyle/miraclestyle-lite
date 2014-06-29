@@ -49,48 +49,23 @@ def search(query, fetch_all=False, limit=10, cursor=None):
   try:
     cursor = Cursor(urlsafe=cursor)
   except:
-    pass
-  if fetch_all or isinstance(cursor, (int, long)):
-    if fetch_all:
-      cursor = 0
-      limit = 1000
-    entities = []
-    more = True
-    while True:
-      _entities = query.fetch(limit=limit, offset=cursor)
-      if len(_entities):
-        entities.extend(_entities)
-        cursor = cursor + limit
-        if not fetch_all:
-          break
-      else:
-        more = False
+    cursor = Cursor()
+  if fetch_all:
+    cursor = Cursor()
+    limit = 1000
+  entities = []
+  while True:
+    _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+    if len(_entities):
+      entities.extend(_entities)
+      if cursor:
+        cursor = cursor.urlsafe()
+      if not fetch_all:
         break
-  elif isinstance(cursor, Cursor):
-    entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-    if cursor:
-      cursor = cursor.urlsafe()
+    else:
+      more = False
+      break
   return {'entities': entities, 'cursor': cursor, 'more': more}
-
-
-def search_ancestor_sequence(model, parent_key, limit=10, start_cursor=None, read_from_start=False):
-  if not start_cursor:
-    start_cursor = 0
-  end_cursor = start_cursor + limit + 1
-  if read_from_start:
-    start_cursor = 0
-  keys = [Key(model.get_kind(), str(i), parent=parent_key) for i in xrange(start_cursor, end_cursor)]
-  more = True
-  entities = get_multi(keys)
-  if entities[-1] == None:  # @todo What happens if the latest fetched entity is none however, there are more entities beyond it?
-    more = False
-  results = []
-  for entity in entities:
-    if entity != None:
-      results.append(entity)
-  if more:
-    del results[-1]  # @todo Or results.pop(len(results) - 1)
-  return {'entities': results, 'more': more, 'cursor': start_cursor + limit}
 
 
 #####################################
@@ -274,7 +249,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     limit = kwds.get('limit')
     start_cursor = kwds.get('start_cursor')
     read_from_start = kwds.get('read_from_start')
-    results = search_ancestor_sequence(self._property._modelclass, self._entity.key, limit, start_cursor, read_from_start)
+    results = self._property._modelclass.search_ancestor_sequence(self._entity.key, limit, start_cursor, read_from_start)
     self._property_value = results['entities']
     self._property_value_options['cursor'] = results['cursor']
     self._property_value_options['more'] = results['more']
@@ -508,73 +483,51 @@ def is_structured_field(field):
   return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty)) and field._modelclass
 
 
-def _rule_read(permissions, entity, field_key, field):
-  '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
-  Otherwise go one level down and check again.
-  
-  '''
-  if (not field_key in permissions) or (not permissions[field_key]['visible']):
-    entity.remove_output(field_key)
-  else:
-    if is_structured_field(field):
-      child_entity = getattr(entity, field_key)
-      if field._repeated:
-        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-          for child_entity_item in child_entity:
-            child_fields = child_entity_item.get_fields()
-            child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
-            for child_field_key, child_field in child_fields.items():
-              _rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
-      else:
-        child_entity = getattr(entity, field_key)
-        if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-          child_fields = child_entity.get_fields()
-          child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
-          for child_field_key, child_field in child_fields.items():
-            _rule_read(permissions[field_key], child_entity, child_field_key, child_field)
+_CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
+          'BUILD_MAP', 'BUILD_TUPLE', 'LOAD_CONST', 'RETURN_VALUE',
+          'STORE_SUBSCR', 'UNARY_POSITIVE', 'UNARY_NEGATIVE', 'UNARY_NOT',
+          'UNARY_INVERT', 'BINARY_POWER', 'BINARY_MULTIPLY', 'BINARY_DIVIDE',
+          'BINARY_FLOOR_DIVIDE', 'BINARY_TRUE_DIVIDE', 'BINARY_MODULO',
+          'BINARY_ADD', 'BINARY_SUBTRACT', 'BINARY_LSHIFT', 'BINARY_RSHIFT',
+          'BINARY_AND', 'BINARY_XOR', 'BINARY_OR', 'STORE_MAP', 'LOAD_NAME',
+          'COMPARE_OP', 'LOAD_ATTR', 'STORE_NAME', 'GET_ITER',
+          'FOR_ITER', 'LIST_APPEND', 'JUMP_ABSOLUTE', 'DELETE_NAME',
+          'JUMP_IF_TRUE', 'JUMP_IF_FALSE', 'JUMP_IF_FALSE_OR_POP',
+          'JUMP_IF_TRUE_OR_POP', 'POP_JUMP_IF_FALSE', 'POP_JUMP_IF_TRUE',
+          'BINARY_SUBSCR', 'JUMP_FORWARD']
 
 
-def _rule_write(permissions, entity, field_key, field, field_value):
-  '''If the field is writable, ignore substructure permissions and override field fith new values.
-  Otherwise go one level down and check again.
-  
-  '''
-  #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
-  if (field_key in permissions) and not (permissions[field_key]['writable']):
-    try:
-      #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
-      #  return
-      setattr(entity, field_key, field_value)
-    except TypeError as e:
-      util.logger('write: setattr error: %s' % e)
-    except ComputedPropertyError:
-      pass
-  else:
-    if is_structured_field(field):
-      child_entity = getattr(entity, field_key)
-      for child_field_key, child_field in field.get_model_fields().items():
-        if field._repeated:
-          for i, child_entity_item in enumerate(child_entity):
-            try:
-              child_field_value = getattr(field_value[i], child_field_key)
-              _rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
-            except IndexError as e:
-              pass
-        else:
-          _rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+_ALLOWED_CODES = set(dis.opmap[x] for x in _CODES if x in dis.opmap)
 
 
-def rule_write(entity, original):
-  entity_fields = entity.get_fields()
-  for field_key, field in entity_fields.items():
-    field_value = getattr(original, field_key)
-    _rule_write(entity._field_permissions, entity, field_key, field, field_value)
+def _compile_source(source):
+  comp = compile(source, '', 'eval')
+  codes = []
+  co_code = comp.co_code
+  i = 0
+  while i < len(co_code):
+    code = ord(co_code[i])
+    codes.append(code)
+    if code >= dis.HAVE_ARGUMENT:
+      i += 3
+    else:
+      i += 1
+  for code in codes:
+    if code not in _ALLOWED_CODES:
+      raise ValueError('opcode %s not allowed' % dis.opname[code])
+  return comp
 
 
-def rule_read(entity):
-  entity_fields = entity.get_fields()
-  for field_key, field in entity_fields.items():
-    _rule_read(entity._field_permissions, entity, field_key, field)
+def safe_eval(source, data=None):
+  if '__subclasses__' in source:
+    raise ValueError('__subclasses__ not allowed')
+  comp = _compile_source(source)
+  try:
+    return eval(comp, {'__builtins__': {'True': True, 'False': False, 'str': str,
+                                        'globals': locals, 'locals': locals, 'bool': bool,
+                                        'dict': dict, 'round': round, 'Decimal': Decimal}}, data)
+  except Exception as e:
+    raise Exception('Failed to process code "%s" error: %s' % ((source, data), e))
 
 
 #############################################
@@ -719,6 +672,50 @@ class _BaseModel(object):
     dic.update(cls.get_fields())
     return dic
   
+  @classmethod
+  def prepare_field(cls, entity, field_path):
+    fields = str(field_path).split('.')
+    last_field = fields[-1]
+    drill = fields[:-1]
+    i = -1
+    while not last_field:
+      i = i - 1
+      last_field = fields[i]
+      drill = fields[:i]
+    for field in drill:
+      if field:
+        if isinstance(entity, dict):
+          try:
+            entity = entity[field]
+          except KeyError as e:
+            return None
+        elif isinstance(entity, list):
+          try:
+            entity = entity[int(field)]
+          except IndexError as e:
+            return None
+        else:
+          try:
+            entity = getattr(entity, field)
+          except ValueError as e:
+            return None
+    return (entity, last_field)
+  
+  def get_field(self, field_path):
+    result = self.prepare_field(self, field_path)
+    if result == None:
+      return None
+    entity, last_field = result
+    if isinstance(entity, dict):
+      return entity.get(last_field, None)
+    elif isinstance(entity, list):
+      try:
+        return entity[int(last_field)]
+      except:
+        return None
+    else:
+      return getattr(entity, last_field, None)
+  
   def _pre_put_hook(self):
     if self._use_field_rules and hasattr(self, '_original'):
       rule_write(self, self._original)
@@ -736,7 +733,7 @@ class _BaseModel(object):
       for field, field_instance in entity.get_fields().items():
         if isinstance(field_instance, SuperAsyncProperty):
           manager = field_instance._get_value(entity, internal=True)
-          manager.get_async()
+          manager.read_async()
   
   @classmethod
   def _post_get_hook(cls, key, future):
@@ -880,6 +877,222 @@ class _BaseModel(object):
       return self.key.parent().get()
     else:
       return None
+  
+  @classmethod
+  def search_ancestor_sequence(cls, parent_key, limit=10, start_cursor=None, read_from_start=False):
+    if not start_cursor:
+      start_cursor = 0
+    end_cursor = start_cursor + limit + 1
+    if read_from_start:
+      start_cursor = 0
+    keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(start_cursor, end_cursor)]
+    more = True
+    entities = get_multi(keys)  # @todo Implement async version of rpc.
+    if entities[-1] == None:  # @todo What happens if the latest fetched entity is none however, there are more entities beyond it?
+      more = False
+    results = []
+    for entity in entities:
+      if entity != None:
+        results.append(entity)
+    if more:
+      del results[-1]  # @todo Or results.pop(len(results) - 1)
+    return {'entities': results, 'more': more, 'cursor': start_cursor + limit}
+  
+  @classmethod
+  def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
+    '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
+    Otherwise go one level down and check again.
+
+    '''
+    if (not field_key in permissions) or (not permissions[field_key]['visible']):
+      entity.remove_output(field_key)
+    else:
+      if is_structured_field(field):
+        child_entity = getattr(entity, field_key)
+        if field._repeated:
+          if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+            for child_entity_item in child_entity:
+              child_fields = child_entity_item.get_fields()
+              child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
+              for child_field_key, child_field in child_fields.items():
+                cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
+        else:
+          child_entity = getattr(entity, field_key)
+          if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
+            child_fields = child_entity.get_fields()
+            child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
+            for child_field_key, child_field in child_fields.items():
+              cls._rule_read(permissions[field_key], child_entity, child_field_key, child_field)
+  
+  def rule_read(self):
+    entity_fields = self.get_fields()
+    for field_key, field in entity_fields.items():
+      self._rule_read(self._field_permissions, self, field_key, field)
+  
+  @classmethod
+  def _rule_write(cls, permissions, entity, field_key, field, field_value):  # @todo Not sure if this should be class method, but it seamed natural that way!?
+    '''If the field is writable, ignore substructure permissions and override field fith new values.
+    Otherwise go one level down and check again.
+
+    '''
+    #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
+    if (field_key in permissions) and not (permissions[field_key]['writable']):
+      try:
+        #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
+        #  return
+        setattr(entity, field_key, field_value)
+      except TypeError as e:
+        util.logger('write: setattr error: %s' % e)
+      except ComputedPropertyError:
+        pass
+    else:
+      if is_structured_field(field):
+        child_entity = getattr(entity, field_key)
+        for child_field_key, child_field in field.get_model_fields().items():
+          if field._repeated:
+            for i, child_entity_item in enumerate(child_entity):
+              try:
+                child_field_value = getattr(field_value[i], child_field_key)
+                cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+              except IndexError as e:
+                pass
+          else:
+            cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+  
+  def rule_write(self):
+    entity_fields = self.get_fields()
+    for field_key, field in entity_fields.items():
+      field_value = getattr(self._original, field_key)
+      self._rule_write(self._field_permissions, self, field_key, field, field_value)
+  
+  @classmethod
+  def _rule_reset_actions(cls, action_permissions, actions):
+    for action_key in actions:
+      action_permissions[action_key] = {'executable': []}
+  
+  @classmethod
+  def _rule_reset_fields(cls, field_permissions, fields):
+    for field_key, field in fields.items():
+      if field_key not in field_permissions:
+        field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
+      if is_structured_field(field):
+        model_fields = field.get_model_fields()
+        if field._code_name in model_fields:
+          model_fields.pop(field._code_name)  # @todo Test this behavior!
+        cls._rule_reset_fields(field_permissions[field_key], model_fields)
+  
+  @classmethod
+  def _rule_reset(cls, entity):
+    '''This method builds dictionaries that will hold permissions inside
+    entity object.
+
+    '''
+    entity._action_permissions = {}
+    entity._field_permissions = {}
+    actions = entity.get_actions()
+    fields = entity.get_fields()
+    cls._rule_reset_actions(entity._action_permissions, actions)
+    cls._rule_reset_fields(entity._field_permissions, fields)
+  
+  @classmethod
+  def _rule_decide(cls, permissions, strict, root=True, parent_permissions=None):
+    for key, value in permissions.items():
+      if isinstance(value, dict):
+        if parent_permissions:
+          root = False
+        cls._rule_decide(permissions[key], strict, root, permissions)
+      else:
+        if isinstance(value, list) and len(value):
+          if (strict):
+            if all(value):
+              permissions[key] = True
+            else:
+              permissions[key] = False
+          elif any(value):
+            permissions[key] = True
+          else:
+            permissions[key] = False
+        else:
+          permissions[key] = None
+          if not root and not len(value):
+            permissions[key] = parent_permissions[key]
+  
+  @classmethod
+  def _rule_override_local_permissions(cls, global_permissions, local_permissions):
+    for key, value in local_permissions.items():
+      if isinstance(value, dict):
+        cls._rule_override_local_permissions(global_permissions[key], local_permissions[key])  # global_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
+      else:
+        if key in global_permissions:
+          gp_value = global_permissions[key]
+          if gp_value is not None and gp_value != value:
+            local_permissions[key] = gp_value
+        if local_permissions[key] is None:
+          local_permissions[key] = False
+  
+  @classmethod
+  def _rule_complement_local_permissions(cls, global_permissions, local_permissions):
+    for key, value in global_permissions.items():
+      if isinstance(value, dict):
+        cls._rule_complement_local_permissions(global_permissions[key], local_permissions[key])  # local_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
+      else:
+        if key not in local_permissions:
+          local_permissions[key] = value
+  
+  @classmethod
+  def _rule_compile_global_permissions(cls, global_permissions):
+    for key, value in global_permissions.items():
+      if isinstance(value, dict):
+        cls._rule_compile_global_permissions(global_permissions[key])
+      else:
+        if value is None:
+          value = False
+        global_permissions[key] = value
+  
+  @classmethod
+  def _rule_compile(cls, global_permissions, local_permissions, strict):
+    cls._rule_decide(global_permissions, strict)
+    # If local permissions are present, process them.
+    if local_permissions:
+      cls._rule_decide(local_permissions, strict)
+      # Iterate over local permissions, and override them with the global permissions.
+      cls._rule_override_local_permissions(global_permissions, local_permissions)
+      # Make sure that global permissions are always present.
+      cls._rule_complement_local_permissions(global_permissions, local_permissions)
+      permissions = local_permissions
+    # Otherwise just process global permissions.
+    else:
+      cls._rule_compile_global_permissions(global_permissions)
+      permissions = global_permissions
+    return permissions
+  
+  def rule_prepare(self, global_permissions, local_permissions=[], strict, **kwargs):
+    '''This method generates permissions situation for the entity object,
+    at the time of execution.
+
+    '''
+    self._rule_reset(self)
+    for global_permission in global_permissions:
+      global_permission.run(self, kwargs)
+    # Copy generated entity permissions to separate dictionary.
+    global_action_permissions = self._action_permissions.copy()
+    global_field_permissions = self._field_permissions.copy()
+    # Reset permissions structures.
+    self._rule_reset(self)
+    local_action_permissions = {}
+    local_field_permissions = {}
+    if len(local_permissions):
+      for local_permission in local_permissions:
+        local_permission.run(self, kwargs)
+      # Copy generated entity permissions to separate dictionary.
+      local_action_permissions = self._action_permissions.copy()
+      local_field_permissions = self._field_permissions.copy()
+      # Reset permissions structures.
+      self._rule_reset(self)
+    self._action_permissions = self._rule_compile(global_action_permissions, local_action_permissions, strict)
+    self._field_permissions = self._rule_compile(global_field_permissions, local_field_permissions, strict)
+    self.add_output('_action_permissions')
+    self.add_output('_field_permissions')
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
@@ -1607,3 +1820,203 @@ class SuperAsyncProperty(SuperKeyProperty):
       return async_manager
     else:
       return async_manager.get()
+
+
+#########################################
+########## Core system models! ##########
+#########################################
+
+
+class Action(BaseExpando):
+  
+  _kind = 56
+  
+  name = SuperStringProperty('1', required=True)
+  arguments = SuperPickleProperty('2', required=True, default={}, compressed=False)
+  active = SuperBooleanProperty('3', required=True, default=True)
+  
+  _default_indexed = False
+  
+  @classmethod
+  def build_key(cls, kind, action_id):
+    return Key(kind, 'action', cls._get_kind(), action_id)
+
+
+class PluginGroup(BaseExpando):
+  
+  _kind = 52
+  
+  name = SuperStringProperty('1', required=True)
+  subscriptions = SuperKeyProperty('2', kind='56', repeated=True)
+  active = SuperBooleanProperty('3', required=True, default=True)
+  sequence = SuperIntegerProperty('4', required=True)  # @todo Not sure if we are gonna need this?
+  transactional = SuperBooleanProperty('5', required=True, default=False, indexed=False)
+  plugins = SuperPickleProperty('6', required=True, default=[], compressed=False)
+  
+  _default_indexed = False
+
+
+class Record(BaseExpando):
+  
+  _kind = 5
+  
+  _use_field_rules = False
+  
+  # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
+  logged = SuperDateTimeProperty('l', auto_now_add=True)
+  agent = SuperKeyProperty('u', kind='0', required=True)
+  action = SuperKeyProperty('a', kind='56', required=True)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'message': SuperTextProperty('m'),
+    'note': SuperTextProperty('n')
+    }
+  
+  _virtual_fields = {
+    '_agent': SuperStringProperty(),
+    '_action': SuperStringProperty()
+    }
+  
+  def _if_properties_are_cloned(self):
+    return not (self.__class__._properties is self._properties)
+  
+  def _retrieve_cloned_name(self, name):
+    for _, prop in self._properties.items():
+      if name == prop._code_name:
+        return prop._name
+  
+  def __setattr__(self, name, value):
+    if self._if_properties_are_cloned():
+      _name = self._retrieve_cloned_name(name)
+      if _name:
+        name = _name
+    return super(Record, self).__setattr__(name, value)
+  
+  def __getattr__(self, name):
+    if self._if_properties_are_cloned():
+      _name = self._retrieve_cloned_name(name)
+      if _name:
+        name = _name
+    return super(Record, self).__getattr__(name)
+  
+  def _get_property_for(self, p, indexed=True, depth=0):
+    '''Overrides BaseExpando._get_property_for.
+    Only way to merge properties from its parent kind to log entity.
+    
+    '''
+    name = p.name()
+    parts = name.split('.')
+    if len(parts) <= depth:
+      # Apparently there's an unstructured value here.
+      # Assume it is a None written for a missing value.
+      # (It could also be that a schema change turned an unstructured
+      # value into a structured one. In that case, too, it seems
+      # better to return None than to return an unstructured value,
+      # since the latter doesn't match the current schema.)
+      return None
+    next = parts[depth]
+    prop = self._properties.get(next)
+    if prop is None:
+      # This loads up proper class to deal with the expandos.
+      kind = self.key_parent.kind()
+      modelclass = self._kind_map.get(kind)
+      # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
+      properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().items()])
+      # Adds properties from parent class to the log entity making it possible to deserialize them properly.
+      prop = properties.get(next)
+      if prop:
+        self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden!
+        self._properties[next] = prop
+        self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
+    return super(Record, self)._get_property_for(p, indexed, depth)
+  
+  def log_entity(self, entity):
+    self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
+    for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
+      value = prop._get_value(entity)
+      self._properties[prop._name] = prop
+      try:
+        prop._set_value(self, value)
+      except TypeError as e:
+        setattr(self, prop._code_name, value)
+      self.add_output(prop._code_name)
+    return self
+
+
+class Permission(BasePolyExpando):
+  '''Base class for all permissions.
+  If the futuer deems scaling to be a problem, possible solutions could be to:
+  a) Create DomainUserPermissions entity, that will fan-out on DomainUser entity,
+  and will contain all permissions for the domain user (based on it's domain role membership) in it;
+  b) Transform this class to BasePolyExpando, so it can be indexed and queried (by model kind, by action...),
+  and store each permission in datasotre as child entity of DomainUser;
+  c) Some other similar pattern.
+  
+  '''
+  _kind = 78
+  
+  _default_indexed = False
+
+
+class ActionPermission(Permission):
+  
+  _kind = 79
+  
+  model = SuperStringProperty('1', required=True, indexed=False)
+  actions = SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
+  executable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
+  condition = SuperStringProperty('4', required=True, indexed=False)
+  
+  def __init__(self, *args, **kwargs):
+    super(ActionPermission, self).__init__(**kwargs)
+    if len(args):
+      model, actions, executable, condition = args
+      if not isinstance(actions, (tuple, list)):
+        actions = [actions]
+      self.model = model
+      self.actions = actions
+      self.executable = executable
+      self.condition = condition
+  
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    if (self.model == entity.get_kind()):
+      for action in self.actions:
+        if (action.urlsafe() in entity.get_actions()) and (safe_eval(self.condition, kwargs)) and (self.executable != None):
+          entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
+
+
+class FieldPermission(Permission):
+  
+  _kind = 80
+  
+  model = SuperStringProperty('1', required=True, indexed=False)
+  fields = SuperStringProperty('2', repeated=True, indexed=False)
+  writable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
+  visible = SuperBooleanProperty('4', required=False, default=None, indexed=False)
+  condition = SuperStringProperty('5', required=True, indexed=False)
+  
+  def __init__(self, *args, **kwargs):
+    super(FieldPermission, self).__init__(**kwargs)
+    if len(args):
+      model, fields, writable, visible, condition = args
+      if not isinstance(fields, (tuple, list)):
+        fields = [fields]
+      self.model = model
+      self.fields = fields
+      self.writable = writable
+      self.visible = visible
+      self.condition = condition
+  
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    if (self.model == entity.get_kind()):
+      for field in self.fields:
+        parsed_field = entity.get_field('_field_permissions.' + field)
+        if parsed_field and (safe_eval(self.condition, kwargs)):
+          if (self.writable != None):
+            parsed_field['writable'].append(self.writable)
+          if (self.visible != None):
+            parsed_field['visible'].append(self.visible)
