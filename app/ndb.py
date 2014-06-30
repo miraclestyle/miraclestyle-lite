@@ -6,19 +6,16 @@ Created on Jul 9, 2013
 '''
 
 import decimal
-import cgi
 import datetime
 import importlib
 import json
 import copy
+import collections
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
-from google.appengine.api import images
-
-import cloudstorage
 
 from app import util, settings
 
@@ -588,7 +585,7 @@ class _BaseModel(object):
         for entity in _entities:
           if entity != None:
             entities.append(entity)
-        if _entities[-1] == None:  # If the last item is None, then we assume there are no more images in catalog to get in next round!
+        if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
           cursor = None
           break
     elif fetch_async:
@@ -608,12 +605,12 @@ class _BaseModel(object):
         if entity != None:
           entities.append(entity)
       more = True
-      if _entities[-1] == None:  # If the last item is None, then we assume there are no more images in catalog to get in next round!
+      if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
         more = False
       if more:
         del entities[-1]  # @todo Or results.pop(len(results) - 1)
       cursor = cursor + limit
-    return {'entities': entities, 'more': more, 'cursor': cursor}
+    return (entities, cursor, more)
   
   @classmethod
   def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
@@ -783,7 +780,7 @@ class _BaseModel(object):
       permissions = global_permissions
     return permissions
   
-  def rule_prepare(self, global_permissions, local_permissions=[], strict, **kwargs):
+  def rule_prepare(self, global_permissions, local_permissions=[], strict=False, **kwargs):
     '''This method generates permissions situation for the entity object,
     at the time of execution.
 
@@ -1225,7 +1222,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     
     '''
     property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    property_value = property_value_key.get()  # @todo do we implement here async ??
+    property_value = property_value_key.get()  # @todo How do we use async call here, when we need to investigate the value below?
     if not property_value:
       property_value = self._property._modelclass(key=property_value_key)
     self._property_value = property_value
@@ -1255,10 +1252,11 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     cursor = kwds.get('cursor')
     fetch_all = kwds.get('fetch_all')
     fetch_async = kwds.get('fetch_async')
-    results = self._property._modelclass.search_ancestor_sequence(self._entity.key, fetch_all=fetch_all, fetch_async=fetch_async, limit=limit, cursor=cursor)
-    self._property_value = results['entities']
-    self._property_value_options['cursor'] = results['cursor']
-    self._property_value_options['more'] = results['more']
+    results = self._property._modelclass.search_ancestor_sequence(self._entity.key, fetch_all=fetch_all,
+                                                                  fetch_async=fetch_async, limit=limit, cursor=cursor)
+    self._property_value = results[0]
+    self._property_value_options['cursor'] = results[1]
+    self._property_value_options['more'] = results[2]
   
   def read_async(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
@@ -1279,19 +1277,16 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if len(self._property_value):
           for value in self._property_value:
             if isinstance(value, Future):
-              property_value.append(value.get_result())
+              entity = value.get_result()
+              if entity is not None:
+                property_value.append(entity)
           self._property_value = property_value
       elif isinstance(self._property_value, Future):
         property_value = self._property_value.get_result()
-        if isinstance(property_value[0], list):
-          entities, cursor, more = property_value
-          self._property_value = entities
-          self._property_value_options['cursor'] = cursor
-          self._property_value_options['more'] = more
-        elif isinstance(property_value, dict):
-          self._property_value = property_value.get('entities')
-          self._property_value_options['cursor'] = property_value.get('cursor')
-          self._property_value_options['more'] = property_value.get('more')
+        if isinstance(property_value, tuple):
+          self._property_value = property_value[0]
+          self._property_value_options['cursor'] = property_value[1]
+          self._property_value_options['more'] = property_value[2]
         else:
           self._property_value = property_value
     return self._property_value
@@ -1923,6 +1918,39 @@ class SuperKeyAsyncProperty(SuperKeyProperty):
       return value.read()
 
 
+class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
+  
+  def __init__(self, *args, **kwargs):
+    args = list(args)
+    self._modelclass2 = args[0]
+    args[0] = Record
+    super(SuperLocalStructuredRecordProperty, self).__init__(*args, **kwargs)
+  
+  def get_model_fields(self):
+    parent = super(SuperLocalStructuredRecordProperty, self).get_model_fields()
+    if isinstance(self._modelclass2, basestring):
+      self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+    parent.update(self._modelclass2.get_fields())
+    return parent
+
+
+class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
+  '''Usage: '_records': ndb.SuperStructuredRecordProperty(Domain or '6')'''
+  
+  def __init__(self, *args, **kwargs):
+    args = list(args)
+    self._modelclass2 = args[0]
+    args[0] = Record
+    super(SuperStructuredRecordProperty, self).__init__(*args, **kwargs)
+  
+  def get_model_fields(self):
+    parent = super(SuperStructuredRecordProperty, self).get_model_fields()
+    if isinstance(self._modelclass2, basestring):
+      self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+    parent.update(self._modelclass2.get_fields())
+    return parent
+
+
 #########################################
 ########## Core system models! ##########
 #########################################
@@ -1957,6 +1985,22 @@ class PluginGroup(BaseExpando):
   _default_indexed = False
 
 
+'''
+The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
+It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because
+if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
+meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will
+cause complete inconsistency and errors while fetching, storing and deleting data. This behavior was noticed upon testing.
+
+Same approach must be done with the transaction / entry / line scenario, which implements its own logic for new
+properties.
+
+This implementation will not cause any performance issues or variable leak whatsoever, the _properties will be adjusted to
+be available in "self" - not "cls".
+
+In the beginning i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
+allowed mutations to class(cls) scope.
+'''
 class Record(BaseExpando):
   
   _kind = 5

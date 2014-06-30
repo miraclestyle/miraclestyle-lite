@@ -22,123 +22,16 @@ from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
 
-def _rule_reset_actions(action_permissions, actions):
-  for action_key in actions:
-    action_permissions[action_key] = {'executable': []}
-
-
-def _rule_reset_fields(field_permissions, fields):
-  for field_key, field in fields.items():
-    if field_key not in field_permissions:
-      field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-    if ndb.is_structured_field(field):
-      model_fields = field.get_model_fields()
-      if field._code_name in model_fields:
-        model_fields.pop(field._code_name)  # @todo Test this behaviour!
-      _rule_reset_fields(field_permissions[field_key], model_fields)
-
-
-def _rule_reset(entity):
-  '''This method builds dictionaries that will hold permissions inside
-  entity object.
-  
-  '''
-  entity._action_permissions = {}
-  entity._field_permissions = {}
-  actions = entity.get_actions()
-  fields = entity.get_fields()
-  _rule_reset_actions(entity._action_permissions, actions)
-  _rule_reset_fields(entity._field_permissions, fields)
-
-
-def _rule_decide(permissions, strict, root=True, parent_permissions=None):
-  for key, value in permissions.items():
-    if isinstance(value, dict):
-      if parent_permissions:
-        root = False
-      _rule_decide(permissions[key], strict, root, permissions)
-    else:
-      if isinstance(value, list) and len(value):
-        if (strict):
-          if all(value):
-            permissions[key] = True
-          else:
-            permissions[key] = False
-        elif any(value):
-          permissions[key] = True
-        else:
-          permissions[key] = False
-      else:
-        permissions[key] = None
-        if not root and not len(value):
-          permissions[key] = parent_permissions[key]
-
-
-def _rule_override_local_permissions(global_permissions, local_permissions):
-  for key, value in local_permissions.items():
-    if isinstance(value, dict):
-      _rule_override_local_permissions(global_permissions[key], local_permissions[key])  # global_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
-    else:
-      if key in global_permissions:
-        gp_value = global_permissions[key]
-        if gp_value is not None and gp_value != value:
-          local_permissions[key] = gp_value
-      if local_permissions[key] is None:
-        local_permissions[key] = False
-
-
-def _rule_complement_local_permissions(global_permissions, local_permissions):
-  for key, value in global_permissions.items():
-    if isinstance(value, dict):
-      _rule_complement_local_permissions(global_permissions[key], local_permissions[key])  # local_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
-    else:
-      if key not in local_permissions:
-        local_permissions[key] = value
-
-
-def _rule_compile_global_permissions(global_permissions):
-  for key, value in global_permissions.items():
-    if isinstance(value, dict):
-      _rule_compile_global_permissions(global_permissions[key])
-    else:
-      if value is None:
-        value = False
-      global_permissions[key] = value
-
-
-def _rule_compile(global_permissions, local_permissions, strict):
-  _rule_decide(global_permissions, strict)
-  # If local permissions are present, process them.
-  if local_permissions:
-    _rule_decide(local_permissions, strict)
-    # Iterate over local permissions, and override them with the global permissions.
-    _rule_override_local_permissions(global_permissions, local_permissions)
-    # Make sure that global permissions are always present.
-    _rule_complement_local_permissions(global_permissions, local_permissions)
-    permissions = local_permissions
-  # Otherwise just process global permissions.
-  else:
-    _rule_compile_global_permissions(global_permissions)
-    permissions = global_permissions
-  return permissions
-
-
 def _rule_prepare(context, skip_user_roles, strict):
   '''This method generates permissions situation for the context.entity object,
   at the time of execution.
   
   '''
   if context.entity:
-    _rule_reset(context.entity)
+    global_permissions = []
+    local_permissions = []
     if hasattr(context.entity, '_global_role') and context.entity._global_role.get_kind() == '67':
-      context.entity._global_role.run(context)
-    # Copy generated entity permissions to separate dictionary.
-    global_action_permissions = context.entity._action_permissions.copy()
-    global_field_permissions = context.entity._field_permissions.copy()
-    # Reset permissions structures.
-    _rule_reset(context.entity)
-    local_action_permissions = {}
-    local_field_permissions = {}
+      global_permissions = context.entity._global_role.permissions
     if not skip_user_roles:
       if not context.user._is_guest:
         domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.entity.key_namespace)
@@ -151,21 +44,14 @@ def _rule_prepare(context, skip_user_roles, strict):
               clean_roles = True
             else:
               if role.active:
-                role.run(context)
+                local_permissions.extend(role.permissions)
           if clean_roles:
             data = {'action_model': '8',
                     'action_key': 'clean_roles',
                     'key': domain_user.key.urlsafe()}
             context.callback_payloads.append(('callback', data))
-        # Copy generated entity permissions to separate dictionary.
-        local_action_permissions = context.entity._action_permissions.copy()
-        local_field_permissions = context.entity._field_permissions.copy()
-        # Reset permissions structures.
-        _rule_reset(context.entity)
-    context.entity._action_permissions = _rule_compile(global_action_permissions, local_action_permissions, strict)
-    context.entity._field_permissions = _rule_compile(global_field_permissions, local_field_permissions, strict)
-    context.entity.add_output('_action_permissions')
-    context.entity.add_output('_field_permissions')
+    kwargs = {'user': context.user, 'action': context.action}
+    context.entity.rule_prepare(global_permissions, local_permissions, strict, kwargs)
 
 
 def rule_prepare(context, entity_path, skip_user_roles, strict):
@@ -248,82 +134,6 @@ __SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
 def get_search_field(field_type):
   global __SEARCH_FIELDS
   return __SEARCH_FIELDS.get(field_type)
-
-
-def ndb_search(model, argument, page_size=None, urlsafe_cursor=None, namespace=None, fetch_all=True, offset=0, limit=1000):
-  keys = None
-  args = []
-  kwds = {}
-  filters = argument.get('filters')
-  order_by = argument.get('order_by')
-  for _filter in filters:
-    if _filter['field'] == 'ancestor':
-      kwds['ancestor'] = _filter['value']
-      continue
-    if _filter['field'] == 'key':
-      keys = _filter['value']
-      break
-    field = getattr(model, _filter['field'])
-    op = _filter['operator']
-    value = _filter['value']
-    if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-      args.append(field == value)
-    elif op == '!=':
-      args.append(field != value)
-    elif op == '>':
-      args.append(field > value)
-    elif op == '<':
-      args.append(field < value)
-    elif op == '>=':
-      args.append(field >= value)
-    elif op == 'IN':
-      args.append(field.IN(value))
-    elif op == 'contains':
-      letters = list(string.printable)
-      try:
-        last = letters[letters.index(value[-1].lower()) + 1]
-        args.append(field >= value)
-        args.append(field < last)
-      except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
-        args.append(field == value)
-  query = model.query(namespace=namespace, **kwds)
-  query = query.filter(*args)
-  if order_by:
-    order_by_field = getattr(model, order_by['field'])
-    if order_by['operator'] == 'asc':
-      query = query.order(order_by_field)
-    else:
-      query = query.order(-order_by_field)
-  cursor = Cursor(urlsafe=urlsafe_cursor)
-  if keys != None:
-    if not isinstance(keys, list):
-      keys = [value]
-    entities = ndb.get_multi(keys)
-    cursor = None
-    more = False
-  else:
-    if page_size != None and page_size > 0:
-      entities, cursor, more = query.fetch_page(page_size, start_cursor=cursor)
-      if cursor:
-        cursor = cursor.urlsafe()
-    else:
-      if fetch_all:
-        offset = 0
-        limit = 1000
-      entities = []
-      more = True
-      while more:
-        _entities = query.fetch(limit=limit, offset=offset)
-        if len(_entities):
-          entities.extend(_entities)
-          offset = offset + limit
-          if not fetch_all:
-            more = False
-        else:
-          more = False
-      cursor = None
-      more = False
-  return {'entities': entities, 'search_cursor': cursor, 'search_more': more}
 
 
 def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, namespace=None, fields=None):
