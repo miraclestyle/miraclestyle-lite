@@ -497,7 +497,7 @@ class _BaseModel(object):
       return None
   
   @classmethod
-  def search(cls, argument, namespace=None, fetch_all=False, limit=10, urlsafe_cursor=None):
+  def search(cls, argument, namespace=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
     keys = None
     args = []
     kwds = {}
@@ -541,15 +541,18 @@ class _BaseModel(object):
         query = query.order(order_by_field)
       else:
         query = query.order(-order_by_field)
-    return cls.search_exec(query, keys, fetch_all, limit, urlsafe_cursor)
+    return cls.search_exec(query, keys, fetch_all, fetch_async, limit, urlsafe_cursor)
   
   @classmethod
-  def search_exec(cls, query, keys=None, fetch_all=False, limit=10, urlsafe_cursor=None):
+  def search_exec(cls, query, keys=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
     # Caller must be capable of differentiating possible results returned!
     if keys != None:
       if not isinstance(keys, list):
         keys = [value]
-      entities = get_multi(keys)
+      if fetch_async:
+        entities = get_multi_async(keys)
+      else:
+        entities = get_multi(keys)
     else:
       try:
         cursor = Cursor(urlsafe=urlsafe_cursor)
@@ -567,8 +570,10 @@ class _BaseModel(object):
               break
           else:
             break
-      else:
+      elif fetch_async:
         entities = query.fetch_page_async(limit, start_cursor=cursor)
+      else:
+        entities = query.fetch_page(limit, start_cursor=cursor)
     return entities
   
   @classmethod
