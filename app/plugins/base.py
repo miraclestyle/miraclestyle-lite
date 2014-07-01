@@ -180,7 +180,7 @@ class Search(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     index_name = self.cfg.get('index', None)
-    page_size = self.cfg.get('page', 10)
+    limit = self.cfg.get('page', 10)
     fields = self.cfg.get('fields', None)
     search_document = self.cfg.get('document', False)
     model =  context.models[context.model.get_kind()]
@@ -193,14 +193,22 @@ class Search(ndb.BaseModel):
       namespace = None
     if search_document:
       result = document_search(index_name, argument, page_size, urlsafe_cursor, namespace, fields)
-      context.search_documents = result['documents']
-      context.search_documents_count = result['documents_count']
-      context.search_documents_total_matches = result['total_matches']
+      context.search_documents = result[0]
+      context.search_cursor = result[1]
+      context.search_more = result[2]
+      context.search_documents_count = result[3]
+      context.search_documents_total_matches = result[4]
     else:
-      result = ndb_search(model, argument, page_size, urlsafe_cursor, namespace)
-      context.entities = result['entities']
-    context.search_cursor = result['search_cursor']
-    context.search_more = result['search_more']
+      result = model.search(argument, namespace=namespace, fetch_async=False, limit=limit, urlsafe_cursor=urlsafe_cursor)
+      entities = []
+      if isinstance(result, tuple):
+        context.entities = result[0]
+        context.search_cursor = result[1]
+        context.search_more = result[2]
+      elif isinstance(result, list):
+        context.entities = result
+        context.search_cursor = None
+        context.search_more = False
 
 
 class RecordRead(ndb.BaseModel):

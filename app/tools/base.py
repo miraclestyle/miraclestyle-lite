@@ -202,11 +202,7 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, nam
   except:
     raise
   finally:
-    return {'documents': documents,
-            'documents_count': documents_count,
-            'total_matches': total_matches,
-            'search_cursor': search_cursor,
-            'search_more': search_more}
+    return (documents, search_cursor, search_more, documents_count, total_matches)
 
 
 def _document_from_entity(entity, fields={}):

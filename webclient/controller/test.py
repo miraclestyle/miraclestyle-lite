@@ -289,9 +289,7 @@ class TestRuleWriteModelRef(ndb.BaseModel):
   _use_field_rules = False
   _use_memcache = False
   _use_cache = False
-  
-  _record = False
-  
+ 
   name = ndb.SuperStringProperty(required=True)
   
 
@@ -300,13 +298,13 @@ class TestRuleWriteModelRef2(ndb.BaseModel):
   _use_field_rules = False
   _use_memcache = False
   _use_cache = False
-  
-  _record = False
-  
+ 
   name = ndb.SuperStringProperty(required=True)
       
       
 class TestRuleWriteModel(ndb.BaseModel):
+  
+  _kind = 1500
   
   _use_field_rules = True
   _use_memcache = False
@@ -315,15 +313,13 @@ class TestRuleWriteModel(ndb.BaseModel):
   _record = False
   
   name = ndb.SuperStringProperty()
-  another = ndb.SuperStructuredProperty(TestRuleWriteModelRef)
+  another = ndb.SuperStructuredProperty(TestRuleWriteModelRef, repeated=False)
   other = ndb.SuperStructuredProperty(TestRuleWriteModelRef2, repeated=True)
   
   _global_role = GlobalRole(
     permissions=[
-      ndb.ActionPermission('77', [ndb.Action.build_key('77', 'update'),
-                              ndb.Action.build_key('77', 'read'),
-                              ndb.Action.build_key('77', 'read_records')], True, 'context.entity._original.key_parent == context.user.key and not context.user._is_guest'),
-      ndb.FieldPermission('77', ['addresses', '_records'], True, True, 'context.entity._original.key_parent == context.user.key and not context.user._is_guest')
+       ndb.FieldPermission('1500', ['name'], True, True, 'True'),
+       ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True')
       ]
     )
 
@@ -333,6 +329,8 @@ class TestRuleWrite(handler.Base):
   LOAD_CURRENT_USER = False
   
   def respond(self):
+    def out(a):
+      self.response.write(json.dumps(a, cls=handler.JSONEncoderHTML))
     ider = self.request.get('id')
     make = self.request.get('make')
     if make:
@@ -344,20 +342,16 @@ class TestRuleWrite(handler.Base):
       
       a._use_field_rules = False
       a.put()
+      out(a)
     else:
       
       a = ndb.Key(TestRuleWriteModel, 'tester_%s' % ider).get()
+      a.rule_prepare(TestRuleWriteModel._global_role.permissions)
+      a.rule_read()
       if a and self.request.get('do_put'):
-        a.rule_prepare([TestRuleWriteModel._global_role])
         a.name = 'Tester one changed'
-        
-        print a.other
-        print a.other.read()
-        print a.other._property_value
-        print a.other.read()
-        print a.other.read()
-        #a.put()
-      self.response.write(a)
+        a.put()
+      out(a)
     
 
 class UploadTest(handler.Base):
