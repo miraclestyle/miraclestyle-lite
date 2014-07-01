@@ -549,7 +549,7 @@ class _BaseModel(object):
     if keys != None:
       if not isinstance(keys, list):
         keys = [value]
-      entities = ndb.get_multi(keys)
+      entities = get_multi(keys)
     else:
       try:
         cursor = Cursor(urlsafe=urlsafe_cursor)
@@ -1338,7 +1338,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       pass
 
 
-class SuperKeyPropertyManager(SuperPropertyManager):
+class SuperReadPropertyManager(SuperPropertyManager):
   
   def _read(self):
     if self._property._callback:
@@ -1458,13 +1458,13 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   
   def _get_value(self, entity):
     # __get__
-    manager = '%s_manager' % self._name
-    if manager in entity._values:
-      return entity._values[manager]
-    util.logger('SuperLocalStructuredProperty._get_value.%s %s' % (manager, entity))
-    value = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
-    entity._values[manager] = value
-    return value
+    manager_name = '%s_manager' % self._name
+    if manager_name in entity._values:
+      return entity._values[manager_name]
+    util.logger('SuperLocalStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    manager = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
+    entity._values[manager_name] = manager
+    return manager
 
 
 class SuperStructuredProperty(_BaseProperty, StructuredProperty):
@@ -1505,13 +1505,13 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
   def _get_value(self, entity):
     # __get__
-    manager = '%s_manager' % self._name
-    if manager in entity._values:
-      return entity._values[manager]
-    util.logger('SuperStructuredProperty._get_value.%s %s' % (manager, entity))
-    value = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
-    entity._values[manager] = value
-    return value
+    manager_name = '%s_manager' % self._name
+    if manager_name in entity._values:
+      return entity._values[manager_name]
+    util.logger('SuperStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    manager = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
+    entity._values[manager_name] = manager
+    return manager
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -1850,19 +1850,19 @@ class SuperEntityStorageStructuredProperty(Property):
   
   def _get_value(self, entity):
     # __get__
-    manager = '%s_manager' % self._name
-    if manager in entity._values:
-      return entity._values[manager]
-    util.logger('SuperEntityStorageStructuredProperty._get_value.%s %s' % (manager, entity))
-    value = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
-    entity._values[manager] = value
-    return value
+    manager_name = '%s_manager' % self._name
+    if manager_name in entity._values:
+      return entity._values[manager_name]
+    util.logger('SuperEntityStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    manager = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
+    entity._values[manager_name] = manager
+    return manager
   
   def _prepare_for_put(self, entity):
     self._get_value(entity)  # For its side effects.
 
 
-class SuperKeyAsyncProperty(SuperKeyProperty):
+class SuperReadProperty(SuperKeyProperty):
   
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
@@ -1875,19 +1875,19 @@ class SuperKeyAsyncProperty(SuperKeyProperty):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):
       raise PropertyError('"format_callback" must be either None or callable, got %s' % self._format_callback)
-    super(SuperKeyAsyncProperty, self).__init__(*args, **kwargs)
+    super(SuperReadProperty, self).__init__(*args, **kwargs)
   
   def _set_value(self, entity, value):
     # __set__
     manager = self._get_value(entity, internal=True)
     manager.set(value)
-    return super(SuperKeyAsyncProperty, self)._set_value(entity, value)
+    return super(SuperReadProperty, self)._set_value(entity, value)
   
   def _delete_value(self, entity):
     # __delete__
     manager = self._get_value(entity, internal=True)
     manager.delete()
-    return super(SuperKeyAsyncProperty, self)._delete_value(entity)
+    return super(SuperReadProperty, self)._delete_value(entity)
   
   def _retrieve_value(self, entity, default=None):
     '''Internal helper to retrieve the value for this Property from an entity.
@@ -1897,28 +1897,28 @@ class SuperKeyAsyncProperty(SuperKeyProperty):
     
     '''
     manager = entity._values.get(self._name, default)
-    if isinstance(manager, SuperKeyPropertyManager):
+    if isinstance(manager, SuperReadPropertyManager):
       return manager.read()
     return manager
   
   def _get_value(self, entity, internal=None):
     # __get__
-    manager = '%s_manager' % self._name
-    if manager in entity._values:
-      value = entity._values[manager]
+    manager_name = '%s_manager' % self._name
+    if manager_name in entity._values:
+      manager = entity._values[manager_name]
     else:
-      util.logger('SuperKeyAsyncProperty._get_value.%s %s' % (manager, entity))
-      value = SuperKeyPropertyManager(property_instance=self, storage_entity=entity)
-      entity._values[manager] = value
-    if internal:  # If is internal is true, always retrieve manager
-      return value
-    if not value.has_value():
-      return value
+      util.logger('SuperKeyAsyncProperty._get_value.%s %s' % (manager_name, entity))
+      manager = SuperReadPropertyManager(property_instance=self, storage_entity=entity)
+      entity._values[manager_name] = manager
+    if internal:  # If internal is true, always retrieve manager.
+      return manager
+    if not manager.has_value():
+      return manager
     else:
-      return value.read()
+      return manager.read()
 
 
-class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
+class SuperLocalStructuredRecordProperty(SuperLocalStructuredProperty):
   
   def __init__(self, *args, **kwargs):
     args = list(args)
@@ -1929,13 +1929,13 @@ class SuperLocalStructuredRecordProperty(ndb.SuperLocalStructuredProperty):
   def get_model_fields(self):
     parent = super(SuperLocalStructuredRecordProperty, self).get_model_fields()
     if isinstance(self._modelclass2, basestring):
-      self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+      self._modelclass2 = Model._kind_map.get(self._modelclass2)
     parent.update(self._modelclass2.get_fields())
     return parent
 
 
-class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
-  '''Usage: '_records': ndb.SuperStructuredRecordProperty(Domain or '6')'''
+class SuperStructuredRecordProperty(SuperStructuredProperty):
+  '''Usage: '_records': SuperStructuredRecordProperty(Domain or '6')'''
   
   def __init__(self, *args, **kwargs):
     args = list(args)
@@ -1946,7 +1946,7 @@ class SuperStructuredRecordProperty(ndb.SuperStructuredProperty):
   def get_model_fields(self):
     parent = super(SuperStructuredRecordProperty, self).get_model_fields()
     if isinstance(self._modelclass2, basestring):
-      self._modelclass2 = ndb.Model._kind_map.get(self._modelclass2)
+      self._modelclass2 = Model._kind_map.get(self._modelclass2)
     parent.update(self._modelclass2.get_fields())
     return parent
 
