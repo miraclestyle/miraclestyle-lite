@@ -16,6 +16,8 @@ from webclient import handler
 
 from app import ndb, memcache, util, io
 
+from app.models.base import GlobalRole
+
 @ndb.tasklet
 def results_search_callback(entities):
   @ndb.tasklet
@@ -95,9 +97,9 @@ class TestEntity(ndb.BaseModel):
   _use_cache = False
   _use_field_rules = False
   
-  _virtual_fields = dict(_magic_single_entity = ndb.SuperEntityStorageProperty(TestEntitySingleStorage, storage='single'),
-                         _magic_children_entity = ndb.SuperEntityStorageProperty(TestEntityChildrenStorage, storage='children_multi'),
-                         _magic_range_children_entity = ndb.SuperEntityStorageProperty(TestEntityRangeStorage, storage='range_children_multi')
+  _virtual_fields = dict(_magic_single_entity = ndb.SuperEntityStorageStructuredProperty(TestEntitySingleStorage, storage='single'),
+                         _magic_children_entity = ndb.SuperEntityStorageStructuredProperty(TestEntityChildrenStorage, storage='children_multi'),
+                         _magic_range_children_entity = ndb.SuperEntityStorageStructuredProperty(TestEntityRangeStorage, storage='range_children_multi')
                         )
   
   local_structured_repeated = ndb.SuperLocalStructuredProperty(TestEntityLocalStructuredStorage, repeated=True)
@@ -219,16 +221,16 @@ class TestGets(ndb.BaseModel):
   referenced2 = ndb.SuperKeyProperty(kind=TestGetsRefEmail)
     
   _virtual_fields = {
-   '_referenced_name' : ndb.SuperAsyncProperty(kind=TestGetsRef, 
+   '_referenced_name' : ndb.SuperReadProperty(kind=TestGetsRef, 
                                           callback=lambda self: self.referenced.get_async(),
                                           format_callback=lambda self, entity: self._get_reference_name(entity)),
                  
-   '_referenced2_email' : ndb.SuperAsyncProperty(kind=TestGetsRefEmail, 
+   '_referenced2_email' : ndb.SuperReadProperty(kind=TestGetsRefEmail, 
                                           callback=lambda self: self.referenced2.get_async(),
                                           format_callback=lambda self, entity: self._get_reference_email(entity)),
-   '_referenced' : ndb.SuperAsyncProperty(kind=TestGetsRef, 
+   '_referenced' : ndb.SuperReadProperty(kind=TestGetsRef, 
                                           target_field='referenced'),
-   '_referenced2' : ndb.SuperAsyncProperty(kind=TestGetsRefEmail, 
+   '_referenced2' : ndb.SuperReadProperty(kind=TestGetsRefEmail, 
                                           target_field='referenced2'),           
   }
   
@@ -280,6 +282,82 @@ class TestGetAsync(handler.Base):
     if self.request.get('get'):
       result = TestGets.build_key('%s_%s' % (sig, self.request.get('get'))).get()
       respond(result)
+ 
+ 
+class TestRuleWriteModelRef(ndb.BaseModel):
+  
+  _use_field_rules = False
+  _use_memcache = False
+  _use_cache = False
+  
+  _record = False
+  
+  name = ndb.SuperStringProperty(required=True)
+  
+
+class TestRuleWriteModelRef2(ndb.BaseModel):
+  
+  _use_field_rules = False
+  _use_memcache = False
+  _use_cache = False
+  
+  _record = False
+  
+  name = ndb.SuperStringProperty(required=True)
+      
+      
+class TestRuleWriteModel(ndb.BaseModel):
+  
+  _use_field_rules = True
+  _use_memcache = False
+  _use_cache = False
+  
+  _record = False
+  
+  name = ndb.SuperStringProperty()
+  another = ndb.SuperStructuredProperty(TestRuleWriteModelRef)
+  other = ndb.SuperStructuredProperty(TestRuleWriteModelRef2, repeated=True)
+  
+  _global_role = GlobalRole(
+    permissions=[
+      ndb.ActionPermission('77', [ndb.Action.build_key('77', 'update'),
+                              ndb.Action.build_key('77', 'read'),
+                              ndb.Action.build_key('77', 'read_records')], True, 'context.entity._original.key_parent == context.user.key and not context.user._is_guest'),
+      ndb.FieldPermission('77', ['addresses', '_records'], True, True, 'context.entity._original.key_parent == context.user.key and not context.user._is_guest')
+      ]
+    )
+
+    
+class TestRuleWrite(handler.Base):
+  
+  LOAD_CURRENT_USER = False
+  
+  def respond(self):
+    ider = self.request.get('id')
+    make = self.request.get('make')
+    if make:
+      a = TestRuleWriteModel(id='tester_%s' % ider, name='Tester one %s' % ider,
+                             another=TestRuleWriteModelRef(name='Yes'),
+                             other=[TestRuleWriteModelRef2(name='#1'),
+                                    TestRuleWriteModelRef2(name='#2'),
+                                    TestRuleWriteModelRef2(name='#3')])
+      
+      a._use_field_rules = False
+      a.put()
+    else:
+      
+      a = ndb.Key(TestRuleWriteModel, 'tester_%s' % ider).get()
+      if a and self.request.get('do_put'):
+        a.rule_prepare([TestRuleWriteModel._global_role])
+        a.name = 'Tester one changed'
+        
+        print a.other
+        print a.other.read()
+        print a.other._property_value
+        print a.other.read()
+        print a.other.read()
+        #a.put()
+      self.response.write(a)
     
 
 class UploadTest(handler.Base):
@@ -490,4 +568,5 @@ handler.register(('/endpoint', Endpoint),
                  ('/test_tasklet', TestTasklet),
                  ('/upload_test', UploadTest),
                  ('/TestEntityManager', TestEntityManager),
-                 ('/TestGetAsync', TestGetAsync))
+                 ('/TestGetAsync', TestGetAsync),
+                 ('/TestRuleWrite', TestRuleWrite))

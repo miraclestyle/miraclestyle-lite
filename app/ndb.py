@@ -11,6 +11,8 @@ import importlib
 import json
 import copy
 import collections
+import dis
+import string
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
@@ -142,7 +144,7 @@ def safe_eval(source, data=None):
   try:
     return eval(comp, {'__builtins__': {'True': True, 'False': False, 'str': str,
                                         'globals': locals, 'locals': locals, 'bool': bool,
-                                        'dict': dict, 'round': round, 'Decimal': Decimal}}, data)
+                                        'dict': dict, 'round': round, 'Decimal': decimal.Decimal}}, data)
   except Exception as e:
     raise Exception('Failed to process code "%s" error: %s' % ((source, data), e))
 
@@ -349,7 +351,7 @@ class _BaseModel(object):
     entity = self
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().items():
-        if isinstance(field_instance, SuperKeyPropertyManager):
+        if isinstance(field_instance, SuperStructuredPropertyManager):
           manager = field_instance._get_value(entity, internal=True)
           manager.read_async()
   
@@ -358,7 +360,7 @@ class _BaseModel(object):
     entity = future.get_result()
     if entity is not None:  # @todo http://stackoverflow.com/questions/2209755/python-operation-vs-is-not
       entity.make_original()
-    entity._make_async_calls()
+      entity._make_async_calls()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
@@ -548,7 +550,7 @@ class _BaseModel(object):
     # Caller must be capable of differentiating possible results returned!
     if keys != None:
       if not isinstance(keys, list):
-        keys = [value]
+        keys = [keys]
       entities = get_multi(keys)
     else:
       try:
@@ -647,30 +649,38 @@ class _BaseModel(object):
   def _rule_write(cls, permissions, entity, field_key, field, field_value):  # @todo Not sure if this should be class method, but it seamed natural that way!?
     '''If the field is writable, ignore substructure permissions and override field fith new values.
     Otherwise go one level down and check again.
-
     '''
-    #print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
-    if (field_key in permissions) and not (permissions[field_key]['writable']):
-      try:
-        #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
-        #  return
-        setattr(entity, field_key, field_value)
-      except TypeError as e:
-        util.logger('write: setattr error: %s' % e)
-      except ComputedPropertyError:
-        pass
-    else:
-      if is_structured_field(field):
+    print '%s.%s=%s' % (entity.__class__.__name__, field_key, field_value)
+    if (field_key in permissions):
+      if not (is_structured_field(field) or isinstance(field_value, SuperStructuredPropertyManager)):
+        if not permissions[field_key]['writable']:
+          if entity._state == 'deleted':
+            entity._state = 'updated'
+          try:
+            #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
+            #  return
+            setattr(entity, field_key, field_value)
+          except TypeError as e:
+            util.logger('write: setattr error: %s' % e)
+          except ComputedPropertyError:
+            pass
+      else:
         child_entity = getattr(entity, field_key)
+        if isinstance(child_entity, SuperStructuredPropertyManager):
+          child_entity = child_entity.read()
         for child_field_key, child_field in field.get_model_fields().items():
           if field._repeated:
             for i, child_entity_item in enumerate(child_entity):
               try:
+                if isinstance(field_value, SuperStructuredPropertyManager):
+                  field_value = field_value.read()
                 child_field_value = getattr(field_value[i], child_field_key)
                 cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
               except IndexError as e:
                 pass
           else:
+            if isinstance(child_entity, SuperStructuredPropertyManager):
+              child_entity = child_entity.read()
             cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
   
   def rule_write(self):
@@ -780,11 +790,13 @@ class _BaseModel(object):
       permissions = global_permissions
     return permissions
   
-  def rule_prepare(self, global_permissions, local_permissions=[], strict=False, **kwargs):
+  def rule_prepare(self, global_permissions, local_permissions=None, strict=False, **kwargs):
     '''This method generates permissions situation for the entity object,
     at the time of execution.
 
     '''
+    if local_permissions is None:
+      local_permissions = []
     self._rule_reset(self)
     for global_permission in global_permissions:
       if isinstance(global_permission, Permission):
@@ -1123,7 +1135,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   '''
   
   def __init__(self, property_instance, storage_entity, **kwds):
-    super(StorageEntityManager, self).__init__(property_instance, storage_entity, **kwds)
+    super(SuperStructuredPropertyManager, self).__init__(property_instance, storage_entity, **kwds)
     if isinstance(self._property._modelclass, basestring):  # In case the model class is a kind str
       self._property._modelclass = Model._kind_map(self._property._modelclass)
     self._property_value_options = {}
@@ -1444,18 +1456,6 @@ class SuperLocalStructuredProperty(_BaseProperty, LocalStructuredProperty):
   def format(self, value):
     return _structured_property_format(self, value)
   
-  def _retrieve_value(self, entity, default=None):
-    '''Internal helper to retrieve the value for this Property from an entity.
-    This returns None if no value is set, or the default argument if
-    given. For a repeated Property this returns a list if a value is
-    set, otherwise None. No additional transformations are applied.
-    
-    '''
-    manager = entity._values.get(self._name, default)
-    if isinstance(manager, SuperStructuredPropertyManager):
-      return manager.read()
-    return manager
-  
   def _get_value(self, entity):
     # __get__
     manager_name = '%s_manager' % self._name
@@ -1490,18 +1490,6 @@ class SuperStructuredProperty(_BaseProperty, StructuredProperty):
   
   def format(self, value):
     return _structured_property_format(self, value)
-  
-  def _retrieve_value(self, entity, default=None):
-    '''Internal helper to retrieve the value for this Property from an entity.
-    This returns None if no value is set, or the default argument if
-    given. For a repeated Property this returns a list if a value is
-    set, otherwise None. No additional transformations are applied.
-    
-    '''
-    manager = entity._values.get(self._name, default)
-    if isinstance(manager, SuperStructuredPropertyManager):
-      return manager.read()
-    return manager
   
   def _get_value(self, entity):
     # __get__
@@ -1888,18 +1876,6 @@ class SuperReadProperty(SuperKeyProperty):
     manager = self._get_value(entity, internal=True)
     manager.delete()
     return super(SuperReadProperty, self)._delete_value(entity)
-  
-  def _retrieve_value(self, entity, default=None):
-    '''Internal helper to retrieve the value for this Property from an entity.
-    This returns None if no value is set, or the default argument if
-    given. For a repeated Property this returns a list if a value is
-    set, otherwise None. No additional transformations are applied.
-    
-    '''
-    manager = entity._values.get(self._name, default)
-    if isinstance(manager, SuperReadPropertyManager):
-      return manager.read()
-    return manager
   
   def _get_value(self, entity, internal=None):
     # __get__
