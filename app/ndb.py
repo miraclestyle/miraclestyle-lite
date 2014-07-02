@@ -656,10 +656,12 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_write(cls, permissions, entity, field_key, field, field_value):  # @todo Not sure if this should be class method, but it seamed natural that way!?
-    '''If the field is writable, ignore substructure permissions and override field fith new values.
+    '''Old principle was: If the field is writable, ignore substructure permissions and override field fith new values.
     Otherwise go one level down and check again.
+    
     '''
-    if (field_key in permissions):
+    if (field_key in permissions):  #  @todo How this affects the outcome??
+      # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       if not (is_structured_field(field)):
         if not permissions[field_key]['writable']:
           try:
@@ -677,36 +679,32 @@ class _BaseModel(object):
         if isinstance(field_value, SuperStructuredPropertyManager):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
-        field_value_mapping = {} # here we hold references of every key from original state.
+        field_value_mapping = {}  # Here we hold references of every key from original state.
         if field._repeated:
           for field_value_item in field_value:
             if field_value_item.key:
               field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
-        if permissions[field_key]['writable'] and is_local_structure: 
-          # if we are on top level of the LOCAL structured property, 
-          # and we do have full permission on it, all local structured properties item(s) that have _state = 'deleted' 
+        if permissions[field_key]['writable'] and is_local_structure:
+          # If we are on top level of the LOCAL structured property,
+          # and we do have full permission on it, all local structured properties item(s) that have _state == 'deleted'
           # must be deleted.
-
-          # we cannot copy over the originals because we would override changes made to the ones that do not want 
-          # to be deleted, so thats why we will mutate child_entity directly.
-          # mutating the original values would break the rule engine further down the drill section
+          # We cannot copy over the originals because we would override changes made to the ones that doesn't have
+          # to be deleted, so that's why we will mutate child_entity directly.
+          # Mutating the original values would break the rule engine further down the drill section.
           if field._repeated:
-            # if field is repeated, iterate over its values
-            to_delete = [] 
+            to_delete = []
             for current_value in child_entity:
               if current_value._state == 'deleted':
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
           else:
-            # if its not repeated, current_values will be set to None but with setattr(entity, field_key, None)
-            # because mutation could not be achieved by setting child_entity = None
+            # If it's not repeated, current_values will be set to None but with setattr(entity, field_key, None),
+            # because mutation could not be achieved by setting child_entity = None.
             if child_entity._state == 'deleted':
               setattr(entity, field_key, None)
-              
-        if not permissions[field_key]:
+        if not permissions[field_key]['writable']:
           if field._repeated:
-            # if field is repeated, iterate
             to_delete = []
             for current_value in child_entity:
               if not current_value.key or current_value.key not in field_value_mapping:
@@ -714,35 +712,32 @@ class _BaseModel(object):
             for delete in to_delete:
               child_entity.remove(delete)
           else:
-            # if its not repeated, child_entities state will be set to modified
             if not current_value.key or current_value.key not in field_value_mapping:
               setattr(entity, field_key, None)
-        if not permissions[field_key] and not is_local_structure:
-          # if we do not have permission and this is not a local structure
-          # all items that got marked with ._state == 'delete' must have its items removed from the list
-          # because they wont even get chance to be deleted/updated and sent to datastore again.
-          
-          # that is all good, but the problem with that is when the items get returned to the client, it will
-          # "seem" that they are deleted, because we removed them from the entity
-          # so in that case we must preserve them in memory, and switch their _state into modified.
+        if not permissions[field_key]['writable'] and not is_local_structure:
+          # If we do not have permission and this is not a local structure,
+          # all items that got marked with ._state == 'delete' must have their items removed from the list
+          # because they won't even get chance to be deleted/updated and sent to datastore again.
+          # That is all good, but the problem with that is when the items get returned to the client, it will
+          # "seem" that they are deleted, because we removed them from the entity.
+          # So in that case we must preserve them in memory, and switch their _state into modified.
           if field._repeated:
-            # if field is repeated, iterate
             for current_value in child_entity:
               if current_value._state == 'deleted':
                 current_value._state = 'modified'
           else:
-            # if its not repeated, child_entities state will be set to modified
+            # If its not repeated, child_entities state will be set to modified
             child_entity._state = 'modified'
-        # here we begin the process of field drill  
+        # Here we begin the process of field drill.
         for child_field_key, child_field in field.get_model_fields().items():
           if field._repeated:
-            # they are bound dict[key_urlsafe] = item
+            # They are bound dict[key_urlsafe] = item
             for i, child_entity_item in enumerate(child_entity):
-              # if the item has the built key, it is obviously a item that needs update so in that case fetch it from the
-              # field_value_mapping
-              # if it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state
+              # If the item has the built key, it is obviously the item that needs update, so in that case fetch it from the
+              # field_value_mapping.
+              # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
               if child_entity_item.key:
-                child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe()) # always get by key in order to match the editing sequence
+                child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
                 child_field_value = getattr(child_field_value, child_field_key, None)
               else:
                 child_field_value = None
