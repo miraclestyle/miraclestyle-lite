@@ -357,7 +357,6 @@ class TestRuleWrite(handler.Base):
         stuff = a.other.read()
         stuff[1].foobar = 77
         stuff[1].name = 'Else 3'
-        stuff.append(TestRuleWriteModelRef2())
         a.put()
       a.rule_read()
       out(a)

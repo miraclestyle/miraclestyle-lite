@@ -682,6 +682,15 @@ class _BaseModel(object):
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if field._repeated:
           for field_value_item in field_value:
+            '''
+            Most of the time, dict keys are int, string an immutable. But generally a key can be anything
+            http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
+            So using
+            dict[entity.key] = entity.key maybe? 
+            I'm not sure whats the overhead in using .urlsafe(), but this is something that we can look at.
+            Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
+            so anyways all the current code is fine, its just that we can take more simplification in consideration.
+            '''
             if field_value_item.key:
               field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
         if permissions[field_key]['writable'] and is_local_structure:
@@ -699,20 +708,30 @@ class _BaseModel(object):
             for delete in to_delete:
               child_entity.remove(delete)
           else:
+<<<<<<< HEAD
             # If it's not repeated, current_values will be set to None but with setattr(entity, field_key, None),
             # because mutation could not be achieved by setting child_entity = None.
+=======
+            # if its not repeated, child_entity will be set to None but with setattr(entity, field_key, None)
+            # because mutation could not be achieved by setting child_entity = None
+>>>>>>> origin/master
             if child_entity._state == 'deleted':
               setattr(entity, field_key, None)
         if not permissions[field_key]['writable']:
           if field._repeated:
             to_delete = []
             for current_value in child_entity:
-              if not current_value.key or current_value.key not in field_value_mapping:
+              if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
           else:
+<<<<<<< HEAD
             if not current_value.key or current_value.key not in field_value_mapping:
+=======
+            # if its not repeated, child_entities state will be set to modified
+            if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
+>>>>>>> origin/master
               setattr(entity, field_key, None)
         if not permissions[field_key]['writable'] and not is_local_structure:
           # If we do not have permission and this is not a local structure,
