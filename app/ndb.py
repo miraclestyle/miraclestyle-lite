@@ -694,6 +694,7 @@ class _BaseModel(object):
         if permissions[field_key]['writable'] and is_local_structure:
           # If we are on top level of the LOCAL structured property,
           # and we do have full permission on it, all local structured properties item(s) that have _state == 'deleted'
+          # must be deleted.
           # We cannot copy over the originals because we would override changes made to the ones that doesn't have
           # to be deleted, so that's why we will mutate child_entity directly.
           # Mutating the original values would break the rule engine further down the drill section.
@@ -719,7 +720,6 @@ class _BaseModel(object):
               child_entity.remove(delete)
           else:
             if not current_value.key or current_value.key not in field_value_mapping:
-            # if its not repeated, child_entities state will be set to modified.
             if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
               setattr(entity, field_key, None)
         if not permissions[field_key]['writable'] and not is_local_structure:
