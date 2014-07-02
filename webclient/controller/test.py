@@ -322,7 +322,7 @@ class TestRuleWriteModel(ndb.BaseModel):
     permissions=[
        ndb.FieldPermission('1500', ['name'], True, True, 'True'),
        ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True'),
-       ndb.FieldPermission('1500', ['another.name', 'other.foobar'], True, True, 'True'),
+       ndb.FieldPermission('1500', ['another.name', 'other.foobar', 'other.name'], True, True, 'True'),
       ]
     )
 
@@ -356,6 +356,7 @@ class TestRuleWrite(handler.Base):
         stuff = a.other.read()
         stuff[0].foobar = 77
         stuff[0].name = 'Else 3'
+        stuff.append(TestRuleWriteModelRef2(name='#4'))
         a.put()
       out(a)
     

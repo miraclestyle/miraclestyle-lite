@@ -685,21 +685,28 @@ class _BaseModel(object):
             field_value_copy = [field_value_copy]
           possible_keys = [field_value_item.key for field_value_item in field_value_copy]
           for child_entity_item in child_entity_copy:
-            child_entity_item._deleted = 'modified'
+            child_entity_item._state = 'modified'
             if not child_entity_item.key:
-              child_entity_item._state = 'deleted'
+              child_entity_item._state = 'created'
             if child_entity_item.key not in possible_keys:
-              child_entity_item._state = 'deleted'
+              child_entity_item._state = 'created'
         for child_field_key, child_field in field.get_model_fields().items():
           if field._repeated:
+            if isinstance(field_value, SuperStructuredPropertyManager):
+                field_value = field_value.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
+            field_value_mapping = {}
+            for field_value_item in field_value:
+              field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
             for i, child_entity_item in enumerate(child_entity):
               try:
-                if isinstance(field_value, SuperStructuredPropertyManager):
-                  field_value = field_value.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
-                child_field_value = getattr(field_value[i], child_field_key)
-                cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+                child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe()) # always get by key in order to match the editing sequence
+                if not child_field_value:
+                  child_field_value = field_value[i]
+                child_field_value = getattr(child_field_value, child_field_key)
               except IndexError as e:
-                pass
+                child_field_value = None # we init the empty class to getattr from which will always retrieve either default or None 
+                # in which case will raise error if user does not have enough field permimssions to complete the save.
+              cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
           else:
             if isinstance(child_entity, SuperStructuredPropertyManager):
               child_entity = child_entity.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
@@ -707,7 +714,7 @@ class _BaseModel(object):
               field_value = field_value.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
             if not permissions[field_key]['writable']:
               child_entity._state = 'modified' # enforce modified EITHERWAY.
-            cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
+            cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
   
   def rule_write(self):
     entity_fields = self.get_fields()
