@@ -680,6 +680,13 @@ class _BaseModel(object):
         field_value_mapping = {} # here we hold references of every key from original state.
         if field._repeated:
           for field_value_item in field_value:
+            '''
+            Most of the time, dict keys are int, string. But generally a key can be anything
+            http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
+            So we will need to look into most of our temp dict structures where we use key.urlsafe to switch to
+            dict[entity.key] = entity.key maybe? 
+            I'm not sure whats the overhead in using .urlsafe(), but this is something that we can look at.
+            '''
             if field_value_item.key:
               field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
         if permissions[field_key]['writable'] and is_local_structure: 
@@ -699,7 +706,7 @@ class _BaseModel(object):
             for delete in to_delete:
               child_entity.remove(delete)
           else:
-            # if its not repeated, current_values will be set to None but with setattr(entity, field_key, None)
+            # if its not repeated, child_entity will be set to None but with setattr(entity, field_key, None)
             # because mutation could not be achieved by setting child_entity = None
             if child_entity._state == 'deleted':
               setattr(entity, field_key, None)
