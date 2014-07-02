@@ -301,7 +301,7 @@ class TestRuleWriteModelRef2(ndb.BaseModel):
   _use_cache = False
  
   name = ndb.SuperStringProperty(required=True)
-  foobar = ndb.SuperIntegerProperty(default=0)
+  foobar = ndb.SuperIntegerProperty(required=True, default=0)
       
       
 class TestRuleWriteModel(ndb.BaseModel):
@@ -315,14 +315,14 @@ class TestRuleWriteModel(ndb.BaseModel):
   _record = False
   
   name = ndb.SuperStringProperty()
-  another = ndb.SuperStructuredProperty(TestRuleWriteModelRef, repeated=False)
-  other = ndb.SuperStructuredProperty(TestRuleWriteModelRef2, repeated=True)
-  
+  another = ndb.SuperLocalStructuredProperty(TestRuleWriteModelRef)
+  other = ndb.SuperLocalStructuredProperty(TestRuleWriteModelRef2, repeated=True)
+ 
   _global_role = GlobalRole(
     permissions=[
-       ndb.FieldPermission('1500', ['name'], True, True, 'True'),
-       ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True'),
-       ndb.FieldPermission('1500', ['another.name', 'other.foobar', 'other.name'], True, True, 'True'),
+       ndb.FieldPermission('1500', ['name', 'another', 'other'], True, True, 'True'),
+       #ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True'),
+       #ndb.FieldPermission('1500', ['another.name', 'other.foobar'], True, True, 'True'),
       ]
     )
 
@@ -334,30 +334,32 @@ class TestRuleWrite(handler.Base):
   def respond(self):
     def out(a):
       self.response.write(json.dumps(a, cls=handler.JSONEncoderHTML))
+  
     ider = self.request.get('id')
     make = self.request.get('make')
     if make:
       a = TestRuleWriteModel(id='tester_%s' % ider, name='Tester one %s' % ider,
-                             another=TestRuleWriteModelRef(name='Yes'),
+                             another=TestRuleWriteModelRef(name='#single'),
                              other=[TestRuleWriteModelRef2(name='#1'),
                                     TestRuleWriteModelRef2(name='#2'),
                                     TestRuleWriteModelRef2(name='#3')])
-      
-      a._use_field_rules = False
+      a.rule_prepare(TestRuleWriteModel._global_role.permissions)
       a.put()
       out(a)
     else:
-      
       a = ndb.Key(TestRuleWriteModel, 'tester_%s' % ider).get()
+      a.other.read()
+      a.another.read()
+      a.make_original()
       a.rule_prepare(TestRuleWriteModel._global_role.permissions)
-      a.rule_read()
       if a and self.request.get('do_put'):
         a.name = 'Tester one changed'
         stuff = a.other.read()
-        stuff[0].foobar = 77
-        stuff[0].name = 'Else 3'
-        stuff.append(TestRuleWriteModelRef2(name='#4'))
+        stuff[1].foobar = 77
+        stuff[1].name = 'Else 3'
+        stuff.append(TestRuleWriteModelRef2())
         a.put()
+      a.rule_read()
       out(a)
     
 
