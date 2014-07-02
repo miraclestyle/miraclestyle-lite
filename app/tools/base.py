@@ -22,7 +22,7 @@ from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
 
-def _rule_prepare(context, skip_user_roles, strict):
+def _rule_prepare(context, skip_user_roles, strict, **kwargs):
   '''This method generates permissions situation for the context.entity object,
   at the time of execution.
   
@@ -50,24 +50,23 @@ def _rule_prepare(context, skip_user_roles, strict):
                     'action_key': 'clean_roles',
                     'key': domain_user.key.urlsafe()}
             context.callback_payloads.append(('callback', data))
-    kwargs = {'user': context.user, 'action': context.action}
-    context.entity.rule_prepare(global_permissions, local_permissions, strict, kwargs)
+    context.entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
 
 
-def rule_prepare(context, entity_path, skip_user_roles, strict):
+def rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs):
   entities = get_attr(context, entity_path)
   # @todo Can we apply normalize here?
   if isinstance(entities, dict):
     for key, entity in entities.items():
       context.entity = entities.get(key)
-      _rule_prepare(context, skip_user_roles, strict)
+      _rule_prepare(context, skip_user_roles, strict, **kwargs)
   elif isinstance(entities, list):
     for entity in entities:
       context.entity = entity
-      _rule_prepare(context, skip_user_roles, strict)
+      _rule_prepare(context, skip_user_roles, strict, **kwargs)
   else:
     context.entity = entities
-    _rule_prepare(context, skip_user_roles, strict)
+    _rule_prepare(context, skip_user_roles, strict, **kwargs)
 
 
 def record_write(model, records, agent_key, action_key):

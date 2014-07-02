@@ -368,7 +368,11 @@ class RulePrepare(ndb.BaseModel):
     entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
     skip_user_roles = self.cfg.get('skip_user_roles', False)
     strict = self.cfg.get('strict', False)
-    rule_prepare(context, entity_path, skip_user_roles, strict)
+    kwds = self.cfg.get('kwds', {})
+    kwargs = {'user': context.user, 'action': context.action}
+    for key, value in kwds.items():
+      kwargs[key] = get_attr(context, value)
+    rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs)
 
 
 class RuleExec(ndb.BaseModel):
