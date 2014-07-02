@@ -681,11 +681,13 @@ class _BaseModel(object):
         if field._repeated:
           for field_value_item in field_value:
             '''
-            Most of the time, dict keys are int, string. But generally a key can be anything
+            Most of the time, dict keys are int, string an immutable. But generally a key can be anything
             http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
-            So we will need to look into most of our temp dict structures where we use key.urlsafe to switch to
+            So using
             dict[entity.key] = entity.key maybe? 
             I'm not sure whats the overhead in using .urlsafe(), but this is something that we can look at.
+            Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
+            so anyways all the current code is fine, its just that we can take more simplification in consideration.
             '''
             if field_value_item.key:
               field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
