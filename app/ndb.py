@@ -677,6 +677,11 @@ class _BaseModel(object):
         if isinstance(field_value, SuperStructuredPropertyManager):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
+        field_value_mapping = {} # here we hold references of every key from original state.
+        if field._repeated:
+          for field_value_item in field_value:
+            if field_value_item.key:
+              field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
         if permissions[field_key]['writable'] and is_local_structure: 
           # if we are on top level of the LOCAL structured property, 
           # and we do have full permission on it, all local structured properties item(s) that have _state = 'deleted' 
@@ -704,13 +709,13 @@ class _BaseModel(object):
             # if field is repeated, iterate
             to_delete = []
             for current_value in child_entity:
-              if not current_value.key or current_value._state == 'created':
+              if not current_value.key or current_value.key not in field_value_mapping:
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
           else:
             # if its not repeated, child_entities state will be set to modified
-            if not child_entity.key or child_entity._state == 'created':
+            if not current_value.key or current_value.key not in field_value_mapping:
               setattr(entity, field_key, None)
         if not permissions[field_key] and not is_local_structure:
           # if we do not have permission and this is not a local structure
@@ -731,11 +736,7 @@ class _BaseModel(object):
         # here we begin the process of field drill  
         for child_field_key, child_field in field.get_model_fields().items():
           if field._repeated:
-            field_value_mapping = {} # here we hold references of every key from original state.
-            for field_value_item in field_value:
-              if field_value_item.key:
-                field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
-              # they are bound dict[key_urlsafe] = item
+            # they are bound dict[key_urlsafe] = item
             for i, child_entity_item in enumerate(child_entity):
               # if the item has the built key, it is obviously a item that needs update so in that case fetch it from the
               # field_value_mapping
