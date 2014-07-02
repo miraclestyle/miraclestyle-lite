@@ -291,6 +291,7 @@ class TestRuleWriteModelRef(ndb.BaseModel):
   _use_cache = False
  
   name = ndb.SuperStringProperty(required=True)
+  foobar = ndb.SuperIntegerProperty(default=0)
   
 
 class TestRuleWriteModelRef2(ndb.BaseModel):
@@ -300,6 +301,7 @@ class TestRuleWriteModelRef2(ndb.BaseModel):
   _use_cache = False
  
   name = ndb.SuperStringProperty(required=True)
+  foobar = ndb.SuperIntegerProperty(default=0)
       
       
 class TestRuleWriteModel(ndb.BaseModel):
@@ -319,7 +321,8 @@ class TestRuleWriteModel(ndb.BaseModel):
   _global_role = GlobalRole(
     permissions=[
        ndb.FieldPermission('1500', ['name'], True, True, 'True'),
-       ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True')
+       ndb.FieldPermission('1500', ['another', 'other'], False, True, 'True'),
+       ndb.FieldPermission('1500', ['another.name', 'other.foobar'], True, True, 'True'),
       ]
     )
 
@@ -350,6 +353,9 @@ class TestRuleWrite(handler.Base):
       a.rule_read()
       if a and self.request.get('do_put'):
         a.name = 'Tester one changed'
+        stuff = a.other.read()
+        stuff[0].foobar = 77
+        stuff[0].name = 'Else 3'
         a.put()
       out(a)
     

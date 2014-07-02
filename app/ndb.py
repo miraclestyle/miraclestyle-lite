@@ -641,6 +641,8 @@ class _BaseModel(object):
                 cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
         else:
           child_entity = getattr(entity, field_key)
+          if isinstance(child_entity, SuperStructuredPropertyManager):
+            child_entity = child_entity.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
             child_fields = child_entity.get_fields()
             child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
@@ -674,12 +676,20 @@ class _BaseModel(object):
         if isinstance(child_entity, SuperStructuredPropertyManager):
           child_entity = child_entity.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
         if not permissions[field_key]['writable']: # if we are on top level of the structured property, and we do not have permission on it, set "deleted" to updated
+          child_entity_copy = child_entity
+          field_value_copy = field_value
+          if isinstance(field_value_copy, SuperStructuredPropertyManager):
+            field_value_copy = field_value_copy.read()
           if not field._repeated:
-            if child_entity._state == 'deleted':
-              child_entity._state = 'modified'
-          else:
-            for child_entity_item in child_entity:
-              child_entity_item._deleted = 'modified'
+            child_entity_copy = [child_entity_copy]
+            field_value_copy = [field_value_copy]
+          possible_keys = [field_value_item.key for field_value_item in field_value_copy]
+          for child_entity_item in child_entity_copy:
+            child_entity_item._deleted = 'modified'
+            if not child_entity_item.key:
+              child_entity_item._state = 'deleted'
+            if child_entity_item.key not in possible_keys:
+              child_entity_item._state = 'deleted'
         for child_field_key, child_field in field.get_model_fields().items():
           if field._repeated:
             for i, child_entity_item in enumerate(child_entity):
@@ -695,6 +705,8 @@ class _BaseModel(object):
               child_entity = child_entity.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
             if isinstance(field_value, SuperStructuredPropertyManager):
               field_value = field_value.read() # we cannot use .read, because we dont always need .read(), we just need to use _property_value. @todo
+            if not permissions[field_key]['writable']:
+              child_entity._state = 'modified' # enforce modified EITHERWAY.
             cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key))
   
   def rule_write(self):
@@ -1318,9 +1330,33 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _update_local(self):
     '''We do not call anything when we work with local storage.
     That is intentional behavior because local storage is on entity and it mutates on it.
+    ----------
+    Actually now with new rule engine, local instances get marked with state "_deleted" and they get .pop if repeated and 
+    None if singular.
     
+    Now this is a problem, we do not call update_local prior to put, but after, so we will need to implement
+    in pre_put hook something like @todo
+    
+    _pre_update_local
+    with
+    pre_update.
     '''
-    pass
+    if self.has_value():
+      to_delete = []
+      if self._property._repeated:
+        # mutates the list
+        for value in self._property_value:
+          if value._state == 'deleted':
+            to_delete.append(value)
+        for delete in to_delete:
+          value.remove(delete)
+      else:
+        # this is non-mutable
+        name = self._property._code_name
+        if not name:
+          name = self._property._name
+        setattr(self._entity, name, None)
+        
   
   def _update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
@@ -1329,29 +1365,49 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     if self._property_value.key_parent != self._entity.key:
       key_id = self._property_value.key_id
       self._property_value.set_key(key_id, parent=self._entity.key)
+    # we do put eitherway   
+    # not sure if we will implement the _state = 'deleted' for single storage?
+    if self._property_value._state == 'deleted':
+      self._property_value.key.delete()
+    else:
       self._property_value.put()
   
   def _update_remote_multi(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
+    to_delete = []
     for entity in self._property_value:
       if entity.key_parent != self._entity.key:
         key_id = entity.key_id
         entity.set_key(key_id, parent=self._entity.key)
+      if entity._state == 'deleted':
+        to_delete.append(entity)
+    for delete in to_delete:
+      self._property_value.remove(delete)
+    delete_multi(to_delete)
     put_multi(self._property_value)
   
   def _update_remote_multi_sequenced(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
+    to_delete = []
     last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
+      if entity._state == 'deleted':
+        to_delete.append(entity)
+        continue
       if entity.key_id is None:
         entity.set_key(str(last_sequence), parent=self._entity.key)
         last_sequence += 1
       else:
         entity.set_key(str(i), parent=self._entity.key)
+    for delete in to_delete:
+      self._property_value.remove(delete)
+    
+    # ifs if the list is empty are not needed because list wont get nowhere in *_multi functions  
+    delete_multi(to_delete)
     put_multi(self._property_value)
   
   def update(self):
