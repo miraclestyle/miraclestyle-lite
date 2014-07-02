@@ -844,7 +844,7 @@ class _BaseModel(object):
     if len(local_permissions):
       for local_permission in local_permissions:
         if isinstance(local_permission, Permission):
-          local_permission.run(self, kwargs)
+          local_permission.run(self, **kwargs)
       # Copy generated entity permissions to separate dictionary.
       local_action_permissions = self._action_permissions.copy()
       local_field_permissions = self._field_permissions.copy()
