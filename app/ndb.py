@@ -698,6 +698,20 @@ class _BaseModel(object):
             # because mutation could not be achieved by setting child_entity = None
             if child_entity._state == 'deleted':
               setattr(entity, field_key, None)
+              
+        if not permissions[field_key]:
+          if field._repeated:
+            # if field is repeated, iterate
+            to_delete = []
+            for current_value in child_entity:
+              if not current_value.key or current_value._state == 'created':
+                to_delete.append(current_value)
+            for delete in to_delete:
+              child_entity.remove(delete)
+          else:
+            # if its not repeated, child_entities state will be set to modified
+            if not child_entity.key or child_entity._state == 'created':
+              setattr(entity, field_key, None)
         if not permissions[field_key] and not is_local_structure:
           # if we do not have permission and this is not a local structure
           # all items that got marked with ._state == 'delete' must have its items removed from the list
@@ -708,7 +722,6 @@ class _BaseModel(object):
           # so in that case we must preserve them in memory, and switch their _state into modified.
           if field._repeated:
             # if field is repeated, iterate
-            to_delete = []
             for current_value in child_entity:
               if current_value._state == 'deleted':
                 current_value._state = 'modified'
