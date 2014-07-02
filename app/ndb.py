@@ -719,7 +719,6 @@ class _BaseModel(object):
             for delete in to_delete:
               child_entity.remove(delete)
           else:
-            if not current_value.key or current_value.key not in field_value_mapping:
             if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
               setattr(entity, field_key, None)
         if not permissions[field_key]['writable'] and not is_local_structure:
