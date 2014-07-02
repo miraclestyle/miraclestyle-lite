@@ -709,13 +709,13 @@ class _BaseModel(object):
             # if field is repeated, iterate
             to_delete = []
             for current_value in child_entity:
-              if not current_value.key or current_value.key not in field_value_mapping:
+              if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
           else:
             # if its not repeated, child_entities state will be set to modified
-            if not current_value.key or current_value.key not in field_value_mapping:
+            if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
               setattr(entity, field_key, None)
         if not permissions[field_key] and not is_local_structure:
           # if we do not have permission and this is not a local structure
