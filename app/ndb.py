@@ -1174,18 +1174,22 @@ class SuperPropertyManager(object):
         value = value[0]
     return isinstance(value, Future)
   
+  @property
+  def value(self):
+    return getattr(self, '_property_value', None)
+  
   def get_output(self):
     return getattr(self, '_property_value', None)
 
 
 class SuperStructuredPropertyManager(SuperPropertyManager):
-  '''StorageEntityManager is the proxy class for all properties that want to implement read, update, delete, concept.
+  '''SuperStructuredPropertyManager is the proxy class for all properties that want to implement read, update, delete, concept.
   Example:
   entity = entity_key.get()
   entity._images = [image, image, image] # override data
   entity._images.read().append(image) # or mutate
   # note that .read() must be used because getter retrieves StorageEntityManager
-  !! Note: You can only retrieve StorageEntityManager instance by accessing the property like so:
+  !! Note: You can only retrieve SuperStructuredPropertyManager instance by accessing the property like so:
   entity_manager = entity._images
   entity_manager.read()
   entity_manager.update()
@@ -1197,7 +1201,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   Process after performing entity.put() which has this property
   entity.put()
   => post_put_hook()
-  - all properties who have StorageEntityEditor capability will perform .update() function.
+  - all properties who have SuperStructuredPropertyManager capability will perform .update() function.
   
   '''
   
@@ -1343,7 +1347,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     
     '''
     if (not self.has_value()) or kwds.get('force_read'):
-      # read_local must be called multiple times because it gets loaded between from_pb and post_get
+      # read_local must be called multiple times because it gets loaded between from_pb and post_get.
       read_function = getattr(self, '_read_%s' % self.storage_type)
       read_function(**kwds)
     return self._property_value
@@ -1370,16 +1374,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           self._property_value = property_value
     return self._property_value
   
-  @property
-  def value(self):
-    return getattr(self, '_property_value', None)
-  
   def _update_local(self):
     '''We do not call anything when we work with local storage.
     That is intentional behavior because local storage is on entity and it mutates on it.
+    
     '''
     pass
-        
   
   def _update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
@@ -1388,8 +1388,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     if self._property_value.key_parent != self._entity.key:
       key_id = self._property_value.key_id
       self._property_value.set_key(key_id, parent=self._entity.key)
-    # we do put eitherway   
-    #  if state is deleted, shall we delete the single storage entity?
+    # We do put eitherway
+    # @todo If state is deleted, shall we delete the single storage entity?
     if self._property_value._state == 'deleted':
       self._property_value.key.delete()
     else:
@@ -1399,37 +1399,36 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
-    to_delete = []
+    delete_entities = []
     for entity in self._property_value:
       if entity.key_parent != self._entity.key:
         key_id = entity.key_id
         entity.set_key(key_id, parent=self._entity.key)
       if entity._state == 'deleted':
-        to_delete.append(entity)
-    for delete in to_delete:
-      self._property_value.remove(delete)
-    delete_multi(to_delete)
+        delete_entities.append(entity)
+    for delete_entity in delete_entities:
+      self._property_value.remove(delete_entity)
+    delete_multi(delete_entities)
     put_multi(self._property_value)
   
   def _update_remote_multi_sequenced(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
-    to_delete = []
+    delete_entities = []
     last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
       if entity._state == 'deleted':
-        to_delete.append(entity)
+        delete_entities.append(entity)
         continue
       if entity.key_id is None:
         entity.set_key(str(last_sequence), parent=self._entity.key)
         last_sequence += 1
       else:
         entity.set_key(str(i), parent=self._entity.key)
-    for delete in to_delete:
-      self._property_value.remove(delete)
-    # ifs if the list is empty are not needed because list wont get nowhere in *_multi functions  
-    delete_multi(to_delete)
+    for delete_entity in delete_entities:
+      self._property_value.remove(delete_entity)
+    delete_multi(delete_entities)
     put_multi(self._property_value)
   
   def update(self):
@@ -1523,7 +1522,9 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
 
 
 class _BaseStructuredProperty(object):
-  ''' Base class for structured property. '''
+  '''Base class for structured property.
+  
+  '''
   def __init__(self, *args, **kwargs):
     args = list(args)
     if isinstance(args[0], basestring):
@@ -1900,11 +1901,11 @@ class SuperEntityStorageStructuredProperty(Property):
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
     super(SuperEntityStorageStructuredProperty, self).__init__(name, **kwds)
   
-  def format(self, value):
-    return _structured_property_format(self, value)
-  
   def get_model_fields(self):
     return self._modelclass.get_fields()
+  
+  def format(self, value):
+    return _structured_property_format(self, value)
   
   def _set_value(self, entity, value):
     # __set__
@@ -1931,26 +1932,19 @@ class SuperEntityStorageStructuredProperty(Property):
 
 
 class SuperReadProperty(SuperKeyProperty):
+  '''This property can be used to read stuff in async mode upon reading entity from protobuff.
+  However, this can be also used for storing keys, behaving like SuperKeyProperty.
+  Setter value should always be a key, however it can be an entire entity instance from which it will use its .key.
+  >>> entity.user = user_key
+  Getter usually retrieves entire entity instance,
+  or something else can be returned based on the _format_callback option.
+  >>> entity.user.email
+  Beware with usage of this property. It will automatically get the entity in async mode as soon as the
+  from_pb and _post_get callback are executed.
+  This functionality can be suppressed by implementing additional kwarg called 'autoload', and based on that
+  the read_async call could be skipped in _BaseModel at make_async_calls().
   
-  ''' 
-    This property can be used to read stuff in async mode upon reading entity from protobuff.
-    However this can be also used for storing keys, behaving like SuperKeyProperty
-    
-    Setter value should always be a key, however it can be a entire entity instance from which it will use its .key.
-    >>> entity.user = user_key
-      
-    Getter usually retrieves entire entity instance,
-    or something else can be returned based on the _format_callback option.
-    >>> entity.user.email
-    
-    Beware with usage of this property. It will automatically get the entity in async mode as soon as the 
-    from_pb and _post_get callback are executed.
-    
-    This functionality can be suppressed by implementing additional kwarg called `autoload` and based on that 
-    the read_async call could be skipped in _BaseModel at make_async_calls()
-       
   '''
-  
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._format_callback = kwargs.pop('format_callback', None)
