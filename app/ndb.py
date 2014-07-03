@@ -336,6 +336,18 @@ class _BaseModel(object):
     else:
       return getattr(entity, last_field, None)
   
+  @classmethod  
+  def _pre_delete_hook(cls, key):
+    entity = key.get()
+    @toplevel
+    def delete_async():
+      for field_key, field in entity.get_fields().items():
+        if is_structured_field(field):
+          manager = getattr(entity, field_key, None)
+          if isinstance(manager, SuperStructuredPropertyManager):
+            manager.delete()
+    delete_async()
+  
   def _pre_put_hook(self):
     if self._use_field_rules and hasattr(self, '_original'):
       self.rule_write()
@@ -826,7 +838,7 @@ class _BaseModel(object):
     self._field_permissions = self._rule_compile(global_field_permissions, local_field_permissions, strict)
     self.add_output('_action_permissions')
     self.add_output('_field_permissions')
-  
+ 
   @toplevel  # @todo Not sure if this is ok?
   def record_write(self):
     if not isinstance(self, Record) and self._record and hasattr(self, 'key') and self.key_id:
@@ -836,6 +848,26 @@ class _BaseModel(object):
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
+      
+  def read(self, input=None):
+    ''' This method loads all subentities based on input details '''
+    for field_key, field in self.get_fields().items():
+      if is_structured_field(field):
+        value = getattr(self, field_key)
+        kwargs = {}
+        if input is not None:
+          entities = input.get(field_key)
+          if entities:
+            kwargs['entities'] = entities
+          else: # entities is not provided, use read_options from the input if any to determine cursor
+            read_options = input.get('read_options')
+            if read_options:
+              read_options = read_options.get(field_key)
+              if read_options:
+                kwargs['cursor'] = read_options.get('cursor')
+           # otherwise we will just retrieve entities without any configurations
+        value.read(**kwargs)
+    self.make_original() # finalize original before touching anything
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
@@ -1198,11 +1230,18 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._mark_for_delete(self._property_value)
   
   def _delete_remote(self):
-    property_name = self._property._code_name
-    if not property_name:
-      property_name = self._property._name
-    property_value = getattr(self._entity, property_name)
-    self._mark_for_delete(property_value, getattr(self._entity.__class__, property_name))
+    cursor = Cursor()
+    limit = 200
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        delete_multi(_entities)
+        if not cursor or not more:
+          break
+      else:
+        break
+    cursor = None
   
   def _delete_remote_single(self):
     self._delete_remote()
@@ -1251,25 +1290,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     urlsafe_cursor = kwds.get('cursor')
     limit = kwds.get('limit', 10)
     order = kwds.get('order')
-    entities = []
-    if kwds.get('fetch_all', False):
-      cursor = Cursor()
-      limit = 1000
-      query = self._property._modelclass.query(ancestor=self._entity.key)
-      while True:
-        _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-        if len(_entities):
-          entities.extend(_entities)
-          if not cursor or not more:
-            break
-        else:
-          break
-      cursor = None
-    elif kwds.get('entities'):
-      _entities = get_multi([entity.key for entity in kwds.get('entities')])
-      for entity in _entities:
-        if entity is not None:
-          entities.append(entity)
+    supplied_entities = kwds.get('entities')
+    if supplied_entities:
+      entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None]) # this will remove all entities without keys from performing get multi
+      entities = [entity for entity in entities if entity is not None] # this will remove all entities that do not exist.
       cursor = None
     else:
       query = self._property._modelclass.query(ancestor=self._entity.key)
@@ -1297,24 +1321,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     cursor = kwds.get('cursor', 0)
     limit = kwds.get('limit', 10)
     entities = []
-    if kwds.get('fetch_all', False):
-      cursor = Cursor()
-      limit = 1000
-      query = self._property._modelclass.query(ancestor=self._entity.key)
-      while True:
-        _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-        if len(_entities):
-          entities.extend(_entities)
-          if not cursor or not more:
-            break
-        else:
-          break
-      cursor = None
-    elif kwds.get('entities'):
-      _entities = get_multi([entity.key for entity in kwds.get('entities')])
-      for entity in _entities:
-        if entity is not None:
-          entities.append(entity)
+    supplied_entities = kwds.get('entities')
+    if supplied_entities:
+      entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None]) # this will remove all entities without keys from performing get multi
+      entities = [entity for entity in entities if entity is not None] # this will remove all entities that do not exist.
       cursor = None
     else:
       keys = [Key(self._property._modelclass.get_kind(),
@@ -1974,12 +1984,7 @@ class SuperEntityStorageStructuredProperty(Property):
     # __set__
     manager = self._get_user_value(entity)
     manager.set(value)
-  
-  def _delete_value(self, entity):
-    # __delete__
-    manager = self._get_value(entity)
-    manager.delete()
-  
+ 
   def _get_value(self, entity):
     # __get__
     manager_name = '%s_manager' % self._name
