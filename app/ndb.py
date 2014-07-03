@@ -1476,9 +1476,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     delete_entities = []
     for entity in self._property_value:
-      if entity.key_parent != self._entity.key:
-        key_id = entity.key_id
-        entity.set_key(key_id, parent=self._entity.key)
+      if not hasattr(entity, 'prepare_key'):
+        if entity.key_parent != self._entity.key:
+          key_id = entity.key_id
+          entity.set_key(key_id, parent=self._entity.key)
+      else:
+        entity.prepare_key(parent=self._entity.key)
       if entity._state == 'deleted':
         delete_entities.append(entity)
     for delete_entity in delete_entities:
@@ -1497,7 +1500,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         delete_entities.append(entity)
         continue
       if entity.key_id is None:
-        entity.set_key(str(last_sequence), parent=self._entity.key)
+        if not hasattr(entity, 'prepare_key'):
+          entity.set_key(str(last_sequence), parent=self._entity.key)
+        else:
+          entity.prepare_key(parent=self._entity.key, id=str(last_sequence))
         last_sequence += 1
       else:
         entity.set_key(str(i), parent=self._entity.key)
