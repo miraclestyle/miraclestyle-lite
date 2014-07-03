@@ -1460,9 +1460,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
-    if self._property_value.key_parent != self._entity.key:
-      key_id = self._property_value.key_id
-      self._property_value.set_key(key_id, parent=self._entity.key)
+    if not hasattr(self._property_value, 'prepare_key'):
+      if self._property_value.key_parent != self._entity.key:
+        key_id = self._property_value.key_id
+        self._property_value.set_key(key_id, parent=self._entity.key)
+    else:
+      self._property_value.prepare_key(parent=self._entity.key)
     # We do put eitherway
     # @todo If state is deleted, shall we delete the single storage entity?
     if self._property_value._state == 'deleted':
