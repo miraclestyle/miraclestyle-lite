@@ -499,7 +499,7 @@ class _BaseModel(object):
       return None
   
   @classmethod
-  def search(cls, argument, namespace=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
+  def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None):
     keys = None
     args = []
     kwds = {}
@@ -543,81 +543,17 @@ class _BaseModel(object):
         query = query.order(order_by_field)
       else:
         query = query.order(-order_by_field)
-    return cls.search_exec(query, keys, fetch_all, fetch_async, limit, urlsafe_cursor)
-  
-  @classmethod
-  def search_exec(cls, query, keys=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
     # Caller must be capable of differentiating possible results returned!
-    if keys != None:
+    if keys is not None:
       if not isinstance(keys, list):
         keys = [keys]
-      if fetch_async:
-        entities = get_multi_async(keys)
-      else:
-        entities = get_multi(keys)
+      return get_multi(keys)
     else:
       try:
         cursor = Cursor(urlsafe=urlsafe_cursor)
       except:
         cursor = Cursor()
-      if fetch_all:
-        cursor = Cursor()
-        limit = 1000
-        entities = []
-        while True:
-          _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-          if len(_entities):
-            entities.extend(_entities)
-            if not cursor or not more:
-              break
-          else:
-            break
-      elif fetch_async:
-        entities = query.fetch_page_async(limit, start_cursor=cursor)
-      else:
-        entities = query.fetch_page(limit, start_cursor=cursor)
-    return entities
-  
-  @classmethod
-  def search_ancestor_sequence(cls, parent_key, fetch_all=False, fetch_async=True, limit=10, cursor=None):
-    if fetch_all:
-      cursor = 0
-      limit = 100
-      entities = []
-      more = False
-      while True:
-        keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
-        _entities = get_multi(keys)
-        cursor = cursor + limit
-        for entity in _entities:
-          if entity != None:
-            entities.append(entity)
-        if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
-          cursor = None
-          break
-    elif fetch_async:
-      if not cursor:
-        cursor = 0
-      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
-      entities = get_multi_async(keys)  # @todo get_multi_async returns list of futures, and get_result() has to be called on each one of them!!!
-      more = False
-      cursor = cursor + limit
-    else:
-      if not cursor:
-        cursor = 0
-      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit + 1)]
-      _entities = get_multi(keys)
-      entities = []
-      for entity in _entities:
-        if entity != None:
-          entities.append(entity)
-      more = True
-      if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
-        more = False
-      if more:
-        del entities[-1]  # @todo Or results.pop(len(results) - 1)
-      cursor = cursor + limit
-    return (entities, cursor, more)
+      return query.fetch_page(limit, start_cursor=cursor)
   
   @classmethod
   def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
@@ -1312,19 +1248,45 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = property_value
   
   def _read_remote_multi(self, **kwds):
-    fetch_all = kwds.get('fetch_all', False)
-    limit = kwds.get('limit')
     urlsafe_cursor = kwds.get('cursor')
+    limit = kwds.get('limit', 10)
     order = kwds.get('order')
-    query = self._property._modelclass.query(ancestor=self._entity.key)
-    if order:
-      order_field = getattr(self._property._modelclass, order['field'])
-      if order['direction'] == 'asc':
-        query = query.order(order_field)
-      else:
-        query = query.order(-order_field)
-    results = self._property._modelclass.search_exec(query, fetch_all=fetch_all, limit=limit, urlsafe_cursor=urlsafe_cursor)
-    self._property_value = results
+    entities = []
+    if kwds.get('fetch_all', False):
+      cursor = Cursor()
+      limit = 1000
+      query = self._property._modelclass.query(ancestor=self._entity.key)
+      while True:
+        _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+        if len(_entities):
+          entities.extend(_entities)
+          if not cursor or not more:
+            break
+        else:
+          break
+      cursor = None
+    elif kwds.get('entities'):
+      _entities = get_multi([entity.key for entity in kwds.get('entities')])
+      for entity in _entities:
+        if entity is not None:
+          entities.append(entity)
+      cursor = None
+    else:
+      query = self._property._modelclass.query(ancestor=self._entity.key)
+      if order:
+        order_field = getattr(self._property._modelclass, order['field'])
+        if order['direction'] == 'asc':
+          query = query.order(order_field)
+        else:
+          query = query.order(-order_field)
+      try:
+        cursor = Cursor(urlsafe=urlsafe_cursor)
+      except:
+        cursor = Cursor()
+      entities = query.fetch_page_async(limit, start_cursor=cursor)
+      cursor = None
+    self._property_value = entities
+    self._property_value_options['cursor'] = cursor
   
   def _read_remote_multi_sequenced(self, **kwds):
     '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
@@ -1332,15 +1294,111 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     This technique has lowest impact on data storage and retreval, and should be used whenever possible!
     
     '''
-    limit = kwds.get('limit')
-    cursor = kwds.get('cursor')
-    fetch_all = kwds.get('fetch_all')
-    fetch_async = kwds.get('fetch_async')
-    results = self._property._modelclass.search_ancestor_sequence(self._entity.key, fetch_all=fetch_all,
-                                                                  fetch_async=fetch_async, limit=limit, cursor=cursor)
-    self._property_value = results[0]
-    self._property_value_options['cursor'] = results[1]
-    self._property_value_options['more'] = results[2]
+    cursor = kwds.get('cursor', 0)
+    limit = kwds.get('limit', 10)
+    entities = []
+    if kwds.get('fetch_all', False):
+      cursor = Cursor()
+      limit = 1000
+      query = self._property._modelclass.query(ancestor=self._entity.key)
+      while True:
+        _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+        if len(_entities):
+          entities.extend(_entities)
+          if not cursor or not more:
+            break
+        else:
+          break
+      cursor = None
+    elif kwds.get('entities'):
+      _entities = get_multi([entity.key for entity in kwds.get('entities')])
+      for entity in _entities:
+        if entity is not None:
+          entities.append(entity)
+      cursor = None
+    else:
+      keys = [Key(self._property._modelclass.get_kind(),
+                  str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit)]
+      entities = get_multi_async(keys)
+      cursor = cursor + limit
+    self._property_value = entities
+    self._property_value_options['cursor'] = cursor
+  
+  @classmethod
+  def search_exec(cls, query, keys=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
+    '''This method is temporary preserved here for reference!'''
+    # Caller must be capable of differentiating possible results returned!
+    if keys != None:
+      if not isinstance(keys, list):
+        keys = [keys]
+      if fetch_async:
+        entities = get_multi_async(keys)
+      else:
+        entities = get_multi(keys)
+    else:
+      try:
+        cursor = Cursor(urlsafe=urlsafe_cursor)
+      except:
+        cursor = Cursor()
+      if fetch_all:
+        cursor = Cursor()
+        limit = 1000
+        entities = []
+        while True:
+          _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+          if len(_entities):
+            entities.extend(_entities)
+            if not cursor or not more:
+              break
+          else:
+            break
+      elif fetch_async:
+        entities = query.fetch_page_async(limit, start_cursor=cursor)
+      else:
+        entities = query.fetch_page(limit, start_cursor=cursor)
+    return entities
+  
+  @classmethod
+  def search_ancestor_sequence(cls, parent_key, fetch_all=False, fetch_async=True, limit=10, cursor=None):
+    '''This method is temporary preserved here for reference!'''
+    if fetch_all:
+      cursor = 0
+      limit = 100
+      entities = []
+      more = False
+      while True:
+        keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
+        _entities = get_multi(keys)
+        cursor = cursor + limit
+        for entity in _entities:
+          if entity != None:
+            entities.append(entity)
+        if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
+          cursor = None
+          break
+    elif fetch_async:
+      if not cursor:
+        cursor = 0
+      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
+      entities = get_multi_async(keys)  # @todo get_multi_async returns list of futures, and get_result() has to be called on each one of them!!!
+      more = False
+      cursor = cursor + limit
+    else:
+      if not cursor:
+        cursor = 0
+      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit + 1)]
+      _entities = get_multi(keys)
+      entities = []
+      for entity in _entities:
+        if entity != None:
+          entities.append(entity)
+      more = True
+      if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
+        more = False
+      if more:
+        del entities[-1]  # @todo Or results.pop(len(results) - 1)
+      cursor = cursor + limit
+    return (entities, cursor, more)
   
   def read_async(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
@@ -1369,8 +1427,11 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       elif isinstance(self._property_value, Future):
         property_value = self._property_value.get_result()
         if isinstance(property_value, tuple):
+          cursor = property_value[1]
+          if cursor:
+            cursor = cursor.urlsafe()
           self._property_value = property_value[0]
-          self._property_value_options['cursor'] = property_value[1]
+          self._property_value_options['cursor'] = cursor
           self._property_value_options['more'] = property_value[2]
         else:
           self._property_value = property_value
