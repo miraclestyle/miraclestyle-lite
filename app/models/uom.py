@@ -15,6 +15,7 @@ class Measurement(ndb.BaseModel):
   
   _kind = 18
   
+  _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   
@@ -25,6 +26,7 @@ class Unit(ndb.BaseExpando):
   
   _kind = 19
   
+  _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   

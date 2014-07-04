@@ -2113,6 +2113,7 @@ allowed mutations to class(cls) scope.
 class Record(BaseExpando):
   
   _kind = 5
+  
   _use_record_engine = False
   _use_rule_engine = False
   

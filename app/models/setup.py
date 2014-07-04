@@ -15,7 +15,8 @@ class Configuration(ndb.BaseExpando):
   
   _kind = 57
   
-  _use_field_rules = False
+  _use_record_engine = False
+  _use_rule_engine = False
   
   created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)

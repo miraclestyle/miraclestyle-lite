@@ -32,6 +32,7 @@ class Country(ndb.BaseModel):
   
   _kind = 15
   
+  _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   

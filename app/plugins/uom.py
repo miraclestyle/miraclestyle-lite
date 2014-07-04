@@ -84,7 +84,7 @@ class CurrencyUpdate(ndb.BaseModel):
           uoms.append(new_uom)
       to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
       for entity in to_put:
-        entity._use_field_rules = False
+        entity._use_rule_engine = False
       ndb.put_multi(to_put)
 
 
@@ -134,7 +134,7 @@ class UnitUpdate(ndb.BaseModel):
           uoms.append(new_uom)
       to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
       for entity in to_put:
-        entity._use_field_rules = False
+        entity._use_rule_engine = False
       ndb.put_multi(to_put)
 
 
