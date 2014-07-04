@@ -1337,89 +1337,13 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  @classmethod
-  def search_exec(cls, query, keys=None, fetch_all=False, fetch_async=True, limit=10, urlsafe_cursor=None):
-    '''This method is temporary preserved here for reference!'''
-    # Caller must be capable of differentiating possible results returned!
-    if keys != None:
-      if not isinstance(keys, list):
-        keys = [keys]
-      if fetch_async:
-        entities = get_multi_async(keys)
-      else:
-        entities = get_multi(keys)
-    else:
-      try:
-        cursor = Cursor(urlsafe=urlsafe_cursor)
-      except:
-        cursor = Cursor()
-      if fetch_all:
-        cursor = Cursor()
-        limit = 1000
-        entities = []
-        while True:
-          _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-          if len(_entities):
-            entities.extend(_entities)
-            if not cursor or not more:
-              break
-          else:
-            break
-      elif fetch_async:
-        entities = query.fetch_page_async(limit, start_cursor=cursor)
-      else:
-        entities = query.fetch_page(limit, start_cursor=cursor)
-    return entities
-  
-  @classmethod
-  def search_ancestor_sequence(cls, parent_key, fetch_all=False, fetch_async=True, limit=10, cursor=None):
-    '''This method is temporary preserved here for reference!'''
-    if fetch_all:
-      cursor = 0
-      limit = 100
-      entities = []
-      more = False
-      while True:
-        keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
-        _entities = get_multi(keys)
-        cursor = cursor + limit
-        for entity in _entities:
-          if entity != None:
-            entities.append(entity)
-        if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
-          cursor = None
-          break
-    elif fetch_async:
-      if not cursor:
-        cursor = 0
-      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit)]
-      entities = get_multi_async(keys)  # @todo get_multi_async returns list of futures, and get_result() has to be called on each one of them!!!
-      more = False
-      cursor = cursor + limit
-    else:
-      if not cursor:
-        cursor = 0
-      keys = [Key(cls.get_kind(), str(i), parent=parent_key) for i in xrange(cursor, cursor + limit + 1)]
-      _entities = get_multi(keys)
-      entities = []
-      for entity in _entities:
-        if entity != None:
-          entities.append(entity)
-      more = True
-      if _entities[-1] == None:  # If the last item is None, then we assume there are no more entities to get in next round!
-        more = False
-      if more:
-        del entities[-1]  # @todo Or results.pop(len(results) - 1)
-      cursor = cursor + limit
-    return (entities, cursor, more)
-  
   def read_async(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
     However we are not sure if we are gonna need to force read operation.
     
     '''
-    if self._property._readable: # this needs to be here as well because read_async gets called by make_async_calls directly
+    if self._property._readable:
       if (not self.has_value()) or kwds.get('force_read'):
         # read_local must be called multiple times because it gets loaded between from_pb and post_get.
         read_function = getattr(self, '_read_%s' % self.storage_type)
@@ -1990,7 +1914,6 @@ class SuperEntityStorageStructuredProperty(Property):
   _indexed = False
   _modelclass = None
   _repeated = False
-  
   _readable = True
   _updateable = True
   _deleteable = True
@@ -2006,7 +1929,7 @@ class SuperEntityStorageStructuredProperty(Property):
     super(SuperEntityStorageStructuredProperty, self).__init__(name, **kwds)
   
   def get_model_fields(self):
-    if isinstance(self._modelclass, basestring): # if the get_model_fields is called early
+    if isinstance(self._modelclass, basestring):
       self._modelclass = Model._kind_map.get(self._modelclass)
     return self._modelclass.get_fields()
   
@@ -2095,18 +2018,18 @@ class SuperReadProperty(SuperKeyProperty):
       return manager
     else:
       return manager.read()
-  
-  
+
+
 class SuperRecordProperty(SuperEntityStorageStructuredProperty):
-  '''Usage: '_records': SuperRecordProperty(Domain or '6')'''
+  '''Usage: '_records': SuperRecordProperty(Domain or '6')
   
+  '''
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._modelclass2 = args[0]
     args[0] = Record
+    kwargs['storage'] = 'remote_multi'
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
-    # enforce the updateable and deleteable
-    self._storage = 'multi' # this is always ancestor query
     self._updateable = False
     self._deleteable = False
   
@@ -2193,12 +2116,14 @@ class Record(BaseExpando):
     }
   
   def _retrieve_agent_name(self):
-    if self.key.kind() == '8': # if we have domain user to use, fetch its .name
+    # We have to involve Domain User here, although ndb should be unavare of external models!
+    if self.key.kind() == '8':
       return self.name
-    else: # this is users email
+    else:
       return self._primary_email
   
   def _retreive_agent(self):
+    # We have to involve Domain User here, although ndb should be unavare of external models!
     entity = self
     if entity.key_namespace and entity.agent.id() != 'system':
       domain_user_key = Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
