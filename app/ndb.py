@@ -211,8 +211,8 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 class _BaseModel(object):
   
   _state = None  # This field is used by rule engine!
-  _record = True  # All models are by default recorded!
-  _use_field_rules = True  # All models by default respect rule engine!
+  _use_record_engine = True  # All models are by default recorded!
+  _use_rule_engine = True  # All models by default respect rule engine!
   
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
@@ -339,6 +339,7 @@ class _BaseModel(object):
   @classmethod
   def _pre_delete_hook(cls, key):
     entity = key.get()
+    entity.record_write()
     @toplevel
     def delete_async():
       for field_key, field in entity.get_fields().items():
@@ -349,11 +350,12 @@ class _BaseModel(object):
     delete_async()
   
   def _pre_put_hook(self):
-    if self._use_field_rules and hasattr(self, '_original'):
+    if self._use_rule_engine and hasattr(self, '_original'):
       self.rule_write()
   
   def _post_put_hook(self, future):
     entity = self
+    entity.record_write()
     for field in entity.get_fields():
       value = getattr(entity, field)
       if isinstance(value, SuperStructuredPropertyManager):
@@ -841,7 +843,7 @@ class _BaseModel(object):
   
   @toplevel  # @todo Not sure if this is ok?
   def record_write(self):
-    if not isinstance(self, Record) and self._record and hasattr(self, 'key') and self.key_id:
+    if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
       if self._record_arguments and self._record_arguments.get('agent') and self._record_arguments.get('action'):
         log_entity = self._record_arguments.pop('log_entity', True)
         record = Record(parent=self.key, **self._record_arguments)
@@ -876,7 +878,7 @@ class _BaseModel(object):
     and put it into _original field.
     
     '''
-    if self._use_field_rules:
+    if self._use_rule_engine:
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
@@ -900,7 +902,7 @@ class _BaseModel(object):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     '''
-    if self._use_field_rules and hasattr(self, '_field_permissions'):
+    if self._use_rule_engine and hasattr(self, '_field_permissions'):
       self.rule_read()  # Apply rule read before output.
     dic = {}
     dic['kind'] = self.get_kind()
@@ -1216,7 +1218,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if not isinstance(property_value_item, self._property._modelclass):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
-    
+  
   def _copy_record_arguments(self, entity):
     if hasattr(self._entity, '_record_arguments'):
       record_arguments = {}
@@ -1258,7 +1260,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _delete_remote_single(self):
     property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    property_value_key.delete()
+    entity = property_value_key.get()
+    self._copy_record_arguments(entity)
+    entity.key.delete()
   
   def _delete_remote_multi(self):
     self._delete_remote()
@@ -2109,8 +2113,8 @@ allowed mutations to class(cls) scope.
 class Record(BaseExpando):
   
   _kind = 5
-  _record = False
-  _use_field_rules = False
+  _use_record_engine = False
+  _use_rule_engine = False
   
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = SuperDateTimeProperty('l', auto_now_add=True)
