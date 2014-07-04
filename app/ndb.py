@@ -1216,6 +1216,16 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if not isinstance(property_value_item, self._property._modelclass):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
+    
+  def _copy_record_arguments(self, entity):
+    if hasattr(self._entity, '_record_arguments'):
+      record_arguments = {}
+      if hasattr(entity, '_record_arguments'):
+        record_arguments = entity._record_arguments
+      entity_record_arguments = self._entity._record_arguments
+      record_arguments['action'] = entity_record_arguments.get('aciton')
+      record_arguments['agent'] = entity_record_arguments.get('agent')
+      entity._record_arguments = record_arguments
   
   def _mark_for_delete(self, property_value, property_instance=None):
     '''Mark each of property values for deletion by setting the '_state'' to 'deleted'!
@@ -1238,6 +1248,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     while True:
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
       if len(_entities):
+        for entity in _entities:
+          self._copy_record_arguments(entity)
         delete_multi(_entities)
         if not cursor or not more:
           break
@@ -1395,6 +1407,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property_value.prepare_key(parent=self._entity.key)
     # We do put eitherway
     # @todo If state is deleted, shall we delete the single storage entity?
+    self._copy_record_arguments(self._property_value)
     if self._property_value._state == 'deleted':
       self._property_value.key.delete()
     else:
@@ -1406,6 +1419,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     delete_entities = []
     for entity in self._property_value:
+      self._copy_record_arguments(entity)
       if not hasattr(entity, 'prepare_key'):
         if entity.key_parent != self._entity.key:
           key_id = entity.key_id
@@ -1426,6 +1440,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     delete_entities = []
     last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
+      self._copy_record_arguments(entity)
       if entity._state == 'deleted':
         delete_entities.append(entity)
         continue
