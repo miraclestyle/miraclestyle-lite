@@ -1180,7 +1180,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def __init__(self, property_instance, storage_entity, **kwds):
     super(SuperStructuredPropertyManager, self).__init__(property_instance, storage_entity, **kwds)
     if isinstance(self._property._modelclass, basestring):  # In case the model class is a kind str
-      self._property._modelclass = Model._kind_map(self._property._modelclass)
+      self._property._modelclass = Model._kind_map.get(self._property._modelclass)
     self._property_value_options = {}
     # @todo We might want to change this to something else, but right now it is the most elegant.
   
@@ -1258,8 +1258,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
     
     '''
-    delete_function = getattr(self, '_delete_%s' % self.storage_type)
-    delete_function()
+    if self._property._deletable:
+      delete_function = getattr(self, '_delete_%s' % self.storage_type)
+      delete_function()
   
   def _read_local(self, **kwds):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
@@ -1418,36 +1419,38 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     However we are not sure if we are gonna need to force read operation.
     
     '''
-    if (not self.has_value()) or kwds.get('force_read'):
-      # read_local must be called multiple times because it gets loaded between from_pb and post_get.
-      read_function = getattr(self, '_read_%s' % self.storage_type)
-      read_function(**kwds)
-    return self._property_value
+    if self._property._readable: # this needs to be here as well because read_async gets called by make_async_calls directly
+      if (not self.has_value()) or kwds.get('force_read'):
+        # read_local must be called multiple times because it gets loaded between from_pb and post_get.
+        read_function = getattr(self, '_read_%s' % self.storage_type)
+        read_function(**kwds)
+      return self._property_value
   
   def read(self, **kwds):
-    self.read_async(**kwds)
-    if self.has_future():
-      property_value = []
-      if isinstance(self._property_value, list):
-        if len(self._property_value):
-          for value in self._property_value:
-            if isinstance(value, Future):
-              entity = value.get_result()
-              if entity is not None:
-                property_value.append(entity)
-          self._property_value = property_value
-      elif isinstance(self._property_value, Future):
-        property_value = self._property_value.get_result()
-        if isinstance(property_value, tuple):
-          cursor = property_value[1]
-          if cursor:
-            cursor = cursor.urlsafe()
-          self._property_value = property_value[0]
-          self._property_value_options['cursor'] = cursor
-          self._property_value_options['more'] = property_value[2]
-        else:
-          self._property_value = property_value
-    return self._property_value
+    if self._property._readable:
+      self.read_async(**kwds)
+      if self.has_future():
+        property_value = []
+        if isinstance(self._property_value, list):
+          if len(self._property_value):
+            for value in self._property_value:
+              if isinstance(value, Future):
+                entity = value.get_result()
+                if entity is not None:
+                  property_value.append(entity)
+            self._property_value = property_value
+        elif isinstance(self._property_value, Future):
+          property_value = self._property_value.get_result()
+          if isinstance(property_value, tuple):
+            cursor = property_value[1]
+            if cursor:
+              cursor = cursor.urlsafe()
+            self._property_value = property_value[0]
+            self._property_value_options['cursor'] = cursor
+            self._property_value_options['more'] = property_value[2]
+          else:
+            self._property_value = property_value
+      return self._property_value
   
   def _update_local(self):
     '''We do not call anything when we work with local storage.
@@ -1516,11 +1519,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     put_multi(self._property_value)
   
   def update(self):
-    if self.has_value():
-      update_function = getattr(self, '_update_%s' % self.storage_type)
-      update_function()
-    else:
-      pass
+    if self._property._updateable:
+      if self.has_value():
+        update_function = getattr(self, '_update_%s' % self.storage_type)
+        update_function()
+      else:
+        pass
 
 
 class SuperReadPropertyManager(SuperPropertyManager):
@@ -1538,17 +1542,19 @@ class SuperReadPropertyManager(SuperPropertyManager):
     return self._property_value
   
   def read_async(self):
-    if not self.has_value():
-      self._read()
-    return self._property_value
+    if self._property._readable:
+      if not self.has_value():
+        self._read()
+      return self._property_value
   
   def read(self):
-    self.read_async()
-    if self.has_future():
-      self._property_value = self._property_value.get_result()
-      if self._property._format_callback:
-        self._property_value = self._property._format_callback(self._entity, self._property_value)
-    return self._property_value
+    if self._property._readable:
+      self.read_async()
+      if self.has_future():
+        self._property_value = self._property_value.get_result()
+        if self._property._format_callback:
+          self._property_value = self._property._format_callback(self._entity, self._property_value)
+      return self._property_value
   
   def set(self, value):
     if isinstance(value, Key):
@@ -1609,8 +1615,15 @@ class _BaseStructuredProperty(object):
   '''Base class for structured property.
   
   '''
+  _readable = True
+  _updateable = True
+  _deleteable = True
+  
   def __init__(self, *args, **kwargs):
     args = list(args)
+    self._readable = kwargs.pop('readable', True)
+    self._updateable = kwargs.pop('updateable', True)
+    self._deleteable = kwargs.pop('deleteable', True)
     if isinstance(args[0], basestring):
       args[0] = Model._kind_map.get(args[0])
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
@@ -1978,14 +1991,23 @@ class SuperEntityStorageStructuredProperty(Property):
   _modelclass = None
   _repeated = False
   
+  _readable = True
+  _updateable = True
+  _deleteable = True
+  
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     self._storage = kwds.pop('storage')
     self._modelclass = modelclass
+    self._readable = kwds.pop('readable', True)
+    self._updateable = kwds.pop('updateable', True)
+    self._deleteable = kwds.pop('deleteable', True)
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
     super(SuperEntityStorageStructuredProperty, self).__init__(name, **kwds)
   
   def get_model_fields(self):
+    if isinstance(self._modelclass, basestring): # if the get_model_fields is called early
+      self._modelclass = Model._kind_map.get(self._modelclass)
     return self._modelclass.get_fields()
   
   def format(self, value):
@@ -2024,11 +2046,18 @@ class SuperReadProperty(SuperKeyProperty):
   the read_async call could be skipped in _BaseModel at make_async_calls().
   
   '''
+  _readable = True
+  _updateable = True
+  _deletable = True
+  
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._format_callback = kwargs.pop('format_callback', None)
     self._kind = kwargs.pop('kind', None)
     self._target_field = kwargs.pop('target_field', None)
+    self._readable = kwargs.pop('readable', True)
+    self._updateable = kwargs.pop('updateable', True)
+    self._deleteable = kwargs.pop('deleteable', True)
     if not self._target_field and not self._callback:
       raise PropertyError('You must provide either: "callback"" or "target_field"')
     if self._callback != None and not callable(self._callback):
@@ -2066,35 +2095,23 @@ class SuperReadProperty(SuperKeyProperty):
       return manager
     else:
       return manager.read()
-
-
-class SuperLocalStructuredRecordProperty(SuperLocalStructuredProperty):
+  
+  
+class SuperRecordProperty(SuperEntityStorageStructuredProperty):
+  '''Usage: '_records': SuperRecordProperty(Domain or '6')'''
   
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._modelclass2 = args[0]
     args[0] = Record
-    super(SuperLocalStructuredRecordProperty, self).__init__(*args, **kwargs)
+    super(SuperRecordProperty, self).__init__(*args, **kwargs)
+    # enforce the updateable and deleteable
+    self._storage = 'multi' # this is always ancestor query
+    self._updateable = False
+    self._deleteable = False
   
   def get_model_fields(self):
-    parent = super(SuperLocalStructuredRecordProperty, self).get_model_fields()
-    if isinstance(self._modelclass2, basestring):
-      self._modelclass2 = Model._kind_map.get(self._modelclass2)
-    parent.update(self._modelclass2.get_fields())
-    return parent
-
-
-class SuperStructuredRecordProperty(SuperStructuredProperty):
-  '''Usage: '_records': SuperStructuredRecordProperty(Domain or '6')'''
-  
-  def __init__(self, *args, **kwargs):
-    args = list(args)
-    self._modelclass2 = args[0]
-    args[0] = Record
-    super(SuperStructuredRecordProperty, self).__init__(*args, **kwargs)
-  
-  def get_model_fields(self):
-    parent = super(SuperStructuredRecordProperty, self).get_model_fields()
+    parent = super(SuperRecordProperty, self).get_model_fields()
     if isinstance(self._modelclass2, basestring):
       self._modelclass2 = Model._kind_map.get(self._modelclass2)
     parent.update(self._modelclass2.get_fields())
@@ -2170,9 +2187,35 @@ class Record(BaseExpando):
     }
   
   _virtual_fields = {
-    '_agent': SuperStringProperty(),
-    '_action': SuperStringProperty()
+    '_agent': SuperReadProperty(callback=lambda self: self._retreive_agent(),
+                                format_callback=lambda self: self._retrieve_agent_name()),
+    '_action': SuperReadProperty(callback=lambda self: self._retrieve_action())
     }
+  
+  def _retrieve_agent_name(self):
+    if self.key.kind() == '8': # if we have domain user to use, fetch its .name
+      return self.name
+    else: # this is users email
+      return self._primary_email
+  
+  def _retreive_agent(self):
+    entity = self
+    if entity.key_namespace and entity.agent.id() != 'system':
+      domain_user_key = Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
+      return domain_user_key.get_async()
+    else:
+      return entity.agent.get_async()
+  
+  def _retrieve_action(self):
+    entity = self
+    action_parent = entity.action.parent()
+    modelclass = entity._kind_map.get(action_parent.kind())
+    action_id = entity.action.id()
+    if modelclass and hasattr(modelclass, '_actions'):
+      for action in modelclass._actions:
+        if entity.action == action.key:
+          return '%s.%s' % (modelclass.__name__, action_id)
+          break
   
   def _if_properties_are_cloned(self):
     return not (self.__class__._properties is self._properties)
