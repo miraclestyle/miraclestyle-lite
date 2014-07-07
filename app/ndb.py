@@ -99,7 +99,7 @@ def is_structured_field(field):
   and if the '_modelclass' is set.
   
   '''
-  return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty, SuperStructuredPropertyManager)) and field._modelclass
+  return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty, SuperPropertyManager)) and field._modelclass
 
 
 _CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
@@ -338,34 +338,42 @@ class _BaseModel(object):
   
   @classmethod
   def _pre_delete_hook(cls, key):
-    entity = key.get()
-    entity.record_write()
-    @toplevel
-    def delete_async():
-      for field_key, field in entity.get_fields().items():
-        if is_structured_field(field):
-          manager = getattr(entity, field_key, None)
-          if isinstance(manager, SuperStructuredPropertyManager):
-            manager.delete()
-    delete_async()
+    if key:
+      entity = key.get()
+      entity.record_write()
+      @toplevel
+      def delete_async():
+        for field_key, field in entity.get_fields().items():
+          if is_structured_field(field):
+            manager = getattr(entity, field_key, None)
+            if isinstance(manager, SuperPropertyManager):
+              manager.delete()
+      delete_async()
   
   def _pre_put_hook(self):
-    if self._use_rule_engine and hasattr(self, '_original'):
+    if self._use_rule_engine:
+      if not hasattr(self, '_original'):
+        raise PropertyError('Working on entity (%r) without _original.' % self)
       self.rule_write()
+    for field in self.get_fields():
+      value = getattr(self, field)
+      if isinstance(value, SuperPropertyManager):
+        value.pre_update() # here we call pre_update on every value
+      
   
   def _post_put_hook(self, future):
     entity = self
     entity.record_write()
     for field in entity.get_fields():
       value = getattr(entity, field)
-      if isinstance(value, SuperStructuredPropertyManager):
-        value.update()
+      if isinstance(value, SuperPropertyManager):
+        value.post_update()
   
   def _make_async_calls(self):
     entity = self
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().items():
-        if isinstance(field_instance, SuperStructuredPropertyManager):
+        if isinstance(field_instance, SuperPropertyManager):
           manager = field_instance._get_value(entity, internal=True)
           manager.read_async()
   
@@ -430,7 +438,7 @@ class _BaseModel(object):
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
-        if isinstance(value, SuperStructuredPropertyManager):
+        if isinstance(value, SuperPropertyManager):
           value = value.value
         value = copy.deepcopy(value)
         try:
@@ -580,7 +588,7 @@ class _BaseModel(object):
     else:
       if is_structured_field(field):
         child_entity = getattr(entity, field_key)
-        if isinstance(child_entity, SuperStructuredPropertyManager):
+        if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
         if field._repeated:
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
@@ -591,7 +599,7 @@ class _BaseModel(object):
                 cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
         else:
           child_entity = getattr(entity, field_key)
-          if isinstance(child_entity, SuperStructuredPropertyManager):
+          if isinstance(child_entity, SuperPropertyManager):
             child_entity = child_entity.value
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
             child_fields = child_entity.get_fields()
@@ -624,9 +632,9 @@ class _BaseModel(object):
             pass
       else:
         child_entity = getattr(entity, field_key)
-        if isinstance(child_entity, SuperStructuredPropertyManager):
+        if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
-        if isinstance(field_value, SuperStructuredPropertyManager):
+        if isinstance(field_value, SuperPropertyManager):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
@@ -641,25 +649,6 @@ class _BaseModel(object):
             '''
             if field_value_item.key:
               field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
-        if permissions[field_key]['writable'] and is_local_structure:
-          # If we are on top level of the LOCAL structured property,
-          # and we do have full permission on it, all local structured properties item(s) that have _state == 'deleted'
-          # must be deleted.
-          # We cannot copy over the originals because we would override changes made to the ones that doesn't have
-          # to be deleted, so that's why we will mutate child_entity directly.
-          # Mutating the original values would break the rule engine further down the drill section.
-          if field._repeated:
-            to_delete = []
-            for current_value in child_entity:
-              if current_value._state == 'deleted':
-                to_delete.append(current_value)
-            for delete in to_delete:
-              child_entity.remove(delete)
-          else:
-            # If it's not repeated, current_values will be set to None but with setattr(entity, field_key, None),
-            # because mutation could not be achieved by setting child_entity = None.
-            if child_entity._state == 'deleted':
-              setattr(entity, field_key, None)
         if not permissions[field_key]['writable']:
           if field._repeated:
             to_delete = []
@@ -668,9 +657,6 @@ class _BaseModel(object):
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
-          else:
-            if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
-              setattr(entity, field_key, None)
         if not permissions[field_key]['writable'] and not is_local_structure:
           # If we do not have permission and this is not a local structure,
           # all items that got marked with ._state == 'delete' must have their items removed from the list
@@ -1391,15 +1377,42 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           else:
             self._property_value = property_value
       return self._property_value
+    
+  def _pre_update_remote_single(self):
+    pass
   
-  def _update_local(self):
+  def _pre_update_remote_multi(self):
+    pass
+  
+  def _pre_update_remote_multi_sequenced(self):
+    pass
+   
+  def _post_update_local(self):
     '''We do not call anything when we work with local storage.
     That is intentional behavior because local storage is on entity and it mutates on it.
     
     '''
     pass
   
-  def _update_remote_single(self):
+  def _pre_update_local(self):
+    '''We call this always before putting the entity.
+    '''
+    if self.has_value():
+      if self._property._repeated:
+        to_delete = []
+        for entity in self._property_value:
+          if entity._state == 'deleted':
+             to_delete.append(entity)
+        for deleted_entity in to_delete:
+          self._property_value.remove(deleted_entity) # this mutates on the entity and on the _property_value
+      else:
+        # we must mutate on the entity itself
+        name = self._property._code_name
+        if not name:
+          name = self._property._name
+        setattr(self._entity, name, None)  # we do it like this instead of prop._set_value in order to comply with expando and virtual
+       
+  def _post_update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -1417,7 +1430,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       self._property_value.put()
   
-  def _update_remote_multi(self):
+  def _post_update_remote_multi(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -1437,7 +1450,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     delete_multi(delete_entities)
     put_multi(self._property_value)
   
-  def _update_remote_multi_sequenced(self):
+  def _post_update_remote_multi_sequenced(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -1461,14 +1474,21 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     delete_multi(delete_entities)
     put_multi(self._property_value)
   
-  def update(self):
+  def post_update(self):
     if self._property._updateable:
       if self.has_value():
-        update_function = getattr(self, '_update_%s' % self.storage_type)
-        update_function()
+        post_update_function = getattr(self, '_post_update_%s' % self.storage_type)
+        post_update_function()
       else:
         pass
-
+      
+  def pre_update(self):
+    if self._property._updateable:
+      if self.has_value():
+        pre_update_function = getattr(self, '_pre_update_%s' % self.storage_type)
+        pre_update_function()
+      else:
+        pass
 
 class SuperReadPropertyManager(SuperPropertyManager):
   
@@ -1561,12 +1581,14 @@ class _BaseStructuredProperty(object):
   _readable = True
   _updateable = True
   _deleteable = True
+  _managerclass = None
   
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._readable = kwargs.pop('readable', True)
     self._updateable = kwargs.pop('updateable', True)
     self._deleteable = kwargs.pop('deleteable', True)
+    self._managerclass = kwargs.pop('managerclass', None)
     if isinstance(args[0], basestring):
       args[0] = Model._kind_map.get(args[0])
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
@@ -1606,7 +1628,10 @@ class _BaseStructuredProperty(object):
       manager = entity._values[manager_name]
     else:
       util.logger('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
-      manager = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
+      managerClass = SuperStructuredPropertyManager
+      if self._managerclass:
+        managerClass = self._managerclass
+      manager = managerClass(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     super(_BaseStructuredProperty, self)._get_value(entity)
     return manager
@@ -1936,6 +1961,7 @@ class SuperEntityStorageStructuredProperty(Property):
   _readable = True
   _updateable = True
   _deleteable = True
+  _managerclass = None
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     self._storage = kwds.pop('storage')
@@ -1943,6 +1969,7 @@ class SuperEntityStorageStructuredProperty(Property):
     self._readable = kwds.pop('readable', True)
     self._updateable = kwds.pop('updateable', True)
     self._deleteable = kwds.pop('deleteable', True)
+    self._managerclass = kwds.pop('managerclass', None)
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
     super(SuperEntityStorageStructuredProperty, self).__init__(name, **kwds)
@@ -1966,7 +1993,10 @@ class SuperEntityStorageStructuredProperty(Property):
     if manager_name in entity._values:
       return entity._values[manager_name]
     util.logger('SuperEntityStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
-    manager = SuperStructuredPropertyManager(property_instance=self, storage_entity=entity)
+    managerClass = SuperStructuredPropertyManager
+    if self._managerclass:
+      managerClass = self._managerclass
+    manager = managerClass(property_instance=self, storage_entity=entity)
     entity._values[manager_name] = manager
     return manager
   

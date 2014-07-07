@@ -10,7 +10,7 @@ import cgi
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-from app import ndb, util
+from app import ndb, util, settings, memcache
 
 
 class InputError(Exception):
@@ -69,21 +69,35 @@ class Engine:
   
   @classmethod
   def process_blob_input(cls, context, input):
+    uploaded_blobs = []
     for key, value in input.items():
       if isinstance(value, cgi.FieldStorage):
         if 'blob-key' in value.type_options:
           try:
             blob_info = blobstore.parse_blob_info(value)
-            context.blob_unused.append(blob_info.key())
+            uploaded_blobs.append(blob_info.key())
           except blobstore.BlobInfoParseError as e:
             pass
+    if uploaded_blobs:
+      payload = {'finally' : uploaded_blobs} 
+      # by default, we set that all uploaded blobs must be deleted in `finally` phase.
+      # however by using BlobKeyManager.collect_on_success(key) you prevent deletation of specified key
+      # if the request completes without any errors.
+      # but specifying BlobKeyManager.collect(key) will prevent the key from deletation anyways
+      memcache.temp_memory_set(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY, payload)
   
   @classmethod
-  def process_blob_output(cls, context):
-    if len(context.blob_unused):
-      util.logger('DELETED BLOBS: %s' % [str(b) for b in context.blob_unused])
-      blobstore.delete(context.blob_unused)
-      context.blob_unused = []
+  def process_blob_output(cls, phase):
+    collector = memcache.temp_memory_get(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY, None)
+    if collector is not None:
+      keys = collector.get(phase, None)
+      if keys:
+        to_skip = collector.get('collector_%s' % phase, None)
+        if to_skip:
+          for skip in to_skip:
+            keys.remove(skip)
+        if keys:
+          blobstore.delete(keys)
   
   @classmethod
   def get_models(cls, context):
@@ -172,7 +186,7 @@ class Engine:
   def run(cls, input):
     util.logger('Payload: %s' % input)
     context = Context()
-    cls.process_blob_input(context, input)  # This is the most efficient strategy to handle blobs we can think of!
+    cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
       cls.init()
       cls.get_models(context)
@@ -180,6 +194,7 @@ class Engine:
       cls.get_action(context, input)
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
+      cls.process_blob_output('success') # delete, or save all blobs that need to be deleted on success
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
@@ -196,5 +211,5 @@ class Engine:
       if throw:
         raise  # Here we raise all other unhandled exceptions!
     finally:
-      cls.process_blob_output(context)  # This is the most efficient strategy to handle blobs we can think of!
+      cls.process_blob_output('finally')  # delete all blobs that are marked to be deleted no matter what happens
     return context.output

@@ -77,6 +77,9 @@ LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')
 CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
 PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 
+
+TEMP_MEMORY_BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
+
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
    'client_id'    : '206755588982-194qvci376p5pj9ulujen5jt1jt5mdtg.apps.googleusercontent.com',
