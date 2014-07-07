@@ -163,7 +163,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
             BlobKeyManager.collect_on_success(entity.image, False)
         
   def _pre_update_local(self):
-    self._delete_possible_blobs()
+    self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._pre_update_local() # finalize delete mode
  
   def _delete_remote(self):
