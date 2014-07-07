@@ -336,38 +336,6 @@ class _BaseModel(object):
     else:
       return getattr(entity, last_field, None)
   
-  @classmethod
-  def _pre_delete_hook(cls, key):
-    if key:
-      entity = key.get()
-      entity.record_write()
-      @toplevel
-      def delete_async():
-        for field_key, field in entity.get_fields().items():
-          if is_structured_field(field):
-            manager = getattr(entity, field_key, None)
-            if isinstance(manager, SuperPropertyManager):
-              manager.delete()
-      delete_async()
-  
-  def _pre_put_hook(self):
-    if self._use_rule_engine:
-      if not hasattr(self, '_original'):
-        raise PropertyError('Working on entity (%r) without _original.' % self)
-      self.rule_write()
-    for field in self.get_fields():
-      value = getattr(self, field)
-      if isinstance(value, SuperPropertyManager):
-        value.pre_update()
-  
-  def _post_put_hook(self, future):
-    entity = self
-    entity.record_write()
-    for field in entity.get_fields():
-      value = getattr(entity, field)
-      if isinstance(value, SuperPropertyManager):
-        value.post_update()
-  
   def _make_async_calls(self):
     entity = self
     if entity.key and entity.key.id():
@@ -389,6 +357,38 @@ class _BaseModel(object):
     entity.make_original()
     entity._make_async_calls()
     return entity
+  
+  def _pre_put_hook(self):
+    if self._use_rule_engine:
+      if not hasattr(self, '_original'):
+        raise PropertyError('Working on entity (%r) without _original.' % self)
+      self.rule_write()
+    for field in self.get_fields():
+      value = getattr(self, field)
+      if isinstance(value, SuperPropertyManager):
+        value.pre_update()
+  
+  def _post_put_hook(self, future):
+    entity = self
+    entity.record_write()
+    for field in entity.get_fields():
+      value = getattr(entity, field)
+      if isinstance(value, SuperPropertyManager):
+        value.post_update()
+  
+  @classmethod
+  def _pre_delete_hook(cls, key):
+    if key:
+      entity = key.get()
+      entity.record_write()
+      @toplevel
+      def delete_async():
+        for field_key, field in entity.get_fields().items():
+          if is_structured_field(field):
+            manager = getattr(entity, field_key, None)
+            if isinstance(manager, SuperPropertyManager):
+              manager.delete()
+      delete_async()
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -1378,7 +1378,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       return self._property_value
   
   def _pre_update_local(self):
-    '''We call this always before putting the entity.
+    '''Process local structures.
     
     '''
     if self.has_value():
@@ -1406,10 +1406,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     pass
   
   def _post_update_local(self):
-    '''We do not call anything when we work with local storage.
-    That is intentional behavior because local storage is on entity and it mutates on it.
-    
-    '''
     pass
   
   def _post_update_remote_single(self):
