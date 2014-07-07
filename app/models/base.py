@@ -33,10 +33,10 @@ class BlobKeyManager():
   @classmethod
   @property
   def collector(cls):
-    out = memcache.temp_memory_get(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY, None)
+    out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if out is None:
-      memcache.temp_memory_set(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY, {})
-    return memcache.temp_memory_get(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY)
+      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {})
+    return memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
  
   @classmethod
   def normalize(cls, key_or_keys):
@@ -44,6 +44,30 @@ class BlobKeyManager():
       return key_or_keys
     else:
       return [key_or_keys]
+    
+  @classmethod
+  def delete(cls, keys):
+    pass
+    
+  @classmethod
+  def delete_on_error(cls, keys):
+    pass
+  
+  @classmethod
+  def delete_on_success(cls, keys):
+    pass
+  
+  @classmethod
+  def collect(cls, keys):
+    pass
+  
+  @classmethod
+  def collect_on_success(cls, keys):
+    pass
+  
+  @classmethod
+  def collect_on_error(cls, keys):
+    pass
     
   @classmethod
   def _delete(cls, phase, keys):
@@ -67,28 +91,6 @@ class BlobKeyManager():
         cls.collector[phase] = []
       if key not in cls.collector[phase]:
         cls.collector[phase].append(key)
-        
-  @classmethod
-  def collect(cls, keys):
-    # this will ALWAYS save the targeted blobs
-    cls._collect('finally', keys)
-  
-  @classmethod
-  def collect_on_success(cls, keys):
-    # this will DELETE the blobs upon ERROR and save them upon success
-    cls._collect('success', keys)
-    # it will delete them if the success phase fails
-    cls.delete(keys)
-  
-  @classmethod
-  def delete(cls, keys):
-    # deletes them always
-    cls._delete('finally', keys)
-  
-  @classmethod
-  def delete_on_success(cls, keys):
-    # deletes them only if the success
-    cls._delete('success', keys)
  
  
 def validate_images(objects):
