@@ -93,6 +93,8 @@ class Engine:
         # collect mode
         keys = collector.get('collect_%s' % state, None)
         delete = collector.get('delete', None)
+        if delete is None:
+          delete = collector['delete'] = []
         if keys and delete is not None:
             for skip in keys:
               if skip in delete:

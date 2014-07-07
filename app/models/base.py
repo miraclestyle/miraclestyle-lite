@@ -38,7 +38,7 @@ class BlobKeyManager():
   def collector(cls):
     out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if out is None:
-      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {})
+      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete' : []})
     return memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
  
   @classmethod
