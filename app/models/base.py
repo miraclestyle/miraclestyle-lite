@@ -34,12 +34,12 @@ class BlobKeyManager():
   '''
   
   @classmethod
-  @property
   def collector(cls):
     out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if out is None:
       memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete' : []})
-    return memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
+    out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
+    return out
  
   @classmethod
   def normalize(cls, key_or_keys):
@@ -66,7 +66,7 @@ class BlobKeyManager():
   
   @classmethod
   def collect(cls, keys, delete=True):
-    # collect keys no matter which error occurs
+    # collect keys no matter what happens
     cls._store(keys, 'collect', delete)
   
   @classmethod
@@ -82,10 +82,10 @@ class BlobKeyManager():
   @classmethod
   def _store(cls, keys, state=None, delete=True):
     keys = cls.normalize(keys)
-    collector = cls.collector
+    collector = cls.collector()
     for key in keys:
       if state not in collector:
-        cls.collector[state] = []
+        collector[state] = []
       if key not in collector[state]:
         collector[state].append(key)
     if state is not None and not state.startswith('delete') and delete is True: 
@@ -95,6 +95,8 @@ class BlobKeyManager():
 def validate_images(objects):
   '''"objects" argument is a list of valid instance(s)
   of Image class that require validation!
+  
+  This function is used mainly for property that turns its usage on.
   
   '''
   to_delete = []
@@ -136,7 +138,7 @@ def validate_images(objects):
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
   def _process_blobs(self, entities=None, forced=False):
-    # this function is helper that will mark every entity.image blob key for deletation
+    # this function is helper that will decide which every entity.image blob key needs to be marked for deletation
     # if `entities` is not provided it will attempt to read from self._property_value
     # otherwise nothing will happen because no value is provided @see self.has_value()
     # this function will also mark the entity.image to be preserved by calling BlobKeyManager.collect_on_success(entity.image, False)
@@ -156,7 +158,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         # it is important that entity.image exists and 
         # that the state == 'deleted'
         # if force=True is specified, it will call delete no matter what the state is
-        if hasattr(entity, 'image') and entity.image and isinstance(blobstore.BlobKey, entity.image):
+        if hasattr(entity, 'image') and entity.image and isinstance(entity.image, blobstore.BlobKey): # this ifs are because single entity storage can be very different
           if (entity._state == 'deleted' or forced):
             BlobKeyManager.delete_on_success(entity.image)
           else:
@@ -177,7 +179,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-        self._process_blobs(_entities, True) # this will mark ALL blobs for delete that are attached to the entities
+        self._process_blobs(_entities, True) # this will force-mark ALL blobs for delete that are attached to the entities
         ndb.delete_multi(_entities)
         if not cursor or not more:
           break
@@ -191,8 +193,8 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     self._process_blobs(entity, True) # this will mark ALL blobs for delete
     entity.key.delete()
    
-  # we override these three methods because we call self._delete_possible_blobs() beforehand
-  # this could be avoided by overriding def post_update() but we need to decide
+  # we override these three methods because we call self._process_blobs() beforehand
+  # this could be avoided by overriding def post_update() but we need to decide which
   def _post_update_remote_single(self):
     self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
@@ -204,21 +206,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   def _post_update_remote_multi_sequenced(self):
     self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
-    
-  def set(self, property_value):
-    # set here will mark the blob for collection
-    # it will not perform collection if the value provided does not have attribute `image` and if value if `image` 
-    # is not instance of BlobKey
-    # otherwise it will check if state is == 'created' or the value.key is none.
-    copy_property_value = property_value
-    if not self._property._repeated:
-      copy_property_value = [copy_property_value]
-    for value in property_value:
-      if not hasattr(value, 'image') or not isinstance(value.image, blobstore.BlobKey): # this is because of single entity
-        continue
-      if value._state == 'created' or not value.key:
-        BlobKeyManager.collect_on_success(value.image)
-    return super(SuperStructuredPropertyImageManager, self).set(property_value)
   
   def process(self):
     '''
@@ -229,7 +216,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       Idempotency overhead in this one is the crop, resize and similar "modify-image" features
       might be called many times on same entity (and its gcs file), which in turn would resize the same image multiple times.
       
-      This cant be avoided when transactions or general failures of app engine comes into play, here is the example:
+      This cant be avoided when transactions or general failures of app engine come into play, here is the example:
       
       try:
        entity.images.process()
@@ -237,7 +224,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
        transaction_rollback()
        
       So the google cloud storage files might be already modified 
-      and the entity was reverted to previous state, so in next retry of taskqueue it will re-start to do the same
+      and the entity was reverted to previous state, so in next retry of taskqueue it will retry to do the same
       thing on the entities.
       
       As for the copying process, we always wipe out the image upon code failure, so stacking of copied data wont happen.
@@ -246,16 +233,21 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       
       class Single:
       
-        images = ndb.SuperStructuredPropertyImageManager()
+        images = ndb.SuperStructuredPropertyImageManager(...)
         
       so in that case you would have to call
       
       entity.image.value.images.process()
       
-      because if you call entity.image.process() it wont do nothing basically because `image` property on which .process() 
-      was called is just instance of SuperStructuredPropertyImageManager
+      because if you call entity.image.process() it wont do nothing, basically because `image` property on which .process() 
+      was called is just instance of SuperStructuredPropertyImageManager, and its property value is instance of entity 
+      that would usually contain property that is repeated list of images.
       
       @todo: We could however solve this by iterating over every entity field and calling .process() if its instance of SuperStructuredPropertyImageManager?
+      like this
+      for field in entity.fields:
+        if field instance of storage_image_entity:
+         entity[field].process()
     '''
     alter_image_config = self._property._alter_image_config
     if not alter_image_config:

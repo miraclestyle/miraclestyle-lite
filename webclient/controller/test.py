@@ -500,6 +500,48 @@ class TestTasklet(handler.Angular):
     
     print get_cart_plus_offers(acc).get_result()
 
+
+from app.models.base import *
+
+class TestImageUploadModel(ndb.BaseModel):
+  
+  _use_record_engine = False  # All models are by default recorded!
+  _use_rule_engine = False  # All models by default respect rule engine!
+  
+  images = SuperLocalStructuredImageProperty(Image, 
+                                             repeated=True, 
+                                             alter_image_config={'width' : 240, 'transform' : True, 'height' : 200})
+      
+    
+class TestImageUpload(handler.Base):
+  
+  LOAD_CURRENT_USER = False
+  
+  def respond(self):
+    name = self.request.get('name')
+    f = self.request.params.get('yes', None)
+    
+    if f is not None:
+      f1 = blobstore.parse_file_info(f)
+      f2 = blobstore.parse_blob_info(f)
+      new = TestImageUploadModel(id=name, images=[Image(image=f2.key(), size=f1.size, gs_object_name=f1.gs_object_name, content_type='image/jpeg')])
+      new.put()
+      
+    ent = ndb.Key(TestImageUploadModel, name).get()
+    if ent:
+     ent.images.read()
+     if self.request.get('proc'):
+       ent.images.process()
+       ent.put()
+     self.response.write(json.dumps(ent, cls=handler.JSONEncoderHTML))
+    
+    self.response.write(self.request.params)
+    self.response.write('''<form method="post" action="%s" enctype="multipart/form-data">
+    <p><input type="file" name="yes" /></p>
+    <input type="hidden" name="name" value="%s" />
+    <p><input type="submit" value="Send" />
+    </p></form>''' % (blobstore.create_upload_url(self.request.url, gs_bucket_name=settings.DOMAIN_LOGO_BUCKET), name))
+
 class Reset(handler.Angular):
   
   def respond(self):
@@ -571,4 +613,5 @@ handler.register(('/endpoint', Endpoint),
                  ('/upload_test', UploadTest),
                  ('/TestEntityManager', TestEntityManager),
                  ('/TestGetAsync', TestGetAsync),
-                 ('/TestRuleWrite', TestRuleWrite))
+                 ('/TestRuleWrite', TestRuleWrite),
+                 ('/TestImageUpload', TestImageUpload))

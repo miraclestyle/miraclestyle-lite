@@ -118,6 +118,7 @@ class Engine:
              if skip in delete:
                delete.remove(skip)
          if delete:
+           util.logger('DELETED %s BLOBS.' % len(delete))
            blobstore.delete(delete)
   
   @classmethod
