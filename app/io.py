@@ -68,7 +68,7 @@ class Engine:
     return ndb.Model._kind_map
   
   @classmethod
-  def process_blob_input(cls, context, input):
+  def process_blob_input(cls, input):
     uploaded_blobs = []
     for key, value in input.items():
       if isinstance(value, cgi.FieldStorage):
@@ -79,11 +79,11 @@ class Engine:
           except blobstore.BlobInfoParseError as e:
             pass
     if uploaded_blobs:
-      payload = {'finally' : uploaded_blobs} 
-      # by default, we set that all uploaded blobs must be deleted in `finally` phase.
-      # however by using BlobKeyManager.collect_on_success(key) you prevent deletation of specified key
+      payload = {'finally': uploaded_blobs}
+      # By default, we set that all uploaded blobs must be deleted in 'finally' phase.
+      # However by using BlobKeyManager.collect_on_success(key) we prevent deletation of specified key,
       # if the request completes without any errors.
-      # but specifying BlobKeyManager.collect(key) will prevent the key from deletation anyways
+      # But specifying BlobKeyManager.collect(key) will prevent the key from deletation.
       memcache.temp_memory_set(settings.TEMP_MEMORY_BLOBKEYMANAGER_KEY, payload)
   
   @classmethod
@@ -194,7 +194,7 @@ class Engine:
       cls.get_action(context, input)
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
-      cls.process_blob_output('success') # delete, or save all blobs that need to be deleted on success
+      cls.process_blob_output('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
     except Exception as e:
       throw = True
       if isinstance(e.message, dict):
@@ -211,5 +211,5 @@ class Engine:
       if throw:
         raise  # Here we raise all other unhandled exceptions!
     finally:
-      cls.process_blob_output('finally')  # delete all blobs that are marked to be deleted no matter what happens
+      cls.process_blob_output('finally')  # Delete all blobs that are marked to be deleted no matter what happens!
     return context.output

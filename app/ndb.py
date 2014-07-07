@@ -358,8 +358,7 @@ class _BaseModel(object):
     for field in self.get_fields():
       value = getattr(self, field)
       if isinstance(value, SuperPropertyManager):
-        value.pre_update() # here we call pre_update on every value
-      
+        value.pre_update()
   
   def _post_put_hook(self, future):
     entity = self
@@ -1238,7 +1237,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-        delete_multi(_entities)
+        delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
       else:
@@ -1377,7 +1376,26 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           else:
             self._property_value = property_value
       return self._property_value
+  
+  def _pre_update_local(self):
+    '''We call this always before putting the entity.
     
+    '''
+    if self.has_value():
+      if self._property._repeated:
+        delete_entities = []
+        for entity in self._property_value:
+          if entity._state == 'deleted':
+            delete_entities.append(entity)
+        for delete_entity in delete_entities:
+          self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
+      else:
+        # We must mutate on the entity itself.
+        name = self._property._code_name
+        if not name:
+          name = self._property._name
+        setattr(self._entity, name, None)  # WComply with expando and virtual fields.
+  
   def _pre_update_remote_single(self):
     pass
   
@@ -1386,7 +1404,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _pre_update_remote_multi_sequenced(self):
     pass
-   
+  
   def _post_update_local(self):
     '''We do not call anything when we work with local storage.
     That is intentional behavior because local storage is on entity and it mutates on it.
@@ -1394,24 +1412,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     pass
   
-  def _pre_update_local(self):
-    '''We call this always before putting the entity.
-    '''
-    if self.has_value():
-      if self._property._repeated:
-        to_delete = []
-        for entity in self._property_value:
-          if entity._state == 'deleted':
-             to_delete.append(entity)
-        for deleted_entity in to_delete:
-          self._property_value.remove(deleted_entity) # this mutates on the entity and on the _property_value
-      else:
-        # we must mutate on the entity itself
-        name = self._property._code_name
-        if not name:
-          name = self._property._name
-        setattr(self._entity, name, None)  # we do it like this instead of prop._set_value in order to comply with expando and virtual
-       
   def _post_update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
@@ -1447,7 +1447,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    delete_multi(delete_entities)
+    delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
   
   def _post_update_remote_multi_sequenced(self):
@@ -1471,8 +1471,16 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         entity.set_key(str(i), parent=self._entity.key)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    delete_multi(delete_entities)
+    delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
+  
+  def pre_update(self):
+    if self._property._updateable:
+      if self.has_value():
+        pre_update_function = getattr(self, '_pre_update_%s' % self.storage_type)
+        pre_update_function()
+      else:
+        pass
   
   def post_update(self):
     if self._property._updateable:
@@ -1481,14 +1489,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         post_update_function()
       else:
         pass
-      
-  def pre_update(self):
-    if self._property._updateable:
-      if self.has_value():
-        pre_update_function = getattr(self, '_pre_update_%s' % self.storage_type)
-        pre_update_function()
-      else:
-        pass
+
 
 class SuperReadPropertyManager(SuperPropertyManager):
   
@@ -1628,10 +1629,10 @@ class _BaseStructuredProperty(object):
       manager = entity._values[manager_name]
     else:
       util.logger('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
-      managerClass = SuperStructuredPropertyManager
+      manager_class = SuperStructuredPropertyManager
       if self._managerclass:
-        managerClass = self._managerclass
-      manager = managerClass(property_instance=self, storage_entity=entity)
+        manager_class = self._managerclass
+      manager = manager_class(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     super(_BaseStructuredProperty, self)._get_value(entity)
     return manager
@@ -1993,10 +1994,10 @@ class SuperEntityStorageStructuredProperty(Property):
     if manager_name in entity._values:
       return entity._values[manager_name]
     util.logger('SuperEntityStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
-    managerClass = SuperStructuredPropertyManager
+    manager_class = SuperStructuredPropertyManager
     if self._managerclass:
-      managerClass = self._managerclass
-    manager = managerClass(property_instance=self, storage_entity=entity)
+      manager_class = self._managerclass
+    manager = manager_class(property_instance=self, storage_entity=entity)
     entity._values[manager_name] = manager
     return manager
   
