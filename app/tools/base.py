@@ -384,10 +384,11 @@ def blob_update(blob_unused, blob_delete=None, blob_write=None):
 def _blob_alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
   result = {}
   if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
-    new_image = copy.deepcopy(original_image)
+    new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
     original_gs_object_name = new_image.gs_object_name
     new_gs_object_name = new_image.gs_object_name
     if make_copy:
+      new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
       new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
     blob_key = None
     try:
@@ -423,10 +424,10 @@ def _blob_alter_image(original_image, make_copy=False, copy_name=None, transform
       util.logger(e, 'exception')
       if blob_key != None:
         result['delete'] = blob_key
+      elif new_image.image:
+        result['delete'] = new_image.image
     else:
       result['save'] = new_image
-    finally:
-      return result
   return result
 
 
@@ -435,7 +436,7 @@ def blob_alter_image(entities, config):
     write_entities = {}
     blob_delete = []
     for key, entity in entities.items():
-      if entity and hasattr(entity, 'image'):
+      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
         result = _blob_alter_image(entity, **config)
         if result.get('save'):
           write_entities[key] = result['save']
@@ -446,14 +447,14 @@ def blob_alter_image(entities, config):
     write_entities = []
     blob_delete= []
     for entity in entities:
-      if entity and hasattr(entity, 'image'):
+      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
         result = _blob_alter_image(entity, **config)
         if result.get('save'):
           write_entities.append(result['save'])
         if result.get('delete'):
           blob_delete.append(result['delete'])
     return (write_entities, blob_delete)
-  elif entities and hasattr(entities, 'image'):
+  elif entities and hasattr(entities, 'image') and isinstance(entity.image, blobstore.BlobKey):
     blob_delete = []
     result = _blob_alter_image(entities, **config)
     if result.get('delete'):

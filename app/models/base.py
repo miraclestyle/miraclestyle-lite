@@ -14,6 +14,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, memcache, settings
 from app.tools.manipulator import set_attr, get_attr, safe_eval
+from app.tools.base import blob_alter_image
 
 class BlobKeyManager():
   '''
@@ -25,6 +26,8 @@ class BlobKeyManager():
     
     new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
     BlobKeyManager.collect_on_success(new_blobstore_key) 
+    
+    
 
     now upon failure anywhere in the application, the new_blobstore_key will be deleted.
     but if no error has occurred the new_blobstore_key will not be deleted from the blobstore.
@@ -47,51 +50,47 @@ class BlobKeyManager():
     
   @classmethod
   def delete(cls, keys):
-    pass
+    # this method will delete list of provided blob keys no matter which state
+    # but depending on methods called later on in the code will determine which are to be deleted for real
+    cls._store(keys, 'delete')
     
   @classmethod
-  def delete_on_error(cls, keys):
-    pass
+  def delete_on_error(cls, keys, delete=True):
+    # marks keys to be deleted upon application error
+    cls._store(keys, 'delete_error', delete)
   
   @classmethod
-  def delete_on_success(cls, keys):
-    pass
+  def delete_on_success(cls, keys, delete=True):
+    # marks keys to be deleted upon success
+    cls._store(keys, 'delete_success', delete)
   
   @classmethod
-  def collect(cls, keys):
-    pass
+  def collect(cls, keys, delete=True):
+    # collect keys no matter which error occurs
+    cls._store(keys, 'collect', delete)
   
   @classmethod
-  def collect_on_success(cls, keys):
-    pass
+  def collect_on_success(cls, keys, delete=True):
+    # collect keys on success
+    cls._store(keys, 'collect_success', delete)
   
   @classmethod
-  def collect_on_error(cls, keys):
-    pass
+  def collect_on_error(cls, keys, delete=True):
+    # collect keys on application error
+    cls._store(keys, 'collect_error', delete)
     
   @classmethod
-  def _delete(cls, phase, keys):
-    # by default, collector has two stages
-    # 'success' and 'finally'
-    # in success he will either, set blobs that need to be deleted on success
-    # or keep alive the blobs
+  def _store(cls, keys, state=None, delete=True):
     keys = cls.normalize(keys)
+    collector = cls.collector
     for key in keys:
-      if phase not in cls.collector:
-        cls.collector[phase] = []
-      if key not in cls.collector[phase]:
-        cls.collector[phase].append(key)
-      
-  @classmethod
-  def _collect(cls, phase, keys):
-    phase = 'collector_%s' % phase
-    keys = cls.normalize(keys)
-    for key in keys:
-      if phase not in cls.collector:
-        cls.collector[phase] = []
-      if key not in cls.collector[phase]:
-        cls.collector[phase].append(key)
- 
+      if state not in collector:
+        cls.collector[state] = []
+      if key not in collector[state]:
+        collector[state].append(key)
+    if state is not None and not state.startswith('delete') and delete is True: 
+      # if state is said to be delete_* or delete then there is no need to store them in delete queue
+      cls._store(keys, 'delete')
  
 def validate_images(objects):
   '''"objects" argument is a list of valid instance(s)
@@ -136,9 +135,13 @@ def validate_images(objects):
 
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
-  def _delete_possible_blobs(self, entities=None, forced=False):
-    # this function is helper that will mark every suitable entities `image` blob key for deletation
-    # if entities is not provided it will attempt to read from self._property_value
+  def _process_blobs(self, entities=None, forced=False):
+    # this function is helper that will mark every entity.image blob key for deletation
+    # if `entities` is not provided it will attempt to read from self._property_value
+    # otherwise nothing will happen because no value is provided @see self.has_value()
+    # this function will also mark the entity.image to be preserved by calling BlobKeyManager.collect_on_success(entity.image, False)
+    # that means it will first check if blob key was previously marked for deletation 
+    # (this way we know that's a new blob key)
     if not entities:
       if self.has_value():
         if self._property._repeated:
@@ -153,8 +156,11 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         # it is important that entity.image exists and 
         # that the state == 'deleted'
         # if force=True is specified, it will call delete no matter what the state is
-        if (entity._state == 'deleted' or forced) and entity.image:
-          BlobKeyManager.delete_on_success(entity.image)
+        if hasattr(entity, 'image') and entity.image and isinstance(blobstore.BlobKey, entity.image):
+          if (entity._state == 'deleted' or forced):
+            BlobKeyManager.delete_on_success(entity.image)
+          else:
+            BlobKeyManager.collect_on_success(entity.image, False)
         
   def _pre_update_local(self):
     self._delete_possible_blobs()
@@ -162,7 +168,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
  
   def _delete_remote(self):
     # this function had to be copied because it queries information, and it never saves its entities in memory
-    # this could be improved however this is most efficient right now
+    # delete_remote is used by both multi and multi_sequenced
     cursor = Cursor()
     limit = 200
     query = self._property._modelclass.query(ancestor=self._entity.key)
@@ -171,7 +177,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-        self._delete_possible_blobs(_entities, True) # this will mark ALL blobs for delete that are attached to the entities
+        self._process_blobs(_entities, True) # this will mark ALL blobs for delete that are attached to the entities
         ndb.delete_multi(_entities)
         if not cursor or not more:
           break
@@ -182,27 +188,90 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._copy_record_arguments(entity)
-    self._delete_possible_blobs(entity, True) # this will mark ALL blobs for delete
+    self._process_blobs(entity, True) # this will mark ALL blobs for delete
     entity.key.delete()
-    
+   
+  # we override these three methods because we call self._delete_possible_blobs() beforehand
+  # this could be avoided by overriding def post_update() but we need to decide
   def _post_update_remote_single(self):
-    self._delete_possible_blobs()
+    self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
   
   def _post_update_remote_multi(self):
-    self._delete_possible_blobs()
+    self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
   
   def _post_update_remote_multi_sequenced(self):
-    self._delete_possible_blobs()
+    self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
+    
+  def set(self, property_value):
+    # set here will mark the blob for collection
+    # it will not perform collection if the value provided does not have attribute `image` and if value if `image` 
+    # is not instance of BlobKey
+    # otherwise it will check if state is == 'created' or the value.key is none.
+    copy_property_value = property_value
+    if not self._property._repeated:
+      copy_property_value = [copy_property_value]
+    for value in property_value:
+      if not hasattr(value, 'image') or not isinstance(value.image, blobstore.BlobKey): # this is because of single entity
+        continue
+      if value._state == 'created' or not value.key:
+        BlobKeyManager.collect_on_success(value.image)
+    return super(SuperStructuredPropertyImageManager, self).set(property_value)
   
   def process(self):
     '''
       This function should be called inside a taskqueue.
       It will perform all needed operations based on the property configuration on how to handle its blobs.
       Resizing, cropping, and generation of serving url in the end.
+      
+      Idempotency overhead in this one is the crop, resize and similar "modify-image" features
+      might be called many times on same entity (and its gcs file), which in turn would resize the same image multiple times.
+      
+      This cant be avoided when transactions or general failures of app engine comes into play, here is the example:
+      
+      try:
+       entity.images.process()
+      except:
+       transaction_rollback()
+       
+      So the google cloud storage files might be already modified 
+      and the entity was reverted to previous state, so in next retry of taskqueue it will re-start to do the same
+      thing on the entities.
+      
+      As for the copying process, we always wipe out the image upon code failure, so stacking of copied data wont happen.
+      
+      !!NOTE: Single entity storage can be problematic in this case because single entity structure is usually:
+      
+      class Single:
+      
+        images = ndb.SuperStructuredPropertyImageManager()
+        
+      so in that case you would have to call
+      
+      entity.image.value.images.process()
+      
+      because if you call entity.image.process() it wont do nothing basically because `image` property on which .process() 
+      was called is just instance of SuperStructuredPropertyImageManager
+      
+      @todo: We could however solve this by iterating over every entity field and calling .process() if its instance of SuperStructuredPropertyImageManager?
     '''
+    alter_image_config = self._property._alter_image_config
+    if not alter_image_config:
+      alter_image_config = {}
+    if not self.has_value():
+      raise ndb.PropertyError('Cannot call %s.process() because read() was not called beforehand.' % self)
+    entities = self.value
+    if not self._property._repeated:
+      entities = [entities]
+    # we do not use validate_images here because we can validate it and measure it in blob_alter_image instead
+    modified_entities, blob_keys_to_delete = blob_alter_image(entities, alter_image_config)
+    setattr(self._entity, self.property_name, modified_entities)  # Comply with expando and virtual fields.
+    # delete blob keys that were ordered to be deleted
+    # blobs must be deleted on full success
+    BlobKeyManager.delete_on_success(blob_keys_to_delete)
+    
      
   
 class _BaseImageProperty(object):
@@ -264,8 +333,8 @@ class Image(ndb.BaseModel):
   height = ndb.SuperIntegerProperty('5', indexed=False)
   gs_object_name = ndb.SuperStringProperty('6', indexed=False)
   serving_url = ndb.SuperStringProperty('7', indexed=False)
-
-
+ 
+ 
 class Role(ndb.BaseExpando):
   
   _kind = 66

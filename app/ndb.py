@@ -1190,6 +1190,13 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     return self._property._storage  # @todo Prehaps _storage renamte to _storage_type
   
+  @property
+  def property_name(self):
+    name = self._property._code_name
+    if not name:
+      name = self._property._name
+    return name
+  
   def set(self, property_value):
     '''We always verify that the property_value is instance
     of the model that is specified in the property configuration.
@@ -1391,10 +1398,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
       else:
         # We must mutate on the entity itself.
-        name = self._property._code_name
-        if not name:
-          name = self._property._name
-        setattr(self._entity, name, None)  # WComply with expando and virtual fields.
+        setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
   
   def _pre_update_remote_single(self):
     pass
