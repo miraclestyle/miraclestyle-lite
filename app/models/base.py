@@ -16,16 +16,24 @@ from app import ndb, memcache, settings
 from app.tools.manipulator import set_attr, get_attr, safe_eval
 from app.tools.base import blob_alter_image
 
-class BlobKeyManager():
+class BaseBlobKeyInterface(object):
   '''
-    Example usage:
+    Base helper class for blob-key-like ndb properties.
     
-    new_file = gcs.open(...)
-    new_file.write(..)
-    new_file.close()
+    This property should be used in conjunction with ndb Property baseclass, like so:
     
-    new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
-    BlobKeyManager.collect_on_success(new_blobstore_key) 
+    class PDF(BaseBlobKeyInterface, ndb.Property):
+      ....
+      
+      def format(self, value):
+        Example usage:
+        
+        new_file = gcs.open(value.path)
+        new_file.write(..)
+        new_file.close()
+        
+        new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
+        self.blob_collect_on_success(new_blobstore_key)
      
     now upon failure anywhere in the application, the new_blobstore_key will be deleted.
     but if no error has occurred the new_blobstore_key will not be deleted from the blobstore.
@@ -42,7 +50,7 @@ class BlobKeyManager():
   '''
   
   @classmethod
-  def collector(cls):
+  def blob_collector(cls):
     # this function acts as a getter from in-memory storage
     out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if out is None:
@@ -51,7 +59,7 @@ class BlobKeyManager():
     return out
  
   @classmethod
-  def normalize(cls, key_or_keys):
+  def blob_normalize(cls, key_or_keys):
     # helper to transform single item into a list for iteration
     if isinstance(key_or_keys, (list, tuple)):
       return key_or_keys
@@ -59,40 +67,40 @@ class BlobKeyManager():
       return [key_or_keys]
     
   @classmethod
-  def delete(cls, keys):
+  def blob_delete(cls, keys):
     # this method will delete list of provided blob keys no matter which state
     # but depending on methods called later on in the code will determine which are to be deleted for real
-    cls._store(keys, 'delete')
+    cls._blob_store(keys, 'delete')
     
   @classmethod
-  def delete_on_error(cls, keys, delete=True):
+  def blob_delete_on_error(cls, keys, delete=True):
     # marks keys to be deleted upon application error
-    cls._store(keys, 'delete_error', delete)
+    cls._blob_store(keys, 'delete_error', delete)
   
   @classmethod
-  def delete_on_success(cls, keys, delete=True):
+  def blob_delete_on_success(cls, keys, delete=True):
     # marks keys to be deleted upon success
-    cls._store(keys, 'delete_success', delete)
+    cls._blob_store(keys, 'delete_success', delete)
   
   @classmethod
-  def collect(cls, keys, delete=True):
+  def blob_collect(cls, keys, delete=True):
     # collect keys no matter what happens
-    cls._store(keys, 'collect', delete)
+    cls._blob_store(keys, 'collect', delete)
   
   @classmethod
-  def collect_on_success(cls, keys, delete=True):
+  def blob_collect_on_success(cls, keys, delete=True):
     # collect keys on success
-    cls._store(keys, 'collect_success', delete)
+    cls._blob_store(keys, 'collect_success', delete)
   
   @classmethod
-  def collect_on_error(cls, keys, delete=True):
+  def blob_collect_on_error(cls, keys, delete=True):
     # collect keys on application error
-    cls._store(keys, 'collect_error', delete)
+    cls._blob_store(keys, 'collect_error', delete)
     
   @classmethod
-  def _store(cls, keys, state=None, delete=True):
-    keys = cls.normalize(keys)
-    collector = cls.collector()
+  def _blob_store(cls, keys, state=None, delete=True):
+    keys = cls.blob_normalize(keys)
+    collector = cls.blob_collector()
     for key in keys:
       if state not in collector:
         collector[state] = []
@@ -100,50 +108,7 @@ class BlobKeyManager():
         collector[state].append(key)
     if state is not None and not state.startswith('delete') and delete is True: 
       # if state is said to be delete_* or delete then there is no need to store them in delete queue
-      cls._store(keys, 'delete')
- 
-def validate_images(objects):
-  '''"objects" argument is a list of valid instance(s)
-  of Image class that require validation!
-  
-  This function is used mainly for property that turns its usage on.
-  
-  '''
-  to_delete = []
-  for obj in objects:
-    if obj.width or obj.height: # validate images will not perform any measurements if image already has defined width and height.
-      continue
-    cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
-    # This will throw an error if the file does not exist in cloudstorage.
-    image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
-    # This will throw an error if the file is not an image, or is corrupted.
-    try:
-      image = images.Image(image_data=image_data)
-      width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
-      height = image.height
-    except images.NotImageError as e:
-      # cannot do objects.remove while in for loop objects
-      to_delete.append(obj)
-    for o in to_delete:
-      if o.image:
-        BlobKeyManager.delete(o.image) # ensure that this gets deleted since we catch the exception above
-      objects.remove(o)
-    cloudstorage_file.close()
-    obj.populate(**{'width': width,
-                    'height': height})
-  
-  @ndb.tasklet
-  def async(obj):
-    if obj.serving_url is None:
-      obj.serving_url = yield images.get_serving_url_async(obj.image)
-    raise ndb.Return(obj)
-  
-  @ndb.tasklet
-  def helper(objects):
-    results = yield map(async, objects)
-    raise ndb.Return(results)
-  
-  return helper(objects).get_result()
+      cls._blob_store(keys, 'delete')
 
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
@@ -171,9 +136,9 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         if hasattr(entity, 'image') and entity.image and isinstance(entity.image, blobstore.BlobKey): 
           # this ifs above are because single entity storage structure can differ
           if (entity._state == 'deleted' or forced):
-            BlobKeyManager.delete_on_success(entity.image)
+            self._property.blob_delete_on_success(entity.image)
           else:
-            BlobKeyManager.collect_on_success(entity.image, False)
+            self._property.blob_collect_on_success(entity.image, False)
         
   def _pre_update_local(self):
     self._process_blobs()
@@ -275,17 +240,71 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     setattr(self._entity, self.property_name, modified_entities)  # Comply with expando and virtual fields.
     # delete blob keys that were ordered to be deleted
     # blobs must be deleted on full success
-    BlobKeyManager.delete_on_success(blob_keys_to_delete)
+    self._property.blob_delete_on_success(blob_keys_to_delete)
     
      
   
-class _BaseImageProperty(object):
+class BaseImageInterface(BaseBlobKeyInterface):
+  '''
+   Base helper class for image-like properties.
+   
+   This class should work in conjunction with ndb.Property, because it does not implement nothing of ndb.
+   
+   example:
+   
+   class NewImageProperty(BaseImageInterface, ndb.Property):
+     ...
+   
+  '''
 
   def __init__(self, *args, **kwargs):
-    self._validate_images = kwargs.pop('validate_images', None)
+    self._measure_and_validate = kwargs.pop('_measure_and_validate', None)
     self._alter_image_config = kwargs.pop('alter_image_config', None)
-    super(_BaseImageProperty, self).__init__(*args, **kwargs)
+    super(BaseImageInterface, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
+    
+  def measure_and_validate(self, objects):
+    '''"objects" argument is a list of valid instance(s)
+    of Image class that require validation!
+    
+    This function is used mainly for property that turns its usage on.
+    
+    '''
+    to_delete = []
+    for obj in objects:
+      if obj.width or obj.height: # validate images will not perform any measurements if image already has defined width and height.
+        continue
+      cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
+      # This will throw an error if the file does not exist in cloudstorage.
+      image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
+      # This will throw an error if the file is not an image, or is corrupted.
+      try:
+        image = images.Image(image_data=image_data)
+        width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
+        height = image.height
+      except images.NotImageError as e:
+        # cannot do objects.remove while in for loop objects
+        to_delete.append(obj)
+      for o in to_delete:
+        if o.image:
+          self.blob_delete(o.image) # ensure that this gets deleted since we catch the exception above
+        objects.remove(o)
+      cloudstorage_file.close()
+      obj.populate(**{'width': width,
+                      'height': height})
+    
+    @ndb.tasklet
+    def async(obj):
+      if obj.serving_url is None:
+        obj.serving_url = yield images.get_serving_url_async(obj.image)
+      raise ndb.Return(obj)
+    
+    @ndb.tasklet
+    def helper(objects):
+      results = yield map(async, objects)
+      raise ndb.Return(results)
+    
+    return helper(objects).get_result()
   
   def format(self, value):
     prop = self
@@ -308,8 +327,8 @@ class _BaseImageProperty(object):
                                      'content_type': file_info.content_type,
                                      'gs_object_name': file_info.gs_object_name,
                                      'image': blob_info.key()}))
-    if prop._validate_images:
-      out = validate_images(out)
+    if prop._measure_and_validate:
+      out = self.measure_and_validate(out)
     if not prop._repeated:
       try:
         out = out[0]
@@ -317,13 +336,13 @@ class _BaseImageProperty(object):
         out = None
     return out
 
-class SuperEntityStorageStructuredImageProperty(_BaseImageProperty, ndb.SuperEntityStorageStructuredProperty):
+class SuperEntityStorageStructuredImageProperty(BaseImageInterface, ndb.SuperEntityStorageStructuredProperty):
   pass
 
-class SuperLocalStructuredImageProperty(_BaseImageProperty, ndb.SuperLocalStructuredProperty):
+class SuperLocalStructuredImageProperty(BaseImageInterface, ndb.SuperLocalStructuredProperty):
   pass
 
-class SuperStructuredImageProperty(_BaseImageProperty, ndb.SuperStructuredProperty):
+class SuperStructuredImageProperty(BaseImageInterface, ndb.SuperStructuredProperty):
   pass
   
 
