@@ -161,7 +161,7 @@ class Engine:
       if argument and hasattr(argument, 'format'):
         try:
           if not value_provided and not argument._required:
-            continue # skip the .format only if the value was not provided, and if the argument is not required
+            continue  # Skip the .format only if the value was not provided, and if the argument is not required.
           value = argument.format(value)
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
             argument._validator(argument, value)

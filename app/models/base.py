@@ -54,21 +54,32 @@ class GlobalRole(Role):
 
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
+  def _update_blobs(self):
+    if self.has_value():
+      if self._property._repeated:
+        entities = self._property_value
+      else:
+        entities = [self._property_value]
+      for entity in entities:
+        if (entity._state == 'deleted'):
+          self._property.delete_blobs_on_success(entity.image)
+        else:
+          self._property.save_blobs_on_success(entity.image, False)
+  
   def _pre_update_local(self):
-    self._process_blobs()
+    self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._pre_update_local()
   
-  # This could be avoided by overriding def post_update() however, we need to decide which is better approach.
   def _post_update_remote_single(self):
-    self._process_blobs()
+    self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
   
   def _post_update_remote_multi(self):
-    self._process_blobs()
+    self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
   
   def _post_update_remote_multi_sequenced(self):
-    self._process_blobs()
+    self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
   
   def _delete_remote(self):
@@ -80,7 +91,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-        self._process_blobs(_entities, True)  # This will force/mark ALL blobs for deletion that are attached to the entities.
+          self._property.delete_blobs_on_success(entity.image)
         delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
@@ -91,91 +102,13 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._copy_record_arguments(entity)
-    self._process_blobs(entity, True) # This will mark ALL blobs for deletion.
+    self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
   
-  def _blob_alter_image(self, original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
-    result = {}
-    if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
-      new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
-      original_gs_object_name = new_image.gs_object_name
-      new_gs_object_name = new_image.gs_object_name
-      if make_copy:
-        new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
-        new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
-      blob_key = None
-      try:
-        if make_copy:
-          readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
-          blob = readonly_blob.read()
-          readonly_blob.close()
-          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-        else:
-          readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
-          blob = readonly_blob.read()
-          readonly_blob.close()
-          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-        if transform:
-          image = images.Image(image_data=blob)
-          image.resize(width,
-                       height,
-                       crop_to_fit=crop_to_fit,
-                       crop_offset_x=crop_offset_x,
-                       crop_offset_y=crop_offset_y)
-          blob = image.execute_transforms(output_encoding=image.format)
-          new_image.width = width
-          new_image.height = height
-          new_image.size = len(blob)
-        writable_blob.write(blob)
-        writable_blob.close()
-        if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
-          new_image.gs_object_name = new_gs_object_name
-          blob_key = blobstore.create_gs_key(new_gs_object_name)
-          new_image.image = blobstore.BlobKey(blob_key)
-          new_image.serving_url = images.get_serving_url(new_image.image)
-      except Exception as e:
-        util.logger(e, 'exception')
-        if blob_key != None:
-          result['delete'] = blob_key
-        elif new_image.image:
-          result['delete'] = new_image.image
-      else:
-        result['save'] = new_image
-    return result
-  
-  def _process_blobs(self, entities=None, forced=False):
-    # this function is helper that will decide which every entity.image blob key needs to be marked for deletation
-    # if `entities` is not provided it will attempt to read from self._property_value
-    # otherwise nothing will happen because no value is provided @see self.has_value()
-    # this function will also mark the entity.image to be preserved by calling BlobKeyManager.collect_on_success(entity.image, False)
-    # that means it will first check if blob key was previously marked for deletation 
-    # (this way we know that's a new blob key)
-    if not entities:
-      if self.has_value():
-        if self._property._repeated:
-          entities = self._property_value
-        else:
-          entities = [self._property_value]
-    else:
-      if not isinstance(entities, (list, tuple)):
-        entities = [entities]
-    if entities:
-      for entity in entities:
-        # it is important that entity.image exists and 
-        # that the state == 'deleted'
-        # if force=True is specified, it will call delete no matter what the state is
-        if hasattr(entity, 'image') and entity.image and isinstance(entity.image, blobstore.BlobKey): 
-          # this ifs above are because single entity storage structure can differ
-          if (entity._state == 'deleted' or forced):
-            self._property.blob_delete_on_success(entity.image)
-          else:
-            self._property.blob_collect_on_success(entity.image, False)
-  
   def process(self):
-    '''
-      This function should be called inside a taskqueue.
-      It will perform all needed operations based on the property configuration on how to handle its blobs.
-      Resizing, cropping, and generation of serving url in the end.
+    '''This function should be called inside a taskqueue.
+    It will perform all needed operations based on the property configuration on how to handle its blobs.
+    Resizing, cropping, and generation of serving url in the end.
       
       Idempotency overhead in this one is the crop, resize and similar "modify-image" features
       might be called many times on same entity (and its gcs file), which in turn would resize the same image multiple times.
@@ -213,43 +146,20 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         if field instance of storage_image_entity:
          entity[field].process()
     '''
-    alter_image_config = self._property._alter_image_config
-    if not alter_image_config:
-      alter_image_config = {}
     if not self.has_value():
       raise ndb.PropertyError('Cannot call %s.process() because read() was not called beforehand.' % self)
-    entities = self.value
-    if not self._property._repeated:
-      entities = [entities]
-    # we do not use validate_images here because we can validate it and measure it in blob_alter_image instead
-    write_entities = []
-    blob_delete = []
-    for entity in entities:
-      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
-        result = self._blob_alter_image(entity, **config)
-        if result.get('save'):
-          write_entities.append(result['save'])
-        if result.get('delete'):
-          blob_delete.append(result['delete'])
-    modified_entities, blob_keys_to_delete = blob_alter_image(entities, alter_image_config)
-    if 
-    setattr(self._entity, self.property_name, modified_entities)  # Comply with expando and virtual fields.
-    # delete blob keys that were ordered to be deleted
-    # blobs must be deleted on full success
-    self._property.blob_delete_on_success(blob_keys_to_delete)
+    if self._property._repeated:
+      processed_entities = []
+      for entity in self.value:
+        processed_entity = self._property.process(entity)
+        if processed_entity is not None:
+          processed_entities.append(processed_entity)
+      setattr(self._entity, self.property_name, processed_entities)
+    else:
+      processed_entity = self._property.process(self.value)
+      if processed_entity is not None:
+        setattr(self._entity, self.property_name, processed_entity)
 
-def blob_alter_image(entities, config):
-  if entities and isinstance(entities, list):
-    write_entities = []
-    blob_delete= []
-    for entity in entities:
-      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
-        result = _blob_alter_image(entity, **config)
-        if result.get('save'):
-          write_entities.append(result['save'])
-        if result.get('delete'):
-          blob_delete.append(result['delete'])
-    return (write_entities, blob_delete)
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like ndb properties.
@@ -345,11 +255,110 @@ class _BaseImageProperty(object):
   
   '''
   def __init__(self, *args, **kwargs):
-    self._measure_and_validate = kwargs.pop('measure_and_validate', None)
-    self._alter_image_config = kwargs.pop('alter_image_config', {})
+    self._process = kwargs.pop('process', None)
+    self._process_config = kwargs.pop('process_config', {})
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
   
+  # This method is not utilising yield images.get_serving_url_async technique for obtaining serving urls for image!
+  # It requires further refinement, and if possible should deprecate _blob_alter_image and measure_and_validate!
+  def process(self, value):
+    if value and hasattr(value, 'image') and isinstance(value.image, blobstore.BlobKey):
+      new_value = value
+      gs_object_name = new_value.gs_object_name
+      new_gs_object_name = new_value.gs_object_name
+      if self._process_config('copy'):
+        new_value = copy.deepcopy(value)
+        new_gs_object_name = '%s_%s' % (new_value.gs_object_name, self._process_config('copy_name'))
+      blob_key = None
+      if len(self._process_config) or not new_value.width or not new_value.height:  # We assume that self._process_config has at least either 'copy' or 'transform' keys!
+        try:
+          readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+          blob = readonly_blob.read()
+          readonly_blob.close()
+          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+          image = images.Image(image_data=blob)
+          if self._process_config('transform'):
+            image.resize(self._process_config('width'),
+                         self._process_config('height'),
+                         crop_to_fit=self._process_config('crop_to_fit'),
+                         crop_offset_x=self._process_config('crop_offset_x'),
+                         crop_offset_y=self._process_config('crop_offset_y'))
+            blob = image.execute_transforms(output_encoding=image.format)
+          new_value.width = image.width
+          new_value.height = image.height
+          new_value.size = len(blob)
+          if len(self._process_config):
+            writable_blob.write(blob)  # @todo Not sure if this is ok!?
+          writable_blob.close()
+          if gs_object_name != new_gs_object_name or new_value.serving_url is None:
+            new_value.gs_object_name = new_gs_object_name
+            blob_key = blobstore.create_gs_key(new_gs_object_name)
+            new_value.image = blobstore.BlobKey(blob_key)
+            new_value.serving_url = images.get_serving_url(new_value.image)
+          return new_value
+        except Exception as e:
+          util.logger(e, 'exception')
+          if blob_key != None:
+            self.delete_blobs(blob_key)
+          elif new_value.image:
+            self.delete_blobs(new_value.image)
+          raise ndb.PropertyError('processing_image_failed')
+      return new_value
+    else:
+      raise ndb.PropertyError('not_image')
+  
+  # This method remains here for reference!
+  def _blob_alter_image(self, value):
+    result = {}
+    if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
+      new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
+      original_gs_object_name = new_image.gs_object_name
+      new_gs_object_name = new_image.gs_object_name
+      if make_copy:
+        new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
+        new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
+      blob_key = None
+      try:
+        if make_copy:
+          readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
+          blob = readonly_blob.read()
+          readonly_blob.close()
+          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+        else:
+          readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
+          blob = readonly_blob.read()
+          readonly_blob.close()
+          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+        if transform:
+          image = images.Image(image_data=blob)
+          image.resize(width,
+                       height,
+                       crop_to_fit=crop_to_fit,
+                       crop_offset_x=crop_offset_x,
+                       crop_offset_y=crop_offset_y)
+          blob = image.execute_transforms(output_encoding=image.format)
+          new_image.width = width
+          new_image.height = height
+          new_image.size = len(blob)
+        writable_blob.write(blob)
+        writable_blob.close()
+        if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
+          new_image.gs_object_name = new_gs_object_name
+          blob_key = blobstore.create_gs_key(new_gs_object_name)
+          new_image.image = blobstore.BlobKey(blob_key)
+          new_image.serving_url = images.get_serving_url(new_image.image)
+      except Exception as e:
+        util.logger(e, 'exception')
+        if blob_key != None:
+          result['delete'] = blob_key
+        elif new_image.image:
+          result['delete'] = new_image.image
+      else:
+        result['save'] = new_image
+    return result
+  
+  # This method remains here for reference!
   def measure_and_validate(self, values):
     '''"values" argument is a list of valid instance(s) of Image class that require validation!
     This function is used mainly for property that turns its usage on.
@@ -374,7 +383,7 @@ class _BaseImageProperty(object):
       cloudstorage_file.close()
     for value in delete_values:
       if value.image:
-        self.blob_delete(value.image)  # Ensure that this gets deleted since we catch the exception above
+        self.delete_blobs(value.image)
       values.remove(value)
     
     @ndb.tasklet
@@ -404,12 +413,13 @@ class _BaseImageProperty(object):
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png!
       if file_info.content_type not in meta_required:
         raise ndb.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-      out.append(self._modelclass(**{'size': file_info.size,
-                                     'content_type': file_info.content_type,
-                                     'gs_object_name': file_info.gs_object_name,
-                                     'image': blob_info.key()}))
-    if self._measure_and_validate:
-      out = self.measure_and_validate(out)
+      new_image = self._modelclass(**{'size': file_info.size,
+                                      'content_type': file_info.content_type,
+                                      'gs_object_name': file_info.gs_object_name,
+                                      'image': blob_info.key()})
+      if self._process:
+        new_image = self.process(new_image)
+      out.append(new_image)
     if not self._repeated:
       try:
         out = out[0]
