@@ -1949,7 +1949,7 @@ class SuperSearchProperty(SuperJsonProperty):
     return search
 
 
-class SuperStructuredStorageProperty(_BaseStructuredProperty, BaseProperty):
+class SuperStorageStructuredProperty(_BaseStructuredProperty, BaseProperty):
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
   
@@ -1971,7 +1971,7 @@ class SuperStructuredStorageProperty(_BaseStructuredProperty, BaseProperty):
     self._managerclass = kwds.pop('managerclass', None)
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
-    super(SuperStructuredStorageProperty, self).__init__(name, **kwds)
+    super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
   
   def get_model_fields(self):
     if isinstance(self._modelclass, basestring):
@@ -1988,7 +1988,7 @@ class SuperStructuredStorageProperty(_BaseStructuredProperty, BaseProperty):
     manager_name = '%s_manager' % self._name
     if manager_name in entity._values:
       return entity._values[manager_name]
-    util.logger('SuperStructuredStorageProperty._get_value.%s %s' % (manager_name, entity))
+    util.logger('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
     manager_class = SuperStructuredPropertyManager
     if self._managerclass:
       manager_class = self._managerclass
@@ -2065,7 +2065,7 @@ class SuperReferenceProperty(SuperKeyProperty):
       return manager.read()
 
 
-class SuperRecordProperty(SuperStructuredStorageProperty):
+class SuperRecordProperty(SuperStorageStructuredProperty):
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
   
   '''
