@@ -14,103 +14,134 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import ndb, memcache, settings
 from app.tools.manipulator import set_attr, get_attr, safe_eval
-from app.tools.base import blob_alter_image
 
-class BaseBlobKeyInterface(object):
-  '''
-    Base helper class for blob-key-like ndb properties.
-    
-    This property should be used in conjunction with ndb Property baseclass, like so:
-    
-    class PDF(BaseBlobKeyInterface, ndb.Property):
-      ....
-      
-      def format(self, value):
-        Example usage:
-        
-        new_file = gcs.open(value.path)
-        new_file.write(..)
-        new_file.close()
-        
-        new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
-        self.blob_collect_on_success(new_blobstore_key)
-     
-    now upon failure anywhere in the application, the new_blobstore_key will be deleted.
-    but if no error has occurred the new_blobstore_key will not be deleted from the blobstore.
-    
-    Functions below accept delete= kwarg. That argument is used if you dont want to add the blobkey automatically in queue for delete.
-    
-    Logically, all newly provided keys are automatically placed in delete queue which will later be stripped away from queue
-    based on which state they were assigned.
-    
-    Possible states that we work with:
-    - success => happens after iO engine has completed entire cycle without throwing any errors (including formatting errors)
-    - error => happens immidiately after iO engine raises an error.
-    - finally => happens after entire iO cycle has completed.
-  '''
+
+class Image(ndb.BaseModel):
   
-  @classmethod
-  def blob_collector(cls):
-    # this function acts as a getter from in-memory storage
-    out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
-    if out is None:
-      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete' : []})
-    out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
-    return out
- 
-  @classmethod
-  def blob_normalize(cls, key_or_keys):
-    # helper to transform single item into a list for iteration
-    if isinstance(key_or_keys, (list, tuple)):
-      return key_or_keys
-    else:
-      return [key_or_keys]
-    
-  @classmethod
-  def blob_delete(cls, keys):
-    # this method will delete list of provided blob keys no matter which state
-    # but depending on methods called later on in the code will determine which are to be deleted for real
-    cls._blob_store(keys, 'delete')
-    
-  @classmethod
-  def blob_delete_on_error(cls, keys, delete=True):
-    # marks keys to be deleted upon application error
-    cls._blob_store(keys, 'delete_error', delete)
+  _kind = 69
   
-  @classmethod
-  def blob_delete_on_success(cls, keys, delete=True):
-    # marks keys to be deleted upon success
-    cls._blob_store(keys, 'delete_success', delete)
+  image = ndb.SuperBlobKeyProperty('1', required=True, indexed=False)
+  content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
+  size = ndb.SuperFloatProperty('3', required=True, indexed=False)
+  width = ndb.SuperIntegerProperty('4', indexed=False)
+  height = ndb.SuperIntegerProperty('5', indexed=False)
+  gs_object_name = ndb.SuperStringProperty('6', indexed=False)
+  serving_url = ndb.SuperStringProperty('7', indexed=False)
+
+
+class Role(ndb.BaseExpando):
   
-  @classmethod
-  def blob_collect(cls, keys, delete=True):
-    # collect keys no matter what happens
-    cls._blob_store(keys, 'collect', delete)
+  _kind = 66
   
-  @classmethod
-  def blob_collect_on_success(cls, keys, delete=True):
-    # collect keys on success
-    cls._blob_store(keys, 'collect_success', delete)
+  # feature proposition (though it should create overhead due to the required drilldown process!)
+  # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
+  # complete_name = ndb.SuperTextProperty('2')
+  name = ndb.SuperStringProperty('1', required=True)
+  active = ndb.SuperBooleanProperty('2', required=True, default=True)
+  permissions = ndb.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
   
-  @classmethod
-  def blob_collect_on_error(cls, keys, delete=True):
-    # collect keys on application error
-    cls._blob_store(keys, 'collect_error', delete)
-    
-  @classmethod
-  def _blob_store(cls, keys, state=None, delete=True):
-    keys = cls.blob_normalize(keys)
-    collector = cls.blob_collector()
-    for key in keys:
-      if state not in collector:
-        collector[state] = []
-      if key not in collector[state]:
-        collector[state].append(key)
-    if state is not None and not state.startswith('delete') and delete is True: 
-      # if state is said to be delete_* or delete then there is no need to store them in delete queue
-      cls._blob_store(keys, 'delete')
+  _default_indexed = False
+  
+  def run(self, context):
+    for permission in self.permissions:
+      permission.run(self, context)
+
+
+class GlobalRole(Role):
+  
+  _kind = 67
+
 
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
+  
+  def _pre_update_local(self):
+    self._process_blobs()
+    super(SuperStructuredPropertyImageManager, self)._pre_update_local()
+  
+  # This could be avoided by overriding def post_update() however, we need to decide which is better approach.
+  def _post_update_remote_single(self):
+    self._process_blobs()
+    super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
+  
+  def _post_update_remote_multi(self):
+    self._process_blobs()
+    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
+  
+  def _post_update_remote_multi_sequenced(self):
+    self._process_blobs()
+    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
+  
+  def _delete_remote(self):
+    cursor = Cursor()
+    limit = 200
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        for entity in _entities:
+          self._copy_record_arguments(entity)
+        self._process_blobs(_entities, True)  # This will force/mark ALL blobs for deletion that are attached to the entities.
+        delete_multi([entity.key for entity in _entities])
+        if not cursor or not more:
+          break
+      else:
+        break
+  
+  def _delete_remote_single(self):
+    property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    entity = property_value_key.get()
+    self._copy_record_arguments(entity)
+    self._process_blobs(entity, True) # This will mark ALL blobs for deletion.
+    entity.key.delete()
+  
+  def _blob_alter_image(self, original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
+    result = {}
+    if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
+      new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
+      original_gs_object_name = new_image.gs_object_name
+      new_gs_object_name = new_image.gs_object_name
+      if make_copy:
+        new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
+        new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
+      blob_key = None
+      try:
+        if make_copy:
+          readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
+          blob = readonly_blob.read()
+          readonly_blob.close()
+          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+        else:
+          readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
+          blob = readonly_blob.read()
+          readonly_blob.close()
+          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+        if transform:
+          image = images.Image(image_data=blob)
+          image.resize(width,
+                       height,
+                       crop_to_fit=crop_to_fit,
+                       crop_offset_x=crop_offset_x,
+                       crop_offset_y=crop_offset_y)
+          blob = image.execute_transforms(output_encoding=image.format)
+          new_image.width = width
+          new_image.height = height
+          new_image.size = len(blob)
+        writable_blob.write(blob)
+        writable_blob.close()
+        if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
+          new_image.gs_object_name = new_gs_object_name
+          blob_key = blobstore.create_gs_key(new_gs_object_name)
+          new_image.image = blobstore.BlobKey(blob_key)
+          new_image.serving_url = images.get_serving_url(new_image.image)
+      except Exception as e:
+        util.logger(e, 'exception')
+        if blob_key != None:
+          result['delete'] = blob_key
+        elif new_image.image:
+          result['delete'] = new_image.image
+      else:
+        result['save'] = new_image
+    return result
   
   def _process_blobs(self, entities=None, forced=False):
     # this function is helper that will decide which every entity.image blob key needs to be marked for deletation
@@ -139,51 +170,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
             self._property.blob_delete_on_success(entity.image)
           else:
             self._property.blob_collect_on_success(entity.image, False)
-        
-  def _pre_update_local(self):
-    self._process_blobs()
-    super(SuperStructuredPropertyImageManager, self)._pre_update_local() # finalize delete mode
- 
-  def _delete_remote(self):
-    # this function had to be copied because it queries information, and it never saves its entities in memory
-    # delete_remote is used by both multi and multi_sequenced
-    cursor = Cursor()
-    limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
-    while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-      if len(_entities):
-        for entity in _entities:
-          self._copy_record_arguments(entity)
-        self._process_blobs(_entities, True) # this will force-mark ALL blobs for delete that are attached to the entities
-        ndb.delete_multi(_entities)
-        if not cursor or not more:
-          break
-      else:
-        break
-  
-  def _delete_remote_single(self):
-    # same happens with remote_single
-    # we must copy over the code because delete_single singlehandedly removes entity.
-    property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    entity = property_value_key.get()
-    self._copy_record_arguments(entity)
-    self._process_blobs(entity, True) # this will mark ALL blobs for delete
-    entity.key.delete()
-   
-  # we override these three methods because we call self._process_blobs() beforehand
-  # this could be avoided by overriding def post_update() but we need to decide which is better approach
-  def _post_update_remote_single(self):
-    self._process_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
-  
-  def _post_update_remote_multi(self):
-    self._process_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
-  
-  def _post_update_remote_multi_sequenced(self):
-    self._process_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
   
   def process(self):
     '''
@@ -236,147 +222,209 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     if not self._property._repeated:
       entities = [entities]
     # we do not use validate_images here because we can validate it and measure it in blob_alter_image instead
+    write_entities = []
+    blob_delete = []
+    for entity in entities:
+      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
+        result = self._blob_alter_image(entity, **config)
+        if result.get('save'):
+          write_entities.append(result['save'])
+        if result.get('delete'):
+          blob_delete.append(result['delete'])
     modified_entities, blob_keys_to_delete = blob_alter_image(entities, alter_image_config)
+    if 
     setattr(self._entity, self.property_name, modified_entities)  # Comply with expando and virtual fields.
     # delete blob keys that were ordered to be deleted
     # blobs must be deleted on full success
     self._property.blob_delete_on_success(blob_keys_to_delete)
-    
-     
-  
-class BaseImageInterface(BaseBlobKeyInterface):
-  '''
-   Base helper class for image-like properties.
-   
-   This class should work in conjunction with ndb.Property, because it does not implement nothing of ndb.
-   
-   example:
-   
-   class NewImageProperty(BaseImageInterface, ndb.Property):
-     ...
-   
-  '''
 
+def blob_alter_image(entities, config):
+  if entities and isinstance(entities, list):
+    write_entities = []
+    blob_delete= []
+    for entity in entities:
+      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
+        result = _blob_alter_image(entity, **config)
+        if result.get('save'):
+          write_entities.append(result['save'])
+        if result.get('delete'):
+          blob_delete.append(result['delete'])
+    return (write_entities, blob_delete)
+
+class _BaseBlobProperty(object):
+  '''Base helper class for blob-key-like ndb properties.
+  This property should be used in conjunction with ndb Property baseclass, like so:
+  class PDF(BaseBlobKeyInterface, ndb.Property):
+  ....
+  def format(self, value):
+  Example usage:
+  new_file = gcs.open(value.path)
+  new_file.write(..)
+  new_file.close()
+  new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
+  self.blob_collect_on_success(new_blobstore_key)
+  now upon failure anywhere in the application, the new_blobstore_key will be deleted.
+  but if no error has occurred the new_blobstore_key will not be deleted from the blobstore.
+  Functions below accept delete= kwarg. That argument is used if you dont want to add the blobkey automatically in queue for delete.
+  Logically, all newly provided keys are automatically placed in delete queue which will later be stripped away from queue
+  based on which state they were assigned.
+  Possible states that we work with:
+  - success => happens after iO engine has completed entire cycle without throwing any errors (including formatting errors)
+  - error => happens immidiately after iO engine raises an error.
+  - finally => happens after entire iO cycle has completed.
+  
+  '''
+  @classmethod
+  def get_blobs(cls):
+    # This function acts as a getter from in-memory storage.
+    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
+    if blobs is None:
+      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
+    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
+    return blobs
+  
+  @classmethod
+  def normalize_blobs(cls, blobs):
+    # Helper to transform single item into a list for iteration.
+    if isinstance(blobs, (list, tuple)):
+      return blobs
+    else:
+      return [blobs]
+  
+  @classmethod
+  def _update_blobs(cls, update_blobs, state=None, delete=True):
+    update_blobs = cls.normalize_blobs(update_blobs)
+    blobs = cls.get_blobs()
+    for blob in update_blobs:
+      if state not in blobs:
+        blobs[state] = []
+      if blob not in blobs[state]:
+        blobs[state].append(blob)
+    if state is not None and not state.startswith('delete') and delete is True:
+      # If state is said to be delete_* or delete then there is no need to store them in delete queue.
+      cls._update_blobs(update_blobs, 'delete')
+  
+  @classmethod
+  def delete_blobs(cls, blobs):
+    # This method will delete list of provided blob keys no matter which state
+    # but depending on methods called later on in the code will determine which are to be deleted for real.
+    cls._update_blobs(blobs, 'delete')
+  
+  @classmethod
+  def delete_blobs_on_error(cls, blobs, delete=True):
+    # Marks blobs to be deleted upon application error.
+    cls._update_blobs(blobs, 'delete_error', delete)
+  
+  @classmethod
+  def delete_blobs_on_success(cls, blobs, delete=True):
+    # Marks blobs to be deleted upon success.
+    cls._update_blobs(blobs, 'delete_success', delete)
+  
+  @classmethod
+  def save_blobs(cls, blobs, delete=True):
+    # Save blobes no matter what happens.
+    cls._update_blobs(blobs, 'collect', delete)
+  
+  @classmethod
+  def save_blobs_on_error(cls, blobs, delete=True):
+    # Marks blobs to be preserved upon application error.
+    cls._update_blobs(blobs, 'collect_error', delete)
+  
+  @classmethod
+  def save_blobs_on_success(cls, blobs, delete=True):
+    # Marks blobs to be preserved upon success.
+    cls._update_blobs(blobs, 'collect_success', delete)
+
+
+class _BaseImageProperty(object):
+  '''Base helper class for image-like properties.
+  This class should work in conjunction with ndb.Property, because it does not implement anything of ndb.
+  Example:
+  class NewImageProperty(_BaseImageProperty, ndb.Property):
+  ...
+  
+  '''
   def __init__(self, *args, **kwargs):
-    self._measure_and_validate = kwargs.pop('_measure_and_validate', None)
-    self._alter_image_config = kwargs.pop('alter_image_config', None)
-    super(BaseImageInterface, self).__init__(*args, **kwargs)
+    self._measure_and_validate = kwargs.pop('measure_and_validate', None)
+    self._alter_image_config = kwargs.pop('alter_image_config', {})
+    super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
-    
-  def measure_and_validate(self, objects):
-    '''"objects" argument is a list of valid instance(s)
-    of Image class that require validation!
-    
+  
+  def measure_and_validate(self, values):
+    '''"values" argument is a list of valid instance(s) of Image class that require validation!
     This function is used mainly for property that turns its usage on.
     
     '''
-    to_delete = []
-    for obj in objects:
-      if obj.width or obj.height: # validate images will not perform any measurements if image already has defined width and height.
+    delete_values = []
+    for value in values:
+      if value.width or value.height:  # measure_and_validate will not perform any measurements if image already has defined width and height.
         continue
-      cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
+      cloudstorage_file = cloudstorage.open(filename=value.gs_object_name[3:])
       # This will throw an error if the file does not exist in cloudstorage.
-      image_data = cloudstorage_file.read()  # We must read the file in order to analyize width/height of an image.
+      image_data = cloudstorage_file.read()
       # This will throw an error if the file is not an image, or is corrupted.
       try:
         image = images.Image(image_data=image_data)
         width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
         height = image.height
+        value.populate(**{'width': width, 'height': height})
       except images.NotImageError as e:
-        # cannot do objects.remove while in for loop objects
-        to_delete.append(obj)
-      for o in to_delete:
-        if o.image:
-          self.blob_delete(o.image) # ensure that this gets deleted since we catch the exception above
-        objects.remove(o)
+        # Cannot do values.remove while in for loop values.
+        delete_values.append(value)
       cloudstorage_file.close()
-      obj.populate(**{'width': width,
-                      'height': height})
+    for value in delete_values:
+      if value.image:
+        self.blob_delete(value.image)  # Ensure that this gets deleted since we catch the exception above
+      values.remove(value)
     
     @ndb.tasklet
-    def async(obj):
-      if obj.serving_url is None:
-        obj.serving_url = yield images.get_serving_url_async(obj.image)
-      raise ndb.Return(obj)
+    def async(value):
+      if value.serving_url is None:
+        value.serving_url = yield images.get_serving_url_async(value.image)
+      raise ndb.Return(value)
     
     @ndb.tasklet
-    def helper(objects):
-      results = yield map(async, objects)
+    def mapper(values):
+      results = yield map(async, values)
       raise ndb.Return(results)
     
-    return helper(objects).get_result()
+    return mapper(values).get_result()
   
   def format(self, value):
-    prop = self
-    value = ndb._property_value_format(prop, value)
-    if prop._repeated:
-      blobs = value
-    else:
-      blobs = [value]
+    value = self._property_value_format(value)
+    if not self._repeated:
+      value = [value]
     out = []
-    for blob in blobs:
-      if not isinstance(blob, cgi.FieldStorage) and not prop._required: # if the prop is not required pass it
+    for v in value:
+      if not isinstance(v, cgi.FieldStorage) and not self._required:  # If the prop is not required, skip it.
         continue
-      # These will throw errors if the 'blob' is not cgi.FileStorage.
-      file_info = blobstore.parse_file_info(blob)
-      blob_info = blobstore.parse_blob_info(blob)
-      meta_required = ('image/jpeg', 'image/jpg', 'image/png') # we only accept jpg/png
+      # These will throw errors if the 'v' is not cgi.FileStorage.
+      file_info = blobstore.parse_file_info(v)
+      blob_info = blobstore.parse_blob_info(v)
+      meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png!
       if file_info.content_type not in meta_required:
         raise ndb.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-      out.append(prop._modelclass(**{'size': file_info.size,
+      out.append(self._modelclass(**{'size': file_info.size,
                                      'content_type': file_info.content_type,
                                      'gs_object_name': file_info.gs_object_name,
                                      'image': blob_info.key()}))
-    if prop._measure_and_validate:
+    if self._measure_and_validate:
       out = self.measure_and_validate(out)
-    if not prop._repeated:
+    if not self._repeated:
       try:
         out = out[0]
       except IndexError as e:
         out = None
     return out
 
-class SuperEntityStorageStructuredImageProperty(BaseImageInterface, ndb.SuperEntityStorageStructuredProperty):
+
+class SuperImageStorageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStorageStructuredProperty):
   pass
 
-class SuperLocalStructuredImageProperty(BaseImageInterface, ndb.SuperLocalStructuredProperty):
+
+class SuperImageLocalStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperLocalStructuredProperty):
   pass
 
-class SuperStructuredImageProperty(BaseImageInterface, ndb.SuperStructuredProperty):
+
+class SuperImageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStructuredProperty):
   pass
-  
-
-class Image(ndb.BaseModel):
-  
-  _kind = 69
-  
-  image = ndb.SuperBlobKeyProperty('1', required=True, indexed=False)
-  content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
-  size = ndb.SuperFloatProperty('3', required=True, indexed=False)
-  width = ndb.SuperIntegerProperty('4', indexed=False)
-  height = ndb.SuperIntegerProperty('5', indexed=False)
-  gs_object_name = ndb.SuperStringProperty('6', indexed=False)
-  serving_url = ndb.SuperStringProperty('7', indexed=False)
- 
- 
-class Role(ndb.BaseExpando):
-  
-  _kind = 66
-  
-  # feature proposition (though it should create overhead due to the required drilldown process!)
-  # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
-  # complete_name = ndb.SuperTextProperty('2')
-  name = ndb.SuperStringProperty('1', required=True)
-  active = ndb.SuperBooleanProperty('2', required=True, default=True)
-  permissions = ndb.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
-  
-  _default_indexed = False
-  
-  def run(self, context):
-    for permission in self.permissions:
-      permission.run(self, context)
-
-
-class GlobalRole(Role):
-  
-  _kind = 67
