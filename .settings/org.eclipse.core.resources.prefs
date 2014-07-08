@@ -37,6 +37,7 @@ encoding//webclient/controller/auth.py=utf-8
 encoding//webclient/controller/cron.py=utf-8
 encoding//webclient/controller/domain.py=utf-8
 encoding//webclient/controller/task.py=utf-8
+encoding//webclient/controller/tests.py=utf-8
 encoding//webclient/controller/ui.py=utf-8
 encoding//webclient/handler.py=utf-8
 encoding//webclient/util.py=utf-8
