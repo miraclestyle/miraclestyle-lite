@@ -1455,7 +1455,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   
   def delete(self):
     self._property_value = None
-    
+  
   def pre_update(self):
     pass
   
