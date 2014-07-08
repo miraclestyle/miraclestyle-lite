@@ -21,9 +21,6 @@ handlers:
   upload: webclient/static/robots.txt
   expiration: "364d 5h"
 
-- url: /poly
-  script: test2.app
-
 - url: /.*
   script: webclient.wsgi.app
 
