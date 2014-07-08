@@ -108,8 +108,8 @@ class Engine:
   def process_blob_output(cls):
     blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
-      save_blobs = collector.get('collect', None)
-      delete_blobs = collector.get('delete', None)
+      save_blobs = blobs.get('collect', None)
+      delete_blobs = blobs.get('delete', None)
       if delete_blobs:
         if save_blobs:
           for blob in save_blobs:
