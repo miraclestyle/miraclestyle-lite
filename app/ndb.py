@@ -1123,6 +1123,18 @@ class SuperPropertyManager(object):
                                                                        self._entity, self._property,
                                                                        getattr(self, '_property_value', None), self._kwds)
   
+  @property
+  def value(self):
+    return getattr(self, '_property_value', None)
+  
+  @property
+  def property_name(self):
+    # Retrieves proper name of the field for setattr usage.
+    name = self._property._code_name
+    if not name:
+      name = self._property._name
+    return name
+  
   def has_value(self):
     return hasattr(self, '_property_value')
   
@@ -1132,10 +1144,6 @@ class SuperPropertyManager(object):
       if len(value):
         value = value[0]
     return isinstance(value, Future)
-  
-  @property
-  def value(self):
-    return getattr(self, '_property_value', None)
   
   def get_output(self):
     return getattr(self, '_property_value', None)
@@ -1188,15 +1196,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     'remote_multi_sequenced' is exactly as the above, however, their id-s represent sequenced numberes, and they are usually accessed via get_multi.
     
     '''
-    return self._property._storage  # @todo Prehaps _storage renamte to _storage_type
-  
-  @property
-  def property_name(self):
-    # retrieves proper name of the field for setattr usage
-    name = self._property._code_name
-    if not name:
-      name = self._property._name
-    return name
+    return self._property._storage  # @todo Prehaps _storage rename to _storage_type
   
   def set(self, property_value):
     '''We always verify that the property_value is instance

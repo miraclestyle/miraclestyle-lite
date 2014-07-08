@@ -79,47 +79,45 @@ class Engine:
           except blobstore.BlobInfoParseError as e:
             pass
     if uploaded_blobs:
-      payload = {'delete': uploaded_blobs}
+      blobs = {'delete': uploaded_blobs}
       # By default, we set that all uploaded blobs must be deleted in 'finally' phase.
-      # However by using BlobKeyManager.collect_on_success(key) we prevent deletation of specified key,
-      # if the request completes without any errors.
-      # But specifying BlobKeyManager.collect(key) will prevent the key from deletation altogether no matter what happend.
-      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, payload)
+      # However, we use blob specialized properties to control intermediate outcome of action.
+      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, blobs)
   
   @classmethod
   def process_blob_state(cls, state):
-    collector = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
-    if collector is not None:
-        # collect mode
-        keys = collector.get('collect_%s' % state, None)
-        delete = collector.get('delete', None)
-        if delete is None:
-          delete = collector['delete'] = []
-        if keys and delete is not None:
-            for skip in keys:
-              if skip in delete:
-                delete.remove(skip)
-        # delete mode     
-        keys = collector.get('delete_%s' % state, None)
-        if keys and delete is not None:
-            for add in keys:
-              if add in delete:
-                delete.append(add)
-         
+    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
+    if blobs is not None:
+      # Process blobs to be saved.
+      save_state_blobs = blobs.get('collect_%s' % state, None)
+      delete_blobs = blobs.get('delete', None)
+      if delete_blobs is None:
+        delete_blobs = blobs['delete'] = []
+      if save_state_blobs and delete_blobs is not None:
+        for blob in save_state_blobs:
+          if blob in delete_blobs:
+            delete_blobs.remove(blob)
+      # Process blobs to be deleted.
+      delete_state_blobs = blobs.get('delete_%s' % state, None)
+      if delete_state_blobs and delete_blobs is not None:
+        for blob in delete_state_blobs:
+          if blob not in delete_blobs:
+            delete_blobs.append(blob)
+  
   @classmethod
   def process_blob_output(cls):
-    collector = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
-    if collector is not None:
-      delete = collector.get('delete', None)
-      collect = collector.get('collect', None)
-      if delete:
-         if collect:
-           for skip in collect:
-             if skip in delete:
-               delete.remove(skip)
-         if delete:
-           util.logger('DELETED %s BLOBS.' % len(delete))
-           blobstore.delete(delete)
+    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
+    if blobs is not None:
+      save_blobs = collector.get('collect', None)
+      delete_blobs = collector.get('delete', None)
+      if delete_blobs:
+        if save_blobs:
+          for blob in save_blobs:
+            if blob in delete_blobs:
+              delete_blobs.remove(blob)
+        if delete_blobs:
+          util.logger('DELETED %s BLOBS.' % len(delete))
+          blobstore.delete(delete_blobs)
   
   @classmethod
   def get_models(cls, context):
@@ -218,7 +216,7 @@ class Engine:
       cls.execute_action(context, input)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
     except Exception as e:
-      cls.process_blob_state('error') # Delete and/or save all blobs that have to be deleted and/or saved or error
+      cls.process_blob_state('error')  # Delete and/or save all blobs that have to be deleted and/or saved or error.
       throw = True
       if isinstance(e.message, dict):
         # Here we handle our exceptions.
