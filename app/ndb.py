@@ -1530,6 +1530,12 @@ class SuperReadPropertyManager(SuperPropertyManager):
   
   def delete(self):
     self._property_value = None
+    
+  def pre_update(self):
+    pass
+  
+  def post_update(self):
+    pass
 
 
 #########################################################

@@ -541,6 +541,28 @@ class TestImageUpload(handler.Base):
     <input type="hidden" name="name" value="%s" />
     <p><input type="submit" value="Send" />
     </p></form>''' % (blobstore.create_upload_url(self.request.url, gs_bucket_name=settings.DOMAIN_LOGO_BUCKET), name))
+ 
+class Cool(ndb.BaseModel):
+  
+  _use_rule_engine = False
+  
+  name = ndb.SuperStringProperty()
+  
+  _virtual_fields = dict(_records = ndb.SuperRecordProperty('Cool'))
+    
+class TestRecordWrite(handler.Base):
+  
+  LOAD_CURRENT_USER = False
+  
+  def respond(self):
+    if self.request.get('put'):
+      a = Cool(name='Yes', id='No')
+      a._record_arguments = {'agent' : ndb.Key('0', 'system'), 'action' : ndb.Key('56', 'put')}
+      a.put()
+    a = ndb.Key('Cool', 'No').get()
+    if a:
+      a._records.read()
+    self.response.write(json.dumps(a, cls=handler.JSONEncoderHTML))
 
 class Reset(handler.Angular):
   
@@ -614,4 +636,5 @@ handler.register(('/endpoint', Endpoint),
                  ('/TestEntityManager', TestEntityManager),
                  ('/TestGetAsync', TestGetAsync),
                  ('/TestRuleWrite', TestRuleWrite),
-                 ('/TestImageUpload', TestImageUpload))
+                 ('/TestImageUpload', TestImageUpload),
+                 ('/TestRecordWrite', TestRecordWrite))
