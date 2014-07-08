@@ -26,15 +26,24 @@ class BlobKeyManager():
     
     new_blobstore_key = blobstore.create_gs_key(gs_object_name=new_file.gs_object_name)
     BlobKeyManager.collect_on_success(new_blobstore_key) 
-    
-    
-
+     
     now upon failure anywhere in the application, the new_blobstore_key will be deleted.
     but if no error has occurred the new_blobstore_key will not be deleted from the blobstore.
+    
+    Functions below accept delete= kwarg. That argument is used if you dont want to add the blobkey automatically in queue for delete.
+    
+    Logically, all newly provided keys are automatically placed in delete queue which will later be stripped away from queue
+    based on which state they were assigned.
+    
+    Possible states that we work with:
+    - success => happens after iO engine has completed entire cycle without throwing any errors (including formatting errors)
+    - error => happens immidiately after iO engine raises an error.
+    - finally => happens after entire iO cycle has completed.
   '''
   
   @classmethod
   def collector(cls):
+    # this function acts as a getter from in-memory storage
     out = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
     if out is None:
       memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete' : []})
@@ -43,6 +52,7 @@ class BlobKeyManager():
  
   @classmethod
   def normalize(cls, key_or_keys):
+    # helper to transform single item into a list for iteration
     if isinstance(key_or_keys, (list, tuple)):
       return key_or_keys
     else:
@@ -101,7 +111,7 @@ def validate_images(objects):
   '''
   to_delete = []
   for obj in objects:
-    if obj.width or obj.height:
+    if obj.width or obj.height: # validate images will not perform any measurements if image already has defined width and height.
       continue
     cloudstorage_file = cloudstorage.open(filename=obj.gs_object_name[3:])
     # This will throw an error if the file does not exist in cloudstorage.
@@ -158,7 +168,8 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         # it is important that entity.image exists and 
         # that the state == 'deleted'
         # if force=True is specified, it will call delete no matter what the state is
-        if hasattr(entity, 'image') and entity.image and isinstance(entity.image, blobstore.BlobKey): # this ifs are because single entity storage can be very different
+        if hasattr(entity, 'image') and entity.image and isinstance(entity.image, blobstore.BlobKey): 
+          # this ifs above are because single entity storage structure can differ
           if (entity._state == 'deleted' or forced):
             BlobKeyManager.delete_on_success(entity.image)
           else:
@@ -187,6 +198,8 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         break
   
   def _delete_remote_single(self):
+    # same happens with remote_single
+    # we must copy over the code because delete_single singlehandedly removes entity.
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._copy_record_arguments(entity)
@@ -194,7 +207,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     entity.key.delete()
    
   # we override these three methods because we call self._process_blobs() beforehand
-  # this could be avoided by overriding def post_update() but we need to decide which
+  # this could be avoided by overriding def post_update() but we need to decide which is better approach
   def _post_update_remote_single(self):
     self._process_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()

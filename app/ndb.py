@@ -1192,6 +1192,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   @property
   def property_name(self):
+    # retrieves proper name of the field for setattr usage
     name = self._property._code_name
     if not name:
       name = self._property._name
@@ -1213,9 +1214,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _copy_record_arguments(self, entity):
     if hasattr(self._entity, '_record_arguments'):
-      record_arguments = {}
       if hasattr(entity, '_record_arguments'):
         record_arguments = entity._record_arguments
+      else:
+        record_arguments = {}
       entity_record_arguments = self._entity._record_arguments
       record_arguments['action'] = entity_record_arguments.get('aciton')
       record_arguments['agent'] = entity_record_arguments.get('agent')
