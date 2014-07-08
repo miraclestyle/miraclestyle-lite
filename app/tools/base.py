@@ -5,17 +5,11 @@ Created on Jun 16, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import string
 import math
 import json
-import copy
-import collections
-import cloudstorage
 
-from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import search
 from google.appengine.api import taskqueue
-from google.appengine.api import images
 from google.appengine.ext import blobstore
 
 from app import ndb, util
@@ -356,107 +350,3 @@ def document_delete(documents, index_name=None, documents_per_index=200):
 
 def blob_create_upload_url(upload_url, gs_bucket_name):
   return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
-
-
-def _blob_parse(entities):
-  entities = normalize(entities)
-  results = []
-  if len(entities):
-    for entity in entities:
-      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
-        results.append(entity.image)
-      elif entity and isinstance(entity, blobstore.BlobKey):
-        results.append(entity)
-  return results
-
-
-def blob_update(blob_unused, blob_delete=None, blob_write=None):
-  if blob_delete:
-    blob_unused.extend(_blob_parse(blob_delete))
-  if blob_write:
-    blob_keys = _blob_parse(blob_write)
-    for blob_key in blob_keys:
-      if blob_key in blob_unused:
-        blob_unused.remove(blob_key)
-  return blob_unused
-
-
-def _blob_alter_image(original_image, make_copy=False, copy_name=None, transform=False, width=0, height=0, crop_to_fit=False, crop_offset_x=0.0, crop_offset_y=0.0):
-  result = {}
-  if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
-    new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
-    original_gs_object_name = new_image.gs_object_name
-    new_gs_object_name = new_image.gs_object_name
-    if make_copy:
-      new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
-      new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
-    blob_key = None
-    try:
-      if make_copy:
-        readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
-        blob = readonly_blob.read()
-        readonly_blob.close()
-        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-      else:
-        readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
-        blob = readonly_blob.read()
-        readonly_blob.close()
-        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-      if transform:
-        image = images.Image(image_data=blob)
-        image.resize(width,
-                     height,
-                     crop_to_fit=crop_to_fit,
-                     crop_offset_x=crop_offset_x,
-                     crop_offset_y=crop_offset_y)
-        blob = image.execute_transforms(output_encoding=image.format)
-        new_image.width = width
-        new_image.height = height
-        new_image.size = len(blob)
-      writable_blob.write(blob)
-      writable_blob.close()
-      if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
-        new_image.gs_object_name = new_gs_object_name
-        blob_key = blobstore.create_gs_key(new_gs_object_name)
-        new_image.image = blobstore.BlobKey(blob_key)
-        new_image.serving_url = images.get_serving_url(new_image.image)
-    except Exception as e:
-      util.logger(e, 'exception')
-      if blob_key != None:
-        result['delete'] = blob_key
-      elif new_image.image:
-        result['delete'] = new_image.image
-    else:
-      result['save'] = new_image
-  return result
-
-
-def blob_alter_image(entities, config):
-  if entities and isinstance(entities, dict):
-    write_entities = {}
-    blob_delete = []
-    for key, entity in entities.items():
-      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
-        result = _blob_alter_image(entity, **config)
-        if result.get('save'):
-          write_entities[key] = result['save']
-        if result.get('delete'):
-          blob_delete.append(result['delete'])
-    return (write_entities, blob_delete)
-  elif entities and isinstance(entities, list):
-    write_entities = []
-    blob_delete= []
-    for entity in entities:
-      if entity and hasattr(entity, 'image') and isinstance(entity.image, blobstore.BlobKey):
-        result = _blob_alter_image(entity, **config)
-        if result.get('save'):
-          write_entities.append(result['save'])
-        if result.get('delete'):
-          blob_delete.append(result['delete'])
-    return (write_entities, blob_delete)
-  elif entities and hasattr(entities, 'image') and isinstance(entity.image, blobstore.BlobKey):
-    blob_delete = []
-    result = _blob_alter_image(entities, **config)
-    if result.get('delete'):
-      blob_delete.append(result['delete'])
-    return (result.get('save'), blob_delete)

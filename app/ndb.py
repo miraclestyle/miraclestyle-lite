@@ -1031,81 +1031,6 @@ class BasePolyExpando(BasePoly, BaseExpando):
   pass
 
 
-#####################################################################
-########## Reusable superior property formating functions. ##########
-#####################################################################
-
-
-def _property_value_validate(prop, value):
-  if prop._max_size:
-    if len(value) > prop._max_size:
-      raise PropertyError('max_size_exceeded')
-  if value is None and prop._required:
-    raise PropertyError('required')
-  if hasattr(prop, '_choices') and prop._choices:
-    if value not in prop._choices:
-      raise PropertyError('not_in_specified_choices')
-
-
-def _property_value_filter(prop, value):
-  if prop._value_filters:
-    if isinstance(prop._value_filters, (list, tuple)):
-      for value_filter in prop._value_filters:
-        value = value_filter(prop, value)
-    else:
-      value = prop._value_filters(prop, value)
-  return value
-
-
-def _property_value_format(prop, value):
-  if value is None:
-    if prop._default is not None:
-      value = prop._default
-  if prop._repeated:
-    out = []
-    if not isinstance(value, (list, tuple)):
-      value = [value]
-    for v in value:
-      _property_value_validate(prop, v)
-      out.append(v)
-    return _property_value_filter(prop, out)
-  else:
-    _property_value_validate(prop, value)
-    return _property_value_filter(prop, value)
-
-
-def _structured_property_field_format(fields, values):
-  _state = values.get('_state')
-  if values.get('key'):
-    values['key'] = Key(urlsafe=values.get('key'))
-  for value_key, value in values.items():
-    field = fields.get(value_key)
-    if field:
-      if hasattr(field, 'format'):
-        values[value_key] = field.format(value)
-    else:
-      del values[value_key]
-  values['_state'] = _state  # Always keep track of _state for rule engine!
-
-
-def _structured_property_format(prop, value):
-  value = _property_value_format(prop, value)
-  out = []
-  if not prop._repeated:
-    value = [value]
-  fields = prop.get_model_fields()
-  for v in value:
-    _structured_property_field_format(fields, v)
-    entity = prop._modelclass(**v)
-    out.append(entity)
-  if not prop._repeated:
-    try:
-      out = out[0]
-    except IndexError as e:
-      out = None
-  return out
-
-
 #################################################
 ########## Superior Property Managers. ##########
 #################################################
@@ -1493,7 +1418,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         pass
 
 
-class SuperReadPropertyManager(SuperPropertyManager):
+class SuperReferencePropertyManager(SuperPropertyManager):
   
   def _read(self):
     if self._property._callback:
@@ -1567,14 +1492,41 @@ class _BaseProperty(object):
            'repeated': self._repeated,
            'type': self.__class__.__name__}
     return dic
-
-
-class BaseProperty(_BaseProperty, Property):
-  '''Base property class for all properties capable of having _max_size option.'''
-
-
-class SuperComputedProperty(_BaseProperty, ComputedProperty):
-  pass
+  
+  def _property_value_validate(self, value):
+    if self._max_size:
+      if len(value) > self._max_size:
+        raise PropertyError('max_size_exceeded')
+    if value is None and self._required:
+      raise PropertyError('required')
+    if hasattr(self, '_choices') and self._choices:
+      if value not in self._choices:
+        raise PropertyError('not_in_specified_choices')
+  
+  def _property_value_filter(self, value):
+    if self._value_filters:
+      if isinstance(self._value_filters, (list, tuple)):
+        for value_filter in self._value_filters:
+          value = value_filter(self, value)
+      else:
+        value = self._value_filters(self, value)
+    return value
+  
+  def _property_value_format(self, value):
+    if value is None:
+      if self._default is not None:
+        value = self._default
+    if self._repeated:
+      out = []
+      if not isinstance(value, (list, tuple)):
+        value = [value]
+      for v in value:
+        self._property_value_validate(v)
+        out.append(v)
+      return self._property_value_filter(out)
+    else:
+      self._property_value_validate(value)
+      return self._property_value_filter(value)
 
 
 class _BaseStructuredProperty(object):
@@ -1610,7 +1562,7 @@ class _BaseStructuredProperty(object):
     return self._modelclass.get_fields()
   
   def format(self, value):
-    return _structured_property_format(self, value)
+    return self._structured_property_format(value)
   
   def _set_value(self, entity, value):
     # __set__
@@ -1638,6 +1590,44 @@ class _BaseStructuredProperty(object):
       entity._values[manager_name] = manager
     super(_BaseStructuredProperty, self)._get_value(entity)
     return manager
+  
+  def _structured_property_field_format(self, fields, values):
+    _state = values.get('_state')
+    if values.get('key'):
+      values['key'] = Key(urlsafe=values.get('key'))
+    for value_key, value in values.items():
+      field = fields.get(value_key)
+      if field:
+        if hasattr(field, 'format'):
+          values[value_key] = field.format(value)
+      else:
+        del values[value_key]
+    values['_state'] = _state  # Always keep track of _state for rule engine!
+  
+  def _structured_property_format(self, value):
+    value = self._property_value_format(value)
+    out = []
+    if not self._repeated:
+      value = [value]
+    fields = self.get_model_fields()
+    for v in value:
+      self._structured_property_field_format(fields, v)
+      entity = self._modelclass(**v)
+      out.append(entity)
+    if not self._repeated:
+      try:
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
+
+
+class BaseProperty(_BaseProperty, Property):
+  '''Base property class for all properties capable of having _max_size option.'''
+
+
+class SuperComputedProperty(_BaseProperty, ComputedProperty):
+  pass
 
 
 class SuperLocalStructuredProperty(_BaseStructuredProperty, _BaseProperty, LocalStructuredProperty):
@@ -1655,7 +1645,7 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     out = []
     if not self._repeated:
       value = [value]
@@ -1672,7 +1662,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if isinstance(value, basestring):
       return json.loads(value)
     else:
@@ -1682,7 +1672,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
 class SuperTextProperty(_BaseProperty, TextProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -1692,7 +1682,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 class SuperStringProperty(_BaseProperty, StringProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -1702,7 +1692,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
 class SuperFloatProperty(_BaseProperty, FloatProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       return [float(v) for v in value]
     else:
@@ -1712,7 +1702,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       return [long(v) for v in value]
     else:
@@ -1729,7 +1719,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   
   '''
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
@@ -1760,7 +1750,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
   
   '''
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
@@ -1788,7 +1778,7 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
       return super(SuperKeyProperty, self).format(value)
     except:
       # Failed to build from urlsafe, proceed with KeyFromPath.
-      value = _property_value_format(self, value)
+      value = self._property_value_format(value)
       out = []
       assert isinstance(value, list) == True
       if self._repeated:
@@ -1815,7 +1805,7 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       return [bool(long(v)) for v in value]
     else:
@@ -1825,7 +1815,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     out = []
     if not self._repeated:
       value = [value]
@@ -1848,7 +1838,7 @@ class SuperDecimalProperty(SuperStringProperty):
   '''Decimal property that accepts only decimal.Decimal.'''
   
   def format(self, value):
-    value = _property_value_format(self, value)
+    value = self._property_value_format(value)
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]
     else:
@@ -1953,7 +1943,7 @@ class SuperSearchProperty(SuperJsonProperty):
     return search
 
 
-class SuperEntityStorageStructuredProperty(Property):
+class SuperStructuredStorageProperty(_BaseStructuredProperty, BaseProperty):
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
   
@@ -1975,15 +1965,12 @@ class SuperEntityStorageStructuredProperty(Property):
     self._managerclass = kwds.pop('managerclass', None)
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
-    super(SuperEntityStorageStructuredProperty, self).__init__(name, **kwds)
+    super(SuperStructuredStorageProperty, self).__init__(name, **kwds)
   
   def get_model_fields(self):
     if isinstance(self._modelclass, basestring):
       self._modelclass = Model._kind_map.get(self._modelclass)
     return self._modelclass.get_fields()
-  
-  def format(self, value):
-    return _structured_property_format(self, value)
   
   def _set_value(self, entity, value):
     # __set__
@@ -1995,7 +1982,7 @@ class SuperEntityStorageStructuredProperty(Property):
     manager_name = '%s_manager' % self._name
     if manager_name in entity._values:
       return entity._values[manager_name]
-    util.logger('SuperEntityStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    util.logger('SuperStructuredStorageProperty._get_value.%s %s' % (manager_name, entity))
     manager_class = SuperStructuredPropertyManager
     if self._managerclass:
       manager_class = self._managerclass
@@ -2007,7 +1994,7 @@ class SuperEntityStorageStructuredProperty(Property):
     self._get_value(entity)  # For its side effects.
 
 
-class SuperReadProperty(SuperKeyProperty):
+class SuperReferenceProperty(SuperKeyProperty):
   '''This property can be used to read stuff in async mode upon reading entity from protobuff.
   However, this can be also used for storing keys, behaving like SuperKeyProperty.
   Setter value should always be a key, however it can be an entire entity instance from which it will use its .key.
@@ -2039,7 +2026,7 @@ class SuperReadProperty(SuperKeyProperty):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):
       raise PropertyError('"format_callback" must be either None or callable, got %s' % self._format_callback)
-    super(SuperReadProperty, self).__init__(*args, **kwargs)
+    super(SuperReferenceProperty, self).__init__(*args, **kwargs)
   
   def _set_value(self, entity, value):
     # __set__
@@ -2047,13 +2034,13 @@ class SuperReadProperty(SuperKeyProperty):
     manager.set(value)
     if not isinstance(value, Key) and hasattr(value, 'key'):
       value = value.key
-    return super(SuperReadProperty, self)._set_value(entity, value)
+    return super(SuperReferenceProperty, self)._set_value(entity, value)
   
   def _delete_value(self, entity):
     # __delete__
     manager = self._get_value(entity, internal=True)
     manager.delete()
-    return super(SuperReadProperty, self)._delete_value(entity)
+    return super(SuperReferenceProperty, self)._delete_value(entity)
   
   def _get_value(self, entity, internal=None):
     # __get__
@@ -2061,8 +2048,8 @@ class SuperReadProperty(SuperKeyProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      util.logger('SuperReadProperty._get_value.%s %s' % (manager_name, entity))
-      manager = SuperReadPropertyManager(property_instance=self, storage_entity=entity)
+      util.logger('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
+      manager = SuperReferencePropertyManager(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     if internal:  # If internal is true, always retrieve manager.
       return manager
@@ -2072,7 +2059,7 @@ class SuperReadProperty(SuperKeyProperty):
       return manager.read()
 
 
-class SuperRecordProperty(SuperEntityStorageStructuredProperty):
+class SuperRecordProperty(SuperStructuredStorageProperty):
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
   
   '''
@@ -2163,9 +2150,9 @@ class Record(BaseExpando):
     }
   
   _virtual_fields = {
-    '_agent': SuperReadProperty(callback=lambda self: self._retreive_agent(),
-                                format_callback=lambda self: self._retrieve_agent_name()),
-    '_action': SuperReadProperty(callback=lambda self: self._retrieve_action())
+    '_agent': SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
+                                     format_callback=lambda self: self._retrieve_agent_name()),
+    '_action': SuperReferenceProperty(callback=lambda self: self._retrieve_action())
     }
   
   def _retrieve_agent_name(self):
