@@ -34,24 +34,24 @@ class InvalidModel(Exception):
 class Context():
   
   def __init__(self):
-    self.input = {}
-    self.output = {}
-    self.tmp = {}
-    self.model = None
-    self.models = None
-    self.action = None
+    self._input = {}
+    self._output = {}
+    self._tmp = {}  # @todo To be removed!!
+    self._model = None
+    self._models = None
+    self._action = None
     # @todo Perhaps here we should put also self.user and retreave current session user?
   
-  def error(self, key, value):
-    if 'errors' not in self.output:
-      self.output['errors'] = {}
-    if key not in self.output['errors']:
-      self.output['errors'][key] = []
-    self.output['errors'][key].append(value)
+  def error(self, key, value):  # @todo Shall we rename this function as well (_error())?
+    if 'errors' not in self._output:
+      self._output['errors'] = {}
+    if key not in self._output['errors']:
+      self._output['errors'][key] = []
+    self._output['errors'][key].append(value)
     return self  # @todo Do we need this line?
   
   def __repr__(self):
-    return self.action.key_id_str
+    return self._action.key_id_str
 
 
 class Engine:
@@ -120,7 +120,7 @@ class Engine:
   
   @classmethod
   def get_models(cls, context):
-    context.models = ndb.Model._kind_map
+    context._models = ndb.Model._kind_map
   
   @classmethod
   def get_model(cls, context, input):
@@ -128,28 +128,28 @@ class Engine:
     action_model_schema = input.get('action_model_schema')
     model = ndb.Model._kind_map.get(model_key)
     if not action_model_schema:
-      context.model = model
+      context._model = model
     else:
-      context.model = model(_model_schema=action_model_schema)
-    if not context.model:
+      context._model = model(_model_schema=action_model_schema)
+    if not context._model:
       raise InvalidModel(model_key)
   
   @classmethod
   def get_action(cls, context, input):
     action_id = input.get('action_id')
-    model_kind = context.model.get_kind()
-    if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
-      actions = context.model.get_actions()
+    model_kind = context._model.get_kind()
+    if hasattr(context._model, 'get_actions') and callable(context._model.get_actions):
+      actions = context._model.get_actions()
       action_key = ndb.Key(model_kind, 'action', '56', action_id).urlsafe()
       if action_key in actions:
-        context.action = actions[action_key]
-    if not context.action:
+        context._action = actions[action_key]
+    if not context._action:
       raise InvalidAction(action_key)
   
   @classmethod
   def process_action_input(cls, context, input):
     input_error = {}
-    for key, argument in context.action.arguments.items():
+    for key, argument in context._action.arguments.items():
       value_provided = key in input
       if not value_provided and argument._default is not None:
         # this must be here because the default value will be ignored, see line 99
@@ -164,7 +164,7 @@ class Engine:
           value = argument.format(value)
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
             argument._validator(argument, value)
-          context.input[key] = value
+          context._input[key] = value
         except ndb.PropertyError as e:
           if e.message not in input_error:
             input_error[e.message] = []
@@ -180,15 +180,15 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
-    util.logger('Execute action: %s.%s' % (context.model.__name__, context))
-    util.logger('Arguments: %s' % (context.input))
+    util.logger('Execute action: %s.%s' % (context._model.__name__, context))
+    util.logger('Arguments: %s' % (context._input))
     def execute_plugins(plugins):
       for plugin in plugins:
         util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
-    if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
+    if hasattr(context._model, 'get_plugin_groups') and callable(context._model.get_plugin_groups):
       try:
-        plugin_groups = context.model.get_plugin_groups(context.action)
+        plugin_groups = context._model.get_plugin_groups(context._action)
         if len(plugin_groups):
           for group in plugin_groups:
             if len(group.plugins):
@@ -232,4 +232,4 @@ class Engine:
         raise  # Here we raise all other unhandled exceptions!
     finally:
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
-    return context.output
+    return context._output

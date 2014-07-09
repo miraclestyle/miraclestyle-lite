@@ -18,8 +18,8 @@ class ProcessCatalogs(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     page_size = self.cfg.get('page', 10)
-    CronConfig = context.models['83']
-    Domain = context.models['6']
+    CronConfig = context._models['83']
+    Domain = context._models['6']
     config_key = CronConfig.build_key('process_catalogs_config')
     config = config_key.get()
     if not config:

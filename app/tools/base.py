@@ -27,8 +27,8 @@ def _rule_prepare(context, skip_user_roles, strict, **kwargs):
     if hasattr(context.entity, '_global_role') and context.entity._global_role.get_kind() == '67':
       global_permissions = context.entity._global_role.permissions
     if not skip_user_roles:
-      if not context.user._is_guest:
-        domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.entity.key_namespace)
+      if not context._user._is_guest:
+        domain_user_key = ndb.Key('8', context._user.key_id_str, namespace=context.entity.key_namespace)
         domain_user = domain_user_key.get()
         clean_roles = False
         if domain_user and domain_user.state == 'accepted':
@@ -43,7 +43,7 @@ def _rule_prepare(context, skip_user_roles, strict, **kwargs):
             data = {'action_model': '8',
                     'action_key': 'clean_roles',
                     'key': domain_user.key.urlsafe()}
-            context.callback_payloads.append(('callback', data))
+            context.callbacks.append(('callback', data))
     context.entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
 
 

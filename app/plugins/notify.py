@@ -16,9 +16,9 @@ from app.tools.manipulator import safe_eval
 class Set(ndb.BaseModel):
   
   def run(self, context):
-    MailTemplate = context.models['58']
-    HttpTemplate = context.models['63']
-    input_templates = context.input.get('templates')
+    MailTemplate = context._models['58']
+    HttpTemplate = context._models['63']
+    input_templates = context._input.get('templates')
     templates = []
     for template in input_templates:
       template.pop('class_', None)
@@ -34,10 +34,10 @@ class Set(ndb.BaseModel):
         else:
           del template[key]
       templates.append(model(**template))
-    context.entities['61'].name = context.input.get('name')
-    context.entities['61'].action = context.input.get('action')
-    context.entities['61'].condition = context.input.get('condition')
-    context.entities['61'].active = context.input.get('active')
+    context.entities['61'].name = context._input.get('name')
+    context.entities['61'].action = context._input.get('action')
+    context.entities['61'].condition = context._input.get('condition')
+    context.entities['61'].active = context._input.get('active')
     context.entities['61'].templates = templates
 
 
@@ -54,9 +54,9 @@ class MailSend(ndb.BaseModel):
       raise ndb.TerminateAction()
     message = mail.EmailMessage()
     message.sender = message_sender
-    message.bcc = context.input['recipient']
-    message.subject = context.input['subject']
-    message.body = context.input['body']  # We can add html argument in addition to body if we want to send html version!
+    message.bcc = context._input['recipient']
+    message.subject = context._input['subject']
+    message.body = context._input['body']  # We can add html argument in addition to body if we want to send html version!
     message.check_initialized()
     message.send()
 
@@ -64,18 +64,18 @@ class MailSend(ndb.BaseModel):
 class HttpSend(ndb.BaseModel):
   
   def run(self, context):
-    urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
+    urlfetch.fetch(context._input.get('recipient'), json.dumps(context._input), method=urlfetch.POST)
 
 
 class Initiate(ndb.BaseModel):
   
   def run(self, context):
-    caller_user_key = context.input.get('caller_user')
-    caller_action_key = context.input.get('caller_action')
+    caller_user_key = context._input.get('caller_user')
+    caller_action_key = context._input.get('caller_action')
     context.tmp['caller_user'] = caller_user_key.get()
-    notifications = context.model.query(context.model.active == True,
-                                        context.model.action == caller_action_key,
-                                        namespace=context.tmp['caller_entity'].key_namespace).fetch()
+    notifications = context._model.query(context._model.active == True,
+                                         context._model.action == caller_action_key,
+                                         namespace=context.tmp['caller_entity'].key_namespace).fetch()
     if notifications:
       for notification in notifications:
         values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}

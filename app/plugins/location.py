@@ -20,8 +20,8 @@ class CountryUpdate(ndb.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise ndb.TerminateAction()
-    Country = context.models['15']
-    CountrySubdivision = context.models['16']
+    Country = context._models['15']
+    CountrySubdivision = context._models['16']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
