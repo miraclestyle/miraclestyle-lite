@@ -40,7 +40,6 @@ class Context():
     self.model = None
     self.models = None
     self.action = None
-    self.blob_unused = []
     # @todo Perhaps here we should put also self.user and retreave current session user?
   
   def error(self, key, value):

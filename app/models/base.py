@@ -108,49 +108,14 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
   def process(self):
     '''This function should be called inside a taskqueue.
-    It will perform all needed operations based on the property configuration on how to handle its blobs.
+    It will perform all needed operations based on the property configuration on how to process its images.
     Resizing, cropping, and generation of serving url in the end.
-      
-      Idempotency overhead in this one is the crop, resize and similar "modify-image" features
-      might be called many times on same entity (and its gcs file), which in turn would resize the same image multiple times.
-      
-      This cant be avoided when transactions or general failures of app engine come into play, here is the example:
-      
-      try:
-       entity.images.process()
-      except:
-       transaction_rollback()
-       
-      So the google cloud storage files might be already modified 
-      and the entity was reverted to previous state, so in next retry of taskqueue it will retry to do the same
-      thing on the entities.
-      
-      As for the copying process, we always wipe out the image upon code failure, so stacking of copied data wont happen.
-      
-      !!NOTE: Single entity storage can be problematic in this case because single entity structure is usually:
-      
-      class Single:
-      
-        images = ndb.SuperStructuredPropertyImageManager(...)
-        
-      so in that case you would have to call
-      
-      entity.image.value.images.process()
-      
-      because if you call entity.image.process() it wont do nothing, basically because `image` property on which .process() 
-      was called is just instance of SuperStructuredPropertyImageManager, and its property value is instance of entity 
-      that would usually contain property that is repeated list of images.
-      
-      @todo: We could however solve this by iterating over every entity field and calling .process() if its instance of SuperStructuredPropertyImageManager?
-      like this
-      for field in entity.fields:
-        if field instance of storage_image_entity:
-         entity[field].process()
+    
     '''
     if not self.has_value():
       raise ndb.PropertyError('Cannot call %s.process() because read() was not called beforehand.' % self)
     if self._property._repeated:
-      processed_entities = map(self._property.process, self.value) # simpler to use map here, cuz we pull every entity trough process(entity) - http://stackoverflow.com/questions/1975250/when-should-i-use-a-map-instead-of-a-for-loop
+      processed_entities = map(self._property.process, self.value)
       setattr(self._entity, self.property_name, processed_entities)
     else:
       processed_entity = self._property.process(self.value)
@@ -212,8 +177,7 @@ class _BaseBlobProperty(object):
   
   @classmethod
   def delete_blobs(cls, blobs):
-    # This method will delete list of provided blob keys no matter which state
-    # but depending on methods called later on in the code will determine which are to be deleted for real.
+    # Delete blobes no matter what happens.
     cls._update_blobs(blobs, 'delete')
   
   @classmethod
@@ -256,8 +220,6 @@ class _BaseImageProperty(object):
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
   
-  # This method is not utilising yield images.get_serving_url_async technique for obtaining serving urls for image!
-  # It requires further refinement, and if possible should deprecate _blob_alter_image and measure_and_validate!
   def process(self, value):
     new_value = value
     gs_object_name = new_value.gs_object_name
@@ -266,15 +228,16 @@ class _BaseImageProperty(object):
       new_value = copy.deepcopy(value)
       new_gs_object_name = '%s_%s' % (new_value.gs_object_name, self._process_config.get('copy_name'))
     blob_key = None
-    if len(self._process_config) or not new_value.width or not new_value.height:  # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-      # @note no try block. this code is no longer forgiving.
-      # if any of the images fail their processing, all is lost/reverted because:
-      # - one of the images is no longer existant in the cloudstorage / .read()
-      # - one of the images is not valid / not image exception
-      # - one of the images resize failed / resize could not be done
-      # - one of the images create gs key failed / blobstore failed for some reason
-      # - one of the images get_serving_url failed / serving url service failed for some reason
-      # - one of the images writing to cloudstorage failed / cloudstorage failed for some reason
+    # We assume that self._process_config has at least either 'copy' or 'transform' keys!
+    if len(self._process_config) or not new_value.width or not new_value.height:
+      # @note No try block is implemented here. This code is no longer forgiving.
+      # If any of the images fail to process, everything is lost/reverted, because one or more images:
+      # - are no longer existant in the cloudstorage / .read();
+      # - are not valid / not image exception;
+      # - failed to resize / resize could not be done;
+      # - failed to create gs key / blobstore failed for some reason;
+      # - failed to create get_serving_url / serving url service failed for some reason;
+      # - failed to write to cloudstorage / cloudstorage failed for some reason.
       readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
       blob = readonly_blob.read()
       readonly_blob.close()
@@ -290,7 +253,7 @@ class _BaseImageProperty(object):
       new_value.height = image.height
       new_value.size = len(blob)
       if len(self._process_config):
-        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w') # if we open for writing why not open it then in the same block where we need it
+        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
         writable_blob.write(blob)
         writable_blob.close()
       if gs_object_name != new_gs_object_name or new_value.serving_url is None:
@@ -308,7 +271,7 @@ class _BaseImageProperty(object):
     for v in value:
       if not isinstance(v, cgi.FieldStorage) and not self._required:  # If the prop is not required, skip it.
         continue
-      # These will throw errors if the 'v' is not cgi.FileStorage compatible blob-key
+      # These will throw errors if the 'v' is not cgi.FileStorage compatible blob-key.
       file_info = blobstore.parse_file_info(v)
       blob_info = blobstore.parse_blob_info(v)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
@@ -319,7 +282,7 @@ class _BaseImageProperty(object):
                                       'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()})
       if self._process:
-        new_image = self.process(new_image) # may throw errors, hence stop this code execution
+        new_image = self.process(new_image)
       out.append(new_image)
     if not self._repeated:
       try:
