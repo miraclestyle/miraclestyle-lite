@@ -13,100 +13,7 @@ from app.tools.base import *
 from app.tools.manipulator import set_attr, get_attr, sort_by_list
 
 
-def get_catalog_images(CatalogImage, catalog_key):
-  catalog_images = []
-  more = True
-  offset = 0
-  limit = 1000
-  while more:
-    entities = CatalogImage.query(ancestor=catalog_key).fetch(limit=limit, offset=offset)
-    if len(entities):
-      catalog_images.extend(entities)
-      offset = offset + limit
-    else:
-      more = False
-  return catalog_images
-
-
-def get_catalog_products(Template, Instance, catalog_key=None, catalog_images=None, include_instances=True, include_categories=False):
-  
-  @ndb.tasklet
-  def instances_async(entity):
-    instances = []
-    more = True
-    offset = 0
-    limit = 1000
-    while more:
-      entities = yield Instance.query(ancestor=entity.key).fetch_async(limit=limit, offset=offset)
-      if len(entities):
-        instances.extend(entities)
-        offset = offset + limit
-      else:
-        more = False
-    if instances:
-      entity._instances = instances
-    raise ndb.Return(entity)
-  
-  @ndb.tasklet
-  def categories_async(entity):
-    category = yield entity.product_category.get_async()
-    entity._product_category = category
-    raise ndb.Return(entity)
-  
-  @ndb.tasklet
-  def instances_mapper(entities):
-    results = yield map(instances_async, entities)
-    raise ndb.Return(results)
-  
-  @ndb.tasklet
-  def categories_mapper(entities):
-    results = yield map(categories_async, entities)
-    raise ndb.Return(results)
-  
-  templates = []
-  if catalog_images:
-    keys = []
-    for catalog_image in catalog_images:
-      keys.extend([pricetag.product_template for pricetag in catalog_image.pricetags])
-    keys = list(set(keys))
-    templates = ndb.get_multi(keys)
-    if not templates:
-      templates = []
-  elif catalog_key:
-    more = True
-    offset = 0
-    limit = 1000
-    while more:
-      entities = Template.query(ancestor=catalog_key).fetch(limit=limit, offset=offset)
-      if len(entities):
-        templates.extend(entities)
-        offset = offset + limit
-      else:
-        more = False
-  if include_instances:
-    templates = instances_mapper(templates).get_result()
-  if include_categories:
-    templates = categories_mapper(templates).get_result()
-  return templates
-
-
-class DuplicateRead(ndb.BaseModel):
-  
-  def run(self, context):
-    catalog = context.entities['35']
-    catalog._images = []
-    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    catalog_images.sort(key=lambda x : int(x.key.id()))
-    if catalog_images:
-      catalog._images = catalog_images
-    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_images=catalog_images)
-    if not templates:
-      templates = []
-    context.tmp['original_product_templates'] = templates
-    context.tmp['copy_product_templates'] = copy.deepcopy(templates)
-
-
-# @todo Not sure if multiple cloudstorage operations can run  inside single transaction?!!
+# @todo To be removed once we create duplicate() method in property managers.
 class DuplicateWrite(ndb.BaseModel):
   
   def run(self, context):
@@ -199,35 +106,7 @@ class DuplicateWrite(ndb.BaseModel):
     ndb.put_multi(instances)
 
 
-class Read(ndb.BaseModel):
-  
-  read_from_start = ndb.SuperBooleanProperty('1', indexed=False, required=True, default=False)
-  catalog_page = ndb.SuperIntegerProperty('2', indexed=False, required=True, default=10)
-  
-  def run(self, context):
-    start = context.input.get('images_cursor')
-    if not start:
-      start = 0
-    end = start + self.catalog_page + 1  # Always ask for one extra image, so we can determine if there are more images to get in next round.
-    if self.read_from_start:
-      start = 0
-    images = ndb.get_multi([ndb.Key('36', str(i), parent=context.entities['35'].key) for i in range(start, end)])
-    count = len(images)
-    more = True
-    results = []
-    for i, image in enumerate(images):
-      if image != None:
-        results.append(image)
-      elif i == (count - 1):
-        more = False  # If the last item is None, then we assume there are no more images in catalog to get in next round!
-    if more:
-      results.pop(len(results) - 1)  # We respect catalog page amount, so if there are more images, remove the last one.
-    context.entities['35']._images = results
-    #context.values['35']._images = copy.deepcopy(context.entities['35']._images)
-    context.tmp['images_cursor'] = start + self.catalog_page  # @todo Next images cursor. Not sure if this is needed or the client does the mageic?
-    context.tmp['images_more'] = more
-
-
+# @todo We will figure out destiny of this plugin once we solve set operation issue!
 class UpdateSet(ndb.BaseModel):
   
   def run(self, context):
@@ -249,72 +128,6 @@ class UpdateSet(ndb.BaseModel):
     context.entities['35']._images = []
 
 
-class UpdateWrite(ndb.BaseModel):
-  
-  def run(self, context):
-    if context.entities['35']._field_permissions['_images']['writable']:
-      if len(context.tmp['delete_images']):
-        ndb.delete_multi([image.key for image in context.tmp['delete_images']])
-        context.records.extend([(image, ) for image in context.tmp['delete_images']])
-        context.blob_delete = [image.image for image in context.tmp['delete_images']]
-    if len(context.entities['35']._images):
-      ndb.put_multi(context.entities['35']._images)
-      context.records.extend([(image, ) for image in context.entities['35']._images])
-
-
-class UploadImagesSet(ndb.BaseModel):
-  
-  def run(self, context):
-    CatalogImage = context.models['36']
-    _images = context.input.get('_images')
-    if not _images:  # If no images were saved, do nothing.
-      raise ndb.TerminateAction()
-    i = CatalogImage.query(ancestor=context.entities['35'].key).count()  # Get last sequence.
-    for image in _images:
-      image.set_key(str(i), parent=context.entities['35'].key)
-      i += 1
-    #context.entities['35']._images = []
-    context.entities['35']._images = _images
-
-
-class UploadImagesWrite(ndb.BaseModel):
-  
-  def run(self, context):
-    if len(context.entities['35']._images):
-      ndb.put_multi(context.entities['35']._images)
-      context.tmp['catalog_image_keys'] = []
-      for image in context.entities['35']._images:
-        if image:
-          context.tmp['catalog_image_keys'].append(image.key.urlsafe())
-          context.blob_write.append(image.image)
-          context.records.append((image, ))
-
-
-class ProcessImages(ndb.BaseModel):
-  
-  def run(self, context):
-    if len(context.input.get('catalog_image_keys')):
-      catalog_image_keys = []
-      for catalog_image_key in context.input.get('catalog_image_keys'):
-        if catalog_image_key.parent() == context.entities['35'].key:
-          catalog_image_keys.append(catalog_image_key)
-      if catalog_image_keys:
-        catalog_images = ndb.get_multi(catalog_image_keys)
-        # You are not permitted to remove elements from the list while iterating over it using a for loop.
-        def mark_catalog_images(catalog_image):
-          if catalog_image is None:
-            return False
-          context.blob_delete.append(catalog_image.image)
-          return True
-        catalog_images = filter(mark_catalog_images, catalog_images)
-        if catalog_images:
-          catalog_images = ndb.validate_images(catalog_images)
-          ndb.put_multi(catalog_images)
-          for catalog_image in catalog_images:
-            context.records.append((catalog_image, ))
-            context.blob_write.append(catalog_image.image)  # Do not delete those blobs that survived!
-
-
 class ProcessCoverSet(ndb.BaseModel):
   
   def run(self, context):
@@ -326,42 +139,6 @@ class ProcessCoverSet(ndb.BaseModel):
         context.entities['35'].cover = context.entities['35']._images[0]
     else:
       context.entities['35'].cover = None
-
-
-class ProcessCoverTransform(ndb.BaseModel):
-  
-  def run(self, context):
-    if context.tmp.get('original_cover') and context.tmp.get('new_cover'):
-      if str(context.tmp['original_cover'].image) != str(context.tmp['new_cover'].image):
-        context.blob_delete.append(context.tmp['original_cover'].image)
-        context.blob_transform = context.tmp['new_cover']
-    elif context.tmp.get('original_cover'):
-      context.blob_delete.append(context.tmp['original_cover'].image)
-    elif context.tmp.get('new_cover'):
-      context.blob_transform = context.tmp['new_cover']
-
-
-class Delete(ndb.BaseModel):
-  
-  def run(self, context):
-    
-    def delete(*args):
-      entities = []
-      for argument in args:
-        entities.extend(argument)
-      ndb.delete_multi([entity.key for entity in entities])
-      context.records.extend([(entity, ) for entity in entities])
-    
-    catalog_images = get_catalog_images(context.models['36'], context.entities['35'].key)
-    templates = get_catalog_products(context.models['38'], context.models['39'], catalog_key=context.entities['35'].key)
-    instances = []
-    context.blob_delete.extend([image.image for image in catalog_images])
-    for template in templates:
-      context.blob_delete.extend([image.image for image in template.images])
-      for instance in template._instances:
-        instances.append(instance)
-        context.blob_delete.extend([image.image for image in instance.images])
-    delete(instances, templates, catalog_images)
 
 
 class CronPublish(ndb.BaseModel):

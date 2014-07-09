@@ -13,6 +13,7 @@ from app import ndb, util
 from app.tools.manipulator import safe_eval
 
 
+# @todo This will be updated once we resolve set operation issue.
 class Set(ndb.BaseModel):
   
   def run(self, context):

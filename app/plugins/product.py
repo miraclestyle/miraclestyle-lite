@@ -31,31 +31,7 @@ class InstancePrepare(ndb.BaseModel):
     context.values[context.model.get_kind()]._instance = context.models['39'](key=product_instance_key)
 
 
-class InstanceRead(ndb.BaseModel):
-  
-  def run(self, context):
-    product_instance_key = build_key_from_signature(context)
-    product_instance = product_instance_key.get()
-    context.entities[context.model.get_kind()]._instance = product_instance
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
-
-
-class InstanceWrite(ndb.BaseModel):
-  
-  def run(self, context):
-    _instance = context.entities[context.model.get_kind()]._instance
-    _instance.put()
-    context.records.append((_instance, ))
-
-
-class InstanceDelete(ndb.BaseModel):
-  
-  def run(self, context):
-    _instance = context.entities[context.model.get_kind()]._instance
-    context.records.append((_instance, ))
-    _instance.key.delete()
-
-
+# @todo Resolve set issue!
 class InstanceUploadImagesSet(ndb.BaseModel):
   
   def run(self, context):
@@ -65,6 +41,7 @@ class InstanceUploadImagesSet(ndb.BaseModel):
     context.values[context.model.get_kind()]._instance.images.extend(images)
 
 
+# @todo Resolve set issue!
 class InstanceUpdateSet(ndb.BaseModel):
   
   def run(self, context):
@@ -76,74 +53,7 @@ class InstanceUpdateSet(ndb.BaseModel):
     context.values[context.model.get_kind()]._instance.images = updated_images
 
 
-class InstanceWriteImages(ndb.BaseModel):
-  
-  def run(self, context):
-    context.blob_write = [image.image for image in context.entities[context.model.get_kind()]._instance.images]
-    if not context.entities[context.model.get_kind()]._field_permissions['_instance']['images']['writable']:
-      context.blob_delete = []
-
-
-class InstanceProcessImages(ndb.BaseModel):
-  
-  def run(self, context):
-    images = context.values[context.model.get_kind()]._instance.images
-    if len(images):
-      images = ndb.validate_images(images)
-      context.blob_delete.extend([image.image for image in images])
-      context.values[context.model.get_kind()]._instance.images = images
-
-
-class InstanceDeleteImages(ndb.BaseModel):
-  
-  def run(self, context):
-    context.blob_delete = [image.image for image in context.entities[context.model.get_kind()]._instance.images]
-
-
-class TemplateReadInstances(ndb.BaseModel):
-  
-  page_size = ndb.SuperIntegerProperty('1', indexed=False, required=True, default=10)
-  read_all = ndb.SuperBooleanProperty('2', indexed=False, default=False)
-  
-  def run(self, context):
-    Instance = context.models['39']
-    ancestor = context.entities[context.model.get_kind()].key
-    cursor = Cursor(urlsafe=context.input.get('instances_cursor'))
-    if self.read_all:
-      _instances = []
-      more = True
-      offset = 0
-      limit = 1000
-      while more:
-        entities = Instance.query(ancestor=ancestor).fetch(limit=limit, offset=offset)
-        if len(entities):
-          _instances.extend(entities)
-          offset = offset + limit
-        else:
-          more = False
-    else:
-      _instances, cursor, more = Instance.query(ancestor=ancestor).fetch_page(self.page_size, start_cursor=cursor)
-    if cursor:
-      cursor = cursor.urlsafe()
-      context.tmp['instances_cursor'] = cursor
-    if _instances:
-      context.entities[context.model.get_kind()]._instances = _instances
-    else:
-      context.entities[context.model.get_kind()]._instances = []
-    context.values[context.model.get_kind()] = copy.deepcopy(context.entities[context.model.get_kind()])
-    context.tmp['instances_more'] = more
-
-
-class TemplateDelete(ndb.BaseModel):
-  
-  def run(self, context):
-    instance_images = []
-    instance_images.extend([instance.images for instance in context.entities[context.model.get_kind()]._instances])
-    context.records.extend([(instance, ) for instance in context.entities[context.model.get_kind()]._instances])
-    context.blob_delete = [image.image for image in instance_images]
-    ndb.delete_multi([instance.key for instance in context.entities[context.model.get_kind()]._instances])
-
-
+# @todo To be removed once we create duplicate() method in property managers.
 class DuplicateWrite(ndb.BaseModel):
   
   def run(self, context):
@@ -199,6 +109,7 @@ class DuplicateWrite(ndb.BaseModel):
     ndb.put_multi(copy_template._instances)
 
 
+# @todo Resolve set issue!
 class UploadImagesSet(ndb.BaseModel):
   
   def run(self, context):
@@ -208,6 +119,7 @@ class UploadImagesSet(ndb.BaseModel):
     context.values[context.model.get_kind()].images.extend(images)
 
 
+# @todo Resolve set issue!
 class UpdateSet(ndb.BaseModel):
   
   def run(self, context):
@@ -217,30 +129,6 @@ class UpdateSet(ndb.BaseModel):
       context.blob_delete.append(image.image)
       updated_images.remove(image)
     context.values[context.model.get_kind()].images = updated_images
-
-
-class WriteImages(ndb.BaseModel):
-  
-  def run(self, context):
-    context.blob_write = [image.image for image in context.entities[context.model.get_kind()].images]
-    if not context.entities[context.model.get_kind()]._field_permissions['images']['writable']:
-      context.blob_delete = []
-
-
-class ProcessImages(ndb.BaseModel):
-  
-  def run(self, context):
-    images = context.values[context.model.get_kind()].images
-    if len(images):
-      images = ndb.validate_images(images)
-      context.blob_delete.extend([image.image for image in images])
-      context.values[context.model.get_kind()].images = images
-
-
-class DeleteImages(ndb.BaseModel):
-  
-  def run(self, context):
-    context.blob_delete = [image.image for image in context.entities[context.model.get_kind()].images]
 
 
 class CategoryUpdate(ndb.BaseModel):
