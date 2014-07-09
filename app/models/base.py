@@ -7,6 +7,7 @@ Created on Jun 14, 2014
 
 import cgi
 import cloudstorage
+import copy
 
 from google.appengine.ext import blobstore
 from google.appengine.api import images
@@ -92,7 +93,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         for entity in _entities:
           self._copy_record_arguments(entity)
           self._property.delete_blobs_on_success(entity.image)
-        delete_multi([entity.key for entity in _entities])
+        ndb.delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
       else:
@@ -149,16 +150,11 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     if not self.has_value():
       raise ndb.PropertyError('Cannot call %s.process() because read() was not called beforehand.' % self)
     if self._property._repeated:
-      processed_entities = []
-      for entity in self.value:
-        processed_entity = self._property.process(entity)
-        if processed_entity is not None:
-          processed_entities.append(processed_entity)
+      processed_entities = map(self._property.process, self.value) # simpler to use map here, cuz we pull every entity trough process(entity) - http://stackoverflow.com/questions/1975250/when-should-i-use-a-map-instead-of-a-for-loop
       setattr(self._entity, self.property_name, processed_entities)
     else:
       processed_entity = self._property.process(self.value)
-      if processed_entity is not None:
-        setattr(self._entity, self.property_name, processed_entity)
+      setattr(self._entity, self.property_name, processed_entity)
 
 
 class _BaseBlobProperty(object):
@@ -263,141 +259,46 @@ class _BaseImageProperty(object):
   # This method is not utilising yield images.get_serving_url_async technique for obtaining serving urls for image!
   # It requires further refinement, and if possible should deprecate _blob_alter_image and measure_and_validate!
   def process(self, value):
-    if value and hasattr(value, 'image') and isinstance(value.image, blobstore.BlobKey):
-      new_value = value
-      gs_object_name = new_value.gs_object_name
-      new_gs_object_name = new_value.gs_object_name
-      if self._process_config('copy'):
-        new_value = copy.deepcopy(value)
-        new_gs_object_name = '%s_%s' % (new_value.gs_object_name, self._process_config('copy_name'))
-      blob_key = None
-      if len(self._process_config) or not new_value.width or not new_value.height:  # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-        try:
-          readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
-          blob = readonly_blob.read()
-          readonly_blob.close()
-          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-          image = images.Image(image_data=blob)
-          if self._process_config('transform'):
-            image.resize(self._process_config('width'),
-                         self._process_config('height'),
-                         crop_to_fit=self._process_config('crop_to_fit'),
-                         crop_offset_x=self._process_config('crop_offset_x'),
-                         crop_offset_y=self._process_config('crop_offset_y'))
-            blob = image.execute_transforms(output_encoding=image.format)
-          new_value.width = image.width
-          new_value.height = image.height
-          new_value.size = len(blob)
-          if len(self._process_config):
-            writable_blob.write(blob)  # @todo Not sure if this is ok!?
-          writable_blob.close()
-          if gs_object_name != new_gs_object_name or new_value.serving_url is None:
-            new_value.gs_object_name = new_gs_object_name
-            blob_key = blobstore.create_gs_key(new_gs_object_name)
-            new_value.image = blobstore.BlobKey(blob_key)
-            new_value.serving_url = images.get_serving_url(new_value.image)
-          return new_value
-        except Exception as e:
-          util.logger(e, 'exception')
-          if blob_key != None:
-            self.delete_blobs(blob_key)
-          elif new_value.image:
-            self.delete_blobs(new_value.image)
-          raise ndb.PropertyError('processing_image_failed')
-      return new_value
-    else:
-      raise ndb.PropertyError('not_image')
-  
-  # This method remains here for reference!
-  def _blob_alter_image(self, value):
-    result = {}
-    if original_image and hasattr(original_image, 'image') and isinstance(original_image.image, blobstore.BlobKey):
-      new_image = original_image # we cannot use deep copy here because it should mutate on entity.itself
-      original_gs_object_name = new_image.gs_object_name
-      new_gs_object_name = new_image.gs_object_name
-      if make_copy:
-        new_image = copy.deepcopy(original_image) # deep copy is fine when we want copies of it
-        new_gs_object_name = '%s_%s' % (new_image.gs_object_name, copy_name)
-      blob_key = None
-      try:
-        if make_copy:
-          readonly_blob = cloudstorage.open(original_gs_object_name[3:], 'r')
-          blob = readonly_blob.read()
-          readonly_blob.close()
-          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-        else:
-          readonly_blob = cloudstorage.open(new_gs_object_name[3:], 'r')
-          blob = readonly_blob.read()
-          readonly_blob.close()
-          writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-        if transform:
-          image = images.Image(image_data=blob)
-          image.resize(width,
-                       height,
-                       crop_to_fit=crop_to_fit,
-                       crop_offset_x=crop_offset_x,
-                       crop_offset_y=crop_offset_y)
-          blob = image.execute_transforms(output_encoding=image.format)
-          new_image.width = width
-          new_image.height = height
-          new_image.size = len(blob)
+    new_value = value
+    gs_object_name = new_value.gs_object_name
+    new_gs_object_name = new_value.gs_object_name
+    if self._process_config.get('copy'):
+      new_value = copy.deepcopy(value)
+      new_gs_object_name = '%s_%s' % (new_value.gs_object_name, self._process_config.get('copy_name'))
+    blob_key = None
+    if len(self._process_config) or not new_value.width or not new_value.height:  # We assume that self._process_config has at least either 'copy' or 'transform' keys!
+      # @note no try block. this code is no longer forgiving.
+      # if any of the images fail their processing, all is lost/reverted because:
+      # - one of the images is no longer existant in the cloudstorage / .read()
+      # - one of the images is not valid / not image exception
+      # - one of the images resize failed / resize could not be done
+      # - one of the images create gs key failed / blobstore failed for some reason
+      # - one of the images get_serving_url failed / serving url service failed for some reason
+      # - one of the images writing to cloudstorage failed / cloudstorage failed for some reason
+      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+      blob = readonly_blob.read()
+      readonly_blob.close()
+      image = images.Image(image_data=blob)
+      if self._process_config.get('transform'):
+        image.resize(self._process_config('width'),
+                     self._process_config('height'),
+                     crop_to_fit=self._process_config('crop_to_fit'),
+                     crop_offset_x=self._process_config('crop_offset_x'),
+                     crop_offset_y=self._process_config('crop_offset_y'))
+        blob = image.execute_transforms(output_encoding=image.format)
+      new_value.width = image.width
+      new_value.height = image.height
+      new_value.size = len(blob)
+      if len(self._process_config):
+        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w') # if we open for writing why not open it then in the same block where we need it
         writable_blob.write(blob)
         writable_blob.close()
-        if original_gs_object_name != new_gs_object_name or new_image.serving_url is None:
-          new_image.gs_object_name = new_gs_object_name
-          blob_key = blobstore.create_gs_key(new_gs_object_name)
-          new_image.image = blobstore.BlobKey(blob_key)
-          new_image.serving_url = images.get_serving_url(new_image.image)
-      except Exception as e:
-        util.logger(e, 'exception')
-        if blob_key != None:
-          result['delete'] = blob_key
-        elif new_image.image:
-          result['delete'] = new_image.image
-      else:
-        result['save'] = new_image
-    return result
-  
-  # This method remains here for reference!
-  def measure_and_validate(self, values):
-    '''"values" argument is a list of valid instance(s) of Image class that require validation!
-    This function is used mainly for property that turns its usage on.
-    
-    '''
-    delete_values = []
-    for value in values:
-      if value.width or value.height:  # measure_and_validate will not perform any measurements if image already has defined width and height.
-        continue
-      cloudstorage_file = cloudstorage.open(filename=value.gs_object_name[3:])
-      # This will throw an error if the file does not exist in cloudstorage.
-      image_data = cloudstorage_file.read()
-      # This will throw an error if the file is not an image, or is corrupted.
-      try:
-        image = images.Image(image_data=image_data)
-        width = image.width  # This property causes _update_dimensions function that might fail to read the image if image meta-data is corrupted, indicating it's not good.
-        height = image.height
-        value.populate(**{'width': width, 'height': height})
-      except images.NotImageError as e:
-        # Cannot do values.remove while in for loop values.
-        delete_values.append(value)
-      cloudstorage_file.close()
-    for value in delete_values:
-      if value.image:
-        self.delete_blobs(value.image)
-      values.remove(value)
-    
-    @ndb.tasklet
-    def async(value):
-      if value.serving_url is None:
-        value.serving_url = yield images.get_serving_url_async(value.image)
-      raise ndb.Return(value)
-    
-    @ndb.tasklet
-    def mapper(values):
-      results = yield map(async, values)
-      raise ndb.Return(results)
-    
-    return mapper(values).get_result()
+      if gs_object_name != new_gs_object_name or new_value.serving_url is None:
+        new_value.gs_object_name = new_gs_object_name
+        blob_key = blobstore.create_gs_key(new_gs_object_name)
+        new_value.image = blobstore.BlobKey(blob_key)
+        new_value.serving_url = images.get_serving_url(new_value.image)
+      return new_value
   
   def format(self, value):
     value = self._property_value_format(value)
@@ -407,10 +308,10 @@ class _BaseImageProperty(object):
     for v in value:
       if not isinstance(v, cgi.FieldStorage) and not self._required:  # If the prop is not required, skip it.
         continue
-      # These will throw errors if the 'v' is not cgi.FileStorage.
+      # These will throw errors if the 'v' is not cgi.FileStorage compatible blob-key
       file_info = blobstore.parse_file_info(v)
       blob_info = blobstore.parse_blob_info(v)
-      meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png!
+      meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
       if file_info.content_type not in meta_required:
         raise ndb.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
       new_image = self._modelclass(**{'size': file_info.size,
@@ -418,7 +319,7 @@ class _BaseImageProperty(object):
                                       'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()})
       if self._process:
-        new_image = self.process(new_image)
+        new_image = self.process(new_image) # may throw errors, hence stop this code execution
       out.append(new_image)
     if not self._repeated:
       try:
