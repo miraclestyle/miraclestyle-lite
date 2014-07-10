@@ -48,34 +48,6 @@ class Set(ndb.BaseModel):
       set_attr(context, key, get_attr(context, value))
 
 
-class Prepare(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    model_path = self.cfg.get('model', 'models.' + context.model.get_kind())
-    parent_path = self.cfg.get('parent', None)
-    namespace_path = self.cfg.get('namespace', 'namespace')
-    model = get_attr(context, model_path)
-    save_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())  # @todo Is this ok?
-    parent = get_attr(context, parent_path)
-    namespace = get_attr(context, namespace_path)
-    if parent != None:
-      namespace = None
-    if hasattr(model, 'prepare_key'):
-      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
-      entity = model_key.get()
-      if entity is None:
-        entity = model()
-        entity.set_key(model_key)
-    else:
-      entity = model()
-      entity.set_key(parent=parent, namespace=namespace)
-    set_attr(context, save_path, entity)
-
-
 class Read(ndb.BaseModel):
   
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
@@ -84,12 +56,31 @@ class Read(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     source_path = self.cfg.get('source', 'input.key')
-    save_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())  # @todo Is this ok?
+    model_path = self.cfg.get('model', 'model')
+    parent_path = self.cfg.get('parent', None)
+    namespace_path = self.cfg.get('namespace', 'namespace')
+    save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     source = get_attr(context, source_path)
+    model = get_attr(context, model_path)
+    parent = get_attr(context, parent_path)
+    namespace = get_attr(context, namespace_path)
+    if parent is not None:
+      namespace = None
     if source and isinstance(source, ndb.Key):
       entity = source.get()
       entity.read(context.input)
-      set_attr(context, save_path, entity)
+    elif hasattr(model, 'prepare_key'):
+      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
+      entity = model_key.get()
+      if entity is None:
+        entity = model()
+        entity.set_key(model_key)
+      else:
+        entity.read(context.input)
+    else:
+      entity = model()
+      entity.set_key(parent=parent, namespace=namespace)
+    set_attr(context, save_path, entity)
 
 
 class Write(ndb.BaseModel):
@@ -99,7 +90,7 @@ class Write(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
     entity = get_attr(context, entity_path)
@@ -117,7 +108,7 @@ class Delete(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
     entity = get_attr(context, entity_path)
