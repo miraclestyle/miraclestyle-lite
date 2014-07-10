@@ -8,7 +8,12 @@ import json
 import inspect
 import copy
 
-from app import ndb
+from google.appengine.ext import blobstore
+from google.appengine.api import images
+
+from app import ndb, settings
+
+from app.models import base
 
 from webclient import handler
   
@@ -50,6 +55,15 @@ class TestDeepCopyStruct(ndb.BaseModel):
   name = ndb.SuperStringProperty()
   
   _virtual_fields = dict(_far=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
+ 
+class TestDeepCopyStructImage(base.Image):
+  
+  _use_record_engine = False
+  _use_rule_engine = False
+  _use_memcache = False
+  
+  _virtual_fields = dict(_other=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
+ 
     
 class TestDeepCopyModel(ndb.BaseModel):
   
@@ -62,27 +76,46 @@ class TestDeepCopyModel(ndb.BaseModel):
   test3 = ndb.SuperLocalStructuredProperty(TestDeepCopyStruct)
   test4 = ndb.SuperStructuredProperty(TestDeepCopyStruct)
   
-  _virtual_fields = dict(test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'))
+  _virtual_fields = dict(_test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'),
+                         _test6=base.SuperImageStorageStructuredProperty(TestDeepCopyStructImage, storage='remote_multi'),)
     
 class TestDeepCopy(BaseTestHandler):
  
   def respond(self):
     the_id = self.request.get('the_id')
     put = self.request.get('put')
-    fields = ['test1', 'test2', 'test3', 'test4', 'test5']
+    fields = ['test1', 'test2', 'test3', 'test4', '_test5', '_test6']
     if the_id and put:
       entity = TestDeepCopyModel(id=the_id)
       for f in fields:
-        if f not in ['test3', 'test4', 'test5']:
+        if f in ['test1', 'test2']:
           s = [TestDeepCopyStruct(name='%s' % f)]
-        elif f == 'test5':
+        elif f in ['test3', 'test4']:
+          s = TestDeepCopyStruct(name='%s' % f)
+        elif f == '_test5':
           s = [TestDeepCopyStruct(name='%s' % f, _far=[
                                                       TestDeepCopyStructFar(what='Yes'), 
                                                       TestDeepCopyStructFar(what='No')
                                                      ])]
-        else:
-          s = TestDeepCopyStruct(name='%s' % f)
+          
+        elif f == '_test6':
+          
+          the_file = self.request.params.get('file')
+          a = blobstore.parse_blob_info(the_file)
+          b = blobstore.parse_file_info(the_file)
+          serving_url = images.get_serving_url(a.key())
+          
+          s = [TestDeepCopyStructImage(image=a.key(),
+          content_type=a.content_type,
+          size=a.size,
+          gs_object_name=b.gs_object_name,
+          serving_url=serving_url,
+          _other=[
+              TestDeepCopyStructFar(what='AYes'), 
+              TestDeepCopyStructFar(what='ANo')
+           ])]
         setattr(entity, f, s)
+      entity._test6.process()  
       entity.put()
     else:
       entity = TestDeepCopyModel.build_key(the_id).get()
@@ -105,10 +138,13 @@ class TestDeepCopy(BaseTestHandler):
           b = getattr(entity, f, None)
           if a == b:
             self.out('EntityCopy.%s == Entity.%s' % (f, f), 1)
-    
-    
-    
-    
+            
+            
+class TestCreateURL(BaseTestHandler):
+  
+  def respond(self):
+    self.out(blobstore.create_upload_url(self.request.get('path'), gs_bucket_name=settings.DOMAIN_LOGO_BUCKET))
+     
     
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):

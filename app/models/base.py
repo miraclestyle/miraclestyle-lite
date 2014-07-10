@@ -249,7 +249,7 @@ class _BaseBlobProperty(object):
     cls._update_blobs(blobs, 'collect_success', delete)
 
 
-class _BaseImageProperty(object):
+class _BaseImageProperty(_BaseBlobProperty):
   '''Base helper class for image-like properties.
   This class should work in conjunction with ndb.Property, because it does not implement anything of ndb.
   Example:
@@ -337,13 +337,13 @@ class _BaseImageProperty(object):
     return out
 
 
-class SuperImageStorageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStorageStructuredProperty):
+class SuperImageStorageStructuredProperty(_BaseImageProperty, ndb.SuperStorageStructuredProperty):
   pass
 
 
-class SuperImageLocalStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperLocalStructuredProperty):
+class SuperImageLocalStructuredProperty(_BaseImageProperty, ndb.SuperLocalStructuredProperty):
   pass
 
 
-class SuperImageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStructuredProperty):
+class SuperImageStructuredProperty(_BaseImageProperty, ndb.SuperStructuredProperty):
   pass
