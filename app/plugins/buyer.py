@@ -19,16 +19,15 @@ def generate_internal_id(address):
   address.internal_id = hashlib.md5(internal_id.encode('utf8')).hexdigest()
 
 
-# @todo To be determined later.
 class AddressRead(ndb.BaseModel):
   
   def run(self, context):
-    user_key = context._input.get('user')
+    user_key = context.input.get('user')
     user = user_key.get()
-    entity_key = context._model.build_key(user.key_id_str, parent=user.key)
+    entity_key = context.model.build_key(user.key_id_str, parent=user.key)
     entity = entity_key.get()
     if entity is None:
-      entity = context._model(key=entity_key)
+      entity = context.model(key=entity_key)
     if entity.addresses and len(entity.addresses):
       
       @ndb.tasklet
@@ -47,7 +46,7 @@ class AddressRead(ndb.BaseModel):
         raise ndb.Return(addresses)
       
       entity.addresses = helper(entity.addresses).get_result()
-    context.entities[context._model.get_kind()] = entity
+    context.entities[context.model.get_kind()] = entity
 
 
 class AddressSet(ndb.BaseModel):
@@ -76,12 +75,12 @@ class AddressSet(ndb.BaseModel):
 class CollectionRead(ndb.BaseModel):
   
   def run(self, context):
-    user_key = context._input.get('user')
+    user_key = context.input.get('user')
     user = user_key.get()
-    entity_key = context._model.build_key(user.key_id_str, parent=user.key)
+    entity_key = context.model.build_key(user.key_id_str, parent=user.key)
     entity = entity_key.get()
     if entity is None:
-      entity = context._model(key=entity_key)
+      entity = context.model(key=entity_key)
     if entity.domains and len(entity.domains):
       entity._domains = ndb.get_multi(entity.domains)
-    context.entities[context._model.get_kind()] = entity
+    context.entities[context.model.get_kind()] = entity

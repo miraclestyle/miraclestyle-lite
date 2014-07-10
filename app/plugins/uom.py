@@ -21,8 +21,8 @@ class CurrencyUpdate(ndb.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise ndb.TerminateAction()
-    Measurement = context._models['18']
-    Unit = context._models['19']
+    Measurement = context.models['18']
+    Unit = context.models['19']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
@@ -98,8 +98,8 @@ class UnitUpdate(ndb.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise ndb.TerminateAction()
-    Measurement = context._models['18']
-    Unit = context._models['19']
+    Measurement = context.models['18']
+    Unit = context.models['19']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
