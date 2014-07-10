@@ -19,6 +19,7 @@ def generate_internal_id(address):
   address.internal_id = hashlib.md5(internal_id.encode('utf8')).hexdigest()
 
 
+# @todo To be determined later.
 class AddressRead(ndb.BaseModel):
   
   def run(self, context):

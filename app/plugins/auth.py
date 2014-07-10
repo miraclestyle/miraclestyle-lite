@@ -133,12 +133,6 @@ class UserLoginOutput(ndb.BaseModel):
       context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.tmp['session'].session_id)
 
 
-class UserIPAddress(ndb.BaseModel):
-  
-  def run(self, context):
-    context.tmp['ip_address'] = os.environ['REMOTE_ADDR']
-
-
 class UserLogoutOutput(ndb.BaseModel):
   
   def run(self, context):
@@ -146,6 +140,7 @@ class UserLogoutOutput(ndb.BaseModel):
     context.output['entity'] = context.entities['0'].current_user()
 
 
+# @todo To be removed, once we figure out how to virtualize properties.
 class UserReadDomains(ndb.BaseModel):
   
   def run(self, context):
@@ -195,33 +190,3 @@ class DomainCreate(ndb.BaseModel):
     config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
     config.put()
     context.entities[config.get_kind()] = config
-
-
-class DomainRead(ndb.BaseModel):
-  
-  def run(self, context):
-    # @todo Async operations effectively require two separate plugins
-    # that will be separated by intermediate plugins, in order to prove to be useful!
-    # This separation for async ops has to be decided yet!
-    # Right now async is eliminated!
-    #primary_contact = context.entities['6'].primary_contact.get_async()
-    #primary_contact = primary_contact.get_result()
-    primary_contact = context.entities['6'].primary_contact.get()
-    context.entities['6']._primary_contact_email = primary_contact._primary_email
-
-
-class DomainSearch(ndb.BaseModel):
-  
-  def run(self, context):
-    @ndb.tasklet
-    def async(entity):
-      user = yield entity.primary_contact.get_async()
-      entity._primary_contact_email = user._primary_email
-      raise ndb.Return(entity)
-    
-    @ndb.tasklet
-    def mapper(entities):
-      entities = yield map(async, entities)
-      raise ndb.Return(entities)
-    
-    context.entities = mapper(context.entities).get_result()

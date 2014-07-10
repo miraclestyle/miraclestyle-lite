@@ -14,6 +14,7 @@ class DomainUserError(Exception):
     self.message = {'domain_user': message}
 
 
+# @todo To reconsider once we implement generic set system!
 class DomainRoleSet(ndb.BaseModel):
   
   def run(self, context):
@@ -61,14 +62,6 @@ class DomainUserInvite(ndb.BaseModel):
     context.entities['8'].populate(name=context._input.get('name'), state='invited', roles=roles)
     user._use_rule_engine = False
     user.domains.append(context._domain.key)
-    context.entities['0'] = user
-
-
-class DomainUserRead(ndb.BaseModel):
-  
-  def run(self, context):
-    user = ndb.Key('0', long(context.entities['8'].key.id())).get()
-    context.entities['8']._primary_email = user._primary_email
     context.entities['0'] = user
 
 

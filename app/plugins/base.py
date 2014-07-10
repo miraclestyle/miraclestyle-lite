@@ -31,26 +31,6 @@ class Context(ndb.BaseModel):
     if domain_key:
       context._domain = domain_key.get()
       context._namespace = context._domain.key_namespace
-    if not hasattr(context, 'entities'):
-      context.entities = {}
-    if not hasattr(context, 'callbacks'):
-      context.callbacks = []  # This variable allways receives tuples of two values! Example: [(a, b), (a, b)]
-    if not hasattr(context, 'records'):
-      context.records = []  # This variable allways receives tuples of at least one value and maximum of two! Example: [(a, ), (a, b)]
-    if not hasattr(context, 'blob_url'):
-      context.blob_url = None
-    if not hasattr(context, 'blob_delete'):
-      context.blob_delete = []
-    if not hasattr(context, 'blob_write'):
-      context.blob_write = []
-    if not hasattr(context, 'blob_transform'):
-      context.blob_transform = None
-    if not hasattr(context, 'search_documents'):
-      context.search_documents = []
-    if not hasattr(context, 'search_documents_total_matches'):
-      context.search_documents_total_matches = None
-    if not hasattr(context, 'search_documents_count'):
-      context.search_documents_count = None
 
 
 class Set(ndb.BaseModel):
@@ -211,77 +191,6 @@ class Search(ndb.BaseModel):
         context.search_more = False
 
 
-class RecordRead(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    @ndb.tasklet
-    def async(entity):
-      if entity.key_namespace and entity.agent.id() != 'system':
-        domain_user_key = ndb.Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
-        agent = yield domain_user_key.get_async()
-        agent = agent.name
-      else:
-        agent = yield entity.agent.get_async()
-        agent = agent._primary_email
-      entity._agent = agent
-      action_parent = entity.action.parent()
-      modelclass = entity._kind_map.get(action_parent.kind())
-      action_id = entity.action.id()
-      if modelclass and hasattr(modelclass, '_actions'):
-        for action in modelclass._actions:
-          if entity.action == action.key:
-            entity._action = '%s.%s' % (modelclass.__name__, action_id)
-            break
-      raise ndb.Return(entity)
-    
-    @ndb.tasklet
-    def helper(entities):
-      results = yield map(async, entities)
-      raise ndb.Return(results)
-    
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
-    page_size = self.cfg.get('page', 10)
-    entity = get_attr(context, entity_path)
-    if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      model = context.models['5']
-      argument = {'filters': [{'field': 'ancestor', 'operator': '==', 'value': entity.key}],
-                  'order_by': {'field': 'logged', 'operator': 'desc'}}
-      urlsafe_cursor = context.input.get('search_cursor')
-      result = ndb_search(model, argument, page_size, urlsafe_cursor)
-      entities = helper(result['entities'])
-      entities = [entity for entity in entities.get_result()]
-      set_attr(context, entity_path + '._records', entities)
-      context.search_cursor = result['search_cursor']
-      context.search_more = result['search_more']
-
-
-class RecordWrite(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    model = context.models['5']
-    arguments = {}
-    entity_paths = self.cfg.get('paths', [])
-    static_arguments = self.cfg.get('s', {})
-    dynamic_arguments = self.cfg.get('d', {})
-    arguments.update(static_arguments)
-    for key, value in dynamic_arguments.items():
-      arguments[key] = get_attr(context, value)
-    for entity_path in entity_paths:
-      entities = get_attr(context, entity_path)
-      entities = normalize(entities)
-      context.records.extend([(entity, arguments) for entity in entities])
-    record_write(context.models['5'], context.records, context.user.key, context.action.key)
-    context.records = []
-
-
 class CallbackNotify(ndb.BaseModel):
   
   def run(self, context):
@@ -320,36 +229,6 @@ class BlobURL(ndb.BaseModel):
     if upload_url:
       context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       #raise ndb.TerminateAction()
-
-
-class BlobUpdate(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    delete_path = self.cfg.get('delete', 'blob_delete')
-    write_path = self.cfg.get('write', 'blob_write')
-    blob_delete = get_attr(context, delete_path)
-    blob_write = get_attr(context, write_path)
-    context.blob_unused = blob_update(context.blob_unused, blob_delete, blob_write)
-
-
-class BlobAlterImage(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    read_path = self.cfg.get('read', None)
-    write_path = self.cfg.get('write', None)
-    config = self.cfg.get('config', None)
-    entities = get_attr(context, read_path)
-    write_entities, blob_delete = blob_alter_image(entities, config)
-    context.blob_delete.extend(blob_delete)
-    set_attr(context, write_path, write_entities)
 
 
 class ActionDenied(Exception):
