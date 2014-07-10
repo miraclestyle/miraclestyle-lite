@@ -53,24 +53,27 @@ class Prepare(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
-    if not isinstance(self.cfg, list):
-      self.cfg = []
-    if not len(self.cfg):
-      self.cfg = [{'model': 'models.'  + context.model.get_kind(),
-                   'parent': None,
-                   'namespace': 'namespace',
-                   'path': 'entities.' + context.model.get_kind()}]
-    for config in self.cfg:
-      model_path = config.get('model')
-      model = get_attr(context, model_path)
-      parent_path = config.get('parent')
-      namespace_path = config.get('namespace', 'namespace')
-      parent = get_attr(context, parent_path)
-      namespace = get_attr(context, namespace_path)
-      if parent != None:
-        namespace = None
-      save_path = config.get('path')
-      set_attr(context, save_path, model(parent=parent, namespace=namespace))
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    model_path = self.cfg.get('model', 'models.' + context.model.get_kind())
+    parent_path = self.cfg.get('parent', None)
+    namespace_path = self.cfg.get('namespace', 'namespace')
+    model = get_attr(context, model_path)
+    save_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())  # @todo Is this ok?
+    parent = get_attr(context, parent_path)
+    namespace = get_attr(context, namespace_path)
+    if parent != None:
+      namespace = None
+    if hasattr(model, 'prepare_key'):
+      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
+      entity = model_key.get()
+      if entity is None:
+        entity = model()
+        entity.set_key(model_key)
+    else:
+      entity = model()
+      entity.set_key(parent=parent, namespace=namespace)
+    set_attr(context, save_path, entity)
 
 
 class Read(ndb.BaseModel):
@@ -78,26 +81,15 @@ class Read(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
-    keys = []
-    if not isinstance(self.cfg, list):
-      self.cfg = []
-    if not len(self.cfg):
-      self.cfg = [{'source': 'input.key',
-                   'path': 'entities.' + context.model.get_kind()}]
-    for config in self.cfg:
-      source_path = config.get('source')
-      source = get_attr(context, source_path)
-      if source and isinstance(source, ndb.Key):
-        keys.append(source)
-    ndb.get_multi(keys)
-    for config in self.cfg:
-      source_path = config.get('source')
-      source = get_attr(context, source_path)
-      entity = None
-      if source and isinstance(source, ndb.Key):
-        entity = source.get()
-        save_path = config.get('path')
-        set_attr(context, save_path, entity)
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    source_path = self.cfg.get('source', 'input.key')
+    save_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())  # @todo Is this ok?
+    source = get_attr(context, source_path)
+    if source and isinstance(source, ndb.Key):
+      entity = source.get()
+      entity.read(context.input)
+      set_attr(context, save_path, entity)
 
 
 class Write(ndb.BaseModel):
@@ -105,29 +97,17 @@ class Write(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    write_entities = []
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_paths = self.cfg.get('paths', ['entities.' + context.model.get_kind()])
-    parent_path = self.cfg.get('parent', None)
-    namespace_path = self.cfg.get('namespace', 'namespace')
-    parent = get_attr(context, parent_path)
-    namespace = get_attr(context, namespace_path)
-    for entity_path in entity_paths:
-      entities = get_attr(context, entity_path)
-      entities = normalize(entities)
-      if len(entities):
-        for entity in entities:
-          if entity and isinstance(entity, ndb.Model):
-            write_entities.append(entity)
-    # @todo This parent/namespace block needs improvement!
-    if parent != None:
-      namespace = None
-    for entity in write_entities:
-      util.logger('Entity to be written: %s' % entity)
-      if not hasattr(entity, 'key'):
-        entity.set_key(None, parent=parent, namespace=namespace)
-    ndb.put_multi(write_entities)
+    entity_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())
+    static_record_arguments = self.cfg.get('sra', {})
+    dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
+    entity = get_attr(context, entity_path)
+    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      entity._record_arguments = static_record_arguments
+      for key, value in dynamic_record_arguments.items():
+        entity._record_arguments[key] = get_attr(context, value)
+      entity.put()
 
 
 class Delete(ndb.BaseModel):
@@ -135,21 +115,58 @@ class Delete(ndb.BaseModel):
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    delete_keys = []
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_paths = self.cfg.get('paths', ['entities.' + context.model.get_kind()])
-    for entity_path in entity_paths:
-      entities = get_attr(context, entity_path)
-      entities = normalize(entities)
-      if len(entities):
-        for entity in entities:
-          if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-            delete_keys.append(entity.key)
-          elif entity and isinstance(entity, ndb.Key):
-            delete_keys.append(entity)
-    delete_keys = set(delete_keys)
-    ndb.delete_multi(delete_keys)
+    entity_path = self.cfg.get('path', '_' + model.__class__.__name__.lower())
+    static_record_arguments = self.cfg.get('sra', {})
+    dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
+    entity = get_attr(context, entity_path)
+    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      entity._record_arguments = static_record_arguments
+      for key, value in dynamic_record_arguments.items():
+        entity._record_arguments[key] = get_attr(context, value)
+      entity.key.delete()
+
+
+class ActionDenied(Exception):
+  
+  def __init__(self, context):
+    self.message = {'action_denied': context.action}
+
+
+class RulePrepare(ndb.BaseModel):
+  
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    skip_user_roles = self.cfg.get('skip_user_roles', False)
+    strict = self.cfg.get('strict', False)
+    kwds = self.cfg.get('kwds', {})
+    kwargs = {'user': context.user, 'action': context.action}
+    for key, value in kwds.items():
+      kwargs[key] = get_attr(context, value)
+    rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs)
+
+
+class RuleExec(ndb.BaseModel):
+  
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    action_path = self.cfg.get('action', 'action.key_urlsafe')
+    entity = get_attr(context, entity_path)
+    action = get_attr(context, action_path)
+    if entity and hasattr(entity, '_action_permissions'):
+      if not entity._action_permissions[action]['executable']:
+        raise ActionDenied(context)
+    else:
+      raise ActionDenied(context)
 
 
 class Search(ndb.BaseModel):
@@ -229,47 +246,6 @@ class BlobURL(ndb.BaseModel):
     if upload_url:
       context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       #raise ndb.TerminateAction()
-
-
-class ActionDenied(Exception):
-  
-  def __init__(self, context):
-    self.message = {'action_denied': context.action}
-
-
-class RulePrepare(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
-    skip_user_roles = self.cfg.get('skip_user_roles', False)
-    strict = self.cfg.get('strict', False)
-    kwds = self.cfg.get('kwds', {})
-    kwargs = {'user': context.user, 'action': context.action}
-    for key, value in kwds.items():
-      kwargs[key] = get_attr(context, value)
-    rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs)
-
-
-class RuleExec(ndb.BaseModel):
-  
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
-    action_path = self.cfg.get('action', 'action.key_urlsafe')
-    entity = get_attr(context, entity_path)
-    action = get_attr(context, action_path)
-    if entity and hasattr(entity, '_action_permissions'):
-      if not entity._action_permissions[action]['executable']:
-        raise ActionDenied(context)
-    else:
-      raise ActionDenied(context)
 
 
 class DocumentWrite(ndb.BaseModel):
