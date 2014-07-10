@@ -16,21 +16,21 @@ class Context(ndb.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
-    context._user = context._models['0'].current_user()
-    caller_user_key = context._input.get('caller_user')
-    if context._user._is_taskqueue:
+    context.user = context.models['0'].current_user()
+    caller_user_key = context.input.get('caller_user')
+    if context.user._is_taskqueue:
       if caller_user_key:
         caller_user = caller_user_key.get()
         if caller_user:
-          context._user = caller_user
+          context.user = caller_user
       else:
-        context._user = context._models['0'].get_system_user()
-    context._namespace = None
-    context._domain = None
-    domain_key = context._input.get('domain')
+        context.user = context.models['0'].get_system_user()
+    context.namespace = None
+    context.domain = None
+    domain_key = context.input.get('domain')
     if domain_key:
-      context._domain = domain_key.get()
-      context._namespace = context._domain.key_namespace
+      context.domain = domain_key.get()
+      context.namespace = context.domain.key_namespace
 
 
 class Set(ndb.BaseModel):

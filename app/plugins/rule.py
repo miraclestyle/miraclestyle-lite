@@ -18,9 +18,9 @@ class DomainUserError(Exception):
 class DomainRoleSet(ndb.BaseModel):
   
   def run(self, context):
-    ActionPermission = context._models['79']
-    FieldPermission = context._models['80']
-    input_permissions = context._input.get('permissions')
+    ActionPermission = context.models['79']
+    FieldPermission = context.models['80']
+    input_permissions = context.input.get('permissions')
     permissions = []
     for permission in input_permissions:
       if str(permission.get('kind')) == '80':
@@ -35,46 +35,46 @@ class DomainRoleSet(ndb.BaseModel):
                                             permission.get('executable'),
                                             permission.get('condition')))
 
-    context.entities['60'].name = context._input.get('name')
-    context.entities['60'].active = context._input.get('active')
+    context.entities['60'].name = context.input.get('name')
+    context.entities['60'].active = context.input.get('active')
     context.entities['60'].permissions = permissions
 
 
 class DomainUserInvite(ndb.BaseModel):
   
   def run(self, context):
-    User = context._models['0']
-    email = context._input.get('email')
+    User = context.models['0']
+    email = context.input.get('email')
     user = User.query(User.emails == email).get()
     if not user:
       raise DomainUserError('not_found')
     if user.state != 'active':
       raise DomainUserError('not_active')
-    already_invited = context._model.build_key(user.key_id_str, namespace=context._namespace).get()
+    already_invited = context.model.build_key(user.key_id_str, namespace=context.namespace).get()
     if already_invited:
       raise DomainUserError('already_invited')
-    context.entities['8'] = context._model(id=user.key_id_str, namespace=context._namespace)
-    input_roles = ndb.get_multi(context._input.get('roles'))
+    context.entities['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
+    input_roles = ndb.get_multi(context.input.get('roles'))
     roles = []
     for role in input_roles:
-      if role.key.namespace() == context._namespace:
+      if role.key.namespace() == context.namespace:
         roles.append(role.key)
-    context.entities['8'].populate(name=context._input.get('name'), state='invited', roles=roles)
+    context.entities['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
     user._use_rule_engine = False
-    user.domains.append(context._domain.key)
+    user.domains.append(context.domain.key)
     context.entities['0'] = user
 
 
 class DomainUserUpdate(ndb.BaseModel):
   
   def run(self, context):
-    input_roles = ndb.get_multi(context._input.get('roles'))
+    input_roles = ndb.get_multi(context.input.get('roles'))
     roles = []
     # Avoid rogue roles.
     for role in input_roles:
       if role.key.namespace() == context.entities['8'].key_namespace:
         roles.append(role.key)
-    context.entities['8'].name = context._input.get('name')
+    context.entities['8'].name = context.input.get('name')
     context.entities['8'].roles = roles
 
 

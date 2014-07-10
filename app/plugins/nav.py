@@ -11,11 +11,11 @@ from app import ndb, util
 class BuildMenu(ndb.BaseModel):
   
   def run(self, context):
-    model = context._model
-    domain_user_key = ndb.Key('8', context._user.key_id_str, namespace=context._namespace)
+    model = context.model
+    domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.namespace)
     domain_user = domain_user_key.get()
     if domain_user:
       widgets = model.query(model.active == True,
                             model.role.IN(domain_user.roles),
-                            namespace=context._namespace).order(model.sequence).fetch()
+                            namespace=context.namespace).order(model.sequence).fetch()
       context.tmp['widgets'] = widgets
