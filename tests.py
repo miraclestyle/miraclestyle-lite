@@ -6,36 +6,23 @@ Created on Jul 8, 2014
 '''
 import unittest
 import random
-
-# example of testcase
-
-class Base1(object):
+ 
+class Base(object):
   
-  def ove(self):
-    print '1'
-    super(Base1, self).ove()
+  foo = 1
   
-  def foo(self):
-    print 'bar'
-    
-    
-class Base2(object):
+  def __getattribute__(self, *args, **kwargs):
+    print args
+    return object.__getattribute__(self, *args, **kwargs)
   
-  def bar(self):
-    self.foo()
-    
-  def ove(self):
-    print '2'
-    
-class Baz(Base1, Base2):
+  def __getattr__(self, *args, **kwargs):
+    print args
+    return object.__getattr__(self, *args, **kwargs)
   
-  def write(self):
-    self.bar()
-    self.ove()
-    
-ff = Baz()
-ff.write()
-
+print getattr(Base, 'foo')
+print getattr(Base, 'bar')
+  
+'''
 class TestSequenceFunctions(unittest.TestCase):
 
     def setUp(self):
@@ -59,6 +46,6 @@ class TestSequenceFunctions(unittest.TestCase):
             random.sample(self.seq, 20)
         for element in random.sample(self.seq, 5):
             self.assertTrue(element in self.seq)
-            
+'''           
 if __name__ == '__main__':
   unittest.main()

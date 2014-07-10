@@ -228,7 +228,25 @@ class _BaseModel(object):
     self._output = []
     for key in self.get_fields():
       self.add_output(key)
+      
+  def _set_attributes(self, kwds):
+    """Internal helper to set attributes from keyword arguments.
   
+    Expando overrides this.
+    
+    Problem with this method was that it couldnt set virtual properties in constructor. So that's why we override it.
+    """
+    cls = self.__class__
+    for name, value in kwds.iteritems():
+      try:
+        prop = getattr(cls, name)  # Raises AttributeError for unknown properties.
+      except AttributeError as e:
+        props = self.get_fields()
+        prop = props.get(name)
+      if not isinstance(prop, Property):
+        raise TypeError('Cannot set non-property %s' % name)
+      prop._set_value(self, value)
+    
   @classmethod
   def _get_kind(cls):
     '''Return the kind name for this class.
@@ -845,7 +863,7 @@ class _BaseModel(object):
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
   def read(self, input=None):
-    '''This method loads all sub-entities based on input details.
+    '''This method loads all sub-entities in async-mode based on input details.
     
     '''
     probable_futures = []
@@ -866,19 +884,85 @@ class _BaseModel(object):
         # otherwise we will just retrieve entities without any configurations
         value.read_async(**kwargs)
         if value.has_future():
-          probable_futures.append(value)
+          probable_futures.append(value) # if we encounter a future pack it for further use
     for prob in probable_futures:
-      prob.read() # enforce get_result call now because if we dont we will attempt to copy futures which dont want
+      prob.read(**kwargs) # enforce get_result call now because if we dont the .value will be instances of Future.
     self.make_original() # finalize original before touching anything
     
   def duplicate(self):
-    new_entity = copy.deepcopy(self)
-    new_entity.set_key(*self.key.pairs())
+    '''
+      Duplicate this entity.
+      
+      Based on entire model configuration and hierarchy, the .duplicate() methods will be called 
+      on its structured children as well.
+      Structured children are any properties that subclass _BaseStructuredProperty.
+      
+      Take a look at this example:
+      
+      class CatalogImage(Image):
+         
+         _virtual_fields = {
+           '_descriptions' : ndb.SuperStorageStructuredProperty(Descriptions, storage='multi'),
+         }
+         
+      class Catalog(ndb.BaseModel):
+         _virtual_fields = {
+           '_images' : ndb.SuperStorageStructuredProperty(CatalogImage, storage='multi'),
+         }
+         
+      .....
+      
+      catalog = catalog_key.get()
+      
+      duplicated_catalog = catalog.duplicate()
+      # remember, calling duplicate() will never perform .put() you must call .put() after you retreive duplicated entity
+      duplicated_catalog.put()
+      # by performing put, the duplicated catalog will put all entities it prepared in drill stage
+      
+      Drill stage looks something like this:
+      
+      catalog => duplicate()
+       for field in catalog.fields:
+         if field is structured:
+          _images => duplicate()
+             for image in images:
+                image => duplicate()
+                  for field in image.fields:
+                     if field is structured:
+                       _descriptions => duplicate()
+                          ......... and so on and so on
+                          
+       Duplicate should always be called from taskqueue because of intensity of queries.
+       It is designed to drill without any limits, so having huge entity structure that consists 
+       of thousands of entities might be problematic mainly because of ram memory usage, not time.
+       
+       That could be solved by making the duplicate function more flexible by implementing ability to just
+       fetch keys (that need to be copied) who would be sent to other tasks that could carry out the 
+       duplication on per-entity basis, and signaling complete when the last entity gets copied.
+       
+       So in this case, example above would only duplicate data that is on the root entity itself, while the 
+       multi, multi sequenced and single entity will be resolved by only retrieving keys and sending them to 
+       multiple tasks that could duplicate them in paralel.
+   
+       That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
+       
+    '''
+    new_entity = copy.deepcopy(self) # deep copy will copy all static properties
+    new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
+    # user with insufficient permissions on fields might not be in able to write complete copy of entity
+    # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().items():
       if is_structured_field(field):
         value = getattr(new_entity, field_key, None)
         if value:
-           pass
+           value.duplicate() # call duplicate for every structured field
+    if new_entity.key:
+      new_entity.set_key('%s_duplicate' % self.key_id, parent=self.key_parent, namespace=self.key_namespace)
+      # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
+      # prepare_duplicate_key()
+      # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that 
+      # does not exist yet
+    return new_entity
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
@@ -1158,7 +1242,27 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if not isinstance(property_value_item, self._property._modelclass):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
-  
+    
+  def _apply_deep_read(self, **kwargs):
+    '''
+      This function will keep calling .read on its sub-entity-like-properties until it no longer has structured properties anymore.
+      This solves the problem of hierarchy.
+    '''
+    if self.has_value():
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      probable_futures = []
+      for entity in entities:
+        for field_key, field in entity.get_fields().items():
+          if is_structured_field(field):
+            fut = getattr(entity, field_key)
+            fut.read_async(**kwargs)
+            if fut.has_future():
+              probable_futures.append(fut)
+      for prob in probable_futures:
+        prob.read(**kwargs) # enforce
+     
   def _copy_record_arguments(self, entity):
     if hasattr(self._entity, '_record_arguments'):
       if hasattr(entity, '_record_arguments'):
@@ -1331,6 +1435,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
+          self._apply_deep_read(**kwds)
       return self._property_value
   
   def _pre_update_local(self):
@@ -1423,6 +1528,54 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property_value.remove(delete_entity)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
+    
+    
+  def _duplicate_remote(self):
+    '''
+      Here we fetch ALL entities that belong to this entity.
+      On every entity called, .duplicate() function will be called in order to ensure complete recursion.
+    '''
+    cursor = Cursor()
+    limit = 200
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    entities = []
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        for entity in _entities:
+          entities.append(entity.duplicate())
+        if not cursor or not more:
+          break
+      else:
+        break
+    self._property_value = entities
+    
+  def _duplicate_local(self):
+    self._read_local()
+    if self._property._repeated:
+      entities = []
+      for entity in self._property_value:
+        entities.append(entity.duplicate())
+    else:
+      entities = self._property_value.duplicate()
+    setattr(self._entity, self.property_name, entities)
+      
+  def _duplicate_remote_single(self):
+    self._read_remote_single()
+    self._property_value = self._property_value.duplicate()
+  
+  def _duplicate_remote_multi(self):
+    self._duplicate_remote()
+   
+  def _duplicate_remote_multi_sequenced(self):
+    self._duplicate_remote()
+     
+  def duplicate(self):
+    '''
+    This function calls the duplicate function based on storage type.
+    '''
+    duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
+    duplicate_function()
   
   def pre_update(self):
     if self._property._updateable:

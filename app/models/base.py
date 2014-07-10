@@ -28,8 +28,8 @@ class Image(ndb.BaseModel):
   height = ndb.SuperIntegerProperty('5', indexed=False)
   gs_object_name = ndb.SuperStringProperty('6', indexed=False)
   serving_url = ndb.SuperStringProperty('7', indexed=False)
-
-
+ 
+  
 class Role(ndb.BaseExpando):
   
   _kind = 66
@@ -105,6 +105,49 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     self._copy_record_arguments(entity)
     self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
+    
+  def duplicate(self):
+    '''
+      Override duplicate. Parent duplicate method will retrieve all data into self._property_value and later on
+      in this function we can just finalize by just copying the blob.
+    '''
+    super(SuperStructuredPropertyImageManager, self).duplicate()
+    
+    entities = self._property_value
+    if not self._property._repeated:
+      entities = [entities]
+      
+    @ndb.tasklet
+    def async(entity):
+      gs_object_name = entity.gs_object_name
+      new_gs_object_name = '%s_duplicate' % entity.gs_object_name
+      
+      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+      # less consuming memory write, can be only used when using brute force copy
+      # in this cloudstorage sdk there is no copy feature so we have to use it like this
+      while True:
+        parts = readonly_blob.read(1000000) # read 1mb per write, that should be enough
+        if not parts:
+          break
+        writable_blob.write(parts)
+      readonly_blob.close()
+      writable_blob.close()
+      
+      entity.gs_object_name = new_gs_object_name
+      blob_key = blobstore.create_gs_key(new_gs_object_name)
+      entity.image = blobstore.BlobKey(blob_key)
+      entity.serving_url = yield images.get_serving_url_async(entity.image)
+      self._property.save_blobs_on_success(entity.image)
+      raise ndb.Return(entity)
+    
+    @ndb.tasklet
+    def helper(entities):
+      out = yield map(async, entities)
+      raise ndb.Return(out)
+    # wait for all
+    helper(entities).get_result()
+    return self._property_value
   
   def process(self):
     '''This function should be called inside a taskqueue.
@@ -206,7 +249,7 @@ class _BaseBlobProperty(object):
     cls._update_blobs(blobs, 'collect_success', delete)
 
 
-class _BaseImageProperty(object):
+class _BaseImageProperty(_BaseBlobProperty):
   '''Base helper class for image-like properties.
   This class should work in conjunction with ndb.Property, because it does not implement anything of ndb.
   Example:
@@ -221,15 +264,16 @@ class _BaseImageProperty(object):
     self._managerclass = SuperStructuredPropertyImageManager
   
   def process(self, value):
+    config = self._process_config
     new_value = value
     gs_object_name = new_value.gs_object_name
     new_gs_object_name = new_value.gs_object_name
-    if self._process_config.get('copy'):
+    if config.get('copy'):
       new_value = copy.deepcopy(value)
-      new_gs_object_name = '%s_%s' % (new_value.gs_object_name, self._process_config.get('copy_name'))
+      new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
     blob_key = None
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-    if len(self._process_config) or not new_value.width or not new_value.height:
+    if len(config) or not new_value.width or not new_value.height:
       # @note No try block is implemented here. This code is no longer forgiving.
       # If any of the images fail to process, everything is lost/reverted, because one or more images:
       # - are no longer existant in the cloudstorage / .read();
@@ -242,17 +286,17 @@ class _BaseImageProperty(object):
       blob = readonly_blob.read()
       readonly_blob.close()
       image = images.Image(image_data=blob)
-      if self._process_config.get('transform'):
-        image.resize(self._process_config('width'),
-                     self._process_config('height'),
-                     crop_to_fit=self._process_config('crop_to_fit'),
-                     crop_offset_x=self._process_config('crop_offset_x'),
-                     crop_offset_y=self._process_config('crop_offset_y'))
+      if config.get('transform'):
+        image.resize(config.get('width'),
+                     config.get('height'),
+                     crop_to_fit=config.get('crop_to_fit'),
+                     crop_offset_x=config.get('crop_offset_x'),
+                     crop_offset_y=config.get('crop_offset_y'))
         blob = image.execute_transforms(output_encoding=image.format)
       new_value.width = image.width
       new_value.height = image.height
       new_value.size = len(blob)
-      if len(self._process_config):
+      if len(config):
         writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
         writable_blob.write(blob)
         writable_blob.close()
@@ -261,6 +305,7 @@ class _BaseImageProperty(object):
         blob_key = blobstore.create_gs_key(new_gs_object_name)
         new_value.image = blobstore.BlobKey(blob_key)
         new_value.serving_url = images.get_serving_url(new_value.image)
+        self.save_blobs_on_success(new_value.image)
       return new_value
   
   def format(self, value):
@@ -292,13 +337,13 @@ class _BaseImageProperty(object):
     return out
 
 
-class SuperImageStorageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStorageStructuredProperty):
+class SuperImageStorageStructuredProperty(_BaseImageProperty, ndb.SuperStorageStructuredProperty):
   pass
 
 
-class SuperImageLocalStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperLocalStructuredProperty):
+class SuperImageLocalStructuredProperty(_BaseImageProperty, ndb.SuperLocalStructuredProperty):
   pass
 
 
-class SuperImageStructuredProperty(_BaseBlobProperty, _BaseImageProperty, ndb._BaseProperty, ndb.SuperStructuredProperty):
+class SuperImageStructuredProperty(_BaseImageProperty, ndb.SuperStructuredProperty):
   pass
