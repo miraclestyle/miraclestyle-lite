@@ -95,11 +95,11 @@ def factory(complete_path):
 
 
 def is_structured_field(field):
-  '''Checks if the provided field is instance of one of the structured properties,
-  and if the '_modelclass' is set.
+  '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
+  and if the '_modelclass' is not none.
   
   '''
-  return isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty, SuperPropertyManager)) and field._modelclass
+  return isinstance(field, _BaseStructuredProperty) and field._modelclass is not None
 
 
 _CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
@@ -209,7 +209,11 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 
 class _BaseModel(object):
-  
+  '''
+    This is base class for all model types in the application.
+    simply by checking an entity with
+    isinstance(entity, _BaseModel) will return true no matter if it was BaseModel, BaseExpando, BasePoly etc.
+  '''
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
   _use_rule_engine = True  # All models by default respect rule engine!
@@ -337,10 +341,14 @@ class _BaseModel(object):
       return getattr(entity, last_field, None)
   
   def _make_async_calls(self):
+    '''
+      This function is reserved only for SuperReferenceProperty, because it will call its .read_async() method upon
+      entity getting loaded by from_pb or _post_get_hook
+    '''
     entity = self
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().items():
-        if isinstance(field_instance, SuperPropertyManager):
+        if isinstance(field_instance, SuperReferenceProperty) and field._autoload:
           manager = field_instance._get_value(entity, internal=True)
           manager.read_async()
   
@@ -840,6 +848,7 @@ class _BaseModel(object):
     '''This method loads all sub-entities based on input details.
     
     '''
+    probable_futures = []
     for field_key, field in self.get_fields().items():
       if is_structured_field(field):
         value = getattr(self, field_key)
@@ -856,7 +865,20 @@ class _BaseModel(object):
                 kwargs = read_options
         # otherwise we will just retrieve entities without any configurations
         value.read_async(**kwargs)
+        if value.has_future():
+          probable_futures.append(value)
+    for prob in probable_futures:
+      prob.read() # enforce get_result call now because if we dont we will attempt to copy futures which dont want
     self.make_original() # finalize original before touching anything
+    
+  def duplicate(self):
+    new_entity = copy.deepcopy(self)
+    new_entity.set_key(*self.key.pairs())
+    for field_key, field in new_entity.get_fields().items():
+      if is_structured_field(field):
+        value = getattr(new_entity, field_key, None)
+        if value:
+           pass
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
@@ -1325,7 +1347,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
       else:
         # We must mutate on the entity itself.
-        setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
+        if self._property_value._state == 'deleted':
+          setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
   
   def _pre_update_remote_single(self):
     pass
@@ -1450,7 +1473,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   def set(self, value):
     if isinstance(value, Key):
       self._property_value = value.get_async()
-    elif isinstance(value, BaseModel):
+    elif isinstance(value, _BaseModel):
       self._property_value = value
   
   def delete(self):
@@ -1552,8 +1575,8 @@ class _BaseStructuredProperty(object):
     self._managerclass = kwargs.pop('managerclass', None)
     if isinstance(args[0], basestring):
       args[0] = Model._kind_map.get(args[0])
-    super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
     self._storage = 'local'
+    super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -1963,16 +1986,19 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, BaseProperty):
   _managerclass = None
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
-    self._storage = kwds.pop('storage')
+    storage = kwds.pop('storage')
     self._modelclass = modelclass
     self._readable = kwds.pop('readable', True)
     self._updateable = kwds.pop('updateable', True)
     self._deleteable = kwds.pop('deleteable', True)
     self._managerclass = kwds.pop('managerclass', None)
+    super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
+    # calling this init will also call _BaseStructuredProperty.__init__ and overide storage into 'local' always.
+    # so we put all behind
+    self._storage = storage
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
-    super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
-  
+ 
   def get_model_fields(self):
     if isinstance(self._modelclass, basestring):
       self._modelclass = Model._kind_map.get(self._modelclass)
@@ -1980,7 +2006,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, BaseProperty):
   
   def _set_value(self, entity, value):
     # __set__
-    manager = self._get_user_value(entity)
+    manager = self._get_value(entity)
     manager.set(value)
   
   def _get_value(self, entity):
@@ -2026,8 +2052,9 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._readable = kwargs.pop('readable', True)
     self._updateable = kwargs.pop('updateable', True)
     self._deleteable = kwargs.pop('deleteable', True)
+    self._autoload = kwargs.pop('autoload', True)
     if not self._target_field and not self._callback:
-      raise PropertyError('You must provide either: "callback"" or "target_field"')
+      raise PropertyError('You must provide either: "callback" or "target_field"')
     if self._callback != None and not callable(self._callback):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):
@@ -2075,6 +2102,7 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     args[0] = Record
     kwargs['storage'] = 'remote_multi'
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
+    # implicitly set that its entities cannot be updated or deleted
     self._updateable = False
     self._deleteable = False
   
