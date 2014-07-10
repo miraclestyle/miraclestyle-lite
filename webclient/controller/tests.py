@@ -33,14 +33,23 @@ class Test1(BaseTestHandler):
   def respond(self):
     self.out('Hello World')
     
-class TestDeepCopyStruct(ndb.BaseModel):
+class TestDeepCopyStructFar(ndb.BaseModel):
   
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
   
+  what = ndb.SuperStringProperty()
+    
+class TestDeepCopyStruct(ndb.BaseModel):
   
+  _use_record_engine = False
+  _use_rule_engine = False
+  _use_memcache = False
+   
   name = ndb.SuperStringProperty()
+  
+  _virtual_fields = dict(_far=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
     
 class TestDeepCopyModel(ndb.BaseModel):
   
@@ -53,21 +62,24 @@ class TestDeepCopyModel(ndb.BaseModel):
   test3 = ndb.SuperLocalStructuredProperty(TestDeepCopyStruct)
   test4 = ndb.SuperStructuredProperty(TestDeepCopyStruct)
   
-  _virtual_fields = dict(test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'),
-                         test6=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi_sequenced'),
-                         )
+  _virtual_fields = dict(test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'))
     
 class TestDeepCopy(BaseTestHandler):
  
   def respond(self):
     the_id = self.request.get('the_id')
     put = self.request.get('put')
-    fields = ['test1', 'test2', 'test3', 'test4', 'test5', 'test6']
+    fields = ['test1', 'test2', 'test3', 'test4', 'test5']
     if the_id and put:
       entity = TestDeepCopyModel(id=the_id)
       for f in fields:
-        if f not in ['test3', 'test4']:
+        if f not in ['test3', 'test4', 'test5']:
           s = [TestDeepCopyStruct(name='%s' % f)]
+        elif f == 'test5':
+          s = [TestDeepCopyStruct(name='%s' % f, _far=[
+                                                      TestDeepCopyStructFar(what='Yes'), 
+                                                      TestDeepCopyStructFar(what='No')
+                                                     ])]
         else:
           s = TestDeepCopyStruct(name='%s' % f)
         setattr(entity, f, s)
@@ -75,8 +87,14 @@ class TestDeepCopy(BaseTestHandler):
     else:
       entity = TestDeepCopyModel.build_key(the_id).get()
       entity.read()
-      duplicated = entity.duplicate()
+      
+    
     self.out_json(entity)
+    
+    if self.request.get('duplicate'):
+      duplicate = entity.duplicate()
+      duplicate.put()
+      self.out_json(duplicate)
       
     if self.request.get('copy'):
       if entity:
