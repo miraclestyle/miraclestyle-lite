@@ -121,7 +121,6 @@ class Delete(ndb.BaseModel):
       entity.key.delete()
 
 
-# @todo Needs review!
 class Duplicate(ndb.BaseModel):
   
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -134,11 +133,11 @@ class Duplicate(ndb.BaseModel):
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = {'agent': context.user, 'action': context.action}
-      entity._record_arguments.update(static_record_arguments)
-      for key, value in dynamic_record_arguments.items():
-        entity._record_arguments[key] = get_attr(context, value)
       duplicate_entity = entity.duplicate()
+      duplicate_entity._record_arguments = {'agent': context.user, 'action': context.action}
+      duplicate_entity._record_arguments.update(static_record_arguments)
+      for key, value in dynamic_record_arguments.items():
+        duplicate_entity._record_arguments[key] = get_attr(context, value)
       duplicate_entity.put()
 
 

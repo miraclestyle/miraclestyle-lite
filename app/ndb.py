@@ -94,14 +94,6 @@ def factory(complete_path):
   return model
 
 
-def is_structured_field(field):
-  '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
-  and if the '_modelclass' is not none.
-  
-  '''
-  return isinstance(field, _BaseStructuredProperty) and field._modelclass is not None
-
-
 _CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
           'BUILD_MAP', 'BUILD_TUPLE', 'LOAD_CONST', 'RETURN_VALUE',
           'STORE_SUBSCR', 'UNARY_POSITIVE', 'UNARY_NEGATIVE', 'UNARY_NOT',
@@ -209,10 +201,9 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
 
 class _BaseModel(object):
-  '''
-    This is base class for all model types in the application.
-    simply by checking an entity with
-    isinstance(entity, _BaseModel) will return true no matter if it was BaseModel, BaseExpando, BasePoly etc.
+  '''This is base class for all model types in the application.
+  Every ndb model will always evaluate True on isinstance(entity, _BaseModel).
+  
   '''
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
@@ -228,14 +219,13 @@ class _BaseModel(object):
     self._output = []
     for key in self.get_fields():
       self.add_output(key)
-      
-  def _set_attributes(self, kwds):
-    """Internal helper to set attributes from keyword arguments.
   
+  def _set_attributes(self, kwds):
+    '''Internal helper to set attributes from keyword arguments.
     Expando overrides this.
+    Problem with this method was that it couldn't set virtual properties in constructor. So that's why we override it.
     
-    Problem with this method was that it couldnt set virtual properties in constructor. So that's why we override it.
-    """
+    '''
     cls = self.__class__
     for name, value in kwds.iteritems():
       try:
@@ -246,7 +236,7 @@ class _BaseModel(object):
       if not isinstance(prop, Property):
         raise TypeError('Cannot set non-property %s' % name)
       prop._set_value(self, value)
-    
+  
   @classmethod
   def _get_kind(cls):
     '''Return the kind name for this class.
@@ -359,9 +349,9 @@ class _BaseModel(object):
       return getattr(entity, last_field, None)
   
   def _make_async_calls(self):
-    '''
-      This function is reserved only for SuperReferenceProperty, because it will call its .read_async() method upon
-      entity getting loaded by from_pb or _post_get_hook
+    '''This function is reserved only for SuperReferenceProperty, because it will call its .read_async() method while
+    entity is being loaded by from_pb or _post_get_hook.
+    
     '''
     entity = self
     if entity.key and entity.key.id():
@@ -410,7 +400,7 @@ class _BaseModel(object):
       @toplevel
       def delete_async():
         for field_key, field in entity.get_fields().items():
-          if is_structured_field(field):
+          if field.is_structured_field:
             manager = getattr(entity, field_key, None)
             if isinstance(manager, SuperPropertyManager):
               manager.delete()
@@ -611,7 +601,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if is_structured_field(field):
+      if field.is_structured_field:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -645,7 +635,7 @@ class _BaseModel(object):
     '''
     if (field_key in permissions):  #  @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      if not (is_structured_field(field)):
+      if not (field.is_structured_field:
         if not permissions[field_key]['writable']:
           try:
             #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
@@ -729,7 +719,7 @@ class _BaseModel(object):
     for field_key, field in fields.items():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-      if is_structured_field(field):
+      if field.is_structured_field:
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)  # @todo Test this behavior!
@@ -863,33 +853,33 @@ class _BaseModel(object):
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
-  def read(self, input=None):
-    '''This method loads all sub-entities in async-mode based on input details.
+  def read(self, input=None):  # @todo We need to standardize method arguments here!!
+    '''This method loads all sub-entities in async-mode, based on input details.
     
     '''
-    probable_futures = []
+    futures = []
     for field_key, field in self.get_fields().items():
-      if is_structured_field(field):
+      if field.is_structured_field:
         value = getattr(self, field_key)
         kwargs = {}
         if input is not None:
           entities = input.get(field_key)
           if entities:
             kwargs['entities'] = entities
-          else:  # Entities is not provided, use read_options from the input if any to determine cursor
+          else:  # Entities is not provided, use read_options from the input if any to determine cursor.
             read_options = input.get('read_options')
             if read_options:
               read_options = read_options.get(field_key)
               if read_options:
                 kwargs = read_options
-        # otherwise we will just retrieve entities without any configurations
+        # Otherwise we will just retrieve entities without any configurations
         value.read_async(**kwargs)
         if value.has_future():
-          probable_futures.append(value) # if we encounter a future pack it for further use
-    for prob in probable_futures:
-      prob.read(**kwargs) # enforce get_result call now because if we dont the .value will be instances of Future.
-    self.make_original() # finalize original before touching anything
-    
+          futures.append(value)  # If we encounter a future, pack it for further use.
+    for future in futures:
+      future.read(**kwargs)  # Enforce get_result call now because if we don't the .value will be instances of Future.
+    self.make_original()  # Finalize original before touching anything.
+  
   def duplicate(self):
     '''
       Duplicate this entity.
@@ -953,7 +943,7 @@ class _BaseModel(object):
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().items():
-      if is_structured_field(field):
+      if field.is_structured_field:
         value = getattr(new_entity, field_key, None)
         if value:
            value.duplicate() # call duplicate for every structured field
@@ -1256,7 +1246,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       probable_futures = []
       for entity in entities:
         for field_key, field in entity.get_fields().items():
-          if is_structured_field(field):
+          if field.is_structured_field:
             fut = getattr(entity, field_key)
             fut.read_async(**kwargs)
             if fut.has_future():
@@ -1710,6 +1700,16 @@ class _BaseProperty(object):
     else:
       self._property_value_validate(value)
       return self._property_value_filter(value)
+  
+  # @todo Hope that it can be here!
+  @classmethod
+  @property
+  def is_structured_field(cls):
+    '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
+    and if the '_modelclass' is not none.
+    
+    '''
+    return isinstance(cls, _BaseStructuredProperty) and cls._modelclass is not None
 
 
 class _BaseStructuredProperty(_BaseProperty):
@@ -2147,8 +2147,8 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     self._deleteable = kwds.pop('deleteable', True)
     self._managerclass = kwds.pop('managerclass', None)
     super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
-    # calling this init will also call _BaseStructuredProperty.__init__ and overide storage into 'local' always.
-    # so we put all behind
+    # Calling this init will also call _BaseStructuredProperty.__init__ and overide _storage into 'local' always.
+    # That's why we deal with _storage after inherited init methods are finished.
     self._storage = storage
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
@@ -2256,7 +2256,7 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     args[0] = Record
     kwargs['storage'] = 'remote_multi'
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
-    # implicitly set that its entities cannot be updated or deleted
+    # Implicitly state that entities cannot be updated or deleted.
     self._updateable = False
     self._deleteable = False
   
