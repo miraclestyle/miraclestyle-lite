@@ -125,10 +125,10 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       # Less consuming memory write, can be only used when using brute force copy.
       # There is no copy feature in cloudstorage sdk, so we have to implement our own!
       while True:
-        blob_partition = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
-        if not blob_partition:
+        blob_segment = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
+        if not blob_segment:
           break
-        writable_blob.write(blob_partition)
+        writable_blob.write(blob_segment)
       readonly_blob.close()
       writable_blob.close()
       entity.gs_object_name = new_gs_object_name
