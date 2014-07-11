@@ -1701,15 +1701,13 @@ class _BaseProperty(object):
       self._property_value_validate(value)
       return self._property_value_filter(value)
   
-  # @todo Hope that it can be here!
-  @classmethod
   @property
-  def is_structured_field(cls):
+  def is_structured_field(self):
     '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
     and if the '_modelclass' is not none.
     
     '''
-    return isinstance(cls, _BaseStructuredProperty) and cls._modelclass is not None
+    return False
 
 
 class _BaseStructuredProperty(_BaseProperty):
@@ -1803,6 +1801,14 @@ class _BaseStructuredProperty(_BaseProperty):
       except IndexError as e:
         out = None
     return out
+  
+  @property
+  def is_structured_field(self):
+    '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
+    and if the '_modelclass' is not none.
+    
+    '''
+    return True
 
 
 class BaseProperty(_BaseProperty, Property):
@@ -2141,12 +2147,8 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     storage = kwds.pop('storage')
-    self._modelclass = modelclass
-    self._readable = kwds.pop('readable', True)
-    self._updateable = kwds.pop('updateable', True)
-    self._deleteable = kwds.pop('deleteable', True)
-    self._managerclass = kwds.pop('managerclass', None)
     super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
+    self._modelclass = modelclass
     # Calling this init will also call _BaseStructuredProperty.__init__ and overide _storage into 'local' always.
     # That's why we deal with _storage after inherited init methods are finished.
     self._storage = storage
@@ -2201,7 +2203,6 @@ class SuperReferenceProperty(SuperKeyProperty):
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._format_callback = kwargs.pop('format_callback', None)
-    self._kind = kwargs.pop('kind', None)
     self._target_field = kwargs.pop('target_field', None)
     self._readable = kwargs.pop('readable', True)
     self._updateable = kwargs.pop('updateable', True)
