@@ -131,7 +131,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         writable_blob.write(blob_partition)
       readonly_blob.close()
       writable_blob.close()
-      
       entity.gs_object_name = new_gs_object_name
       blob_key = blobstore.create_gs_key(new_gs_object_name)
       entity.image = blobstore.BlobKey(blob_key)
@@ -140,11 +139,11 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       raise ndb.Return(entity)
     
     @ndb.tasklet
-    def helper(entities):
+    def mapper(entities):
       out = yield map(async, entities)
       raise ndb.Return(out)
-    # wait for all
-    helper(entities).get_result()
+    
+    mapper(entities).get_result()
     return self._property_value
   
   def process(self):
@@ -245,7 +244,6 @@ class _BaseBlobProperty(object):
   def save_blobs_on_success(cls, blobs, delete=True):
     # Marks blobs to be preserved upon success.
     cls._update_blobs(blobs, 'collect_success', delete)
-
 
 
 class _BaseImageProperty(_BaseBlobProperty):
