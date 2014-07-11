@@ -121,6 +121,48 @@ class Delete(ndb.BaseModel):
       entity.key.delete()
 
 
+# @todo Needs review!
+class Duplicate(ndb.BaseModel):
+  
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    static_record_arguments = self.cfg.get('sra', {})
+    dynamic_record_arguments = self.cfg.get('dra', {})
+    entity = get_attr(context, entity_path)
+    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      entity._record_arguments = {'agent': context.user, 'action': context.action}
+      entity._record_arguments.update(static_record_arguments)
+      for key, value in dynamic_record_arguments.items():
+        entity._record_arguments[key] = get_attr(context, value)
+      duplicate_entity = entity.duplicate()
+      duplicate_entity.put()
+
+
+# @todo Runner method not implemented!
+class ProcessImages(ndb.BaseModel):
+  
+  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    static_record_arguments = self.cfg.get('sra', {})
+    dynamic_record_arguments = self.cfg.get('dra', {})
+    entity = get_attr(context, entity_path)
+    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+      entity._record_arguments = {'agent': context.user, 'action': context.action}
+      entity._record_arguments.update(static_record_arguments)
+      for key, value in dynamic_record_arguments.items():
+        entity._record_arguments[key] = get_attr(context, value)
+      duplicate_entity = entity.duplicate()
+      duplicate_entity.put()
+
+
 class ActionDenied(Exception):
   
   def __init__(self, context):

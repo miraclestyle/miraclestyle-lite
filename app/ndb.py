@@ -1712,7 +1712,7 @@ class _BaseProperty(object):
       return self._property_value_filter(value)
 
 
-class _BaseStructuredProperty(object):
+class _BaseStructuredProperty(_BaseProperty):
   '''Base class for structured property.
   
   '''
@@ -1813,11 +1813,11 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass
 
 
-class SuperLocalStructuredProperty(_BaseStructuredProperty, _BaseProperty, LocalStructuredProperty):
+class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
   pass
 
 
-class SuperStructuredProperty(_BaseStructuredProperty, _BaseProperty, StructuredProperty):
+class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   pass
 
 
@@ -2126,7 +2126,7 @@ class SuperSearchProperty(SuperJsonProperty):
     return search
 
 
-class SuperStorageStructuredProperty(_BaseStructuredProperty, BaseProperty):
+class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
   
@@ -2152,7 +2152,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, BaseProperty):
     self._storage = storage
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
- 
+  
   def get_model_fields(self):
     if isinstance(self._modelclass, basestring):
       self._modelclass = Model._kind_map.get(self._modelclass)

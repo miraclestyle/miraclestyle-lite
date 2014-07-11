@@ -28,8 +28,8 @@ class Image(ndb.BaseModel):
   height = ndb.SuperIntegerProperty('5', indexed=False)
   gs_object_name = ndb.SuperStringProperty('6', indexed=False)
   serving_url = ndb.SuperStringProperty('7', indexed=False)
- 
-  
+
+
 class Role(ndb.BaseExpando):
   
   _kind = 66
@@ -105,32 +105,30 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     self._copy_record_arguments(entity)
     self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
-    
+  
   def duplicate(self):
-    '''
-      Override duplicate. Parent duplicate method will retrieve all data into self._property_value and later on
-      in this function we can just finalize by just copying the blob.
+    '''Override duplicate. Parent duplicate method will retrieve all data into self._property_value, and later on,
+    here we can finalize duplicate by copying the blob.
+    
     '''
     super(SuperStructuredPropertyImageManager, self).duplicate()
-    
     entities = self._property_value
     if not self._property._repeated:
       entities = [entities]
-      
+    
     @ndb.tasklet
     def async(entity):
       gs_object_name = entity.gs_object_name
       new_gs_object_name = '%s_duplicate' % entity.gs_object_name
-      
       readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-      # less consuming memory write, can be only used when using brute force copy
-      # in this cloudstorage sdk there is no copy feature so we have to use it like this
+      # Less consuming memory write, can be only used when using brute force copy.
+      # There is no copy feature in cloudstorage sdk, so we have to implement our own!
       while True:
-        parts = readonly_blob.read(1000000) # read 1mb per write, that should be enough
-        if not parts:
+        blob_partition = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
+        if not blob_partition:
           break
-        writable_blob.write(parts)
+        writable_blob.write(blob_partition)
       readonly_blob.close()
       writable_blob.close()
       
@@ -247,6 +245,7 @@ class _BaseBlobProperty(object):
   def save_blobs_on_success(cls, blobs, delete=True):
     # Marks blobs to be preserved upon success.
     cls._update_blobs(blobs, 'collect_success', delete)
+
 
 
 class _BaseImageProperty(_BaseBlobProperty):
