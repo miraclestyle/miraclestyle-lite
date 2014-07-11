@@ -9,7 +9,7 @@ import copy
 
 from app import ndb, util
 from app.tools.base import *
-from app.tools.manipulator import set_attr, get_attr
+from app.tools.manipulator import set_attr, get_attr, normalize
 
 
 class Context(ndb.BaseModel):
@@ -92,10 +92,11 @@ class Write(ndb.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
-    dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
+    dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = static_record_arguments
+      entity._record_arguments = {'agent': context.user, 'action': context.action}
+      entity._record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         entity._record_arguments[key] = get_attr(context, value)
       entity.put()
@@ -110,10 +111,11 @@ class Delete(ndb.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
-    dynamic_record_arguments = self.cfg.get('dra', {'agent': 'user', 'action': 'action'})
+    dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = static_record_arguments
+      entity._record_arguments = {'agent': context.user, 'action': context.action}
+      entity._record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         entity._record_arguments[key] = get_attr(context, value)
       entity.key.delete()
@@ -132,14 +134,17 @@ class RulePrepare(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     skip_user_roles = self.cfg.get('skip_user_roles', False)
     strict = self.cfg.get('strict', False)
-    kwds = self.cfg.get('kwds', {})
+    static_kwargs = self.cfg.get('s', {})
+    dynamic_kwargs = self.cfg.get('d', {})
     kwargs = {'user': context.user, 'action': context.action}
-    for key, value in kwds.items():
+    kwargs.update(static_kwargs)
+    for key, value in dynamic_kwargs.items():
       kwargs[key] = get_attr(context, value)
-    rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs)
+    entities = get_attr(context, entity_path)
+    rule_prepare(entities, skip_user_roles, strict, **kwargs)
 
 
 class RuleExec(ndb.BaseModel):
@@ -149,7 +154,7 @@ class RuleExec(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     action_path = self.cfg.get('action', 'action.key_urlsafe')
     entity = get_attr(context, entity_path)
     action = get_attr(context, action_path)
@@ -171,7 +176,6 @@ class Search(ndb.BaseModel):
     limit = self.cfg.get('page', 10)
     fields = self.cfg.get('fields', None)
     search_document = self.cfg.get('document', False)
-    model =  context.models[context.model.get_kind()]
     argument = context.input.get('search')
     urlsafe_cursor = context.input.get('search_cursor')
     namespace = context.namespace
@@ -180,23 +184,23 @@ class Search(ndb.BaseModel):
     else:
       namespace = None
     if search_document:
-      result = document_search(index_name, argument, page_size, urlsafe_cursor, namespace, fields)
-      context.search_documents = result[0]
-      context.search_cursor = result[1]
-      context.search_more = result[2]
-      context.search_documents_count = result[3]
-      context.search_documents_total_matches = result[4]
+      result = document_search(index_name, namespace, argument, limit, urlsafe_cursor, fields)
+      context._documents = result[0]
+      context._cursor = result[1]
+      context._more = result[2]
+      context._documents_count = result[3]
+      context._total_matches = result[4]
     else:
-      result = model.search(argument, namespace=namespace, fetch_async=False, limit=limit, urlsafe_cursor=urlsafe_cursor)
+      result = context.model.search(argument, namespace, limit, urlsafe_cursor)
       entities = []
       if isinstance(result, tuple):
-        context.entities = result[0]
-        context.search_cursor = result[1]
-        context.search_more = result[2]
+        context._entities = result[0]
+        context._cursor = result[1]
+        context._more = result[2]
       elif isinstance(result, list):
-        context.entities = result
-        context.search_cursor = None
-        context.search_more = False
+        context._entities = result
+        context._cursor = None
+        context._more = False
 
 
 class CallbackNotify(ndb.BaseModel):
@@ -204,8 +208,9 @@ class CallbackNotify(ndb.BaseModel):
   def run(self, context):
     static_data = {}
     static_data.update({'action_id': 'initiate', 'action_model': '61'})
-    static_data['caller_entity'] = context.entities[context.model.get_kind()].key_urlsafe
-    context.callbacks.append(('notify', static_data))
+    entity = get_attr(context, '_' + context.model.__name__.lower())
+    static_data['caller_entity'] = entity.key_urlsafe
+    context._callbacks.append(('notify', static_data))
 
 
 class CallbackExec(ndb.BaseModel):
@@ -220,9 +225,9 @@ class CallbackExec(ndb.BaseModel):
       queue_name, static_data, dynamic_data = config
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
-      context.callbacks.append((queue_name, static_data))
-    callback_exec('/task/io_engine_run', context.callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
-    context.callbacks = []
+      context._callbacks.append((queue_name, static_data))
+    callback_exec('/task/io_engine_run', context._callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
+    context._callbacks = []
 
 
 class BlobURL(ndb.BaseModel):
@@ -235,7 +240,7 @@ class BlobURL(ndb.BaseModel):
     gs_bucket_name = self.cfg.get('bucket', None)
     upload_url = context.input.get('upload_url')
     if upload_url:
-      context.blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
+      context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       #raise ndb.TerminateAction()
 
 
@@ -246,13 +251,12 @@ class DocumentWrite(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     fields = self.cfg.get('fields', {})
-    max_doc = self.cfg.get('max_doc', 200)
+    documents_per_index = self.cfg.get('max_doc', 200)
     entities = get_attr(context, entity_path)
-    entities = normalize(entities)
     documents = document_from_entity(entities, fields)
-    document_write(documents, documents_per_index=max_doc)
+    document_write(documents, documents_per_index=documents_per_index)
 
 
 class DocumentDelete(ndb.BaseModel):
@@ -262,22 +266,21 @@ class DocumentDelete(ndb.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    documents = []
-    entity_path = self.cfg.get('path', 'entities.' + context.model.get_kind())
-    max_doc = self.cfg.get('max_doc', 200)
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    documents_per_index = self.cfg.get('max_doc', 200)
     entities = get_attr(context, entity_path)
-    document_delete(entities, documents_per_index=max_doc)
+    document_delete(entities, documents_per_index=documents_per_index)
 
 
 class DocumentDictConverter(ndb.BaseModel):
   
   def run(self, context):
-    if len(context.search_documents):
-      context.entities = document_to_dict(context.search_documents)
+    if len(context._documents):
+      context._entities = document_to_dict(context._documents)
 
 
 class DocumentEntityConverter(ndb.BaseModel):
   
   def run(self, context):
-    if len(context.search_documents):
-      context.entities = ndb.get_multi([document.doc_id for document in context.search_documents])
+    if len(context._documents):
+      context._entities = ndb.get_multi([document.doc_id for document in context._documents])

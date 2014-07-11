@@ -857,6 +857,7 @@ class _BaseModel(object):
     if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
       if self._record_arguments and self._record_arguments.get('agent') and self._record_arguments.get('action'):
         log_entity = self._record_arguments.pop('log_entity', True)
+        # @todo We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
         record = Record(parent=self.key, **self._record_arguments)
         if log_entity is True:
           record.log_entity(self)

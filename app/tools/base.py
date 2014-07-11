@@ -15,77 +15,49 @@ from google.appengine.ext import blobstore
 from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
+def _rule_get_global_permissions(entity):
+  global_permissions = []
+  if entity and isinstance(entity, ndb.Model):
+    if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
+      global_permissions = entity._global_role.permissions
+  return global_permissions
 
-def _rule_prepare(context, skip_user_roles, strict, **kwargs):
-  '''This method generates permissions situation for the context.entity object,
-  at the time of execution.
-  
-  '''
-  if context.entity:
-    global_permissions = []
+
+def _rule_get_local_permissions(entity, user):
+  local_permissions = []
+  clean_roles_callbacks = []
+  if entity and isinstance(entity, ndb.Model):
+    if user and not user._is_guest:
+      domain_user_key = ndb.Key('8', user.key_id_str, namespace=entity.key_namespace)
+      domain_user = domain_user_key.get()
+      clean_roles = False
+      if domain_user and domain_user.state == 'accepted':
+        roles = ndb.get_multi(domain_user.roles)
+        for role in roles:
+          if role is None:
+            clean_roles = True
+          elif role.active:
+            local_permissions.extend(role.permissions)
+        if clean_roles:
+          data = {'action_model': '8',
+                  'action_key': 'clean_roles',
+                  'key': domain_user.key.urlsafe()}
+          clean_roles_callbacks.append(('callback', data))
+  return local_permissions, clean_roles_callbacks
+
+
+def rule_prepare(entities, skip_user_roles, strict, **kwargs):
+  entities = normalize(entities)
+  callbacks = []
+  for entity in entities:
+    global_permissions = _rule_get_global_permissions(entity)
     local_permissions = []
-    if hasattr(context.entity, '_global_role') and context.entity._global_role.get_kind() == '67':
-      global_permissions = context.entity._global_role.permissions
     if not skip_user_roles:
-      if not context.user._is_guest:
-        domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=context.entity.key_namespace)
-        domain_user = domain_user_key.get()
-        clean_roles = False
-        if domain_user and domain_user.state == 'accepted':
-          roles = ndb.get_multi(domain_user.roles)
-          for role in roles:
-            if role is None:
-              clean_roles = True
-            else:
-              if role.active:
-                local_permissions.extend(role.permissions)
-          if clean_roles:
-            data = {'action_model': '8',
-                    'action_key': 'clean_roles',
-                    'key': domain_user.key.urlsafe()}
-            context.callback_payloads.append(('callback', data))
-    context.entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
-
-
-def rule_prepare(context, entity_path, skip_user_roles, strict, **kwargs):
-  entities = get_attr(context, entity_path)
-  # @todo Can we apply normalize here?
-  if isinstance(entities, dict):
-    for key, entity in entities.items():
-      context.entity = entities.get(key)
-      _rule_prepare(context, skip_user_roles, strict, **kwargs)
-  elif isinstance(entities, list):
-    for entity in entities:
-      context.entity = entity
-      _rule_prepare(context, skip_user_roles, strict, **kwargs)
-  else:
-    context.entity = entities
-    _rule_prepare(context, skip_user_roles, strict, **kwargs)
-
-
-def record_write(model, records, agent_key, action_key):
-  records = normalize(records)
-  write_records = []
-  if len(records):
-    for config in records:
-      if config and isinstance(config, (list, tuple)) and config[0] and isinstance(config[0], ndb.Model) and hasattr(config[0], 'key') and isinstance(config[0].key, ndb.Key):
-        arguments = {}
-        entity = config[0]
-        try:
-          entity_arguments = config[1]
-        except:
-          entity_arguments = {}
-        log_entity = entity_arguments.pop('log_entity', True)
-        if len(entity_arguments):
-          for key, value in entity_arguments.items():
-            if entity._field_permissions['_records'][key]['writable']:
-              arguments[key] = value
-        record = model(parent=entity.key, agent=agent_key, action=action_key, **arguments)
-        if log_entity is True:
-          record.log_entity(entity)
-        write_records.append(record)
-  if len(write_records):
-    return ndb.put_multi(write_records)
+      local_permissions, clean_roles = _rule_get_local_permissions(entity, kwargs.get('user'))
+      callbacks.extend(clean_roles)
+    entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
+  callbacks = list(set(callbacks))
+  callback_exec('/task/io_engine_run', callbacks, kwargs.get('user').key_urlsafe, kwargs.get('action').key_urlsafe)  # @todo This has to be optimized!
 
 
 def callback_exec(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
@@ -129,7 +101,7 @@ def get_search_field(field_type):
   return __SEARCH_FIELDS.get(field_type)
 
 
-def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, namespace=None, fields=None):
+def document_search(index_name, namespace=None, argument, limit=10, urlsafe_cursor=None, fields=None):
   index = search.Index(name=index_name, namespace=namespace)
   # Query String implementation start!
   query_string = ''
@@ -171,9 +143,9 @@ def document_search(index_name, argument, page_size=10, urlsafe_cursor=None, nam
     default_value=property_config._order_by[order_by['field']]['default_value']['desc']
     direction = search.SortExpression.DESCENDING
   order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
-  sort_options = search.SortOptions(expressions=[order], limit=page_size)
+  sort_options = search.SortOptions(expressions=[order], limit=limit)
   cursor = search.Cursor(web_safe_string=urlsafe_cursor)
-  options = search.QueryOptions(limit=page_size, returned_fields=fields, sort_options=sort_options, cursor=cursor)
+  options = search.QueryOptions(limit=limit, returned_fields=fields, sort_options=sort_options, cursor=cursor)
   query = search.Query(query_string=query_string, options=options)
   total_matches = 0
   documents_count = 0
@@ -239,6 +211,7 @@ def _document_from_entity(entity, fields={}):
 
 
 def document_from_entity(entities, fields={}):
+  entities = normalize(entities)
   documents = [_document_from_entity(entity, fields) for entity in entities]
   return documents
 
