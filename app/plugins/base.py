@@ -94,12 +94,12 @@ class Write(ndb.BaseModel):
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = {'agent': context.user, 'action': context.action}
-      entity._record_arguments.update(static_record_arguments)
+    if entity and isinstance(entity, ndb.Model):
+      record_arguments = {'agent': context.user, 'action': context.action}
+      record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
-        entity._record_arguments[key] = get_attr(context, value)
-      entity.put()
+        record_arguments[key] = get_attr(context, value)
+      entity.write(**record_arguments)
 
 
 class Delete(ndb.BaseModel):
@@ -113,12 +113,12 @@ class Delete(ndb.BaseModel):
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = {'agent': context.user, 'action': context.action}
-      entity._record_arguments.update(static_record_arguments)
+    if entity and isinstance(entity, ndb.Model):
+      record_arguments = {'agent': context.user, 'action': context.action}
+      record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
-        entity._record_arguments[key] = get_attr(context, value)
-      entity.key.delete()
+        record_arguments[key] = get_attr(context, value)
+      entity.delete(**record_arguments)
 
 
 class Duplicate(ndb.BaseModel):
@@ -129,19 +129,13 @@ class Duplicate(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    static_record_arguments = self.cfg.get('sra', {})
-    dynamic_record_arguments = self.cfg.get('dra', {})
+    save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+    if entity and isinstance(entity, ndb.Model):
       duplicate_entity = entity.duplicate()
-      duplicate_entity._record_arguments = {'agent': context.user, 'action': context.action}
-      duplicate_entity._record_arguments.update(static_record_arguments)
-      for key, value in dynamic_record_arguments.items():
-        duplicate_entity._record_arguments[key] = get_attr(context, value)
-      duplicate_entity.put()
+      set_attr(context, save_path, duplicate_entity)
 
 
-# @todo Runner method not implemented!
 class ProcessImages(ndb.BaseModel):
   
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -150,16 +144,11 @@ class ProcessImages(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    static_record_arguments = self.cfg.get('sra', {})
-    dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model) and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
-      entity._record_arguments = {'agent': context.user, 'action': context.action}
-      entity._record_arguments.update(static_record_arguments)
-      for key, value in dynamic_record_arguments.items():
-        entity._record_arguments[key] = get_attr(context, value)
-      duplicate_entity = entity.duplicate()
-      duplicate_entity.put()
+    if entity and isinstance(entity, ndb.Model):
+      for field_key, field in entity.get_fields().items():
+        if field.is_structured_field and hasattr(field, 'process') and callable(field.process):
+          field.process()
 
 
 class ActionDenied(Exception):

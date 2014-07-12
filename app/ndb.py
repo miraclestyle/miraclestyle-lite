@@ -633,9 +633,9 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    if (field_key in permissions):  #  @todo How this affects the outcome??
+    if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      if not (field.is_structured_field:
+      if not field.is_structured_field:
         if not permissions[field_key]['writable']:
           try:
             #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
@@ -853,7 +853,7 @@ class _BaseModel(object):
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
-  def read(self, input=None):  # @todo We need to standardize method arguments here!!
+  def read(self, input=None):  # @todo We need to standardize method arguments here!! And why we obtain results here? What's the point of async implementation in that respect?
     '''This method loads all sub-entities in async-mode, based on input details.
     
     '''
@@ -880,39 +880,37 @@ class _BaseModel(object):
       future.read(**kwargs)  # Enforce get_result call now because if we don't the .value will be instances of Future.
     self.make_original()  # Finalize original before touching anything.
   
+  def write(self, **record_arguments):
+    self._record_arguments = record_arguments
+    self.put()
+  
+  def delete(self, **record_arguments):
+    if hasattr(self, 'key') and isinstance(self.key, Key):
+      self._record_arguments = record_arguments
+      self.key.delete()
+  
   def duplicate(self):
-    '''
-      Duplicate this entity.
-      
-      Based on entire model configuration and hierarchy, the .duplicate() methods will be called 
-      on its structured children as well.
-      Structured children are any properties that subclass _BaseStructuredProperty.
-      
-      Take a look at this example:
-      
-      class CatalogImage(Image):
-         
-         _virtual_fields = {
-           '_descriptions' : ndb.SuperStorageStructuredProperty(Descriptions, storage='multi'),
-         }
-         
-      class Catalog(ndb.BaseModel):
-         _virtual_fields = {
-           '_images' : ndb.SuperStorageStructuredProperty(CatalogImage, storage='multi'),
-         }
-         
-      .....
-      
-      catalog = catalog_key.get()
-      
-      duplicated_catalog = catalog.duplicate()
-      # remember, calling duplicate() will never perform .put() you must call .put() after you retreive duplicated entity
-      duplicated_catalog.put()
-      # by performing put, the duplicated catalog will put all entities it prepared in drill stage
-      
-      Drill stage looks something like this:
-      
-      catalog => duplicate()
+    '''Duplicate this entity.
+    Based on entire model configuration and hierarchy, the .duplicate() methods will be called
+    on its structured children as well.
+    Structured children are any properties that subclass _BaseStructuredProperty.
+    Take a look at this example:
+    class CatalogImage(Image):
+    _virtual_fields = {
+    '_descriptions' : ndb.SuperStorageStructuredProperty(Descriptions, storage='multi'),
+    }
+    class Catalog(ndb.BaseModel):
+    _virtual_fields = {
+    '_images' : ndb.SuperStorageStructuredProperty(CatalogImage, storage='multi'),
+    }
+    .....
+    catalog = catalog_key.get()
+    duplicated_catalog = catalog.duplicate()
+    # remember, calling duplicate() will never perform .put() you must call .put() after you retreive duplicated entity
+    duplicated_catalog.put()
+    # by performing put, the duplicated catalog will put all entities it prepared in drill stage
+    Drill stage looks something like this:
+    catalog => duplicate()
        for field in catalog.fields:
          if field is structured:
           _images => duplicate()
@@ -922,21 +920,17 @@ class _BaseModel(object):
                      if field is structured:
                        _descriptions => duplicate()
                           ......... and so on and so on
-                          
-       Duplicate should always be called from taskqueue because of intensity of queries.
-       It is designed to drill without any limits, so having huge entity structure that consists 
-       of thousands of entities might be problematic mainly because of ram memory usage, not time.
-       
-       That could be solved by making the duplicate function more flexible by implementing ability to just
-       fetch keys (that need to be copied) who would be sent to other tasks that could carry out the 
-       duplication on per-entity basis, and signaling complete when the last entity gets copied.
-       
-       So in this case, example above would only duplicate data that is on the root entity itself, while the 
-       multi, multi sequenced and single entity will be resolved by only retrieving keys and sending them to 
-       multiple tasks that could duplicate them in paralel.
-   
-       That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
-       
+    Duplicate should always be called from taskqueue because of intensity of queries.
+    It is designed to drill without any limits, so having huge entity structure that consists
+    of thousands of entities might be problematic mainly because of ram memory usage, not time.
+    That could be solved by making the duplicate function more flexible by implementing ability to just
+    fetch keys (that need to be copied) who would be sent to other tasks that could carry out the
+    duplication on per-entity basis, and signaling complete when the last entity gets copied.
+    So in this case, example above would only duplicate data that is on the root entity itself, while the
+    multi, multi sequenced and single entity will be resolved by only retrieving keys and sending them to
+    multiple tasks that could duplicate them in paralel.
+    That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
+    
     '''
     new_entity = copy.deepcopy(self) # deep copy will copy all static properties
     new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
@@ -951,7 +945,7 @@ class _BaseModel(object):
       new_entity.set_key('%s_duplicate' % self.key_id, parent=self.key_parent, namespace=self.key_namespace)
       # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
       # prepare_duplicate_key()
-      # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that 
+      # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that
       # does not exist yet
     return new_entity
   
@@ -1233,27 +1227,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if not isinstance(property_value_item, self._property._modelclass):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
-    
-  def _apply_deep_read(self, **kwargs):
-    '''
-      This function will keep calling .read on its sub-entity-like-properties until it no longer has structured properties anymore.
-      This solves the problem of hierarchy.
-    '''
-    if self.has_value():
-      entities = self._property_value
-      if not self._property._repeated:
-        entities = [entities]
-      probable_futures = []
-      for entity in entities:
-        for field_key, field in entity.get_fields().items():
-          if field.is_structured_field:
-            fut = getattr(entity, field_key)
-            fut.read_async(**kwargs)
-            if fut.has_future():
-              probable_futures.append(fut)
-      for prob in probable_futures:
-        prob.read(**kwargs) # enforce
-     
+  
   def _copy_record_arguments(self, entity):
     if hasattr(self._entity, '_record_arguments'):
       if hasattr(entity, '_record_arguments'):
@@ -1264,55 +1238,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       record_arguments['action'] = entity_record_arguments.get('aciton')
       record_arguments['agent'] = entity_record_arguments.get('agent')
       entity._record_arguments = record_arguments
-  
-  def _mark_for_delete(self, property_value, property_instance=None):
-    '''Mark each of property values for deletion by setting the '_state'' to 'deleted'!
-    
-    '''
-    if not property_instance:
-      property_instance = self._property
-    if not property_instance._repeated:
-      property_value = [property_value]
-    for value in property_value:
-      value._state = 'deleted'
-  
-  def _delete_local(self):
-    self._mark_for_delete(self._property_value)
-  
-  def _delete_remote(self):
-    cursor = Cursor()
-    limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
-    while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-      if len(_entities):
-        for entity in _entities:
-          self._copy_record_arguments(entity)
-        delete_multi([entity.key for entity in _entities])
-        if not cursor or not more:
-          break
-      else:
-        break
-  
-  def _delete_remote_single(self):
-    property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    entity = property_value_key.get()
-    self._copy_record_arguments(entity)
-    entity.key.delete()
-  
-  def _delete_remote_multi(self):
-    self._delete_remote()
-  
-  def _delete_remote_multi_sequenced(self):
-    self._delete_remote()
-  
-  def delete(self):
-    '''Calls storage type specific delete function, in order to mark property values for deletion.
-    
-    '''
-    if self._property._deletable:
-      delete_function = getattr(self, '_delete_%s' % self.storage_type)
-      delete_function()
   
   def _read_local(self, **kwds):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
@@ -1389,6 +1314,26 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
+  def _read_deep(self, **kwargs):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+    '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
+    This solves the problem of hierarchy.
+    
+    '''
+    if self.has_value():
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      futures = []
+      for entity in entities:
+        for field_key, field in entity.get_fields().items():
+          if field.is_structured_field:
+            value = getattr(entity, field_key)
+            value.read_async(**kwargs)
+            if value.has_future():
+              futures.append(value)
+      for future in futures:
+        future.read(**kwargs)
+  
   def read_async(self, **kwds):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
@@ -1426,7 +1371,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
-          self._apply_deep_read(**kwds)
+      self._read_deep(**kwds)  # @todo not sure if this indentation is correct!?
       return self._property_value
   
   def _pre_update_local(self):
@@ -1519,54 +1464,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property_value.remove(delete_entity)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
-    
-    
-  def _duplicate_remote(self):
-    '''
-      Here we fetch ALL entities that belong to this entity.
-      On every entity called, .duplicate() function will be called in order to ensure complete recursion.
-    '''
-    cursor = Cursor()
-    limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
-    entities = []
-    while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-      if len(_entities):
-        for entity in _entities:
-          entities.append(entity.duplicate())
-        if not cursor or not more:
-          break
-      else:
-        break
-    self._property_value = entities
-    
-  def _duplicate_local(self):
-    self._read_local()
-    if self._property._repeated:
-      entities = []
-      for entity in self._property_value:
-        entities.append(entity.duplicate())
-    else:
-      entities = self._property_value.duplicate()
-    setattr(self._entity, self.property_name, entities)
-      
-  def _duplicate_remote_single(self):
-    self._read_remote_single()
-    self._property_value = self._property_value.duplicate()
-  
-  def _duplicate_remote_multi(self):
-    self._duplicate_remote()
-   
-  def _duplicate_remote_multi_sequenced(self):
-    self._duplicate_remote()
-     
-  def duplicate(self):
-    '''
-    This function calls the duplicate function based on storage type.
-    '''
-    duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
-    duplicate_function()
   
   def pre_update(self):
     if self._property._updateable:
@@ -1583,9 +1480,111 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         post_update_function()
       else:
         pass
+  
+  def _mark_for_delete(self, property_value, property_instance=None):
+    '''Mark each of property values for deletion by setting the '_state'' to 'deleted'!
+    
+    '''
+    if not property_instance:
+      property_instance = self._property
+    if not property_instance._repeated:
+      property_value = [property_value]
+    for value in property_value:
+      value._state = 'deleted'
+  
+  def _delete_local(self):
+    self._mark_for_delete(self._property_value)
+  
+  def _delete_remote(self):
+    cursor = Cursor()
+    limit = 200
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        for entity in _entities:
+          self._copy_record_arguments(entity)
+        delete_multi([entity.key for entity in _entities])
+        if not cursor or not more:
+          break
+      else:
+        break
+  
+  def _delete_remote_single(self):
+    property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    entity = property_value_key.get()
+    self._copy_record_arguments(entity)
+    entity.key.delete()
+  
+  def _delete_remote_multi(self):
+    self._delete_remote()
+  
+  def _delete_remote_multi_sequenced(self):
+    self._delete_remote()
+  
+  def delete(self):
+    '''Calls storage type specific delete function, in order to mark property values for deletion.
+    
+    '''
+    if self._property._deletable:
+      delete_function = getattr(self, '_delete_%s' % self.storage_type)
+      delete_function()
+  
+  def _duplicate_local(self):
+    self._read_local()
+    if self._property._repeated:
+      entities = []
+      for entity in self._property_value:
+        entities.append(entity.duplicate())
+    else:
+      entities = self._property_value.duplicate()
+    setattr(self._entity, self.property_name, entities)
+  
+  def _duplicate_remote(self):
+    '''Fetch ALL entities that belong to this entity.
+    On every entity called, .duplicate() function will be called in order to ensure complete recursion.
+    
+    '''
+    cursor = Cursor()
+    limit = 200
+    query = self._property._modelclass.query(ancestor=self._entity.key)
+    entities = []
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        for entity in _entities:
+          entities.append(entity.duplicate())
+        if not cursor or not more:
+          break
+      else:
+        break
+    self._property_value = entities
+  
+  def _duplicate_remote_single(self):
+    self._read_remote_single()
+    self._property_value = self._property_value.duplicate()
+  
+  def _duplicate_remote_multi(self):
+    self._duplicate_remote()
+  
+  def _duplicate_remote_multi_sequenced(self):
+    self._duplicate_remote()
+  
+  def duplicate(self):
+    '''Calls storage type specific duplicate function.
+    
+    '''
+    duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
+    duplicate_function()
 
 
 class SuperReferencePropertyManager(SuperPropertyManager):
+  
+  def set(self, value):
+    if isinstance(value, Key):
+      self._property_value = value.get_async()
+    elif isinstance(value, _BaseModel):
+      self._property_value = value
   
   def _read(self):
     if self._property._callback:
@@ -1614,20 +1613,14 @@ class SuperReferencePropertyManager(SuperPropertyManager):
           self._property_value = self._property._format_callback(self._entity, self._property_value)
       return self._property_value
   
-  def set(self, value):
-    if isinstance(value, Key):
-      self._property_value = value.get_async()
-    elif isinstance(value, _BaseModel):
-      self._property_value = value
-  
-  def delete(self):
-    self._property_value = None
-  
   def pre_update(self):
     pass
   
   def post_update(self):
     pass
+  
+  def delete(self):
+    self._property_value = None
 
 
 #########################################################
