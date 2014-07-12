@@ -147,7 +147,7 @@ class ProcessImages(ndb.BaseModel):
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model):
       for field_key, field in entity.get_fields().items():
-        if field.is_structured_field and hasattr(field, 'process') and callable(field.process):
+        if field._structured and hasattr(field, 'process') and callable(field.process):
           field.process()
 
 

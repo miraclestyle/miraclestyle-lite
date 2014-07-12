@@ -400,7 +400,7 @@ class _BaseModel(object):
       @toplevel
       def delete_async():
         for field_key, field in entity.get_fields().items():
-          if field.is_structured_field:
+          if field._structured:
             manager = getattr(entity, field_key, None)
             if isinstance(manager, SuperPropertyManager):
               manager.delete()
@@ -601,7 +601,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if field.is_structured_field:
+      if field._structured:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -635,7 +635,7 @@ class _BaseModel(object):
     '''
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      if not field.is_structured_field:
+      if not field._structured:
         if not permissions[field_key]['writable']:
           try:
             #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
@@ -719,7 +719,7 @@ class _BaseModel(object):
     for field_key, field in fields.items():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-      if field.is_structured_field:
+      if field._structured:
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)  # @todo Test this behavior!
@@ -859,7 +859,7 @@ class _BaseModel(object):
     '''
     futures = []
     for field_key, field in self.get_fields().items():
-      if field.is_structured_field:
+      if field._structured:
         value = getattr(self, field_key)
         kwargs = {}
         if input is not None:
@@ -937,7 +937,7 @@ class _BaseModel(object):
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().items():
-      if field.is_structured_field:
+      if field._structured:
         value = getattr(new_entity, field_key, None)
         if value:
            value.duplicate() # call duplicate for every structured field
@@ -1326,7 +1326,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       futures = []
       for entity in entities:
         for field_key, field in entity.get_fields().items():
-          if field.is_structured_field:
+          if field._structured:
             value = getattr(entity, field_key)
             value.read_async(**kwargs)
             if value.has_future():
@@ -1656,6 +1656,7 @@ class _BaseProperty(object):
            'choices': choices,
            'default': self._default,
            'repeated': self._repeated,
+           'structured': self._structured,  # @todo Not sure if this is ok!?
            'type': self.__class__.__name__}
     return dic
   
@@ -1695,11 +1696,7 @@ class _BaseProperty(object):
       return self._property_value_filter(value)
   
   @property
-  def is_structured_field(self):
-    '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
-    and if the '_modelclass' is not none.
-    
-    '''
+  def _structured(self):  # @todo Not sure if this is ok!?
     return False
 
 
@@ -1796,11 +1793,7 @@ class _BaseStructuredProperty(_BaseProperty):
     return out
   
   @property
-  def is_structured_field(self):
-    '''Checks if the provided field is instance of a class that inherits _BaseStructuredProperty
-    and if the '_modelclass' is not none.
-    
-    '''
+  def _structured(self):
     return True
 
 
