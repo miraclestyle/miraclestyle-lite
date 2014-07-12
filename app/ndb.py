@@ -1197,7 +1197,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   @property
   def value_options(self):
-    ''' '_property_value_options' is used for storing and returning information that
+    ''''_property_value_options' is used for storing and returning information that
     is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
     
     '''
@@ -1205,7 +1205,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   @property
   def storage_type(self):
-    ''' Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi', 'remote_multi_sequenced' values stored.
+    '''Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi', 'remote_multi_sequenced' values stored.
     'local' is a structured value stored in a parent entity.
     'remote_single' is a single child (fan-out) entity of the parent entity.
     'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.
@@ -1482,7 +1482,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         pass
   
   def _mark_for_delete(self, property_value, property_instance=None):
-    '''Mark each of property values for deletion by setting the '_state'' to 'deleted'!
+    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
     
     '''
     if not property_instance:
@@ -2039,8 +2039,8 @@ class SuperSearchProperty(SuperJsonProperty):
     '''Filters work like this:
     First you configure SuperSearchProperty with filters, indexes and order_by parameters.
     This configuration takes place at the property definition place.
-    filters = {'field': {'operators': ['==', '>', '<', '>=', '<=', 'contains'],  With 'operators'' you define possible filter operators.
-                         'type': SuperStringProperty(required=True)}} With 'type'' you define a filter value property.
+    filters = {'field': {'operators': ['==', '>', '<', '>=', '<=', 'contains'],  With 'operators' you define possible filter operators.
+                         'type': SuperStringProperty(required=True)}} With 'type' you define a filter value property.
     
     indexes = [{'filter': ['field1', 'field2', 'field3'], 'order_by': [['field1', ['asc', 'desc']]]},
                {'filter': ['field1', 'field2'], 'order_by': [['field1', ['asc', 'desc']]]}]
