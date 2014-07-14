@@ -68,7 +68,7 @@
 		<div class="text-right" ng-show="$isUploading">Images are uploading... please wait...</div>
 		
 		<div ui-sortable="sortableOptions" ng-model="entity._images" class="clearfix grid-wrapper">
-			<div ng-repeat="image in entity._images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
+			<div ng-repeat="image in entity._images track by $index" ng-hide="image._state == 'deleted" uploaded-image-grid="gridConfig" class="image-image grid-item">
 				<div class="img spaceout">
 					<img ng-src="{{image.serving_url}}=s360" />
 				</div>

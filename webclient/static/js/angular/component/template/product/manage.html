@@ -194,7 +194,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="variant in entity.variants track by $index">
+					<tr ng-repeat="variant in entity.variants track by $index" ng-hide="variant._state == 'deleted">
 						<td>{{variant.name}}</td>
 						<td>
 							<span ng-show="rule.field.variants.writable">
@@ -221,7 +221,7 @@
 			<div ng-show="$isUploading">Images are uploading... please wait...</div>
 			
 			<div ui-sortable="sortableOptions" ng-model="entity.images" class="clearfix grid-wrapper">
-				<div ng-repeat="image in entity.images track by $index" uploaded-image-grid="gridConfig" class="image-image grid-item">
+				<div ng-repeat="image in entity.images track by $index" ng-hide="image._state == 'deleted" uploaded-image-grid="gridConfig" class="image-image grid-item">
 					<div class="img spaceout">
 						<img ng-src="{{image.serving_url}}=s360" />
 					</div>
@@ -246,7 +246,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="content in entity.contents track by $index">
+					<tr ng-repeat="content in entity.contents track by $index" ng-hide="content._state == 'deleted">
 						<td>{{content.title}}</td>
 						<td>
 							<span ng-show="rule.field.contents.writable">
@@ -278,7 +278,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="instance in entity._instances track by $index">
+				<tr ng-repeat="instance in entity._instances track by $index" ng-hide="instance._state == 'deleted">
 					<td>{{instance.code}}</td>
 					<td>
 						<span ng-show="rule.field._instances.writable">

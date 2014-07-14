@@ -58,7 +58,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="template in entity.templates track by $index">
+				<tr ng-repeat="template in entity.templates track by $index" ng-hide="template._state == 'deleted">
 					<td>{{template.message_subject}}</td>
 					<td>
 						<span ng-show="rule.field.templates.writable">

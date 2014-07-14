@@ -51,7 +51,8 @@ MainApp
     	 	},
     	 	'removeFilter' : function (filter)
     	 	{
-    	 		this.entity.filters.remove(filter);
+    	 		filter._state = 'deleted';
+    	 		//this.entity.filters.remove(filter);
   	 
     	 	},
     	};

@@ -71,7 +71,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="filter in entity.filters">
+						<tr ng-repeat="filter in entity.filters" ng-hide="filter._state == 'deleted">
 							<td>{{filter.name}}</td>
 							<td>{{FRIENDLY_KIND_NAMES[filter.model]}}</td>
 							<td>{{filter.query}}</td>

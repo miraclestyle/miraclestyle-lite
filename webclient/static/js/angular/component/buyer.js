@@ -53,7 +53,8 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     	 	},
     	 	'removeAddress' : function (address)
     	 	{
-    	 		this.entity.addresses.remove(address);
+    	 		address._state = 'deleted';
+    	 		//this.entity.addresses.remove(address);
   			      
     	 	},
     	 
@@ -99,8 +100,9 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
             		
             		'removeApp' : function (app)
             		{
-            			this.entity.domains.remove(app.key);
-            			this.entity._domains.remove(app);
+            			 app._state = 'deleted';
+            			//this.entity.domains.remove(app.key);
+            			//this.entity._domains.remove(app);
             		}
             	};
              

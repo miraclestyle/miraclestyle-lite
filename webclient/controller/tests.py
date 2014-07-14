@@ -78,6 +78,7 @@ class TestDeepCopyModel(ndb.BaseModel):
   
   _virtual_fields = dict(_test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'),
                          _test6=base.SuperImageStorageStructuredProperty(TestDeepCopyStructImage, storage='remote_multi'),)
+  
     
 class TestDeepCopy(BaseTestHandler):
  
@@ -100,6 +101,8 @@ class TestDeepCopy(BaseTestHandler):
           
         elif f == '_test6':
           
+          continue
+          
           the_file = self.request.params.get('file')
           a = blobstore.parse_blob_info(the_file)
           b = blobstore.parse_file_info(the_file)
@@ -115,7 +118,7 @@ class TestDeepCopy(BaseTestHandler):
               TestDeepCopyStructFar(what='ANo')
            ])]
         setattr(entity, f, s)
-      entity._test6.process()  
+      #entity._test6.process()  
       entity.put()
     else:
       entity = TestDeepCopyModel.build_key(the_id).get()

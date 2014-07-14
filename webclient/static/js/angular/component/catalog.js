@@ -172,8 +172,8 @@ MainApp
                     this.entity.search_cursor = this.entity._images.length;
                 },
                 'removeImage': function (image) {
-                	console.log(this);
-                    this.entity._images.remove(image);
+                	image._state = 'deleted';
+                    //this.entity._images.remove(image);
                 },
                 'getImages': function () {
                     var that = this;

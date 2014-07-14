@@ -7,20 +7,25 @@ Created on Jul 8, 2014
 import unittest
 import random
  
-class Base(object):
-  
-  foo = 1
-  
-  def __getattribute__(self, *args, **kwargs):
-    print args
-    return object.__getattribute__(self, *args, **kwargs)
-  
-  def __getattr__(self, *args, **kwargs):
-    print args
-    return object.__getattr__(self, *args, **kwargs)
-  
-print getattr(Base, 'foo')
-print getattr(Base, 'bar')
+class Base1(object):
+  pass
+
+class Base2(object):
+  pass
+
+class Base3(object):
+  pass
+
+class Final(Base1, Base2, Base3):
+  pass
+
+d = Final()
+print d
+
+class A(object):
+    def __init__(self): print "A.__init__() called"
+
+class B(object, A): pass
   
 '''
 class TestSequenceFunctions(unittest.TestCase):

@@ -24,7 +24,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="addr in entity.addresses track by $index">
+						<tr ng-repeat="addr in entity.addresses track by $index" ng-hide="addr._state == 'deleted">
 							<td>
 								{{addr.name}}
 							</td>

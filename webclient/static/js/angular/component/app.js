@@ -404,7 +404,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.add_new = config['add_new'];
              
             $scope.removeItem = function (e) {
-            	 $scope.search.entities.remove(e);
+            	// $scope.search.entities.remove(e);
+            	e._state = 'deleted';
             };
  
             $scope.create = function () {
@@ -420,7 +421,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.remove = function (entity) {
 				service.remove(entity, function () {
-					  	$scope.search.entities.remove(entity);
+					  	//$scope.search.entities.remove(entity);
+					  	entity._state = 'deleted';
   					 
 				}, $scope);
             };
@@ -492,7 +494,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	AppUser.remove(app._domain_user, function (data) {
             		if (data['entity'])
             		{
-            			 entities.remove(app);
+            			  app._state = 'deleted';
+            			 //entities.remove(app);
             		}
             	});
             	

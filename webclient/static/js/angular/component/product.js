@@ -35,14 +35,17 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	},
 	            'removeImage' : function (image)
 	        	 {
-	        	 	this.entity.images.remove(image);
+	        	 	image._state = 'deleted';
+	        	 	//this.entity.images.remove(image);
 	        	 },
 	        	 'removeContent' : function (content) {
-	        	 	this.entity.contents.remove(content);
+	        	 	content._state = 'deleted';
+	        	 	//this.entity.contents.remove(content);
 	        	 },
 	        	 'removeVariant' : function (variant)
 	        	 {
-	        	 	this.entity.variants.remove(variant);
+	        	 	variant._state = 'deleted';
+	        	 	//this.entity.variants.remove(variant);
 	        	 },
 	        	 'manageContent' : function (content) { 
 	        	 	
@@ -133,7 +136,8 @@ MainApp.factory('Product', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
 	        	  	  	action : 'instance_delete',
 	        	  	  	complete : function (entity)
 	        	  	  	{
-	        	  	  		that.entity._instances.remove(instance);
+	        	  	  		instance._state = 'deleted';
+	        	  	  		//that.entity._instances.remove(instance);
 	        	  	  	}
 	        	  	  });
 	        	  },

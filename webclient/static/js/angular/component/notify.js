@@ -30,7 +30,8 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
          	 'actions' : actions,
          	 'removeTemplate' : function (template)
         	 {
-        	 	this.entity.templates.remove(template);
+        	 	template._state = 'deleted';
+        	 	//this.entity.templates.remove(template);
         	 },
         	 'createTemplate' : function ()
         	 {

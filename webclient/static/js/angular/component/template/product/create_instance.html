@@ -6,12 +6,12 @@
 		 <span class="fieldset-text">General</span>
 	 </h2>
   
-	<div ng-repeat="variant in variants track by $index" class="form-control">
+	<div ng-repeat="variant in variants track by $index" ng-hide="variant._state == 'deleted" class="form-control">
 		<label class="form-label">{{variant.name}}</label>
 		<div class="form-input">
 			<select name="option_{{$index}}" ng-required="true" ui-select2 ng-model="variant.option" data-placeholder="Select option">
 					<option value=""></option>
-				    <option ng-repeat="opt in variant.options" value="{{opt}}">{{opt}}</option>
+				    <option ng-repeat="opt in variant.options" ng-if="opt._state != 'deleted" value="{{opt}}">{{opt}}</option>
 			</select>
 		</div>
 	</div>

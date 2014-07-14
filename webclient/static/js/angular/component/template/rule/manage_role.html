@@ -41,7 +41,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="perm in entity.permissions track by $index">
+						<tr ng-repeat="perm in entity.permissions track by $index" ng-hide="perm._state == 'deleted">
 							<td>{{FRIENDLY_KIND_NAMES[perm.model]}}</td>
 							<td>
 								<span ng-show="perm.fields != null">{{perm.fields|join:', '}}</span>

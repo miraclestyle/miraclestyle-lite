@@ -7,7 +7,7 @@
 	<div load-infinite-catalog-images class="pull-left t60 overflow-x">
 		<div class="overflow-master">
 			<ol>
-			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
+			 <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index" ng-hide="catalog_image._state == 'deleted"
 			     data-drop="true" ng-model='catalog_image.pricetags' data-jqyoui-options="{accept: '.new-pricetag'}" 
 			     jqyoui-droppable="{multiple:true, onDrop : 'onDrop(catalog_image)'}"
 			     data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
@@ -18,7 +18,8 @@
 				      jqyoui-draggable="{index: {{$index}}, onStop : 'onStop(pricetag)'}" 
 				 	  data-drag="true" class="button pricetag"
 				 	  catalog-pricetag-position
-				 	  ng-repeat="pricetag in catalog_image.pricetags track by $index">
+				 	  ng-repeat="pricetag in catalog_image.pricetags track by $index"
+				 	  ng-hide="pricetag._state == 'deleted">
 				 	<a href="javascript:;">{{pricetag.value}}</a>
 				 </div>
 				 

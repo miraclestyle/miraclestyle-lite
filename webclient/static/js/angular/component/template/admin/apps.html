@@ -14,7 +14,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="app in search.entities track by $index">
+				<tr ng-repeat="app in search.entities track by $index" ng-hide="app._state == 'deleted">
 					<td>{{app.id}}</td>
 					<td>{{app.name}}</td>
 					<td>{{app|output:'created'}}</td>
