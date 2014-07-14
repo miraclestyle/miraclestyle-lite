@@ -56,7 +56,7 @@ class GlobalRole(Role):
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
   def _update_blobs(self):
-    if self.has_value() and isinstance(self._property, _BaseImageProperty): # and if checks is this an actual image prop
+    if self.has_value() and isinstance(self._property, _BaseImageProperty):
       if self._property._repeated:
         entities = self._property_value
       else:
@@ -92,7 +92,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-          if isinstance(self._property, _BaseImageProperty): # if checks is this an actual image prop
+          if isinstance(self._property, _BaseImageProperty):
             self._property.delete_blobs_on_success(entity.image)
         ndb.delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
@@ -104,7 +104,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._copy_record_arguments(entity)
-    if isinstance(self._property, _BaseImageProperty): # if this is base image property
+    if isinstance(self._property, _BaseImageProperty):
       self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
   
@@ -114,14 +114,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     
     '''
     super(SuperStructuredPropertyImageManager, self).duplicate()
-    entities = self._property_value
-    
-    if not isinstance(self._property, _BaseImageProperty):
-      return entities # nothing to duplicate more because this property is not image-like
-    
-    if not self._property._repeated:
-      entities = [entities]
-    
     @ndb.tasklet
     def async(entity):
       gs_object_name = entity.gs_object_name
@@ -149,19 +141,23 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       out = yield map(async, entities)
       raise ndb.Return(out)
     
-    mapper(entities).get_result()
+    if isinstance(self._property, _BaseImageProperty):
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      mapper(entities).get_result()
     return self._property_value
   
   def _process_deep(self):
-    if self.has_value() and not self.has_future(): # in case has value is a future we cannot proceed. All must be already loaded
+    if self.has_value() and not self.has_future():  # In case value is a future we cannot proceed. Everything must be already loaded!
       entities = self._property_value
       if not self._property._repeated:
         entities = [entities]
       for entity in entities:
         for field_key, field in entity.get_fields().items():
           if field._structured:
-            value = getattr(entity, field_key)
-            value.process() # re-loop if any
+            value = getattr(entity, field_key)  # @todo Do we need 'if isinstance(value, _BaseImageProperty):' block here?
+            value.process()  # Re-loop if any
   
   def process(self):
     '''This function should be called inside a taskqueue.
@@ -169,8 +165,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     Resizing, cropping, and generation of serving url in the end.
     
     '''
-    if self.has_value() and not self.has_future(): # in case has value is a future we cannot proceed. All must be already loaded
-      # the process will not be called on non-loaded entities
+    if self.has_value() and not self.has_future():  # In case value is a future we cannot proceed. Everything must be already loaded!
       if isinstance(self._property, _BaseImageProperty):
         if self._property._repeated:
           processed_entities = map(self._property.process, self.value)
