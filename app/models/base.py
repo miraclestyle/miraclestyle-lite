@@ -56,7 +56,7 @@ class GlobalRole(Role):
 class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   
   def _update_blobs(self):
-    if self.has_value():
+    if self.has_value() and isinstance(self._property, _BaseImageProperty): # and if checks is this an actual image prop
       if self._property._repeated:
         entities = self._property_value
       else:
@@ -92,7 +92,8 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       if len(_entities):
         for entity in _entities:
           self._copy_record_arguments(entity)
-          self._property.delete_blobs_on_success(entity.image)
+          if isinstance(self._property, _BaseImageProperty): # if checks is this an actual image prop
+            self._property.delete_blobs_on_success(entity.image)
         ndb.delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
@@ -103,7 +104,8 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._copy_record_arguments(entity)
-    self._property.delete_blobs_on_success(entity.image)
+    if isinstance(self._property, _BaseImageProperty): # if this is base image property
+      self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
   
   def duplicate(self):
@@ -113,6 +115,10 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     '''
     super(SuperStructuredPropertyImageManager, self).duplicate()
     entities = self._property_value
+    
+    if not isinstance(self._property, _BaseImageProperty):
+      return entities # nothing to duplicate more because this property is not image-like
+    
     if not self._property._repeated:
       entities = [entities]
     
@@ -146,20 +152,33 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     mapper(entities).get_result()
     return self._property_value
   
+  def _process_deep(self):
+    if self.has_value() and not self.has_future(): # in case has value is a future we cannot proceed. All must be already loaded
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      for entity in entities:
+        for field_key, field in entity.get_fields().items():
+          if field._structured:
+            value = getattr(entity, field_key)
+            value.process() # re-loop if any
+  
   def process(self):
     '''This function should be called inside a taskqueue.
     It will perform all needed operations based on the property configuration on how to process its images.
     Resizing, cropping, and generation of serving url in the end.
     
     '''
-    if not self.has_value():
-      raise ndb.PropertyError('Cannot call %s.process() because read() was not called beforehand.' % self)
-    if self._property._repeated:
-      processed_entities = map(self._property.process, self.value)
-      setattr(self._entity, self.property_name, processed_entities)
-    else:
-      processed_entity = self._property.process(self.value)
-      setattr(self._entity, self.property_name, processed_entity)
+    if self.has_value() and not self.has_future(): # in case has value is a future we cannot proceed. All must be already loaded
+      # the process will not be called on non-loaded entities
+      if isinstance(self._property, _BaseImageProperty):
+        if self._property._repeated:
+          processed_entities = map(self._property.process, self.value)
+          setattr(self._entity, self.property_name, processed_entities)
+        else:
+          processed_entity = self._property.process(self.value)
+          setattr(self._entity, self.property_name, processed_entity)
+      self._process_deep()
 
 
 class _BaseBlobProperty(object):

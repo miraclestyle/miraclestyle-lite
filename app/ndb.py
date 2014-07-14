@@ -853,31 +853,43 @@ class _BaseModel(object):
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
-  def read(self, input=None):  # @todo We need to standardize method arguments here!! And why we obtain results here? What's the point of async implementation in that respect?
+  def read(self):  # @todo We need to standardize method arguments here!! And why we obtain results here? What's the point of async implementation in that respect?
     '''This method loads all sub-entities in async-mode, based on input details.
     
+    '''
+    read_arguments = self._read_arguments # @todo decide if this should be called like this then
+    '''
+    Read arguments dict looks like this:
+    read_arguments = {'_images' : {
+        # @todo what to name the key for actual arguments, i put config for now
+        config : {'cursor' : 0, 'other_config' : [...]}
+        _contents: {
+        
+           config : {'cursor' : 10, ....},
+           _other_field_name : {....}
+        }
+    },
+     
+    }
     '''
     futures = []
     for field_key, field in self.get_fields().items():
       if field._structured:
         value = getattr(self, field_key)
-        kwargs = {}
-        if input is not None:
-          entities = input.get(field_key)
-          if entities:
-            kwargs['entities'] = entities
-          else:  # Entities is not provided, use read_options from the input if any to determine cursor.
-            read_options = input.get('read_options')
-            if read_options:
-              read_options = read_options.get(field_key)
-              if read_options:
-                kwargs = read_options
+        new_read_arguments = {}
+        if read_arguments is not None:
+          root_read_arguments = read_arguments.get(field_key)
+          if root_read_arguments:
+            new_read_arguments = root_read_arguments
         # Otherwise we will just retrieve entities without any configurations
-        value.read_async(**kwargs)
+        value.read_async(new_read_arguments) 
+        # i dont think these should be keyword arguments because read_arguments is a dictionary that will get
+        # passed around as it goes from funciton to funciton, so in that case its maybe better to not use keyword arguments
+        # since this just 1 argument approach is maybe faster
         if value.has_future():
-          futures.append(value)  # If we encounter a future, pack it for further use.
-    for future in futures:
-      future.read(**kwargs)  # Enforce get_result call now because if we don't the .value will be instances of Future.
+          futures.append((value, new_read_arguments))  # If we encounter a future, pack it for further use.
+    for future, new_read_arguments in futures:
+      future.read(new_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
     self.make_original()  # Finalize original before touching anything.
   
   def write(self, **record_arguments):
@@ -1239,7 +1251,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       record_arguments['agent'] = entity_record_arguments.get('agent')
       entity._record_arguments = record_arguments
   
-  def _read_local(self, **kwds):
+  def _read_local(self, read_arguments):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
     
     '''
@@ -1255,7 +1267,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         property_value = []
     self._property_value = property_value
   
-  def _read_remote_single(self, **kwds):
+  def _read_remote_single(self, read_arguments):
     '''Remote single storage always follows the same pattern,
     it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
     
@@ -1266,11 +1278,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       property_value = self._property._modelclass(key=property_value_key)
     self._property_value = property_value
   
-  def _read_remote_multi(self, **kwds):
-    urlsafe_cursor = kwds.get('cursor')
-    limit = kwds.get('limit', 10)
-    order = kwds.get('order')
-    supplied_entities = kwds.get('entities')
+  def _read_remote_multi(self, read_arguments):
+    config = read_arguments.get('config')
+    urlsafe_cursor = config.get('cursor')
+    limit = config.get('limit', 10)
+    order = config.get('order')
+    supplied_entities = config.get('entities')
     if supplied_entities:
       entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None])
       entities = [entity for entity in entities if entity is not None]
@@ -1292,16 +1305,17 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  def _read_remote_multi_sequenced(self, **kwds):
+  def _read_remote_multi_sequenced(self, read_arguments):
     '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
     It then uses those keys for retreving, storing and deleting entities of those keys.
     This technique has lowest impact on data storage and retreval, and should be used whenever possible!
     
     '''
-    cursor = kwds.get('cursor', 0)
-    limit = kwds.get('limit', 10)
+    config = read_arguments.get('config')
+    cursor = config.get('cursor', 0)
+    limit = config.get('limit', 10)
     entities = []
-    supplied_entities = kwds.get('entities')
+    supplied_entities = config.get('entities')
     if supplied_entities:
       entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None])
       entities = [entity for entity in entities if entity is not None]
@@ -1314,7 +1328,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  def _read_deep(self, **kwargs):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+  def _read_deep(self, read_arguments):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
     
@@ -1328,28 +1342,30 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         for field_key, field in entity.get_fields().items():
           if field._structured:
             value = getattr(entity, field_key)
-            value.read_async(**kwargs)
+            new_read_arguments = read_arguments.get(field_key, {})
+            value.read_async(new_read_arguments)
             if value.has_future():
-              futures.append(value)
-      for future in futures:
-        future.read(**kwargs)
+              futures.append((value, new_read_arguments))
+      for future, new_read_arguments in futures:
+        future.read(new_read_arguments) # again enforce read and re-loop if any
   
-  def read_async(self, **kwds):
+  def read_async(self, read_arguments):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
     However we are not sure if we are gonna need to force read operation.
     
     '''
+    config = read_arguments.get('config')
     if self._property._readable:
-      if (not self.has_value()) or kwds.get('force_read'):
+      if (not self.has_value()) or config.get('force_read'):
         # read_local must be called multiple times because it gets loaded between from_pb and post_get.
         read_function = getattr(self, '_read_%s' % self.storage_type)
-        read_function(**kwds)
+        read_function(read_arguments)
       return self._property_value
   
-  def read(self, **kwds):
+  def read(self, read_arguments):
     if self._property._readable:
-      self.read_async(**kwds)
+      self.read_async(read_arguments)
       if self.has_future():
         property_value = []
         if isinstance(self._property_value, list):
@@ -1371,7 +1387,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
-      self._read_deep(**kwds)  # @todo not sure if this indentation is correct!?
+      self._read_deep(read_arguments)  # line is aligned with if has future, so the _read_deep must be called anyways
       return self._property_value
   
   def _pre_update_local(self):
@@ -1696,7 +1712,8 @@ class _BaseProperty(object):
       return self._property_value_filter(value)
   
   @property
-  def _structured(self):  # @todo Not sure if this is ok!?
+  def _structured(self):  # @todo Not sure if this is ok!?, it is but the def _structured should not be called _structured, because its not something that gets changed
+    # this should be called is_structured
     return False
 
 
