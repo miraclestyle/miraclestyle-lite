@@ -155,7 +155,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         entities = [entities]
       for entity in entities:
         for field_key, field in entity.get_fields().items():
-          if field._structured:
+          if field.is_structured:
             value = getattr(entity, field_key)  # @todo Do we need 'if isinstance(value, _BaseImageProperty):' block here?
             value.process()  # Re-loop if any
   

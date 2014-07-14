@@ -204,6 +204,50 @@ class _BaseModel(object):
   '''This is base class for all model types in the application.
   Every ndb model will always evaluate True on isinstance(entity, _BaseModel).
   
+  According to old appengine db docs,
+  (https://developers.google.com/appengine/docs/python/datastore/modelclass#Disallowed_Property_Names)
+  the following attribute names are reserved by the Model class in the Python API:
+  
+  all
+  app
+  copy
+  delete
+  entity
+  entity_type
+  fields
+  from_entity
+  get
+  gql
+  instance_properties
+  is_saved
+  key
+  key_name
+  kind
+  parent
+  parent_key
+  properties
+  put
+  setdefault
+  to_xml
+  update
+  
+  On top of the previous list, the following attribute names are reserved by the _BaseModel class:
+  _state
+  _use_record_engine
+  _use_rule_engine
+  _kind
+  _expando_fields
+  _virtual_fields
+  _global_role
+  _actions
+  executable
+  writable
+  visible
+  searchable
+  _record_arguments
+  _read_arguments
+  ........ to be continued...
+  
   '''
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
@@ -386,7 +430,7 @@ class _BaseModel(object):
   
   def _post_put_hook(self, future):
     entity = self
-    entity.record_write()
+    entity.record()
     for field in entity.get_fields():
       value = getattr(entity, field)
       if isinstance(value, SuperPropertyManager):
@@ -396,11 +440,11 @@ class _BaseModel(object):
   def _pre_delete_hook(cls, key):
     if key:
       entity = key.get()
-      entity.record_write()
+      entity.record()
       @toplevel
       def delete_async():
         for field_key, field in entity.get_fields().items():
-          if field._structured:
+          if field.is_structured:
             manager = getattr(entity, field_key, None)
             if isinstance(manager, SuperPropertyManager):
               manager.delete()
@@ -601,7 +645,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if field._structured:
+      if field.is_structured:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -635,7 +679,7 @@ class _BaseModel(object):
     '''
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      if not field._structured:
+      if not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
             #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
@@ -719,7 +763,7 @@ class _BaseModel(object):
     for field_key, field in fields.items():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-      if field._structured:
+      if field.is_structured:
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)  # @todo Test this behavior!
@@ -843,7 +887,7 @@ class _BaseModel(object):
     self.add_output('_field_permissions')
   
   @toplevel  # @todo Not sure if this is ok?
-  def record_write(self):
+  def record(self):
     if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
       if self._record_arguments and self._record_arguments.get('agent') and self._record_arguments.get('action'):
         log_entity = self._record_arguments.pop('log_entity', True)
@@ -853,43 +897,33 @@ class _BaseModel(object):
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
-  def read(self):  # @todo We need to standardize method arguments here!! And why we obtain results here? What's the point of async implementation in that respect?
+  def read(self):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
+    It's behaviour is controlled by 'self._read_arguments' dictioary!
+    'self._read_arguments' follows this pattern:
+    {'_some_field':
+       {'config': {'cursor': 0, 'some_other_config': [....]}, '_some_child_field': {''}},
+     '_another_field':
+       {'config': {'cursor': 0, 'some_other_config': [....]}, '_some_child_field': {''}}
+     }
+    'config' keyword be revised once we map all protected fields used in _BaseModel.
     
     '''
-    read_arguments = self._read_arguments # @todo decide if this should be called like this then
-    '''
-    Read arguments dict looks like this:
-    read_arguments = {'_images' : {
-        # @todo what to name the key for actual arguments, i put config for now
-        config : {'cursor' : 0, 'other_config' : [...]}
-        _contents: {
-        
-           config : {'cursor' : 10, ....},
-           _other_field_name : {....}
-        }
-    },
-     
-    }
-    '''
+    read_arguments = getattr(self, '_read_arguments', {})  # We use getattr to accomodate alternative value for read_arguments (empty dict)!
     futures = []
     for field_key, field in self.get_fields().items():
-      if field._structured:
+      if field.is_structured:
         value = getattr(self, field_key)
-        new_read_arguments = {}
-        if read_arguments is not None:
-          root_read_arguments = read_arguments.get(field_key)
-          if root_read_arguments:
-            new_read_arguments = root_read_arguments
+        field_read_arguments = read_arguments.get(field_key, {})
         # Otherwise we will just retrieve entities without any configurations
-        value.read_async(new_read_arguments) 
-        # i dont think these should be keyword arguments because read_arguments is a dictionary that will get
-        # passed around as it goes from funciton to funciton, so in that case its maybe better to not use keyword arguments
-        # since this just 1 argument approach is maybe faster
+        value.read_async(field_read_arguments)
+        # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
+        # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
+        # since this just 1 argument approach is perhaps faster.
         if value.has_future():
-          futures.append((value, new_read_arguments))  # If we encounter a future, pack it for further use.
-    for future, new_read_arguments in futures:
-      future.read(new_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
+          futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
+    for future, field_read_arguments in futures:
+      future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
     self.make_original()  # Finalize original before touching anything.
   
   def write(self, **record_arguments):
@@ -949,7 +983,7 @@ class _BaseModel(object):
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().items():
-      if field._structured:
+      if field.is_structured:
         value = getattr(new_entity, field_key, None)
         if value:
            value.duplicate() # call duplicate for every structured field
@@ -1340,14 +1374,14 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       futures = []
       for entity in entities:
         for field_key, field in entity.get_fields().items():
-          if field._structured:
+          if field.is_structured:
             value = getattr(entity, field_key)
-            new_read_arguments = read_arguments.get(field_key, {})
-            value.read_async(new_read_arguments)
+            field_read_arguments = read_arguments.get(field_key, {})
+            value.read_async(field_read_arguments)
             if value.has_future():
-              futures.append((value, new_read_arguments))
-      for future, new_read_arguments in futures:
-        future.read(new_read_arguments) # again enforce read and re-loop if any
+              futures.append((value, field_read_arguments))
+      for future, field_read_arguments in futures:
+        future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
   
   def read_async(self, read_arguments):
     '''Calls storage type specific read function, in order populate _property_value with values.
@@ -1387,7 +1421,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
-      self._read_deep(read_arguments)  # line is aligned with if has future, so the _read_deep must be called anyways
+      self._read_deep(read_arguments)
       return self._property_value
   
   def _pre_update_local(self):
@@ -1672,7 +1706,7 @@ class _BaseProperty(object):
            'choices': choices,
            'default': self._default,
            'repeated': self._repeated,
-           'structured': self._structured,  # @todo Not sure if this is ok!?
+           'structured': self.is_structured,  # @todo Not sure if this is ok!?
            'type': self.__class__.__name__}
     return dic
   
@@ -1712,8 +1746,7 @@ class _BaseProperty(object):
       return self._property_value_filter(value)
   
   @property
-  def _structured(self):  # @todo Not sure if this is ok!?, it is but the def _structured should not be called _structured, because its not something that gets changed
-    # this should be called is_structured
+  def is_structured(self):
     return False
 
 
@@ -1810,7 +1843,7 @@ class _BaseStructuredProperty(_BaseProperty):
     return out
   
   @property
-  def _structured(self):
+  def is_structured(self):
     return True
 
 
