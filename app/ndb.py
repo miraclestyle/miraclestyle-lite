@@ -1030,9 +1030,9 @@ class _BaseModel(object):
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
       dic['namespace'] = self.key.namespace()
+      dic['parent'] = {}
       if self.key.parent():
         parent = self.key.parent()
-        dic['parent'] = {}
         parent_dic = dic['parent']
         while True:
           if not parent:
