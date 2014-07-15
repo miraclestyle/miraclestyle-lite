@@ -34,7 +34,7 @@ class ProcessCatalogs(ndb.BaseModel):
       data = {'action_id': 'cron',
               'action_model': '35',
               'domain': key.urlsafe()}
-      context.callbacks.append(('callback', data))
+      context._callbacks.append(('callback', data))
     config.data['current_cursor'] = cursor
     config.data['current_more'] = more
     config.put()

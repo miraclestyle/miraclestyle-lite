@@ -31,6 +31,7 @@ class Context(ndb.BaseModel):
     if domain_key:
       context.domain = domain_key.get()
       context.namespace = context.domain.key_namespace
+    context._callbacks = []  # @todo For now this stays here!
 
 
 class Set(ndb.BaseModel):
@@ -153,12 +154,6 @@ class ProcessImages(ndb.BaseModel):
             value.process()
 
 
-class ActionDenied(Exception):
-  
-  def __init__(self, context):
-    self.message = {'action_denied': context.action}
-
-
 class RulePrepare(ndb.BaseModel):
   
   cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -187,14 +182,10 @@ class RuleExec(ndb.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    action_path = self.cfg.get('action', 'action.key_urlsafe')
+    action_path = self.cfg.get('action', 'action')
     entity = get_attr(context, entity_path)
     action = get_attr(context, action_path)
-    if entity and hasattr(entity, '_action_permissions'):
-      if not entity._action_permissions[action]['executable']:
-        raise ActionDenied(context)
-    else:
-      raise ActionDenied(context)
+    rule_exec(entity, action)
 
 
 class Search(ndb.BaseModel):

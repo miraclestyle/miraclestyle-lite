@@ -36,6 +36,12 @@ ctx.set_memcache_policy(False)
 #############################################
 
 
+class ActionDenied(Exception):
+  
+  def __init__(self, action):
+    self.message = {'action_denied': action}
+
+
 class TerminateAction(Exception):
   pass
 
@@ -1044,7 +1050,6 @@ class _BaseModel(object):
           parent = parent.parent()
           parent_dic['parent'] = {}
           parent_dic = parent_dic['parent']
-           
     names = self._output
     for name in names:
       value = getattr(self, name, None)

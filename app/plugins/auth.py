@@ -45,20 +45,16 @@ class OAuth2Error(Exception):
     self.message = {'oauth2_error': error}
 
 
-class UserLoginPrepare(ndb.BaseModel):
-  
-  def run(self, context):
-    User = context.models['0']
-    context.entities['0'] = User.current_user()
-    context.user = User.current_user()
-
-
 class UserLoginOAuth(ndb.BaseModel):
   
   login_methods = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    User = context.models['0']
+    context._user = context.model.current_user()
+    context.user = context.model.current_user()
+    kwargs = {'user': context.user, 'action': context.action}
+    rule_prepare(context._user, True, False, **kwargs)
+    rule_exec(context._user, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -81,48 +77,48 @@ class UserLoginOAuth(ndb.BaseModel):
       info = client.resource_request(url=userinfo)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
-        context.tmp['identity_id'] = '%s-%s' % (info['id'], identity)
-        context.tmp['email'] = info['email']
-        user = User.query(User.identities.identity == context.tmp['identity_id']).get()
+        context._identity_id = '%s-%s' % (info['id'], identity)
+        context._email = info['email']
+        user = context.model.query(User.identities.identity == context._identity_id).get()
         if not user:
-          user = User.query(User.emails == context.tmp['email']).get()
+          user = context.model.query(User.emails == context._email).get()
         if user:
-          context.entities['0'] = user
+          context._user = user
           context.user = user
 
 
 class UserLoginUpdate(ndb.BaseModel):
   
   def run(self, context):
-    if context.tmp.get('identity_id') != None:
+    if context._identity_id != None:
       User = context.models['0']
       Identity = context.models['64']
-      entity = context.entities['0']
+      Session = context.models['70']
+      entity = context._user
       if entity._is_guest:
         entity = User()
-        entity.emails.append(context.tmp['email'])
-        entity.identities.append(Identity(identity=context.tmp['identity_id'], email=context.tmp['email'], primary=True))
+        entity.emails.append(context._email)
+        entity.identities.append(Identity(identity=context._identity_id, email=context._email, primary=True))
         entity.state = 'active'
-        session = new_session(context.models['70'], entity)
+        session = new_session(Session, entity)
         entity._use_rule_engine = False
-        entity.put()
+        entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       else:
-        if context.tmp['email'] not in entity.emails:
-          entity.emails.append(context.tmp['email'])
-        used_identity = has_identity(entity, context.tmp['identity_id'])
+        if context._email not in entity.emails:
+          entity.emails.append(context._email)
+        used_identity = has_identity(entity, context._identity_id)
         if not used_identity:
-          entity.append(Identity(identity=context.tmp['identity_id'], email=context.tmp['email'], primary=False))
+          entity.append(Identity(identity=context._identity_id, email=context._email, primary=False))
         else:
           used_identity.associated = True
-          if used_identity.email != context.tmp['email']:
-            used_identity.email = context.tmp['email']
-        session = new_session(context.models['70'], entity)
-        entity.put()
+          if used_identity.email != context._email:
+            used_identity.email = context._email
+        session = new_session(Session, entity)
+        entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       User.set_current_user(entity, session)
-      context.entities['0'] = entity
+      context._user = entity
       context.user = entity
-      context.tmp['session'] = session
-      context.records.append((entity, {'ip_address' : context.tmp['ip_address']}))
+      context._session = session
 
 
 class UserLoginOutput(ndb.BaseModel):

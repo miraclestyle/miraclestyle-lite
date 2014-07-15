@@ -61,6 +61,14 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
   callback_exec('/task/io_engine_run', callbacks, kwargs.get('user').key_urlsafe, kwargs.get('action').key_urlsafe)  # @todo This has to be optimized!
 
 
+def rule_exec(entity, action):
+  if entity and hasattr(entity, '_action_permissions'):
+    if not entity._action_permissions[action.key_urlsafe]['executable']:
+      raise ndb.ActionDenied(action)  # @todo Do we use TerminateAction here??
+  else:
+    raise ndb.ActionDenied(action)  # @todo Do we use TerminateAction here??
+
+
 def callback_exec(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
   callbacks = normalize(callbacks)
   queues = {}
