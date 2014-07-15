@@ -12,7 +12,7 @@ from app import io, ndb, util, memcache
 from webclient import handler
 
 class Reset(handler.Angular):
-  
+ 
   def respond(self):
     
       models = io.Engine.get_schema()
@@ -64,7 +64,7 @@ class Reset(handler.Angular):
  
       
 class Endpoint(handler.Angular):
-    
+ 
     def respond(self):
         output = io.Engine.run(self.get_input())
         return output

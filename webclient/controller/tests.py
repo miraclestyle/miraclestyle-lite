@@ -43,6 +43,7 @@ class TestDeepCopyStructFar(ndb.BaseModel):
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
+  _use_cache = False
   
   what = ndb.SuperStringProperty()
     
@@ -51,6 +52,7 @@ class TestDeepCopyStruct(ndb.BaseModel):
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
+  _use_cache = False
    
   name = ndb.SuperStringProperty()
   
@@ -61,6 +63,7 @@ class TestDeepCopyStructImage(base.Image):
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
+  _use_cache = False
   
   _virtual_fields = dict(_other=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
  
@@ -70,6 +73,7 @@ class TestDeepCopyModel(ndb.BaseModel):
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
+  _use_cache = False
   
   test1 = ndb.SuperLocalStructuredProperty(TestDeepCopyStruct, repeated=True)
   test2 = ndb.SuperStructuredProperty(TestDeepCopyStruct, repeated=True)
@@ -147,6 +151,30 @@ class TestCreateURL(BaseTestHandler):
   
   def respond(self):
     self.out(blobstore.create_upload_url(self.request.get('path'), gs_bucket_name=settings.DOMAIN_LOGO_BUCKET))
+  
+class TestKeyParentModel(ndb.BaseModel):
+  
+  _use_record_engine = False
+  _use_rule_engine = False
+  _use_memcache = False
+  _use_cache = False
+  
+  name = ndb.SuperStringProperty()  
+    
+class TestKeyParent(BaseTestHandler):
+  
+  def respond(self):
+    root = TestKeyParentModel(name='Root', id='root')
+    child1 = TestKeyParentModel(name='Child #1', id='child1', parent=root.key)
+    child2 = TestKeyParentModel(name='Child #2', id='child2', parent=child1.key)
+    entity = TestKeyParentModel(name='Child #3', parent=child2.key, id='child3')
+    
+    if self.request.get('put'):
+      ndb.put_multi([root, child1, child2, entity])
+    else:
+      entity = entity.key.get()
+    
+    self.out_json(entity)
      
     
 for k,o in globals().items():

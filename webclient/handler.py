@@ -5,7 +5,6 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import os
-import cgi
 import json
 import webapp2
 import importlib
@@ -13,7 +12,7 @@ import importlib
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
-from app import settings, util, memcache
+from app import ndb, settings, util, memcache
 
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
@@ -223,7 +222,6 @@ class Base(webapp2.RequestHandler):
         """
         This function is fired just before the handler, usefull for setting variables
         """
-        #time.sleep(3) # emulate slowness
         pass
     
     
@@ -231,18 +229,16 @@ class Base(webapp2.RequestHandler):
         """
         This function is fired just after the handler is executed
         """
-        #time.sleep(1) # emulate slowness
         pass
     
-    
+    @ndb.toplevel
     def get(self, *args, **kwargs):
         return self.respond(*args, **kwargs)
         
-        
+    @ndb.toplevel    
     def post(self, *args, **kwargs):
         return self.respond(*args, **kwargs)
-        
-        
+         
     def respond(self, *args, **kwargs):
         self.abort(404)
         self.response.write('<h1>404 Not found</h1>')

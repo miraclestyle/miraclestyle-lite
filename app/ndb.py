@@ -441,7 +441,6 @@ class _BaseModel(object):
     if key:
       entity = key.get()
       entity.record()
-      @toplevel
       def delete_async():
         for field_key, field in entity.get_fields().items():
           if field.is_structured:
@@ -886,7 +885,6 @@ class _BaseModel(object):
     self.add_output('_action_permissions')
     self.add_output('_field_permissions')
   
-  @toplevel  # @todo Not sure if this is ok?
   def record(self):
     if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
       if self._record_arguments and self._record_arguments.get('agent') and self._record_arguments.get('action'):
@@ -1032,6 +1030,22 @@ class _BaseModel(object):
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
+      dic['namespace'] = self.key.namespace()
+      if self.key.parent():
+        parent = self.key.parent()
+        dic['parent'] = {}
+        parent_dic = dic['parent']
+        while True:
+          if not parent:
+            break
+          parent_dic['kind'] = parent.kind()
+          parent_dic['key'] = parent.urlsafe()
+          parent_dic['id'] = parent.id()
+          parent_dic['namespace'] = parent.namespace()
+          parent = parent.parent()
+          parent_dic['parent'] = {}
+          parent_dic = parent_dic['parent']
+           
     names = self._output
     for name in names:
       value = getattr(self, name, None)
