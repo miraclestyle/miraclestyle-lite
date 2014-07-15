@@ -96,7 +96,7 @@ class Write(ndb.BaseModel):
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model):
-      record_arguments = {'agent': context.user, 'action': context.action}
+      record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         record_arguments[key] = get_attr(context, value)
@@ -115,7 +115,7 @@ class Delete(ndb.BaseModel):
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model):
-      record_arguments = {'agent': context.user, 'action': context.action}
+      record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         record_arguments[key] = get_attr(context, value)

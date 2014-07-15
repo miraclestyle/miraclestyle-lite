@@ -32,6 +32,7 @@ def new_session(model, entity):
   entity.sessions.append(session)
   return session
 
+
 def has_identity(entity, identity_id):
   for identity in entity.identities:
     if identity.identity == identity_id:
@@ -45,7 +46,7 @@ class OAuth2Error(Exception):
     self.message = {'oauth2_error': error}
 
 
-class UserLoginOAuth(ndb.BaseModel):
+class UserLoginInit(ndb.BaseModel):
   
   login_methods = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -79,15 +80,18 @@ class UserLoginOAuth(ndb.BaseModel):
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
         context._email = info['email']
-        user = context.model.query(User.identities.identity == context._identity_id).get()
+        user = context.model.query(context.model.identities.identity == context._identity_id).get()
         if not user:
-          user = context.model.query(User.emails == context._email).get()
+          user = context.model.query(context.model.emails == context._email).get()
         if user:
           context._user = user
           context.user = user
+    kwargs = {'user': context.user, 'action': context.action}
+    rule_prepare(context._user, True, False, **kwargs)
+    rule_exec(context._user, context.action)
 
 
-class UserLoginUpdate(ndb.BaseModel):
+class UserLoginWrite(ndb.BaseModel):
   
   def run(self, context):
     if context._identity_id != None:
@@ -96,78 +100,50 @@ class UserLoginUpdate(ndb.BaseModel):
       Session = context.models['70']
       entity = context._user
       if entity._is_guest:
-        entity = User()
+        entity = context.model()
         entity.emails.append(context._email)
         entity.identities.append(Identity(identity=context._identity_id, email=context._email, primary=True))
         entity.state = 'active'
         session = new_session(Session, entity)
+        # Right now this is the only way to record this entity.
         entity._use_rule_engine = False
-        entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
+        entity.write({})
+        entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
+        entity.record()
       else:
         if context._email not in entity.emails:
           entity.emails.append(context._email)
         used_identity = has_identity(entity, context._identity_id)
         if not used_identity:
-          entity.append(Identity(identity=context._identity_id, email=context._email, primary=False))
+          entity.identities.append(Identity(identity=context._identity_id, email=context._email, primary=False))
         else:
           used_identity.associated = True
           if used_identity.email != context._email:
             used_identity.email = context._email
         session = new_session(Session, entity)
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
-      User.set_current_user(entity, session)
+      context.model.set_current_user(entity, session)
       context._user = entity
       context.user = entity
       context._session = session
-
-
-class UserLoginOutput(ndb.BaseModel):
-  
-  def run(self, context):
-    context.output['entity'] = context.entities['0']
-    if not context.entities['0']._is_guest:
-      context.output['authorization_code'] = '%s|%s' % (context.entities['0'].key.urlsafe(), context.tmp['session'].session_id)
+    context.output['entity'] = context._user
+    if not context._user._is_guest:
+      context.output['authorization_code'] = '%s|%s' % (context._user.key.urlsafe(), context._session.session_id)
 
 
 class UserLogoutOutput(ndb.BaseModel):
   
   def run(self, context):
-    context.entities['0'].set_current_user(None, None)
-    context.output['entity'] = context.entities['0'].current_user()
+    context._user.set_current_user(None, None)
+    context.output['entity'] = context._user.current_user()
 
 
-# @todo To be removed, once we figure out how to virtualize properties.
-class UserReadDomains(ndb.BaseModel):
-  
-  def run(self, context):
-    context.tmp['domains'] = []
-    context.tmp['domain_users'] = []
-    if context.user.domains:
-      
-      @ndb.tasklet
-      def async(domain):
-        if domain:
-          # Rule engine cannot run in tasklets because the context.rule.entity gets in wrong places for some reason... which
-          # also causes rule engine to not work properly with _action_permissions, this i could not debug because it is impossible to determine what is going on in iterator
-          domain_user_key = ndb.Key('8', context.user.key_id_str, namespace=domain.key_namespace)
-          domain_user = yield domain_user_key.get_async()
-        raise ndb.Return(domain_user)
-      
-      @ndb.tasklet
-      def helper(domains):
-        domain_users = yield map(async, domains)
-        raise ndb.Return(domain_users)
-      
-      context.tmp['domains'] = ndb.get_multi(context.user.domains)
-      context.tmp['domain_users'] = helper(context.tmp['domains']).get_result()
-
-
-class UserUpdate(ndb.BaseModel):
+class UserUpdateSet(ndb.BaseModel):
   
   def run(self, context):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
-    for identity in context.entities['0'].identities:
+    for identity in context._user.identities:
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
@@ -185,4 +161,4 @@ class DomainCreate(ndb.BaseModel):
     Configuration = context.models['57']
     config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
     config.put()
-    context.entities[config.get_kind()] = config
+    context._config = config
