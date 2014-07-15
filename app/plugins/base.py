@@ -68,7 +68,7 @@ class Read(ndb.BaseModel):
       namespace = None
     if source and isinstance(source, ndb.Key):
       entity = source.get()
-      entity.read(context.input)
+      entity.read(context.input.get('read_arguments', {}))
     elif hasattr(model, 'prepare_key'):
       model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
       entity = model_key.get()
@@ -76,7 +76,7 @@ class Read(ndb.BaseModel):
         entity = model()
         entity.set_key(model_key)
       else:
-        entity.read(context.input)
+        entity.read(context.input.get('read_arguments', {}))
     else:
       entity = model()
       entity.set_key(parent=parent, namespace=namespace)
@@ -99,7 +99,7 @@ class Write(ndb.BaseModel):
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         record_arguments[key] = get_attr(context, value)
-      entity.write(**record_arguments)
+      entity.write(record_arguments)
 
 
 class Delete(ndb.BaseModel):
@@ -118,7 +118,7 @@ class Delete(ndb.BaseModel):
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
         record_arguments[key] = get_attr(context, value)
-      entity.delete(**record_arguments)
+      entity.delete(record_arguments)
 
 
 class Duplicate(ndb.BaseModel):
@@ -147,8 +147,10 @@ class ProcessImages(ndb.BaseModel):
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, ndb.Model):
       for field_key, field in entity.get_fields().items():
-        if field.is_structured and hasattr(field, 'process') and callable(field.process):
-          field.process()
+        if field.is_structured:
+          value = getattr(self, field_key)
+          if hasattr(value, 'process') and callable(value.process):
+            value.process()
 
 
 class ActionDenied(Exception):
