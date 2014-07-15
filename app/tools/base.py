@@ -15,6 +15,7 @@ from google.appengine.ext import blobstore
 from app import ndb, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
+
 def _rule_get_global_permissions(entity):
   global_permissions = []
   if entity and isinstance(entity, ndb.Model):

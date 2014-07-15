@@ -897,10 +897,10 @@ class _BaseModel(object):
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
   
-  def read(self):  # @todo Find a way to minimize synchronous reads here!
+  def read(self, read_arguments):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
-    It's behaviour is controlled by 'self._read_arguments' dictioary!
-    'self._read_arguments' follows this pattern:
+    It's behaviour is controlled by 'read_arguments' dictioary argument!
+    'read_arguments' follows this pattern:
     {'_some_field':
        {'config': {'cursor': 0, 'some_other_config': [....]}, '_some_child_field': {''}},
      '_another_field':
@@ -909,7 +909,6 @@ class _BaseModel(object):
     'config' keyword be revised once we map all protected fields used in _BaseModel.
     
     '''
-    read_arguments = getattr(self, '_read_arguments', {})  # We use getattr to accomodate alternative value for read_arguments (empty dict)!
     futures = []
     for field_key, field in self.get_fields().items():
       if field.is_structured:
@@ -926,11 +925,11 @@ class _BaseModel(object):
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
     self.make_original()  # Finalize original before touching anything.
   
-  def write(self, **record_arguments):
+  def write(self, record_arguments):
     self._record_arguments = record_arguments
     self.put()
   
-  def delete(self, **record_arguments):
+  def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
