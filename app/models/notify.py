@@ -39,15 +39,17 @@ class CustomTemplate(Template):
   message_body = ndb.SuperTextProperty('3', required=True)
   outlet = ndb.SuperStringProperty('4', required=True, default='send_mail', indexed=False)
   
-  def run(self, context):
-    template_values = {'entity': context.tmp['caller_entity']}
+  def run(self, **kwargs):
+    callbacks = []
+    template_values = {'entity': kwargs['caller_entity']}
     data = {'action_id': self.outlet,
             'action_model': '61',
-            'recipient': self.message_recievers(context.tmp['caller_entity'], context.tmp['caller_user']),
+            'recipient': self.message_recievers(kwargs['caller_entity'], kwargs['caller_user']),
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
-            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-    context.callbacks.append(('send', data))
+            'caller_entity': kwargs['caller_entity'].key.urlsafe()}
+    callbacks.append(('send', data))
+    return callbacks
 
 
 class MailTemplate(Template):
@@ -58,18 +60,19 @@ class MailTemplate(Template):
   message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
   message_body = ndb.SuperTextProperty('3', required=True)
   
-  def run(self, context):
-    DomainUser = context.models['8']
+  def run(self, **kwargs):
+    callbacks = []
+    DomainUser = kwargs['models']['DomainUser']
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
     recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
-    template_values = {'entity': context.tmp['caller_entity']}
+    template_values = {'entity': kwargs['caller_entity']}
     data = {'action_id': 'send_mail',
             'action_model': '61',
             'recipient': [reciever._primary_email for reciever in recievers],
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
-            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
+            'caller_entity': kwargs['caller_entity'].key.urlsafe()}
     recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
     data_copy = data.copy()
     del data_copy['recipient']
@@ -78,7 +81,8 @@ class MailTemplate(Template):
       if recipients:
         new_data = data_copy.copy()
         new_data['recipient'] = recipients
-        context.callbacks.append(('send', new_data))
+        callbacks.append(('send', new_data))
+    return callbacks
 
 
 class HttpTemplate(Template):
@@ -89,15 +93,17 @@ class HttpTemplate(Template):
   message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
   message_body = ndb.SuperTextProperty('3', required=True)
   
-  def run(self, context):
-    template_values = {'entity': context.tmp['caller_entity']}
+  def run(self, **kwargs):
+    callbacks = []
+    template_values = {'entity': kwargs['caller_entity']}
     data = {'action_id': 'send_http',
             'action_model': '61',
             'recipient': self.message_reciever,
             'body': render_template(self.message_body, template_values),
             'subject': render_template(self.message_subject, template_values),
-            'caller_entity': context.tmp['caller_entity'].key.urlsafe()}
-    context.callbacks.append(('send', data))
+            'caller_entity': kwargs['caller_entity'].key.urlsafe()}
+    callbacks.append(('send', data))
+    return callbacks
 
 
 class Notification(ndb.BaseExpando):
