@@ -29,8 +29,8 @@ class Set(ndb.BaseModel):
       for key, value in template.items():
         if key in fields:
           field = fields.get(key)
-          if hasattr(field, 'format'):
-            template[key] = field.format(value)  # Call format functions on simpleton json values.
+          if hasattr(field, 'argument_format'):
+            template[key] = field.argument_format(value)  # Call format functions on simpleton json values.
         else:
           del template[key]
       templates.append(model(**template))

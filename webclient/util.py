@@ -9,7 +9,7 @@ import os
 import json
 import datetime
 
-from app import ndb, settings
+from app import orm, settings
 from webclient import webclient_settings
 
 JINJA_FILTERS = {}
@@ -44,6 +44,8 @@ class JSONEncoderHTML(json.JSONEncoder):
     characters &, < and > should be escaped. They cannot be escaped
     with the usual entities (e.g. &amp;) because they are not expanded
     within <script> tags.
+    
+    Also its `default` function will properly format data that is usually not serialized by json standard.
     """
     
     def default(self, o):
@@ -51,7 +53,7 @@ class JSONEncoderHTML(json.JSONEncoder):
         if isinstance(o, datetime.datetime):
            return o.strftime(settings.DATETIME_FORMAT)
         
-        if isinstance(o, ndb.Key):
+        if isinstance(o, orm.Key):
            return o.urlsafe()
         
         if hasattr(o, 'get_output'):
