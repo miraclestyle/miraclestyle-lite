@@ -136,7 +136,8 @@ class Collection(ndb.BaseModel):
   
   _virtual_fields = {
     '_records': SuperLocalStructuredRecordProperty('10', repeated=True),
-    '_domains': ndb.SuperLocalStructuredProperty(auth.Domain, repeated=True)
+    '_domains' : ndb.SuperReferenceProperty(autoload=False, 
+                                            callback=lambda self: ndb.get_multi_async([domain_key for domain_key in self.domains])),
     }
   
   _global_role = GlobalRole(
