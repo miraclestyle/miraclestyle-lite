@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import time
 import datetime
 
-from app import ndb, util
+from app import orm, util
 from app.tools.base import record_write, callback_exec
 
 
@@ -43,7 +43,7 @@ class Setup():
       iterations -= 1
       runner = getattr(self, self.__get_next_operation())
       if runner:
-        ndb.transaction(runner, xg=True)
+        orm.transaction(runner, xg=True)
       time.sleep(1.5)
       if iterations < 1:
         util.logger('Stopped iteration at %s' % iterations)  # @todo Probably to be removed?!
@@ -55,7 +55,7 @@ class DomainSetup(Setup):
   @classmethod
   def create_domain_notify_message_recievers(cls, entity, user):
     primary_contact = entity.primary_contact.get()
-    user = ndb.Key('0', int(primary_contact.key_id_str)).get()
+    user = orm.Key('0', int(primary_contact.key_id_str)).get()
     return [user._primary_email]
   
   def execute_init(self):
@@ -63,7 +63,7 @@ class DomainSetup(Setup):
     self.config.next_operation = 'create_domain'
     self.config.next_operation_input = {'name': config_input.get('domain_name'),
                                         'logo': config_input.get('domain_logo')}
-    self.config.put()
+    self.config.write()
   
   def execute_create_domain(self):
     config_input = self.config.next_operation_input
@@ -72,11 +72,10 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity._use_rule_engine = False
-    entity.put()
-    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
-    self.config.put()
+    self.config.write()
   
   def execute_create_domain_role(self):
     config_input = self.config.next_operation_input
@@ -106,12 +105,11 @@ class DomainSetup(Setup):
       permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity._use_rule_engine = False
-    entity.put()
-    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_widget_step_1'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
-    self.config.put()
+    self.config.write()
   
   def execute_create_widget_step_1(self):
     config_input = self.config.next_operation_input
@@ -142,13 +140,13 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity._use_rule_engine = False
       entity.sequence = i
-    ndb.put_multi(entities)
-    record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+      entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
+    orm.put_multi(entities)
     self.config.next_operation = 'create_widget_step_2'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
                                         'sequence': i}
-    self.config.put()
+    self.config.write()
   
   def execute_create_widget_step_2(self):
     config_input = self.config.next_operation_input
@@ -173,12 +171,12 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity._use_rule_engine = False
       entity.sequence = (i+1) + sequence
-    ndb.put_multi(entities)
-    record_write(self.context.models['5'], [(entity, ) for entity in entities], self.context.user.key, self.context.action.key)
+      entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
+    orm.put_multi(entities)
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
-    self.config.put()
+    self.config.write()
   
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
@@ -190,15 +188,14 @@ class DomainSetup(Setup):
                         name='Administrator', state='accepted',
                         roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
     entity._use_rule_engine = False
-    entity.put()
+    entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     user.domains.append(domain_key)
     user._use_rule_engine = False
-    user.put()
-    record_write(self.context.models['5'], [(entity, ), (user, )], self.context.user.key, self.context.action.key)
+    user.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'add_domain_primary_contact'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'user_key': entity.key}
-    self.config.put()
+    self.config.write()
   
   def execute_add_domain_primary_contact(self):
     config_input = self.config.next_operation_input
@@ -206,37 +203,37 @@ class DomainSetup(Setup):
     entity = domain_key.get()
     entity.primary_contact = config_input.get('user_key')
     entity._use_rule_engine = False
-    entity.put()
-    record_write(self.context.models['5'], [(entity, )], self.context.user.key, self.context.action.key)
+    entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                    message_body='Your application has been created. Check your apps page (this message can be changed). Thanks.',
                                    message_recievers=self.create_domain_notify_message_recievers)
-    self.context.tmp['caller_entity'] = entity
-    self.context.tmp['caller_user'] = self.context.user
-    custom_notify.run(self.context)
-    callback_exec('/task/io_engine_run', self.context.callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
+    kwargs = {}
+    kwargs['caller_entity'] = entity
+    kwargs['caller_user'] = self.context.user
+    callbacks = custom_notify.run(**kwargs)
+    callback_exec('/task/io_engine_run', callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
     self.config.state = 'completed'
-    self.config.put()
+    self.config.write()
 
 
 register_system_setup(('setup_domain', DomainSetup))
 
 
-class Install(ndb.BaseModel):
+class Install(orm.BaseModel):
   
   def run(self, context):
-    config = context.entities['57']
+    config = context._configuration
     context.user = config.parent_entity
     SetupClass = get_system_setup(config.setup)
     setup = SetupClass(config, context)
     setup.run()
 
 
-class CronInstall(ndb.BaseModel):
+class CronInstall(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):

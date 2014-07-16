@@ -8,19 +8,19 @@ Created on May 13, 2014
 from decimal import Decimal
 from xml.etree import ElementTree
 
-from app import ndb, util
+from app import orm, util
 
 
-class CurrencyUpdate(ndb.BaseModel):
+class CurrencyUpdateWrite(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      raise ndb.TerminateAction()
+      raise orm.TerminateAction()
     Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:
@@ -85,19 +85,19 @@ class CurrencyUpdate(ndb.BaseModel):
       to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
       for entity in to_put:
         entity._use_rule_engine = False
-      ndb.put_multi(to_put)
+      orm.put_multi(to_put)
 
 
-class UnitUpdate(ndb.BaseModel):
+class UnitUpdateWrite(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      raise ndb.TerminateAction()
+      raise orm.TerminateAction()
     Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:
@@ -135,10 +135,10 @@ class UnitUpdate(ndb.BaseModel):
       to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
       for entity in to_put:
         entity._use_rule_engine = False
-      ndb.put_multi(to_put)
+      orm.put_multi(to_put)
 
 
-class RemoveCurrencies(ndb.BaseModel):
+class RemoveCurrencies(orm.BaseModel):
   
   def run(self, context):
-    context.entities = filter(lambda x: x.key.parent().id() != 'currency', context.entities)
+    context._entities = filter(lambda x: x.key.parent().id() != 'currency', context._entities)

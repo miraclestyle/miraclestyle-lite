@@ -5,7 +5,7 @@ Created on Apr 16, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb, util
+from app import orm, util
 
 
 class DomainUserError(Exception):
@@ -15,7 +15,7 @@ class DomainUserError(Exception):
 
 
 # @todo To reconsider once we implement generic set system!
-class DomainRoleSet(ndb.BaseModel):
+class DomainRoleSet(orm.BaseModel):
   
   def run(self, context):
     ActionPermission = context.models['79']
@@ -31,16 +31,16 @@ class DomainRoleSet(ndb.BaseModel):
                                            permission.get('condition')))
       elif str(permission.get('kind')) == '79':
         permissions.append(ActionPermission(permission.get('model'),
-                                            [ndb.Key(urlsafe=action_key) for action_key in permission.get('actions')],
+                                            [orm.Key(urlsafe=action_key) for action_key in permission.get('actions')],
                                             permission.get('executable'),
                                             permission.get('condition')))
 
-    context.entities['60'].name = context.input.get('name')
-    context.entities['60'].active = context.input.get('active')
-    context.entities['60'].permissions = permissions
+    context._domainrole.name = context.input.get('name')
+    context._domainrole.active = context.input.get('active')
+    context._domainrole.permissions = permissions
 
 
-class DomainUserInvite(ndb.BaseModel):
+class DomainUserInviteSet(orm.BaseModel):
   
   def run(self, context):
     User = context.models['0']
@@ -53,42 +53,42 @@ class DomainUserInvite(ndb.BaseModel):
     already_invited = context.model.build_key(user.key_id_str, namespace=context.namespace).get()
     if already_invited:
       raise DomainUserError('already_invited')
-    context.entities['8'] = context.model(id=user.key_id_str, namespace=context.namespace)
-    input_roles = ndb.get_multi(context.input.get('roles'))
+    context._domainuser = context.model(id=user.key_id_str, namespace=context.namespace)
+    input_roles = orm.get_multi(context.input.get('roles'))
     roles = []
     for role in input_roles:
       if role.key.namespace() == context.namespace:
         roles.append(role.key)
-    context.entities['8'].populate(name=context.input.get('name'), state='invited', roles=roles)
+    context._domainuser.populate(name=context.input.get('name'), state='invited', roles=roles)
     user._use_rule_engine = False
     user.domains.append(context.domain.key)
-    context.entities['0'] = user
+    context._user = user
 
 
-class DomainUserUpdate(ndb.BaseModel):
+class DomainUserUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    input_roles = ndb.get_multi(context.input.get('roles'))
+    input_roles = orm.get_multi(context.input.get('roles'))
     roles = []
     # Avoid rogue roles.
     for role in input_roles:
-      if role.key.namespace() == context.entities['8'].key_namespace:
+      if role.key.namespace() == context._domainuser.key_namespace:
         roles.append(role.key)
-    context.entities['8'].name = context.input.get('name')
-    context.entities['8'].roles = roles
+    context._domainuser.name = context.input.get('name')
+    context._domainuser.roles = roles
 
 
-class DomainUserRemove(ndb.BaseModel):
+class DomainUserRemoveSet(orm.BaseModel):
   
   def run(self, context):
-    context.entities['0']._use_rule_engine = False
-    context.entities['0'].domains.remove(ndb.Key(urlsafe=context.entities['8'].key_namespace))
+    context._user._use_rule_engine = False
+    context._user.domains.remove(orm.Key(urlsafe=context._domainuser.key_namespace))
 
 
-class DomainUserCleanRoles(ndb.BaseModel):
+class DomainUserCleanRolesSet(orm.BaseModel):
   
   def run(self, context):
-    roles = ndb.get_multi(context.entities['8'].roles)
+    roles = orm.get_multi(context._domainuser.roles)
     for role in roles:
       if role is None:
-        context.entities['8'].roles.remove(role)
+        context._domainuser.roles.remove(role)

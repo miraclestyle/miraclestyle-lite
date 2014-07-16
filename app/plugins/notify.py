@@ -9,11 +9,11 @@ import json
 
 from google.appengine.api import mail, urlfetch
 
-from app import ndb, util
+from app import orm, util
 from app.tools.manipulator import safe_eval
 
 
-class Set(ndb.BaseModel):
+class NotifySet(orm.BaseModel):
   
   def run(self, context):
     MailTemplate = context.models['58']
@@ -34,24 +34,24 @@ class Set(ndb.BaseModel):
         else:
           del template[key]
       templates.append(model(**template))
-    context.entities['61'].name = context.input.get('name')
-    context.entities['61'].action = context.input.get('action')
-    context.entities['61'].condition = context.input.get('condition')
-    context.entities['61'].active = context.input.get('active')
-    context.entities['61'].templates = templates
+    context._notification.name = context.input.get('name')
+    context._notification.action = context.input.get('action')
+    context._notification.condition = context.input.get('condition')
+    context._notification.active = context.input.get('active')
+    context._notification.templates = templates
 
 
 # @todo We have to consider http://sendgrid.com/partner/google
-class MailSend(ndb.BaseModel):
+class NotifyMailSend(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     message_sender = self.cfg.get('sender', None)
     if not message_sender:
-      raise ndb.TerminateAction()
+      raise orm.TerminateAction()
     message = mail.EmailMessage()
     message.sender = message_sender
     message.bcc = context.input['recipient']
@@ -61,24 +61,27 @@ class MailSend(ndb.BaseModel):
     message.send()
 
 
-class HttpSend(ndb.BaseModel):
+class NotifyHttpSend(orm.BaseModel):
   
   def run(self, context):
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
 
 
-class Initiate(ndb.BaseModel):
+class NotifyInitiate(orm.BaseModel):
   
   def run(self, context):
     caller_user_key = context.input.get('caller_user')
     caller_action_key = context.input.get('caller_action')
-    context.tmp['caller_user'] = caller_user_key.get()
+    context._caller_user = caller_user_key.get()
     notifications = context.model.query(context.model.active == True,
                                         context.model.action == caller_action_key,
-                                        namespace=context.tmp['caller_entity'].key_namespace).fetch()
+                                        namespace=context._caller_entity.key_namespace).fetch()
     if notifications:
       for notification in notifications:
-        values = {'entity': context.tmp['caller_entity'], 'user': context.tmp['caller_user']}
+        values = {'entity': context._caller_entity, 'user': context._caller_user}
         if safe_eval(notification.condition, values):
           for template in notification.templates:
-            template.run(context)
+            callbacks = template.run({'caller_entity': context._caller_entity,
+                                      'caller_user': context._caller_user,
+                                      'models': context.models})
+            context._callbacks.extend(callbacks)

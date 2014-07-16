@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import os
 import hashlib
 
-from app import ndb, util
+from app import orm, util
 from app.tools import oauth2
 
 
@@ -18,7 +18,7 @@ def primary_contact_validator(prop, value):
   if 'admin' in role_ids:
     return value
   else:
-    raise ndb.PropertyError('invalid_domain_user')
+    raise orm.PropertyError('invalid_domain_user')
 
 
 def new_session(model, entity):
@@ -46,9 +46,9 @@ class OAuth2Error(Exception):
     self.message = {'oauth2_error': error}
 
 
-class UserLoginInit(ndb.BaseModel):
+class UserLoginInit(orm.BaseModel):
   
-  login_methods = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  login_methods = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     context._user = context.model.current_user()
@@ -91,7 +91,7 @@ class UserLoginInit(ndb.BaseModel):
     rule_exec(context._user, context.action)
 
 
-class UserLoginWrite(ndb.BaseModel):
+class UserLoginWrite(orm.BaseModel):
   
   def run(self, context):
     if context._identity_id != None:
@@ -131,14 +131,14 @@ class UserLoginWrite(ndb.BaseModel):
       context.output['authorization_code'] = '%s|%s' % (context._user.key.urlsafe(), context._session.session_id)
 
 
-class UserLogoutOutput(ndb.BaseModel):
+class UserLogoutOutput(orm.BaseModel):
   
   def run(self, context):
     context._user.set_current_user(None, None)
     context.output['entity'] = context._user.current_user()
 
 
-class UserUpdateSet(ndb.BaseModel):
+class UserUpdateSet(orm.BaseModel):
   
   def run(self, context):
     primary_email = context.input.get('primary_email')
@@ -154,7 +154,7 @@ class UserUpdateSet(ndb.BaseModel):
           identity.associated = True
 
 
-class DomainCreate(ndb.BaseModel):
+class DomainCreateWrite(orm.BaseModel):
   
   def run(self, context):
     config_input = context.input.copy()

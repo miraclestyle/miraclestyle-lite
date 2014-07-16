@@ -7,19 +7,19 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from app import ndb, util, settings  # @todo settings has to GET OUT OF HERE!!!
+from app import orm, util, settings  # @todo settings has to GET OUT OF HERE!!!
 
 
-class CountryUpdate(ndb.BaseModel):
+class CountryUpdateWrite(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
-      raise ndb.TerminateAction()
+      raise orm.TerminateAction()
     Country = context.models['15']
     CountrySubdivision = context.models['16']
     with file(update_file_path) as f:
@@ -97,4 +97,4 @@ class CountryUpdate(ndb.BaseModel):
         to_put.append(new_sub_divison)
         if i == 100 and settings.DEBUG:
           break
-      ndb.put_multi(to_put)
+      orm.put_multi(to_put)

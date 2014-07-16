@@ -7,12 +7,12 @@ Created on May 29, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, util
+from app import orm, util
 
 
-class ProcessCatalogs(ndb.BaseModel):
+class ProcessCatalogs(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):

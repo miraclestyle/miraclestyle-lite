@@ -7,12 +7,12 @@ Created on Jun 14, 2014
 
 import copy
 
-from app import ndb, util
+from app import orm, util
 from app.tools.base import *
 from app.tools.manipulator import set_attr, get_attr, normalize
 
 
-class Context(ndb.BaseModel):
+class Context(orm.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
@@ -34,9 +34,9 @@ class Context(ndb.BaseModel):
     context._callbacks = []  # @todo For now this stays here!
 
 
-class Set(ndb.BaseModel):
+class Set(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -49,9 +49,9 @@ class Set(ndb.BaseModel):
       set_attr(context, key, get_attr(context, value))
 
 
-class Read(ndb.BaseModel):
+class Read(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -67,7 +67,7 @@ class Read(ndb.BaseModel):
     namespace = get_attr(context, namespace_path)
     if parent is not None:
       namespace = None
-    if source and isinstance(source, ndb.Key):
+    if source and isinstance(source, orm.Key):
       entity = source.get()
       entity.read(context.input.get('read_arguments', {}))
     elif hasattr(model, 'prepare_key'):
@@ -84,9 +84,9 @@ class Read(ndb.BaseModel):
     set_attr(context, save_path, entity)
 
 
-class Write(ndb.BaseModel):
+class Write(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -95,7 +95,7 @@ class Write(ndb.BaseModel):
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model):
+    if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
@@ -103,9 +103,9 @@ class Write(ndb.BaseModel):
       entity.write(record_arguments)
 
 
-class Delete(ndb.BaseModel):
+class Delete(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -114,7 +114,7 @@ class Delete(ndb.BaseModel):
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model):
+    if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.items():
@@ -122,9 +122,9 @@ class Delete(ndb.BaseModel):
       entity.delete(record_arguments)
 
 
-class Duplicate(ndb.BaseModel):
+class Duplicate(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -132,21 +132,21 @@ class Duplicate(ndb.BaseModel):
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model):
+    if entity and isinstance(entity, orm.Model):
       duplicate_entity = entity.duplicate()
       set_attr(context, save_path, duplicate_entity)
 
 
-class ProcessImages(ndb.BaseModel):
+class ProcessImages(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, ndb.Model):
+    if entity and isinstance(entity, orm.Model):
       for field_key, field in entity.get_fields().items():
         if field.is_structured:
           value = getattr(self, field_key)
@@ -154,9 +154,9 @@ class ProcessImages(ndb.BaseModel):
             value.process()
 
 
-class RulePrepare(ndb.BaseModel):
+class RulePrepare(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -174,9 +174,9 @@ class RulePrepare(ndb.BaseModel):
     rule_prepare(entities, skip_user_roles, strict, **kwargs)
 
 
-class RuleExec(ndb.BaseModel):
+class RuleExec(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -188,9 +188,9 @@ class RuleExec(ndb.BaseModel):
     rule_exec(entity, action)
 
 
-class Search(ndb.BaseModel):
+class Search(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -226,7 +226,7 @@ class Search(ndb.BaseModel):
         context._more = False
 
 
-class CallbackNotify(ndb.BaseModel):
+class CallbackNotify(orm.BaseModel):
   
   def run(self, context):
     static_data = {}
@@ -236,9 +236,9 @@ class CallbackNotify(ndb.BaseModel):
     context._callbacks.append(('notify', static_data))
 
 
-class CallbackExec(ndb.BaseModel):
+class CallbackExec(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default=[])
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
   def run(self, context):
     if not isinstance(self.cfg, list):
@@ -253,9 +253,9 @@ class CallbackExec(ndb.BaseModel):
     context._callbacks = []
 
 
-class BlobURL(ndb.BaseModel):
+class BlobURL(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -264,12 +264,12 @@ class BlobURL(ndb.BaseModel):
     upload_url = context.input.get('upload_url')
     if upload_url:
       context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
-      #raise ndb.TerminateAction()
+      #raise orm.TerminateAction()
 
 
-class DocumentWrite(ndb.BaseModel):
+class DocumentWrite(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -282,9 +282,9 @@ class DocumentWrite(ndb.BaseModel):
     document_write(documents, documents_per_index=documents_per_index)
 
 
-class DocumentDelete(ndb.BaseModel):
+class DocumentDelete(orm.BaseModel):
   
-  cfg = ndb.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
@@ -295,15 +295,15 @@ class DocumentDelete(ndb.BaseModel):
     document_delete(entities, documents_per_index=documents_per_index)
 
 
-class DocumentDictConverter(ndb.BaseModel):
+class DocumentDictConverter(orm.BaseModel):
   
   def run(self, context):
     if len(context._documents):
       context._entities = document_to_dict(context._documents)
 
 
-class DocumentEntityConverter(ndb.BaseModel):
+class DocumentEntityConverter(orm.BaseModel):
   
   def run(self, context):
     if len(context._documents):
-      context._entities = ndb.get_multi([document.doc_id for document in context._documents])
+      context._entities = orm.get_multi([document.doc_id for document in context._documents])
