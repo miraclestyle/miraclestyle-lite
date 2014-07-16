@@ -1655,12 +1655,18 @@ class SuperReferencePropertyManager(SuperPropertyManager):
       self._property_value = value
   
   def _read(self):
+    target_field = self._property._target_field
+    if not target_field and not self._property._callback:
+      target_field = self.property_name
     if self._property._callback:
       self._property_value = self._property._callback(self._entity)
-    elif self._property._target_field:
-      field = getattr(self._entity, self._property._target_field)
+    elif target_field:
+      field = getattr(self._entity, target_field)
+      if field is None: # if value is none the key was not set therefore value must be null
+        self._property_value = None
+        return self._property_value
       if not isinstance(field, Key):
-        raise PropertyError('Target field must be instance of Key. Got %s' % field)
+        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
       if self._property._kind != None and field.kind() != self._property._kind:
         raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
@@ -2262,8 +2268,6 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._updateable = kwargs.pop('updateable', True)
     self._deleteable = kwargs.pop('deleteable', True)
     self._autoload = kwargs.pop('autoload', True)
-    if not self._target_field and not self._callback:
-      raise PropertyError('You must provide either: "callback" or "target_field"')
     if self._callback != None and not callable(self._callback):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):

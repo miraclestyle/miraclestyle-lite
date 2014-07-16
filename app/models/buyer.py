@@ -34,8 +34,8 @@ class Address(ndb.BaseExpando):
     }
   
   _virtual_fields = {
-    '_country': ndb.SuperStringProperty(),
-    '_region': ndb.SuperStringProperty()
+    '_country': ndb.SuperReferenceProperty(target_field='country'),
+    '_region': ndb.SuperReferenceProperty(target_field='region'),
     }
 
 
