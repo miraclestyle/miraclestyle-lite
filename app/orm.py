@@ -1212,7 +1212,7 @@ class SuperPropertyManager(object):
   
   def __init__(self, property_instance, storage_entity, **kwds):
     self._property = property_instance
-    self._entity = storage_entity  # storage entity of the property
+    self._entity = storage_entity  # Storage entity of the property.
     self._kwds = kwds
   
   def __repr__(self):
@@ -1692,7 +1692,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
       self._property_value = value.get_async()
     elif isinstance(value, _BaseModel):
       self._property_value = value
- 
+  
   def _read(self):
     target_field = self._property._target_field
     if not target_field and not self._property._callback:
@@ -1701,7 +1701,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
       self._property_value = self._property._callback(self._entity)
     elif target_field:
       field = getattr(self._entity, target_field)
-      if field is None: # if value is none the key was not set therefore value must be null
+      if field is None:  # If value is none the key was not set, therefore value must be null.
         self._property_value = None
         return self._property_value
       if not isinstance(field, Key):
@@ -1811,7 +1811,7 @@ class _BaseProperty(object):
     else:
       self._property_value_validate(value)
       return self._property_value_filter(value)
-    
+  
   @property
   def searchable_name(self):
     if self._searchable_name is not None:
@@ -1957,7 +1957,11 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
     return out
   
   def search_field_format(self, value):
-    return search.DateField(name=self.searchable_name, value=value)
+    if self._repeated:
+      value = ' '.join(value)
+      return search.TextField(name=self.searchable_name, value=value)
+    else:
+      return search.DateField(name=self.searchable_name, value=value)
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
@@ -1968,9 +1972,13 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
       return json.loads(value)
     else:
       return value
-    
+  
   def search_field_format(self, value):
-    return search.TextField(name=self.searchable_name, value=json.dumps(value))
+    if self._repeated:
+      value = ' '.join(map(lambda v: json.dumps(v), value))
+    else:
+      value = json.dumps(value)
+    return search.TextField(name=self.searchable_name, value=value)
 
 
 class SuperTextProperty(_BaseProperty, TextProperty):
@@ -1981,10 +1989,10 @@ class SuperTextProperty(_BaseProperty, TextProperty):
       return [unicode(v) for v in value]
     else:
       return unicode(value)
-    
+  
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(value)
+      value = ' '.join(value)
     return search.HtmlField(name=self.searchable_name, value=value)
 
 
@@ -1996,12 +2004,11 @@ class SuperStringProperty(_BaseProperty, StringProperty):
       return [unicode(v) for v in value]
     else:
       return unicode(value)
-    
+  
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(value)
-      return search.TextField(name=self.searchable_name, value=value)
-    return search.AtomField(name=self.searchable_name, value=value)
+      value = ' '.join(value)
+    return search.TextField(name=self.searchable_name, value=value)
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
@@ -2012,10 +2019,10 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
       return [float(v) for v in value]
     else:
       return float(value)
-    
+  
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(value)
+      value = ' '.join(value)
       return search.TextField(name=self.searchable_name, value=value)
     return search.NumberField(name=self.searchable_name, value=value)
 
@@ -2030,10 +2037,10 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
       if not self._required and value is None:
         return value
       return long(value)
-    
+  
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(value)
+      value = ' '.join(value)
       return search.TextField(name=self.searchable_name, value=value)
     return search.NumberField(name=self.searchable_name, value=value)
 
@@ -2071,11 +2078,11 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(map(lambda x: x.urlsafe(), value))
+      value = ' '.join(map(lambda key: key.urlsafe(), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = value.urlsafe()
-    return search.AtomField(name=self.searchable_name, value=value)
+      return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperVirtualKeyProperty(SuperKeyProperty):
@@ -2145,9 +2152,14 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
       return [bool(long(v)) for v in value]
     else:
       return bool(long(value))
-    
+  
   def search_field_format(self, value):
-    return search.AtomField(name=self.searchable_name, value=value)
+    if self._repeated:
+      value = ' '.join(map(lambda v: str(v), value))
+      return search.TextField(name=self.searchable_name, value=value)
+    else:
+      value = str(value)
+      return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
@@ -2173,11 +2185,11 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(map(lambda x: str(x), value))
+      value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = str(value)
-    return search.AtomField(name=self.searchable_name, value=value)
+      return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
@@ -2195,11 +2207,11 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def search_field_format(self, value):
     if self._repeated:
-      value = " ".join(map(lambda x: str(x), value))
+      value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = str(value)
-    return search.AtomField(name=self.searchable_name, value=value)
+      return search.NumberField(name=self.searchable_name, value=value)
   
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
