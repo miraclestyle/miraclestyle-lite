@@ -18,6 +18,7 @@ from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
+from google.appengine.api import search
 
 from app import util, settings
 
@@ -1707,10 +1708,14 @@ class _BaseProperty(object):
   
   _max_size = None
   _value_filters = None
+  _searchable = None
+  _searchable_name = None
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
+    self._searchable = kwargs.pop('searchable', self._searchable)
+    self._searchable_name = kwargs.pop('searchable_name', self._searchable_name)
     custom_kind = kwargs.get('kind')
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
       kwargs['kind'] = factory(custom_kind)
@@ -1768,6 +1773,12 @@ class _BaseProperty(object):
     else:
       self._property_value_validate(value)
       return self._property_value_filter(value)
+    
+  @property
+  def searchable_name(self):
+    if self._searchable_name is not None:
+      return self._searchable_name
+    return self._code_name if self._code_name is not None else self._name
   
   @property
   def is_structured(self):
@@ -1930,12 +1941,17 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 
 class SuperStringProperty(_BaseProperty, StringProperty):
   
-  def format(self, value):
+  def format(self, value): # this would be called argument_format
     value = self._property_value_format(value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
       return unicode(value)
+    
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(value)
+    return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
