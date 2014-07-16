@@ -18,6 +18,7 @@ from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
+from google.appengine.api import search
 
 from app import util, settings
 
@@ -258,6 +259,7 @@ class _BaseModel(object):
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
   _use_rule_engine = True  # All models by default respect rule engine!
+  _parent = None
   
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
@@ -513,6 +515,23 @@ class _BaseModel(object):
           #util.logger('__deepcopy__ - could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
+  
+  @property
+  def _root(self):
+    '''
+      Retrieves top level entity from hierarchy. If parent is none retrieves self.
+    '''
+    if self._parent is None:
+      return self
+    parent = self._parent
+    last_parent = self._parent
+    while True:
+      parent = parent._parent
+      if parent is None:
+        break
+      else:
+        last_parent = parent
+    return last_parent
   
   @classmethod
   def build_key(cls, *args, **kwargs):
@@ -893,10 +912,11 @@ class _BaseModel(object):
   
   def record(self):
     if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
-      if self._record_arguments and self._record_arguments.get('agent') and self._record_arguments.get('action'):
-        log_entity = self._record_arguments.pop('log_entity', True)
+      record_arguments = getattr(self._root, '_record_arguments', None)
+      if record_arguments and record_arguments.get('agent') and record_arguments.get('action'):
+        log_entity = record_arguments.pop('log_entity', True)
         # @todo We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
-        record = Record(parent=self.key, **self._record_arguments)
+        record = Record(parent=self.key, **record_arguments)
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
@@ -1054,9 +1074,6 @@ class _BaseModel(object):
     for name in names:
       value = getattr(self, name, None)
       dic[name] = value
-    for k, v in dic.items():
-      if isinstance(v, Key):
-        dic[k] = v.urlsafe()
     return dic
 
 
@@ -1215,6 +1232,39 @@ class SuperPropertyManager(object):
       name = self._property._name
     return name
   
+  def _set_parent(self, entities=None):
+    '''
+     This function will be called on:
+      - set()
+      - read()
+      - duplicate()
+      and on every delete function because delete functions just query entities for deletation, not for storing it into
+      self._property_value, therefore the `entities` kwarg.
+    '''
+    if entities is None:
+      entities = getattr(self, '_property_value', None)
+      if entities is not None:
+        if self._property._repeated:
+          for entity in entities:
+            if entity._parent is None:
+              entity._parent = self._entity
+            else:
+              continue
+        else:
+          if entities._parent is None:
+            entities._parent = self._entity
+    else:
+      if isinstance(entities, list):
+        for entity in entities:
+          if entity._parent is None:
+            entity._parent = self._entity
+          else:
+            continue
+      else:
+        if entities._parent is None:
+          entities._parent = self._entity
+    return entities
+  
   def has_value(self):
     return hasattr(self, '_property_value')
   
@@ -1291,17 +1341,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if not isinstance(property_value_item, self._property._modelclass):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
-  
-  def _copy_record_arguments(self, entity):
-    if hasattr(self._entity, '_record_arguments'):
-      if hasattr(entity, '_record_arguments'):
-        record_arguments = entity._record_arguments
-      else:
-        record_arguments = {}
-      entity_record_arguments = self._entity._record_arguments
-      record_arguments['action'] = entity_record_arguments.get('aciton')
-      record_arguments['agent'] = entity_record_arguments.get('agent')
-      entity._record_arguments = record_arguments
+    self._set_parent()
   
   def _read_local(self, read_arguments):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
@@ -1439,6 +1479,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
+      self._set_parent()
       self._read_deep(read_arguments)
       return self._property_value
   
@@ -1483,7 +1524,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property_value.prepare_key(parent=self._entity.key)
     # We do put eitherway
     # @todo If state is deleted, shall we delete the single storage entity?
-    self._copy_record_arguments(self._property_value)
     if self._property_value._state == 'deleted':
       self._property_value.key.delete()
     else:
@@ -1495,7 +1535,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     delete_entities = []
     for entity in self._property_value:
-      self._copy_record_arguments(entity)
       if not hasattr(entity, 'prepare_key'):
         if entity.key_parent != self._entity.key:
           key_id = entity.key_id
@@ -1516,7 +1555,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     delete_entities = []
     last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
-      self._copy_record_arguments(entity)
       if entity._state == 'deleted':
         delete_entities.append(entity)
         continue
@@ -1570,8 +1608,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     while True:
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
       if len(_entities):
-        for entity in _entities:
-          self._copy_record_arguments(entity)
+        self._set_parent(_entities)
         delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
@@ -1581,7 +1618,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _delete_remote_single(self):
     property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
-    self._copy_record_arguments(entity)
+    self._set_parent(entity)
     entity.key.delete()
   
   def _delete_remote_multi(self):
@@ -1607,6 +1644,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       entities = self._property_value.duplicate()
     setattr(self._entity, self.property_name, entities)
+    self._property_value = entities
   
   def _duplicate_remote(self):
     '''Fetch ALL entities that belong to this entity.
@@ -1644,6 +1682,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
     duplicate_function()
+    self._set_parent()
 
 
 class SuperReferencePropertyManager(SuperPropertyManager):
@@ -1653,14 +1692,20 @@ class SuperReferencePropertyManager(SuperPropertyManager):
       self._property_value = value.get_async()
     elif isinstance(value, _BaseModel):
       self._property_value = value
-  
+ 
   def _read(self):
+    target_field = self._property._target_field
+    if not target_field and not self._property._callback:
+      target_field = self.property_name
     if self._property._callback:
       self._property_value = self._property._callback(self._entity)
-    elif self._property._target_field:
-      field = getattr(self._entity, self._property._target_field)
+    elif target_field:
+      field = getattr(self._entity, target_field)
+      if field is None: # if value is none the key was not set therefore value must be null
+        self._property_value = None
+        return self._property_value
       if not isinstance(field, Key):
-        raise PropertyError('Target field must be instance of Key. Got %s' % field)
+        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
       if self._property._kind != None and field.kind() != self._property._kind:
         raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
@@ -1701,10 +1746,14 @@ class _BaseProperty(object):
   
   _max_size = None
   _value_filters = None
+  _searchable = None
+  _searchable_name = None
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
+    self._searchable = kwargs.pop('searchable', self._searchable)
+    self._searchable_name = kwargs.pop('searchable_name', self._searchable_name)
     custom_kind = kwargs.get('kind')
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
       kwargs['kind'] = factory(custom_kind)
@@ -1762,6 +1811,12 @@ class _BaseProperty(object):
     else:
       self._property_value_validate(value)
       return self._property_value_filter(value)
+    
+  @property
+  def searchable_name(self):
+    if self._searchable_name is not None:
+      return self._searchable_name
+    return self._code_name if self._code_name is not None else self._name
   
   @property
   def is_structured(self):
@@ -1800,7 +1855,7 @@ class _BaseStructuredProperty(_BaseProperty):
   def get_model_fields(self):
     return self._modelclass.get_fields()
   
-  def format(self, value):
+  def argument_format(self, value):
     return self._structured_property_format(value)
   
   def _set_value(self, entity, value):
@@ -1837,8 +1892,8 @@ class _BaseStructuredProperty(_BaseProperty):
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
-        if hasattr(field, 'format'):
-          values[value_key] = field.format(value)
+        if hasattr(field, 'argument_format'):
+          values[value_key] = field.argument_format(value)
       else:
         del values[value_key]
     values['_state'] = _state  # Always keep track of _state for rule engine!
@@ -1887,7 +1942,7 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     out = []
     if not self._repeated:
@@ -1900,51 +1955,74 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       except IndexError as e:
         out = None
     return out
+  
+  def search_field_format(self, value):
+    return search.DateField(name=self.searchable_name, value=value)
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if isinstance(value, basestring):
       return json.loads(value)
     else:
       return value
+    
+  def search_field_format(self, value):
+    return search.TextField(name=self.searchable_name, value=json.dumps(value))
 
 
 class SuperTextProperty(_BaseProperty, TextProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
       return unicode(value)
+    
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(value)
+    return search.HtmlField(name=self.searchable_name, value=value)
 
 
 class SuperStringProperty(_BaseProperty, StringProperty):
   
-  def format(self, value):
+  def argument_format(self, value): # this would be called argument_format
     value = self._property_value_format(value)
     if self._repeated:
       return [unicode(v) for v in value]
     else:
       return unicode(value)
+    
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(value)
+      return search.TextField(name=self.searchable_name, value=value)
+    return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       return [float(v) for v in value]
     else:
       return float(value)
+    
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(value)
+      return search.TextField(name=self.searchable_name, value=value)
+    return search.NumberField(name=self.searchable_name, value=value)
 
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       return [long(v) for v in value]
@@ -1952,6 +2030,12 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
       if not self._required and value is None:
         return value
       return long(value)
+    
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(value)
+      return search.TextField(name=self.searchable_name, value=value)
+    return search.NumberField(name=self.searchable_name, value=value)
 
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
@@ -1961,7 +2045,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   If key existence feature isn't required, SuperVirtualKeyProperty() can be used in exchange.
   
   '''
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
@@ -1984,6 +2068,14 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       except IndexError as e:
         out = None
     return out
+  
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(map(lambda x: x.urlsafe(), value))
+      return search.TextField(name=self.searchable_name, value=value)
+    else:
+      value = value.urlsafe()
+    return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperVirtualKeyProperty(SuperKeyProperty):
@@ -1992,7 +2084,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
   provided urlsafe key into a ndb.Key.
   
   '''
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       if not isinstance(value, (tuple, list)):
@@ -2015,10 +2107,10 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
 
 class SuperKeyFromPathProperty(SuperKeyProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     try:
       # First it attempts to construct the key from urlsafe
-      return super(SuperKeyProperty, self).format(value)
+      return super(SuperKeyProperty, self).argument_format(value)
     except:
       # Failed to build from urlsafe, proceed with KeyFromPath.
       value = self._property_value_format(value)
@@ -2047,17 +2139,20 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       return [bool(long(v)) for v in value]
     else:
       return bool(long(value))
+    
+  def search_field_format(self, value):
+    return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     out = []
     if not self._repeated:
@@ -2075,12 +2170,20 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
       except IndexError as e:
         out = None
     return out
+  
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(map(lambda x: str(x), value))
+      return search.TextField(name=self.searchable_name, value=value)
+    else:
+      value = str(value)
+    return search.AtomField(name=self.searchable_name, value=value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
   '''Decimal property that accepts only decimal.Decimal.'''
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]
@@ -2089,6 +2192,14 @@ class SuperDecimalProperty(SuperStringProperty):
     if value is None:
       raise PropertyError('invalid_number')
     return value
+  
+  def search_field_format(self, value):
+    if self._repeated:
+      value = " ".join(map(lambda x: str(x), value))
+      return search.TextField(name=self.searchable_name, value=value)
+    else:
+      value = str(value)
+    return search.AtomField(name=self.searchable_name, value=value)
   
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
@@ -2142,8 +2253,8 @@ class SuperSearchProperty(SuperJsonProperty):
     dic['indexes'] = self._indexes
     return dic
   
-  def format(self, value):
-    value = super(SuperSearchProperty, self).format(value)
+  def argument_format(self, value):
+    value = super(SuperSearchProperty, self).argument_format(value)
     search = {'filters': value.get('filters'),
               'order_by': value.get('order_by'),
               'property': self}
@@ -2154,7 +2265,7 @@ class SuperSearchProperty(SuperJsonProperty):
       if not _filter:
         raise PropertyError('field_not_in_filter_list')
       assert config.get('operator') in _filter['operators']
-      new_value = _filter['type'].format(config.get('value'))  # Format the value based on the property type.
+      new_value = _filter['type'].argument_format(config.get('value'))  # Format the value based on the property type.
       config['value'] = new_value
       for_composite_filter.append(key)
     for_composite_order_by = []
@@ -2262,8 +2373,6 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._updateable = kwargs.pop('updateable', True)
     self._deleteable = kwargs.pop('deleteable', True)
     self._autoload = kwargs.pop('autoload', True)
-    if not self._target_field and not self._callback:
-      raise PropertyError('You must provide either: "callback" or "target_field"')
     if self._callback != None and not callable(self._callback):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):

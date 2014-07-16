@@ -91,7 +91,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
       if len(_entities):
         for entity in _entities:
-          self._copy_record_arguments(entity)
           if isinstance(self._property, _BaseImageProperty):
             self._property.delete_blobs_on_success(entity.image)
         ndb.delete_multi([entity.key for entity in _entities])
@@ -103,7 +102,6 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
   def _delete_remote_single(self):
     property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
-    self._copy_record_arguments(entity)
     if isinstance(self._property, _BaseImageProperty):
       self._property.delete_blobs_on_success(entity.image)
     entity.key.delete()
@@ -181,7 +179,7 @@ class _BaseBlobProperty(object):
   This property should be used in conjunction with ndb Property baseclass, like so:
   class PDF(BaseBlobKeyInterface, ndb.Property):
   ....
-  def format(self, value):
+  def argument_format(self, value):
   Example usage:
   new_file = gcs.open(value.path)
   new_file.write(..)
@@ -319,7 +317,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         self.save_blobs_on_success(new_value.image)
       return new_value
   
-  def format(self, value):
+  def argument_format(self, value):
     value = self._property_value_format(value)
     if not self._repeated:
       value = [value]
