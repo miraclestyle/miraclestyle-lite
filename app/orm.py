@@ -2103,6 +2103,11 @@ class _BaseStructuredProperty(_BaseProperty):
       args[0] = Model._kind_map.get(args[0])
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
+    
+  def get_modelclass(self, values=None):
+    if values is None:
+      return self._modelclass
+    return self._modelclass(**values)
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -2110,7 +2115,7 @@ class _BaseStructuredProperty(_BaseProperty):
     
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
-    dic['model'] = self._modelclass.get_fields()
+    dic['model'] = self.get_modelclass().get_fields()
     return dic
   
   def get_model_fields(self):
@@ -2166,8 +2171,10 @@ class _BaseStructuredProperty(_BaseProperty):
       value = [value]
     fields = self.get_model_fields()
     for v in value:
+      provided_kind_id = v.get('_kind')
       self._structured_property_field_format(fields, v)
-      entity = self._modelclass(**v)
+      v['_kind'] = provided_kind_id
+      entity = self.get_modelclass(**v)
       out.append(entity)
     if not self._repeated:
       try:
@@ -2196,7 +2203,62 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   pass
 
-
+class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
+  
+  _kinds = None
+  
+  def __init__(self, *args, **kwargs):
+    '''
+      So basically:
+      
+      argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself)) 
+      will allow instancing of both 51 and 21 that is provided from the input.
+      
+      This property should not be used for datastore. Currently we do not have the code that would allow this to be saved
+      in datastore:
+      
+      Entity.images
+              => Image
+              => OtherTypeOfImage
+              => AnotherTypeOfImage
+              
+      We only support
+      
+      Entity.images
+            => Image
+            => Image
+            => Image
+            
+      etc.
+      
+    '''
+    args = list(args)
+    if isinstance(args[0], (tuple, list)):
+      self._kinds = args[0]
+      args[0] = Model._kind_map.get(args[0][0]) # by default just pass the first one
+    if isinstance(args[0], basestring):
+      args[0] = Model._kind_map.get(args[0])
+    super(SuperMultiStructuredProperty, self).__init__(*args, **kwargs)
+  
+  def get_modelclass(self, values=None):
+    if self._kinds and values:
+      if '_kind' in values:
+        _kind = values.get('_kind')
+        if _kind:
+          _kinds = []
+          for kind in self._kinds:
+            if isinstance(kind, _BaseModel):
+              _the_kind = kind.get_kind()
+            else:
+              _the_kind = kind
+            _kinds.append(_the_kind)
+          if _kind not in _kinds:
+            raise PropertyError('Expected Kind to be one of %s, got %s' % (_kind, _kinds))
+          model = Model._kind_map.get(_kind)
+          values.pop('_kind')
+          return model(**values)
+    return super(SuperMultiStructuredProperty, self).get_modelclass()
+ 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
   pass
 
