@@ -10,7 +10,7 @@ import json
 from google.appengine.api import mail, urlfetch
 
 from app import orm, util
-from app.tools.manipulator import safe_eval
+from app.tools.manipulator import safe_eval  # @todo Does it makes sense to integrate app/tools/manipulator.py into app/util.py?
 
 
 class NotifySet(orm.BaseModel):
