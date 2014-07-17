@@ -9,7 +9,7 @@ import time
 import datetime
 
 from app import orm, util
-from app.tools.base import record_write, callback_exec
+from app.tools.base import callback_exec
 
 
 __SYSTEM_SETUPS = {}

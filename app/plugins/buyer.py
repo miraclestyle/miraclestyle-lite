@@ -7,7 +7,6 @@ Created on May 13, 2014
 
 import time
 import hashlib
-import copy
 
 from app import orm, util
 

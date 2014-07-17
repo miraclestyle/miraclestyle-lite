@@ -5,11 +5,9 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import copy
-
 from app import orm, util
 from app.tools.base import *
-from app.tools.manipulator import set_attr, get_attr, normalize
+from app.tools.manipulator import set_attr, get_attr
 
 
 class Context(orm.BaseModel):
