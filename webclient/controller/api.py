@@ -7,7 +7,7 @@ Created on Oct 10, 2013
 from google.appengine.ext.ndb import metadata
 from google.appengine.api import search
 
-from app import io, ndb, util, memcache
+from app import io, orm, util, memcache
 
 from webclient import handler
 
@@ -22,10 +22,10 @@ class Reset(handler.Angular):
       keys_to_delete = []
       
       ignore = ['15', '16', '17', '18', '19']
-      @ndb.tasklet
+      @orm.tasklet
       def wipe(kind):
           util.logger(kind)
-          @ndb.tasklet
+          @orm.tasklet
           def generator():
             model = models.get(kind)
             if model and not kind.startswith('__'):
@@ -42,17 +42,17 @@ class Reset(handler.Angular):
         for kind in kinds:
           if kind not in ignore:
             futures.append(wipe(kind))
-        ndb.Future.wait_all(futures)
+        orm.Future.wait_all(futures)
  
       if self.request.get('and_system'):
         futures = []
         for kind in kinds:
           if kind in ignore:
             futures.append(wipe(kind))
-        ndb.Future.wait_all(futures)
+        orm.Future.wait_all(futures)
      
       if keys_to_delete:
-         ndb.delete_multi(keys_to_delete)
+         orm.delete_multi(keys_to_delete)
       # empty catalog index!
       index = search.Index(name='catalogs')
       while True:

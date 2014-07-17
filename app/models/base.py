@@ -13,33 +13,31 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import ndb, memcache, settings
-from app.tools.manipulator import set_attr, get_attr, safe_eval
+from app import orm, memcache, settings
 
-
-class Image(ndb.BaseModel):
+class Image(orm.BaseModel):
   
   _kind = 69
   
-  image = ndb.SuperBlobKeyProperty('1', required=True, indexed=False)
-  content_type = ndb.SuperStringProperty('2', required=True, indexed=False)
-  size = ndb.SuperFloatProperty('3', required=True, indexed=False)
-  width = ndb.SuperIntegerProperty('4', indexed=False)
-  height = ndb.SuperIntegerProperty('5', indexed=False)
-  gs_object_name = ndb.SuperStringProperty('6', indexed=False)
-  serving_url = ndb.SuperStringProperty('7', indexed=False)
+  image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
+  content_type = orm.SuperStringProperty('2', required=True, indexed=False)
+  size = orm.SuperFloatProperty('3', required=True, indexed=False)
+  width = orm.SuperIntegerProperty('4', indexed=False)
+  height = orm.SuperIntegerProperty('5', indexed=False)
+  gs_object_name = orm.SuperStringProperty('6', indexed=False)
+  serving_url = orm.SuperStringProperty('7', indexed=False)
 
 
-class Role(ndb.BaseExpando):
+class Role(orm.BaseExpando):
   
   _kind = 66
   
   # feature proposition (though it should create overhead due to the required drilldown process!)
-  # parent_record = ndb.SuperKeyProperty('1', kind='Role', indexed=False)
-  # complete_name = ndb.SuperTextProperty('2')
-  name = ndb.SuperStringProperty('1', required=True)
-  active = ndb.SuperBooleanProperty('2', required=True, default=True)
-  permissions = ndb.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
+  # parent_record = orm.SuperKeyProperty('1', kind='Role', indexed=False)
+  # complete_name = orm.SuperTextProperty('2')
+  name = orm.SuperStringProperty('1', required=True)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  permissions = orm.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
   
   _default_indexed = False
   
@@ -53,7 +51,7 @@ class GlobalRole(Role):
   _kind = 67
 
 
-class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
+class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
   
   def _update_blobs(self):
     if self.has_value() and isinstance(self._property, _BaseImageProperty):
@@ -93,14 +91,14 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
         for entity in _entities:
           if isinstance(self._property, _BaseImageProperty):
             self._property.delete_blobs_on_success(entity.image)
-        ndb.delete_multi([entity.key for entity in _entities])
+        orm.delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break
       else:
         break
   
   def _delete_remote_single(self):
-    property_value_key = ndb.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    property_value_key = orm.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     if isinstance(self._property, _BaseImageProperty):
       self._property.delete_blobs_on_success(entity.image)
@@ -112,7 +110,7 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     
     '''
     super(SuperStructuredPropertyImageManager, self).duplicate()
-    @ndb.tasklet
+    @orm.tasklet
     def async(entity):
       gs_object_name = entity.gs_object_name
       new_gs_object_name = '%s_duplicate' % entity.gs_object_name
@@ -132,12 +130,12 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
       entity.image = blobstore.BlobKey(blob_key)
       entity.serving_url = yield images.get_serving_url_async(entity.image)
       self._property.save_blobs_on_success(entity.image)
-      raise ndb.Return(entity)
+      raise orm.Return(entity)
     
-    @ndb.tasklet
+    @orm.tasklet
     def mapper(entities):
       out = yield map(async, entities)
-      raise ndb.Return(out)
+      raise orm.Return(out)
     
     if isinstance(self._property, _BaseImageProperty):
       entities = self._property_value
@@ -188,9 +186,9 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
     setattr(self._entity, self.property_name, self._property_value)
 
 class _BaseBlobProperty(object):
-  '''Base helper class for blob-key-like ndb properties.
-  This property should be used in conjunction with ndb Property baseclass, like so:
-  class PDF(BaseBlobKeyInterface, ndb.Property):
+  '''Base helper class for blob-key-like orm properties.
+  This property should be used in conjunction with orm Property baseclass, like so:
+  class PDF(BaseBlobKeyInterface, orm.Property):
   ....
   def argument_format(self, value):
   Example usage:
@@ -273,9 +271,9 @@ class _BaseBlobProperty(object):
 
 class _BaseImageProperty(_BaseBlobProperty):
   '''Base helper class for image-like properties.
-  This class should work in conjunction with ndb.Property, because it does not implement anything of ndb.
+  This class should work in conjunction with orm.Property, because it does not implement anything of orm.
   Example:
-  class NewImageProperty(_BaseImageProperty, ndb.Property):
+  class NewImageProperty(_BaseImageProperty, orm.Property):
   ...
   
   '''
@@ -343,7 +341,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       blob_info = blobstore.parse_blob_info(v)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
       if file_info.content_type not in meta_required:
-        raise ndb.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
+        raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
       new_image = self._modelclass(**{'size': file_info.size,
                                       'content_type': file_info.content_type,
                                       'gs_object_name': file_info.gs_object_name,
@@ -359,13 +357,13 @@ class _BaseImageProperty(_BaseBlobProperty):
     return out
 
 
-class SuperImageStorageStructuredProperty(_BaseImageProperty, ndb.SuperStorageStructuredProperty):
+class SuperImageStorageStructuredProperty(_BaseImageProperty, orm.SuperStorageStructuredProperty):
   pass
 
 
-class SuperImageLocalStructuredProperty(_BaseImageProperty, ndb.SuperLocalStructuredProperty):
+class SuperImageLocalStructuredProperty(_BaseImageProperty, orm.SuperLocalStructuredProperty):
   pass
 
 
-class SuperImageStructuredProperty(_BaseImageProperty, ndb.SuperStructuredProperty):
+class SuperImageStructuredProperty(_BaseImageProperty, orm.SuperStructuredProperty):
   pass

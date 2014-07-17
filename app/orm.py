@@ -210,39 +210,161 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 class _BaseModel(object):
   '''This is base class for all model types in the application.
   Every ndb model will always evaluate True on isinstance(entity, _BaseModel).
+
+  the following attribute names are reserved by the Model class in our ORM + ndb api.
   
-  According to old appengine db docs,
-  (https://developers.google.com/appengine/docs/python/datastore/modelclass#Disallowed_Property_Names)
-  the following attribute names are reserved by the Model class in the Python API:
-  
-  all
-  app
-  copy
-  delete
-  entity
-  entity_type
-  fields
-  from_entity
-  get
-  gql
-  instance_properties
-  is_saved
-  key
-  key_name
-  kind
-  parent
-  parent_key
-  properties
-  put
-  setdefault
-  to_xml
-  update
-  
-  On top of the previous list, the following attribute names are reserved by the _BaseModel class:
+  _Model__get_arg
+  __class__
+  __deepcopy__
+  __delattr__
+  __dict__
+  __doc__
+  __eq__
+  __format__
+  __getattr__
+  __getattribute__
+  __getstate__
+  __hash__
+  __init__
+  __metaclass__
+  __module__
+  __ne__
+  __new__
+  __reduce__
+  __reduce_ex__
+  __repr__
+  __setattr__
+  __setstate__
+  __sizeof__
+  __str__
+  __subclasshook__
+  __weakref__
+  _allocate_ids
+  _allocate_ids_async
+  _check_initialized
+  _check_properties
+  _class_name
+  _clone_properties
+  _default_filters
+  _default_post_allocate_ids_hook
+  _default_post_delete_hook
+  _default_post_get_hook
+  _default_post_put_hook
+  _default_pre_allocate_ids_hook
+  _default_pre_delete_hook
+  _default_pre_get_hook
+  _default_pre_put_hook
+  _entity_key
+  _equivalent
+  _fake_property
+  _find_uninitialized
+  _fix_up_properties
+  _from_pb
+  _get_by_id
+  _get_by_id_async
+  _get_kind
+  _get_or_insert
+  _get_or_insert_async
+  _get_property_for
+  _gql
+  _has_complete_key
+  _has_repeated
+  _is_default_hook
+  _key
+  _key_to_pb
+  _kind_map
+  _lookup_model
+  _make_async_calls
+  _output
+  _parent
+  _populate
+  _post_allocate_ids_hook
+  _post_delete_hook
+  _post_get_hook
+  _post_put_hook
+  _pre_allocate_ids_hook
+  _pre_delete_hook
+  _pre_get_hook
+  _pre_put_hook
+  _prepare_for_put
+  _projection
+  _properties
+  _put
+  _put_async
+  _query
+  _reset_kind_map
+  _root
+  _rule_compile
+  _rule_compile_global_permissions
+  _rule_complement_local_permissions
+  _rule_decide
+  _rule_override_local_permissions
+  _rule_read
+  _rule_reset
+  _rule_reset_actions
+  _rule_reset_fields
+  _rule_write
+  _set_attributes
+  _set_projection
   _state
+  _to_dict
+  _to_pb
+  _unknown_property
+  _update_kind_map
+  _use_cache
+  _use_memcache
   _use_record_engine
   _use_rule_engine
-  _kind
+  _validate_key
+  _values
+  add_output
+  allocate_ids
+  allocate_ids_async
+  build_key
+  delete
+  duplicate
+  get_actions
+  get_by_id
+  get_by_id_async
+  get_field
+  get_fields
+  get_kind
+  get_meta
+  get_or_insert
+  get_or_insert_async
+  get_output
+  get_plugin_groups
+  get_virtual_fields
+  gql
+  has_complete_key
+  key
+  key_id
+  key_id_int
+  key_id_str
+  key_kind
+  key_namespace
+  key_parent
+  key_urlsafe
+  make_original
+  namespace_entity
+  parent_entity
+  populate
+  prepare_field
+  put
+  put_async
+  query
+  read
+  record
+  remove_output
+  rule_prepare
+  rule_read
+  rule_write
+  search
+  set_key
+  to_dict
+  write
+  
+  On top of the previous list, the following attribute names are reserved:
   _expando_fields
   _virtual_fields
   _global_role
@@ -251,14 +373,17 @@ class _BaseModel(object):
   writable
   visible
   searchable
+  config --- this is for read_records dict
   _record_arguments
   _read_arguments
+  _field_permissions
   ........ to be continued...
   
   '''
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
   _use_rule_engine = True  # All models by default respect rule engine!
+  _use_search_document_engine = False
   _parent = None
   
   def __init__(self, *args, **kwargs):
@@ -443,6 +568,9 @@ class _BaseModel(object):
       value = getattr(entity, field)
       if isinstance(value, SuperPropertyManager):
         value.post_update()
+    entity.search_document_write()
+    # @todo general problem with documents is that they are not transactional and upon failure of transaction
+    # they might get stored anyways
   
   @classmethod
   def _pre_delete_hook(cls, key):
@@ -456,6 +584,20 @@ class _BaseModel(object):
             if isinstance(manager, SuperPropertyManager):
               manager.delete()
       delete_async()
+      
+  @classmethod
+  def _post_delete_hook(cls, key, future):
+    # here we cannot retrieve the entity, so in this case we just delete the document
+    # problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the 
+    # index will be deleted anyway
+    if cls._use_search_engine:
+      try:
+        index = search.Index(name=key.kind(), namespace=None) # well see about the namespace
+        index.delete(key.urlsafe())
+        # index does not have .delete_async, ergo no global scope batcher
+      except Exception as e:
+        util.logger('INDEX DELETE FAILED! ERROR: %s' % e)
+        pass
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -920,6 +1062,8 @@ class _BaseModel(object):
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
+        # we should also test put_async behaviour in transacitons but i think they will work fine since 
+        # general handler failure will result in transaction rollback?
   
   def read(self, read_arguments):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
@@ -1027,6 +1171,121 @@ class _BaseModel(object):
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
+ 
+  def search_document(self):
+    # returns document representation of entity based on properties configurations
+    entity = self
+    if entity and hasattr(entity, 'key') and isinstance(entity.key, Key):
+      doc_id = entity.key_urlsafe
+      doc_fields = []
+      doc_fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
+      doc_fields.append(search.AtomField(name='kind', value=entity.get_kind()))
+      doc_fields.append(search.AtomField(name='id', value=entity.key_id_str))
+      if entity.key_namespace != None:
+        doc_fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
+      if entity.key_parent != None:
+        doc_fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
+      for field_key, field in entity.get_fields().items():
+        if field._searchable:
+          search_document_field = field.search_field_format(getattr(entity, field_key, None))
+          doc_fields.append(search_document_field)
+      if doc_id != None and len(doc_fields):
+        return search.Document(doc_id=doc_id, fields=doc_fields)
+ 
+  def search_document_write(self):
+    if self._use_search_engine:
+      try:
+        index = search.Index(name=self.get_kind(), namespace=None) # well see about the namespace
+        index.put(self.search_document())  
+        # Batching puts is more efficient than adding documents one at a time. - this is a problem, because
+        # index does not have .put_async, ergo no global scope batcher
+      except Exception as e:
+        util.logger('INDEX FAILED! ERROR: %s' % e)
+        pass
+ 
+  @classmethod    
+  def search_documents(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+    # should this be here anyways?
+    index = search.Index(name=cls.get_kind(), namespace=namespace)
+    # Query String implementation start!
+    query_string = ''
+    sort_options = None
+    filters = argument.get('filters')
+    args = []
+    for _filter in filters:
+      field = _filter['field']
+      op = _filter['operator']
+      value = _filter['value']
+      if field == 'query_string':
+        args.append(value)
+        break
+      if field == 'ancestor':
+        args.append('(' + field + '=' + value + ')')
+        continue
+      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+        args.append('(' + field + '=' + value + ')')
+      elif op == '!=':
+        args.append('(NOT ' + field + '=' + value + ')')
+      elif op == '>':
+        args.append('(' + field + '>' + value + ')')
+      elif op == '<':
+        args.append('(' + field + '<' + value + ')')
+      elif op == '>=':
+        args.append('(' + field + '>=' + value + ')')
+      elif op == '<=':
+        args.append('(' + field + '<=' + value + ')')
+      elif op == 'IN':
+        args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
+    query_string = ' AND '.join(args)
+    # Query String implementation start!
+    order_by = argument.get('order_by')
+    property_config = argument.get('property')
+    if order_by['operator'] == 'asc':
+      default_value=property_config._order_by[order_by['field']]['default_value']['asc']
+      direction = search.SortExpression.ASCENDING
+    else:
+      default_value=property_config._order_by[order_by['field']]['default_value']['desc']
+      direction = search.SortExpression.DESCENDING
+    order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
+    sort_options = search.SortOptions(expressions=[order], limit=limit)
+    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+    options = search.QueryOptions(limit=limit, returned_fields=fields, sort_options=sort_options, cursor=cursor)
+    query = search.Query(query_string=query_string, options=options)
+    total_matches = 0
+    documents_count = 0
+    documents = []
+    search_cursor = None
+    search_more = False
+    try:
+      result = index.search(query)
+      total_matches = result.number_found
+      if len(result.results):
+        documents_count = len(result.results)
+        documents = result.results
+      if result.cursor != None:
+        search_cursor = result.cursor.web_safe_string
+        search_more = True
+      else:
+        search_cursor = None
+        search_more = False
+    except:
+      raise
+    finally:
+      return (map(cls.search_document_to_dict, documents), search_cursor, search_more, documents_count, total_matches)
+  
+  @classmethod
+  def search_document_to_dict(document):
+    # this can be avoided by subclassing search.Document
+    # and implementing get_output on it
+    if document and isinstance(document, search.Document):
+      dic = {}
+      dic['doc_id'] = document.doc_id
+      dic['language'] = document.language
+      dic['rank'] = document.rank
+      fields = document.fields
+      for field in fields:
+        dic[field.name] = field.value
+    return dic
   
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
@@ -1958,7 +2217,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
         out = None
     return out
   
-  def search_field_format(self, value):
+  def search_field_format(self, value): # @todo should we call this search_document_field_format?
     if self._repeated:
       value = ' '.join(value)
       return search.TextField(name=self.searchable_name, value=value)

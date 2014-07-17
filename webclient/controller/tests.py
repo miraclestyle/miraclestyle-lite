@@ -11,7 +11,7 @@ import copy
 from google.appengine.ext import blobstore
 from google.appengine.api import images
 
-from app import ndb, settings
+from app import orm, settings
 
 from app.models import base
 
@@ -27,9 +27,10 @@ class BaseTestHandler(handler.Base):
   def out_json(self, s):
     self.out(json.dumps(s, indent=2, cls=handler.JSONEncoderHTML))
   
-  def out(self, s, a=0):
+  def out(self, s, a=0, before=True):
     sp = "\n"
-    self.response.write(sp*a)
+    if before:
+      self.response.write(sp*a)
     self.response.write(s)
     self.response.write(sp*a)
 
@@ -38,25 +39,25 @@ class Test1(BaseTestHandler):
   def respond(self):
     self.out('Hello World')
     
-class TestDeepCopyStructFar(ndb.BaseModel):
+class TestDeepCopyStructFar(orm.BaseModel):
   
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
   _use_cache = False
   
-  what = ndb.SuperStringProperty()
+  what = orm.SuperStringProperty()
     
-class TestDeepCopyStruct(ndb.BaseModel):
+class TestDeepCopyStruct(orm.BaseModel):
   
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
   _use_cache = False
    
-  name = ndb.SuperStringProperty()
+  name = orm.SuperStringProperty()
   
-  _virtual_fields = dict(_far=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
+  _virtual_fields = dict(_far=orm.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
  
 class TestDeepCopyStructImage(base.Image):
   
@@ -65,22 +66,22 @@ class TestDeepCopyStructImage(base.Image):
   _use_memcache = False
   _use_cache = False
   
-  _virtual_fields = dict(_other=ndb.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
+  _virtual_fields = dict(_other=orm.SuperStorageStructuredProperty(TestDeepCopyStructFar, storage='remote_multi_sequenced'))
  
     
-class TestDeepCopyModel(ndb.BaseModel):
+class TestDeepCopyModel(orm.BaseModel):
   
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
   _use_cache = False
   
-  test1 = ndb.SuperLocalStructuredProperty(TestDeepCopyStruct, repeated=True)
-  test2 = ndb.SuperStructuredProperty(TestDeepCopyStruct, repeated=True)
-  test3 = ndb.SuperLocalStructuredProperty(TestDeepCopyStruct)
-  test4 = ndb.SuperStructuredProperty(TestDeepCopyStruct)
+  test1 = orm.SuperLocalStructuredProperty(TestDeepCopyStruct, repeated=True)
+  test2 = orm.SuperStructuredProperty(TestDeepCopyStruct, repeated=True)
+  test3 = orm.SuperLocalStructuredProperty(TestDeepCopyStruct)
+  test4 = orm.SuperStructuredProperty(TestDeepCopyStruct)
   
-  _virtual_fields = dict(_test5=ndb.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'),
+  _virtual_fields = dict(_test5=orm.SuperStorageStructuredProperty(TestDeepCopyStruct, storage='remote_multi'),
                          _test6=base.SuperImageStorageStructuredProperty(TestDeepCopyStructImage, storage='remote_multi'),)
   
     
@@ -152,14 +153,14 @@ class TestCreateURL(BaseTestHandler):
   def respond(self):
     self.out(blobstore.create_upload_url(self.request.get('path'), gs_bucket_name=settings.DOMAIN_LOGO_BUCKET))
   
-class TestKeyParentModel(ndb.BaseModel):
+class TestKeyParentModel(orm.BaseModel):
   
   _use_record_engine = False
   _use_rule_engine = False
   _use_memcache = False
   _use_cache = False
   
-  name = ndb.SuperStringProperty()  
+  name = orm.SuperStringProperty()  
     
 class TestKeyParent(BaseTestHandler):
   
@@ -170,11 +171,18 @@ class TestKeyParent(BaseTestHandler):
     entity = TestKeyParentModel(name='Child #3', parent=child2.key, id='child3')
     
     if self.request.get('put'):
-      ndb.put_multi([root, child1, child2, entity])
+      orm.put_multi([root, child1, child2, entity])
     else:
       entity = entity.key.get()
     
     self.out_json(entity)
+     
+     
+class TestPossibleFieldNames(BaseTestHandler):
+  
+  def respond(self):
+    for f in dir(TestKeyParentModel()):
+      self.out(f, 1, before=False)
      
     
 for k,o in globals().items():

@@ -10,7 +10,7 @@ import cgi
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-from app import ndb, util, settings, memcache
+from app import orm, util, settings, memcache
 
 
 class InputError(Exception):
@@ -64,7 +64,7 @@ class Engine:
   @classmethod
   def get_schema(cls):
     cls.init()
-    return ndb.Model._kind_map
+    return orm.Model._kind_map
   
   @classmethod
   def process_blob_input(cls, input):
@@ -115,18 +115,18 @@ class Engine:
             if blob in delete_blobs:
               delete_blobs.remove(blob)
         if delete_blobs:
-          util.logger('DELETED %s BLOBS.' % len(delete))
+          util.logger('DELETED %s BLOBS.' % len(delete_blobs))
           blobstore.delete(delete_blobs)
   
   @classmethod
   def get_models(cls, context):
-    context.models = ndb.Model._kind_map
+    context.models = orm.Model._kind_map
   
   @classmethod
   def get_model(cls, context, input):
     model_key = input.get('action_model')
     action_model_schema = input.get('action_model_schema')
-    model = ndb.Model._kind_map.get(model_key)
+    model = orm.Model._kind_map.get(model_key)
     if not action_model_schema:
       context.model = model
     else:
@@ -140,7 +140,7 @@ class Engine:
     model_kind = context.model.get_kind()
     if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
       actions = context.model.get_actions()
-      action_key = ndb.Key(model_kind, 'action', '56', action_id).urlsafe()
+      action_key = orm.Key(model_kind, 'action', '56', action_id).urlsafe()
       if action_key in actions:
         context.action = actions[action_key]
     if not context.action:
@@ -162,10 +162,10 @@ class Engine:
           if not value_provided and not argument._required:
             continue  # Skip the .format only if the value was not provided, and if the argument is not required.
           value = argument.argument_format(value)
-          if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by ndb.
+          if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by orm.
             argument._validator(argument, value)
           context.input[key] = value
-        except ndb.PropertyError as e:
+        except orm.PropertyError as e:
           if e.message not in input_error:
             input_error[e.message] = []
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
@@ -193,10 +193,10 @@ class Engine:
           for group in plugin_groups:
             if len(group.plugins):
               if group.transactional:
-                ndb.transaction(lambda: execute_plugins(group.plugins), xg=True)
+                orm.transaction(lambda: execute_plugins(group.plugins), xg=True)
               else:
                 execute_plugins(group.plugins)
-      except ndb.TerminateAction as e:
+      except orm.TerminateAction as e:
         pass
       except Exception as e:
         raise
