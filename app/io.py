@@ -36,7 +36,6 @@ class Context():
   def __init__(self):
     self.input = {}
     self.output = {}
-    self.tmp = {}
     self.model = None
     self.models = None
     self.action = None
@@ -152,7 +151,7 @@ class Engine:
     for key, argument in context.action.arguments.items():
       value_provided = key in input
       if not value_provided and argument._default is not None:
-        # this must be here because the default value will be ignored, see line 99
+        # This must be here because the default value will be ignored, see line 99.
         value_provided = True
         value = argument._default
       else:
