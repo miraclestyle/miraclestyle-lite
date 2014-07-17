@@ -137,6 +137,25 @@ class Duplicate(orm.BaseModel):
       set_attr(context, save_path, duplicate_entity)
 
 
+class UploadImages(orm.BaseModel):
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  upload_cfg = orm.SuperJsonProperty('2', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    if not isinstance(self.upload_cfg, dict):
+      self.upload_cfg = {}
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    entity = get_attr(context, entity_path)
+    if entity and isinstance(entity, orm.Model):
+      for field_key, input_key in self.upload_cfg.items():
+        value = getattr(entity, field_key, None)
+        if value is not None:
+          value.upload(context.input.get(input_key))
+
+
 class ProcessImages(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})

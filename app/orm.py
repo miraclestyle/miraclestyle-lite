@@ -1774,6 +1774,8 @@ class _BaseProperty(object):
            'default': self._default,
            'repeated': self._repeated,
            'structured': self.is_structured,  # @todo Not sure if this is ok!?
+           'searchable' : self._searchable,
+           'searchable_name' : self.searchable_name,
            'type': self.__class__.__name__}
     return dic
   

@@ -172,7 +172,20 @@ class SuperStructuredPropertyImageManager(ndb.SuperStructuredPropertyManager):
           processed_entity = self._property.process(self.value)
           setattr(self._entity, self.property_name, processed_entity)
       self._process_deep()
-
+      
+  def upload(self, entities):
+    # this function could be moved into the storage manager core by calling it "append" or "extend"
+    # basically that's what it does at the moment
+    if self.storage_type == 'local':
+      self.read() # we always call read when the local is mentioned because we always need local value for extending its list or complete override
+    if self._property._repeated:
+      if not self.has_value():
+        self._property_value = []
+      self._property_value.extend(entities)
+    else:
+      self._property_value = entities
+    # always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, self._property_value)
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like ndb properties.

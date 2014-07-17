@@ -4,6 +4,7 @@ Created on May 12, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+import hashlib
 
 from app import ndb, settings
 from app.models.base import *
@@ -127,6 +128,13 @@ class Instance(ndb.BaseExpando):
     'contents': ndb.SuperLocalStructuredProperty(Content, '11', repeated=True),
     'low_stock_quantity': ndb.SuperDecimalProperty('12', default='0.00')
     }
+  
+  
+  def prepare_key(self, **kwargs):
+    variant_signature = self.variant_signature
+    key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
+    product_instance_key = self.build_key(key_id, parent=kwargs.get('parent'))
+    return product_instance_key
 
 
 class Template(ndb.BaseExpando):
