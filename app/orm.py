@@ -587,17 +587,10 @@ class _BaseModel(object):
       
   @classmethod
   def _post_delete_hook(cls, key, future):
-    # here we cannot retrieve the entity, so in this case we just delete the document
-    # problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the 
-    # index will be deleted anyway
-    if cls._use_search_engine:
-      try:
-        index = search.Index(name=key.kind(), namespace=None) # well see about the namespace
-        index.delete(key.urlsafe())
-        # index does not have .delete_async, ergo no global scope batcher
-      except Exception as e:
-        util.logger('INDEX DELETE FAILED! ERROR: %s' % e)
-        pass
+    # Here we can no longer retrieve the deleted entity, so in this case we just delete the document.
+    # Problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the 
+    # index will be deleted anyway.
+    cls.search_document_delete(key)
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -1195,14 +1188,25 @@ class _BaseModel(object):
   def search_document_write(self):
     if self._use_search_engine:
       try:
-        index = search.Index(name=self.get_kind(), namespace=None) # well see about the namespace
+        index = search.Index(name=self.get_kind(), namespace=self.key.namespace()) # well see about the namespace
         index.put(self.search_document())  
         # Batching puts is more efficient than adding documents one at a time. - this is a problem, because
         # index does not have .put_async, ergo no global scope batcher
       except Exception as e:
         util.logger('INDEX FAILED! ERROR: %s' % e)
         pass
- 
+      
+  @classmethod
+  def search_document_delete(cls, key):
+    if cls._use_search_engine:
+      try:
+        index = search.Index(name=key.kind(), namespace=None) # well see about the namespace
+        index.delete(key.urlsafe())
+        # index does not have .delete_async, ergo no global scope batcher
+      except Exception as e:
+        util.logger('INDEX DELETE FAILED! ERROR: %s' % e)
+        pass
+      
   @classmethod    
   def search_documents(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
     # should this be here anyways?
@@ -2026,7 +2030,7 @@ class _BaseProperty(object):
     choices = self._choices
     if choices:
       choices = list(self._choices)
-    dic = {'verbose_name': getattr(self, '_verbose_name'),
+    dic = {'verbose_name': self._verbose_name,
            'required': self._required,
            'max_size': self._max_size,
            'choices': choices,
@@ -2214,8 +2218,8 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
       argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself)) 
       will allow instancing of both 51 and 21 that is provided from the input.
       
-      This property should not be used for datastore. Currently we do not have the code that would allow this to be saved
-      in datastore:
+      This property should not be used for datastore. 
+      Currently we do not have the code that would allow this to be saved in datastore:
       
       Entity.images
               => Image
@@ -2228,9 +2232,8 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
             => Image
             => Image
             => Image
-            
-      etc.
-      
+      In order to support different instances in the repeated list we would also need to store KIND. But i dont
+      see that this is going to be needed.
     '''
     args = list(args)
     if isinstance(args[0], (tuple, list)):
@@ -2534,6 +2537,7 @@ class SuperDecimalProperty(SuperStringProperty):
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = str(value)
+      # specifying this as number field will either convert it in INT or FLOAT
       return search.NumberField(name=self.searchable_name, value=value)
   
   def _validate(self, value):
@@ -2867,7 +2871,6 @@ class Record(BaseExpando):
       for action in modelclass._actions:
         if entity.action == action.key:
           return '%s.%s' % (modelclass.__name__, action_id)
-          break
   
   def _if_properties_are_cloned(self):
     return not (self.__class__._properties is self._properties)
