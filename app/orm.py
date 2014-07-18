@@ -20,7 +20,7 @@ from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
 from google.appengine.api import search
 
-from app import util, settings
+from app import util, settings, memcache
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -394,6 +394,8 @@ class _BaseModel(object):
     if not _deepcopied:
       self.make_original()
     self._output = []
+    self._search_documents_write = []
+    self._search_documents_delete = []
     for key in self.get_fields():
       self.add_output(key)
   
@@ -1089,11 +1091,22 @@ class _BaseModel(object):
   def write(self, record_arguments):
     self._record_arguments = record_arguments
     self.put()
-  
+    write_indexes = self.search_document_write_temp_memory(self.key)
+    delete_indexes = self.search_document_delete_temp_memory(self.key)
+    index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
+    if write_indexes:
+      index.put(write_indexes)
+    if delete_indexes:
+      index.delete(delete_indexes)
+       
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
+      delete_indexes = self.search_document_delete_temp_memory(self.key)
+      index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
+      if delete_indexes:
+        index.delete(delete_indexes)
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1184,28 +1197,33 @@ class _BaseModel(object):
           doc_fields.append(search_document_field)
       if doc_id != None and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
- 
+  
+  @classmethod
+  def search_document_write_temp_memory(cls, key):
+    k = '%s_search_document_write'
+    out = memcache.temp_memory_get(k % key.urlsafe())
+    if not isinstance(out, list):
+      memcache.temp_memory_set(k, [])
+    return memcache.temp_memory_get(k)
+  
+  @classmethod
+  def search_document_delete_temp_memory(cls, key):
+    k = '%s_search_document_delete'
+    out = memcache.temp_memory_get(k % key.urlsafe())
+    if not isinstance(out, list):
+      memcache.temp_memory_set(k, [])
+    return memcache.temp_memory_get(k)
+  
   def search_document_write(self):
     if self._use_search_engine:
-      try:
-        index = search.Index(name=self.get_kind(), namespace=self.key.namespace()) # well see about the namespace
-        index.put(self.search_document())  
-        # Batching puts is more efficient than adding documents one at a time. - this is a problem, because
-        # index does not have .put_async, ergo no global scope batcher
-      except Exception as e:
-        util.logger('INDEX FAILED! ERROR: %s' % e)
-        pass
+      indexes = self.search_document_write_temp_memory(self.key)
+      indexes.append(self.search_document())
       
   @classmethod
   def search_document_delete(cls, key):
     if cls._use_search_engine:
-      try:
-        index = search.Index(name=key.kind(), namespace=None) # well see about the namespace
-        index.delete(key.urlsafe())
-        # index does not have .delete_async, ergo no global scope batcher
-      except Exception as e:
-        util.logger('INDEX DELETE FAILED! ERROR: %s' % e)
-        pass
+      delete_indexes = cls.search_document_delete_temp_memory(key)
+      delete_indexes.append(key.urlsafe())
       
   @classmethod    
   def search_documents(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
