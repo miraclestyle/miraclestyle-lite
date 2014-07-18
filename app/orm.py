@@ -1764,6 +1764,19 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._read_deep(read_arguments)
       return self._property_value
   
+  def add(self, entities):
+    # @todo Is it preferable to branch this function to helper functions, like we do for read, update, delete (_add_local, _add_remote_sigle...)?
+    if self.storage_type == 'local':
+      self.read()  # We always call read when the local is mentioned because we always need local value for extending its list or complete override
+    if self._property._repeated:
+      if not self.has_value():
+        self._property_value = []
+      self._property_value.extend(entities)
+    else:
+      self._property_value = entities
+    # Always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, self._property_value)
+  
   def _pre_update_local(self):
     '''Process local structures.
     
