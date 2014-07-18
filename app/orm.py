@@ -20,7 +20,7 @@ from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
 from google.appengine.api import search
 
-from app import util, settings, memcache
+from app import memcache, util, settings
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -383,7 +383,7 @@ class _BaseModel(object):
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
   _use_rule_engine = True  # All models by default respect rule engine!
-  _use_search_document_engine = False
+  _use_search_engine = False  # Models can utilize google search services along with datastore search services.
   _parent = None
   
   def __init__(self, *args, **kwargs):
@@ -586,7 +586,7 @@ class _BaseModel(object):
             if isinstance(manager, SuperPropertyManager):
               manager.delete()
       delete_async()
-      
+  
   @classmethod
   def _post_delete_hook(cls, key, future):
     # Here we can no longer retrieve the deleted entity, so in this case we just delete the document.
@@ -1193,7 +1193,7 @@ class _BaseModel(object):
         doc_fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
       for field_key, field in entity.get_fields().items():
         if field._searchable:
-          search_document_field = field.search_field_format(getattr(entity, field_key, None))
+          search_document_field = field.search_document_field_format(getattr(entity, field_key, None))
           doc_fields.append(search_document_field)
       if doc_id != None and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
@@ -2068,8 +2068,8 @@ class _BaseProperty(object):
            'default': self._default,
            'repeated': self._repeated,
            'structured': self.is_structured,  # @todo Not sure if this is ok!?
-           'searchable' : self._searchable,
-           'searchable_name' : self.searchable_name,
+           'searchable': self._searchable,
+           'searchable_name': self.searchable_name,  # @todo Rename 'searchable_name' to 'search_document_field_name'?
            'type': self.__class__.__name__}
     return dic
   
@@ -2138,7 +2138,7 @@ class _BaseStructuredProperty(_BaseProperty):
       args[0] = Model._kind_map.get(args[0])
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
-    
+  
   def get_modelclass(self, values=None):
     if values is None:
       return self._modelclass
@@ -2238,6 +2238,7 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   pass
 
+
 class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   
   _kinds = None
@@ -2292,7 +2293,8 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
           values.pop('_kind')
           return model(**values)
     return super(SuperMultiStructuredProperty, self).get_modelclass()
- 
+
+
 class SuperPickleProperty(_BaseProperty, PickleProperty):
   pass
 
@@ -2313,9 +2315,9 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
         out = None
     return out
   
-  def search_field_format(self, value): # @todo should we call this search_document_field_format?
+  def search_document_field_format(self, value):
     if self._repeated:
-      value = ' '.join(value)
+      value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       return search.DateField(name=self.searchable_name, value=value)
@@ -2330,7 +2332,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
     else:
       return value
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: json.dumps(v), value))
     else:
@@ -2347,7 +2349,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
     else:
       return unicode(value)
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(value)
     return search.HtmlField(name=self.searchable_name, value=value)
@@ -2362,7 +2364,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
     else:
       return unicode(value)
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(value)
     return search.TextField(name=self.searchable_name, value=value)
@@ -2377,9 +2379,9 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
     else:
       return float(value)
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
-      value = ' '.join(value)
+      value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     return search.NumberField(name=self.searchable_name, value=value)
 
@@ -2395,9 +2397,9 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
         return value
       return long(value)
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
-      value = ' '.join(value)
+      value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     return search.NumberField(name=self.searchable_name, value=value)
 
@@ -2433,9 +2435,9 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
         out = None
     return out
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
-      value = ' '.join(map(lambda key: key.urlsafe(), value))
+      value = ' '.join(map(lambda v: v.urlsafe(), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = value.urlsafe()
@@ -2510,7 +2512,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     else:
       return bool(long(value))
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
@@ -2540,7 +2542,7 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
         out = None
     return out
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
@@ -2562,13 +2564,13 @@ class SuperDecimalProperty(SuperStringProperty):
       raise PropertyError('invalid_number')
     return value
   
-  def search_field_format(self, value):
+  def search_document_field_format(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.searchable_name, value=value)
     else:
       value = str(value)
-      # specifying this as number field will either convert it in INT or FLOAT
+      # Specifying this as a number field will either convert it to INT or FLOAT.
       return search.NumberField(name=self.searchable_name, value=value)
   
   def _validate(self, value):
