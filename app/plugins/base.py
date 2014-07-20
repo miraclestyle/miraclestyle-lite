@@ -248,9 +248,10 @@ class CallbackNotify(orm.BaseModel):
   
   def run(self, context):
     static_data = {}
-    static_data.update({'action_id': 'initiate', 'action_model': '61'})
     entity = get_attr(context, '_' + context.model.__name__.lower())
-    static_data['caller_entity'] = entity.key_urlsafe
+    static_data.update({'caller_entity': entity.key_urlsafe,
+                        'action_id': 'initiate',
+                        'action_model': '61'})
     context._callbacks.append(('notify', static_data))
 
 
@@ -267,7 +268,12 @@ class CallbackExec(orm.BaseModel):
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
-    callback_exec('/task/io_engine_run', context._callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
+    for callback in context._callbacks:
+      if callback[1].get('caller_user') == None:
+        callback[1]['caller_user'] = context.user.key_urlsafe
+      if callback[1].get('caller_action') == None:
+        callback[1]['caller_action'] = context.action.key_urlsafe
+    callback_exec('/task/io_engine_run', context._callbacks)
     context._callbacks = []
 
 
