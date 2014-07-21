@@ -213,7 +213,10 @@ class DomainSetup(Setup):
     kwargs['caller_entity'] = entity
     kwargs['caller_user'] = self.context.user
     callbacks = custom_notify.run(**kwargs)
-    callback_exec('/task/io_engine_run', callbacks, self.context.user.key_urlsafe, self.context.action.key_urlsafe)
+    for callback in callbacks:
+      callback[1]['caller_user'] = self.context.user.key_urlsafe
+      callback[1]['caller_action'] = self.context.action.key_urlsafe
+    callback_exec('/task/io_engine_run', callbacks)
     self.config.state = 'completed'
     self.config.write()
 

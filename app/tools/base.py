@@ -58,7 +58,10 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
       callbacks.extend(clean_roles)
     entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
   callbacks = list(set(callbacks))
-  callback_exec('/task/io_engine_run', callbacks, kwargs.get('user').key_urlsafe, kwargs.get('action').key_urlsafe)  # @todo This has to be optimized!
+  for callback in callbacks:
+    callback[1]['caller_user'] = kwargs.get('user').key_urlsafe
+    callback[1]['caller_action'] = kwargs.get('action').key_urlsafe
+  callback_exec('/task/io_engine_run', callbacks)  # @todo This has to be optimized!
 
 
 def rule_exec(entity, action):
@@ -69,7 +72,7 @@ def rule_exec(entity, action):
     raise ndb.ActionDenied(action)  # @todo Do we use TerminateAction here??
 
 
-def callback_exec(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
+def callback_exec(url, callbacks):
   callbacks = normalize(callbacks)
   queues = {}
   if ndb.in_transaction():
@@ -78,13 +81,10 @@ def callback_exec(url, callbacks, agent_key_urlsafe, action_key_urlsafe):
     for callback in callbacks:
       if callback and isinstance(callback, (list, tuple)) and len(callback) == 2:
         queue_name, data = callback
-        if data.get('caller_user') == None:
-          data['caller_user'] = agent_key_urlsafe
-        if data.get('caller_action') == None:
-          data['caller_action'] = action_key_urlsafe
-        if queue_name not in queues:
-          queues[queue_name] = []
-        queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))
+        if data and data.get('caller_user') and data.get('caller_action'):
+          if queue_name not in queues:
+            queues[queue_name] = []
+          queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))
   if len(queues):
     for queue_name, tasks in queues.items():
       queue = taskqueue.Queue(name=queue_name)

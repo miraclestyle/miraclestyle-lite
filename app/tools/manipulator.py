@@ -54,20 +54,20 @@ def set_attr(entity, field_path, value):
     setattr(entity, last_field, value)
 
 
-def get_attr(entity, field_path):
+def get_attr(entity, field_path, default_value=None):
   result = prepare_attr(entity, field_path)
   if result == None:
-    return None
+    return default_value
   entity, last_field = result
   if isinstance(entity, dict):
-    return entity.get(last_field, None)
+    return entity.get(last_field, default_value)
   elif isinstance(entity, list):
     try:
       return entity[int(last_field)]
     except:
-      return None
+      return default_value
   else:
-    return getattr(entity, last_field, None)
+    return getattr(entity, last_field, default_value)
 
 
 def get_meta(entity, field_path):

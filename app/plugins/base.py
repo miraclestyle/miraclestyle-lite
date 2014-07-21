@@ -58,16 +58,18 @@ class Read(orm.BaseModel):
     model_path = self.cfg.get('model', 'model')
     parent_path = self.cfg.get('parent', None)
     namespace_path = self.cfg.get('namespace', 'namespace')
+    read_arguments_path = self.cfg.get('read', 'input.read_arguments')
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     source = get_attr(context, source_path)
     model = get_attr(context, model_path)
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
+    read_arguments = get_attr(context, read_arguments_path, {})
     if parent is not None:
       namespace = None
     if source and isinstance(source, orm.Key):
       entity = source.get()
-      entity.read(context.input.get('read_arguments', {}))
+      entity.read(read_arguments)
     elif hasattr(model, 'prepare_key'):
       model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
       entity = model_key.get()
@@ -75,7 +77,7 @@ class Read(orm.BaseModel):
         entity = model()
         entity.set_key(model_key)
       else:
-        entity.read(context.input.get('read_arguments', {}))
+        entity.read(read_arguments)
     else:
       entity = model()
       entity.set_key(parent=parent, namespace=namespace)
@@ -135,23 +137,22 @@ class Duplicate(orm.BaseModel):
       set_attr(context, save_path, duplicate_entity)
 
 
-class UploadImages(orm.BaseModel):
+class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring required.
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  upload_cfg = orm.SuperJsonProperty('2', indexed=False, required=True, default={})
   
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    if not isinstance(self.upload_cfg, dict):
-      self.upload_cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    add_config = self.cfg.get('add_config', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
-      for field_key, input_key in self.upload_cfg.items():
-        value = getattr(entity, field_key, None)
-        if value is not None:
-          value.upload(context.input.get(input_key))
+      for field_key, path in add_config.items():
+        if field.is_structured:
+          value = getattr(entity, field_key, None)
+          if value is not None and hasattr(value, 'add') and callable(value.add):
+            value.add(get_attr(context, path))
 
 
 class ProcessImages(orm.BaseModel):
@@ -247,9 +248,10 @@ class CallbackNotify(orm.BaseModel):
   
   def run(self, context):
     static_data = {}
-    static_data.update({'action_id': 'initiate', 'action_model': '61'})
     entity = get_attr(context, '_' + context.model.__name__.lower())
-    static_data['caller_entity'] = entity.key_urlsafe
+    static_data.update({'caller_entity': entity.key_urlsafe,
+                        'action_id': 'initiate',
+                        'action_model': '61'})
     context._callbacks.append(('notify', static_data))
 
 
@@ -266,7 +268,12 @@ class CallbackExec(orm.BaseModel):
       for key, value in dynamic_data.items():
         static_data[key] = get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
-    callback_exec('/task/io_engine_run', context._callbacks, context.user.key_urlsafe, context.action.key_urlsafe)
+    for callback in context._callbacks:
+      if callback[1].get('caller_user') == None:
+        callback[1]['caller_user'] = context.user.key_urlsafe
+      if callback[1].get('caller_action') == None:
+        callback[1]['caller_action'] = context.action.key_urlsafe
+    callback_exec('/task/io_engine_run', context._callbacks)
     context._callbacks = []
 
 
