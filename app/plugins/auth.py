@@ -9,6 +9,7 @@ import hashlib
 
 from app import orm, util
 from app.tools import oauth2
+from app.tools.base import *
 
 
 def primary_contact_validator(prop, value):
@@ -22,18 +23,18 @@ def primary_contact_validator(prop, value):
 
 def new_session(model, entity):
   Session = model
-  session_ids = [session.session_id for session in entity.sessions]
+  session_ids = [session.session_id for session in entity.sessions.read()]
   while True:
     session_id = hashlib.md5(util.random_chars(30)).hexdigest()
     if session_id not in session_ids:
       break
   session = Session(session_id=session_id)
-  entity.sessions.append(session)
+  entity.sessions.read().append(session)
   return session
 
 
 def has_identity(entity, identity_id):
-  for identity in entity.identities:
+  for identity in entity.identities.read():
     if identity.identity == identity_id:
       return identity
   return False
@@ -96,7 +97,7 @@ class UserLoginInit(orm.BaseModel):
 class UserLoginWrite(orm.BaseModel):
   
   def run(self, context):
-    if context._identity_id != None:
+    if hasattr(context, '_identity_id') and context._identity_id != None:
       User = context.models['0']
       Identity = context.models['64']
       Session = context.models['70']
@@ -104,7 +105,7 @@ class UserLoginWrite(orm.BaseModel):
       if entity._is_guest:
         entity = context.model()
         entity.emails.append(context._email)
-        entity.identities.append(Identity(identity=context._identity_id, email=context._email, primary=True))
+        entity.identities.read().append(Identity(identity=context._identity_id, email=context._email, primary=True))
         entity.state = 'active'
         session = new_session(Session, entity)
         # Right now this is the only way to record this entity.
@@ -117,7 +118,7 @@ class UserLoginWrite(orm.BaseModel):
           entity.emails.append(context._email)
         used_identity = has_identity(entity, context._identity_id)
         if not used_identity:
-          entity.identities.append(Identity(identity=context._identity_id, email=context._email, primary=False))
+          entity.identities.read().append(Identity(identity=context._identity_id, email=context._email, primary=False))
         else:
           used_identity.associated = True
           if used_identity.email != context._email:
@@ -145,7 +146,7 @@ class UserUpdateSet(orm.BaseModel):
   def run(self, context):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
-    for identity in context._user.identities:
+    for identity in context._user.identities.read():
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False

@@ -232,7 +232,7 @@ class Base(webapp2.RequestHandler):
        current_user = auth.User.current_user()
        current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
        current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
-       self.template['current_user'] = current_user # @note here we reference entire exposed user object without rule.read() because that will be only available to the user who is currently logged in!
+       self.template['current_user'] = current_user
        csrf = current_user._csrf
         
     if not csrf_cookie_value:

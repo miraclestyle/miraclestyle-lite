@@ -12,13 +12,13 @@ from google.appengine.api import search
 from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
 
-from app import ndb, util
+from app import orm, util
 from app.tools.manipulator import get_attr, get_meta, normalize
 
 
 def _rule_get_global_permissions(entity):
   global_permissions = []
-  if entity and isinstance(entity, ndb.Model):
+  if entity and isinstance(entity, orm.Model):
     if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
       global_permissions = entity._global_role.permissions
   return global_permissions
@@ -27,13 +27,13 @@ def _rule_get_global_permissions(entity):
 def _rule_get_local_permissions(entity, user):
   local_permissions = []
   clean_roles_callbacks = []
-  if entity and isinstance(entity, ndb.Model):
+  if entity and isinstance(entity, orm.Model):
     if user and not user._is_guest:
-      domain_user_key = ndb.Key('8', user.key_id_str, namespace=entity.key_namespace)
+      domain_user_key = orm.Key('8', user.key_id_str, namespace=entity.key_namespace)
       domain_user = domain_user_key.get()
       clean_roles = False
       if domain_user and domain_user.state == 'accepted':
-        roles = ndb.get_multi(domain_user.roles)
+        roles = orm.get_multi(domain_user.roles)
         for role in roles:
           if role is None:
             clean_roles = True
@@ -67,15 +67,15 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
 def rule_exec(entity, action):
   if entity and hasattr(entity, '_action_permissions'):
     if not entity._action_permissions[action.key_urlsafe]['executable']:
-      raise ndb.ActionDenied(action)  # @todo Do we use TerminateAction here??
+      raise orm.ActionDenied(action)  # @todo Do we use TerminateAction here??
   else:
-    raise ndb.ActionDenied(action)  # @todo Do we use TerminateAction here??
+    raise orm.ActionDenied(action)  # @todo Do we use TerminateAction here??
 
 
 def callback_exec(url, callbacks):
   callbacks = normalize(callbacks)
   queues = {}
-  if ndb.in_transaction():
+  if orm.in_transaction():
     callbacks = callbacks[:5]
   if len(callbacks):
     for callback in callbacks:
@@ -88,7 +88,7 @@ def callback_exec(url, callbacks):
   if len(queues):
     for queue_name, tasks in queues.items():
       queue = taskqueue.Queue(name=queue_name)
-      queue.add(tasks, transactional=ndb.in_transaction())
+      queue.add(tasks, transactional=orm.in_transaction())
 
 
 __SEARCH_FIELDS = {'SuperKeyProperty': search.AtomField,
@@ -110,7 +110,7 @@ def get_search_field(field_type):
   return __SEARCH_FIELDS.get(field_type)
 
 
-def document_search(index_name, namespace=None, argument, limit=10, urlsafe_cursor=None, fields=None):
+def document_search(index_name, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
   index = search.Index(name=index_name, namespace=namespace)
   # Query String implementation start!
   query_string = ''
@@ -180,7 +180,7 @@ def document_search(index_name, namespace=None, argument, limit=10, urlsafe_curs
 
 
 def _document_from_entity(entity, fields={}):
-  if entity and hasattr(entity, 'key') and isinstance(entity.key, ndb.Key):
+  if entity and hasattr(entity, 'key') and isinstance(entity.key, orm.Key):
     doc_id = entity.key_urlsafe
     doc_fields = []
     doc_fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
@@ -271,7 +271,7 @@ def document_index_from_entity(entities, index_name=None):
   indexes = {}
   if len(entities):
     for entity in entities:
-      if entity and isinstance(entity, ndb.Model):
+      if entity and isinstance(entity, orm.Model):
         namespace = 'global'
         if index_name != None:
           name = index_name

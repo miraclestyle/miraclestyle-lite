@@ -59,7 +59,7 @@ class JSONEncoderHTML(json.JSONEncoder):
         if hasattr(o, 'get_output'):
            try:
              return o.get_output()
-           except TypeError:
+           except TypeError as e:
              pass
          
         if hasattr(o, 'get_meta'):

@@ -78,7 +78,7 @@ class User(orm.BaseExpando):
       orm.FieldPermission('0', ['created', 'updated', 'state'], False, True,
                           'not user._is_guest and user.key == entity._original.key'),
       orm.FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                          'not user._is_guest and user.key == entity._original.key'),  # @todo Perhaps 'domain' field should not be writable?
+                          'not user._is_guest and user.key == entity._original.key'),  # @todo Perhaps 'domain' field should not be writable? - it should not be writable
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
@@ -249,7 +249,6 @@ class User(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_user.sessions': []}}),
-            auth.UserIPAddress(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
@@ -279,6 +278,10 @@ class User(orm.BaseExpando):
   @property
   def _is_cron(self):
     return memcache.temp_memory_get('_current_request_is_cron')
+ 
+  @property
+  def _root_admin(self):
+    return self._primary_email in settings.ROOT_ADMINS
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
@@ -286,14 +289,10 @@ class User(orm.BaseExpando):
   def set_cron(self, is_it):
     return memcache.temp_memory_set('_current_request_is_cron', is_it)
   
-  @property
-  def _root_admin(self):
-    return self._primary_email in settings.ROOT_ADMINS
-  
   def primary_email(self):
-    if not self.identities:
+    if not self.identities.read():
       return None
-    for identity in self.identities:
+    for identity in self.identities.read():
       if identity.primary == True:
         return identity.email
     return identity.email
@@ -336,7 +335,7 @@ class User(orm.BaseExpando):
     return memcache.temp_memory_get('_current_user_session')
   
   def session_by_id(self, session_id):
-    for session in self.sessions:
+    for session in self.sessions.read():
       if session.session_id == session_id:
         return session
     return None
@@ -373,7 +372,7 @@ class Domain(orm.BaseExpando):
   
   _virtual_fields = {
     '_primary_contact_email': orm.SuperReferenceProperty(target_field='primary_contact',
-                                                         format_callback=lambda self, value: self.value.primary_email),
+                                                         format_callback=lambda self, value: value.primary_email),
     '_records': orm.SuperRecordProperty('6', repeated=True)
     }
   
@@ -554,7 +553,6 @@ class Domain(orm.BaseExpando):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            auth.DomainSearch(),
             RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': 'entities',
                            'output._cursor': '_cursor',

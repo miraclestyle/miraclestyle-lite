@@ -149,7 +149,8 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
       for field_key, path in add_config.items():
-        if field.is_structured:
+        field = getattr(entity.__class__, field_key, None)
+        if field and field.is_structured:
           value = getattr(entity, field_key, None)
           if value is not None and hasattr(value, 'add') and callable(value.add):
             value.add(get_attr(context, path))

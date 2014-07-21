@@ -514,7 +514,7 @@ class _BaseModel(object):
     entity = self
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().items():
-        if isinstance(field_instance, SuperReferenceProperty) and field._autoload:
+        if isinstance(field_instance, SuperReferenceProperty) and field_instance._autoload:
           manager = field_instance._get_value(entity, internal=True)
           manager.read_async()
   
@@ -534,7 +534,7 @@ class _BaseModel(object):
   
   def _pre_put_hook(self):
     self.rule_write()
-    for field_key, field in entity.get_fields().items():
+    for field_key, field in self.get_fields().items():
       value = getattr(self, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.pre_update()
@@ -584,8 +584,10 @@ class _BaseModel(object):
         props = self.get_fields()
         prop = props.get(name)
       if not isinstance(prop, Property):
-        raise TypeError('Cannot set non-property %s' % name)
-      prop._set_value(self, value)
+        #raise TypeError('Cannot set non-property %s' % name)
+        setattr(self, name, value)
+      else:
+        prop._set_value(self, value)
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -636,13 +638,17 @@ class _BaseModel(object):
         value = getattr(self, field, None)
         if isinstance(value, SuperPropertyManager):
           value = value.value
-        value = copy.deepcopy(value)
+        if not isinstance(value, Future) or (isinstance(value, list) and not isinstance(value[0], Future)):
+          continue # this is a problem, we cannot copy futures, we will have to have on all properties flags like
+          # copiable
+          # or deepcopy=True
+          # because this way this if is retarded
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
-          #util.logger('__deepcopy__ - could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
+          util.logger('__deepcopy__ - could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
   
@@ -775,6 +781,7 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
+    util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field, field_value))
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       if not field.is_structured:
@@ -1099,7 +1106,7 @@ class _BaseModel(object):
     return query
   
   @classmethod
-  def _ndb_search(cls, argument, namespace, limit, urlsafe_cursor, fields):
+  def _ndb_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here?
     query = cls.get_ndb_query(argument, namespace, limit, urlsafe_cursor, fields)
     # Caller must be capable of differentiating possible results returned!
     if query and hasattr(query, 'fetch_page') and callable(query.fetch_page):
@@ -1109,7 +1116,7 @@ class _BaseModel(object):
         cursor = Cursor()
       return query.fetch_page(limit, start_cursor=cursor)
     else:
-      if not isinstance(keys, list):
+      if not isinstance(keys, list): # from where you get `keys`
         keys = [keys]
       return get_multi(keys)
   
@@ -1146,7 +1153,7 @@ class _BaseModel(object):
     else:
       return cls._ndb_search(argument, namespace, limit, urlsafe_cursor, fields)
   
-  def read(self, read_arguments):  # @todo Find a way to minimize synchronous reads here!
+  def read(self, read_arguments=None):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
     It's behaviour is controlled by 'read_arguments' dictioary argument!
     'read_arguments' follows this pattern:
@@ -1158,6 +1165,8 @@ class _BaseModel(object):
     'config' keyword be revised once we map all protected fields used in _BaseModel.
     
     '''
+    if read_arguments is None:
+      read_arguments = {}
     futures = []
     for field_key, field in self.get_fields().items():
       if field.is_structured:
@@ -1366,9 +1375,12 @@ class _BaseModel(object):
           parent_dic['parent'] = {}
           parent_dic = parent_dic['parent']
     names = self._output
-    for name in names:
-      value = getattr(self, name, None)
-      dic[name] = value
+    try:
+      for name in names:
+        value = getattr(self, name, None)
+        dic[name] = value
+    except Exception as e:
+      util.logger(e, 'exception')
     return dic
 
 
@@ -1674,7 +1686,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = property_value
   
   def _read_remote_multi(self, read_arguments):
-    config = read_arguments.get('config')
+    config = read_arguments.get('config', {})
     urlsafe_cursor = config.get('cursor')
     limit = config.get('limit', 10)
     order = config.get('order')
@@ -1744,13 +1756,15 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       for future, field_read_arguments in futures:
         future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
   
-  def read_async(self, read_arguments):
+  def read_async(self, read_arguments=None):
     '''Calls storage type specific read function, in order populate _property_value with values.
     'force_read' keyword will always call storage type specific read function.
     However we are not sure if we are gonna need to force read operation.
     
     '''
-    config = read_arguments.get('config')
+    if read_arguments is None:
+      read_arguments = {}
+    config = read_arguments.get('config', {})
     if self._property._readable:
       if (not self.has_value()) or config.get('force_read'):
         # read_local must be called multiple times because it gets loaded between from_pb and post_get.
@@ -1758,7 +1772,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         read_function(read_arguments)
       return self._property_value
   
-  def read(self, read_arguments):
+  def read(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
     if self._property._readable:
       self.read_async(read_arguments)
       if self.has_future():
@@ -1947,7 +1963,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
     
     '''
-    if self._property._deletable:
+    if self._property._deleteable:
       delete_function = getattr(self, '_delete_%s' % self.storage_type)
       delete_function()
   
@@ -2767,6 +2783,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._updateable = kwargs.pop('updateable', True)
     self._deleteable = kwargs.pop('deleteable', True)
     self._autoload = kwargs.pop('autoload', True)
+    self._store_key = kwargs.pop('store_key', False)
     if self._callback != None and not callable(self._callback):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
     if self._format_callback != None and not callable(self._format_callback):
@@ -2779,13 +2796,15 @@ class SuperReferenceProperty(SuperKeyProperty):
     manager.set(value)
     if not isinstance(value, Key) and hasattr(value, 'key'):
       value = value.key
-    return super(SuperReferenceProperty, self)._set_value(entity, value)
+    if self._store_key:
+      return super(SuperReferenceProperty, self)._set_value(entity, value)
   
   def _delete_value(self, entity):
     # __delete__
     manager = self._get_value(entity, internal=True)
     manager.delete()
-    return super(SuperReferenceProperty, self)._delete_value(entity)
+    if self._store_key:
+      return super(SuperReferenceProperty, self)._delete_value(entity)
   
   def _get_value(self, entity, internal=None):
     # __get__
@@ -2984,6 +3003,8 @@ class Record(BaseExpando):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
+      if isinstance(value, SuperPropertyManager):
+        value = value.read()
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)
