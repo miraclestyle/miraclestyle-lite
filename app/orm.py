@@ -784,6 +784,8 @@ class _BaseModel(object):
     if hasattr(field, '_updateable') and not field._updateable:
       return # @todo this is for _records and other types of things that do not get writed.. there is no need to iterate them over
       # we'll see!
+    # @todo
+    # also we need to handle values which are `None`. E.g. repeated lists, simple checks with `return` statement would suffice
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       # util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
