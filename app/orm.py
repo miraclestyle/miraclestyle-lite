@@ -557,7 +557,7 @@ class _BaseModel(object):
       entity.record()
       def delete_async():
         for field_key, field in entity.get_fields().items():
-          if field.is_structured:
+          if hasattr(field, 'is_structured') and field.is_structured:
             value = getattr(entity, field_key, None)
             if isinstance(value, SuperPropertyManager):
               value.delete()
@@ -638,7 +638,7 @@ class _BaseModel(object):
         value = getattr(self, field, None)
         if isinstance(value, SuperPropertyManager):
           value = value.value
-        if not isinstance(value, Future) or (isinstance(value, list) and not isinstance(value[0], Future)):
+        if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
           continue # this is a problem, we cannot copy futures, we will have to have on all properties flags like
           # copiable
           # or deepcopy=True
@@ -648,7 +648,7 @@ class _BaseModel(object):
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
-          util.logger('__deepcopy__ - could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
+          util.logger('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
   
@@ -748,7 +748,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if field.is_structured:
+      if hasattr(field, 'is_structured') and field.is_structured:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -781,9 +781,12 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field, field_value))
+    if hasattr(field, '_updateable') and not field._updateable:
+      return # @todo this is for _records and other types of things that do not get writed.. there is no need to iterate them over
+      # we'll see!
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
+      # util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
       if not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
@@ -791,7 +794,7 @@ class _BaseModel(object):
             #  return
             setattr(entity, field_key, field_value)
           except TypeError as e:
-            util.logger('write: setattr error: %s' % e)
+            util.logger('--RuleWrite: setattr error: %s' % e)
           except ComputedPropertyError:
             pass
       else:
@@ -1116,7 +1119,7 @@ class _BaseModel(object):
         cursor = Cursor()
       return query.fetch_page(limit, start_cursor=cursor)
     else:
-      if not isinstance(keys, list): # from where you get `keys`
+      if not isinstance(keys, list): # @todo from where you get `keys`? arguments
         keys = [keys]
       return get_multi(keys)
   
@@ -1169,10 +1172,13 @@ class _BaseModel(object):
       read_arguments = {}
     futures = []
     for field_key, field in self.get_fields().items():
-      if field.is_structured:
+      if hasattr(field, 'is_structured') and field.is_structured:
         value = getattr(self, field_key)
         field_read_arguments = read_arguments.get(field_key, {})
         # Otherwise we will just retrieve entities without any configurations
+        if (field_key not in field_read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
+          continue # we only read what we're told to and we always do reads for local structureds
+        field_read_arguments = read_arguments.get(field_key, {})
         value.read_async(field_read_arguments)
         # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
         # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
@@ -1557,7 +1563,7 @@ class SuperPropertyManager(object):
       self._property_value, therefore the `entities` kwarg.
     '''
     if entities is None:
-      entities = getattr(self, '_property_value', None)
+      entities = self.value
       if entities is not None:
         if self._property._repeated:
           for entity in entities:
@@ -1591,7 +1597,7 @@ class SuperPropertyManager(object):
     return isinstance(value, Future)
   
   def get_output(self):
-    return getattr(self, '_property_value', None)
+    return self.value
 
 
 class SuperStructuredPropertyManager(SuperPropertyManager):
@@ -1623,6 +1629,13 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property._modelclass = Model._kind_map.get(self._property._modelclass)
     self._property_value_options = {}
     # @todo We might want to change this to something else, but right now it is the most elegant.
+    
+  @property
+  def value(self):
+    # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
+    if self.storage_type == 'local': # it happens only on local props
+      self._read_local()
+    return super(SuperStructuredPropertyManager, self).value
   
   @property
   def value_options(self):
@@ -1658,10 +1671,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = property_value
     self._set_parent()
   
-  def _read_local(self, read_arguments):
+  def _read_local(self, read_arguments=None):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
     
     '''
+    if read_arguments is None:
+      read_arguments = {}
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -1674,18 +1689,22 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         property_value = []
     self._property_value = property_value
   
-  def _read_remote_single(self, read_arguments):
+  def _read_remote_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
     it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
     
     '''
+    if read_arguments is None:
+      read_arguments = {}
     property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
     property_value = property_value_key.get()  # @todo How do we use async call here, when we need to investigate the value below?
     if not property_value:
       property_value = self._property._modelclass(key=property_value_key)
     self._property_value = property_value
   
-  def _read_remote_multi(self, read_arguments):
+  def _read_remote_multi(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
     config = read_arguments.get('config', {})
     urlsafe_cursor = config.get('cursor')
     limit = config.get('limit', 10)
@@ -1712,12 +1731,14 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  def _read_remote_multi_sequenced(self, read_arguments):
+  def _read_remote_multi_sequenced(self, read_arguments=None):
     '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
     It then uses those keys for retreving, storing and deleting entities of those keys.
     This technique has lowest impact on data storage and retreval, and should be used whenever possible!
     
     '''
+    if read_arguments is None:
+      read_arguments = {}
     config = read_arguments.get('config')
     cursor = config.get('cursor', 0)
     limit = config.get('limit', 10)
@@ -1735,11 +1756,13 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  def _read_deep(self, read_arguments):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+  def _read_deep(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
     
     '''
+    if read_arguments is None:
+      read_arguments = {}
     if self.has_value():
       entities = self._property_value
       if not self._property._repeated:
@@ -2215,7 +2238,7 @@ class _BaseStructuredProperty(_BaseProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      util.logger('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
+      #util.logger('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
       manager_class = SuperStructuredPropertyManager
       if self._managerclass:
         manager_class = self._managerclass
@@ -2745,7 +2768,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     manager_name = '%s_manager' % self._name
     if manager_name in entity._values:
       return entity._values[manager_name]
-    util.logger('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    #util.logger('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
     manager_class = SuperStructuredPropertyManager
     if self._managerclass:
       manager_class = self._managerclass
@@ -2812,7 +2835,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      util.logger('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
+      #util.logger('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
       manager = SuperReferencePropertyManager(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     if internal:  # If internal is true, always retrieve manager.
@@ -2916,16 +2939,16 @@ class Record(BaseExpando):
   
   _virtual_fields = {
     '_agent': SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
-                                     format_callback=lambda self: self._retrieve_agent_name()),
+                                     format_callback=lambda self, value: self._retrieve_agent_name(value)),
     '_action': SuperReferenceProperty(callback=lambda self: self._retrieve_action())
     }
   
-  def _retrieve_agent_name(self):
+  def _retrieve_agent_name(self, value):
     # We have to involve Domain User here, although ndb should be unavare of external models!
-    if self.key.kind() == '8':
-      return self.name
+    if value.key.kind() == '8':
+      return value.name
     else:
-      return self._primary_email
+      return value._primary_email
   
   def _retreive_agent(self):
     # We have to involve Domain User here, although ndb should be unavare of external models!

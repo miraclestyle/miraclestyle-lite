@@ -137,7 +137,7 @@ class User(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='0', required=True),
         'primary_email': orm.SuperStringProperty(),
-        'disassociate': orm.SuperStringProperty()
+        'disassociate': orm.SuperStringProperty(repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(

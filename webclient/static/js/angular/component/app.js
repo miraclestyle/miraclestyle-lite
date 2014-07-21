@@ -99,7 +99,9 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
         return {
             search: function (args, config) {
-                return Endpoint.post('read_domains', '0', args, config);
+                return Endpoint.post('read', '0', angular.extend({
+                	'read_arguments' : {'domains' : {}, 'domain_users' : {}},
+                }, args), config);
             },
             sudo_search: function (args, config) {
                 return Endpoint.post('sudo_search', '6', args, config);
@@ -443,8 +445,15 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
             angular.forEach(domains, function (domain, i) {
             	domain.rule = RuleEngine.factory(domain);
-            	domain._domain_user = domain_users[i];
-            	domain._domain_user.rule = RuleEngine.factory(domain_users[i]);
+            	angular.forEach(domain_users, function (user) {
+            		if (user.namespace == domain.key)
+            		{
+            			domain._domain_user = user;
+            			domain._domain_user.rule = RuleEngine.factory(domain._domain_user);
+            		}
+            		
+            	});
+ 
             	entities.push(domain);
             });
 

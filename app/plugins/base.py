@@ -80,7 +80,7 @@ class Read(orm.BaseModel):
         entity.read(read_arguments)
     else:
       entity = model()
-      entity.set_key(parent=parent, namespace=namespace)
+      entity.set_key(None, parent=parent, namespace=namespace)
     set_attr(context, save_path, entity)
 
 

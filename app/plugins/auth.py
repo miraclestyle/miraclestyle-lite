@@ -150,6 +150,8 @@ class UserUpdateSet(orm.BaseModel):
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
+      else:
+        identity.associated = True
       if primary_email:
         identity.primary = False
         if identity.email == primary_email:
