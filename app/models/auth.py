@@ -6,6 +6,7 @@ Created on Jan 6, 2014
 '''
 
 import hashlib
+import os
 
 from app import ndb, settings, memcache
 from app.models.base import *
@@ -48,7 +49,7 @@ class User(ndb.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    'ip_address': ndb.SuperStringProperty(),
+    'ip_address': ndb.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
     '_records': SuperLocalStructuredRecordProperty('0', repeated=True),
     # these properties are not loaded on every user entity when they are fetched from datastore
@@ -425,7 +426,8 @@ class Domain(ndb.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_contact_email': ndb.SuperStringProperty(),
+    '_primary_contact_email': ndb.SuperReferenceProperty(target_field='primary_contact',
+                                                         format_callback=lambda self, value: self.value.primary_email),
     '_records': SuperLocalStructuredRecordProperty('6', repeated=True)
     }
   
