@@ -51,7 +51,7 @@ class User(ndb.BaseExpando):
   _virtual_fields = {
     'ip_address': ndb.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': SuperLocalStructuredRecordProperty('0', repeated=True),
+    '_records': SuperRecordProperty('0', repeated=True),
     # these properties are not loaded on every user entity when they are fetched from datastore
     # they should be read individually like so:
     # user._domains.read_async()
@@ -61,9 +61,9 @@ class User(ndb.BaseExpando):
     #   ...
     # for domain_user in user._domain_users:
     #   ...
-    '_domains' : ndb.SuperReferenceProperty(autoload=False, 
+    '_domains' : ndb.SuperReferenceProperty(autoload=False,
                                             callback=lambda self: ndb.get_multi_async([domain_key for domain_key in self.domains])),
-    '_domain_users' : ndb.SuperReferenceProperty(autoload=False, 
+    '_domain_users' : ndb.SuperReferenceProperty(autoload=False,
                                                  callback=lambda self: ndb.get_multi_async([ndb.Key('8', self.key_id, namespace=domain_key.urlsafe()) for domain_key in self.domains])),
     }
   
@@ -428,7 +428,7 @@ class Domain(ndb.BaseExpando):
   _virtual_fields = {
     '_primary_contact_email': ndb.SuperReferenceProperty(target_field='primary_contact',
                                                          format_callback=lambda self, value: self.value.primary_email),
-    '_records': SuperLocalStructuredRecordProperty('6', repeated=True)
+    '_records': SuperRecordProperty('6', repeated=True)
     }
   
   _global_role = GlobalRole(

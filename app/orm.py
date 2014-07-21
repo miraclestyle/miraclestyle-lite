@@ -399,23 +399,6 @@ class _BaseModel(object):
     for key in self.get_fields():
       self.add_output(key)
   
-  def _set_attributes(self, kwds):
-    '''Internal helper to set attributes from keyword arguments.
-    Expando overrides this.
-    Problem with this method was that it couldn't set virtual properties in constructor. So that's why we override it.
-    
-    '''
-    cls = self.__class__
-    for name, value in kwds.iteritems():
-      try:
-        prop = getattr(cls, name)  # Raises AttributeError for unknown properties.
-      except AttributeError as e:
-        props = self.get_fields()
-        prop = props.get(name)
-      if not isinstance(prop, Property):
-        raise TypeError('Cannot set non-property %s' % name)
-      prop._set_value(self, value)
-  
   @classmethod
   def _get_kind(cls):
     '''Return the kind name for this class.
@@ -454,10 +437,6 @@ class _BaseModel(object):
     virtual_fields = cls.get_virtual_fields()
     if virtual_fields:
       fields.update(virtual_fields)
-    if hasattr(cls, 'get_expando_fields'):
-      expando_fields = cls.get_expando_fields()
-      if expando_fields:
-        fields.update(expando_fields)
     return fields
   
   @classmethod
@@ -512,20 +491,20 @@ class _BaseModel(object):
             return None
     return (entity, last_field)
   
-  def get_field(self, field_path):
+  def get_field_value(self, field_path, default_value=None):
     result = self.prepare_field(self, field_path)
     if result == None:
-      return None
+      return default_value
     entity, last_field = result
     if isinstance(entity, dict):
-      return entity.get(last_field, None)
+      return entity.get(last_field, default_value)
     elif isinstance(entity, list):
       try:
         return entity[int(last_field)]
       except:
-        return None
+        return default_value
     else:
-      return getattr(entity, last_field, None)
+      return getattr(entity, last_field, default_value)
   
   def _make_async_calls(self):
     '''This function is reserved only for SuperReferenceProperty, because it will call its .read_async() method while
@@ -558,21 +537,21 @@ class _BaseModel(object):
       if not hasattr(self, '_original'):
         raise PropertyError('Working on entity (%r) without _original.' % self)
       self.rule_write()
-    for field in self.get_fields():
-      value = getattr(self, field)
+    for field_key, field in entity.get_fields().items():
+      value = getattr(self, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.pre_update()
   
   def _post_put_hook(self, future):
     entity = self
     entity.record()
-    for field in entity.get_fields():
-      value = getattr(entity, field)
+    for field_key, field in entity.get_fields().items():
+      value = getattr(entity, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.post_update()
     entity.search_document_write()
-    # @todo general problem with documents is that they are not transactional and upon failure of transaction
-    # they might get stored anyways
+    # @todo General problem with documents is that they are not transactional, and upon failure of transaction
+    # they might end up being stored anyway.
   
   @classmethod
   def _pre_delete_hook(cls, key):
@@ -582,17 +561,34 @@ class _BaseModel(object):
       def delete_async():
         for field_key, field in entity.get_fields().items():
           if field.is_structured:
-            manager = getattr(entity, field_key, None)
-            if isinstance(manager, SuperPropertyManager):
-              manager.delete()
+            value = getattr(entity, field_key, None)
+            if isinstance(value, SuperPropertyManager):
+              value.delete()
       delete_async()
   
   @classmethod
   def _post_delete_hook(cls, key, future):
     # Here we can no longer retrieve the deleted entity, so in this case we just delete the document.
-    # Problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the 
+    # Problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the
     # index will be deleted anyway.
     cls.search_document_delete(key)
+  
+  def _set_attributes(self, kwds):
+    '''Internal helper to set attributes from keyword arguments.
+    Expando overrides this.
+    Problem with this method was that it couldn't set virtual properties in constructor. So that's why we override it.
+    
+    '''
+    cls = self.__class__
+    for name, value in kwds.iteritems():
+      try:
+        prop = getattr(cls, name)  # Raises AttributeError for unknown properties.
+      except AttributeError as e:
+        props = self.get_fields()
+        prop = props.get(name)
+      if not isinstance(prop, Property):
+        raise TypeError('Cannot set non-property %s' % name)
+      prop._set_value(self, value)
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -655,8 +651,8 @@ class _BaseModel(object):
   
   @property
   def _root(self):
-    '''
-      Retrieves top level entity from hierarchy. If parent is none retrieves self.
+    '''Retrieves top level entity from hierarchy. If parent is none it retrieves self.
+    
     '''
     if self._parent is None:
       return self
@@ -1091,22 +1087,22 @@ class _BaseModel(object):
   def write(self, record_arguments):
     self._record_arguments = record_arguments
     self.put()
-    write_indexes = self.search_document_write_temp_memory(self.key)
-    delete_indexes = self.search_document_delete_temp_memory(self.key)
+    write_documents = self.get_search_documents_to_write(self.key)
+    delete_documents = self.get_search_documents_to_delete(self.key)
     index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
-    if write_indexes:
-      index.put(write_indexes)
-    if delete_indexes:
-      index.delete(delete_indexes)
-       
+    if len(write_documents):
+      index.put(write_documents)  # @todo Do we have to reset temp_memory here?
+    if len(delete_documents):
+      index.delete(delete_documents)  # @todo Do we have to reset temp_memory here?
+  
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
-      delete_indexes = self.search_document_delete_temp_memory(self.key)
+      delete_documents = self.get_search_documents_to_delete(self.key)
       index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
-      if delete_indexes:
-        index.delete(delete_indexes)
+      if len(delete_documents):
+        index.delete(delete_documents)  # @todo Do we have to reset temp_memory here?
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1177,55 +1173,55 @@ class _BaseModel(object):
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
- 
-  def search_document(self):
-    # returns document representation of entity based on properties configurations
-    entity = self
-    if entity and hasattr(entity, 'key') and isinstance(entity.key, Key):
-      doc_id = entity.key_urlsafe
+  
+  def get_search_document(self):
+    '''Returns search document representation of the entity, based on property configurations.
+    
+    '''
+    if self and hasattr(self, 'key') and isinstance(self.key, Key):
+      doc_id = self.key_urlsafe
       doc_fields = []
-      doc_fields.append(search.AtomField(name='key', value=entity.key_urlsafe))
-      doc_fields.append(search.AtomField(name='kind', value=entity.get_kind()))
-      doc_fields.append(search.AtomField(name='id', value=entity.key_id_str))
-      if entity.key_namespace != None:
-        doc_fields.append(search.AtomField(name='namespace', value=entity.key_namespace))
-      if entity.key_parent != None:
-        doc_fields.append(search.AtomField(name='ancestor', value=entity.key_parent.urlsafe()))
-      for field_key, field in entity.get_fields().items():
+      doc_fields.append(search.AtomField(name='key', value=self.key_urlsafe))
+      doc_fields.append(search.AtomField(name='kind', value=self.key_kind))
+      doc_fields.append(search.AtomField(name='id', value=self.key_id_str))
+      if self.key_namespace is not None:
+        doc_fields.append(search.AtomField(name='namespace', value=self.key_namespace))
+      if self.key_parent is not None:
+        doc_fields.append(search.AtomField(name='ancestor', value=self.key_parent.urlsafe()))
+      for field_key, field in self.get_fields().items():
         if field._searchable:
-          search_document_field = field.search_document_field_format(getattr(entity, field_key, None))
-          doc_fields.append(search_document_field)
-      if doc_id != None and len(doc_fields):
+          doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))
+      if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
   @classmethod
-  def search_document_write_temp_memory(cls, key):
-    k = '%s_search_document_write'
-    out = memcache.temp_memory_get(k % key.urlsafe())
+  def get_search_documents_to_write(cls, key):
+    k = '%s_search_document_write' % key.urlsafe()
+    out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
       memcache.temp_memory_set(k, [])
     return memcache.temp_memory_get(k)
   
   @classmethod
-  def search_document_delete_temp_memory(cls, key):
-    k = '%s_search_document_delete'
-    out = memcache.temp_memory_get(k % key.urlsafe())
+  def get_search_documents_to_delete(cls, key):
+    k = '%s_search_document_delete' % key.urlsafe()
+    out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
       memcache.temp_memory_set(k, [])
     return memcache.temp_memory_get(k)
   
-  def search_document_write(self):
+  def add_search_documents_to_write(self):
     if self._use_search_engine:
-      indexes = self.search_document_write_temp_memory(self.key)
-      indexes.append(self.search_document())
-      
+      documents = self.search_document_write_temp_memory(self.key)
+      documents.append(self.get_search_document())
+  
   @classmethod
-  def search_document_delete(cls, key):
+  def add_search_documents_to_delete(cls, key):
     if cls._use_search_engine:
-      delete_indexes = cls.search_document_delete_temp_memory(key)
-      delete_indexes.append(key.urlsafe())
-      
-  @classmethod    
+      documents = cls.search_document_delete_temp_memory(key)
+      documents.append(key.urlsafe())
+  
+  @classmethod
   def search_documents(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
     # should this be here anyways?
     index = search.Index(name=cls.get_kind(), namespace=namespace)
@@ -1297,8 +1293,7 @@ class _BaseModel(object):
   
   @classmethod
   def search_document_to_dict(document):
-    # this can be avoided by subclassing search.Document
-    # and implementing get_output on it
+    # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
     if document and isinstance(document, search.Document):
       dic = {}
       dic['doc_id'] = document.doc_id
@@ -1412,6 +1407,14 @@ class BasePoly(_BaseModel, polymodel.PolyModel):
 
 class BaseExpando(_BaseModel, Expando):
   '''Base class for all 'ndb.Expando' entities.'''
+  
+  @classmethod
+  def get_fields(cls):
+    fields = super(BaseExpando, cls).get_fields()
+    expando_fields = cls.get_expando_fields()
+    if expando_fields:
+      fields.update(expando_fields)
+    return fields
   
   @classmethod
   def get_expando_fields(cls):
@@ -2041,13 +2044,13 @@ class _BaseProperty(object):
   _max_size = None
   _value_filters = None
   _searchable = None
-  _searchable_name = None
+  _search_document_field_name = None
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
     self._searchable = kwargs.pop('searchable', self._searchable)
-    self._searchable_name = kwargs.pop('searchable_name', self._searchable_name)
+    self._search_document_field_name = kwargs.pop('search_document_field_name', self._search_document_field_name)
     custom_kind = kwargs.get('kind')
     if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
       kwargs['kind'] = factory(custom_kind)
@@ -2069,7 +2072,7 @@ class _BaseProperty(object):
            'repeated': self._repeated,
            'structured': self.is_structured,  # @todo Not sure if this is ok!?
            'searchable': self._searchable,
-           'searchable_name': self.searchable_name,  # @todo Rename 'searchable_name' to 'search_document_field_name'?
+           'search_document_field_name': self.search_document_field_name,  # @todo Rename 'searchable_name' to 'search_document_field_name'?
            'type': self.__class__.__name__}
     return dic
   
@@ -2109,9 +2112,9 @@ class _BaseProperty(object):
       return self._property_value_filter(value)
   
   @property
-  def searchable_name(self):
-    if self._searchable_name is not None:
-      return self._searchable_name
+  def search_document_field_name(self):
+    if self._search_document_field_name is not None:
+      return self._search_document_field_name
     return self._code_name if self._code_name is not None else self._name
   
   @property
@@ -2315,12 +2318,12 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
         out = None
     return out
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
     else:
-      return search.DateField(name=self.searchable_name, value=value)
+      return search.DateField(name=self.search_document_field_name, value=value)
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
@@ -2332,12 +2335,12 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
     else:
       return value
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: json.dumps(v), value))
     else:
       value = json.dumps(value)
-    return search.TextField(name=self.searchable_name, value=value)
+    return search.TextField(name=self.search_document_field_name, value=value)
 
 
 class SuperTextProperty(_BaseProperty, TextProperty):
@@ -2349,10 +2352,10 @@ class SuperTextProperty(_BaseProperty, TextProperty):
     else:
       return unicode(value)
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(value)
-    return search.HtmlField(name=self.searchable_name, value=value)
+    return search.HtmlField(name=self.search_document_field_name, value=value)
 
 
 class SuperStringProperty(_BaseProperty, StringProperty):
@@ -2364,10 +2367,10 @@ class SuperStringProperty(_BaseProperty, StringProperty):
     else:
       return unicode(value)
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(value)
-    return search.TextField(name=self.searchable_name, value=value)
+    return search.TextField(name=self.search_document_field_name, value=value)
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
@@ -2379,11 +2382,11 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
     else:
       return float(value)
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
-    return search.NumberField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
+    return search.NumberField(name=self.search_document_field_name, value=value)
 
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
@@ -2397,11 +2400,11 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
         return value
       return long(value)
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
-    return search.NumberField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
+    return search.NumberField(name=self.search_document_field_name, value=value)
 
 
 class SuperKeyProperty(_BaseProperty, KeyProperty):
@@ -2435,13 +2438,13 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
         out = None
     return out
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: v.urlsafe(), value))
-      return search.TextField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
     else:
       value = value.urlsafe()
-      return search.AtomField(name=self.searchable_name, value=value)
+      return search.AtomField(name=self.search_document_field_name, value=value)
 
 
 class SuperVirtualKeyProperty(SuperKeyProperty):
@@ -2512,13 +2515,13 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     else:
       return bool(long(value))
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
     else:
       value = str(value)
-      return search.AtomField(name=self.searchable_name, value=value)
+      return search.AtomField(name=self.search_document_field_name, value=value)
 
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
@@ -2542,13 +2545,13 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
         out = None
     return out
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
     else:
       value = str(value)
-      return search.AtomField(name=self.searchable_name, value=value)
+      return search.AtomField(name=self.search_document_field_name, value=value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
@@ -2564,14 +2567,14 @@ class SuperDecimalProperty(SuperStringProperty):
       raise PropertyError('invalid_number')
     return value
   
-  def search_document_field_format(self, value):
+  def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
-      return search.TextField(name=self.searchable_name, value=value)
+      return search.TextField(name=self.search_document_field_name, value=value)
     else:
       value = str(value)
       # Specifying this as a number field will either convert it to INT or FLOAT.
-      return search.NumberField(name=self.searchable_name, value=value)
+      return search.NumberField(name=self.search_document_field_name, value=value)
   
   def _validate(self, value):
     if not isinstance(value, (decimal.Decimal)):
@@ -3040,7 +3043,7 @@ class FieldPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for field in self.fields:
-        parsed_field = entity.get_field('_field_permissions.' + field)
+        parsed_field = entity.get_field_value('_field_permissions.' + field)
         if parsed_field and (safe_eval(self.condition, kwargs)):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)
