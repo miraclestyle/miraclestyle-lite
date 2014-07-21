@@ -8,50 +8,50 @@ Created on Jan 6, 2014
 import hashlib
 import os
 
-from app import ndb, settings, memcache
+from app import orm, memcache, settings
 from app.models.base import *
 from app.plugins.base import *
 from app.plugins import auth
 
 
-class Session(ndb.BaseModel):
+class Session(orm.BaseModel):
   
   _kind = 70
   
-  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
-  session_id = ndb.SuperStringProperty('2', required=True, indexed=False)
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
+  session_id = orm.SuperStringProperty('2', required=True, indexed=False)
 
 
-class Identity(ndb.BaseModel):
+class Identity(orm.BaseModel):
   
   _kind = 64
   
-  identity = ndb.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
-  email = ndb.SuperStringProperty('2', required=True)
-  associated = ndb.SuperBooleanProperty('3', required=True, default=True)
-  primary = ndb.SuperBooleanProperty('4', required=True, default=True)
+  identity = orm.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
+  email = orm.SuperStringProperty('2', required=True)
+  associated = orm.SuperBooleanProperty('3', required=True, default=True)
+  primary = orm.SuperBooleanProperty('4', required=True, default=True)
 
 
-class User(ndb.BaseExpando):
+class User(orm.BaseExpando):
   
   _kind = 0
   
   _use_memcache = True
   
-  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
-  identities = ndb.SuperStructuredProperty(Identity, '3', repeated=True)  # Soft limit 100 instances.
-  emails = ndb.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances.
-  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # @todo Shall we disable indexing here?
-  sessions = ndb.SuperLocalStructuredProperty(Session, '6', repeated=True)  # Soft limit 100 instances.
-  domains = ndb.SuperKeyProperty('7', kind='6', repeated=True)  # Soft limit 100 instances. @todo Shall we disable indexing here?
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
+  identities = orm.SuperStructuredProperty(Identity, '3', repeated=True)  # Soft limit 100 instances.
+  emails = orm.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances.
+  state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # @todo Shall we disable indexing here?
+  sessions = orm.SuperLocalStructuredProperty(Session, '6', repeated=True)  # Soft limit 100 instances.
+  domains = orm.SuperKeyProperty('7', kind='6', repeated=True)  # Soft limit 100 instances. @todo Shall we disable indexing here?
   
   _default_indexed = False
   
   _virtual_fields = {
-    'ip_address': ndb.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
-    '_primary_email': ndb.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': SuperRecordProperty('0', repeated=True),
+    'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
+    '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
+    '_records': orm.SuperRecordProperty('0', repeated=True),
     # these properties are not loaded on every user entity when they are fetched from datastore
     # they should be read individually like so:
     # user._domains.read_async()
@@ -61,123 +61,113 @@ class User(ndb.BaseExpando):
     #   ...
     # for domain_user in user._domain_users:
     #   ...
-    '_domains' : ndb.SuperReferenceProperty(autoload=False,
-                                            callback=lambda self: ndb.get_multi_async([domain_key for domain_key in self.domains])),
-    '_domain_users' : ndb.SuperReferenceProperty(autoload=False,
-                                                 callback=lambda self: ndb.get_multi_async([ndb.Key('8', self.key_id, namespace=domain_key.urlsafe()) for domain_key in self.domains])),
+    '_domains': orm.SuperReferenceProperty(autoload=False,
+                                           callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])),
+    '_domain_users': orm.SuperReferenceProperty(autoload=False,
+                                                callback=lambda self: orm.get_multi_async([orm.Key('8', self.key_id, namespace=domain_key.urlsafe()) for domain_key in self.domains]))
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('0', Action.build_key('0', 'login'), True,
-                       'context.entity._is_guest or context.entity._original.state == "active"'),
-      ActionPermission('0', [Action.build_key('0', 'read'),
-                             Action.build_key('0', 'update'),
-                             Action.build_key('0', 'logout'),
-                             Action.build_key('0', 'read_domains')], True, 'not context.entity._is_guest and context.user.key == context.entity._original.key'),
-      FieldPermission('0', ['created', 'updated', 'state'], False, True,
-                      'not context.user._is_guest and context.user.key == context.entity._original.key'),
-      FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                      'not context.user._is_guest and context.user.key == context.entity._original.key'),  # @todo Perhaps 'domain' field should not be writable?
+      orm.ActionPermission('0', orm.Action.build_key('0', 'login'), True,
+                           'entity._is_guest or entity._original.state == "active"'),
+      orm.ActionPermission('0', [orm.Action.build_key('0', 'read'),
+                                 orm.Action.build_key('0', 'update'),
+                                 orm.Action.build_key('0', 'logout'),
+                                 orm.Action.build_key('0', 'read_domains')], True, 'not entity._is_guest and user.key == entity._original.key'),
+      orm.FieldPermission('0', ['created', 'updated', 'state'], False, True,
+                          'not user._is_guest and user.key == entity._original.key'),
+      orm.FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
+                          'not user._is_guest and user.key == entity._original.key'),  # @todo Perhaps 'domain' field should not be writable?
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
-      ActionPermission('0', [Action.build_key('0', 'read'),
-                             Action.build_key('0', 'search'),
-                             Action.build_key('0', 'read_records'),
-                             Action.build_key('0', 'sudo')], True, 'context.user._root_admin'),
-      FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                            'ip_address', '_primary_email', '_records'], None, True, 'context.user._root_admin'),
-      FieldPermission('0', ['state'], True, None, 'context.action.key_id_str == "sudo" and context.user._root_admin')
+      orm.ActionPermission('0', [orm.Action.build_key('0', 'read'),
+                                 orm.Action.build_key('0', 'search'),
+                                 orm.Action.build_key('0', 'read_records'),
+                                 orm.Action.build_key('0', 'sudo')], True, 'user._root_admin'),
+      orm.FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
+                                'ip_address', '_primary_email', '_records'], None, True, 'user._root_admin'),
+      orm.FieldPermission('0', ['state'], True, None, 'action.key_id_str == "sudo" and user._root_admin')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('0', 'login'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'login'),
       arguments={
-        'login_method': ndb.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
-        'code': ndb.SuperStringProperty(),
-        'error': ndb.SuperStringProperty()
+        'login_method': orm.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
+        'code': orm.SuperStringProperty(),
+        'error': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            auth.UserLoginPrepare(),
-            auth.UserIPAddress(),
-            RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
-            auth.UserLoginOAuth(login_methods=settings.LOGIN_METHODS),
-            RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec()
+            auth.UserLoginInit(cfg={'methods': settings.LOGIN_METHODS})
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            auth.UserLoginUpdate(),
-            RulePrepare(cfg={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
-            RecordWrite(),
-            auth.UserLoginOutput()
+            auth.UserLoginWrite()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('0', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': orm.SuperKeyProperty(kind='0', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.0'}})
+            Set(cfg={'d': {'output.entity': '_user'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('0', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'primary_email': ndb.SuperStringProperty(),
-        'disassociate': ndb.SuperStringProperty()
+        'key': orm.SuperKeyProperty(kind='0', required=True),
+        'primary_email': orm.SuperStringProperty(),
+        'disassociate': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            auth.UserUpdate(),
+            auth.UserUpdateSet(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.0']}),
-            Set(cfg={'d': {'output.entity': 'entities.0'}}),
+            Set(cfg={'d': {'output.entity': '_user'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('0', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'search'),
       arguments={
-        'search': ndb.SuperSearchProperty(
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
-            'emails': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
+            'emails': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
             },
           indexes=[
             {'filter': ['emails'],
@@ -199,120 +189,76 @@ class User(ndb.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Prepare(),
-            RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('0', 'read_records'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'search_cursor': ndb.SuperStringProperty()
-        },
-      _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.0',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
       ),
     # @todo Treba obratiti paznju na to da suspenzija usera ujedno znaci
     # i izuzimanje svih negativnih i neutralnih feedbackova koje je user ostavio dok je bio aktivan.
-    Action(
-      key=Action.build_key('0', 'sudo'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'sudo'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True),
-        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended']),
-        'message': ndb.SuperStringProperty(required=True),
-        'note': ndb.SuperStringProperty()
+        'key': orm.SuperKeyProperty(kind='0', required=True),
+        'state': orm.SuperStringProperty(required=True, choices=['active', 'suspended']),
+        'message': orm.SuperStringProperty(required=True),
+        'note': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'entities.0.state': 'input.state'}, 's': {'entities.0.sessions': []}}),
+            Set(cfg={'d': {'_user.state': 'input.state'}, 's': {'_user.sessions': []}}),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
-            RecordWrite(cfg={'paths': ['entities.0'],
-                             'd': {'message': 'input.message', 'note': 'input.note'}}),
-            Set(cfg={'d': {'output.entity': 'entities.0'}}),
+            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
+            Set(cfg={'d': {'output.entity': '_user'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('0', 'logout'),
+    orm.Action(
+      key=orm.Action.build_key('0', 'logout'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True)
+        'key': orm.SuperKeyProperty(kind='0', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'entities.0.sessions': []}}),
+            Set(cfg={'s': {'_user.sessions': []}}),
             auth.UserIPAddress(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
-            RecordWrite(cfg={'paths': ['entities.0'], 'd': {'ip_address': 'tmp.ip_address'}}),
+            Write(cfg={'dra': {'ip_address': '_user.ip_address'}}),
             auth.UserLogoutOutput()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('0', 'read_domains'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='0', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
-            auth.UserReadDomains(),
-            RulePrepare(cfg={'path': 'tmp.domains'}),
-            RulePrepare(cfg={'path': 'tmp.domain_users'}),
-            Set(cfg={'d': {'output.domains': 'tmp.domains', 'output.domain_users': 'tmp.domain_users'}})
             ]
           )
         ]
@@ -403,188 +349,180 @@ class User(ndb.BaseExpando):
       return  # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
     if not session_id:
       return  # Fail silently if the session id is not found in the split sequence.
-    user = ndb.Key(urlsafe=user_key).get()
+    user = orm.Key(urlsafe=user_key).get()
     if user:
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)
 
 
-class Domain(ndb.BaseExpando):
+class Domain(orm.BaseExpando):
   
   _kind = 6
   
   _use_memcache = True
   
-  created = ndb.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  updated = ndb.SuperDateTimeProperty('2', required=True, auto_now=True)
-  name = ndb.SuperStringProperty('3', required=True)
-  primary_contact = ndb.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
-  state = ndb.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = ndb.SuperLocalStructuredProperty(Image, '6', required=True)
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
+  name = orm.SuperStringProperty('3', required=True)
+  primary_contact = orm.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
+  state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
+  logo = orm.SuperLocalStructuredProperty(Image, '6', required=True)
   
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_contact_email': ndb.SuperReferenceProperty(target_field='primary_contact',
+    '_primary_contact_email': orm.SuperReferenceProperty(target_field='primary_contact',
                                                          format_callback=lambda self, value: self.value.primary_email),
-    '_records': SuperRecordProperty('6', repeated=True)
+    '_records': orm.SuperRecordProperty('6', repeated=True)
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('6', [Action.build_key('6', 'prepare'),
-                             Action.build_key('6', 'create')], True, 'not context.user._is_guest'),
-      ActionPermission('6', Action.build_key('6', 'update'), False,
-                       'context.entity._original.state != "active"'),
-      ActionPermission('6', Action.build_key('6', 'suspend'), False,
-                       'context.entity._original.state != "active"'),
-      ActionPermission('6', Action.build_key('6', 'activate'), False,
-                       'context.entity._original.state == "active" or context.entity._original.state == "su_suspended"'),
-      FieldPermission('6', ['created', 'updated', 'state'], False, None, 'True'),
-      FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
-                      'context.entity._original.state != "active"'),
-      FieldPermission('6', ['state'], True, None,
-                      '(context.action.key_id_str == "activate" and context.entity.state == "active") or (context.action.key_id_str == "suspend" and context.entity.state == "suspended")'),
+      orm.ActionPermission('6', [orm.Action.build_key('6', 'prepare'),
+                                 orm.Action.build_key('6', 'create')], True, 'not user._is_guest'),
+      orm.ActionPermission('6', orm.Action.build_key('6', 'update'), False,
+                           'entity._original.state != "active"'),
+      orm.ActionPermission('6', orm.Action.build_key('6', 'suspend'), False,
+                           'entity._original.state != "active"'),
+      orm.ActionPermission('6', orm.Action.build_key('6', 'activate'), False,
+                           'entity._original.state == "active" or entity._original.state == "su_suspended"'),
+      orm.FieldPermission('6', ['created', 'updated', 'state'], False, None, 'True'),
+      orm.FieldPermission('6', ['name', 'primary_contact', 'logo', '_records', '_primary_contact_email'], False, None,
+                          'entity._original.state != "active"'),
+      orm.FieldPermission('6', ['state'], True, None,
+                          '(action.key_id_str == "activate" and entity.state == "active") or (action.key_id_str == "suspend" and entity.state == "suspended")'),
       # Domain is unit of administration, hence root admins need control over it!
       # Root admins can always: read domain; search for domains (exclusively);
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
-      ActionPermission('6', [Action.build_key('6', 'read'),
-                             Action.build_key('6', 'search'),
-                             Action.build_key('6', 'read_records'),
-                             Action.build_key('6', 'sudo'),
-                             Action.build_key('6', 'log_message')], True, 'context.user._root_admin'),
-      ActionPermission('6', [Action.build_key('6', 'search'),
-                             Action.build_key('6', 'sudo')], False, 'not context.user._root_admin'),
-      FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
-                            '_primary_contact_email'], None, True, 'context.user._root_admin'),
-      FieldPermission('6', ['_records.note'], True, True,
-                      'context.user._root_admin'),
-      FieldPermission('6', ['_records.note'], False, False,
-                      'not context.user._root_admin'),
-      FieldPermission('6', ['state'], True, None,
-                      '(context.action.key_id_str == "sudo") and context.user._root_admin and (context.entity.state == "active" or context.entity.state == "su_suspended")')
+      orm.ActionPermission('6', [orm.Action.build_key('6', 'read'),
+                                 orm.Action.build_key('6', 'search'),
+                                 orm.Action.build_key('6', 'read_records'),
+                                 orm.Action.build_key('6', 'sudo'),
+                                 orm.Action.build_key('6', 'log_message')], True, 'user._root_admin'),
+      orm.ActionPermission('6', [orm.Action.build_key('6', 'search'),
+                                 orm.Action.build_key('6', 'sudo')], False, 'not user._root_admin'),
+      orm.FieldPermission('6', ['created', 'updated', 'name', 'primary_contact', 'state', 'logo', '_records',
+                                '_primary_contact_email'], None, True, 'user._root_admin'),
+      orm.FieldPermission('6', ['_records.note'], True, True,
+                          'user._root_admin'),
+      orm.FieldPermission('6', ['_records.note'], False, False,
+                          'not user._root_admin'),
+      orm.FieldPermission('6', ['state'], True, None,
+                          '(action.key_id_str == "sudo") and user._root_admin and (entity.state == "active" or entity.state == "su_suspended")')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('6', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'prepare'),
       arguments={
-        'upload_url': ndb.SuperStringProperty()
+        'upload_url': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             BlobURL(cfg={'bucket': settings.DOMAIN_LOGO_BUCKET}),
-            Set(cfg={'d': {'output.entity': 'entities.6',
-                           'output.upload_url': 'blob_url'}})
+            Set(cfg={'d': {'output.entity': '_domain',
+                           'output.upload_url': '_blob_url'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'create'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'create'),
       arguments={
         # Domain
-        'domain_name': ndb.SuperStringProperty(required=True),
-        'domain_logo': SuperLocalStructuredImageProperty(Image, required=True)
+        'domain_name': orm.SuperStringProperty(required=True),
+        'domain_logo': SuperImageLocalStructuredProperty(Image, required=True)  # @todo Configure this prop for processing!!
+        # 'config': {'transform': True, 'width': 240, 'height': 100,
+        # 'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            BlobAlterImage(cfg={'read': 'input.domain_logo',
-                                'write': 'input.domain_logo',
-                                'config': {'transform': True, 'width': 240, 'height': 100,
-                                           'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
-            auth.DomainCreate(),
-            BlobUpdate(cfg={'write': 'input.domain_logo.image'}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            # @todo Embed image uploading & processing plugin here somewhere!
+            auth.DomainCreateWrite(),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'install', 'action_model': '57'},
-                               {'key': 'entities.57.key_urlsafe'})])
+                               {'key': '_config.key_urlsafe'})])
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True)
+        'key': orm.SuperKeyProperty(kind='6', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            auth.DomainRead(),
-            Set(cfg={'d': {'output.entity': 'entities.6'}})
+            Set(cfg={'d': {'output.entity': '_domain'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'logo': SuperLocalStructuredImageProperty(Image),
-        'primary_contact': ndb.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'logo': SuperImageLocalStructuredProperty(Image),  # @todo Configure this prop for processing!!
+        # 'config': {'transform': True, 'width': 240, 'height': 100,
+        # 'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+        'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'entities.6.name': 'input.name',
-                           'entities.6.primary_contact': 'input.primary_contact',
-                           'entities.6.logo': 'input.logo'}}),
+            Set(cfg={'d': {'_domain.name': 'input.name',
+                           '_domain.primary_contact': 'input.primary_contact',
+                           '_domain.logo': 'input.logo'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Set(cfg={'d': {'tmp.original_logo': 'entities.6._original.logo'}}),
-            Set(cfg={'d': {'tmp.new_logo': 'entities.6.logo'}}),
-            BlobAlterImage(cfg={'read': 'entities.6.logo',
-                                'write': 'entities.6.logo',
-                                'config': {'transform': True, 'width': 240, 'height': 100,
-                                           'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+            # @todo Embed image uploading & processing plugin here somewhere!
             Write(),
-            RecordWrite(cfg={'paths': ['entities.6']}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
-            BlobUpdate(cfg={'delete': 'tmp.original_logo.image', 'write': 'tmp.new_logo.image'}),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'search'),
       arguments={
-        'search': ndb.SuperSearchProperty(
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
           filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
+            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
             },
           indexes=[
             {'filter': ['name'],
@@ -606,144 +544,120 @@ class Domain(ndb.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             },
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
             auth.DomainSearch(),
             RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'read_records'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'suspend'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'search_cursor': ndb.SuperStringProperty()
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'message': orm.SuperTextProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            RulePrepare(),
-            RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.6',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('6', 'suspend'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'s': {'entities.6.state': 'suspended'}}),
+            Set(cfg={'s': {'_domain.state': 'suspended'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
+            Write(cfg={'dra': {'message': 'input.message'}}),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'activate'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'activate'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True)
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'message': orm.SuperTextProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'entities.6.state': 'active'}}),
+            Set(cfg={'s': {'_domain.state': 'active'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
+            Write(cfg={'dra': {'message': 'input.message'}}),
             RulePrepare(),  # @todo Should run out of transaction!!!
-            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message'}}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'sudo'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'sudo'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'state': ndb.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty()
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'state': orm.SuperStringProperty(required=True, choices=['active', 'suspended', 'su_suspended']),
+        'message': orm.SuperTextProperty(required=True),
+        'note': orm.SuperTextProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'entities.6.state': 'input.state'}}),
+            Set(cfg={'d': {'_domain.state': 'input.state'}}),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
+            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
             RulePrepare(cfg={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
-            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('6', 'log_message'),
+    orm.Action(
+      key=orm.Action.build_key('6', 'log_message'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='6', required=True),
-        'message': ndb.SuperTextProperty(required=True),
-        'note': ndb.SuperTextProperty()
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'message': orm.SuperTextProperty(required=True),
+        'note': orm.SuperTextProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
@@ -751,12 +665,11 @@ class Domain(ndb.BaseExpando):
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
-            RecordWrite(cfg={'paths': ['entities.6'], 'd': {'message': 'input.message', 'note': 'input.note'}}),
-            Set(cfg={'d': {'output.entity': 'entities.6'}}),
+            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
+            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
             ]

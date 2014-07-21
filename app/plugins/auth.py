@@ -47,9 +47,12 @@ class OAuth2Error(Exception):
 
 class UserLoginInit(orm.BaseModel):
   
-  login_methods = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    login_methods = self.cfg.get('methods', {})
     context._user = context.model.current_user()
     context.user = context.model.current_user()
     kwargs = {'user': context.user, 'action': context.action}
@@ -58,11 +61,11 @@ class UserLoginInit(orm.BaseModel):
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
-    oauth2_cfg = self.login_methods[login_method]['oauth2']
+    oauth2_cfg = login_methods[login_method]['oauth2']
     client = oauth2.Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
-    for urls_login_method, cfg in self.login_methods.items():
+    for urls_login_method, cfg in login_methods.items():
       urls_oauth2_cfg = cfg['oauth2']
       urls_client = oauth2.Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()

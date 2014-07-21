@@ -60,7 +60,7 @@ class Read(orm.BaseModel):
     namespace_path = self.cfg.get('namespace', 'namespace')
     read_arguments_path = self.cfg.get('read', 'input.read_arguments')
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    source = get_attr(context, source_path)
+    source = get_attr(context, source_path, None)
     model = get_attr(context, model_path)
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
@@ -213,26 +213,19 @@ class Search(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    index_name = self.cfg.get('index', None)
-    limit = self.cfg.get('page', 10)
-    fields = self.cfg.get('fields', None)
-    search_document = self.cfg.get('document', False)
     argument = context.input.get('search')
-    urlsafe_cursor = context.input.get('search_cursor')
     namespace = context.namespace
-    if index_name == None:
-      index_name = context.model.get_kind()
-    else:
-      namespace = None
-    if search_document:
-      result = document_search(index_name, namespace, argument, limit, urlsafe_cursor, fields)
-      context._documents = result[0]
+    limit = self.cfg.get('page', 10)
+    urlsafe_cursor = context.input.get('search_cursor')
+    fields = self.cfg.get('fields', None)
+    result = context.model.search(argument, namespace, limit, urlsafe_cursor, fields)
+    if context.model._use_search_engine:
+      context._entities = result[0]
       context._cursor = result[1]
       context._more = result[2]
       context._documents_count = result[3]
       context._total_matches = result[4]
     else:
-      result = context.model.search(argument, namespace, limit, urlsafe_cursor)
       entities = []
       if isinstance(result, tuple):
         context._entities = result[0]

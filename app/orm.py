@@ -533,10 +533,7 @@ class _BaseModel(object):
     return entity
   
   def _pre_put_hook(self):
-    if self._use_rule_engine:
-      if not hasattr(self, '_original'):
-        raise PropertyError('Working on entity (%r) without _original.' % self)
-      self.rule_write()
+    self.rule_write()
     for field_key, field in entity.get_fields().items():
       value = getattr(self, field_key, None)
       if isinstance(value, SuperPropertyManager):
@@ -549,7 +546,7 @@ class _BaseModel(object):
       value = getattr(entity, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.post_update()
-    entity.search_document_write()
+    entity.index_search_document()
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
   
@@ -571,7 +568,7 @@ class _BaseModel(object):
     # Here we can no longer retrieve the deleted entity, so in this case we just delete the document.
     # Problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the
     # index will be deleted anyway.
-    cls.search_document_delete(key)
+    cls.unindex_search_document(key)
   
   def _set_attributes(self, kwds):
     '''Internal helper to set attributes from keyword arguments.
@@ -737,63 +734,6 @@ class _BaseModel(object):
       return None
   
   @classmethod
-  def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None):
-    keys = None
-    args = []
-    kwds = {}
-    filters = argument.get('filters')
-    order_by = argument.get('order_by')
-    for _filter in filters:
-      if _filter['field'] == 'ancestor':
-        kwds['ancestor'] = _filter['value']
-        continue
-      if _filter['field'] == 'key':
-        keys = _filter['value']
-        break
-      field = getattr(cls, _filter['field'])
-      op = _filter['operator']
-      value = _filter['value']
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-        args.append(field == value)
-      elif op == '!=':
-        args.append(field != value)
-      elif op == '>':
-        args.append(field > value)
-      elif op == '<':
-        args.append(field < value)
-      elif op == '>=':
-        args.append(field >= value)
-      elif op == 'IN':
-        args.append(field.IN(value))
-      elif op == 'contains':
-        letters = list(string.printable)
-        try:
-          last = letters[letters.index(value[-1].lower()) + 1]
-          args.append(field >= value)
-          args.append(field < last)
-        except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
-          args.append(field == value)
-    query = cls.query(namespace=namespace, **kwds)
-    query = query.filter(*args)
-    if order_by:
-      order_by_field = getattr(cls, order_by['field'])
-      if order_by['operator'] == 'asc':
-        query = query.order(order_by_field)
-      else:
-        query = query.order(-order_by_field)
-    # Caller must be capable of differentiating possible results returned!
-    if keys is not None:
-      if not isinstance(keys, list):
-        keys = [keys]
-      return get_multi(keys)
-    else:
-      try:
-        cursor = Cursor(urlsafe=urlsafe_cursor)
-      except:
-        cursor = Cursor()
-      return query.fetch_page(limit, start_cursor=cursor)
-  
-  @classmethod
   def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
     '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
     Otherwise go one level down and check again.
@@ -824,9 +764,10 @@ class _BaseModel(object):
               cls._rule_read(permissions[field_key], child_entity, child_field_key, child_field)
   
   def rule_read(self):
-    entity_fields = self.get_fields()
-    for field_key, field in entity_fields.items():
-      self._rule_read(self._field_permissions, self, field_key, field)
+    if self._use_rule_engine and hasattr(self, '_field_permissions'):
+      entity_fields = self.get_fields()
+      for field_key, field in entity_fields.items():
+        self._rule_read(self._field_permissions, self, field_key, field)
   
   @classmethod
   def _rule_write(cls, permissions, entity, field_key, field, field_value):  # @todo Not sure if this should be class method, but it seamed natural that way!?
@@ -905,10 +846,13 @@ class _BaseModel(object):
             cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
   
   def rule_write(self):
-    entity_fields = self.get_fields()
-    for field_key, field in entity_fields.items():
-      field_value = getattr(self._original, field_key)
-      self._rule_write(self._field_permissions, self, field_key, field, field_value)
+    if self._use_rule_engine and hasattr(self, '_field_permissions'):
+      if not hasattr(self, '_original'):
+        raise PropertyError('Working on entity (%r) without _original.' % self)
+      entity_fields = self.get_fields()
+      for field_key, field in entity_fields.items():
+        field_value = getattr(self._original, field_key)
+        self._rule_write(self._field_permissions, self, field_key, field, field_value)
   
   @classmethod
   def _rule_reset_actions(cls, action_permissions, actions):
@@ -1053,8 +997,154 @@ class _BaseModel(object):
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
-        # we should also test put_async behaviour in transacitons but i think they will work fine since 
-        # general handler failure will result in transaction rollback?
+        # We should also test put_async behaviour in transacitons however, they will probably work fine since,
+        # general handler failure will result in transaction rollback!
+  
+  @classmethod
+  def get_ndb_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+    keys = None
+    args = []
+    kwds = {}
+    filters = argument.get('filters')
+    order_by = argument.get('order_by')
+    for _filter in filters:
+      if _filter['field'] == 'ancestor':
+        kwds['ancestor'] = _filter['value']
+        continue
+      if _filter['field'] == 'key':
+        keys = _filter['value']
+        break
+      field = getattr(cls, _filter['field'])
+      op = _filter['operator']
+      value = _filter['value']
+      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+        args.append(field == value)
+      elif op == '!=':
+        args.append(field != value)
+      elif op == '>':
+        args.append(field > value)
+      elif op == '<':
+        args.append(field < value)
+      elif op == '>=':
+        args.append(field >= value)
+      elif op == 'IN':
+        args.append(field.IN(value))
+      elif op == 'contains':
+        letters = list(string.printable)
+        try:
+          last = letters[letters.index(value[-1].lower()) + 1]
+          args.append(field >= value)
+          args.append(field < last)
+        except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
+          args.append(field == value)
+    query = cls.query(namespace=namespace, **kwds)
+    query = query.filter(*args)
+    if order_by:
+      order_by_field = getattr(cls, order_by['field'])
+      if order_by['operator'] == 'asc':
+        query = query.order(order_by_field)
+      else:
+        query = query.order(-order_by_field)
+    if keys is not None:
+      return keys
+    else:
+      return query
+  
+  @classmethod
+  def get_search_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+    # Query String implementation start!
+    query_string = ''
+    sort_options = None
+    filters = argument.get('filters')
+    args = []
+    for _filter in filters:
+      field = _filter['field']
+      op = _filter['operator']
+      value = _filter['value']
+      if field == 'query_string':
+        args.append(value)
+        break
+      if field == 'ancestor':
+        args.append('(' + field + '=' + value + ')')
+        continue
+      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+        args.append('(' + field + '=' + value + ')')
+      elif op == '!=':
+        args.append('(NOT ' + field + '=' + value + ')')
+      elif op == '>':
+        args.append('(' + field + '>' + value + ')')
+      elif op == '<':
+        args.append('(' + field + '<' + value + ')')
+      elif op == '>=':
+        args.append('(' + field + '>=' + value + ')')
+      elif op == '<=':
+        args.append('(' + field + '<=' + value + ')')
+      elif op == 'IN':
+        args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
+    query_string = ' AND '.join(args)
+    # Query String implementation start!
+    order_by = argument.get('order_by')
+    property_config = argument.get('property')
+    if order_by['operator'] == 'asc':
+      default_value=property_config._order_by[order_by['field']]['default_value']['asc']
+      direction = search.SortExpression.ASCENDING
+    else:
+      default_value=property_config._order_by[order_by['field']]['default_value']['desc']
+      direction = search.SortExpression.DESCENDING
+    order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
+    sort_options = search.SortOptions(expressions=[order], limit=limit)
+    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+    options = search.QueryOptions(limit=limit, returned_fields=fields, sort_options=sort_options, cursor=cursor)
+    query = search.Query(query_string=query_string, options=options)
+    return query
+  
+  @classmethod
+  def _ndb_search(cls, argument, namespace, limit, urlsafe_cursor, fields):
+    query = cls.get_ndb_query(argument, namespace, limit, urlsafe_cursor, fields)
+    # Caller must be capable of differentiating possible results returned!
+    if query and hasattr(query, 'fetch_page') and callable(query.fetch_page):
+      try:
+        cursor = Cursor(urlsafe=urlsafe_cursor)
+      except:
+        cursor = Cursor()
+      return query.fetch_page(limit, start_cursor=cursor)
+    else:
+      if not isinstance(keys, list):
+        keys = [keys]
+      return get_multi(keys)
+  
+  @classmethod
+  def _document_search(cls, argument, namespace, limit, urlsafe_cursor, fields):
+    query = cls.get_search_query(argument, namespace, limit, urlsafe_cursor, fields)
+    index = search.Index(name=cls.get_kind(), namespace=namespace)
+    total_matches = 0
+    documents_count = 0
+    documents = []
+    search_cursor = None
+    search_more = False
+    try:
+      result = index.search(query)
+      total_matches = result.number_found
+      if len(result.results):
+        documents_count = len(result.results)
+        documents = result.results
+      if result.cursor != None:
+        search_cursor = result.cursor.web_safe_string
+        search_more = True
+      else:
+        search_cursor = None
+        search_more = False
+    except:
+      raise
+    finally:
+      return (map(cls.search_document_to_dict, documents), search_cursor, search_more, documents_count, total_matches)
+  
+  @classmethod
+  def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+    if cls._use_search_engine:
+      return cls._document_search(argument, namespace, limit, urlsafe_cursor, fields)
+    else:
+      return cls._ndb_search(argument, namespace, limit, urlsafe_cursor, fields)
   
   def read(self, read_arguments):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
@@ -1087,8 +1177,8 @@ class _BaseModel(object):
   def write(self, record_arguments):
     self._record_arguments = record_arguments
     self.put()
-    write_documents = self.get_search_documents_to_write(self.key)
-    delete_documents = self.get_search_documents_to_delete(self.key)
+    write_documents = self.get_search_documents_to_index(self.key)
+    delete_documents = self.get_search_documents_to_unindex(self.key)
     index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
     if len(write_documents):
       index.put(write_documents)  # @todo Do we have to reset temp_memory here?
@@ -1099,7 +1189,7 @@ class _BaseModel(object):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
-      delete_documents = self.get_search_documents_to_delete(self.key)
+      delete_documents = self.get_search_documents_to_unindex(self.key)
       index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
       if len(delete_documents):
         index.delete(delete_documents)  # @todo Do we have to reset temp_memory here?
@@ -1195,7 +1285,7 @@ class _BaseModel(object):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
   @classmethod
-  def get_search_documents_to_write(cls, key):
+  def get_search_documents_to_index(cls, key):
     k = '%s_search_document_write' % key.urlsafe()
     out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
@@ -1203,93 +1293,23 @@ class _BaseModel(object):
     return memcache.temp_memory_get(k)
   
   @classmethod
-  def get_search_documents_to_delete(cls, key):
+  def get_search_documents_to_unindex(cls, key):
     k = '%s_search_document_delete' % key.urlsafe()
     out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
       memcache.temp_memory_set(k, [])
     return memcache.temp_memory_get(k)
   
-  def add_search_documents_to_write(self):
+  def index_search_document(self):
     if self._use_search_engine:
-      documents = self.search_document_write_temp_memory(self.key)
+      documents = self.get_search_documents_to_index(self.key)
       documents.append(self.get_search_document())
   
   @classmethod
-  def add_search_documents_to_delete(cls, key):
+  def unindex_search_document(cls, key):
     if cls._use_search_engine:
-      documents = cls.search_document_delete_temp_memory(key)
+      documents = cls.get_search_documents_to_unindex(key)
       documents.append(key.urlsafe())
-  
-  @classmethod
-  def search_documents(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    # should this be here anyways?
-    index = search.Index(name=cls.get_kind(), namespace=namespace)
-    # Query String implementation start!
-    query_string = ''
-    sort_options = None
-    filters = argument.get('filters')
-    args = []
-    for _filter in filters:
-      field = _filter['field']
-      op = _filter['operator']
-      value = _filter['value']
-      if field == 'query_string':
-        args.append(value)
-        break
-      if field == 'ancestor':
-        args.append('(' + field + '=' + value + ')')
-        continue
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-        args.append('(' + field + '=' + value + ')')
-      elif op == '!=':
-        args.append('(NOT ' + field + '=' + value + ')')
-      elif op == '>':
-        args.append('(' + field + '>' + value + ')')
-      elif op == '<':
-        args.append('(' + field + '<' + value + ')')
-      elif op == '>=':
-        args.append('(' + field + '>=' + value + ')')
-      elif op == '<=':
-        args.append('(' + field + '<=' + value + ')')
-      elif op == 'IN':
-        args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
-    query_string = ' AND '.join(args)
-    # Query String implementation start!
-    order_by = argument.get('order_by')
-    property_config = argument.get('property')
-    if order_by['operator'] == 'asc':
-      default_value=property_config._order_by[order_by['field']]['default_value']['asc']
-      direction = search.SortExpression.ASCENDING
-    else:
-      default_value=property_config._order_by[order_by['field']]['default_value']['desc']
-      direction = search.SortExpression.DESCENDING
-    order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
-    sort_options = search.SortOptions(expressions=[order], limit=limit)
-    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
-    options = search.QueryOptions(limit=limit, returned_fields=fields, sort_options=sort_options, cursor=cursor)
-    query = search.Query(query_string=query_string, options=options)
-    total_matches = 0
-    documents_count = 0
-    documents = []
-    search_cursor = None
-    search_more = False
-    try:
-      result = index.search(query)
-      total_matches = result.number_found
-      if len(result.results):
-        documents_count = len(result.results)
-        documents = result.results
-      if result.cursor != None:
-        search_cursor = result.cursor.web_safe_string
-        search_more = True
-      else:
-        search_cursor = None
-        search_more = False
-    except:
-      raise
-    finally:
-      return (map(cls.search_document_to_dict, documents), search_cursor, search_more, documents_count, total_matches)
   
   @classmethod
   def search_document_to_dict(document):
@@ -1323,8 +1343,7 @@ class _BaseModel(object):
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
     
     '''
-    if self._use_rule_engine and hasattr(self, '_field_permissions'):
-      self.rule_read()  # Apply rule read before output.
+    self.rule_read()  # Apply rule read before output.
     dic = {}
     dic['kind'] = self.get_kind()
     dic['_state'] = self._state
