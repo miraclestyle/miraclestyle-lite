@@ -557,7 +557,8 @@ class _BaseModel(object):
       entity.record()
       def delete_async():
         for field_key, field in entity.get_fields().items():
-          if hasattr(field, 'is_structured') and field.is_structured:
+          # we have to check here if it has struct
+          if field.is_structured:
             value = getattr(entity, field_key, None)
             if isinstance(value, SuperPropertyManager):
               value.delete()
@@ -639,16 +640,15 @@ class _BaseModel(object):
         if isinstance(value, SuperPropertyManager):
           value = value.value
         if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
-          continue # this is a problem, we cannot copy futures, we will have to have on all properties flags like
-          # copiable
+          continue # this is a problem, we cannot copy futures, we might have to implement flags on properties like
+          # copiable=True
           # or deepcopy=True
-          # because this way this if is retarded
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
-          util.logger('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
+          #util.logger('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
   
@@ -748,7 +748,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if hasattr(field, 'is_structured') and field.is_structured:
+      if field.is_structured:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -782,18 +782,18 @@ class _BaseModel(object):
     
     '''
     if hasattr(field, '_updateable') and not field._updateable:
-      return # @todo this is for _records and other types of things that do not get writed.. there is no need to iterate them over
+      return # @todo this is for _records and other types of things that do not get put to datastore.. 
+      # there is no need to iterate them over ?
       # we'll see!
     # @todo
-    # also we need to handle values which are `None`. E.g. repeated lists, simple checks with `return` statement would suffice
+    # also we need to handle values which are `None`.
+    # E.g. repeated lists, if they are none they should not be iterated
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       # util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
       if not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
-            #if field_value is None:  # @todo This is bug. None value can not be supplied on fields that are not required!
-            #  return
             setattr(entity, field_key, field_value)
           except TypeError as e:
             util.logger('--RuleWrite: setattr error: %s' % e)
@@ -808,6 +808,7 @@ class _BaseModel(object):
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if field._repeated:
+          # field_value can be none, and below we iterate it, so that will throw an error
           for field_value_item in field_value:
             '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
             http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
@@ -860,7 +861,7 @@ class _BaseModel(object):
   def rule_write(self):
     if self._use_rule_engine and hasattr(self, '_field_permissions'):
       if not hasattr(self, '_original'):
-        raise PropertyError('Working on entity (%r) without _original.' % self)
+        raise PropertyError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
       entity_fields = self.get_fields()
       for field_key, field in entity_fields.items():
         field_value = getattr(self._original, field_key)
@@ -1153,7 +1154,7 @@ class _BaseModel(object):
   
   @classmethod
   def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    if cls._use_search_engine:
+    if cls._use_search_engine: # @todo what happens if you want to use both ?
       return cls._document_search(argument, namespace, limit, urlsafe_cursor, fields)
     else:
       return cls._ndb_search(argument, namespace, limit, urlsafe_cursor, fields)
@@ -1174,12 +1175,10 @@ class _BaseModel(object):
       read_arguments = {}
     futures = []
     for field_key, field in self.get_fields().items():
-      if hasattr(field, 'is_structured') and field.is_structured:
+      if field.is_structured:
         value = getattr(self, field_key)
-        field_read_arguments = read_arguments.get(field_key, {})
-        # Otherwise we will just retrieve entities without any configurations
-        if (field_key not in field_read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
-          continue # we only read what we're told to and we always do reads for local structureds
+        if (field_key not in read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
+          continue # we only read what we're told to or if its a local storage
         field_read_arguments = read_arguments.get(field_key, {})
         value.read_async(field_read_arguments)
         # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
@@ -1188,7 +1187,8 @@ class _BaseModel(object):
         if value.has_future():
           futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
     for future, field_read_arguments in futures:
-      future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
+      future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future. 
+      # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
     self.make_original()  # Finalize original before touching anything.
   
   def write(self, record_arguments):
@@ -1199,8 +1199,11 @@ class _BaseModel(object):
     index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
     if len(write_documents):
       index.put(write_documents)  # @todo Do we have to reset temp_memory here?
+      self.get_search_documents_to_index(self.key, reset=True)
     if len(delete_documents):
-      index.delete(delete_documents)  # @todo Do we have to reset temp_memory here?
+      index.delete(delete_documents)  # @todo Do we have to reset temp_memory here? # ye we have to, reset keyword implemented in getters, 
+      # @todo however it is possible we will use separate function for them, not the getter maybe delete_search_ or whatever
+      self.get_search_documents_to_unindex(self.key, reset=True)
   
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
@@ -1302,16 +1305,20 @@ class _BaseModel(object):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
   @classmethod
-  def get_search_documents_to_index(cls, key):
+  def get_search_documents_to_index(cls, key, reset=False):
     k = '%s_search_document_write' % key.urlsafe()
+    if reset:
+      return memcache.temp_memory_set(k, [])
     out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
       memcache.temp_memory_set(k, [])
     return memcache.temp_memory_get(k)
   
   @classmethod
-  def get_search_documents_to_unindex(cls, key):
+  def get_search_documents_to_unindex(cls, key, reset=False):
     k = '%s_search_document_delete' % key.urlsafe()
+    if reset:
+      return memcache.temp_memory_set(k, [])
     out = memcache.temp_memory_get(k)
     if not isinstance(out, list):
       memcache.temp_memory_set(k, [])
@@ -1635,8 +1642,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   @property
   def value(self):
     # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
+    # so in that case we always call self.read() to mutate the list properly when needed
     if self.storage_type == 'local': # it happens only on local props
-      self._read_local()
+      self.read()
     return super(SuperStructuredPropertyManager, self).value
   
   @property
@@ -1993,7 +2001,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       delete_function()
   
   def _duplicate_local(self):
-    self._read_local()
+    self.read()
     if self._property._repeated:
       entities = []
       for entity in self._property_value:
@@ -2047,7 +2055,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   def set(self, value):
     if isinstance(value, Key):
       self._property_value = value.get_async()
-    elif isinstance(value, _BaseModel):
+    elif isinstance(value, Model):
       self._property_value = value
   
   def _read(self):
@@ -2345,7 +2353,7 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
         if _kind:
           _kinds = []
           for kind in self._kinds:
-            if isinstance(kind, _BaseModel):
+            if isinstance(kind, Model):
               _the_kind = kind.get_kind()
             else:
               _the_kind = kind
@@ -3029,7 +3037,7 @@ class Record(BaseExpando):
     for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       if isinstance(value, SuperPropertyManager):
-        value = value.read()
+        value = value.value
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)
