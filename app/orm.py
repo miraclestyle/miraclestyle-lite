@@ -1684,8 +1684,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       if not self._property._repeated:
         property_value_copy = [property_value_copy]
       for property_value_item in property_value_copy:
-        if not isinstance(property_value_item, self._property._modelclass):
-          raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
+        if not isinstance(property_value_item, self._property.get_modeclass()):
+          raise PropertyError('Expected %r, got %r' % (self._property.get_modeclass(), self._property_value))
     self._property_value = property_value
     self._set_parent()
     
@@ -2262,7 +2262,7 @@ class _BaseStructuredProperty(_BaseProperty):
       # model must be scanned when it reaches this call
       find = Model._kind_map.get(self._modelclass)
       if find is None:
-        raise PropertyError('Could not locate kind with %s' % self._modelclass)
+        raise PropertyError('Could not locate model with kind %s' % self._modelclass)
       else:
         self._modelclass = find
     if values is None:
@@ -2936,7 +2936,11 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
   def get_model_fields(self):
     parent = super(SuperRecordProperty, self).get_model_fields()
     if isinstance(self._modelclass2, basestring):
-      self._modelclass2 = Model._kind_map.get(self._modelclass2)
+      set_modelclass2 = Model._kind_map.get(self._modelclass2)
+      if set_modelclass2 is None:
+        raise PropertyError('Could not locate model with kind %s' % self._modelclass2)
+      else:
+        self._modelclass2 = set_modelclass2
     parent.update(self._modelclass2.get_fields())
     return parent
 
