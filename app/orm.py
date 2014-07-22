@@ -781,13 +781,8 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    if hasattr(field, '_updateable') and not field._updateable:
-      return # @todo this is for _records and other types of things that do not get put to datastore.. 
-      # there is no need to iterate them over ?
-      # we'll see!
-    # @todo
-    # also we need to handle values which are `None`.
-    # E.g. repeated lists, if they are none they should not be iterated
+    if hasattr(field, '_updateable') and (not field._updateable and not field._deleteable):
+      return
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       # util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
@@ -809,6 +804,8 @@ class _BaseModel(object):
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
+          if field_value is None:
+            return
           for field_value_item in field_value:
             '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
             http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
@@ -1014,7 +1011,7 @@ class _BaseModel(object):
         # general handler failure will result in transaction rollback!
   
   @classmethod
-  def get_ndb_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+  def get_datastore_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
     keys = None
     args = []
     kwds = {}
@@ -1112,8 +1109,9 @@ class _BaseModel(object):
     return query
   
   @classmethod
-  def _ndb_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here?
-    query = cls.get_ndb_query(argument, namespace, limit, urlsafe_cursor, fields)
+  def _datastore_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here? 
+    # this should be called datastore_search?
+    query = cls.get_datastore_query(argument, namespace, limit, urlsafe_cursor, fields)
     # Caller must be capable of differentiating possible results returned!
     if query and hasattr(query, 'fetch_page') and callable(query.fetch_page):
       try:
@@ -1122,9 +1120,9 @@ class _BaseModel(object):
         cursor = Cursor()
       return query.fetch_page(limit, start_cursor=cursor)
     else:
-      if not isinstance(keys, list): # @todo from where you get `keys`? arguments
-        keys = [keys]
-      return get_multi(keys)
+      if not isinstance(query, list):
+        query = [query]
+      return get_multi(query)
   
   @classmethod
   def _document_search(cls, argument, namespace, limit, urlsafe_cursor, fields):
@@ -1154,10 +1152,10 @@ class _BaseModel(object):
   
   @classmethod
   def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    if cls._use_search_engine: # @todo what happens if you want to use both ?
+    if cls._use_search_engine: # based on this flag we use different search engine
       return cls._document_search(argument, namespace, limit, urlsafe_cursor, fields)
     else:
-      return cls._ndb_search(argument, namespace, limit, urlsafe_cursor, fields)
+      return cls._datastore_search(argument, namespace, limit, urlsafe_cursor, fields)
   
   def read(self, read_arguments=None):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
@@ -1176,9 +1174,9 @@ class _BaseModel(object):
     futures = []
     for field_key, field in self.get_fields().items():
       if field.is_structured:
-        value = getattr(self, field_key)
         if (field_key not in read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
           continue # we only read what we're told to or if its a local storage
+        value = getattr(self, field_key)
         field_read_arguments = read_arguments.get(field_key, {})
         value.read_async(field_read_arguments)
         # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
@@ -1196,7 +1194,7 @@ class _BaseModel(object):
     self.put()
     write_documents = self.get_search_documents_to_index(self.key)
     delete_documents = self.get_search_documents_to_unindex(self.key)
-    index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
+    index = search.Index(name=self._root.get_kind(), namespace=self._root.key.namespace())
     if len(write_documents):
       index.put(write_documents)  # @todo Do we have to reset temp_memory here?
       self.get_search_documents_to_index(self.key, reset=True)
