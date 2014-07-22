@@ -178,7 +178,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            NotifySet()
+            notify.NotifySet(),
             ]
           ),
         orm.PluginGroup(
@@ -226,7 +226,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            NotifySet()
+            notify.NotifySet()
             ]
           ),
         orm.PluginGroup(
@@ -329,7 +329,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyInitiate(),
+            notify.NotifyInitiate(),
             CallbackExec()
             ]
           )
@@ -351,7 +351,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
+            notify.NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
             ]
           )
         ]
@@ -372,7 +372,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyHttpSend()
+            notify.NotifyHttpSend()
             ]
           )
         ]

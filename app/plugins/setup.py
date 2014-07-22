@@ -34,7 +34,7 @@ class Setup():
     if not self.config.next_operation:
       return 'execute_init'
     function = 'execute_%s' % self.config.next_operation
-    util.logger('Running function %s' % function)  # @todo Probably to be removed?!
+    util.logger('Running function %s' % function)  # @todo Probably to be removed?! - removed after testing
     return function
   
   def run(self):
@@ -44,9 +44,9 @@ class Setup():
       runner = getattr(self, self.__get_next_operation())
       if runner:
         orm.transaction(runner, xg=True)
-      time.sleep(1.5)
+      time.sleep(1.5) # sleep between transactions
       if iterations < 1:
-        util.logger('Stopped iteration at %s' % iterations)  # @todo Probably to be removed?!
+        util.logger('Stopped iteration at %s' % iterations)  # @todo Probably to be removed?! - removed after testing
         break
 
 
@@ -72,6 +72,7 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity._use_rule_engine = False
+    entity.logo.process() # @todo i put the process
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
@@ -85,19 +86,19 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     permissions = []
-    objects = [self.context.models['6'], self.context.models['60'], self.context.models['8'],
-               self.context.models['62'], self.context.models['61'], self.context.models['35'],
-               self.context.models['38'], self.context.models['39'], self.context.models['17'],
-               self.context.models['15'], self.context.models['16'], self.context.models['19']]
+    objects = ['6', '60', '8', '62', '61', '35', '38', '39', '17', '15', '16', '19']
     for obj in objects:
-      if hasattr(obj, '_actions'):
-        actions = []
-        for action_instance in obj._actions:
-          actions.append(action_instance.key)
-        permissions.append(ActionPermission(model=obj.get_kind(),
-                                            actions=actions,
-                                            executable=True,
-                                            condition='True'))
+      obj = self.context.models.get(obj)
+      if obj is not None: # this is because we do not have all models ported yet
+        # for production it should work self.context.models[obj]
+        if hasattr(obj, '_actions'):
+          actions = []
+          for action_instance in obj._actions:
+            actions.append(action_instance.key)
+          permissions.append(ActionPermission(model=obj.get_kind(),
+                                              actions=actions,
+                                              executable=True,
+                                              condition='True'))
       props = obj.get_fields()
       prop_names = []
       for prop_name, prop in props.items():

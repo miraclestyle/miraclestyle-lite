@@ -1189,7 +1189,9 @@ class _BaseModel(object):
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
     self.make_original()  # Finalize original before touching anything.
   
-  def write(self, record_arguments):
+  def write(self, record_arguments=None):
+    if record_arguments is None:
+      record_arguments = {}
     self._record_arguments = record_arguments
     self.put()
     write_documents = self.get_search_documents_to_index(self.key)
@@ -1642,7 +1644,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
     # so in that case we always call self.read() to mutate the list properly when needed
     if self.storage_type == 'local': # it happens only on local props
-      self.read()
+      self._read_local() # recursion is present if we call .read()
     return super(SuperStructuredPropertyManager, self).value
   
   @property

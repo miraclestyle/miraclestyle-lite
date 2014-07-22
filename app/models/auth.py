@@ -366,7 +366,10 @@ class Domain(orm.BaseExpando):
   name = orm.SuperStringProperty('3', required=True)
   primary_contact = orm.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
   state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = orm.SuperLocalStructuredProperty(Image, '6', required=True)
+  logo = SuperImageLocalStructuredProperty(Image, '6', required=True,
+                                               process_config={'transform': True, 'width': 240, 'height': 100,
+                                                               'crop_to_fit': True, 'crop_offset_x': 0.0,
+                                                               'crop_offset_y': 0.0})
   
   _default_indexed = False
   
@@ -437,9 +440,7 @@ class Domain(orm.BaseExpando):
       arguments={
         # Domain
         'domain_name': orm.SuperStringProperty(required=True),
-        'domain_logo': SuperImageLocalStructuredProperty(Image, required=True)  # @todo Configure this prop for processing!!
-        # 'config': {'transform': True, 'width': 240, 'height': 100,
-        # 'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+        'domain_logo': SuperImageLocalStructuredProperty(Image, required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -454,6 +455,7 @@ class Domain(orm.BaseExpando):
           transactional=True,
           plugins=[
             # @todo Embed image uploading & processing plugin here somewhere!
+            # ive put it in setup for now, we cant put it here because entity is not created yet
             auth.DomainCreateWrite(),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackExec(cfg=[('callback',
@@ -485,9 +487,7 @@ class Domain(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'logo': SuperImageLocalStructuredProperty(Image),  # @todo Configure this prop for processing!!
-        # 'config': {'transform': True, 'width': 240, 'height': 100,
-        # 'crop_to_fit': True, 'crop_offset_x': 0.0, 'crop_offset_y': 0.0}}),
+        'logo': SuperImageLocalStructuredProperty(Image),
         'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
         },
       _plugin_groups=[
@@ -506,6 +506,8 @@ class Domain(orm.BaseExpando):
           transactional=True,
           plugins=[
             # @todo Embed image uploading & processing plugin here somewhere!
+            # ...
+            ProcessImages(),
             Write(),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),

@@ -334,6 +334,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                       'content_type': file_info.content_type,
                                       'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()})
+      self.save_blobs_on_success(new_image.image)
       if self._process:
         new_image = self.process(new_image)
       out.append(new_image)
