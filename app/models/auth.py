@@ -64,7 +64,7 @@ class User(orm.BaseExpando):
     '_domains': orm.SuperReferenceProperty(autoload=False,
                                            callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])),
     '_domain_users': orm.SuperReferenceProperty(autoload=False,
-                                                callback=lambda self: orm.get_multi_async([orm.Key('8', str(self.key_id), namespace=domain_key.urlsafe()) for domain_key in self.domains]))
+                                                callback=lambda self: orm.get_multi_async([orm.Key('8', self.key_id_str, namespace=domain_key.urlsafe()) for domain_key in self.domains]))
     }
   
   _global_role = GlobalRole(
@@ -73,8 +73,7 @@ class User(orm.BaseExpando):
                            'entity._is_guest or entity._original.state == "active"'),
       orm.ActionPermission('0', [orm.Action.build_key('0', 'read'),
                                  orm.Action.build_key('0', 'update'),
-                                 orm.Action.build_key('0', 'logout'),
-                                 orm.Action.build_key('0', 'read_domains')], True, 'not entity._is_guest and user.key == entity._original.key'),
+                                 orm.Action.build_key('0', 'logout')], True, 'not entity._is_guest and user.key == entity._original.key'),
       orm.FieldPermission('0', ['created', 'updated', 'state', 'domains', '_domains', '_domain_users'], False, True,
                           'not user._is_guest and user.key == entity._original.key'),
       orm.FieldPermission('0', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
