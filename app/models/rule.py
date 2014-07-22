@@ -5,10 +5,10 @@ Created on Dec 20, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb, settings
+from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import rule
+from app.plugins.rule import *
 
 
 class DomainRole(Role):
@@ -16,130 +16,127 @@ class DomainRole(Role):
   _kind = 60
   
   _virtual_fields = {
-    '_records': SuperLocalStructuredRecordProperty('60', repeated=True)
+    '_records': orm.SuperRecordProperty('60')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('60', [Action.build_key('60', 'prepare'),
-                              Action.build_key('60', 'create'),
-                              Action.build_key('60', 'read'),
-                              Action.build_key('60', 'update'),
-                              Action.build_key('60', 'delete'),
-                              Action.build_key('60', 'search'),
-                              Action.build_key('60', 'read_records')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
-      ActionPermission('60', [Action.build_key('60', 'create'),
-                              Action.build_key('60', 'update'),
-                              Action.build_key('60', 'delete')], False, 'context.entity._is_system'),
-      FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, False,
-                      'context.entity._original.namespace_entity._original.state != "active"'),
-      FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None,
-                      'context.entity._is_system')
+      orm.ActionPermission('60', [orm.Action.build_key('60', 'prepare'),
+                                  orm.Action.build_key('60', 'create'),
+                                  orm.Action.build_key('60', 'read'),
+                                  orm.Action.build_key('60', 'update'),
+                                  orm.Action.build_key('60', 'delete'),
+                                  orm.Action.build_key('60', 'search'),
+                                  orm.Action.build_key('60', 'read_records')], False, 'entity._original.namespace_entity._original.state != "active"'),
+      orm.ActionPermission('60', [orm.Action.build_key('60', 'create'),
+                                  orm.Action.build_key('60', 'update'),
+                                  orm.Action.build_key('60', 'delete')], False, 'entity._is_system'),
+      orm.FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"'),
+      orm.FieldPermission('60', ['name', 'active', 'permissions', '_records'], False, None, 'entity._is_system')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('60', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'prepare'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.60'}})
+            Set(cfg={'d': {'output.entity': '_domainrole'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('60', 'create'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'create'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'permissions': ndb.SuperJsonProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'permissions': orm.SuperJsonProperty(required=True),
+        'active': orm.SuperBooleanProperty(default=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            rule.DomainRoleSet()
+            DomainRoleSet()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.60']}),
-            Set(cfg={'d': {'output.entity': 'entities.60'}}),
+            Set(cfg={'d': {'output.entity': '_domainrole'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('60', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='60', required=True)
+        'key': orm.SuperKeyProperty(kind='60', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.60'}})
+            Set(cfg={'d': {'output.entity': '_domainrole'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('60', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='60', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'permissions': ndb.SuperJsonProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True)
+        'key': orm.SuperKeyProperty(kind='60', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'permissions': orm.SuperJsonProperty(required=True),
+        'active': orm.SuperBooleanProperty(default=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            rule.DomainRoleSet()
+            DomainRoleSet()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.60']}),
-            Set(cfg={'d': {'output.entity': 'entities.60'}}),
+            Set(cfg={'d': {'output.entity': '_domainrole'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('60', 'delete'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'delete'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='60', required=True)
+        'key': orm.SuperKeyProperty(kind='60', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
@@ -147,28 +144,27 @@ class DomainRole(Role):
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(cfg={'paths': ['entities.60']}),
-            Set(cfg={'d': {'output.entity': 'entities.60'}}),
+            Set(cfg={'d': {'output.entity': '_domainrole'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('60', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('60', 'search'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='60', repeated=True)},
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='60', repeated=True)},
+            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
             },
           indexes=[
             {'filter': [],
@@ -185,41 +181,20 @@ class DomainRole(Role):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Prepare(),
-            RulePrepare(),
-            RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('60', 'read_records'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='60', required=True),
-        'search_cursor': ndb.SuperStringProperty()
-        },
-      _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.60',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
@@ -232,187 +207,182 @@ class DomainRole(Role):
     return self.key_id_str == 'admin'
 
 
-class DomainUser(ndb.BaseExpando):
+class DomainUser(orm.BaseExpando):
   
   _kind = 8
   
-  name = ndb.SuperStringProperty('1', required=True)
-  roles = ndb.SuperKeyProperty('2', kind='60', repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since that can pose security issue!!
-  state = ndb.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
+  name = orm.SuperStringProperty('1', required=True)
+  roles = orm.SuperKeyProperty('2', kind='60', repeated=True)  # It's important to ensure that this list doesn't contain duplicate role keys, since that can pose security issue!!
+  state = orm.SuperStringProperty('3', required=True, choices=['invited', 'accepted'])
   
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_email': ndb.SuperStringProperty(),
-    '_records': SuperLocalStructuredRecordProperty('8', repeated=True)
+    '_primary_email': orm.SuperStringProperty(),
+    '_records': orm.SuperRecordProperty('8')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('8', [Action.build_key('8', 'prepare'),
-                             Action.build_key('8', 'invite'),
-                             Action.build_key('8', 'read'),
-                             Action.build_key('8', 'update'),
-                             Action.build_key('8', 'remove'),
-                             Action.build_key('8', 'search'),
-                             Action.build_key('8', 'read_records'),
-                             Action.build_key('8', 'accept'),
-                             Action.build_key('8', 'clean_roles')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
-      ActionPermission('8', Action.build_key('8', 'remove'), False,
-                       'context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
-      ActionPermission('8', Action.build_key('8', 'remove'), True,
-                       '(context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str) and not (context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str)'),
-      ActionPermission('8', Action.build_key('8', 'accept'), False,
-                       'context.user.key_id_str != context.entity._original.key_id_str'),
-      ActionPermission('8', Action.build_key('8', 'accept'), True,
-                       'context.entity._original.namespace_entity._original.state == "active" and context.user.key_id_str == context.entity._original.key_id_str and context.entity._original.state == "invited"'),
-      ActionPermission('8', Action.build_key('8', 'clean_roles'), False, 'False'),
-      ActionPermission('8', Action.build_key('8', 'clean_roles'), True,
-                       'context.entity._original.namespace_entity._original.state == "active" and context.user._is_taskqueue'),
-      FieldPermission('8', ['name', 'roles', 'state', '_primary_email', '_records'], False, False,
-                      'context.entity._original.namespace_entity._original.state != "active"'),
-      FieldPermission('8', ['state'], False, None, 'True'),
-      FieldPermission('8', ['roles'], False, None,
-                      'context.entity._original.key_id_str == context.entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
-      FieldPermission('8', ['state'], True, None,
-                      '(context.action.key_id_str == "invite" and context.entity.state == "invited") or (context.action.key_id_str == "accept" and context.entity.state == "accepted")')
+      orm.ActionPermission('8', [orm.Action.build_key('8', 'prepare'),
+                                 orm.Action.build_key('8', 'invite'),
+                                 orm.Action.build_key('8', 'read'),
+                                 orm.Action.build_key('8', 'update'),
+                                 orm.Action.build_key('8', 'remove'),
+                                 orm.Action.build_key('8', 'search'),
+                                 orm.Action.build_key('8', 'read_records'),
+                                 orm.Action.build_key('8', 'accept'),
+                                 orm.Action.build_key('8', 'clean_roles')], False, 'entity._original.namespace_entity._original.state != "active"'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'remove'), False,
+                           'entity._original.key_id_str == entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'remove'), True,
+                           '(entity._original.namespace_entity._original.state == "active" and user.key_id_str == entity._original.key_id_str) and not (entity._original.key_id_str == entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str)'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'accept'), False,
+                           'user.key_id_str != entity._original.key_id_str'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'accept'), True,
+                           'entity._original.namespace_entity._original.state == "active" and user.key_id_str == entity._original.key_id_str and entity._original.state == "invited"'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'clean_roles'), False, 'False'),
+      orm.ActionPermission('8', orm.Action.build_key('8', 'clean_roles'), True,
+                           'entity._original.namespace_entity._original.state == "active" and user._is_taskqueue'),
+      orm.FieldPermission('8', ['name', 'roles', 'state', '_primary_email', '_records'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"'),
+      orm.FieldPermission('8', ['state'], False, None, 'True'),
+      orm.FieldPermission('8', ['roles'], False, None,
+                          'entity._original.key_id_str == entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
+      orm.FieldPermission('8', ['state'], True, None,
+                          '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('8', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'prepare'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6')
+        'domain': orm.SuperKeyProperty(kind='6')
         },
       _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Prepare(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.8'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('8', 'invite'),
-      arguments={
-        'domain': ndb.SuperKeyProperty(kind='6'),
-        'name': ndb.SuperStringProperty(required=True),
-        'email': ndb.SuperStringProperty(required=True),
-        'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            rule.DomainUserInvite(),
-            RulePrepare(cfg={'path': 'entities'}),
-            RuleExec()
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'paths': ['entities.8', 'entities.0']}),
-            RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
-            Set(cfg={'d': {'output.entity': 'entities.8'}}),
-            CallbackNotify(),
-            CallbackExec()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('8', 'read'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            rule.DomainUserRead(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.8'}})
+            Set(cfg={'d': {'output.entity': '_domainuser'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('8', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'invite'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'roles': ndb.SuperKeyProperty(kind='60', repeated=True)
+        'domain': orm.SuperKeyProperty(kind='6'),
+        'name': orm.SuperStringProperty(required=True),
+        'email': orm.SuperStringProperty(required=True),
+        'roles': orm.SuperKeyProperty(kind='60', repeated=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),
-            rule.DomainUserRead(),
-            rule.DomainUserUpdate(),
+            DomainUserInviteSet(),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.8']}),
-            Set(cfg={'d': {'output.entity': 'entities.8'}}),
+            Write(cfg={'path': '_user'}),
+            Set(cfg={'d': {'output.entity': '_domainuser'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('8', 'remove'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True)
+        'key': orm.SuperKeyProperty(kind='8', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            rule.DomainUserRead(),
-            rule.DomainUserRemove(),
-            RulePrepare(cfg={'path': 'entities'}),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_domainuser'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('8', 'update'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='8', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'roles': orm.SuperKeyProperty(kind='60', repeated=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            DomainUserUpdateSet(),
+            RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'paths': ['entities.0']}),
-            Delete(),
-            RecordWrite(cfg={'paths': ['entities.8', 'entities.0']}),
-            Set(cfg={'d': {'output.entity': 'entities.8'}}),
+            Write(),
+            Set(cfg={'d': {'output.entity': '_domainuser'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('8', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'remove'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
+        'key': orm.SuperKeyProperty(kind='8', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            DomainUserRemoveSet(),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(cfg={'path': '_user'}),
+            Delete(),
+            Set(cfg={'d': {'output.entity': '_domainuser'}}),
+            CallbackNotify(),
+            CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('8', 'search'),
+      arguments={
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='8', repeated=True)},
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty(choices=['invited', 'accepted'])}
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='8', repeated=True)},
+            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty(choices=['invited', 'accepted'])}
             },
           indexes=[
             {'filter': ['key']},
@@ -429,98 +399,77 @@ class DomainUser(ndb.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
             RulePrepare(cfg={'path': 'entities'}),
             Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('8', 'read_records'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'accept'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True),
-        'search_cursor': ndb.SuperStringProperty()
+        'key': orm.SuperKeyProperty(kind='8', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            rule.DomainUserRead(),
-            RulePrepare(),
-            RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.8',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('8', 'accept'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            rule.DomainUserRead(),
-            Set(cfg={'s': {'entities.8.state': 'accepted'}}),
+            Set(cfg={'s': {'_domainuser.state': 'accepted'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.8']}),
-            Set(cfg={'d': {'entities.6': 'entities.8.namespace_entity'}}),
-            RulePrepare(cfg={'path': 'entities'}),  # @todo Should run out of transaction!!!
-            Set(cfg={'d': {'output.entity': 'entities.8',
-                           'output.domain': 'entities.6'}}),
             CallbackNotify(),
             CallbackExec()
             ]
+          ),
+        orm.PluginGroup(
+          plugins=[
+            Set(cfg={'d': {'_domain': '_domainuser.namespace_entity'}}),
+            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(cfg={'path': '_domain'}),  # @todo Should run out of transaction!!!
+            Set(cfg={'d': {'output.entity': '_domainuser',
+                           'output.domain': '_domain'}})
+            ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('8', 'clean_roles'),
+    orm.Action(
+      key=orm.Action.build_key('8', 'clean_roles'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='8', required=True)
+        'key': orm.SuperKeyProperty(kind='8', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            rule.DomainUserRead(),
-            rule.DomainUserCleanRoles(),
+            DomainUserCleanRolesSet(),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),
-            RecordWrite(cfg={'paths': ['entities.8']})
+            Write()
             ]
           )
         ]
