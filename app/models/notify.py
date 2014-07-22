@@ -13,7 +13,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import notify
+from app.plugins.notify import *
 
 
 sandboxed_jinja = SandboxedEnvironment()
@@ -178,7 +178,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            notify.NotifySet(),
+            NotifySet(),
             ]
           ),
         orm.PluginGroup(
@@ -226,7 +226,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            notify.NotifySet()
+            NotifySet()
             ]
           ),
         orm.PluginGroup(
@@ -329,7 +329,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.NotifyInitiate(),
+            NotifyInitiate(),
             CallbackExec()
             ]
           )
@@ -351,7 +351,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
+            NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
             ]
           )
         ]
@@ -372,7 +372,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.NotifyHttpSend()
+            NotifyHttpSend()
             ]
           )
         ]

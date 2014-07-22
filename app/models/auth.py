@@ -11,7 +11,7 @@ import os
 from app import orm, memcache, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import auth
+from app.plugins.auth import *
 
 
 class Session(orm.BaseModel):
@@ -104,13 +104,13 @@ class User(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            auth.UserLoginInit(cfg={'methods': settings.LOGIN_METHODS})
+            UserLoginInit(cfg={'methods': settings.LOGIN_METHODS})
             ]
           ),
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            auth.UserLoginWrite()
+            UserLoginWrite()
             ]
           )
         ]
@@ -144,7 +144,7 @@ class User(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            auth.UserUpdateSet(),
+            UserUpdateSet(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
             ]
@@ -257,7 +257,7 @@ class User(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(cfg={'dra': {'ip_address': '_user.ip_address'}}),
-            auth.UserLogoutOutput()
+            UserLogoutOutput()
             ]
           )
         ]
@@ -456,7 +456,7 @@ class Domain(orm.BaseExpando):
           plugins=[
             # @todo Embed image uploading & processing plugin here somewhere!
             # ive put it in setup for now, we cant put it here because entity is not created yet
-            auth.DomainCreateWrite(),
+            DomainCreateWrite(),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'install', 'action_model': '57'},
@@ -488,7 +488,7 @@ class Domain(orm.BaseExpando):
         'key': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
         'logo': SuperImageLocalStructuredProperty(Image),
-        'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=auth.primary_contact_validator)
+        'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=primary_contact_validator)
         },
       _plugin_groups=[
         orm.PluginGroup(
