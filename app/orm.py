@@ -1180,7 +1180,7 @@ class _BaseModel(object):
       read_arguments = {}
     futures = []
     for field_key, field in self.get_fields().items():
-      if (field_key in read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
+      if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
         # we only read what we're told to or if its a local storage
         field_read_arguments = read_arguments.get(field_key, {})
         if field.is_structured:
@@ -1193,7 +1193,7 @@ class _BaseModel(object):
             futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
         elif isinstance(field, SuperReferenceProperty) and field._autoload is False:
           value = field._get_value(self, internal=True)
-          value.read_async()
+          value.read_async() # for super-reference we always just call read_async() we do not pack it for future.get_result()
     for future, field_read_arguments in futures:
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future. 
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
@@ -1644,8 +1644,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def __init__(self, property_instance, storage_entity, **kwds):
     super(SuperStructuredPropertyManager, self).__init__(property_instance, storage_entity, **kwds)
-    if isinstance(self._property._modelclass, basestring):  # In case the model class is a kind str
-      self._property._modelclass = Model._kind_map.get(self._property._modelclass)
     self._property_value_options = {}
     # @todo We might want to change this to something else, but right now it is the most elegant.
     
@@ -1690,6 +1688,27 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           raise PropertyError('Expected %r, got %r' % (self._property._modelclass, self._property_value))
     self._property_value = property_value
     self._set_parent()
+    
+  def _read_reference(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
+    target_field = self._property._storage_config.get('target_field')
+    callback = self._property._storage_config.get('callback')
+    if not target_field and not callback:
+      target_field = self.property_name
+    if callback:
+      self._property_value = callback(self._entity)
+    elif target_field:
+      field = getattr(self._entity, target_field)
+      if field is None:  # If value is none the key was not set, therefore value must be null.
+        self._property_value = None
+        return self._property_value
+      if not isinstance(field, Key):
+        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
+      if self._property.get_modelclass().get_kind() != field.kind():
+        raise PropertyError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
+      self._property_value = field.get_async()
+    return self._property_value
   
   def _read_local(self, read_arguments=None):
     '''Every structured/local structured value requires a sequence id for future identification purposes!
@@ -1716,10 +1735,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     if read_arguments is None:
       read_arguments = {}
-    property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
     property_value = property_value_key.get()  # @todo How do we use async call here, when we need to investigate the value below?
     if not property_value:
-      property_value = self._property._modelclass(key=property_value_key)
+      property_value = self._property.get_modelclass()(key=property_value_key)
     self._property_value = property_value
   
   def _read_remote_multi(self, read_arguments=None):
@@ -1735,9 +1754,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = [entity for entity in entities if entity is not None]
       cursor = None
     else:
-      query = self._property._modelclass.query(ancestor=self._entity.key)
+      query = self._property.get_modelclass().query(ancestor=self._entity.key)
       if order:
-        order_field = getattr(self._property._modelclass, order['field'])
+        order_field = getattr(self._property.get_modelclass(), order['field'])
         if order['direction'] == 'asc':
           query = query.order(order_field)
         else:
@@ -1769,7 +1788,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = [entity for entity in entities if entity is not None]
       cursor = None
     else:
-      keys = [Key(self._property._modelclass.get_kind(),
+      keys = [Key(self._property.get_modelclass().get_kind(),
                   str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit)]
       entities = get_multi_async(keys)
       cursor = cursor + limit
@@ -1791,11 +1810,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       for entity in entities:
         for field_key, field in entity.get_fields().items():
           if field.is_structured:
-            value = getattr(entity, field_key)
-            field_read_arguments = read_arguments.get(field_key, {})
-            value.read_async(field_read_arguments)
-            if value.has_future():
-              futures.append((value, field_read_arguments))
+            if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
+              value = getattr(entity, field_key)
+              field_read_arguments = read_arguments.get(field_key, {})
+              value.read_async(field_read_arguments)
+              if value.has_future():
+                futures.append((value, field_read_arguments))
       for future, field_read_arguments in futures:
         future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
   
@@ -1875,6 +1895,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         if self._property_value._state == 'deleted':
           setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
   
+  def _pre_update_reference(self):
+    pass
+  
   def _pre_update_remote_single(self):
     pass
   
@@ -1886,6 +1909,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _post_update_local(self):
     pass
+  
+  def _post_update_reference(self):
+    pass # we can invent here logic that would fire for reference's sake
   
   def _post_update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
@@ -1928,7 +1954,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     
     '''
     delete_entities = []
-    last_sequence = self._property._modelclass.query(ancestor=self._entity.key).count()
+    last_sequence = self._property.get_modelclass().query(ancestor=self._entity.key).count()
     for i, entity in enumerate(self._property_value):
       if entity._state == 'deleted':
         delete_entities.append(entity)
@@ -1979,7 +2005,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _delete_remote(self):
     cursor = Cursor()
     limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
+    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     while True:
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
       if len(_entities):
@@ -1991,7 +2017,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         break
   
   def _delete_remote_single(self):
-    property_value_key = Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     self._set_parent(entity)
     entity.key.delete()
@@ -2001,6 +2027,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _delete_remote_multi_sequenced(self):
     self._delete_remote()
+    
+  def _delete_reference(self):
+    pass # nothing happens when you delete reference, we can however implement that logic too
   
   def delete(self):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
@@ -2028,7 +2057,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     cursor = Cursor()
     limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
+    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     entities = []
     while True:
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
@@ -2100,11 +2129,11 @@ class SuperReferencePropertyManager(SuperPropertyManager):
           self._property_value = map(lambda x: x.get_result(), self._property_value)
         else:
           self._property_value = self._property_value.get_result()
-        if self._property._format_callback:
-          if isinstance(self._property_value, list):
-            self._property_value = map(lambda x: self._property._format_callback(self._entity, x.get_result()), self._property_value)
-          else:
-            self._property_value = self._property._format_callback(self._entity, self._property_value)
+      if self._property._format_callback:
+        if isinstance(self._property_value, list):
+          self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
+        else:
+          self._property_value = self._property._format_callback(self._entity, self._property_value)
       return self._property_value
   
   def pre_update(self):
@@ -2135,9 +2164,6 @@ class _BaseProperty(object):
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
     self._searchable = kwargs.pop('searchable', self._searchable)
     self._search_document_field_name = kwargs.pop('search_document_field_name', self._search_document_field_name)
-    custom_kind = kwargs.get('kind')
-    if custom_kind and isinstance(custom_kind, basestring) and '.' in custom_kind:
-      kwargs['kind'] = factory(custom_kind)
     super(_BaseProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -2214,19 +2240,31 @@ class _BaseStructuredProperty(_BaseProperty):
   _updateable = True
   _deleteable = True
   _managerclass = None
+  _autoload = True
   
   def __init__(self, *args, **kwargs):
     args = list(args)
-    self._readable = kwargs.pop('readable', True)
-    self._updateable = kwargs.pop('updateable', True)
-    self._deleteable = kwargs.pop('deleteable', True)
-    self._managerclass = kwargs.pop('managerclass', None)
-    if isinstance(args[0], basestring):
-      args[0] = Model._kind_map.get(args[0])
+    self._readable = kwargs.pop('readable', self._readable)
+    self._updateable = kwargs.pop('updateable', self._updateable)
+    self._deleteable = kwargs.pop('deleteable', self._deleteable)
+    self._managerclass = kwargs.pop('managerclass', self._managerclass)
+    self._autoload = kwargs.pop('autoload', self._autoload)
+    if not kwargs.pop('generic', None):
+      if isinstance(args[0], basestring):
+        set_arg = Model._kind_map.get(args[0])
+        if set_arg is not None: # if model is not scanned yet
+          args[0] = set_arg
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
-  
+ 
   def get_modelclass(self, values=None):
+    if isinstance(self._modelclass, basestring):
+      # model must be scanned when it reaches this call
+      find = Model._kind_map.get(self._modelclass)
+      if find is None:
+        raise PropertyError('Could not locate kind with %s' % self._modelclass)
+      else:
+        self._modelclass = find
     if values is None:
       return self._modelclass
     return self._modelclass(**values)
@@ -2238,10 +2276,13 @@ class _BaseStructuredProperty(_BaseProperty):
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
     dic['model'] = self.get_modelclass().get_fields()
+    other = ['_autoload', '_readable', '_updateable', '_deleteable', '_deleteable']
+    for o in other:
+      dic[o[1:]] = getattr(self, o)
     return dic
   
   def get_model_fields(self):
-    return self._modelclass.get_fields()
+    return self.get_modelclass().get_fields()
   
   def argument_format(self, value):
     return self._structured_property_format(value)
@@ -2296,7 +2337,7 @@ class _BaseStructuredProperty(_BaseProperty):
       provided_kind_id = v.get('_kind')
       self._structured_property_field_format(fields, v)
       v['_kind'] = provided_kind_id
-      entity = self.get_modelclass(**v)
+      entity = self.get_modelclass(v)
       out.append(entity)
     if not self._repeated:
       try:
@@ -2768,21 +2809,29 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
   _updateable = True
   _deleteable = True
   _managerclass = None
+  _autoload = False
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     storage = kwds.pop('storage')
+    storage_config = kwds.pop('storage_config', {}) # storage specific options
+    if isinstance(modelclass, basestring):
+      set_modelclass = Model._kind_map.get(modelclass)
+      if set_modelclass is not None:
+        modelclass = set_modelclass
+    kwds['generic'] = True
     super(SuperStorageStructuredProperty, self).__init__(name, **kwds)
     self._modelclass = modelclass
     # Calling this init will also call _BaseStructuredProperty.__init__ and overide _storage into 'local' always.
     # That's why we deal with _storage after inherited init methods are finished.
     self._storage = storage
+    # we use storage_config dict instead of keywords,
+    # because we cannot forsee how many key-values we can invent for per-storage type
+    self._storage_config = storage_config 
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
   
   def get_model_fields(self):
-    if isinstance(self._modelclass, basestring):
-      self._modelclass = Model._kind_map.get(self._modelclass)
-    return self._modelclass.get_fields()
+    return self.get_modelclass().get_fields()
   
   def _set_value(self, entity, value):
     # __set__
@@ -2814,10 +2863,8 @@ class SuperReferenceProperty(SuperKeyProperty):
   Getter usually retrieves entire entity instance,
   or something else can be returned based on the _format_callback option.
   >>> entity.user.email
-  Beware with usage of this property. It will automatically get the entity in async mode as soon as the
-  from_pb and _post_get callback are executed.
-  This functionality can be suppressed by implementing additional kwarg called 'autoload', and based on that
-  the read_async call could be skipped in _BaseModel at make_async_calls().
+  Beware with usage of this property. It will automatically perform RPC calls in async mode as soon as the
+  from_pb and _post_get callback are executed unless autoload is set to False.
   
   '''
   _readable = True

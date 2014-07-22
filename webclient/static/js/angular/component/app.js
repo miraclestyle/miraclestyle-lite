@@ -444,12 +444,12 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             var entities = [];
 
             angular.forEach(domains, function (domain, i) {
-            	domain.rule = RuleEngine.factory(domain);
+            	domain.rule = RuleEngine.factory(apps.entity);
             	angular.forEach(domain_users, function (user) {
             		if (user.namespace == domain.key)
             		{
             			domain._domain_user = user;
-            			domain._domain_user.rule = RuleEngine.factory(domain._domain_user);
+            			domain._domain_user.rule = RuleEngine.factory(apps.entity);
             		}
             		
             	});

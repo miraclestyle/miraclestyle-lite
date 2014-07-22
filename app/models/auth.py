@@ -61,10 +61,10 @@ class User(orm.BaseExpando):
     #   ...
     # for domain_user in user._domain_users:
     #   ...
-    '_domains': orm.SuperReferenceProperty(autoload=False,
-                                           callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])),
-    '_domain_users': orm.SuperReferenceProperty(autoload=False,
-                                                callback=lambda self: orm.get_multi_async([orm.Key('8', self.key_id_str, namespace=domain_key.urlsafe()) for domain_key in self.domains]))
+    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
+                                                   storage_config={'callback' : lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])}),
+    '_domain_users': orm.SuperStorageStructuredProperty('8', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
+                                                        storage_config={'callback' : lambda self: orm.get_multi_async([orm.Key('8', self.key_id_str, namespace=domain_key.urlsafe()) for domain_key in self.domains])})
     }
   
   _global_role = GlobalRole(
@@ -374,7 +374,7 @@ class Domain(orm.BaseExpando):
   
   _virtual_fields = {
     '_primary_contact_email': orm.SuperReferenceProperty(target_field='primary_contact',
-                                                         format_callback=lambda self, value: value.primary_email),
+                                                         format_callback=lambda self, value: value._primary_email),
     '_records': orm.SuperRecordProperty('6')
     }
   
@@ -495,7 +495,7 @@ class Domain(orm.BaseExpando):
             Read(),
             Set(cfg={'d': {'_domain.name': 'input.name',
                            '_domain.primary_contact': 'input.primary_contact',
-                           '_domain.logo': 'input.logo'}}),
+                           '_domain.logo': 'input.logo'}}), # if we do this then input.logo will set domain.logo to be none!
             RulePrepare(),
             RuleExec()
             ]

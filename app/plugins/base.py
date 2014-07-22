@@ -169,8 +169,8 @@ class ProcessImages(orm.BaseModel):
     if entity and isinstance(entity, orm.Model):
       for field_key, field in entity.get_fields().items():
         if field.is_structured:
-          value = getattr(self, field_key)
-          if hasattr(value, 'process') and callable(value.process):
+          value = getattr(entity, field_key)
+          if value.has_value() and hasattr(value, 'process') and callable(value.process):
             value.process()
 
 
@@ -223,15 +223,21 @@ class Search(orm.BaseModel):
     result = context.model.search(argument, namespace, limit, urlsafe_cursor, fields)
     if context.model._use_search_engine:
       context._entities = result[0]
-      context._cursor = result[1]
+      cursor = result[1]
+      if cursor is not None:
+        cursor = cursor.urlsafe()
+      context._cursor = cursor
       context._more = result[2]
       context._documents_count = result[3]
       context._total_matches = result[4]
     else:
       entities = []
       if isinstance(result, tuple):
+        cursor = result[1]
+        if cursor is not None:
+          cursor = cursor.urlsafe()
         context._entities = result[0]
-        context._cursor = result[1]
+        context._cursor = cursor
         context._more = result[2]
       elif isinstance(result, list):
         context._entities = result

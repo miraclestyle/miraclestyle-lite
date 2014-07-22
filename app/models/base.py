@@ -85,7 +85,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
   def _delete_remote(self):
     cursor = Cursor()
     limit = 200
-    query = self._property._modelclass.query(ancestor=self._entity.key)
+    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     while True:
       _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
       if len(_entities):
@@ -99,7 +99,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
         break
   
   def _delete_remote_single(self):
-    property_value_key = orm.Key(self._property._modelclass.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    property_value_key = orm.Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
     entity = property_value_key.get()
     if isinstance(self._property, _BaseImageProperty):
       self._property.delete_blobs_on_success(entity.image)
@@ -330,7 +330,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
       if file_info.content_type not in meta_required:
         raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-      new_image = self._modelclass(**{'size': file_info.size,
+      new_image = self.get_modelclass()(**{'size': file_info.size,
                                       'content_type': file_info.content_type,
                                       'gs_object_name': file_info.gs_object_name,
                                       'image': blob_info.key()})

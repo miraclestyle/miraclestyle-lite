@@ -218,7 +218,7 @@ class DomainUser(orm.BaseExpando):
   
   _virtual_fields = {
     '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_primary_email_async(),
-                                                 format_callback=lambda self, value: value.primary_email),
+                                                 format_callback=lambda self, value: value._primary_email),
     '_records': orm.SuperRecordProperty('8')
     }
   
@@ -408,8 +408,8 @@ class DomainUser(orm.BaseExpando):
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
                            'output._cursor': '_cursor',
                            'output._more': '_more'}})
             ]
