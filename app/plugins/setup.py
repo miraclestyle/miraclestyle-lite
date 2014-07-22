@@ -46,7 +46,7 @@ class Setup():
         orm.transaction(runner, xg=True)
       time.sleep(1.5) # sleep between transactions
       if iterations < 1:
-        util.logger('Stopped iteration at %s' % iterations)  # @todo Probably to be removed?! - removed after testing
+        util.logger('Stopped iteration after 100')  # @todo Probably to be removed?! - removed after testing
         break
 
 
@@ -99,11 +99,11 @@ class DomainSetup(Setup):
                                               actions=actions,
                                               executable=True,
                                               condition='True'))
-      props = obj.get_fields()
-      prop_names = []
-      for prop_name, prop in props.items():
-        prop_names.append(prop_name)
-      permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
+          props = obj.get_fields()
+          prop_names = []
+          for prop_name, prop in props.items():
+            prop_names.append(prop_name)
+          permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity._use_rule_engine = False
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
@@ -114,11 +114,13 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_1(self):
     config_input = self.config.next_operation_input
+    domain_key = config_input.get('domain_key')
+    role_key = config_input.get('role_key')
+    i = 0
     Widget = self.context.models['62']
     Filter = self.context.models['65']
-    domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    role_key = config_input.get('role_key')
+    
     entities = [Widget(id='system_search',
                        namespace=namespace,
                        name='Search',
@@ -151,12 +153,12 @@ class DomainSetup(Setup):
   
   def execute_create_widget_step_2(self):
     config_input = self.config.next_operation_input
-    Widget = self.context.models['62']
-    Filter = self.context.models['65']
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
     sequence = config_input.get('sequence')
+    Widget = self.context.models['62']
+    Filter = self.context.models['65']
     entities = [Widget(id='system_user_interface',
                        namespace=namespace,
                        name='User Interface',

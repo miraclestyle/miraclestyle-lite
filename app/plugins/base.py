@@ -81,6 +81,7 @@ class Read(orm.BaseModel):
     else:
       entity = model()
       entity.set_key(None, parent=parent, namespace=namespace)
+    entity.make_original()
     set_attr(context, save_path, entity)
 
 

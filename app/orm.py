@@ -398,6 +398,13 @@ class _BaseModel(object):
     self._search_documents_delete = []
     for key in self.get_fields():
       self.add_output(key)
+      
+  def __repr__(self):
+    original = 'No, '
+    if hasattr(self, '_original') and self._original is not None:
+      original = 'Yes, '
+    out = super(_BaseModel, self).__repr__()
+    return out.replace('%s(' % self.__class__.__name__, '%s(_original=%s' % (self.__class__.__name__, original))
   
   @classmethod
   def _get_kind(cls):
@@ -1173,17 +1180,20 @@ class _BaseModel(object):
       read_arguments = {}
     futures = []
     for field_key, field in self.get_fields().items():
-      if field.is_structured:
-        if (field_key not in read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
-          continue # we only read what we're told to or if its a local storage
-        value = getattr(self, field_key)
+      if (field_key in read_arguments) or not isinstance(field, (SuperLocalStructuredProperty, SuperStructuredProperty)):
+        # we only read what we're told to or if its a local storage
         field_read_arguments = read_arguments.get(field_key, {})
-        value.read_async(field_read_arguments)
-        # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
-        # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
-        # since this just 1 argument approach is perhaps faster.
-        if value.has_future():
-          futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
+        if field.is_structured:
+          value = getattr(self, field_key)
+          value.read_async(field_read_arguments)
+          # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
+          # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
+          # since this just 1 argument approach is perhaps faster.
+          if value.has_future():
+            futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
+        elif isinstance(field, SuperReferenceProperty) and field._autoload is False:
+          value = field._get_value(self, internal=True)
+          value.read_async()
     for future, field_read_arguments in futures:
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future. 
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
@@ -2086,9 +2096,15 @@ class SuperReferencePropertyManager(SuperPropertyManager):
     if self._property._readable:
       self.read_async()
       if self.has_future():
-        self._property_value = self._property_value.get_result()
+        if isinstance(self._property_value, list):
+          self._property_value = map(lambda x: x.get_result(), self._property_value)
+        else:
+          self._property_value = self._property_value.get_result()
         if self._property._format_callback:
-          self._property_value = self._property._format_callback(self._entity, self._property_value)
+          if isinstance(self._property_value, list):
+            self._property_value = map(lambda x: self._property._format_callback(self._entity, x.get_result()), self._property_value)
+          else:
+            self._property_value = self._property._format_callback(self._entity, self._property_value)
       return self._property_value
   
   def pre_update(self):

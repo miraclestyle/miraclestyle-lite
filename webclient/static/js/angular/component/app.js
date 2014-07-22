@@ -100,7 +100,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
         return {
             search: function (args, config) {
                 return Endpoint.post('read', '0', angular.extend({
-                	'read_arguments' : {'domains' : {}, 'domain_users' : {}},
+                	'read_arguments' : {'_domains' : {}, '_domain_users' : {}},
                 }, args), config);
             },
             sudo_search: function (args, config) {
@@ -438,8 +438,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
 
             Title.set('My Apps');
             
-            var domains = apps.domains;
-            var domain_users = apps.domain_users;
+            var domains = apps.entity._domains;
+            var domain_users = apps.entity._domain_users;
 
             var entities = [];
 
@@ -456,6 +456,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
  
             	entities.push(domain);
             });
+            
+            console.log(entities);
 
             $scope.apps = entities;
 

@@ -26,8 +26,7 @@ class DomainRole(Role):
                                   orm.Action.build_key('60', 'read'),
                                   orm.Action.build_key('60', 'update'),
                                   orm.Action.build_key('60', 'delete'),
-                                  orm.Action.build_key('60', 'search'),
-                                  orm.Action.build_key('60', 'read_records')], False, 'entity._original.namespace_entity._original.state != "active"'),
+                                  orm.Action.build_key('60', 'search')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('60', [orm.Action.build_key('60', 'create'),
                                   orm.Action.build_key('60', 'update'),
                                   orm.Action.build_key('60', 'delete')], False, 'entity._is_system'),
@@ -218,7 +217,8 @@ class DomainUser(orm.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_email': orm.SuperStringProperty(),
+    '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_primary_email_async(),
+                                                 format_callback=lambda self, value: value.primary_email),
     '_records': orm.SuperRecordProperty('8')
     }
   
@@ -230,7 +230,6 @@ class DomainUser(orm.BaseExpando):
                                  orm.Action.build_key('8', 'update'),
                                  orm.Action.build_key('8', 'remove'),
                                  orm.Action.build_key('8', 'search'),
-                                 orm.Action.build_key('8', 'read_records'),
                                  orm.Action.build_key('8', 'accept'),
                                  orm.Action.build_key('8', 'clean_roles')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('8', orm.Action.build_key('8', 'remove'), False,
@@ -475,3 +474,6 @@ class DomainUser(orm.BaseExpando):
         ]
       )
     ]
+  
+  def _get_primary_email_async(self):
+    return orm.Key('0', long(self.key_id_str)).get_async()

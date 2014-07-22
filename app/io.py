@@ -58,7 +58,7 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models, so it must be called before executing anything!'''
-    from app.models import auth, base, notify, setup
+    from app.models import auth, base, notify, setup, rule, nav
     #, buyer, cron, location, marketing, nav, notify, product, rule, setup, uom
   
   @classmethod
