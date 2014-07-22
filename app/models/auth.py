@@ -83,7 +83,6 @@ class User(orm.BaseExpando):
       # read users history (exclusively); perform sudo operations (exclusively).
       orm.ActionPermission('0', [orm.Action.build_key('0', 'read'),
                                  orm.Action.build_key('0', 'search'),
-                                 orm.Action.build_key('0', 'read_records'),
                                  orm.Action.build_key('0', 'sudo')], True, 'user._root_admin'),
       orm.FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
                                 'ip_address', '_primary_email', '_records', '_domains', '_domain_users'], None, True, 'user._root_admin'),
@@ -118,7 +117,7 @@ class User(orm.BaseExpando):
       key=orm.Action.build_key('0', 'read'),
       arguments={
         'key': orm.SuperKeyProperty(kind='0', required=True),
-        'read_arguments' : orm.SuperJsonProperty(),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -399,7 +398,6 @@ class Domain(orm.BaseExpando):
       # read domain history; perform sudo operations (exclusively); log messages; read _records.note field (exclusively).
       orm.ActionPermission('6', [orm.Action.build_key('6', 'read'),
                                  orm.Action.build_key('6', 'search'),
-                                 orm.Action.build_key('6', 'read_records'),
                                  orm.Action.build_key('6', 'sudo'),
                                  orm.Action.build_key('6', 'log_message')], True, 'user._root_admin'),
       orm.ActionPermission('6', [orm.Action.build_key('6', 'search'),
