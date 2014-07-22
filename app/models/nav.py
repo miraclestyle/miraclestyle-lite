@@ -5,178 +5,176 @@ Created on Feb 24, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb, settings
+from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import nav
+from app.plugins.nav import *
 
 
-class Filter(ndb.BaseModel):
+class Filter(orm.BaseModel):
   
   _kind = 65
   
-  name = ndb.SuperStringProperty('1', required=True, indexed=False)
-  model = ndb.SuperStringProperty('2', required=True, indexed=False)
-  query = ndb.SuperJsonProperty('3', required=True, indexed=False, default={})
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  model = orm.SuperStringProperty('2', required=True, indexed=False)
+  query = orm.SuperJsonProperty('3', required=True, indexed=False, default={})
 
 
-class Widget(ndb.BaseExpando):
+class Widget(orm.BaseExpando):
   
   _kind = 62
   
-  name = ndb.SuperStringProperty('1', required=True)
-  sequence = ndb.SuperIntegerProperty('2', required=True)
-  active = ndb.SuperBooleanProperty('3', required=True, default=True)
-  role = ndb.SuperKeyProperty('4', kind='60', required=True)
-  search_form = ndb.SuperBooleanProperty('5', required=True, indexed=False, default=True)
-  filters = ndb.SuperLocalStructuredProperty(Filter, '6', repeated=True)
+  name = orm.SuperStringProperty('1', required=True)
+  sequence = orm.SuperIntegerProperty('2', required=True)
+  active = orm.SuperBooleanProperty('3', required=True, default=True)
+  role = orm.SuperKeyProperty('4', kind='60', required=True)
+  search_form = orm.SuperBooleanProperty('5', required=True, indexed=False, default=True)
+  filters = orm.SuperLocalStructuredProperty(Filter, '6', repeated=True)
   
   _default_indexed = False
   
   _virtual_fields = {
-    '_records': SuperLocalStructuredRecordProperty('62', repeated=True)
+    '_records': orm.SuperRecordProperty('62')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('62', [Action.build_key('62', 'prepare'),
-                              Action.build_key('62', 'create'),
-                              Action.build_key('62', 'read'),
-                              Action.build_key('62', 'update'),
-                              Action.build_key('62', 'delete'),
-                              Action.build_key('62', 'search'),
-                              Action.build_key('62', 'read_records'),
-                              Action.build_key('62', 'build_menu')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
-      ActionPermission('62', [Action.build_key('62', 'create'),
-                              Action.build_key('62', 'update'),
-                              Action.build_key('62', 'delete')], False, 'context.entity._is_system'),
-      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
-                      'context.entity._original.namespace_entity._original.state != "active"'),
-      FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
-                      'context.entity._is_system'),
-      FieldPermission('62', ['role'], False, None,
-                      '(context.action.key_id_str == "create" or context.action.key_id_str == "update") and (context.entity.role and context.entity._original.key_namespace != context.entity.role.entity._original.key_namespace)')
+      orm.ActionPermission('62', [orm.Action.build_key('62', 'prepare'),
+                                  orm.Action.build_key('62', 'create'),
+                                  orm.Action.build_key('62', 'read'),
+                                  orm.Action.build_key('62', 'update'),
+                                  orm.Action.build_key('62', 'delete'),
+                                  orm.Action.build_key('62', 'search'),
+                                  orm.Action.build_key('62', 'read_records'),
+                                  orm.Action.build_key('62', 'build_menu')], False, 'entity._original.namespace_entity._original.state != "active"'),
+      orm.ActionPermission('62', [orm.Action.build_key('62', 'create'),
+                                  orm.Action.build_key('62', 'update'),
+                                  orm.Action.build_key('62', 'delete')], False, 'entity._is_system'),
+      orm.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"'),
+      orm.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
+                          'entity._is_system'),
+      orm.FieldPermission('62', ['role'], False, None,
+                          '(action.key_id_str == "create" or action.key_id_str == "update") and (entity.role and entity._original.key_namespace != entity.role.entity._original.key_namespace)')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('62', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'prepare'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.62'}})
+            Set(cfg={'d': {'output.entity': '_widget'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'create'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'create'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'sequence': ndb.SuperIntegerProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True),
-        'role': ndb.SuperKeyProperty(kind='60', required=True),
-        'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperLocalStructuredProperty(Filter, repeated=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'sequence': orm.SuperIntegerProperty(required=True),
+        'active': orm.SuperBooleanProperty(default=True),
+        'role': orm.SuperKeyProperty(kind='60', required=True),
+        'search_form': orm.SuperBooleanProperty(default=True),
+        'filters': orm.SuperLocalStructuredProperty(Filter, repeated=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
-            Set(cfg={'d': {'entities.62.name': 'input.name',
-                           'entities.62.sequence': 'input.sequence',
-                           'entities.62.active': 'input.active',
-                           'entities.62.role': 'input.role',
-                           'entities.62.search_form': 'input.search_form',
-                           'entities.62.filters': 'input.filters'}}),
+            Read(),
+            Set(cfg={'d': {'_widget.name': 'input.name',
+                           '_widget.sequence': 'input.sequence',
+                           '_widget.active': 'input.active',
+                           '_widget.role': 'input.role',
+                           '_widget.search_form': 'input.search_form',
+                           '_widget.filters': 'input.filters'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.62']}),
-            Set(cfg={'d': {'output.entity': 'entities.62'}}),
+            Set(cfg={'d': {'output.entity': '_widget'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='62', required=True)
+        'key': orm.SuperKeyProperty(kind='62', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.62'}})
+            Set(cfg={'d': {'output.entity': '_widget'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='62', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'sequence': ndb.SuperIntegerProperty(required=True),
-        'active': ndb.SuperBooleanProperty(default=True),
-        'role': ndb.SuperKeyProperty(kind='60', required=True),
-        'search_form': ndb.SuperBooleanProperty(default=True),
-        'filters': ndb.SuperLocalStructuredProperty(Filter, repeated=True)
+        'key': orm.SuperKeyProperty(kind='62', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'sequence': orm.SuperIntegerProperty(required=True),
+        'active': orm.SuperBooleanProperty(default=True),
+        'role': orm.SuperKeyProperty(kind='60', required=True),
+        'search_form': orm.SuperBooleanProperty(default=True),
+        'filters': orm.SuperLocalStructuredProperty(Filter, repeated=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'entities.62.name': 'input.name',
-                           'entities.62.sequence': 'input.sequence',
-                           'entities.62.active': 'input.active',
-                           'entities.62.role': 'input.role',
-                           'entities.62.search_form': 'input.search_form',
-                           'entities.62.filters': 'input.filters'}}),
+            Set(cfg={'d': {'_widget.name': 'input.name',
+                           '_widget.sequence': 'input.sequence',
+                           '_widget.active': 'input.active',
+                           '_widget.role': 'input.role',
+                           '_widget.search_form': 'input.search_form',
+                           '_widget.filters': 'input.filters'}}),
             RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.62']}),
-            Set(cfg={'d': {'output.entity': 'entities.62'}}),
+            Set(cfg={'d': {'output.entity': '_widget'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'delete'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'delete'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='62', required=True)
+        'key': orm.SuperKeyProperty(kind='62', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
@@ -184,28 +182,27 @@ class Widget(ndb.BaseExpando):
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(cfg={'paths': ['entities.62']}),
-            Set(cfg={'d': {'output.entity': 'entities.62'}}),
+            Set(cfg={'d': {'output.entity': '_widget'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'search'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'sequence', 'operator': 'asc'}},
           filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'role': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='60')},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'role': {'operators': ['==', '!='], 'type': orm.SuperKeyProperty(kind='60')},
+            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
             },
           indexes=[
             {'filter': ['name'],
@@ -232,59 +229,38 @@ class Widget(ndb.BaseExpando):
             'sequence': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Prepare(),
-            RulePrepare(),
-            RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('62', 'read_records'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='62', required=True),
-        'search_cursor': ndb.SuperStringProperty()
-        },
-      _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.62',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('62', 'build_menu'),
+    orm.Action(
+      key=orm.Action.build_key('62', 'build_menu'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            nav.BuildMenu(),
-            Set(cfg={'d': {'output.menu': 'tmp.widgets', 'output.domain': 'domain'}})
+            NavBuildMenu(),
+            Set(cfg={'d': {'output.menu': '_widgets', 'output.domain': 'domain'}})
             ]
           )
         ]

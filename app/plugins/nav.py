@@ -8,13 +8,12 @@ Created on Apr 15, 2014
 from app import orm, util
 
 
-class BuildMenu(orm.BaseModel):
+class NavBuildMenu(orm.BaseModel):
   
   def run(self, context):
     domain_user_key = orm.Key('8', context.user.key_id_str, namespace=context.namespace)
     domain_user = domain_user_key.get()
     if domain_user:
-      widgets = context.model.query(context.model.active == True,
-                                    context.model.role.IN(domain_user.roles),
-                                    namespace=context.namespace).order(context.model.sequence).fetch()
-      context._widgets = widgets
+      context._widgets = context.model.query(context.model.active == True,
+                                             context.model.role.IN(domain_user.roles),
+                                             namespace=context.namespace).order(context.model.sequence).fetch()
