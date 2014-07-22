@@ -51,7 +51,7 @@ class User(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': orm.SuperRecordProperty('0', repeated=True),
+    '_records': orm.SuperRecordProperty('0'),
     # these properties are not loaded on every user entity when they are fetched from datastore
     # they should be read individually like so:
     # user._domains.read_async()
@@ -75,10 +75,10 @@ class User(orm.BaseExpando):
                                  orm.Action.build_key('0', 'update'),
                                  orm.Action.build_key('0', 'logout'),
                                  orm.Action.build_key('0', 'read_domains')], True, 'not entity._is_guest and user.key == entity._original.key'),
-      orm.FieldPermission('0', ['created', 'updated', 'state'], False, True,
+      orm.FieldPermission('0', ['created', 'updated', 'state', 'domains'], False, True,
                           'not user._is_guest and user.key == entity._original.key'),
-      orm.FieldPermission('0', ['identities', 'emails', 'sessions', 'domains', '_primary_email'], True, True,
-                          'not user._is_guest and user.key == entity._original.key'),  # @todo Perhaps 'domain' field should not be writable? - it should not be writable
+      orm.FieldPermission('0', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
+                          'not user._is_guest and user.key == entity._original.key'),
       # User is unit of administration, hence root admins need control over it!
       # Root admins can always: read user; search for users (exclusively);
       # read users history (exclusively); perform sudo operations (exclusively).
@@ -272,16 +272,16 @@ class User(orm.BaseExpando):
     return dic
   
   @property
+  def _root_admin(self):
+    return self._primary_email in settings.ROOT_ADMINS
+  
+  @property
   def _is_taskqueue(self):
     return memcache.temp_memory_get('_current_request_is_taskqueue')
   
   @property
   def _is_cron(self):
     return memcache.temp_memory_get('_current_request_is_cron')
- 
-  @property
-  def _root_admin(self):
-    return self._primary_email in settings.ROOT_ADMINS
   
   def set_taskqueue(self, is_it):
     return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
@@ -290,9 +290,9 @@ class User(orm.BaseExpando):
     return memcache.temp_memory_set('_current_request_is_cron', is_it)
   
   def primary_email(self):
-    if not self.identities.read():
+    if not self.identities.value:
       return None
-    for identity in self.identities.read():
+    for identity in self.identities.value:
       if identity.primary == True:
         return identity.email
     return identity.email
@@ -335,7 +335,7 @@ class User(orm.BaseExpando):
     return memcache.temp_memory_get('_current_user_session')
   
   def session_by_id(self, session_id):
-    for session in self.sessions.read():
+    for session in self.sessions.value:
       if session.session_id == session_id:
         return session
     return None
@@ -373,7 +373,7 @@ class Domain(orm.BaseExpando):
   _virtual_fields = {
     '_primary_contact_email': orm.SuperReferenceProperty(target_field='primary_contact',
                                                          format_callback=lambda self, value: value.primary_email),
-    '_records': orm.SuperRecordProperty('6', repeated=True)
+    '_records': orm.SuperRecordProperty('6')
     }
   
   _global_role = GlobalRole(

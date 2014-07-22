@@ -10,7 +10,7 @@ import math
 from jinja2.sandbox import SandboxedEnvironment
 
 
-from app import ndb, settings
+from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
 from app.plugins import notify
@@ -23,7 +23,7 @@ def render_template(template_as_string, values={}):
   return from_string_template.render(values)
 
 
-class Template(ndb.BasePolyExpando):
+class Template(orm.BasePolyExpando):
   
   _kind = 81
   
@@ -34,10 +34,10 @@ class CustomTemplate(Template):
   
   _kind = 59
   
-  message_recievers = ndb.SuperPickleProperty('1', required=True, indexed=False)
-  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('3', required=True)
-  outlet = ndb.SuperStringProperty('4', required=True, default='send_mail', indexed=False)
+  message_recievers = orm.SuperPickleProperty('1', required=True, indexed=False)
+  message_subject = orm.SuperStringProperty('2', required=True, indexed=False)
+  message_body = orm.SuperTextProperty('3', required=True)
+  outlet = orm.SuperStringProperty('4', required=True, default='send_mail', indexed=False)
   
   def run(self, **kwargs):
     callbacks = []
@@ -56,16 +56,16 @@ class MailTemplate(Template):
   
   _kind = 58
   
-  message_reciever = ndb.SuperKeyProperty('1', kind='60', required=True, indexed=False)  # All users that have this role.
-  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('3', required=True)
+  message_reciever = orm.SuperKeyProperty('1', kind='60', required=True, indexed=False)  # All users that have this role.
+  message_subject = orm.SuperStringProperty('2', required=True, indexed=False)
+  message_body = orm.SuperTextProperty('3', required=True)
   
   def run(self, **kwargs):
     callbacks = []
     DomainUser = kwargs['models']['DomainUser']
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
-    recievers = ndb.get_multi([ndb.Key('0', long(reciever.key.id())) for reciever in domain_users])
+    recievers = orm.get_multi([orm.Key('0', long(reciever.key.id())) for reciever in domain_users])
     template_values = {'entity': kwargs['caller_entity']}
     data = {'action_id': 'send_mail',
             'action_model': '61',
@@ -89,9 +89,9 @@ class HttpTemplate(Template):
   
   _kind = 63
   
-  message_reciever = ndb.SuperStringProperty('1', required=True, indexed=False)
-  message_subject = ndb.SuperStringProperty('2', required=True, indexed=False)
-  message_body = ndb.SuperTextProperty('3', required=True)
+  message_reciever = orm.SuperStringProperty('1', required=True, indexed=False)
+  message_subject = orm.SuperStringProperty('2', required=True, indexed=False)
+  message_body = orm.SuperTextProperty('3', required=True)
   
   def run(self, **kwargs):
     callbacks = []
@@ -106,149 +106,147 @@ class HttpTemplate(Template):
     return callbacks
 
 
-class Notification(ndb.BaseExpando):
+class Notification(orm.BaseExpando):
   
   _kind = 61
   
-  name = ndb.SuperStringProperty('1', required=True)
-  action = ndb.SuperKeyProperty('2', kind='56', required=True)
-  condition = ndb.SuperStringProperty('3', required=True, indexed=False)
-  active = ndb.SuperBooleanProperty('4', required=True, default=True)
-  templates = ndb.SuperPickleProperty('5', required=True, indexed=False, compressed=False)
+  name = orm.SuperStringProperty('1', required=True)
+  action = orm.SuperKeyProperty('2', kind='56', required=True)
+  condition = orm.SuperStringProperty('3', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('4', required=True, default=True)
+  templates = orm.SuperPickleProperty('5', required=True, indexed=False, compressed=False)
   
   _default_indexed = False
   
   _virtual_fields = {
-    '_records': SuperLocalStructuredRecordProperty('61', repeated=True)
+    '_records': orm.SuperRecordProperty('61')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('61', [Action.build_key('61', 'prepare'),
-                              Action.build_key('61', 'create'),
-                              Action.build_key('61', 'read'),
-                              Action.build_key('61', 'update'),
-                              Action.build_key('61', 'delete'),
-                              Action.build_key('61', 'search'),
-                              Action.build_key('61', 'read_records')], False, 'context.entity._original.namespace_entity._original.state != "active"'),
-      ActionPermission('61', [Action.build_key('61', 'initiate'),
-                              Action.build_key('61', 'send_mail'),
-                              Action.build_key('61', 'send_http')], False, 'True'),
-      ActionPermission('61', [Action.build_key('61', 'initiate'),
-                              Action.build_key('61', 'send_mail'),
-                              Action.build_key('61', 'send_http')], True,
-                       'context.entity._original.namespace_entity._original.state == "active" and context.user._is_taskqueue'),
-      FieldPermission('61', ['name', 'action', 'condition', 'active', 'templates', '_records'], False, False,
-                      'context.entity._original.namespace_entity._original.state != "active"')
+      orm.ActionPermission('61', [orm.Action.build_key('61', 'prepare'),
+                                  orm.Action.build_key('61', 'create'),
+                                  orm.Action.build_key('61', 'read'),
+                                  orm.Action.build_key('61', 'update'),
+                                  orm.Action.build_key('61', 'delete'),
+                                  orm.Action.build_key('61', 'search'),
+                                  orm.Action.build_key('61', 'read_records')], False, 'entity._original.namespace_entity._original.state != "active"'),
+      orm.ActionPermission('61', [orm.Action.build_key('61', 'initiate'),
+                                  orm.Action.build_key('61', 'send_mail'),
+                                  orm.Action.build_key('61', 'send_http')], False, 'True'),
+      orm.ActionPermission('61', [orm.Action.build_key('61', 'initiate'),
+                                  orm.Action.build_key('61', 'send_mail'),
+                                  orm.Action.build_key('61', 'send_http')], True,
+                           'entity._original.namespace_entity._original.state == "active" and user._is_taskqueue'),
+      orm.FieldPermission('61', ['name', 'action', 'condition', 'active', 'templates', '_records'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('61', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'prepare'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.61'}})
+            Set(cfg={'d': {'output.entity': '_notification'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'create'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'create'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'action': ndb.SuperVirtualKeyProperty(required=True, kind='56'),
-        'condition': ndb.SuperTextProperty(required=True),
-        'active': ndb.SuperBooleanProperty(),
-        'templates': ndb.SuperJsonProperty(required=True)
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
+        'condition': orm.SuperTextProperty(required=True),
+        'active': orm.SuperBooleanProperty(),
+        'templates': orm.SuperJsonProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(),
             RuleExec(),
-            notify.Set()
+            NotifySet()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.61']}),
-            Set(cfg={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': '_notification'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='61', required=True)
+        'key': orm.SuperKeyProperty(kind='61', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.61'}})
+            Set(cfg={'d': {'output.entity': '_notification'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'update'),
       arguments={
-        'key': ndb.SuperKeyProperty(required=True, kind='61'),
-        'name': ndb.SuperStringProperty(required=True),
-        'action': ndb.SuperVirtualKeyProperty(required=True, kind='56'),
-        'condition': ndb.SuperTextProperty(required=True),
-        'active': ndb.SuperBooleanProperty(),
-        'templates': ndb.SuperJsonProperty(required=True)
+        'key': orm.SuperKeyProperty(required=True, kind='61'),
+        'name': orm.SuperStringProperty(required=True),
+        'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
+        'condition': orm.SuperTextProperty(required=True),
+        'active': orm.SuperBooleanProperty(),
+        'templates': orm.SuperJsonProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            notify.Set()
+            NotifySet()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.61']}),
-            Set(cfg={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': '_notification'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'delete'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'delete'),
       arguments={
-        'key': ndb.SuperKeyProperty(required=True, kind='61')
+        'key': orm.SuperKeyProperty(required=True, kind='61')
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
@@ -256,28 +254,27 @@ class Notification(ndb.BaseExpando):
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Delete(),
-            RecordWrite(cfg={'paths': ['entities.61']}),
-            Set(cfg={'d': {'output.entity': 'entities.61'}}),
+            Set(cfg={'d': {'output.entity': '_notification'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'search'),
       arguments={
-        'domain': ndb.SuperKeyProperty(kind='6', required=True),
-        'search': ndb.SuperSearchProperty(
+        'domain': orm.SuperKeyProperty(kind='6', required=True),
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'name': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()},
-            'action': {'operators': ['==', '!='], 'type': ndb.SuperVirtualKeyProperty(kind='56')},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty()}
+            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
+            'action': {'operators': ['==', '!='], 'type': orm.SuperVirtualKeyProperty(kind='56')},
+            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
             },
           indexes=[
             {'filter': [],
@@ -299,110 +296,83 @@ class Notification(ndb.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'search_cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Prepare(),
-            RulePrepare(),
-            RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('61', 'read_records'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='61', required=True),
-        'search_cursor': ndb.SuperStringProperty()
-        },
-      _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.61',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'path': 'entities'}),
+            Set(cfg={'d': {'output.entities': 'entities',
+                           'output._cursor': '_cursor',
+                           'output._more': '_more'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'initiate'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'initiate'),
       arguments={
-        'caller_entity': ndb.SuperKeyProperty(required=True),
-        'caller_user': ndb.SuperKeyProperty(required=True, kind='0'),
-        'caller_action': ndb.SuperVirtualKeyProperty(required=True)
+        'caller_entity': orm.SuperKeyProperty(required=True),
+        'caller_user': orm.SuperKeyProperty(required=True, kind='0'),
+        'caller_action': orm.SuperVirtualKeyProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(cfg=[{'model': 'models.61', 'parent': None,
-                          'namespace': 'tmp.caller_entity.key_namespace',
-                          'path': 'entities.61'}]),
+            Set(cfg={'d': {'_caller_entity': 'input.caller_entity.entity'}}),
+            Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.Initiate(),
+            NotifyInitiate(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'send_mail'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'send_mail'),
       arguments={
-        'recipient': ndb.SuperStringProperty(repeated=True),
-        'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True),
-        'caller_entity': ndb.SuperKeyProperty(required=True)
+        'recipient': orm.SuperStringProperty(repeated=True),
+        'subject': orm.SuperTextProperty(required=True),
+        'body': orm.SuperTextProperty(required=True),
+        'caller_entity': orm.SuperKeyProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(cfg=[{'model': 'models.61', 'parent': None,
-                          'namespace': 'tmp.caller_entity.key_namespace',
-                          'path': 'entities.61'}]),
+            Set(cfg={'d': {'_caller_entity': 'input.caller_entity.entity'}}),
+            Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.MailSend(cfg={'sender': settings.NOTIFY_EMAIL})
+            NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('61', 'send_http'),
+    orm.Action(
+      key=orm.Action.build_key('61', 'send_http'),
       arguments={
-        'recipient': ndb.SuperStringProperty(required=True),
-        'subject': ndb.SuperTextProperty(required=True),
-        'body': ndb.SuperTextProperty(required=True),
-        'caller_entity': ndb.SuperKeyProperty(required=True)
+        'recipient': orm.SuperStringProperty(required=True),
+        'subject': orm.SuperTextProperty(required=True),
+        'body': orm.SuperTextProperty(required=True),
+        'caller_entity': orm.SuperKeyProperty(required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'d': {'tmp.caller_entity': 'input.caller_entity.entity'}}),
-            Prepare(cfg=[{'model': 'models.61', 'parent': None,
-                          'namespace': 'tmp.caller_entity.key_namespace',
-                          'path': 'entities.61'}]),
+            Set(cfg={'d': {'_caller_entity': 'input.caller_entity.entity'}}),
+            Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            notify.HttpSend()
+            NotifyHttpSend()
             ]
           )
         ]

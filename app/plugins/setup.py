@@ -242,8 +242,9 @@ class CronInstall(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     elapsed_time = self.cfg.get('time', 10)
+    limit = self.cfg.get('page', 50)
     time_difference = datetime.datetime.now()-datetime.timedelta(minutes=elapsed_time)
-    configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(50)
+    configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(limit=limit)
     for config in configurations:
       context.user = config.parent_entity
       SetupClass = get_system_setup(config.setup)

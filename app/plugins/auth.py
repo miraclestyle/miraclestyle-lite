@@ -23,18 +23,18 @@ def primary_contact_validator(prop, value):
 
 def new_session(model, entity):
   Session = model
-  session_ids = [session.session_id for session in entity.sessions.read()]
+  session_ids = [session.session_id for session in entity.sessions.value]
   while True:
     session_id = hashlib.md5(util.random_chars(30)).hexdigest()
     if session_id not in session_ids:
       break
   session = Session(session_id=session_id)
-  entity.sessions.read().append(session)
+  entity.sessions.value.append(session)
   return session
 
 
 def has_identity(entity, identity_id):
-  for identity in entity.identities.read():
+  for identity in entity.identities.value:
     if identity.identity == identity_id:
       return identity
   return False
@@ -105,7 +105,7 @@ class UserLoginWrite(orm.BaseModel):
       if entity._is_guest:
         entity = context.model()
         entity.emails.append(context._email)
-        entity.identities.read().append(Identity(identity=context._identity_id, email=context._email, primary=True))
+        entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=True))
         entity.state = 'active'
         session = new_session(Session, entity)
         # Right now this is the only way to record this entity.
@@ -118,7 +118,7 @@ class UserLoginWrite(orm.BaseModel):
           entity.emails.append(context._email)
         used_identity = has_identity(entity, context._identity_id)
         if not used_identity:
-          entity.identities.read().append(Identity(identity=context._identity_id, email=context._email, primary=False))
+          entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=False))
         else:
           used_identity.associated = True
           if used_identity.email != context._email:
@@ -146,7 +146,7 @@ class UserUpdateSet(orm.BaseModel):
   def run(self, context):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
-    for identity in context._user.identities.read():
+    for identity in context._user.identities.value:
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
