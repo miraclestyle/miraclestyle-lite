@@ -1347,7 +1347,7 @@ class _BaseModel(object):
       documents.append(key.urlsafe())
   
   @classmethod
-  def search_document_to_dict(document):
+  def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
     # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
     if document and isinstance(document, search.Document):
       dic = {}
