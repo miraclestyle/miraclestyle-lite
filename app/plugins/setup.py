@@ -227,7 +227,7 @@ class DomainSetup(Setup):
 register_system_setup(('setup_domain', DomainSetup))
 
 
-class Install(orm.BaseModel):
+class ConfigurationInstall(orm.BaseModel):
   
   def run(self, context):
     config = context._configuration
@@ -237,7 +237,7 @@ class Install(orm.BaseModel):
     setup.run()
 
 
-class CronInstall(orm.BaseModel):
+class ConfigurationCronInstall(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   

@@ -8,7 +8,7 @@ Created on Apr 30, 2014
 from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import setup as plugins_setup
+from app.plugins.setup import *
 
 
 class Configuration(orm.BaseExpando):
@@ -48,7 +48,7 @@ class Configuration(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            plugins_setup.Install()
+            ConfigurationInstall()
             ]
           )
         ]
@@ -63,7 +63,7 @@ class Configuration(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            plugins_setup.CronInstall(cfg={'time': settings.SETUP_ELAPSED_TIME})
+            ConfigurationCronInstall(cfg={'time': settings.SETUP_ELAPSED_TIME})
             ]
           )
         ]
