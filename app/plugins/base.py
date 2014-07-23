@@ -130,7 +130,7 @@ class Duplicate(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):

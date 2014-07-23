@@ -4,76 +4,79 @@ Created on May 12, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import hashlib
 
-from app import ndb, settings
+from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import product
+from app.plugins.product import *
 
 
-class Content(ndb.BaseModel):
+class Content(orm.BaseModel):
   
   _kind = 43
   
-  title = ndb.SuperStringProperty('1', required=True, indexed=False)
-  body = ndb.SuperTextProperty('2', required=True)
+  title = orm.SuperStringProperty('1', required=True, indexed=False)
+  body = orm.SuperTextProperty('2', required=True)
 
 
-class Variant(ndb.BaseModel):
+class Variant(orm.BaseModel):
   
   _kind = 42
   
-  name = ndb.SuperStringProperty('1', required=True, indexed=False)
-  description = ndb.SuperTextProperty('2')
-  options = ndb.SuperStringProperty('3', repeated=True, indexed=False)
-  allow_custom_value = ndb.SuperBooleanProperty('4', required=True, indexed=False, default=False)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  description = orm.SuperTextProperty('2')
+  options = orm.SuperStringProperty('3', repeated=True, indexed=False)
+  allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
 
 
-class Category(ndb.BaseModel):
+class Category(orm.BaseModel):
   
   _kind = 17
   
-  parent_record = ndb.SuperKeyProperty('1', kind='17', indexed=False)
-  name = ndb.SuperStringProperty('2', required=True)
-  complete_name = ndb.SuperTextProperty('3', required=True)
-  state = ndb.SuperStringProperty('4', required=True, default='indexable')
+  _use_record_engine = False
+  
+  parent_record = orm.SuperKeyProperty('1', kind='17', indexed=False)
+  name = orm.SuperStringProperty('2', required=True)
+  complete_name = orm.SuperTextProperty('3', required=True)
+  state = orm.SuperStringProperty('4', required=True, default='indexable')
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('17', [Action.build_key('17', 'update')], True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('17', [Action.build_key('17', 'search')], True, 'not context.user._is_guest'),
-      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
-      FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
-                      'context.user._root_admin or context.user._is_taskqueue')
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'update')], True, 'user._root_admin or user._is_taskqueue'),
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
+      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
+                          'user._root_admin or user._is_taskqueue')
       ]
     )
   
   _actions = [  # @todo Do we need read action here?
-    Action(
-      key=Action.build_key('17', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('17', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            product.CategoryUpdate(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
+            CategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('17', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('17', 'search'),
       arguments={  # @todo Add default filter to list active ones.
-        'search': ndb.SuperSearchProperty(
+        'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='17', repeated=True)},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
-            'state': {'operators': ['==', '!='], 'type': ndb.SuperStringProperty()}
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='17', repeated=True)},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
+            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
             },
           indexes=[
             {'filter': ['key']},
@@ -86,20 +89,20 @@ class Category(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
@@ -107,28 +110,29 @@ class Category(ndb.BaseModel):
     ]
 
 
-class Instance(ndb.BaseExpando):
+class Instance(orm.BaseExpando):
   
   _kind = 39
   
-  variant_signature = ndb.SuperJsonProperty('1', required=True, indexed=False)
+  _use_rule_engine = False
+  
+  variant_signature = orm.SuperJsonProperty('1', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'description': ndb.SuperTextProperty('2'),
-    'unit_price': ndb.SuperDecimalProperty('3'),
-    'availability': ndb.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-    'code': ndb.SuperStringProperty('5'),
-    'weight': ndb.SuperDecimalProperty('6'),
-    'weight_uom': ndb.SuperKeyProperty('7', kind='19'),
-    'volume': ndb.SuperDecimalProperty('8'),
-    'volume_uom': ndb.SuperKeyProperty('9', kind='19'),
-    'images': ndb.SuperLocalStructuredProperty(Image, '10', repeated=True),
-    'contents': ndb.SuperLocalStructuredProperty(Content, '11', repeated=True),
-    'low_stock_quantity': ndb.SuperDecimalProperty('12', default='0.00')
+    'description': orm.SuperTextProperty('2'),
+    'unit_price': orm.SuperDecimalProperty('3'),
+    'availability': orm.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+    'code': orm.SuperStringProperty('5'),
+    'weight': orm.SuperDecimalProperty('6'),
+    'weight_uom': orm.SuperKeyProperty('7', kind='19'),
+    'volume': orm.SuperDecimalProperty('8'),
+    'volume_uom': orm.SuperKeyProperty('9', kind='19'),
+    'images': orm.SuperLocalStructuredProperty(Image, '10', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(Content, '11', repeated=True),
+    'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
     }
-  
   
   def prepare_key(self, **kwargs):
     variant_signature = self.variant_signature
@@ -137,282 +141,257 @@ class Instance(ndb.BaseExpando):
     return product_instance_key
 
 
-class Template(ndb.BaseExpando):
+class Template(orm.BaseExpando):
   
   _kind = 38
   
-  product_category = ndb.SuperKeyProperty('1', kind='17', required=True)
-  name = ndb.SuperStringProperty('2', required=True)
-  description = ndb.SuperTextProperty('3', required=True)  # Soft limit 64kb.
-  product_uom = ndb.SuperKeyProperty('4', kind='19', required=True, indexed=False)
-  unit_price = ndb.SuperDecimalProperty('5', required=True, indexed=False)
-  availability = ndb.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
-  code = ndb.SuperStringProperty('7', required=True, indexed=False)
+  product_category = orm.SuperKeyProperty('1', kind='17', required=True)
+  name = orm.SuperStringProperty('2', required=True)
+  description = orm.SuperTextProperty('3', required=True)  # Soft limit 64kb.
+  product_uom = orm.SuperKeyProperty('4', kind='19', required=True, indexed=False)
+  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
+  code = orm.SuperStringProperty('7', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'weight': ndb.SuperDecimalProperty('8'),
-    'weight_uom': ndb.SuperKeyProperty('9', kind='19'),
-    'volume': ndb.SuperDecimalProperty('10'),
-    'volume_uom': ndb.SuperKeyProperty('11', kind='19'),
-    'images': ndb.SuperLocalStructuredProperty(Image, '12', repeated=True),
-    'contents': ndb.SuperLocalStructuredProperty(Content, '13', repeated=True),
-    'variants': ndb.SuperLocalStructuredProperty(Variant, '14', repeated=True),
-    'low_stock_quantity': ndb.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
+    'weight': orm.SuperDecimalProperty('8'),
+    'weight_uom': orm.SuperKeyProperty('9', kind='19'),
+    'volume': orm.SuperDecimalProperty('10'),
+    'volume_uom': orm.SuperKeyProperty('11', kind='19'),
+    'images': orm.SuperLocalStructuredProperty(Image, '12', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(Content, '13', repeated=True),
+    'variants': orm.SuperLocalStructuredProperty(Variant, '14', repeated=True),
+    'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
     }
   
   _virtual_fields = {
-    '_records': SuperLocalStructuredRecordProperty('38', repeated=True),
-    '_instances': ndb.SuperLocalStructuredProperty(Instance, repeated=True),
-    '_instance': ndb.SuperLocalStructuredProperty(Instance)
+    '_records': orm.SuperRecordProperty('38'),
+    '_instances': orm.SuperLocalStructuredProperty(Instance, repeated=True)  # @todo Implement Storage PRoperty here!
     }
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('38', [Action.build_key('38', 'prepare'),
-                              Action.build_key('38', 'create'),
-                              Action.build_key('38', 'read'),
-                              Action.build_key('38', 'update'),
-                              Action.build_key('38', 'upload_images'),
-                              Action.build_key('38', 'search'),
-                              Action.build_key('38', 'read_records'),
-                              Action.build_key('38', 'read_instances'),
-                              Action.build_key('38', 'duplicate'),
-                              Action.build_key('38', 'instance_prepare'),
-                              Action.build_key('38', 'instance_create'),
-                              Action.build_key('38', 'instance_read'),
-                              Action.build_key('38', 'instance_update'),
-                              Action.build_key('38', 'instance_upload_images')], False, 'context.entity.namespace_entity.state != "active"'),
-      ActionPermission('38', [Action.build_key('38', 'create'),
-                              Action.build_key('38', 'update'),
-                              Action.build_key('38', 'upload_images'),
-                              Action.build_key('38', 'duplicate'),
-                              Action.build_key('38', 'instance_create'),
-                              Action.build_key('38', 'instance_update'),
-                              Action.build_key('38', 'instance_upload_images')], False, 'context.entity.parent_entity.state != "unpublished"'),
-      ActionPermission('38', [Action.build_key('38', 'delete'),
-                              Action.build_key('38', 'process_images'),
-                              Action.build_key('38', 'process_duplicate'),
-                              Action.build_key('38', 'instance_delete'),
-                              Action.build_key('38', 'instance_process_images')], False, 'True'),
-      ActionPermission('38', [Action.build_key('38', 'read'),
-                              Action.build_key('38', 'read_instances'),
-                              Action.build_key('38', 'instance_read')], True, 'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
-      ActionPermission('38', [Action.build_key('38', 'delete'),
-                              Action.build_key('38', 'process_images'),
-                              Action.build_key('38', 'process_duplicate'),
-                              Action.build_key('38', 'instance_delete'),
-                              Action.build_key('38', 'instance_process_images')], True, 'context.user._is_taskqueue'),
-      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
-                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], False, False,
-                      'context.entity.namespace_entity.state != "active"'),
-      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
-                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], False, None,
-                      'context.entity.parent_entity.state != "unpublished"'),
-      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
-                             'weight', 'weight_uom', 'volume', 'volume_uom', 'images', 'contents', 'variants', '_instances', '_instance'], None, True,
-                      'context.entity.parent_entity.state == "published" or context.entity.parent_entity.state == "discontinued"'),
-      FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
-                             'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], None, True,
-                      'context.user._is_taskqueue or context.user._root_admin'),
-      FieldPermission('38', ['images'], True, None,
-                      'context.action.key_id_str == "process_images" and (context.user._is_taskqueue or context.user._root_admin)'),
-      FieldPermission('38', ['_instance.images'], True, None,
-                      'context.action.key_id_str == "instance_process_images" and (context.user._is_taskqueue or context.user._root_admin)')
+      orm.ActionPermission('38', [orm.Action.build_key('38', 'prepare'),
+                                  orm.Action.build_key('38', 'create'),
+                                  orm.Action.build_key('38', 'read'),
+                                  orm.Action.build_key('38', 'update'),
+                                  orm.Action.build_key('38', 'upload_images'),
+                                  orm.Action.build_key('38', 'search'),
+                                  orm.Action.build_key('38', 'duplicate')], False, 'entity.namespace_entity.state != "active"'),
+      orm.ActionPermission('38', [orm.Action.build_key('38', 'create'),
+                                  orm.Action.build_key('38', 'update'),
+                                  orm.Action.build_key('38', 'upload_images'),
+                                  orm.Action.build_key('38', 'duplicate')], False, 'entity.parent_entity.state != "unpublished"'),
+      orm.ActionPermission('38', [orm.Action.build_key('38', 'delete'),
+                                  orm.Action.build_key('38', 'process_images'),
+                                  orm.Action.build_key('38', 'process_duplicate')], False, 'True'),
+      orm.ActionPermission('38', [orm.Action.build_key('38', 'read')], True, 'entity.parent_entity.state == "published" or entity.parent_entity.state == "discontinued"'),
+      orm.ActionPermission('38', [orm.Action.build_key('38', 'delete'),
+                                  orm.Action.build_key('38', 'process_images'),
+                                  orm.Action.build_key('38', 'process_duplicate')], True, 'user._is_taskqueue'),
+      orm.FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                                 'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], False, False,
+                          'entity.namespace_entity.state != "active"'),
+      orm.FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                                 'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], False, None,
+                          'entity.parent_entity.state != "unpublished"'),
+      orm.FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                                 'weight', 'weight_uom', 'volume', 'volume_uom', 'images', 'contents', 'variants', '_instances', '_instance'], None, True,
+                          'entity.parent_entity.state == "published" or entity.parent_entity.state == "discontinued"'),
+      orm.FieldPermission('38', ['product_category', 'name', 'description', 'product_uom', 'unit_price', 'availability', 'code',
+                                 'weight', 'weight_uom', 'volume', 'volume_uom', 'low_stock_quantity', 'images', 'contents', 'variants', '_instances', '_records', '_instance'], None, True,
+                          'user._is_taskqueue or user._root_admin'),
+      orm.FieldPermission('38', ['images'], True, None,
+                          'action.key_id_str == "process_images" and (user._is_taskqueue or user._root_admin)'),
+      orm.FieldPermission('38', ['_instance.images'], True, None,
+                          'action.key_id_str == "instance_process_images" and (user._is_taskqueue or user._root_admin)')
       ]
     )
   
   _actions = [
-    Action(
-      key=Action.build_key('38', 'prepare'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'prepare'),
       arguments={
-        'parent': ndb.SuperKeyProperty(kind='35', required=True),
-        'upload_url': ndb.SuperStringProperty()
+        'parent': orm.SuperKeyProperty(kind='35', required=True),
+        'upload_url': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                          'path': 'entities.38'}]),
+            Read(cfg={'parent': 'input.parent'}),
             RulePrepare(),
             RuleExec(),
             BlobURL(cfg={'bucket': settings.PRODUCT_TEMPLATE_BUCKET}),
-            Set(cfg={'d': {'output.entity': 'entities.38',
-                           'output.upload_url': 'blob_url'}})
+            Set(cfg={'d': {'output.entity': '_template',
+                           'output.upload_url': '_blob_url'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'create'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'create'),
       arguments={
-        'product_category': ndb.SuperKeyProperty(kind='17', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'product_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'code': ndb.SuperStringProperty(required=True),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'variants': ndb.SuperLocalStructuredProperty(Variant, repeated=True),
-        'contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'parent': ndb.SuperKeyProperty(kind='35', required=True)
+        'product_category': orm.SuperKeyProperty(kind='17', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'description': orm.SuperTextProperty(required=True),
+        'product_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'unit_price': orm.SuperDecimalProperty(required=True),
+        'availability': orm.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+        'code': orm.SuperStringProperty(required=True),
+        'weight': orm.SuperDecimalProperty(required=True),
+        'weight_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'volume': orm.SuperDecimalProperty(required=True),
+        'volume_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'variants': orm.SuperLocalStructuredProperty(Variant, repeated=True),
+        'contents': orm.SuperLocalStructuredProperty(Content, repeated=True),
+        'low_stock_quantity': orm.SuperDecimalProperty(default='0.00'),
+        'parent': orm.SuperKeyProperty(kind='35', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                          'path': 'entities.38'}]),
+            Read(cfg={'parent': 'input.parent'}),
+            Set(cfg={'d': {'_template.product_category': 'input.product_category',
+                           '_template.name': 'input.name',
+                           '_template.description': 'input.description',
+                           '_template.product_uom': 'input.product_uom',
+                           '_template.unit_price': 'input.unit_price',
+                           '_template.availability': 'input.availability',
+                           '_template.code': 'input.code',
+                           '_template.weight': 'input.weight',
+                           '_template.weight_uom': 'input.weight_uom',
+                           '_template.volume': 'input.volume',
+                           '_template.volume_uom': 'input.volume_uom',
+                           '_template.variants': 'input.variants',
+                           '_template.contents': 'input.contents',
+                           '_template.low_stock_quantity': 'input.low_stock_quantity'}}),
             RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'entities.38.product_category': 'input.product_category',
-                           'entities.38.name': 'input.name',
-                           'entities.38.description': 'input.description',
-                           'entities.38.product_uom': 'input.product_uom',
-                           'entities.38.unit_price': 'input.unit_price',
-                           'entities.38.availability': 'input.availability',
-                           'entities.38.code': 'input.code',
-                           'entities.38.weight': 'input.weight',
-                           'entities.38.weight_uom': 'input.weight_uom',
-                           'entities.38.volume': 'input.volume',
-                           'entities.38.volume_uom': 'input.volume_uom',
-                           'entities.38.variants': 'input.variants',
-                           'entities.38.contents': 'input.contents',
-                           'entities.38.low_stock_quantity': 'input.low_stock_quantity'}})
+            RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.38']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': '_template'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'read'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.38'}})
+            Set(cfg={'d': {'output.entity': '_template'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'update'),
       arguments={
-        'variants': ndb.SuperLocalStructuredProperty(Variant, repeated=True),
-        'contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        'sort_images': ndb.SuperStringProperty(repeated=True),
-        'product_category': ndb.SuperKeyProperty(kind='17', required=True),
-        'name': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'product_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'code': ndb.SuperStringProperty(required=True),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'variants': orm.SuperLocalStructuredProperty(Variant, repeated=True),
+        'contents': orm.SuperLocalStructuredProperty(Content, repeated=True),
+        'sort_images': orm.SuperStringProperty(repeated=True),
+        'product_category': orm.SuperKeyProperty(kind='17', required=True),
+        'name': orm.SuperStringProperty(required=True),
+        'description': orm.SuperTextProperty(required=True),
+        'product_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'unit_price': orm.SuperDecimalProperty(required=True),
+        'availability': orm.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+        'code': orm.SuperStringProperty(required=True),
+        'weight': orm.SuperDecimalProperty(required=True),
+        'weight_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'volume': orm.SuperDecimalProperty(required=True),
+        'volume_uom': orm.SuperKeyProperty(kind='19', required=True),
+        'low_stock_quantity': orm.SuperDecimalProperty(default='0.00'),
+        'key': orm.SuperKeyProperty(kind='38', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
+            Set(cfg={'d': {'_template.product_category': 'input.product_category',
+                           '_template.name': 'input.name',
+                           '_template.description': 'input.description',
+                           '_template.product_uom': 'input.product_uom',
+                           '_template.unit_price': 'input.unit_price',
+                           '_template.availability': 'input.availability',
+                           '_template.code': 'input.code',
+                           '_template.weight': 'input.weight',
+                           '_template.weight_uom': 'input.weight_uom',
+                           '_template.volume': 'input.volume',
+                           '_template.volume_uom': 'input.volume_uom',
+                           '_template.variants': 'input.variants',
+                           '_template.contents': 'input.contents',
+                           '_template.low_stock_quantity': 'input.low_stock_quantity'}}),
             RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'entities.38.product_category': 'input.product_category',
-                           'entities.38.name': 'input.name',
-                           'entities.38.description': 'input.description',
-                           'entities.38.product_uom': 'input.product_uom',
-                           'entities.38.unit_price': 'input.unit_price',
-                           'entities.38.availability': 'input.availability',
-                           'entities.38.code': 'input.code',
-                           'entities.38.weight': 'input.weight',
-                           'entities.38.weight_uom': 'input.weight_uom',
-                           'entities.38.volume': 'input.volume',
-                           'entities.38.volume_uom': 'input.volume_uom',
-                           'entities.38.variants': 'input.variants',
-                           'entities.38.contents': 'input.contents',
-                           'entities.38.low_stock_quantity': 'input.low_stock_quantity'}}),
-            product.UpdateSet()
+            RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            product.WriteImages(),
-            RecordWrite(cfg={'paths': ['entities.38']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
+            Set(cfg={'d': {'output.entity': '_template'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'upload_images'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'upload_images'),  # @todo Do we implement image uploading into update action!?
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True),
+        'images': orm.SuperLocalStructuredImageProperty(Image, repeated=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
+            Set(cfg={'d': {'_template.images': 'input.images'}}),
             RulePrepare(),
-            RuleExec(),
-            product.UploadImagesSet()
+            RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
             Write(),
-            RecordWrite(cfg={'paths': ['entities.38']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
+            Set(cfg={'d': {'output.entity': '_template'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'process_images', 'action_model': '38'},
-                               {'key': 'entities.38.key_urlsafe'})])
+                               {'key': '_template.key_urlsafe'})])
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'process_images'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'process_images'),  # @todo Implement Image Processing here!
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
@@ -420,59 +399,50 @@ class Template(ndb.BaseExpando):
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            product.ProcessImages(),
             Write(),
-            product.WriteImages(),
-            RecordWrite(cfg={'paths': ['entities.38']}),
-            BlobUpdate(),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'delete'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'delete'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
-            RuleExec(),
-            product.TemplateReadInstances(read_all=True)
+            RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            product.TemplateDelete(),
-            product.DeleteImages(),
             Delete(),
-            RecordWrite(cfg={'paths': ['entities.38']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
+            Set(cfg={'d': {'output.entity': '_template'}}),
             CallbackNotify(),
             CallbackExec()
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'search'),
       arguments={
-        'parent': ndb.SuperKeyProperty(kind='35', required=True),  # This argument is used for access control.
-        'search': ndb.SuperSearchProperty(
+        'parent': orm.SuperKeyProperty(kind='35', required=True),  # This argument is used for access control.
+        'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'name', 'operator': 'desc'}},
           filters={
-            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='35')},
-            'product_category': {'operators': ['==', '!='], 'type': ndb.SuperKeyProperty(kind='17')}
+            'ancestor': {'operators': ['=='], 'type': orm.SuperKeyProperty(kind='35')},
+            'product_category': {'operators': ['==', '!='], 'type': orm.SuperKeyProperty(kind='17')}
             },
           indexes=[  # We'll see if we are going to allow searches by name.
             {'filter': ['ancestor'],
@@ -488,327 +458,64 @@ class Template(ndb.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(cfg=[{'model': 'models.38', 'parent': 'input.parent', 'namespace': 'namespace',
-                          'path': 'entities.38'}]),
+            Read(cfg={'parent': 'input.parent'}),
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'to': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'read_records'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'duplicate'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'search_cursor': ndb.SuperStringProperty()
+        'key': orm.SuperKeyProperty(kind='38', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
             RuleExec(),
-            RecordRead(cfg={'page': settings.RECORDS_PAGE}),
-            Set(cfg={'d': {'output.entity': 'entities.38',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'read_instances'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True),
-        'search_cursor': ndb.SuperStringProperty()
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            product.TemplateReadInstances(page_size=settings.SEARCH_PAGE),
-            Set(cfg={'d': {'output.entity': 'entities.38',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'duplicate'),
-      arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
+            Set(cfg={'d': {'output.entity': '_template'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'process_duplicate', 'action_model': '38'},
-                               {'key': 'entities.38.key_urlsafe'})])
+                               {'key': '_template.key_urlsafe'})])
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('38', 'process_duplicate'),
+    orm.Action(
+      key=orm.Action.build_key('38', 'process_duplicate'),
       arguments={
-        'key': ndb.SuperKeyProperty(kind='38', required=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True)
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             RulePrepare(),
-            RuleExec(),
-            product.TemplateReadInstances(read_all=True)
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            product.DuplicateWrite(),
-            RecordWrite(),
-            CallbackNotify(),
-            CallbackExec()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'instance_create'),
-      arguments={
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'code': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstancePrepare(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'entities.38._instance.variant_signature': 'input.variant_signature',
-                           'entities.38._instance.code': 'input.code',
-                           'entities.38._instance.description': 'input.description',
-                           'entities.38._instance.unit_price': 'input.unit_price',
-                           'entities.38._instance.availability': 'input.availability',
-                           'entities.38._instance.weight': 'input.weight',
-                           'entities.38._instance.weight_uom': 'input.weight_uom',
-                           'entities.38._instance.volume': 'input.volume',
-                           'entities.38._instance.volume_uom': 'input.volume_uom',
-                           'entities.38._instance.contents': 'input.contents',
-                           'entities.38._instance.low_stock_quantity': 'input.low_stock_quantity'}})
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'paths': ['entities.38._instance']}),
-            RecordWrite(cfg={'paths': ['entities.38._instance']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            CallbackNotify(),
-            CallbackExec()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'instance_read'),
-      arguments={
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstanceRead(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': 'entities.38'}})
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'instance_update'),
-      arguments={
-        'contents': ndb.SuperLocalStructuredProperty(Content, repeated=True),
-        'sort_images': ndb.SuperStringProperty(repeated=True),
-        'code': ndb.SuperStringProperty(required=True),
-        'description': ndb.SuperTextProperty(required=True),
-        'unit_price': ndb.SuperDecimalProperty(required=True),
-        'availability': ndb.SuperStringProperty(required=True, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
-        'weight': ndb.SuperDecimalProperty(required=True),
-        'weight_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'volume': ndb.SuperDecimalProperty(required=True),
-        'volume_uom': ndb.SuperKeyProperty(kind='19', required=True),
-        'low_stock_quantity': ndb.SuperDecimalProperty(default='0.00'),
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        #'key': ndb.SuperKeyProperty(kind='39', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstanceRead(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'entities.38._instance.code': 'input.code',
-                           'entities.38._instance.description': 'input.description',
-                           'entities.38._instance.unit_price': 'input.unit_price',
-                           'entities.38._instance.availability': 'input.availability',
-                           'entities.38._instance.weight': 'input.weight',
-                           'entities.38._instance.weight_uom': 'input.weight_uom',
-                           'entities.38._instance.volume': 'input.volume',
-                           'entities.38._instance.volume_uom': 'input.volume_uom',
-                           'entities.38._instance.contents': 'input.contents',
-                           'entities.38._instance.low_stock_quantity': 'input.low_stock_quantity'}}),
-            product.InstanceUpdateSet(),
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'paths': ['entities.38._instance']}),
-            RecordWrite(cfg={'paths': ['entities.38._instance']}),
-            product.InstanceWriteImages(),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
-            CallbackNotify(),
-            CallbackExec()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'instance_upload_images'),
-      arguments={
-        #'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True),
-        'images': ndb.SuperLocalStructuredImageProperty(Image, repeated=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstanceRead(),
-            RulePrepare(),
-            RuleExec(),
-            product.InstanceUploadImagesSet()
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'paths': ['entities.38._instance']}),
-            RecordWrite(cfg={'paths': ['entities.38._instance']}),
-            product.InstanceWriteImages(),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
-            CallbackNotify(),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'instance_process_images', 'action_model': '38'},
-                               {'parent': 'entities.38.key_urlsafe',
-                                'variant_signature': 'entities.38._instance.variant_signature'})])
-            ]
-          )
-        ]
-      ),
-     Action(
-      key=Action.build_key('38', 'instance_process_images'),
-      arguments={
-        #'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstanceRead(),
-            RulePrepare(),
             RuleExec()
             ]
           ),
-        PluginGroup(
+        orm.PluginGroup(
           transactional=True,
           plugins=[
-            product.InstanceProcessImages(),
-            Write(cfg={'paths': ['entities.38._instance']}),
-            RecordWrite(cfg={'paths': ['entities.38._instance']}),
-            product.InstanceWriteImages(),
-            BlobUpdate(),
-            CallbackNotify(),
-            CallbackExec()
-            ]
-          )
-        ]
-      ),
-    Action(
-      key=Action.build_key('38', 'instance_delete'),
-      arguments={
-        #'key': ndb.SuperKeyProperty(kind='39', required=True),
-        'variant_signature': ndb.SuperJsonProperty(required=True),
-        'parent': ndb.SuperKeyProperty(kind='38', required=True)
-        },
-      _plugin_groups=[
-        PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg=[{'source': 'input.parent', 'path': 'entities.38'}]),
-            product.InstanceRead(),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        PluginGroup(
-          transactional=True,
-          plugins=[
-            product.InstanceDeleteImages(),
-            RecordWrite(cfg={'paths': ['entities.38._instance']}),
-            Delete(cfg={'paths': ['entities.38._instance']}),
-            Set(cfg={'d': {'output.entity': 'entities.38'}}),
-            BlobUpdate(),
+            Duplicate(),  # @todo Not sure about this!!
+            Write(),  # @todo Not sure about this!!
             CallbackNotify(),
             CallbackExec()
             ]
