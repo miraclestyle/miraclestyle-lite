@@ -382,7 +382,7 @@ class _BaseModel(object):
   '''
   _state = None  # This field is used by rule engine!
   _use_record_engine = True  # All models are by default recorded!
-  _use_rule_engine = True  # All models by default respect rule engine!
+  _use_rule_engine = True  # All models by default respect rule engine! @todo This control property doen't respect Action control!!
   _use_search_engine = False  # Models can utilize google search services along with datastore search services.
   _parent = None
   
