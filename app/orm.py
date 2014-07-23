@@ -1684,8 +1684,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       if not self._property._repeated:
         property_value_copy = [property_value_copy]
       for property_value_item in property_value_copy:
-        if not isinstance(property_value_item, self._property.get_modeclass()):
-          raise PropertyError('Expected %r, got %r' % (self._property.get_modeclass(), self._property_value))
+        if not isinstance(property_value_item, self._property.get_modelclass()):
+          raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), self._property_value))
     self._property_value = property_value
     self._set_parent()
     
@@ -2129,11 +2129,11 @@ class SuperReferencePropertyManager(SuperPropertyManager):
           self._property_value = map(lambda x: x.get_result(), self._property_value)
         else:
           self._property_value = self._property_value.get_result()
-      if self._property._format_callback:
-        if isinstance(self._property_value, list):
-          self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
-        else:
-          self._property_value = self._property._format_callback(self._entity, self._property_value)
+        if self._property._format_callback:
+          if isinstance(self._property_value, list):
+            self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
+          else:
+            self._property_value = self._property._format_callback(self._entity, self._property_value)
       return self._property_value
   
   def pre_update(self):
@@ -2230,6 +2230,18 @@ class _BaseProperty(object):
   @property
   def is_structured(self):
     return False
+  
+  def initialize(self):
+    '''
+      This function is called by io def init() to prepare the field for work.
+      This is mostly because of get_modelclass lazy-loading of modelclass. 
+      
+      In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
+      classes to initilize, so they are waiting for us in _kind_map.
+      
+      Only then we will be in able to pick out the model by its kind from _kind_map registry.
+    '''
+    pass
 
 
 class _BaseStructuredProperty(_BaseProperty):
@@ -2249,7 +2261,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
     self._managerclass = kwargs.pop('managerclass', self._managerclass)
     self._autoload = kwargs.pop('autoload', self._autoload)
-    if not kwargs.pop('generic', None):
+    if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
         if set_arg is not None: # if model is not scanned yet, do not set it to none
@@ -2262,6 +2274,9 @@ class _BaseStructuredProperty(_BaseProperty):
       Function that will attempt to lazy-set model if its kind id was specified. 
       If model could not be found it will raise an error. This function is used instead of directly accessing 
       self._modelclass in our code.
+      
+      This function was mainly invented for purpose of structured and multi structured property. See its usage 
+      trough the code for reference.
     '''
     if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
@@ -2354,6 +2369,9 @@ class _BaseStructuredProperty(_BaseProperty):
   @property
   def is_structured(self):
     return True
+  
+  def initialize(self):
+    self.get_modelclass() # enforce premature loading of lazy-set model logic to prevent errors.
 
 
 class BaseProperty(_BaseProperty, Property):
@@ -2891,8 +2909,8 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._store_key = kwargs.pop('store_key', False)
     if self._callback != None and not callable(self._callback):
       raise PropertyError('"callback" must be a callable, got %s' % self._callback)
-    if self._format_callback != None and not callable(self._format_callback):
-      raise PropertyError('"format_callback" must be either None or callable, got %s' % self._format_callback)
+    if self._format_callback is None or not callable(self._format_callback):
+      raise PropertyError('"format_callback" must be provided and callable, got %s' % self._format_callback)
     super(SuperReferenceProperty, self).__init__(*args, **kwargs)
   
   def _set_value(self, entity, value):
@@ -3026,7 +3044,7 @@ class Record(BaseExpando):
   _virtual_fields = {
     '_agent': SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
                                      format_callback=lambda self, value: self._retrieve_agent_name(value)),
-    '_action': SuperReferenceProperty(callback=lambda self: self._retrieve_action())
+    '_action': SuperReferenceProperty(callback=lambda self: self._retrieve_action(), format_callback=lambda self, value: value)
     }
   
   def _retrieve_agent_name(self, value):

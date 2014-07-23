@@ -24,7 +24,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="addr in entity.addresses track by $index" ng-hide="addr._state == 'deleted">
+						<tr ng-repeat="addr in entity.addresses track by $index" ng-hide="addr._state == 'deleted'">
 							<td>
 								{{addr.name}}
 							</td>
@@ -66,7 +66,7 @@
 					</tbody>
 		</table>
 	 
-	<div ng-show="rule.action.read_records.executable && history && entity.id" class="form-control">
+	<div ng-show="rule.field._records.visible && history && entity.id" class="form-control">
 		<div ng-include="logic_template('misc/logs.html')"></div>
 	</div>	 
 	 

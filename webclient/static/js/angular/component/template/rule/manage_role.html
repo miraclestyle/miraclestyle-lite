@@ -41,7 +41,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="perm in entity.permissions track by $index" ng-hide="perm._state == 'deleted">
+						<tr ng-repeat="perm in entity.permissions track by $index" ng-hide="perm._state == 'deleted'">
 							<td>{{FRIENDLY_KIND_NAMES[perm.model]}}</td>
 							<td>
 								<span ng-show="perm.fields != null">{{perm.fields|join:', '}}</span>
@@ -60,7 +60,7 @@
 					</tbody>
 		</table>
 	 
-	<div ng-show="rule.action.read_records.executable && history && entity.id" class="form-control">
+	<div ng-show="rule.field._records.visible && history && entity.id" class="form-control">
 		<div ng-include="logic_template('misc/logs.html')"></div>
 	</div>	 
 	 

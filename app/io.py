@@ -57,12 +57,21 @@ class Engine:
   
   @classmethod
   def init(cls):
-    '''This function initializes all models, so it must be called before executing anything!'''
+    '''This function initializes all models and its properties, so it must be called before executing anything!'''
     from app.models import auth, base, notify, setup, rule, nav
     #, buyer, cron, location, marketing, nav, notify, product, rule, setup, uom
+    for model_kind, model in orm.Model._kind_map.items():
+      if hasattr(model, 'get_fields'):
+        for field_key, field in model.get_fields().items():
+          if hasattr(field, 'initialize'):
+            field.initialize()
+        
   
   @classmethod
   def get_schema(cls):
+    '''
+      Calls init and returns model structure as dict
+    '''
     cls.init()
     return orm.Model._kind_map
   
@@ -199,7 +208,7 @@ class Engine:
       except orm.TerminateAction as e:
         pass
       except Exception as e:
-        raise
+        raise e
   
   @classmethod
   def run(cls, input):

@@ -221,7 +221,7 @@ class User(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_user.state': 'input.state'}, 's': {'_user.sessions': []}}),
+            Set(cfg={'d': {'_user.state': 'input.state'}, 's': {'_user.sessions': []}}), # if we reset user sessions on every sudo we will log him out
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             ]
@@ -466,7 +466,8 @@ class Domain(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('6', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='6', required=True)
+        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'read_arguments': orm.SuperJsonProperty(),
         },
       _plugin_groups=[
         orm.PluginGroup(

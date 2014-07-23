@@ -566,30 +566,36 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	if (!$scope.history) return false;
  
     $scope.logs = [];
-    $scope.history.args.search_more = true;
+    $scope.history.args.more = true;
+    $scope.history.args.read_arguments = {
+    	'_records' : {
+    		'cursor' : null,
+    	},
+    };
     
 	$scope.commander = {'isOpen' : false, 'first' : false, 'loading' : false};
 	  
 	var loadMore = function (that)
 	{ 
-			if (!$scope.commander.loading && $scope.history.args.search_more)
+			if (!$scope.commander.loading && $scope.history.args.more)
 			{
 				$scope.commander.loading = true;
 				
-				Endpoint.post('read_records', $scope.history.kind, $scope.history.args).success(function (data) {
+				Endpoint.post('read', $scope.history.kind, $scope.history.args).success(function (data) {
 					
 					$scope.commander.first = true;
 				 
 					angular.forEach(data.entity._records, function (value) {
 					     $scope.logs.push(value);
 					});
- 
-					$scope.history.args.search_cursor = data.search_cursor;
-					$scope.history.args.search_more = data.search_more;
+ 					
+ 					$scope.history.args.read_arguments.cursor = data.cursor;
+					$scope.history.args.cursor = data.cursor;
+					$scope.history.args.more = data.more;
 					
-					if (!$scope.history.args.search_cursor)
+					if (!$scope.history.args.more)
 				    {
-				    	delete $scope.history.args.search_more;
+				    	delete $scope.history.args.more;
 				    }	
 					 
 					$scope.commander.loading = false;
