@@ -75,7 +75,7 @@ class Unit(orm.BaseExpando):
   
   _actions = [  # @todo Do we need read action here?
     orm.Action(
-      key=orm.Action.build_key('19', 'update_currency'),
+      key=orm.Action.build_key('19', 'update_currency'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
@@ -90,7 +90,7 @@ class Unit(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('19', 'update_unit'),
+      key=orm.Action.build_key('19', 'update_unit'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(

@@ -69,10 +69,10 @@ class Addresses(orm.BaseModel):
           plugins=[
             Context(),
             Read(),  # @todo We need prepare_key method in order for this to work!
-            RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
             Set(cfg={'d': {'_addresses.addresses': 'input.addresses'}}),
-            AddressesUpdateSet()
+            AddressesUpdateSet(),
+            RulePrepare(cfg={'skip_user_roles': True}),
+            RuleExec()
             ]
           ),
         orm.PluginGroup(
@@ -139,9 +139,9 @@ class Collection(orm.BaseModel):
           plugins=[
             Context(),
             Read(),  # @todo We need prepare_key method in order for this to work!
+            Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.domains': 'input.domains'}}),
             RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
-            Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.domains': 'input.domains'}})
+            RuleExec()
             ]
           ),
         orm.PluginGroup(

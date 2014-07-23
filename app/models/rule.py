@@ -67,9 +67,9 @@ class DomainRole(Role):
           plugins=[
             Context(),
             Read(),
+            DomainRoleSet(),
             RulePrepare(),
-            RuleExec(),
-            DomainRoleSet()
+            RuleExec()
             ]
           ),
         orm.PluginGroup(
@@ -114,9 +114,9 @@ class DomainRole(Role):
           plugins=[
             Context(),
             Read(),
+            DomainRoleSet(),
             RulePrepare(),
-            RuleExec(),
-            DomainRoleSet()
+            RuleExec()
             ]
           ),
         orm.PluginGroup(

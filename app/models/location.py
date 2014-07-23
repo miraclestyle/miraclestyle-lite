@@ -52,7 +52,7 @@ class Country(orm.BaseModel):
   
   _actions = [  # @todo Do we need read action here?
     orm.Action(
-      key=orm.Action.build_key('15', 'update'),
+      key=orm.Action.build_key('15', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(

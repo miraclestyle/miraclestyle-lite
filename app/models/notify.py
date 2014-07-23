@@ -175,9 +175,9 @@ class Notification(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(),
-            RuleExec(),
             NotificationSet(),
+            RulePrepare(),
+            RuleExec()
             ]
           ),
         orm.PluginGroup(
@@ -224,9 +224,9 @@ class Notification(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
+            NotificationSet(),
             RulePrepare(),
-            RuleExec(),
-            NotificationSet()
+            RuleExec()
             ]
           ),
         orm.PluginGroup(
