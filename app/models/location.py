@@ -5,14 +5,14 @@ Created on Jan 9, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import ndb, settings
+from app import orm, settings
 from app.models.base import *
 from app.plugins.base import *
-from app.plugins import location
+from app.plugins.location import *
 
 
 def get_location(location):
-  if isinstance(location, ndb.Key):
+  if isinstance(location, orm.Key):
     location = location.get()
   location_country = location.country.get()
   location_region = location.region.get()
@@ -28,7 +28,7 @@ def get_location(location):
                   telephone=location.telephone)
 
 
-class Country(ndb.BaseModel):
+class Country(orm.BaseModel):
   
   _kind = 15
   
@@ -36,44 +36,44 @@ class Country(ndb.BaseModel):
   _use_cache = True
   _use_memcache = True
   
-  code = ndb.SuperStringProperty('1', required=True, indexed=False)
-  name = ndb.SuperStringProperty('2', required=True)
-  active = ndb.SuperBooleanProperty('3', required=True, default=True)
+  code = orm.SuperStringProperty('1', required=True, indexed=False)
+  name = orm.SuperStringProperty('2', required=True)
+  active = orm.SuperBooleanProperty('3', required=True, default=True)
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('15', [Action.build_key('15', 'update')], True, 'context.user._root_admin or context.user._is_taskqueue'),
-      ActionPermission('15', [Action.build_key('15', 'search')], True, 'not context.user._is_guest'),
-      FieldPermission('15', ['code', 'name', 'active'], False, True, 'True'),
-      FieldPermission('15', ['code', 'name', 'active'], True, True,
-                      'context.user._root_admin or context.user._is_taskqueue')
+      orm.ActionPermission('15', [orm.Action.build_key('15', 'update')], True, 'user._root_admin or user._is_taskqueue'),
+      orm.ActionPermission('15', [orm.Action.build_key('15', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('15', ['code', 'name', 'active'], False, True, 'True'),
+      orm.FieldPermission('15', ['code', 'name', 'active'], True, True,
+                          'user._root_admin or user._is_taskqueue')
       ]
     )
   
   _actions = [  # @todo Do we need read action here?
-    Action(
-      key=Action.build_key('15', 'update'),
+    orm.Action(
+      key=orm.Action.build_key('15', 'update'),
       arguments={},
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            location.CountryUpdate(cfg={'file': settings.LOCATION_DATA_FILE})
+            CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE})
             ]
           )
         ]
       ),
-    Action(
-      key=Action.build_key('15', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('15', 'search'),
       arguments={
-        'search': ndb.SuperSearchProperty(
+        'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='15', repeated=True)},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])}
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='15', repeated=True)},
+            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])}
             },
           indexes=[
             {'filter': ['key']},
@@ -84,20 +84,20 @@ class Country(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': -1}),
-            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
@@ -105,40 +105,41 @@ class Country(ndb.BaseModel):
     ]
 
 
-class CountrySubdivision(ndb.BaseModel):
+class CountrySubdivision(orm.BaseModel):
   
   _kind = 16
   
+  _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   
-  parent_record = ndb.SuperKeyProperty('1', kind='16', indexed=False)
-  code = ndb.SuperStringProperty('2', required=True, indexed=False)
-  name = ndb.SuperStringProperty('3', required=True)
-  complete_name = ndb.SuperTextProperty('4', required=True)
-  type = ndb.SuperStringProperty('5', required=True, indexed=False)
-  active = ndb.SuperBooleanProperty('6', required=True, default=True)
+  parent_record = orm.SuperKeyProperty('1', kind='16', indexed=False)
+  code = orm.SuperStringProperty('2', required=True, indexed=False)
+  name = orm.SuperStringProperty('3', required=True)
+  complete_name = orm.SuperTextProperty('4', required=True)
+  type = orm.SuperStringProperty('5', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('6', required=True, default=True)
   
   _global_role = GlobalRole(
     permissions=[
-      ActionPermission('16', [Action.build_key('16', 'search')], True, 'not context.user._is_guest'),
-      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, True, 'True'),
-      FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], True, True,
-                      'context.user._root_admin or context.user._is_taskqueue')
+      orm.ActionPermission('16', [orm.Action.build_key('16', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, True, 'True'),
+      orm.FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], True, True,
+                          'user._root_admin or user._is_taskqueue')
       ]
     )
   
   _actions = [  # @todo Do we need read action here?
-    Action(
-      key=Action.build_key('16', 'search'),
+    orm.Action(
+      key=orm.Action.build_key('16', 'search'),
       arguments={
-        'search': ndb.SuperSearchProperty(
+        'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
           filters={
-            'key': {'operators': ['IN'], 'type': ndb.SuperKeyProperty(kind='16', repeated=True)},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': ndb.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
-            'active': {'operators': ['==', '!='], 'type': ndb.SuperBooleanProperty(choices=[True])},
-            'ancestor': {'operators': ['=='], 'type': ndb.SuperKeyProperty(kind='15')}
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='16', repeated=True)},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
+            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])},
+            'ancestor': {'operators': ['=='], 'type': orm.SuperKeyProperty(kind='15')}
             },
           indexes=[
             {'filter': ['key']},
@@ -155,20 +156,20 @@ class CountrySubdivision(ndb.BaseModel):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': ndb.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
-            Prepare(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities', 'skip_user_roles': True}),
-            Set(cfg={'d': {'output.entities': 'entities',
-                           'output.search_cursor': 'search_cursor',
-                           'output.search_more': 'search_more'}})
+            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
@@ -176,22 +177,22 @@ class CountrySubdivision(ndb.BaseModel):
     ]
 
 
-class Location(ndb.BaseExpando):
+class Location(orm.BaseExpando):
   
   _kind = 68
   
-  name = ndb.SuperStringProperty('1', required=True, indexed=False)
-  country = ndb.SuperStringProperty('2', required=True, indexed=False)
-  country_code = ndb.SuperStringProperty('3', required=True, indexed=False)
-  city = ndb.SuperStringProperty('4', required=True, indexed=False)
-  postal_code = ndb.SuperStringProperty('5', required=True, indexed=False)
-  street = ndb.SuperStringProperty('6', required=True, indexed=False)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  country = orm.SuperStringProperty('2', required=True, indexed=False)
+  country_code = orm.SuperStringProperty('3', required=True, indexed=False)
+  city = orm.SuperStringProperty('4', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
+  street = orm.SuperStringProperty('6', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'region': ndb.SuperStringProperty('7'),
-    'region_code': ndb.SuperStringProperty('8'),
-    'email': ndb.SuperStringProperty('9'),
-    'telephone': ndb.SuperStringProperty('10')
+    'region': orm.SuperStringProperty('7'),
+    'region_code': orm.SuperStringProperty('8'),
+    'email': orm.SuperStringProperty('9'),
+    'telephone': orm.SuperStringProperty('10')
     }

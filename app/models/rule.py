@@ -86,7 +86,8 @@ class DomainRole(Role):
     orm.Action(
       key=orm.Action.build_key('60', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='60', required=True)
+        'key': orm.SuperKeyProperty(kind='60', required=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -180,7 +181,7 @@ class DomainRole(Role):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -303,7 +304,8 @@ class DomainUser(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('8', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='8', required=True)
+        'key': orm.SuperKeyProperty(kind='8', required=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -398,7 +400,7 @@ class DomainUser(orm.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

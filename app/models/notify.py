@@ -177,7 +177,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            NotifySet(),
+            NotificationSet(),
             ]
           ),
         orm.PluginGroup(
@@ -194,7 +194,8 @@ class Notification(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('61', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='61', required=True)
+        'key': orm.SuperKeyProperty(kind='61', required=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -225,7 +226,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            NotifySet()
+            NotificationSet()
             ]
           ),
         orm.PluginGroup(
@@ -295,7 +296,7 @@ class Notification(orm.BaseExpando):
             'name': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -328,7 +329,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyInitiate(),
+            NotificationInitiate(),
             CallbackExec()
             ]
           )
@@ -350,7 +351,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
+            NotificationMailSend(cfg={'sender': settings.NOTIFY_EMAIL})
             ]
           )
         ]
@@ -371,7 +372,7 @@ class Notification(orm.BaseExpando):
             Read(cfg={'namespace': '_caller_entity.key_namespace'}),
             RulePrepare(),
             RuleExec(),
-            NotifyHttpSend()
+            NotificationHttpSend()
             ]
           )
         ]

@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 from app import orm, util
 
 
-class CurrencyUpdateWrite(orm.BaseModel):
+class UnitCurrencyUpdateWrite(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -138,7 +138,7 @@ class UnitUpdateWrite(orm.BaseModel):
       orm.put_multi(to_put)
 
 
-class RemoveCurrencies(orm.BaseModel):
+class UnitRemoveCurrencies(orm.BaseModel):
   
   def run(self, context):
     context._entities = filter(lambda x: x.key.parent().id() != 'currency', context._entities)

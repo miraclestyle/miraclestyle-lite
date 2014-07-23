@@ -188,7 +188,7 @@ class User(orm.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -467,7 +467,7 @@ class Domain(orm.BaseExpando):
       key=orm.Action.build_key('6', 'read'),
       arguments={
         'key': orm.SuperKeyProperty(kind='6', required=True),
-        'read_arguments': orm.SuperJsonProperty(),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -544,7 +544,7 @@ class Domain(orm.BaseExpando):
             'updated': {'operators': ['asc', 'desc']}
             },
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

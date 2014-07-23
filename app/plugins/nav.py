@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 from app import orm, util
 
 
-class NavBuildMenu(orm.BaseModel):
+class WidgetBuildMenu(orm.BaseModel):
   
   def run(self, context):
     domain_user_key = orm.Key('8', context.user.key_id_str, namespace=context.namespace)

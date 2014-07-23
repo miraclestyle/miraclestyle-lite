@@ -45,7 +45,6 @@ class Widget(orm.BaseExpando):
                                   orm.Action.build_key('62', 'update'),
                                   orm.Action.build_key('62', 'delete'),
                                   orm.Action.build_key('62', 'search'),
-                                  orm.Action.build_key('62', 'read_records'),
                                   orm.Action.build_key('62', 'build_menu')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('62', [orm.Action.build_key('62', 'create'),
                                   orm.Action.build_key('62', 'update'),
@@ -117,7 +116,8 @@ class Widget(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('62', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='62', required=True)
+        'key': orm.SuperKeyProperty(kind='62', required=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -229,7 +229,7 @@ class Widget(orm.BaseExpando):
             'sequence': {'operators': ['asc', 'desc']}
             }
           ),
-        'search_cursor': orm.SuperStringProperty()
+        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -259,7 +259,7 @@ class Widget(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            NavBuildMenu(),
+            WidgetBuildMenu(),
             Set(cfg={'d': {'output.menu': '_widgets', 'output.domain': 'domain'}})
             ]
           )

@@ -10,7 +10,7 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import orm, util
 
 
-class ProcessCatalogs(orm.BaseModel):
+class CronConfigProcessCatalogs(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   

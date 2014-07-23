@@ -13,7 +13,7 @@ from app import orm, util
 from app.tools.manipulator import safe_eval  # @todo Does it makes sense to integrate app/tools/manipulator.py into app/util.py?
 
 
-class NotifySet(orm.BaseModel):
+class NotificationSet(orm.BaseModel):
   
   def run(self, context):
     MailTemplate = context.models['58']
@@ -42,7 +42,7 @@ class NotifySet(orm.BaseModel):
 
 
 # @todo We have to consider http://sendgrid.com/partner/google
-class NotifyMailSend(orm.BaseModel):
+class NotificationMailSend(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -61,13 +61,13 @@ class NotifyMailSend(orm.BaseModel):
     message.send()
 
 
-class NotifyHttpSend(orm.BaseModel):
+class NotificationHttpSend(orm.BaseModel):
   
   def run(self, context):
     urlfetch.fetch(context.input.get('recipient'), json.dumps(context.input), method=urlfetch.POST)
 
 
-class NotifyInitiate(orm.BaseModel):
+class NotificationInitiate(orm.BaseModel):
   
   def run(self, context):
     caller_user_key = context.input.get('caller_user')
