@@ -200,8 +200,8 @@ class User(orm.BaseExpando):
             Search(cfg={'page': settings.SEARCH_PAGE}),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
-                           'output._cursor': '_cursor',
-                           'output._more': '_more'}})
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
@@ -555,8 +555,8 @@ class Domain(orm.BaseExpando):
             Search(cfg={'page': settings.SEARCH_PAGE}),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
-                           'output._cursor': '_cursor',
-                           'output._more': '_more'}})
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
