@@ -8,6 +8,8 @@ Created on Apr 24, 2014
 import dis
 from decimal import Decimal, ROUND_HALF_EVEN
 
+from app import util
+
 
 def prepare_attr(entity, field_path):
   fields = str(field_path).split('.')
@@ -24,23 +26,23 @@ def prepare_attr(entity, field_path):
         try:
           entity = entity[field]
         except KeyError as e:
-          return None
+          return util.Nonexistent
       elif isinstance(entity, list):
         try:
           entity = entity[int(field)]
         except IndexError as e:
-          return None
+          return util.Nonexistent
       else:
         try:
           entity = getattr(entity, field)
         except ValueError as e:
-          return None
+          return util.Nonexistent
   return (entity, last_field)
 
 
 def set_attr(entity, field_path, value):
   result = prepare_attr(entity, field_path)
-  if result == None:
+  if result == util.Nonexistent:
     return None
   entity, last_field = result
   if isinstance(entity, dict):
@@ -56,7 +58,7 @@ def set_attr(entity, field_path, value):
 
 def get_attr(entity, field_path, default_value=None):
   result = prepare_attr(entity, field_path)
-  if result == None:
+  if result == util.Nonexistent:
     return default_value
   entity, last_field = result
   if isinstance(entity, dict):
@@ -72,7 +74,7 @@ def get_attr(entity, field_path, default_value=None):
 
 def get_meta(entity, field_path):
   result = prepare_attr(entity, field_path)
-  if result == None:
+  if result == util.Nonexistent:
     return None
   entity, last_field = result
   if not isinstance(entity, dict) and not isinstance(entity, list):

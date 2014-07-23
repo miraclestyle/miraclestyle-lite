@@ -2207,9 +2207,13 @@ class _BaseProperty(object):
     return value
   
   def _property_value_format(self, value):
-    if value is None:
+    if value is util.Nonexistent:
       if self._default is not None:
         value = self._default
+      elif self._required:
+        raise PropertyError('required')
+      else:
+        return value # returns util.Nonexistent
     if self._repeated:
       out = []
       if not isinstance(value, (list, tuple)):

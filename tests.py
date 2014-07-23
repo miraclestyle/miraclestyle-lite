@@ -6,26 +6,6 @@ Created on Jul 8, 2014
 '''
 import unittest
 import random
- 
-class Base1(object):
-  pass
-
-class Base2(object):
-  pass
-
-class Base3(object):
-  pass
-
-class Final(Base1, Base2, Base3):
-  pass
-
-d = Final()
-print d
-
-class A(object):
-    def __init__(self): print "A.__init__() called"
-
-class B(object, A): pass
   
 '''
 class TestSequenceFunctions(unittest.TestCase):

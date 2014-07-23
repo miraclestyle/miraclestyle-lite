@@ -44,7 +44,9 @@ class Set(orm.BaseModel):
     for key, value in static_values.items():
       set_attr(context, key, value)
     for key, value in dynamic_values.items():
-      set_attr(context, key, get_attr(context, value))
+      set_value = get_attr(context, value, util.Nonexistent)
+      if set_value is not util.Nonexistent:
+        set_attr(context, key, set_value)
 
 
 class Read(orm.BaseModel):

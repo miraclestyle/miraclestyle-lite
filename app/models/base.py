@@ -13,7 +13,7 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import orm, memcache, settings
+from app import orm, memcache, settings, util
 
 
 class Image(orm.BaseModel):
@@ -322,9 +322,9 @@ class _BaseImageProperty(_BaseBlobProperty):
       value = [value]
     out = []
     for v in value:
-      if not isinstance(v, cgi.FieldStorage) and not self._required:  # If the prop is not required, skip it.
-        continue
-      # These will throw errors if the 'v' is not cgi.FileStorage compatible blob-key.
+      if not isinstance(v, cgi.FieldStorage) and not self._required:
+        return util.Nonexistent # if the field is not required, and its not an actual upload, immidiately return Nonexistent
+      # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
       file_info = blobstore.parse_file_info(v)
       blob_info = blobstore.parse_blob_info(v)
       meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
@@ -339,10 +339,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         new_image = self.process(new_image)
       out.append(new_image)
     if not self._repeated:
-      try:
-        out = out[0]
-      except IndexError as e:
-        out = None
+      out = out[0]
     return out
 
 

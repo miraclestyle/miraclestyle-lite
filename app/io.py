@@ -159,18 +159,12 @@ class Engine:
   def process_action_input(cls, context, input):
     input_error = {}
     for key, argument in context.action.arguments.items():
-      value_provided = key in input
-      if not value_provided and argument._default is not None:
-        # This must be here because the default value will be ignored, see line 99.
-        value_provided = True
-        value = argument._default
-      else:
-        value = input.get(key)
+      value = input.get(key, util.Nonexistent)
       if argument and hasattr(argument, 'argument_format'):
         try:
-          if not value_provided and not argument._required:
-            continue  # Skip the .format only if the value was not provided, and if the argument is not required.
           value = argument.argument_format(value)
+          if value is util.Nonexistent:
+            continue # if the formatter returns util.Nonexistent, that means we have to skip setting context.input[key] = value
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by orm.
             argument._validator(argument, value)
           context.input[key] = value
@@ -208,7 +202,7 @@ class Engine:
       except orm.TerminateAction as e:
         pass
       except Exception as e:
-        raise e
+        raise
   
   @classmethod
   def run(cls, input):
