@@ -305,8 +305,8 @@ class Notification(orm.BaseExpando):
             RulePrepare(),
             RuleExec(),
             Search(cfg={'page': settings.SEARCH_PAGE}),
-            RulePrepare(cfg={'path': 'entities'}),
-            Set(cfg={'d': {'output.entities': 'entities',
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
                            'output._cursor': '_cursor',
                            'output._more': '_more'}})
             ]

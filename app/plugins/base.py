@@ -231,7 +231,6 @@ class Search(orm.BaseModel):
       context._documents_count = result[3]
       context._total_matches = result[4]
     else:
-      entities = []
       if isinstance(result, tuple):
         cursor = result[1]
         if cursor is not None:

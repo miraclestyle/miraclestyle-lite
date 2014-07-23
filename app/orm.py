@@ -2252,12 +2252,17 @@ class _BaseStructuredProperty(_BaseProperty):
     if not kwargs.pop('generic', None):
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
-        if set_arg is not None: # if model is not scanned yet
+        if set_arg is not None: # if model is not scanned yet, do not set it to none
           args[0] = set_arg
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
  
   def get_modelclass(self, values=None):
+    '''
+      Function that will attempt to lazy-set model if its kind id was specified. 
+      If model could not be found it will raise an error. This function is used instead of directly accessing 
+      self._modelclass in our code.
+    '''
     if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
       find = Model._kind_map.get(self._modelclass)
@@ -2378,7 +2383,7 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
       argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself)) 
       will allow instancing of both 51 and 21 that is provided from the input.
       
-      This property should not be used for datastore. 
+      This property should not be used for datastore. Its specifically meant for arguments.
       Currently we do not have the code that would allow this to be saved in datastore:
       
       Entity.images
@@ -2398,9 +2403,13 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
     args = list(args)
     if isinstance(args[0], (tuple, list)):
       self._kinds = args[0]
-      args[0] = Model._kind_map.get(args[0][0]) # by default just pass the first one
+      set_model1 = Model._kind_map.get(args[0][0]) # by default just pass the first one
+      if set_model1 is not None:
+        args[0] = set_model1
     if isinstance(args[0], basestring):
-      args[0] = Model._kind_map.get(args[0])
+      set_model1 = Model._kind_map.get(args[0]) # by default just pass the first one
+      if set_model1 is not None: # do not set it if it wasnt scanned yet
+        args[0] = set_model1
     super(SuperMultiStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_modelclass(self, values=None):
