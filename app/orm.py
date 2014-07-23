@@ -811,7 +811,7 @@ class _BaseModel(object):
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
-          # @todo This is bug. None value can not be supplied on fields that are not required!
+          # @todo This is bug. None value should not be supplied on fields that are not required!
           if field_value is None:
             return
           for field_value_item in field_value:
