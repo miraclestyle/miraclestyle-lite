@@ -278,17 +278,17 @@ class User(orm.BaseExpando):
   
   @property
   def _is_taskqueue(self):
-    return memcache.temp_memory_get('_current_request_is_taskqueue')
+    return memcache.temp_get('_current_request_is_taskqueue')
   
   @property
   def _is_cron(self):
-    return memcache.temp_memory_get('_current_request_is_cron')
+    return memcache.temp_get('_current_request_is_cron')
   
   def set_taskqueue(self, is_it):
-    return memcache.temp_memory_set('_current_request_is_taskqueue', is_it)
+    return memcache.temp_set('_current_request_is_taskqueue', is_it)
   
   def set_cron(self, is_it):
-    return memcache.temp_memory_set('_current_request_is_cron', is_it)
+    return memcache.temp_set('_current_request_is_cron', is_it)
   
   def primary_email(self):
     if not self.identities.value:
@@ -311,12 +311,12 @@ class User(orm.BaseExpando):
   
   @classmethod
   def set_current_user(cls, user, session=None):
-    memcache.temp_memory_set('_current_user', user)
-    memcache.temp_memory_set('_current_user_session', session)
+    memcache.temp_set('_current_user', user)
+    memcache.temp_set('_current_user_session', session)
   
   @classmethod
   def current_user(cls):
-    current_user = memcache.temp_memory_get('_current_user')
+    current_user = memcache.temp_get('_current_user')
     if not current_user:
       current_user = cls()
     return current_user
@@ -333,7 +333,7 @@ class User(orm.BaseExpando):
   
   @classmethod
   def current_user_session(cls):
-    return memcache.temp_memory_get('_current_user_session')
+    return memcache.temp_get('_current_user_session')
   
   def session_by_id(self, session_id):
     for session in self.sessions.value:

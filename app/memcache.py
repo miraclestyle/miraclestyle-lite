@@ -11,26 +11,26 @@ from google.appengine.api import memcache
 # Local memory for the app instance. _local must be released upon request completion.
 _local = local.Local()
 
-"""
+'''
 Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
 
-"""
+'''
 
 def set(k, v, expire=0, **kwargs):
-  temp_memory_set(k, v)
+  temp_set(k, v)
   memcache.set(k, v, expire, **kwargs)
 
 def get(k, d=None, callback=None, **kwargs):
-  """'k' = identifier for cache,
+  ''''k' = identifier for cache,
   'd' = what not to expect,
   'callback' = expensive callable to execute and set its value into the memory, otherwise it will return 'd'.
   
-  """
+  '''
   force = kwargs.pop('force', None)
   setkwargs = kwargs.pop('set', {})
   # If specified force=True, it will avoid in-memory check.
   if not force:
-    tmp = temp_memory_get(k, d)
+    tmp = temp_get(k, d)
   else:
     tmp = d
   
@@ -44,38 +44,38 @@ def get(k, d=None, callback=None, **kwargs):
         set(k, v, **setkwargs)
         return v
       return d
-    temp_memory_set(k, tmp)
+    temp_set(k, tmp)
     return tmp
 
 def delete(k):
+  temp_delete(k)
   memcache.delete(k)
-  temp_memory_delete(k)
 
 def tempcached(func, k=None, d=None):
-  """Does temporary caching of the provided function.
+  '''Does temporary caching of the provided function.
   Temporary caching is the one that is done inside threads using webapp2_extras.local
   
-  """
+  '''
   if k == None:
     k = func.__name__
   
   def dec(*args, **kwargs):
-    v = temp_memory_get(k, d)
+    v = temp_get(k, d)
     if v == d:
       v = func()
-      temp_memory_set(k, v)
+      temp_set(k, v)
       return v
   
   return dec
 
 def memcached(func, k=None, d=None):
-  """Decorator
+  '''Decorator
   Usage:
   @memcached(k='heavy_processing_key')
   def heavy_processing():
   ...
   
-  """
+  '''
   if k == None:
     k = func.__name__
   
@@ -88,13 +88,13 @@ def memcached(func, k=None, d=None):
   
   return dec
 
-def temp_memory_get(k, d=None):
+def temp_get(k, d=None):
   return getattr(_local, k, d)
 
-def temp_memory_set(k, v):
+def temp_set(k, v):
   setattr(_local, k, v)
 
-def temp_memory_delete(k):
+def temp_delete(k):
   try:
     del _local[k]
   except:
