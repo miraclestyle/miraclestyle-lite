@@ -323,7 +323,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     out = []
     for v in value:
       if not isinstance(v, cgi.FieldStorage) and not self._required:
-        return util.Nonexistent # if the field is not required, and its not an actual upload, immidiately return Nonexistent
+        return util.Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
       # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
       file_info = blobstore.parse_file_info(v)
       blob_info = blobstore.parse_blob_info(v)

@@ -65,13 +65,10 @@ class Engine:
         for field_key, field in model.get_fields().items():
           if hasattr(field, 'initialize'):
             field.initialize()
-        
   
   @classmethod
   def get_schema(cls):
-    '''
-      Calls init and returns model structure as dict
-    '''
+    '''Calls init() and returns model structure as dict.'''
     cls.init()
     return orm.Model._kind_map
   
@@ -164,7 +161,7 @@ class Engine:
         try:
           value = argument.argument_format(value)
           if value is util.Nonexistent:
-            continue # if the formatter returns util.Nonexistent, that means we have to skip setting context.input[key] = value
+            continue  # If the formatter returns util.Nonexistent, that means we have to skip setting context.input[key] = value.
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by orm.
             argument._validator(argument, value)
           context.input[key] = value
