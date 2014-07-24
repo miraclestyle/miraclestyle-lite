@@ -114,7 +114,7 @@ def wsgi_config(as_tuple=False):
   JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : ROUTES, 'settings' : settings, 'webclient_settings' : webclient_settings})
   TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)
   
-  util.logger('Webapp2 started, compiling stuff')
+  util.log('Webapp2 started, compiling stuff')
   
   WSGI_CONFIG = {}
   WSGI_CONFIG.update(webclient_settings.WEBAPP2_EXTRAS)

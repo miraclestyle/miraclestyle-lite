@@ -117,6 +117,59 @@ Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
 Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
+#############################################
+########## Helper classes of orm   ##########
+#############################################
+
+def get_multi_clean(*args, **kwargs):
+  '''
+    This function will retrieve clean list of entities.
+    This is because get_multi can return None if key is not found.
+    This is mainly used for retriving data that does not need consistency of actual values.
+  '''
+  entities = get_multi(*args, **kwargs)
+  util.remove_value(entities)
+  return entities
+
+def get_async_results(*args, **kwargs):
+  '''
+    It will mutate futures list into results after its done retrieving data.
+    This is mainly for making shorthands.
+    instead of 
+    async_entities1 = get_multi_async(..)
+    entities1 = [future.get_result() for future in async_entities1]
+    async_entities2 = get_multi_async(..)
+    entities2 = [future.get_result() for future in async_entities2]
+    you write
+    entities1 = get_multi_async(..)
+    entities2 = get_multi_async(..)
+    get_async_results(entities1, entities2)
+    for entity in entities1:
+      ..
+    for entity in entities2:
+      ..
+  '''
+  if len(args) > 1:
+    for set_of_futures in args:
+      get_async_results(set_of_futures, **kwargs)
+  elif not isinstance(args[0], list):
+    raise ValueError('Futures must be a list, got %s' % args[0])
+  futures = args[0]
+  Future.wait_all([future for future in futures if isinstance(future, Future) and not future.done()]) 
+  # calling in for loop future.get_result() vs Future.wait_all() was not tested if its faster but according to sdk
+  # it appears that it will wait for every future to be completed in event loop
+  entities = []
+  for future in futures:
+    if isinstance(future, Future):
+      entities.append(future.get_result())
+    else:
+      entities.append(future)
+  if kwargs.get('remove'):
+    util.remove_value(entities) # empty out the Nones
+  del futures[:] # this empties the list
+  for entity in entities:
+    futures.append(entity) # and now we modify back the futures list
+
 
 ################################################################
 ########## Base extension classes for all ndb models! ##########
@@ -1612,8 +1665,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     order = config.get('order')
     supplied_entities = config.get('entities')
     if supplied_entities:
-      entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None])
-      entities = [entity for entity in entities if entity is not None]
+      entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1646,8 +1698,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     entities = []
     supplied_entities = config.get('entities')
     if supplied_entities:
-      entities = get_multi([entity.key for entity in supplied_entities if entity.key is not None])
-      entities = [entity for entity in entities if entity is not None]
+      entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     else:
       keys = [Key(self._property.get_modelclass().get_kind(),
@@ -1705,13 +1756,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       if self.has_future():
         property_value = []
         if isinstance(self._property_value, list):
-          if len(self._property_value):
-            for value in self._property_value:
-              if isinstance(value, Future):
-                entity = value.get_result()
-                if entity is not None:
-                  property_value.append(entity)
-            self._property_value = property_value
+          get_async_results(self._property_value)
         elif isinstance(self._property_value, Future):
           property_value = self._property_value.get_result()
           if isinstance(property_value, tuple):
@@ -1723,6 +1768,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
+      format_callback = self._property._storage_config.get('format_callback')
+      if callable(format_callback):
+        self._property_value = format_callback(self._entity, self._property_value)
       self._set_parent()
       self._read_deep(read_arguments)
       return self._property_value
@@ -2445,7 +2493,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     for key in out:
       if self._kind and key.kind() != self._kind:
         raise PropertyError('invalid_kind')
-    entities = get_multi(out, use_cache=True)
+    entities = get_multi(out)
     for i, entity in enumerate(entities):
       if entity is None:
         raise PropertyError('not_found_%s' % out[i].urlsafe())
@@ -2510,7 +2558,7 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
             if self._kind and key.kind() != self._kind:
               raise PropertyError('invalid_kind')
             out.append(key)
-          entities = get_multi(out, use_cache=True)  # @todo Added use_cache, not sure if that's ok?
+          entities = get_multi(out)
           for i, entity in enumerate(entities):
             if entity is None:
               raise PropertyError('not_found_%s' % out[i].urlsafe())
@@ -3046,7 +3094,7 @@ class ActionPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for action in self.actions:
-        if (action.urlsafe() in entity.get_actions()) and (safe_eval(self.condition, kwargs)) and (self.executable != None):
+        if (action.urlsafe() in entity.get_actions()) and (util.safe_eval(self.condition, kwargs)) and (self.executable != None):
           entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
 
 
@@ -3077,7 +3125,7 @@ class FieldPermission(Permission):
     if (self.model == entity.get_kind()):
       for field in self.fields:
         parsed_field = util.get_attr(entity, '_field_permissions.' + field)
-        if parsed_field and (safe_eval(self.condition, kwargs)):
+        if parsed_field and (util.safe_eval(self.condition, kwargs)):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)
           if (self.visible != None):

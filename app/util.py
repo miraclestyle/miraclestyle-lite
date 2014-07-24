@@ -15,6 +15,41 @@ from decimal import Decimal, ROUND_HALF_EVEN
 
 from app import settings
 
+def remove_value(values, target=None):
+  '''
+    By default it will remove None. This function will never return new list
+    it will always mutate it.
+  '''
+  delete_values = []
+  if isinstance(values, list):
+    for value in values:
+      delete = False
+      if callable(target):
+        if value == target(value):
+          delete = True
+      else:
+        if value == target:
+          delete = True
+      if delete:
+        delete_values.append(value)
+    for delete_value in delete_values:
+      values.remove(delete_value)
+  elif isinstance(values, dict):
+    for key in values:
+      delete = False
+      value = values.get(key)
+      if callable(target):
+        if value == target(value):
+          delete = True
+      else:
+        if value == target:
+          delete = True
+      if delete:
+        delete_values.append(key)
+    for delete_key in delete_values:
+      del values[delete_key]
+    
+      
 
 class Meaning(object):
   '''Class used to provide meaning for variables. E.g.:

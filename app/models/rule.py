@@ -106,7 +106,7 @@ class DomainRole(Role):
       arguments={
         'key': orm.SuperKeyProperty(kind='60', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'permissions': orm.SuperJsonProperty(required=True),
+        'permissions': orm.SuperMultiStructuredProperty(kinds=['80', '79'], required=True),
         'active': orm.SuperBooleanProperty(default=True)
         },
       _plugin_groups=[
@@ -218,7 +218,7 @@ class DomainUser(orm.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_primary_email_async(),
+    '_primary_email': orm.SuperReferenceProperty(callback=lambda self: orm.Key('0', long(self.key_id_str)).get_async(),
                                                  format_callback=lambda self, value: value._primary_email),
     '_records': orm.SuperRecordProperty('8')
     }
@@ -250,7 +250,9 @@ class DomainUser(orm.BaseExpando):
       orm.FieldPermission('8', ['roles'], False, None,
                           'entity._original.key_id_str == entity._original.namespace_entity._original.primary_contact.entity._original.key_id_str'),
       orm.FieldPermission('8', ['state'], True, None,
-                          '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")')
+                          '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")'),
+      orm.FieldPermission('8', ['state'], None, True,
+                          '(action.key_id_str == "read_domains")')
       ]
     )
   
@@ -476,6 +478,3 @@ class DomainUser(orm.BaseExpando):
         ]
       )
     ]
-  
-  def _get_primary_email_async(self):
-    return orm.Key('0', long(self.key_id_str)).get_async()

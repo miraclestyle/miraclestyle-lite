@@ -65,7 +65,7 @@ class MailTemplate(Template):
     DomainUser = kwargs['models']['DomainUser']
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
-    recievers = orm.get_multi([orm.Key('0', long(reciever.key.id())) for reciever in domain_users])
+    recievers = orm.get_multi_clean([orm.Key('0', long(reciever.key.id())) for reciever in domain_users])
     template_values = {'entity': kwargs['caller_entity']}
     data = {'action_id': 'send_mail',
             'action_model': '61',

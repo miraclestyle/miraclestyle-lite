@@ -19,26 +19,9 @@ class DomainUserError(Exception):
 class DomainRoleSet(orm.BaseModel):
   
   def run(self, context):
-    ActionPermission = context.models['79']
-    FieldPermission = context.models['80']
-    input_permissions = context.input.get('permissions')
-    permissions = []
-    for permission in input_permissions:
-      if str(permission.get('kind')) == '80':
-        permissions.append(FieldPermission(permission.get('model'),
-                                           permission.get('fields'),
-                                           permission.get('writable'),
-                                           permission.get('visible'),
-                                           permission.get('condition')))
-      elif str(permission.get('kind')) == '79':
-        permissions.append(ActionPermission(permission.get('model'),
-                                            [orm.Key(urlsafe=action_key) for action_key in permission.get('actions')],
-                                            permission.get('executable'),
-                                            permission.get('condition')))
-
     context._domainrole.name = context.input.get('name')
     context._domainrole.active = context.input.get('active')
-    context._domainrole.permissions = permissions
+    context._domainrole.permissions = context.input.get('permissions')
 
 
 class DomainUserInviteSet(orm.BaseModel):

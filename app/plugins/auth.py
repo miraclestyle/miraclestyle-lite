@@ -174,10 +174,14 @@ class UserReadDomains():
     domains = []
     domain_users = []
     if entity.domains and len(entity.domains):
-      future_domains = orm.get_multi_async(entity.domains)
-      future_domain_users = orm.get_multi_async([orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
-      domains = [domain.get_result() for domain in future_domains]
-      domain_users = [domain_user.get_result() for domain_user in future_domain_users]
+      domains = orm.get_multi_async(entity.domains)
+      domain_users = orm.get_multi_async([orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
+      # get_async_results will mutate the lists
+      if True:
+        orm.get_async_results(domains, domain_users)
+      else:
+        domains = map(lambda x: x.get_result(), domains)
+        domain_users = map(lambda x: x.get_result(), domain_users)
       rule_prepare(domains, True, False, **kwargs)
       rule_prepare(domain_users, True, False, **kwargs)
     context.output['domains'] = domains
