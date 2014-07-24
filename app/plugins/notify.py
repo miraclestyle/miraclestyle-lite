@@ -16,29 +16,11 @@ from app.util import *
 class NotificationSet(orm.BaseModel):
   
   def run(self, context):
-    MailTemplate = context.models['58']
-    HttpTemplate = context.models['63']
-    input_templates = context.input.get('templates')
-    templates = []
-    for template in input_templates:
-      template.pop('class_', None)
-      model = MailTemplate
-      if template.get('kind') == '63':
-        model = HttpTemplate
-      fields = model.get_fields()
-      for key, value in template.items():
-        if key in fields:
-          field = fields.get(key)
-          if hasattr(field, 'argument_format'):
-            template[key] = field.argument_format(value)  # Call format functions on simpleton json values.
-        else:
-          del template[key]
-      templates.append(model(**template))
     context._notification.name = context.input.get('name')
     context._notification.action = context.input.get('action')
     context._notification.condition = context.input.get('condition')
     context._notification.active = context.input.get('active')
-    context._notification.templates = templates
+    context._notification.templates = context.input.get('templates')
 
 
 # @todo We have to consider http://sendgrid.com/partner/google

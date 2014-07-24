@@ -41,8 +41,8 @@ MainApp.filter('permissionResolveActionName', function() {
                return EntityEditor.create({
 	                	 'kind' : '8',
 	                	 'entity' : {},
-	                	 'action' : 'invite',
-	                	 
+	                	 'create_action' : 'invite',
+	           
 	                	 'handle' : function (data)
 				         {
 				            this.roles = data['roles'];

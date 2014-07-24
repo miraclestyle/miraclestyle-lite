@@ -59,7 +59,7 @@ class DomainRole(Role):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'permissions': orm.SuperJsonProperty(required=True),
+        'permissions': orm.SuperMultiLocalStructuredProperty(('80', '79'), repeated=True),
         'active': orm.SuperBooleanProperty(default=True)
         },
       _plugin_groups=[
@@ -106,7 +106,7 @@ class DomainRole(Role):
       arguments={
         'key': orm.SuperKeyProperty(kind='60', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'permissions': orm.SuperMultiStructuredProperty(kinds=['80', '79'], required=True),
+        'permissions': orm.SuperMultiLocalStructuredProperty(('80', '79'), repeated=True),
         'active': orm.SuperBooleanProperty(default=True)
         },
       _plugin_groups=[
@@ -218,8 +218,11 @@ class DomainUser(orm.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    '_primary_email': orm.SuperReferenceProperty(callback=lambda self: orm.Key('0', long(self.key_id_str)).get_async(),
+    '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_user_async(),
                                                  format_callback=lambda self, value: value._primary_email),
+    '_user': orm.SuperStorageStructuredProperty('0', updateable=False, deleteable=False,
+                                                 storage='reference', autoload=False, 
+                                                 storage_config={'callback' : lambda self: self._get_user_async()}),
     '_records': orm.SuperRecordProperty('8')
     }
   
@@ -252,7 +255,7 @@ class DomainUser(orm.BaseExpando):
       orm.FieldPermission('8', ['state'], True, None,
                           '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")'),
       orm.FieldPermission('8', ['state'], None, True,
-                          '(action.key_id_str == "read_domains")')
+                          '(action.key_id_str == "read_domains") and (user.key_id_str == entity._original.key_id_str)')
       ]
     )
   
@@ -478,3 +481,6 @@ class DomainUser(orm.BaseExpando):
         ]
       )
     ]
+  
+  def _get_user_async(self):
+    return orm.Key('0', long(self.key_id_str)).get_async()

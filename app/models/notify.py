@@ -168,7 +168,7 @@ class Notification(orm.BaseExpando):
         'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': orm.SuperTextProperty(required=True),
         'active': orm.SuperBooleanProperty(),
-        'templates': orm.SuperJsonProperty(required=True)
+        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True),
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -217,7 +217,7 @@ class Notification(orm.BaseExpando):
         'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': orm.SuperTextProperty(required=True),
         'active': orm.SuperBooleanProperty(),
-        'templates': orm.SuperJsonProperty(required=True)
+        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True),
         },
       _plugin_groups=[
         orm.PluginGroup(

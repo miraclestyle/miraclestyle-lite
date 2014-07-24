@@ -65,6 +65,7 @@ class DomainUserUpdateSet(orm.BaseModel):
 class DomainUserRemoveSet(orm.BaseModel):
   
   def run(self, context):
+    context._user = context._domainuser._user.read() # this has to be avoided somehow
     context._user._use_rule_engine = False
     context._user.domains.remove(orm.Key(urlsafe=context._domainuser.key_namespace))
 

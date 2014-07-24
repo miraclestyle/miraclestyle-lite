@@ -502,8 +502,10 @@ class _BaseModel(object):
         props = self.get_fields()
         prop = props.get(name)
       if not isinstance(prop, Property):
-        #raise TypeError('Cannot set non-property %s' % name)
-        setattr(self, name, value)
+        if not hasattr(self, name) and not isinstance(self, Expando):
+          raise TypeError('Cannot set non-property %s' % name)
+        else:
+          setattr(self, name, value)
       else:
         prop._set_value(self, value)
   
@@ -706,6 +708,7 @@ class _BaseModel(object):
       if not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
+            util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
             setattr(entity, field_key, field_value)
           except TypeError as e:
             util.log('--RuleWrite: setattr error: %s' % e)
@@ -2179,7 +2182,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
  
-  def get_modelclass(self, values=None):
+  def get_modelclass(self, **kwargs):
     '''
       Function that will attempt to lazy-set model if its kind id was specified. 
       If model could not be found it will raise an error. This function is used instead of directly accessing 
@@ -2195,9 +2198,7 @@ class _BaseStructuredProperty(_BaseProperty):
         raise PropertyError('Could not locate model with kind %s' % self._modelclass)
       else:
         self._modelclass = find
-    if values is None:
-      return self._modelclass
-    return self._modelclass(**values)
+    return self._modelclass
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -2211,8 +2212,8 @@ class _BaseStructuredProperty(_BaseProperty):
       dic[o[1:]] = getattr(self, o)
     return dic
   
-  def get_model_fields(self):
-    return self.get_modelclass().get_fields()
+  def get_model_fields(self, **kwargs):
+    return self.get_modelclass(**kwargs).get_fields()
   
   def argument_format(self, value):
     return self._structured_property_format(value)
@@ -2253,21 +2254,26 @@ class _BaseStructuredProperty(_BaseProperty):
       if field:
         if hasattr(field, 'argument_format'):
           values[value_key] = field.argument_format(value)
+        else:
+          del values[value_key]
       else:
         del values[value_key]
     values['_state'] = _state  # Always keep track of _state for rule engine!
   
   def _structured_property_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     out = []
     if not self._repeated:
       value = [value]
-    fields = self.get_model_fields()
     for v in value:
-      provided_kind_id = v.get('_kind')
+      provided_kind_id = v.get('kind')
+      fields = self.get_model_fields(kind=provided_kind_id)
+      v.pop('class_', None) # never allow class_ or any read-only property to be set for that matter.
       self._structured_property_field_format(fields, v)
-      v['_kind'] = provided_kind_id
-      entity = self.get_modelclass(v)
+      modelclass = self.get_modelclass(kind=provided_kind_id)
+      entity = modelclass(**v)
       out.append(entity)
     if not self._repeated:
       try:
@@ -2300,7 +2306,7 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   pass
 
 
-class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
+class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
   
   _kinds = None
   
@@ -2338,26 +2344,28 @@ class SuperMultiStructuredProperty(_BaseStructuredProperty, StructuredProperty):
       set_model1 = Model._kind_map.get(args[0]) # by default just pass the first one
       if set_model1 is not None: # do not set it if it wasnt scanned yet
         args[0] = set_model1
-    super(SuperMultiStructuredProperty, self).__init__(*args, **kwargs)
+    super(SuperMultiLocalStructuredProperty, self).__init__(*args, **kwargs)
   
-  def get_modelclass(self, values=None):
-    if self._kinds and values:
-      if '_kind' in values:
-        _kind = values.get('_kind')
-        if _kind:
-          _kinds = []
-          for kind in self._kinds:
-            if isinstance(kind, Model):
-              _the_kind = kind.get_kind()
-            else:
-              _the_kind = kind
-            _kinds.append(_the_kind)
-          if _kind not in _kinds:
-            raise PropertyError('Expected Kind to be one of %s, got %s' % (_kind, _kinds))
-          model = Model._kind_map.get(_kind)
-          values.pop('_kind')
-          return model(**values)
-    return super(SuperMultiStructuredProperty, self).get_modelclass()
+  def get_modelclass(self, kind=None):
+    if self._kinds and kind:
+      if kind:
+        _kinds = []
+        for other in self._kinds:
+          if isinstance(other, Model):
+            _the_kind = other.get_kind()
+          else:
+            _the_kind = other
+          _kinds.append(_the_kind)
+        if kind not in _kinds:
+          raise PropertyError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
+        model = Model._kind_map.get(kind)
+        return model
+    return super(SuperMultiLocalStructuredProperty, self).get_modelclass()
+  
+  def get_meta(self):
+    out = super(SuperMultiLocalStructuredProperty, self).get_meta()
+    out['kinds'] = self._kinds
+    return out
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -2368,6 +2376,8 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     out = []
     if not self._repeated:
       value = [value]
@@ -2392,6 +2402,8 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if isinstance(value, basestring):
       return json.loads(value)
     else:
@@ -2409,6 +2421,8 @@ class SuperTextProperty(_BaseProperty, TextProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -2424,6 +2438,8 @@ class SuperStringProperty(_BaseProperty, StringProperty):
   
   def argument_format(self, value): # this would be called argument_format
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       return [unicode(v) for v in value]
     else:
@@ -2439,6 +2455,8 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       return [float(v) for v in value]
     else:
@@ -2455,6 +2473,8 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       return [long(v) for v in value]
     else:
@@ -2478,6 +2498,8 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   '''
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
@@ -2517,6 +2539,8 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
   '''
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       if not isinstance(value, (tuple, list)):
         value = [value]
@@ -2545,6 +2569,8 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
     except:
       # Failed to build from urlsafe, proceed with KeyFromPath.
       value = self._property_value_format(value)
+      if value is util.Nonexistent:
+        return value
       out = []
       assert isinstance(value, list) == True
       if self._repeated:
@@ -2572,6 +2598,8 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       return [bool(long(v)) for v in value]
     else:
@@ -2590,6 +2618,8 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     out = []
     if not self._repeated:
       value = [value]
@@ -2621,6 +2651,8 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]
     else:
@@ -2897,6 +2929,8 @@ class Action(BaseExpando):
   
   _default_indexed = False
   
+  _plugin_groups = None # this is to allow this property to be set in constructor.
+  
   @classmethod
   def build_key(cls, kind, action_id):
     return Key(kind, 'action', cls._get_kind(), action_id)
@@ -3071,7 +3105,7 @@ class ActionPermission(Permission):
   _kind = 79
   
   model = SuperStringProperty('1', required=True, indexed=False)
-  actions = SuperKeyProperty('2', kind='56', repeated=True, indexed=False)
+  actions = SuperVirtualKeyProperty('2', kind='56', repeated=True, indexed=False)
   executable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
   condition = SuperStringProperty('4', required=True, indexed=False)
   

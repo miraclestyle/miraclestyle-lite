@@ -39,7 +39,7 @@ class Role(orm.BaseExpando):
   # complete_name = orm.SuperTextProperty('2')
   name = orm.SuperStringProperty('1', required=True)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  permissions = orm.SuperPickleProperty('3', required=True, default=[], compressed=False)  # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
+  permissions = orm.SuperPickleProperty('3', required=True, default=[], compressed=False) # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
   
   _default_indexed = False
   

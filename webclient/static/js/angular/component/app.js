@@ -404,8 +404,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.add_new = config['add_new'];
              
             $scope.removeItem = function (e) {
-            	// $scope.search.entities.remove(e);
-            	e._state = 'deleted';
+            	$scope.search.entities.remove(e);
+            	//e._state = 'deleted';
             };
  
             $scope.create = function () {
