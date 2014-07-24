@@ -24,7 +24,7 @@ class Reset(handler.Angular):
       ignore = ['15', '16', '17', '18', '19']
       @orm.tasklet
       def wipe(kind):
-          util.logger(kind)
+          util.log(kind)
           @orm.tasklet
           def generator():
             model = models.get(kind)

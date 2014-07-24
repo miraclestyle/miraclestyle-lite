@@ -50,5 +50,8 @@ class CategoryUpdateWrite(orm.BaseModel):
         new_cat['name'] = last
         new_cat['complete_name'] = ' / '.join(current[:current_total+1])
         new_cat['state'] = 'indexable'
-        write_data.append(Category(**new_cat))
+        new_cat = Category(**new_cat)
+        new_cat._use_rule_engine = False
+        new_cat._use_record_engine = False
+        write_data.append(new_cat)
     orm.put_multi(write_data)

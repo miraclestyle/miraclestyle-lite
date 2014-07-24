@@ -5,7 +5,7 @@ Created on May 18, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import orm, settings
+from app import orm, settings, util
 from app.models import auth
 from app.models.base import *
 from app.plugins.base import *
@@ -68,7 +68,7 @@ class Addresses(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),  # @todo We need prepare_key method in order for this to work!
+            Read(),
             Set(cfg={'d': {'_addresses.addresses': 'input.addresses'}}),
             AddressesUpdateSet(),
             RulePrepare(cfg={'skip_user_roles': True}),
@@ -94,7 +94,7 @@ class Addresses(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),  # @todo We need prepare_key method in order for this to work!
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_addresses'}})
@@ -103,6 +103,10 @@ class Addresses(orm.BaseModel):
         ]
       )
     ]
+  
+  def prepare_key(self, input, **kwargs):
+    user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
+    return self.build_key(user_key._id_str, parent=user_key)
 
 
 class Collection(orm.BaseModel):
@@ -114,15 +118,19 @@ class Collection(orm.BaseModel):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('10'),
-    '_domains': orm.SuperReferenceProperty(autoload=False,
-                                           callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])),
+    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
+                                                   storage_config={'callback' : lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
+                                                                    # this format_callback is here because inside entities there can be always Nones
+                                                                    # it is possible that we will have to make this more convinient, because we use same functionality on many places
+                                                                   'format_callback' : lambda self, entities: orm.get_async_results(entities)
+                                                                   }),
     }
   
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('10', [orm.Action.build_key('10', 'update'),
                                   orm.Action.build_key('10', 'read')], True, 'entity._original.key_parent == user.key and not user._is_guest'),
-      orm.FieldPermission('10', ['notify', 'domains', '_records', '_domains'], True, True, 'entity._original.key_parent == user.key and not user._is_guest')
+      orm.FieldPermission('10', ['notify', 'domains', '_records', '_domains.name', '_domains.logo'], True, True, 'entity._original.key_parent == user.key and not user._is_guest')
       ]
     )
   
@@ -153,14 +161,14 @@ class Collection(orm.BaseModel):
           )
         ]
       ),
-    Action(
-      key=Action.build_key('10', 'read'),
+    orm.Action(
+      key=orm.Action.build_key('10', 'read'),
       arguments={
         'user': orm.SuperKeyProperty(kind='0', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
-        PluginGroup(
+        orm.PluginGroup(
           plugins=[
             Context(),
             Read(),  # @todo We need prepare_key method in order for this to work!
@@ -172,3 +180,7 @@ class Collection(orm.BaseModel):
         ]
       )
     ]
+  
+  def prepare_key(self, input, **kwargs):
+    user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
+    return self.build_key(user_key._id_str, parent=user_key)
