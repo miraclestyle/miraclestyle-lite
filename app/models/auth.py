@@ -51,20 +51,7 @@ class User(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': orm.SuperRecordProperty('0'),
-    # these properties are not loaded on every user entity when they are fetched from datastore
-    # they should be read individually like so:
-    # user._domains.read_async()
-    # user._domain_users.read_async()
-    # and then you have it
-    # for domain in user._domains:
-    #   ...
-    # for domain_user in user._domain_users:
-    #   ...
-    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
-                                                   storage_config={'callback' : lambda self: orm.get_multi_async([domain_key for domain_key in self.domains])}),
-    '_domain_users': orm.SuperStorageStructuredProperty('8', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
-                                                        storage_config={'callback' : lambda self: orm.get_multi_async([orm.Key('8', self.key_id_str, namespace=domain_key.urlsafe()) for domain_key in self.domains])})
+    '_records': orm.SuperRecordProperty('0')
     }
   
   _global_role = GlobalRole(
@@ -73,8 +60,9 @@ class User(orm.BaseExpando):
                            'entity._is_guest or entity._original.state == "active"'),
       orm.ActionPermission('0', [orm.Action.build_key('0', 'read'),
                                  orm.Action.build_key('0', 'update'),
-                                 orm.Action.build_key('0', 'logout')], True, 'not entity._is_guest and user.key == entity._original.key'),
-      orm.FieldPermission('0', ['created', 'updated', 'state', 'domains', '_domains', '_domain_users'], False, True,
+                                 orm.Action.build_key('0', 'logout'),
+                                 orm.Action.build_key('0', 'read_domains')], True, 'not entity._is_guest and user.key == entity._original.key'),
+      orm.FieldPermission('0', ['created', 'updated', 'state', 'domains'], False, True,
                           'not user._is_guest and user.key == entity._original.key'),
       orm.FieldPermission('0', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
                           'not user._is_guest and user.key == entity._original.key'),
@@ -85,7 +73,7 @@ class User(orm.BaseExpando):
                                  orm.Action.build_key('0', 'search'),
                                  orm.Action.build_key('0', 'sudo')], True, 'user._root_admin'),
       orm.FieldPermission('0', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                                'ip_address', '_primary_email', '_records', '_domains', '_domain_users'], None, True, 'user._root_admin'),
+                                'ip_address', '_primary_email', '_records'], None, True, 'user._root_admin'),
       orm.FieldPermission('0', ['state'], True, None, 'action.key_id_str == "sudo" and user._root_admin')
       ]
     )
@@ -257,6 +245,20 @@ class User(orm.BaseExpando):
           plugins=[
             Write(cfg={'dra': {'ip_address': '_user.ip_address'}}),
             UserLogoutOutput()
+            ]
+          )
+        ]
+      ),
+    orm.Action(  # We need this action in order to properly prepare entities for client side access control!
+      key=orm.Action.build_key('0', 'read_domains'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='0', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            UserReadDomains()
             ]
           )
         ]

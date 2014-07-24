@@ -160,6 +160,28 @@ class UserUpdateSet(orm.BaseModel):
           identity.associated = True
 
 
+class UserReadDomains():
+  
+  def run(self, context):
+    # We could go with this strategy perhaps!?
+    # entity = context.user
+    entity_key = context.input.get('key)
+    entity = entity_key.get()
+    entity.read()
+    kwargs = {'user': context.user, 'action': context.action}
+    rule_prepare(entity, True, False, **kwargs)
+    rule_exec(entity, context.action)
+    domains = []
+    domain_users = []
+    if entity.domains and len(entity.domains):
+      domains = orm.get_multi(entity.domains)
+      domain_users = orm.get_multi([orm.Key('8', entity.key_id_str, namespace=domain.key_namespace) for domain in domains])
+      rule_prepare(domains, True, False, **kwargs)
+      rule_prepare(domain_users, True, False, **kwargs)
+    context.output['domains'] = domains
+    context.output['domain_users'] = domain_users
+
+
 class DomainCreateWrite(orm.BaseModel):
   
   def run(self, context):
