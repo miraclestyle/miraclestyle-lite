@@ -13,7 +13,7 @@ from app.util import *
 
 
 # @todo We will figure out destiny of this plugin once we solve set operation issue!
-class UpdateSet(orm.BaseModel):
+class CatalogUpdateSet(orm.BaseModel):
   
   def run(self, context):
     context._catalog.name = context.input.get('name')
@@ -34,7 +34,7 @@ class UpdateSet(orm.BaseModel):
     context._catalog._images = []
 
 
-class ProcessCoverSet(orm.BaseModel):
+class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
     if len(context._catalog._images):
@@ -47,7 +47,7 @@ class ProcessCoverSet(orm.BaseModel):
       context._catalog.cover = None
 
 
-class CronPublish(orm.BaseModel):
+class CatalogCronPublish(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -70,7 +70,7 @@ class CronPublish(orm.BaseModel):
         context._callbacks.append(('callback', data))
 
 
-class CronDiscontinue(orm.BaseModel):
+class CatalogCronDiscontinue(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -94,7 +94,7 @@ class CronDiscontinue(orm.BaseModel):
       context._callbacks.append(('callback', data))
 
 
-class CronDelete(orm.BaseModel):
+class CatalogCronDelete(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -127,7 +127,7 @@ class CronDelete(orm.BaseModel):
 
 
 # @todo To be rewriten once we finish search integration with orm.
-class SearchWrite(orm.BaseModel):
+class CatalogSearchDocumentWrite(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -172,7 +172,7 @@ class SearchWrite(orm.BaseModel):
 
 
 # @todo To be rewriten once we finish search integration with orm.
-class SearchDelete(orm.BaseModel):
+class CatalogSearchDocumentDelete(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
