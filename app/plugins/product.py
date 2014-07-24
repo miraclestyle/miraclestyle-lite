@@ -7,7 +7,8 @@ Created on Apr 15, 2014
 
 import hashlib
 
-from app import orm, util, settings  # @todo settings has to GET OUT OF HERE!!!
+from app import orm, settings  # @todo settings has to GET OUT OF HERE!!!
+from app.util import *
 
 
 class CategoryUpdateWrite(orm.BaseModel):

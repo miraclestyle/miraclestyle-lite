@@ -7,7 +7,8 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from app import orm, util, settings  # @todo settings has to GET OUT OF HERE!!!
+from app import orm, settings  # @todo settings has to GET OUT OF HERE!!!
+from app.util import *
 
 
 class CountryUpdateWrite(orm.BaseModel):

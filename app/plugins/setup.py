@@ -8,8 +8,9 @@ Created on Apr 15, 2014
 import time
 import datetime
 
-from app import orm, util
+from app import orm
 from app.tools.base import callback_exec
+from app.util import *
 
 
 __SYSTEM_SETUPS = {}
@@ -34,7 +35,7 @@ class Setup():
     if not self.config.next_operation:
       return 'execute_init'
     function = 'execute_%s' % self.config.next_operation
-    util.logger('Running function %s' % function)  # @todo Probably to be removed?! - removed after testing
+    log('Running function %s' % function)  # @todo Probably to be removed?! - removed after testing
     return function
   
   def run(self):
@@ -46,7 +47,7 @@ class Setup():
         orm.transaction(runner, xg=True)
       time.sleep(1.5) # sleep between transactions
       if iterations < 1:
-        util.logger('Stopped iteration after 100')  # @todo Probably to be removed?! - removed after testing
+        log('Stopped iteration after 100')  # @todo Probably to be removed?! - removed after testing
         break
 
 

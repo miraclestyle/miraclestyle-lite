@@ -5,9 +5,9 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import orm, util
+from app import orm
 from app.tools.base import *
-from app.tools.manipulator import set_attr, get_attr
+from app.util import *
 
 
 class Context(orm.BaseModel):
@@ -44,8 +44,8 @@ class Set(orm.BaseModel):
     for key, value in static_values.items():
       set_attr(context, key, value)
     for key, value in dynamic_values.items():
-      set_value = get_attr(context, value, util.Nonexistent)
-      if set_value is not util.Nonexistent:
+      set_value = get_attr(context, value, Nonexistent)
+      if set_value is not Nonexistent:
         set_attr(context, key, set_value)
 
 

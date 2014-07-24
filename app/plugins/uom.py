@@ -8,7 +8,8 @@ Created on May 13, 2014
 from decimal import Decimal
 from xml.etree import ElementTree
 
-from app import orm, util
+from app import orm
+from app.util import *
 
 
 class UnitCurrencyUpdateWrite(orm.BaseModel):

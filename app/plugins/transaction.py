@@ -7,7 +7,8 @@ Created on Jun 2, 2014
 
 import collections
 
-from app import orm, util
+from app import orm
+from app.util import *
 
 
 class JournalFields(orm.BaseModel):

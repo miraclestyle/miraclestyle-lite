@@ -12,8 +12,8 @@ from google.appengine.api import search
 from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
 
-from app import orm, util
-from app.tools.manipulator import get_attr, get_meta, normalize
+from app import orm
+from app.util import *
 
 
 def _rule_get_global_permissions(entity):
@@ -304,7 +304,7 @@ def document_write(documents, index_name=None, documents_per_index=200):
                   index = search.Index(name=name, namespace=namespace)
                 index.put(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
               except Exception as e:
-                util.logger('INDEX FAILED! ERROR: %s' % e)
+                log('INDEX FAILED! ERROR: %s' % e)
                 pass
 
 
@@ -326,7 +326,7 @@ def document_delete(documents, index_name=None, documents_per_index=200):
                   index = search.Index(name=name, namespace=namespace)
                 index.delete(documents_partition)  # Batching puts is more efficient than adding documents one at a time.
               except Exception as e:
-                util.logger('INDEX FAILED! ERROR: %s' % e)
+                log('INDEX FAILED! ERROR: %s' % e)
                 pass
 
 

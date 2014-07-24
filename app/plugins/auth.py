@@ -7,9 +7,10 @@ Created on Apr 15, 2014
 
 import hashlib
 
-from app import orm, util
+from app import orm
 from app.tools import oauth2
 from app.tools.base import *
+from app.util import *
 
 
 def primary_contact_validator(prop, value):
@@ -25,7 +26,7 @@ def new_session(model, entity):
   Session = model
   session_ids = [session.session_id for session in entity.sessions.value]
   while True:
-    session_id = hashlib.md5(util.random_chars(30)).hexdigest()
+    session_id = hashlib.md5(random_chars(30)).hexdigest()
     if session_id not in session_ids:
       break
   session = Session(session_id=session_id)

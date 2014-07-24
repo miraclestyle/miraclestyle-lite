@@ -7,9 +7,9 @@ Created on Apr 15, 2014
 
 import datetime
 
-from app import orm, util
+from app import orm
 from app.tools.base import *
-from app.tools.manipulator import set_attr, get_attr, sort_by_list
+from app.util import *
 
 
 # @todo We will figure out destiny of this plugin once we solve set operation issue!

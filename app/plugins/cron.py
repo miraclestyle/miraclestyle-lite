@@ -7,7 +7,8 @@ Created on May 29, 2014
 
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import orm, util
+from app import orm
+from app.util import *
 
 
 class CronConfigProcessCatalogs(orm.BaseModel):

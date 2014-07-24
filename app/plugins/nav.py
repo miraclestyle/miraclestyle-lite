@@ -5,7 +5,8 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import orm, util
+from app import orm
+from app.util import *
 
 
 class WidgetBuildMenu(orm.BaseModel):

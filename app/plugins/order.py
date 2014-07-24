@@ -10,7 +10,6 @@ import re
  
 from app import ndb
 from app.models import transaction, rule, uom, location, log
-from app.tools.manipulator import safe_eval
  
 class PluginValidationError(Exception):
   pass

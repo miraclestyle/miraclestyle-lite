@@ -7,11 +7,9 @@ Created on Jul 9, 2013
 
 import decimal
 import datetime
-import importlib
 import json
 import copy
 import collections
-import dis
 import string
 
 from google.appengine.datastore.datastore_query import Cursor
@@ -49,103 +47,6 @@ class TerminateAction(Exception):
 
 class PropertyError(Exception):
   pass
-
-
-############################################################
-########## System wide data processing functions! ##########
-############################################################
-
-
-def make_complete_name(entity, name_property, parent_property=None, separator=None):
-  '''Returns a string build by joining individual string values,
-  extracted from the same property traced in a chain of interrelated entities.
-  
-  '''
-  if separator is None:
-    separator = unicode(' / ')
-  path = entity
-  names = []
-  while True:
-    parent = None
-    if parent_property is None:
-      parent_key = path.key.parent()
-      parent = parent_key.get()
-    else:
-      parent_key = getattr(path, parent_property)
-      if parent_key:
-        parent = parent_key.get()
-    if not parent:
-      names.append(getattr(path, name_property))
-      break
-    else:
-      names.append(getattr(path, name_property))
-      path = parent
-  names.reverse()
-  return separator.join(names)
-
-
-def factory(complete_path):
-  '''Retrieves model by its module path,
-  (e.g. model = factory('app.models.base.Record'), where 'model' will be Record class).
-  
-  '''
-  path_elements = complete_path.split('.')
-  module_path = '.'.join(path_elements[:-1])
-  model_name = path_elements[-1]
-  try:
-    module = importlib.import_module(module_path)
-    model = getattr(module, model_name)
-  except Exception as e:
-    util.logger('Failed to import %s. Error: %s.' % (complete_path, e), 'exception')
-    return None
-  return model
-
-
-_CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
-          'BUILD_MAP', 'BUILD_TUPLE', 'LOAD_CONST', 'RETURN_VALUE',
-          'STORE_SUBSCR', 'UNARY_POSITIVE', 'UNARY_NEGATIVE', 'UNARY_NOT',
-          'UNARY_INVERT', 'BINARY_POWER', 'BINARY_MULTIPLY', 'BINARY_DIVIDE',
-          'BINARY_FLOOR_DIVIDE', 'BINARY_TRUE_DIVIDE', 'BINARY_MODULO',
-          'BINARY_ADD', 'BINARY_SUBTRACT', 'BINARY_LSHIFT', 'BINARY_RSHIFT',
-          'BINARY_AND', 'BINARY_XOR', 'BINARY_OR', 'STORE_MAP', 'LOAD_NAME',
-          'COMPARE_OP', 'LOAD_ATTR', 'STORE_NAME', 'GET_ITER',
-          'FOR_ITER', 'LIST_APPEND', 'JUMP_ABSOLUTE', 'DELETE_NAME',
-          'JUMP_IF_TRUE', 'JUMP_IF_FALSE', 'JUMP_IF_FALSE_OR_POP',
-          'JUMP_IF_TRUE_OR_POP', 'POP_JUMP_IF_FALSE', 'POP_JUMP_IF_TRUE',
-          'BINARY_SUBSCR', 'JUMP_FORWARD']
-
-
-_ALLOWED_CODES = set(dis.opmap[x] for x in _CODES if x in dis.opmap)
-
-
-def _compile_source(source):
-  comp = compile(source, '', 'eval')
-  codes = []
-  co_code = comp.co_code
-  i = 0
-  while i < len(co_code):
-    code = ord(co_code[i])
-    codes.append(code)
-    if code >= dis.HAVE_ARGUMENT:
-      i += 3
-    else:
-      i += 1
-  for code in codes:
-    if code not in _ALLOWED_CODES:
-      raise ValueError('opcode %s not allowed' % dis.opname[code])
-  return comp
-
-
-def safe_eval(source, data=None):
-  if '__subclasses__' in source:
-    raise ValueError('__subclasses__ not allowed')
-  comp = _compile_source(source)
-  try:
-    return eval(comp, {'__builtins__': {'True': True, 'False': False, 'str': str,
-                                        'globals': locals, 'locals': locals, 'bool': bool,
-                                        'dict': dict, 'round': round, 'Decimal': decimal.Decimal}}, data)
-  except Exception as e:
-    raise Exception('Failed to process code "%s" error: %s' % ((source, data), e))
 
 
 #############################################
@@ -469,50 +370,6 @@ class _BaseModel(object):
     dic.update(cls.get_fields())
     return dic
   
-  @classmethod
-  def prepare_field(cls, entity, field_path):
-    fields = str(field_path).split('.')
-    last_field = fields[-1]
-    drill = fields[:-1]
-    i = -1
-    while not last_field:
-      i = i - 1
-      last_field = fields[i]
-      drill = fields[:i]
-    for field in drill:
-      if field:
-        if isinstance(entity, dict):
-          try:
-            entity = entity[field]
-          except KeyError as e:
-            return None
-        elif isinstance(entity, list):
-          try:
-            entity = entity[int(field)]
-          except IndexError as e:
-            return None
-        else:
-          try:
-            entity = getattr(entity, field)
-          except ValueError as e:
-            return None
-    return (entity, last_field)
-  
-  def get_field_value(self, field_path, default_value=None):
-    result = self.prepare_field(self, field_path)
-    if result == None:
-      return default_value
-    entity, last_field = result
-    if isinstance(entity, dict):
-      return entity.get(last_field, default_value)
-    elif isinstance(entity, list):
-      try:
-        return entity[int(last_field)]
-      except:
-        return default_value
-    else:
-      return getattr(entity, last_field, default_value)
-  
   def _make_async_calls(self):
     '''This function is reserved only for SuperReferenceProperty, because it will call its .read_async() method while
     entity is being loaded by from_pb or _post_get_hook.
@@ -655,7 +512,7 @@ class _BaseModel(object):
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
-          #util.logger('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
+          #util.log('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
   
@@ -792,13 +649,13 @@ class _BaseModel(object):
       return
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      # util.logger('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
+      # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
       if not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
             setattr(entity, field_key, field_value)
           except TypeError as e:
-            util.logger('--RuleWrite: setattr error: %s' % e)
+            util.log('--RuleWrite: setattr error: %s' % e)
           except ComputedPropertyError:
             pass
       else:
@@ -1406,7 +1263,7 @@ class _BaseModel(object):
         value = getattr(self, name, None)
         dic[name] = value
     except Exception as e:
-      util.logger(e, 'exception')
+      util.log(e, 'exception')
     return dic
 
 
@@ -2213,7 +2070,7 @@ class _BaseProperty(object):
       elif self._required:
         raise PropertyError('required')
       else:
-        return value # returns util.Nonexistent
+        return value  # Returns util.Nonexistent
     if self._repeated:
       out = []
       if not isinstance(value, (list, tuple)):
@@ -2330,7 +2187,7 @@ class _BaseStructuredProperty(_BaseProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      #util.logger('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
+      #util.log('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
       manager_class = SuperStructuredPropertyManager
       if self._managerclass:
         manager_class = self._managerclass
@@ -2875,7 +2732,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     manager_name = '%s_manager' % self._name
     if manager_name in entity._values:
       return entity._values[manager_name]
-    #util.logger('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
+    #util.log('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
     manager_class = SuperStructuredPropertyManager
     if self._managerclass:
       manager_class = self._managerclass
@@ -2940,7 +2797,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      #util.logger('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
+      #util.log('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
       manager = SuperReferencePropertyManager(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     if internal:  # If internal is true, always retrieve manager.
@@ -3215,7 +3072,7 @@ class FieldPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for field in self.fields:
-        parsed_field = entity.get_field_value('_field_permissions.' + field)
+        parsed_field = util.get_attr(entity, '_field_permissions.' + field)
         if parsed_field and (safe_eval(self.condition, kwargs)):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)

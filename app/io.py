@@ -121,7 +121,7 @@ class Engine:
             if blob in delete_blobs:
               delete_blobs.remove(blob)
         if delete_blobs:
-          util.logger('DELETED %s BLOBS.' % len(delete_blobs))
+          util.log('DELETED %s BLOBS.' % len(delete_blobs))
           blobstore.delete(delete_blobs)
   
   @classmethod
@@ -174,17 +174,17 @@ class Engine:
           if 'non_property_error' not in input_error:
             input_error['non_property_error'] = []
           input_error['non_property_error'].append(key)  # Or perhaps, 'non_specific_error', or something simmilar.
-          util.logger(e, 'exception')
+          util.log(e, 'exception')
     if len(input_error):
       raise InputError(input_error)
   
   @classmethod
   def execute_action(cls, context, input):
-    util.logger('Execute action: %s.%s' % (context.model.__name__, context))
-    util.logger('Arguments: %s' % (context.input))
+    util.log('Execute action: %s.%s' % (context.model.__name__, context))
+    util.log('Arguments: %s' % (context.input))
     def execute_plugins(plugins):
       for plugin in plugins:
-        util.logger('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
+        util.log('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
     if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
       try:
@@ -203,7 +203,7 @@ class Engine:
   
   @classmethod
   def run(cls, input):
-    util.logger('Payload: %s' % input)
+    util.log('Payload: %s' % input)
     context = Context()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
