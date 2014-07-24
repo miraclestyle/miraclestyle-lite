@@ -165,7 +165,7 @@ class UserReadDomains():
   def run(self, context):
     # We could go with this strategy perhaps!?
     # entity = context.user
-    entity_key = context.input.get('key)
+    entity_key = context.input.get('key')
     entity = entity_key.get()
     entity.read()
     kwargs = {'user': context.user, 'action': context.action}
@@ -174,8 +174,10 @@ class UserReadDomains():
     domains = []
     domain_users = []
     if entity.domains and len(entity.domains):
-      domains = orm.get_multi(entity.domains)
-      domain_users = orm.get_multi([orm.Key('8', entity.key_id_str, namespace=domain.key_namespace) for domain in domains])
+      future_domains = orm.get_multi_async(entity.domains)
+      future_domain_users = orm.get_multi_async([orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
+      domains = [domain.get_result() for domain in future_domains]
+      domain_users = [domain_user.get_result() for domain_user in future_domain_users]
       rule_prepare(domains, True, False, **kwargs)
       rule_prepare(domain_users, True, False, **kwargs)
     context.output['domains'] = domains
