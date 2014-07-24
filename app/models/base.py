@@ -200,10 +200,10 @@ class _BaseBlobProperty(object):
   @classmethod
   def get_blobs(cls):
     # This function acts as a getter from in-memory storage.
-    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is None:
-      memcache.temp_memory_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
-    blobs = memcache.temp_memory_get(settings.BLOBKEYMANAGER_KEY)
+      memcache.temp_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
+    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY)
     return blobs
   
   @classmethod

@@ -75,6 +75,18 @@ def _get_parent(self):
 def _get_urlsafe(self):
   return self.urlsafe()
 
+def _get_root(self):
+  pairs = self.pairs()
+  return Key(pairs[0][0], pairs[0][1])
+
+def _get_search_index(self):
+  pairs = self.pairs()
+  return '%s_search_document_write' % Key(pairs[0][0], pairs[0][1]).urlsafe()
+
+def _get_search_unindex(self):
+  pairs = self.pairs()
+  return '%s_search_document_delete' % Key(pairs[0][0], pairs[0][1]).urlsafe()
+
 def _get_entity(self):
   return self.get()
 
@@ -98,6 +110,9 @@ Key._namespace = property(_get_namespace)
 Key._kind = property(_get_kind)
 Key._parent = property(_get_parent)
 Key._urlsafe = property(_get_urlsafe)
+Key._root = property(_get_root)
+Key._search_index = property(_get_search_index)
+Key._search_unindex = property(_get_search_unindex)
 Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
 Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
@@ -299,7 +314,7 @@ class _BaseModel(object):
     self._search_documents_delete = []
     for key in self.get_fields():
       self.add_output(key)
-      
+  
   def __repr__(self):
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
@@ -584,6 +599,13 @@ class _BaseModel(object):
     if self.key is None:
       return None
     return self.key.urlsafe()
+  
+  @property
+  def key_root(self):
+    if self.key is None:
+      return None
+    pairs = self.key.pairs()
+    return Key(pairs[0][0], pairs[0][1])
   
   @property
   def namespace_entity(self):
@@ -1062,25 +1084,25 @@ class _BaseModel(object):
       record_arguments = {}
     self._record_arguments = record_arguments
     self.put()
-    write_documents = self.get_search_documents_to_index(self.key)
-    delete_documents = self.get_search_documents_to_unindex(self.key)
+    write_documents = memcache.temp_get(self.key._search_index, [])
+    delete_documents = memcache.temp_get(self.key._search_unindex, [])
     index = search.Index(name=self._root.get_kind(), namespace=self._root.key.namespace())
     if len(write_documents):
-      index.put(write_documents)  # @todo Do we have to reset temp_memory here?
-      self.get_search_documents_to_index(self.key, reset=True)
+      index.put(write_documents)
+      memcache.temp_delete(self.key._search_index)
     if len(delete_documents):
-      index.delete(delete_documents)  # @todo Do we have to reset temp_memory here? # ye we have to, reset keyword implemented in getters, 
-      # @todo however it is possible we will use separate function for them, not the getter maybe delete_search_ or whatever
-      self.get_search_documents_to_unindex(self.key, reset=True)
+      index.delete(delete_documents)
+      memcache.temp_delete(self.key._search_unindex)
   
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
-      delete_documents = self.get_search_documents_to_unindex(self.key)
+      delete_documents = memcache.temp_get(self.key._search_unindex, [])
       index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
       if len(delete_documents):
-        index.delete(delete_documents)  # @todo Do we have to reset temp_memory here?
+        index.delete(delete_documents)
+        memcache.temp_delete(self.key._search_unindex)
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1172,36 +1194,18 @@ class _BaseModel(object):
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
-  @classmethod
-  def get_search_documents_to_index(cls, key, reset=False):
-    k = '%s_search_document_write' % key.urlsafe()
-    if reset:
-      return memcache.temp_memory_set(k, [])
-    out = memcache.temp_memory_get(k)
-    if not isinstance(out, list):
-      memcache.temp_memory_set(k, [])
-    return memcache.temp_memory_get(k)
-  
-  @classmethod
-  def get_search_documents_to_unindex(cls, key, reset=False):
-    k = '%s_search_document_delete' % key.urlsafe()
-    if reset:
-      return memcache.temp_memory_set(k, [])
-    out = memcache.temp_memory_get(k)
-    if not isinstance(out, list):
-      memcache.temp_memory_set(k, [])
-    return memcache.temp_memory_get(k)
-  
   def index_search_document(self):
     if self._use_search_engine:
-      documents = self.get_search_documents_to_index(self.key)
+      documents = memcache.temp_get(self.key._search_index, [])
       documents.append(self.get_search_document())
+      memcache.temp_set(self.key._search_index, documents)
   
   @classmethod
   def unindex_search_document(cls, key):
     if cls._use_search_engine:
-      documents = cls.get_search_documents_to_unindex(key)
+      documents = memcache.temp_get(key._search_unindex, [])
       documents.append(key.urlsafe())
+      memcache.temp_set(key._search_unindex, documents)
   
   @classmethod
   def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
