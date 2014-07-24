@@ -77,7 +77,7 @@ class Read(orm.BaseModel):
       entity = model_key.get()
       if entity is None:
         entity = model()
-        entity.set_key(model_key)
+        entity.key = model_key
       else:
         entity.read(read_arguments)
     else:

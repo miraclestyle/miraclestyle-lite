@@ -174,14 +174,10 @@ class UserReadDomains():
     domains = []
     domain_users = []
     if entity.domains and len(entity.domains):
-      domains = orm.get_multi_async(entity.domains)
-      domain_users = orm.get_multi_async([orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
-      # get_async_results will mutate the lists
-      if True:
-        orm.get_async_results(domains, domain_users)
-      else:
-        domains = map(lambda x: x.get_result(), domains)
-        domain_users = map(lambda x: x.get_result(), domain_users)
+      # fastest way is this one
+      # for every argument, there must be a set of keys that are lists e.g. iterables
+      domains, domain_users = orm.get_multi_combined_clean(entity.domains, [orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
+      # merge all keys and slice them when they arrive
       rule_prepare(domains, True, False, **kwargs)
       rule_prepare(domain_users, True, False, **kwargs)
     context.output['domains'] = domains

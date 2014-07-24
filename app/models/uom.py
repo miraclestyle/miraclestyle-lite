@@ -134,7 +134,7 @@ class Unit(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': -1}),
+            Search(cfg={'page': 1000}),
             UnitRemoveCurrencies(),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',

@@ -421,8 +421,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             
             $scope.remove = function (entity) {
 				service.remove(entity, function () {
-					  	//$scope.search.entities.remove(entity);
-					  	entity._state = 'deleted';
+					    $scope.search.entities.remove(entity);
   					 
 				}, $scope);
             };
@@ -502,9 +501,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	
             	AppUser.remove(app._domain_user, function (data) {
             		if (data['entity'])
-            		{
-            			  app._state = 'deleted';
-            			 //entities.remove(app);
+            		{ 
+            			  entities.remove(app);
             		}
             	});
             	

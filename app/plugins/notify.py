@@ -12,7 +12,7 @@ from google.appengine.api import mail, urlfetch
 from app import orm
 from app.util import *
 
-
+# @todo decomission
 class NotificationSet(orm.BaseModel):
   
   def run(self, context):
@@ -63,7 +63,7 @@ class NotificationInitiate(orm.BaseModel):
         values = {'entity': context._caller_entity, 'user': context._caller_user}
         if safe_eval(notification.condition, values):
           for template in notification.templates:
-            callbacks = template.run({'caller_entity': context._caller_entity,
+            callbacks = template.run(**{'caller_entity': context._caller_entity,
                                       'caller_user': context._caller_user,
                                       'models': context.models})
             context._callbacks.extend(callbacks)

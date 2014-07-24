@@ -31,10 +31,9 @@ function calculate_grider(all_canvas, max_w, min_w, margin){
       break;
     }
   }
-  return values
+  return values;
 };
 
-KINDS._friendlyActionName = {};
 KINDS.friendlyActionName = function(kind, action_key)
 {
  
@@ -56,7 +55,7 @@ KINDS.friendlyActionName = function(kind, action_key)
 
 if (!'console' in window)
 {
-	window.console = {'logo' : $.noop};
+	window.console = {'log' : $.noop};
 }
 else
 {
@@ -66,7 +65,6 @@ else
 	}
 }
 
-//KINDS._get = {};
 KINDS.get = function (kind_id)
 {
   

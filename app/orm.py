@@ -121,6 +121,35 @@ Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 ########## Helper classes of orm   ##########
 #############################################
 
+def get_multi_combined(*args, **kwargs):
+  async = kwargs.pop('async', None)
+  combinations = []
+  keys = []
+  for arg in args:
+    combinations.append(len(arg))
+    keys.extend(arg)
+  if not async:
+    entities = get_multi(keys, **kwargs)
+  else:
+    entities = get_multi(keys, **kwargs)
+  separations = []
+  start = 0
+  for combination in combinations:
+    separations.append(entities[start:combination+start])
+    start += combination
+  return separations
+
+def get_multi_async_combined(*args, **kwargs):
+  kwargs['async'] = True
+  return get_multi_combined(*args, **kwargs)
+    
+  
+def get_multi_combined_clean(*args, **kwargs):
+  separations = get_multi_combined(*args, **kwargs)
+  for separation in separations:
+    util.remove_value(separation)
+  return separations  
+
 def get_multi_clean(*args, **kwargs):
   '''
     This function will retrieve clean list of entities.
@@ -178,7 +207,7 @@ def get_async_results(*args, **kwargs):
 
 class _BaseModel(object):
   '''This is base class for all model types in the application.
-  Every ndb model will always evaluate True on isinstance(entity, _BaseModel).
+  Every ndb model will always evaluate True on isinstance(entity, Model).
 
   the following attribute names are reserved by the Model class in our ORM + ndb api.
   
@@ -359,6 +388,7 @@ class _BaseModel(object):
     _deepcopied = '_deepcopy' in kwargs
     if _deepcopied:
       kwargs.pop('_deepcopy')
+    self._state = kwargs.pop('_state', None)
     super(_BaseModel, self).__init__(*args, **kwargs)
     if not _deepcopied:
       self.make_original()
@@ -517,7 +547,7 @@ class _BaseModel(object):
         props = self.get_fields()
         prop = props.get(name)
       if not isinstance(prop, Property):
-        if not hasattr(self, name) and not isinstance(self, Expando):
+        if not isinstance(self, Expando):
           raise TypeError('Cannot set non-property %s' % name)
         else:
           setattr(self, name, value)
@@ -2933,7 +2963,9 @@ class Action(BaseExpando):
   
   _default_indexed = False
   
-  _plugin_groups = None # this is to allow this property to be set in constructor.
+  def __init__(self, *args, **kwargs):
+    self._plugin_groups = kwargs.pop('_plugin_groups', None)
+    super(Action, self).__init__(*args, **kwargs)
   
   @classmethod
   def build_key(cls, kind, action_id):

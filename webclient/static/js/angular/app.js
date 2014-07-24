@@ -1088,8 +1088,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	},
     	'removeFilter' : function(filter)
     	{
-    		filter._state = 'deleted';
-    		//this.send.filters.remove(filter);
+    		this.send.filters.remove(filter);
     	},
     	'makeComposites' : function ()
     	{

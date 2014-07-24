@@ -62,7 +62,7 @@ class MailTemplate(Template):
   
   def run(self, **kwargs):
     callbacks = []
-    DomainUser = kwargs['models']['DomainUser']
+    DomainUser = kwargs['models']['8']
     domain_users = DomainUser.query(DomainUser.roles == self.message_reciever,
                                     namespace=self.message_reciever.namespace()).fetch()
     recievers = orm.get_multi_clean([orm.Key('0', long(reciever.key.id())) for reciever in domain_users])

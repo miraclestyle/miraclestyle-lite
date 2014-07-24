@@ -34,8 +34,8 @@ class Address(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_country': orm.SuperReferenceProperty(target_field='country'),
-    '_region': orm.SuperReferenceProperty(target_field='region')
+    '_country': orm.SuperStorageStructuredProperty('15', storage='reference', storage_config={'target_field' : 'country'}, updateable=False, deleteable=True),
+    '_region': orm.SuperStorageStructuredProperty('16', storage='reference', storage_config={'target_field' : 'region'}, updateable=False, deleteable=True)
     }
 
 
@@ -104,9 +104,10 @@ class Addresses(orm.BaseModel):
       )
     ]
   
-  def prepare_key(self, input, **kwargs):
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
     user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
-    return self.build_key(user_key._id_str, parent=user_key)
+    return cls.build_key(user_key._id_str, parent=user_key)
 
 
 class Collection(orm.BaseModel):
@@ -181,6 +182,7 @@ class Collection(orm.BaseModel):
       )
     ]
   
-  def prepare_key(self, input, **kwargs):
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
     user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
-    return self.build_key(user_key._id_str, parent=user_key)
+    return cls.build_key(user_key._id_str, parent=user_key)

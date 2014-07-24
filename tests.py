@@ -6,6 +6,14 @@ Created on Jul 8, 2014
 '''
 import unittest
 import random
+
+combinations = [10, 20, 15]
+start = 0
+items = range(0, 45)
+for com in combinations:
+  print 'com %s' % com
+  print items[start:com+start]
+  start += com
   
 '''
 class TestSequenceFunctions(unittest.TestCase):

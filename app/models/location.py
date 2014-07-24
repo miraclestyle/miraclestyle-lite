@@ -92,8 +92,8 @@ class Country(orm.BaseModel):
             Context(),
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(),
-            Search(cfg={'page': -1}),
+            RuleExec(), 
+            Search(cfg={'page': 1000}), # before we put -1 for no limit, but 1000 is the limit.
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
