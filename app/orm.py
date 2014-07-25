@@ -581,8 +581,7 @@ class _BaseModel(object):
       prop = virtual_fields.get(name)
       if prop:
         prop._delete_value(self)
-    if isinstance(self, BaseExpando):
-      return super(BaseExpando, self).__delattr__(name)
+    return super(_BaseModel, self).__delattr__(name)
   
   def __deepcopy__(self, memo):
     '''This hook for deepcopy will only instance a new entity that has the same properties
