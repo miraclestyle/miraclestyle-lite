@@ -32,11 +32,17 @@ class Address(orm.BaseExpando):
     'email': orm.SuperStringProperty('10'),
     'telephone': orm.SuperStringProperty('11')
     }
-  
+ 
   _virtual_fields = {
-    '_country': orm.SuperStorageStructuredProperty('15', storage='reference', storage_config={'target_field' : 'country'}, updateable=False, deleteable=True),
-    '_region': orm.SuperStorageStructuredProperty('16', storage='reference', storage_config={'target_field' : 'region'}, updateable=False, deleteable=True)
-    }
+    '_country': orm.SuperStorageStructuredProperty('15', autoload=True, 
+                                                   storage='reference', 
+                                                   storage_config={'target_field' : 'country'}, 
+                                                   updateable=False, deleteable=False),
+    '_region': orm.SuperStorageStructuredProperty('16', autoload=True, 
+                                                  storage='reference', 
+                                                  storage_config={'target_field' : 'region'}, 
+                                                  updateable=False, deleteable=False),
+  }
 
 
 class Addresses(orm.BaseModel):

@@ -22,13 +22,14 @@ def generate_internal_id(address):
 class AddressesUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    if context._addresses.addresses:
+    addresses = context._addresses.addresses.value
+    if addresses:
       default_billing = 0
       default_shipping = 0
-      for i, address in enumerate(context._addresses.addresses):
+      for i, address in enumerate(addresses):
         try:
           # Ensure that the internal id is never changed by the client.
-          address.internal_id = context._addresses._original.addresses[i].internal_id
+          address.internal_id = context._addresses._original.addresses.value[i].internal_id
         except IndexError as e:
           # This is a new record, so force-feed it the internal_id.
           generate_internal_id(address)
@@ -38,5 +39,5 @@ class AddressesUpdateSet(orm.BaseModel):
           default_billing = i
         address.default_shipping = False
         address.default_billing = False
-      context._addresses.addresses[default_shipping].default_shipping = True
-      context._addresses.addresses[default_billing].default_billing = True
+      addresses[default_shipping].default_shipping = True
+      addresses[default_billing].default_billing = True

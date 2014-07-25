@@ -1,5 +1,3 @@
-### INSTALL NOTES ##
-
 For complete installation of the app, login as admin and run these paths
 
 ## Create locations
@@ -15,3 +13,11 @@ For complete installation of the app, login as admin and run these paths
 
 
 ## Note, it will only create 100 records for locations and product categories if the settings.DEBUG = True
+
+@todo we can make single path
+
+e.g.
+
+/install
+
+that will run these in taskqueue or something.

@@ -522,7 +522,7 @@ class _BaseModel(object):
       def delete_async():
         for field_key, field in entity.get_fields().items():
           # we have to check here if it has struct
-          if field.is_structured:
+          if hasattr(field, 'is_structured') and field.is_structured:
             value = getattr(entity, field_key, None)
             if isinstance(value, SuperPropertyManager):
               value.delete()
@@ -720,7 +720,7 @@ class _BaseModel(object):
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
     else:
-      if field.is_structured:
+      if hasattr(field, 'is_structured') and field.is_structured:
         child_entity = getattr(entity, field_key)
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
@@ -758,7 +758,7 @@ class _BaseModel(object):
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
-      if not field.is_structured:
+      if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
             util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
@@ -848,7 +848,7 @@ class _BaseModel(object):
     for field_key, field in fields.items():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
-      if field.is_structured:
+      if hasattr(field, 'is_structured') and field.is_structured:
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)  # @todo Test this behavior!
@@ -1148,16 +1148,15 @@ class _BaseModel(object):
     futures = []
     for field_key, field in self.get_fields().items():
       if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
-        # we only read what we're told to or if its a local storage
+        # we only read what we're told to or if its a local storage or if its marked for autoload
         field_read_arguments = read_arguments.get(field_key, {})
-        if field.is_structured:
+        if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(self, field_key)
           value.read_async(field_read_arguments)
           # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
           # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
           # since this just 1 argument approach is perhaps faster.
-          if value.has_future():
-            futures.append((value, field_read_arguments))  # If we encounter a future, pack it for further use.
+          futures.append((value, field_read_arguments)) # we have to pack them all for .read()
         elif isinstance(field, SuperReferenceProperty) and field._autoload is False:
           value = field._get_value(self, internal=True)
           value.read_async() # for super-reference we always just call read_async() we do not pack it for future.get_result()
@@ -1239,7 +1238,7 @@ class _BaseModel(object):
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().items():
-      if field.is_structured:
+      if hasattr(field, 'is_structured') and field.is_structured:
         value = getattr(new_entity, field_key, None)
         if value:
            value.duplicate() # call duplicate for every structured field
@@ -1756,7 +1755,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       futures = []
       for entity in entities:
         for field_key, field in entity.get_fields().items():
-          if field.is_structured:
+          if hasattr(field, 'is_structured') and field.is_structured:
             if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
               value = getattr(entity, field_key)
               field_read_arguments = read_arguments.get(field_key, {})
@@ -2209,6 +2208,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
     self._managerclass = kwargs.pop('managerclass', self._managerclass)
     self._autoload = kwargs.pop('autoload', self._autoload)
+    self._storage_config = kwargs.pop('storage_config', {}) 
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -2303,6 +2303,9 @@ class _BaseStructuredProperty(_BaseProperty):
     if not self._repeated:
       value = [value]
     for v in value:
+      if v is None and not self._required:
+        out.append(v)
+        continue
       provided_kind_id = v.get('kind')
       fields = self.get_model_fields(kind=provided_kind_id)
       v.pop('class_', None) # never allow class_ or any read-only property to be set for that matter.
@@ -2817,7 +2820,6 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     storage = kwds.pop('storage')
-    storage_config = kwds.pop('storage_config', {}) # storage specific options
     if isinstance(modelclass, basestring):
       set_modelclass = Model._kind_map.get(modelclass)
       if set_modelclass is not None:
@@ -2830,12 +2832,11 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     self._storage = storage
     # we use storage_config dict instead of keywords,
     # because we cannot forsee how many key-values we can invent for per-storage type
-    self._storage_config = storage_config 
     if self._storage in ['remote_multi', 'remote_multi_sequenced']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
   
-  def get_model_fields(self):
-    return self.get_modelclass().get_fields()
+  def get_model_fields(self, **kwargs):
+    return self.get_modelclass(**kwargs).get_fields()
   
   def _set_value(self, entity, value):
     # __set__
@@ -2937,8 +2938,8 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     self._updateable = False
     self._deleteable = False
   
-  def get_model_fields(self):
-    parent = super(SuperRecordProperty, self).get_model_fields()
+  def get_model_fields(self, **kwargs):
+    parent = super(SuperRecordProperty, self).get_model_fields(**kwargs)
     if isinstance(self._modelclass2, basestring):
       set_modelclass2 = Model._kind_map.get(self._modelclass2)
       if set_modelclass2 is None:

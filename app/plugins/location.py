@@ -64,7 +64,7 @@ class CountryUpdateWrite(orm.BaseModel):
           if child2.text:
             dat[name] = child2.text
         to_put.append(Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
-        if i == 100 and settings.DEBUG:
+        if i == 100 and not settings.DEVELOPMENT_SERVER:
           break
       processed_keys = {}
       processed_ids = {}
@@ -96,6 +96,6 @@ class CountryUpdateWrite(orm.BaseModel):
         processed_ids[dat['id']] = new_sub_divison
         new_sub_divison._use_rule_engine = False
         to_put.append(new_sub_divison)
-        if i == 100 and settings.DEBUG:
+        if i == 100 and not settings.DEVELOPMENT_SERVER:
           break
       orm.put_multi(to_put)
