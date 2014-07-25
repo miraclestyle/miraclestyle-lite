@@ -18,7 +18,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                          
                             $scope.save = function () {
                   
-                            	 // @todo missing async fetching for the country and region ._country etc.
+               
                                  if (new_address)
                                  {
                                  	if (!entity.addresses)
@@ -33,6 +33,8 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                                  	update(address, $scope.entity);
                                  }
                                  
+                                 $parentScope.react_on_address_update(address);
+                                  
                                  $scope.cancel();
                             };
 
@@ -54,8 +56,31 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     	 	'removeAddress' : function (address)
     	 	{
     	 		address._state = 'deleted';
-    	 		//this.entity.addresses.remove(address);
   			      
+    	 	},
+    	 	
+    	 	'react_on_address_update' : function (updated_address)
+    	 	{
+    	 		angular.forEach(this.entity.addresses, function (address) {
+    	 			if (updated_address.default_billing || updated_address.default_shipping)
+    	 			{
+    	 				if (updated_address != address)
+    	 				{
+    	 					
+    	 					if (updated_address.default_billing)
+    	 					{
+    	 						address.default_billing = false;
+    	 					}
+    	 					
+    	 					if (updated_address.default_shipping)
+    	 					{
+    	 						address.default_shipping = false;
+    	 					}
+    	 				}
+    	 				 
+    	 			}
+    	 			
+    	 		});
     	 	},
     	 
     	};
