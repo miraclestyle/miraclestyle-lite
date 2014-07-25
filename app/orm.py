@@ -77,15 +77,15 @@ def _get_urlsafe(self):
 
 def _get_root(self):
   pairs = self.pairs()
-  return Key(pairs[0][0], pairs[0][1])
+  return Key(*pairs[0], namespace=self.namespace())
 
 def _get_search_index(self):
   pairs = self.pairs()
-  return '%s_search_document_write' % Key(pairs[0][0], pairs[0][1]).urlsafe()
+  return '%s_search_document_write' % Key(*pairs[0], namespace=self.namespace()).urlsafe()
 
 def _get_search_unindex(self):
   pairs = self.pairs()
-  return '%s_search_document_delete' % Key(pairs[0][0], pairs[0][1]).urlsafe()
+  return '%s_search_document_delete' % Key(*pairs[0], namespace=self.namespace()).urlsafe()
 
 def _get_entity(self):
   return self.get()
@@ -117,9 +117,11 @@ Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
 Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
 
+
 #############################################
 ########## Helper classes of orm   ##########
 #############################################
+
 
 def get_multi_combined(*args, **kwargs):
   async = kwargs.pop('async', None)
@@ -690,7 +692,7 @@ class _BaseModel(object):
     if self.key is None:
       return None
     pairs = self.key.pairs()
-    return Key(pairs[0][0], pairs[0][1])
+    return Key(*pairs[0], namespace=self.key.namespace())
   
   @property
   def namespace_entity(self):
