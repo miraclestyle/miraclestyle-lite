@@ -44,7 +44,7 @@ In OpenERP, journals can have up to 5 characters of code length.
 
 
 # @todo This has to be resolved once we solve this input set strategy.
-class JournalSet(orm.BaseModel):
+class JournalUpdateSet(orm.BaseModel):
   
   def run(self, context):
     
@@ -87,7 +87,7 @@ In OpenERP, accounts can have up to 64 characters of code length.
 
 
 # @todo This has to be resolved once we solve this input set strategy.
-class CategorySet(orm.BaseModel):
+class CategoryUpdateSet(orm.BaseModel):
   
   def run(self, context):
     context._category.parent_record = context.input.get('parent_record')
