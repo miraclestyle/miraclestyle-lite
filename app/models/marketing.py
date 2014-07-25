@@ -13,6 +13,164 @@ from app.plugins.base import *
 from app.plugins.marketing import *
 
 
+class ProductCategory(orm.BaseModel):
+  
+  _kind = 17
+  
+  _use_record_engine = False
+  
+  parent_record = orm.SuperKeyProperty('1', kind='17', indexed=False)
+  name = orm.SuperStringProperty('2', required=True)
+  complete_name = orm.SuperTextProperty('3', required=True)
+  state = orm.SuperStringProperty('4', required=True, default='indexable')
+  
+  _global_role = GlobalRole(
+    permissions=[
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'update')], True, 'user._root_admin or user._is_taskqueue'),
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
+      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
+                          'user._root_admin or user._is_taskqueue')
+      ]
+    )
+  
+  _actions = [  # @todo Do we need read action here?
+    orm.Action(
+      key=orm.Action.build_key('17', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(cfg={'skip_user_roles': True}),
+            RuleExec(),
+            ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('17', 'search'),
+      arguments={  # @todo Add default filter to list active ones.
+        'search': orm.SuperSearchProperty(
+          default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
+          filters={
+            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='17', repeated=True)},
+            'name': {'operators': ['==', '!=', 'contains'], 'type': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
+            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
+            },
+          indexes=[
+            {'filter': ['key']},
+            {'filter': ['state'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            {'filter': ['name', 'state'],
+             'order_by': [['name', ['asc', 'desc']]]},
+            ],
+          order_by={
+            'name': {'operators': ['asc', 'desc']}
+            }
+          ),
+        'cursor': orm.SuperStringProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(cfg={'skip_user_roles': True}),
+            RuleExec(),
+            Search(cfg={'page': settings.SEARCH_PAGE}),
+            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
+            ]
+          )
+        ]
+      )
+    ]
+
+
+class ProductContent(orm.BaseModel):
+  
+  _kind = 43
+  
+  title = orm.SuperStringProperty('1', required=True, indexed=False)
+  body = orm.SuperTextProperty('2', required=True)
+
+
+class ProductVariant(orm.BaseModel):
+  
+  _kind = 42
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  description = orm.SuperTextProperty('2')
+  options = orm.SuperStringProperty('3', repeated=True, indexed=False)
+  allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
+
+
+class ProductInstance(orm.BaseExpando):
+  
+  _kind = 39
+  
+  _use_rule_engine = False
+  
+  variant_signature = orm.SuperJsonProperty('1', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'description': orm.SuperTextProperty('2'),
+    'unit_price': orm.SuperDecimalProperty('3'),
+    'availability': orm.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+    'code': orm.SuperStringProperty('5'),
+    'weight': orm.SuperDecimalProperty('6'),
+    'weight_uom': orm.SuperKeyProperty('7', kind='19'),
+    'volume': orm.SuperDecimalProperty('8'),
+    'volume_uom': orm.SuperKeyProperty('9', kind='19'),
+    'images': orm.SuperLocalStructuredProperty(Image, '10', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(ProductContent, '11', repeated=True),
+    'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
+    }
+  
+  def prepare_key(self, **kwargs):
+    variant_signature = self.variant_signature
+    key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
+    product_instance_key = self.build_key(key_id, parent=kwargs.get('parent'))
+    return product_instance_key
+
+
+class Product(orm.BaseExpando):
+  
+  _kind = 38
+  
+  product_category = orm.SuperKeyProperty('1', kind='17', required=True)
+  name = orm.SuperStringProperty('2', required=True)
+  description = orm.SuperTextProperty('3', required=True)  # Soft limit 64kb.
+  product_uom = orm.SuperKeyProperty('4', kind='19', required=True, indexed=False)
+  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
+  code = orm.SuperStringProperty('7', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'weight': orm.SuperDecimalProperty('8'),
+    'weight_uom': orm.SuperKeyProperty('9', kind='19'),
+    'volume': orm.SuperDecimalProperty('10'),
+    'volume_uom': orm.SuperKeyProperty('11', kind='19'),
+    'images': orm.SuperLocalStructuredProperty(Image, '12', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(ProductContent, '13', repeated=True),
+    'variants': orm.SuperLocalStructuredProperty(ProductVariant, '14', repeated=True),
+    'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
+    }
+  
+  _virtual_fields = {
+    '_instances': orm.SuperLocalStructuredProperty(ProductInstance, repeated=True)  # @todo Implement Storage PRoperty here!
+    }
+
+
 class CatalogPricetag(orm.BaseModel):
   
   _kind = 34
