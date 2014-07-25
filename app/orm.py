@@ -5,6 +5,7 @@ Created on Jul 9, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import math
 import decimal
 import datetime
 import json
@@ -141,16 +142,18 @@ def get_multi_combined(*args, **kwargs):
     start += combination
   return separations
 
+
 def get_multi_async_combined(*args, **kwargs):
   kwargs['async'] = True
   return get_multi_combined(*args, **kwargs)
-    
-  
+
+
 def get_multi_combined_clean(*args, **kwargs):
   separations = get_multi_combined(*args, **kwargs)
   for separation in separations:
     util.remove_value(separation)
-  return separations  
+  return separations
+
 
 def get_multi_clean(*args, **kwargs):
   '''
@@ -162,11 +165,12 @@ def get_multi_clean(*args, **kwargs):
   util.remove_value(entities)
   return entities
 
+
 def get_async_results(*args, **kwargs):
   '''
     It will mutate futures list into results after its done retrieving data.
     This is mainly for making shorthands.
-    instead of 
+    instead of
     async_entities1 = get_multi_async(..)
     entities1 = [future.get_result() for future in async_entities1]
     async_entities2 = get_multi_async(..)
@@ -510,7 +514,7 @@ class _BaseModel(object):
       value = getattr(entity, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.post_update()
-    entity.index_search_document()
+    entity.write_search_document()
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
   
@@ -533,7 +537,7 @@ class _BaseModel(object):
     # Here we can no longer retrieve the deleted entity, so in this case we just delete the document.
     # Problem with deleting the search index in pre_delete_hook is that if the transaciton fails, the
     # index will be deleted anyway.
-    cls.unindex_search_document(key)
+    cls.delete_search_document(key)
   
   def _set_attributes(self, kwds):
     '''Internal helper to set attributes from keyword arguments.
@@ -1083,7 +1087,7 @@ class _BaseModel(object):
     return query
   
   @classmethod
-  def _datastore_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here? 
+  def _datastore_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here?
     # this should be called datastore_search?
     query = cls.get_datastore_query(argument, namespace, limit, urlsafe_cursor, fields)
     # Caller must be capable of differentiating possible results returned!
@@ -1170,25 +1174,14 @@ class _BaseModel(object):
       record_arguments = {}
     self._record_arguments = record_arguments
     self.put()
-    write_documents = memcache.temp_get(self.key._search_index, [])
-    delete_documents = memcache.temp_get(self.key._search_unindex, [])
-    index = search.Index(name=self._root.get_kind(), namespace=self._root.key.namespace())
-    if len(write_documents):
-      index.put(write_documents)
-      memcache.temp_delete(self.key._search_index)
-    if len(delete_documents):
-      index.delete(delete_documents)
-      memcache.temp_delete(self.key._search_unindex)
+    self.write_search_index()
+    self.delete_search_index()
   
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
-      delete_documents = memcache.temp_get(self.key._search_unindex, [])
-      index = search.Index(name=self.get_kind(), namespace=self.key.namespace())
-      if len(delete_documents):
-        index.delete(delete_documents)
-        memcache.temp_delete(self.key._search_unindex)
+      self.delete_search_index()
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1280,18 +1273,50 @@ class _BaseModel(object):
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
-  def index_search_document(self):
+  def write_search_document(self):
     if self._use_search_engine:
       documents = memcache.temp_get(self.key._search_index, [])
       documents.append(self.get_search_document())
       memcache.temp_set(self.key._search_index, documents)
   
   @classmethod
-  def unindex_search_document(cls, key):
+  def delete_search_document(cls, key):
     if cls._use_search_engine:
       documents = memcache.temp_get(key._search_unindex, [])
       documents.append(key.urlsafe())
       memcache.temp_set(key._search_unindex, documents)
+  
+  def write_search_index(self):
+    documents = memcache.temp_get(self.key._search_index, [])
+    if len(documents):
+      documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
+      index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
+      cycles = int(math.ceil(len(documents) / documents_per_index))
+      for i in range(0, cycles + 1):
+        documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+        if len(documents_partition):
+          try:
+            index.put(documents_partition)
+          except Exception as e:
+            util.log('INDEX FAILED! ERROR: %s' % e)
+            pass
+      memcache.temp_delete(self.key._search_index)
+  
+  def delete_search_index(self):
+    documents = memcache.temp_get(self.key._search_unindex, [])
+    if len(documents):
+      documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
+      index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
+      cycles = int(math.ceil(len(documents) / documents_per_index))
+      for i in range(0, cycles + 1):
+        documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+        if len(documents_partition):
+          try:
+            index.delete(documents_partition)
+          except Exception as e:
+            util.log('INDEX FAILED! ERROR: %s' % e)
+            pass
+      memcache.temp_delete(self.key._search_unindex)
   
   @classmethod
   def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
@@ -1594,7 +1619,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     super(SuperStructuredPropertyManager, self).__init__(property_instance, storage_entity, **kwds)
     self._property_value_options = {}
     # @todo We might want to change this to something else, but right now it is the most elegant.
-    
+  
   @property
   def value(self):
     # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
@@ -1636,7 +1661,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
           raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), self._property_value))
     self._property_value = property_value
     self._set_parent()
-    
+  
   def _read_reference(self, read_arguments=None):
     if read_arguments is None:
       read_arguments = {}
@@ -1970,7 +1995,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _delete_remote_multi_sequenced(self):
     self._delete_remote()
-    
+  
   def _delete_reference(self):
     pass # nothing happens when you delete reference, we can however implement that logic too
   
@@ -2181,7 +2206,7 @@ class _BaseProperty(object):
   def initialize(self):
     '''
       This function is called by io def init() to prepare the field for work.
-      This is mostly because of get_modelclass lazy-loading of modelclass. 
+      This is mostly because of get_modelclass lazy-loading of modelclass.
       
       In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
       classes to initilize, so they are waiting for us in _kind_map.
@@ -2208,7 +2233,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
     self._managerclass = kwargs.pop('managerclass', self._managerclass)
     self._autoload = kwargs.pop('autoload', self._autoload)
-    self._storage_config = kwargs.pop('storage_config', {}) 
+    self._storage_config = kwargs.pop('storage_config', {})
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -2216,14 +2241,14 @@ class _BaseStructuredProperty(_BaseProperty):
           args[0] = set_arg
     self._storage = 'local'
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
- 
+  
   def get_modelclass(self, **kwargs):
     '''
-      Function that will attempt to lazy-set model if its kind id was specified. 
-      If model could not be found it will raise an error. This function is used instead of directly accessing 
+      Function that will attempt to lazy-set model if its kind id was specified.
+      If model could not be found it will raise an error. This function is used instead of directly accessing
       self._modelclass in our code.
       
-      This function was mainly invented for purpose of structured and multi structured property. See its usage 
+      This function was mainly invented for purpose of structured and multi structured property. See its usage
       trough the code for reference.
     '''
     if isinstance(self._modelclass, basestring):
@@ -2352,7 +2377,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     '''
       So basically:
       
-      argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself)) 
+      argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
       will allow instancing of both 51 and 21 that is provided from the input.
       
       This property should not be used for datastore. Its specifically meant for arguments.
