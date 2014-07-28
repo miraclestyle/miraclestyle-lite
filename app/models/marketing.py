@@ -34,7 +34,7 @@ class ProductCategory(orm.BaseModel):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
       key=orm.Action.build_key('17', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
@@ -42,7 +42,6 @@ class ProductCategory(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
@@ -51,7 +50,7 @@ class ProductCategory(orm.BaseModel):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('17', 'search'),
+      key=orm.Action.build_key('17', 'search'), # @todo search is very inaccurate when using 'contains' filter. so we will have to use here document search i think
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
@@ -129,16 +128,20 @@ class ProductInstance(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('7', kind='19'),
     'volume': orm.SuperDecimalProperty('8'),
     'volume_uom': orm.SuperKeyProperty('9', kind='19'),
-    'images': orm.SuperLocalStructuredProperty(Image, '10', repeated=True),
+    'images': SuperImageLocalStructuredProperty(Image, '10', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '11', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
     }
   
-  def prepare_key(self, **kwargs):
-    variant_signature = self.variant_signature
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    variant_signature = input.get('variant_signature')
     key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
-    product_instance_key = self.build_key(key_id, parent=kwargs.get('parent'))
+    product_instance_key = cls.build_key(key_id, parent=kwargs.get('parent'))
     return product_instance_key
+  
+  def instance_prepare_key(self, **kwargs):
+    self.key = self.prepare_key({'variant_signature' : self.variant_signature}, **kwargs)
 
 
 class Product(orm.BaseExpando):
@@ -160,14 +163,14 @@ class Product(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('9', kind='19'),
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperKeyProperty('11', kind='19'),
-    'images': orm.SuperLocalStructuredProperty(Image, '12', repeated=True),
+    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '13', repeated=True),
     'variants': orm.SuperLocalStructuredProperty(ProductVariant, '14', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperLocalStructuredProperty(ProductInstance, repeated=True)  # @todo Implement Storage PRoperty here!
+    '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi')
     }
 
 
@@ -202,12 +205,13 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': orm.SuperLocalStructuredProperty(CatalogImage, '7'),
+    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy' : True, 'copy_name' : 'cover'}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
   _virtual_fields = {
-    '_images': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi_sequenced'),
+    '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
     '_records': orm.SuperRecordProperty('35')
     }
   
@@ -217,7 +221,9 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'create'),
                                   orm.Action.build_key('35', 'read'),
                                   orm.Action.build_key('35', 'update'),
-                                  orm.Action.build_key('35', 'upload_images'),
+                                  orm.Action.build_key('35', 'catalog_upload_images'),
+                                  orm.Action.build_key('35', 'product_upload_images'),
+                                  orm.Action.build_key('35', 'product_instance_upload_images'),
                                   orm.Action.build_key('35', 'search'),
                                   orm.Action.build_key('35', 'lock'),
                                   orm.Action.build_key('35', 'discontinue'),
@@ -225,7 +231,9 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'duplicate')], False, 'entity._original.namespace_entity.state != "active"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'update'),
                                   orm.Action.build_key('35', 'lock'),
-                                  orm.Action.build_key('35', 'upload_images')], False, 'entity._original.state != "unpublished"'),
+                                  orm.Action.build_key('35', 'catalog_upload_images'),
+                                  orm.Action.build_key('35', 'product_upload_images'),
+                                  orm.Action.build_key('35', 'product_instance_upload_images')], False, 'entity._original.state != "unpublished"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'process_images'),
                                   orm.Action.build_key('35', 'process_cover'),
                                   orm.Action.build_key('35', 'process_duplicate'),
@@ -284,6 +292,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
+            # @todo this is a problem, bucket varies based on product, product instance and catalog image
             BlobURL(cfg={'bucket': settings.CATALOG_IMAGE_BUCKET}),
             Set(cfg={'d': {'output.entity': '_catalog',
                            'output.upload_url': '_blob_url'}})
@@ -346,18 +355,21 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'sort_images': orm.SuperStringProperty(repeated=True),
-        'pricetags': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),  # must be like this because we need to match the pricetags with order.....
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
-        'search_cursor': orm.SuperIntegerProperty(default=0)
+        '_images': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+        '_products': orm.SuperLocalStructuredProperty(Product, repeated=True),
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            CatalogUpdateSet(),
+            Set(cfg={'d': {'_catalog.name': 'input.name',
+                           '_catalog.publish_date': 'input.publish_date',
+                           '_catalog.discontinue_date': 'input.discontinue_date',
+                           '_catalog._images': 'input._images',
+                           '_catalog._products': 'input._products',}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -369,24 +381,54 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_cover', 'action_model': '35'},
+                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe'})])
+            ]
+          )
+        ]
+      ),
+    # it has to have separate upload_images because of arguments
+    orm.Action(
+      key=orm.Action.build_key('35', 'catalog_upload_images'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, repeated=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            UploadImages(cfg={'add_config' : {'_images' : 'input._images'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_catalog'}}),
+            CallbackNotify(),
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_images', 'read_arguments' : {'_images' : {}}, 'action_model': '35'},
                                {'key': '_catalog.key_urlsafe'})])
             ]
           )
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('35', 'upload_images'),
+      key=orm.Action.build_key('35', 'product_upload_images'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True),
-        '_images': orm.SuperLocalStructuredImageProperty(CatalogImage, repeated=True)
+        'key': orm.SuperKeyProperty(kind='38', required=True),
+        '_images': SuperImageLocalStructuredProperty(Image, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_catalog._images': 'input._images'}}),
+            UploadImages(cfg={'target_field_path' : '_products', 'add_config' : {'_images' : 'input._images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -398,7 +440,36 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'action_model': '35'},
+                               {'action_id': 'process_images', 'read_arguments' : {'_products' : {}}, 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe'})])
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('35', 'product_instance_upload_images'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='39', required=True),
+        '_images': SuperImageLocalStructuredProperty(Image, repeated=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            UploadImages(cfg={'target_field_path' : '_products._instances', 'add_config' : {'_images' : 'input._images'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_catalog'}}),
+            CallbackNotify(),
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_images', 'read_arguments' : {'_products' : {'_instances' : {}}}, 'action_model': '35'},
                                {'key': '_catalog.key_urlsafe'})])
             ]
           )
@@ -408,7 +479,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'process_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'catalog_image_keys': orm.SuperKeyProperty(kind='36', repeated=True)
+        'read_arguments': orm.SuperJsonProperty(), # read arguments exists because we need to know which stuff needs to be loaded
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -422,10 +493,15 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
+            ProcessImages(),
+            # @todo this is a problem, we cannot call recursively all process functions,
+            # because properties with copy=True will copy themselves every time def process is called.
+            # we will have to think some other way how we can do this, like we do with read_arguments
             Write(),
             CallbackNotify(),
+            # @todo this is also a problem, process_cover should only be called on catalog image processing
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_cover', 'action_model': '35'},
+                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
                                {'key': '_catalog.key_urlsafe'})])
             ]
           )
@@ -434,7 +510,8 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('35', 'process_cover'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True)
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        'read_arguments': orm.SuperJsonProperty(), # read arguments exists because we need to know how many images we want load
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -483,6 +560,7 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
+      # this has to work both the datastore and document_search query
       key=orm.Action.build_key('35', 'search'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
@@ -815,8 +893,8 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Duplicate(),  # @todo Not sure about this!!
-            Write(),  # @todo Not sure about this!!
+            Duplicate(),
+            Write(),
             CallbackNotify(),
             CallbackExec()
             ]
@@ -831,9 +909,12 @@ class Catalog(orm.BaseExpando):
     return True
 
 
+# @todo this cannot exist now because it's search will try to find by kind
 class CatalogIndex(orm.BaseExpando):
   
   _kind = 82
+  
+  _use_search_engine = True
   
   _default_indexed = False
   
@@ -890,10 +971,7 @@ class CatalogIndex(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            CatalogSearch(cfg={'index': settings.CATALOG_INDEX, 'page': settings.SEARCH_PAGE, 'document': True}),
-            #DocumentDictConverter(),
-            #DocumentEntityConverter(),
-            #RulePrepare(cfg={'path': 'entities'}),
+            Search(),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.total_matches': '_total_matches',
                            'output.documents_count': '_documents_count',

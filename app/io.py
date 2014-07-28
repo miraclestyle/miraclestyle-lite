@@ -58,8 +58,7 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom
-    # marketing, product
+    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing
     for model_kind, model in orm.Model._kind_map.items():
       if hasattr(model, 'get_fields'):
         for field_key, field in model.get_fields().items():

@@ -150,9 +150,31 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     add_config = self.cfg.get('add_config', {})
     entity = get_attr(context, entity_path)
+    target_field_path = self.cfg.get('target_field_path')
+    if target_field_path:
+      found = None
+      target_field_paths = target_field_path.split('.')
+      last_i = len(target_field_paths)-1
+      def start(entity, target, last_i, i):
+        if isinstance(entity, orm.SuperPropertyManager):
+          entity = entity.value
+        if last_i == i:
+          found = entity
+          return entity
+        if not isinstance(entity, list):
+          entity = getattr(entity, target)
+          return entity
+        else:
+          for ent in entity:
+            start(ent, target, last_i, i)
+          return entity
+      for i,target in enumerate(target_field_paths):
+        entity = start(entity, target, last_i, i)
+      entity = found
     if entity and isinstance(entity, orm.Model):
+      fields = entity.get_fields()
       for field_key, path in add_config.items():
-        field = getattr(entity.__class__, field_key, None)
+        field = fields.get(field_key, None)
         if field and field.is_structured:
           value = getattr(entity, field_key, None)
           if value is not None and hasattr(value, 'add') and callable(value.add):
@@ -171,8 +193,8 @@ class ProcessImages(orm.BaseModel):
     if entity and isinstance(entity, orm.Model):
       for field_key, field in entity.get_fields().items():
         if field.is_structured:
-          value = getattr(entity, field_key)
-          if value.has_value() and hasattr(value, 'process') and callable(value.process):
+          value = getattr(entity, field_key, None)
+          if value is not None and value.has_value() and hasattr(value, 'process') and callable(value.process):
             value.process()
 
 

@@ -7,13 +7,23 @@ Created on Jul 8, 2014
 import unittest
 import random
 
-combinations = [10, 20, 15]
-start = 0
-items = range(0, 45)
-for com in combinations:
-  print 'com %s' % com
-  print items[start:com+start]
-  start += com
+class Tests():
+
+  def __nonzero__(self):
+    print '__nonzero__'
+    return False
+  
+  def __bool__(self):
+    print '__bool__'
+    return False
+  
+d = Tests()
+if d:
+  print 'yes d'
+  
+if not d:
+  print 'not d'
+  
   
 '''
 class TestSequenceFunctions(unittest.TestCase):

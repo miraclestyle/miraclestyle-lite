@@ -57,41 +57,27 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
         new_cat._use_record_engine = False
         write_data.append(new_cat)
     orm.put_multi(write_data)
-
-
-# @todo We will figure out destiny of this plugin once we solve set operation issue!
-class CatalogUpdateSet(orm.BaseModel):
-  
-  def run(self, context):
-    context._catalog.name = context.input.get('name')
-    context._catalog.discontinue_date = context.input.get('discontinue_date')
-    context._catalog.publish_date = context.input.get('publish_date')
-    pricetags = context.input.get('pricetags')
-    sort_images = context.input.get('sort_images')
-    entity_images, delete_images = sort_by_list(context._catalog._images, sort_images, 'image')
-    context._delete_images = []
-    for delete in delete_images:
-      entity_images.remove(delete)
-      context._delete_images.append(delete)
-    context._catalog._images = entity_images
-    if context._catalog._images:
-      for i, image in enumerate(context._catalog._images):
-        image.set_key(str(i), parent=context._catalog.key)
-        image.pricetags = pricetags[i].pricetags
-    context._catalog._images = []
-
-
+ 
+ 
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
-    if len(context._catalog._images):
-      if context._catalog.cover:
-        if context._catalog.cover.gs_object_name[:-6] != context._catalog._images[0].gs_object_name:
-          context._catalog.cover = context._catalog._images[0]
+    # this has to exist because it carries a lot of logic with it
+    # so we cant bluntly use Set()
+    # it also calls .process() after it copies over the image to be used for copy process
+    catalog_images = context._catalog._images.value
+    catalog_cover = context._catalog.cover.value
+    if catalog_images and len(catalog_images):
+      if catalog_cover:
+        if catalog_cover.gs_object_name[:-6] != catalog_images[0].gs_object_name:
+          context._catalog.cover = catalog_images[0]
+          context._catalog.cover.process()
       else:
-        context._catalog.cover = context._catalog._images[0]
-    else:
+        context._catalog.cover = catalog_images[0]
+        context._catalog.cover.process()
+    elif context._catalog.cover.value:
       context._catalog.cover = None
+      
 
 
 class CatalogCronPublish(orm.BaseModel):

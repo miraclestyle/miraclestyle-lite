@@ -1,6 +1,6 @@
 <form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
-<input type="hidden" name="action_id" value="upload_images" />
+<input type="hidden" name="action_id" value="catalog_upload_images" />
 <input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="key" value="{{entity.key}}" />
 	
@@ -57,7 +57,7 @@
 		<div class="form-control clearfix mb15">
 		  <div ng-show="rule.field._images.writable" class="pull-right">
 		  <button ng-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
-		  <div  class="button fake-button">
+		  <div class="button fake-button">
 		  	 <span>Add Images</span>
 		  	 <input class="upload" name="_images" multiple upload-on-select type="file" ng-model="entity._supplied_filename" />
 		  </div>

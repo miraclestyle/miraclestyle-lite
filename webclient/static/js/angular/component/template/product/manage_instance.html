@@ -1,9 +1,9 @@
 <form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
-<input type="hidden" name="action_id" value="instance_upload_images" />
-<input type="hidden" name="action_model" value="38" />
+<input type="hidden" name="action_id" value="product_instance_upload_images" />
+<input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="variant_signature" value="{{entity.variant_signature|json}}" />
-<input type="hidden" name="parent" value="{{entity.parent}}" />
+<input type="hidden" name="parent" value="{{entity.parent.key.parent.key}}" />
 	
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">

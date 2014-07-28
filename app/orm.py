@@ -199,7 +199,7 @@ def get_async_results(*args, **kwargs):
       entities.append(future.get_result())
     else:
       entities.append(future)
-  if kwargs.get('remove'):
+  if kwargs.get('remove', True):
     util.remove_value(entities) # empty out the Nones
   del futures[:] # this empties the list
   for entity in entities:
@@ -757,11 +757,12 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    if hasattr(field, '_updateable') and (not field._updateable and not field._deleteable):
+    # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
+    # this is the problem with catalog dates...
+    if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
     if (field_key in permissions):  # @todo How this affects the outcome??
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
       if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
@@ -772,7 +773,7 @@ class _BaseModel(object):
           except ComputedPropertyError:
             pass
       else:
-        child_entity = getattr(entity, field_key)
+        child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
         if isinstance(child_entity, SuperPropertyManager):
           child_entity = child_entity.value
         if isinstance(field_value, SuperPropertyManager):
@@ -782,6 +783,8 @@ class _BaseModel(object):
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
           # @todo This is bug. None value should not be supplied on fields that are not required!
+          if child_entity is None:
+            return
           if field_value is None:
             return
           for field_value_item in field_value:
@@ -1582,7 +1585,7 @@ class SuperPropertyManager(object):
     return hasattr(self, '_property_value')
   
   def has_future(self):
-    value = self._property_value
+    value = self.value
     if isinstance(value, list):
       if len(value):
         value = value[0]
@@ -1658,7 +1661,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         property_value_copy = [property_value_copy]
       for property_value_item in property_value_copy:
         if not isinstance(property_value_item, self._property.get_modelclass()):
-          raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), self._property_value))
+          raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
     self._property_value = property_value
     self._set_parent()
   
@@ -1696,10 +1699,11 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         property_value_copy = [property_value_copy]
       for i, value in enumerate(property_value_copy):
         value.set_key(str(i))
+      self._property_value = property_value
     else:
       if self._property._repeated:
-        property_value = []
-    self._property_value = property_value
+        self._property_value = []
+    
   
   def _read_remote_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
@@ -1750,7 +1754,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     if read_arguments is None:
       read_arguments = {}
-    config = read_arguments.get('config')
+    config = read_arguments.get('config', {})
     cursor = config.get('cursor', 0)
     limit = config.get('limit', 10)
     entities = []
@@ -1804,7 +1808,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         # read_local must be called multiple times because it gets loaded between from_pb and post_get.
         read_function = getattr(self, '_read_%s' % self.storage_type)
         read_function(read_arguments)
-      return self._property_value
+      return self.value
   
   def read(self, read_arguments=None):
     if read_arguments is None:
@@ -1831,7 +1835,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         self._property_value = format_callback(self._entity, self._property_value)
       self._set_parent()
       self._read_deep(read_arguments)
-      return self._property_value
+      return self.value
   
   def add(self, entities):
     # @todo Is it preferable to branch this function to helper functions, like we do for read, update, delete (_add_local, _add_remote_sigle...)?
@@ -1885,12 +1889,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
-    if not hasattr(self._property_value, 'prepare_key'):
+    if not hasattr(self._property_value, 'instance_prepare_key'):
       if self._property_value.key_parent != self._entity.key:
         key_id = self._property_value.key_id
         self._property_value.set_key(key_id, parent=self._entity.key)
     else:
-      self._property_value.prepare_key(parent=self._entity.key)
+      self._property_value.instance_prepare_key(parent=self._entity.key)
     # We do put eitherway
     # @todo If state is deleted, shall we delete the single storage entity?
     if self._property_value._state == 'deleted':
@@ -1904,12 +1908,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     delete_entities = []
     for entity in self._property_value:
-      if not hasattr(entity, 'prepare_key'):
+      if not hasattr(entity, 'instance_prepare_key'):
         if entity.key_parent != self._entity.key:
           key_id = entity.key_id
           entity.set_key(key_id, parent=self._entity.key)
       else:
-        entity.prepare_key(parent=self._entity.key)
+        entity.instance_prepare_key(parent=self._entity.key)
       if entity._state == 'deleted':
         delete_entities.append(entity)
     for delete_entity in delete_entities:
@@ -1928,10 +1932,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         delete_entities.append(entity)
         continue
       if entity.key_id is None:
-        if not hasattr(entity, 'prepare_key'):
+        if not hasattr(entity, 'instance_prepare_key'):
           entity.set_key(str(last_sequence), parent=self._entity.key)
         else:
-          entity.prepare_key(parent=self._entity.key, id=str(last_sequence))
+          entity.instance_prepare_key(parent=self._entity.key, id=str(last_sequence))
         last_sequence += 1
       else:
         entity.set_key(str(i), parent=self._entity.key)
@@ -2307,8 +2311,7 @@ class _BaseStructuredProperty(_BaseProperty):
   
   def _structured_property_field_format(self, fields, values):
     _state = values.get('_state')
-    if values.get('key'):
-      values['key'] = Key(urlsafe=values.get('key'))
+    key = values.get('key')
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
@@ -2318,6 +2321,8 @@ class _BaseStructuredProperty(_BaseProperty):
           del values[value_key]
       else:
         del values[value_key]
+    if key:
+      values['key'] = Key(urlsafe=key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
   
   def _structured_property_format(self, value):

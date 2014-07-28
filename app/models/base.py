@@ -154,8 +154,9 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
       for entity in entities:
         for field_key, field in entity.get_fields().items():
           if field.is_structured:
-            value = getattr(entity, field_key)  # @todo Do we need 'if isinstance(value, _BaseImageProperty):' block here?
-            value.process()  # Re-loop if any
+            value = getattr(entity, field_key, None)  # @todo Do we need 'if isinstance(value, _BaseImageProperty):' block here?
+            if value is not None and value.has_value() and hasattr(value, 'process') and callable(value.process):
+              value.process()  # Re-loop if any
   
   def process(self):
     '''This function should be called inside a taskqueue.
@@ -315,7 +316,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         new_value.image = blobstore.BlobKey(blob_key)
         new_value.serving_url = images.get_serving_url(new_value.image)
         self.save_blobs_on_success(new_value.image)
-      return new_value
+    return new_value
   
   def argument_format(self, value):
     value = self._property_value_format(value)

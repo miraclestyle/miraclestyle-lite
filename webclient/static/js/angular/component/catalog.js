@@ -126,6 +126,268 @@ MainApp
         function ($rootScope, Endpoint, EntityEditor, Title, Product, $modal, Confirm) {
 
             var kind = '35';
+            
+            var make_product_scope = function ()
+	    	{
+	    
+		       return {
+		        	 'form_info' : {'action' : Endpoint.url},
+		        	 'accordions' : {
+		        	 	'general' : true,
+		        	 },
+		        	 'gridConfig' : function (scope)
+		            	{
+		            		return {
+		            			margin : 10
+		            		};
+		             },
+		        	 'completed' : function (data)
+		        	 { 
+		        	 	// append new images
+		        	 },
+ 
+		            'removeImage' : function (image)
+		        	 {
+		        	 	image._state = 'deleted';
+		       
+		        	 },
+		        	 'removeContent' : function (content) {
+		        	 	content._state = 'deleted';
+	 
+		        	 },
+		        	 'removeVariant' : function (variant)
+		        	 {
+		        	 	variant._state = 'deleted';
+		        	  
+		        	 },
+		        	 'manageContent' : function (content) { 
+		        	 	
+		        	 	var that = this;
+		        	 	 
+		        	 	var modalInstance = $modal.open({
+		                        templateUrl: logic_template('product/manage_content.html'),
+		                        controller: function ($scope, $modalInstance, RuleEngine) {
+		 
+		                            $scope.content = angular.copy(content ? content : {});
+		                      
+		                            var new_content = content ? false : true;
+		             
+		                            $scope.save = function () {
+		           
+		                                 if (new_content)
+		                                 {
+		                                 	that.entity.contents.push($scope.content);
+		                                 }
+		                                 else
+		                                 {
+		                                 	update(content, $scope.content);
+		                                 }
+		                                 
+		                                 $scope.cancel();
+		                            };
+		
+		                            $scope.cancel = function () {
+		                                $modalInstance.dismiss('cancel');
+		                            };
+		
+		                        }
+		                    });
+		        	 	
+		        	  },
+		        	 'manageVariant' : function (variant) {
+		        	 	
+		        	 	var that = this;
+		        	 	 
+		        	 	var modalInstance = $modal.open({
+		                        templateUrl: logic_template('product/manage_variant.html'),
+		                        controller: function ($scope, $modalInstance, RuleEngine) {
+		 
+		                            $scope.variant = angular.copy(variant ? variant : {});
+		          
+		                            if ($scope.variant && ('options' in $scope.variant))
+		                            {
+		                            	$scope.variant._options = $scope.variant.options.join("\n");
+		                            }
+		                   
+		                            var new_variant = variant ? false : true;
+		                   
+		                            $scope.save = function () {
+		                            	
+		                            	 if (!this.variant._options) this.variant._options = '';
+		                            	 
+		                            	 this.variant.options = this.variant._options.split("\n");
+		                            	  
+		                                 if (new_variant)
+		                                 {
+		                                 	that.entity.variants.push(this.variant);
+		                                 }
+		                                 else
+		                                 {
+		                                 	update(variant, this.variant);
+		                                 }
+		                                 
+		                                 $scope.cancel();
+		                            };
+		
+		                            $scope.cancel = function () {
+		                                $modalInstance.dismiss('cancel');
+		                            };
+		
+		                        }
+		                    });
+		        	 	
+		        	  },
+		        	  'removeInstance' : function (instance)
+		        	  {
+		        	  	
+		        	  	  var that = this;
+		        	  	  
+		        	  	  instance._state = 'deleted';
+		        	  },
+	 
+		        	  'manageInstance' : function (instance, create)
+		        	  {
+		        	  	    var that = this;
+		        	  	    
+		        	  	    if (!instance) instance = {'images' : [], 'contents' : []};
+		          
+		        	  	    var cfg = {
+			                	 'kind' : kind,
+			                	 'close' : false,
+			                	 'entity' : instance,
+			                	 'data' : {'entity' : instance},
+			                	 'scope' : angular.extend(make_product_scope(), {}),
+			                	 'handle' : function (data)
+						         { 
+	  
+						         },
+			                	 'templateUrl' : logic_template('product/manage_instance.html'),
+			               };
+			               
+			               if (create) {
+	          
+			        		  	cfg['args'] = create;
+			        		  	cfg['complete'] = function (entity)
+			        		  	{
+			        		  		angular.forEach(that.entity._instances, function (e) {
+			        		  			if (e.key == entity.key)
+			        		  			{
+			        		  				 create = false;
+			        		  			}
+			        		  		});
+			        		  		
+			        		  	    if (create)
+			        		  	    {
+			        		  	    	that.entity._instances.push(entity);
+			        		  	    }
+			        		  		
+			        		  	};
+			        		  	
+			        		  	EntityEditor.create(cfg);
+			        		  }
+			        		  else
+			        		  {
+			        		  	cfg['close'] = true;
+			        		  	EntityEditor.update(cfg);
+			        		  }
+		        	   
+		        	  },
+		        	  'newInstance' : function ()
+		        	  {
+		        	  	
+						var that = this;
+		        	 	 
+		        	 	var modalInstance = $modal.open({
+		                        templateUrl: logic_template('product/create_instance.html'),
+		                        controller: function ($scope, $modalInstance, RuleEngine) {
+		  							
+		  							$scope.variants = [];
+		  				 
+		  							angular.forEach(that.entity.variants, function (v) {
+		 
+		  								$scope.variants.push({
+		  									'name' : v.name,
+		  									'options' : v.options,
+		  									'option' : null,
+		  								});
+		  							});
+		  							
+		                            $scope.save = function () {
+		                            	 
+		                            	 var variant_signature = [];
+		                            	 angular.forEach($scope.variants, function (v) {
+		                            	 	var d = {};
+		                            	 	d[v.name] = v.option;
+		                            	 	variant_signature.push(d);
+		                            	 });
+		                            	 
+		                            	 
+		                            	 //@todo fetch the dialog
+		                            	 
+		                            	 console.log(variant_signature);
+		                            	   
+		                            };
+		
+		                            $scope.cancel = function () {
+		                                $modalInstance.dismiss('cancel');
+		                            };
+		
+		                        }
+		                    });
+		        	  }, 
+		        	 _do_user_admin : function (entity, action) {
+		        	 	
+		        	 	    var that = this;
+	
+	                        var handle = function () {
+	
+	                            var modalInstance = $modal.open({
+	                                templateUrl: logic_template('product/user_admin.html'),
+	                                windowClass: 'modal-medium',
+	                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+	                               
+	                                    $scope.rule = that.rule;
+	                                    $scope.action = action;
+	                                    $scope.log = {
+	                                        'message': '',
+	                                        'key': that.entity['key'],
+	                                        'state' : that.entity['state'],
+	                                        'note' : '',
+	                                    };
+	
+	                                    $scope.save = function () {
+	
+	                                        Endpoint.post(action, that.entity['kind'], $scope.log)
+	                                            .success(function (data) {
+	
+	                                                EntityEditor.update_entity(that, data, ['_images']);
+	
+	                                                $scope.cancel();
+	
+	                                            });
+	
+	                                    };
+	
+	                                    $scope.cancel = function () {
+	                                        $modalInstance.dismiss();
+	                                    };
+	                                }
+	                            });
+	
+	                        };
+	
+	                        handle();
+	
+	                    },
+	                    
+	                    duplicate : function()
+	                    {
+	                    	this._do_user_admin(this.entity, 'duplicate');
+	                    },
+		      		  
+		    	};
+	    	 
+	    	};
 
             var make_scope = function ()
             {
@@ -156,43 +418,18 @@ MainApp
                 'form_info': {
                     'action': Endpoint.url
                 },
-                'pre_save' : function ()
-	        	{
-	        		var new_order = [];
-	        		var pricetags = [];
-	        		angular.forEach(this.entity._images, function (item, index) {
-	        			new_order.push(item.image);
-	        			pricetags.push(item);
-	        		});
-	        		this.entity.sort_images = new_order;
-	        		this.entity.pricetags = pricetags;
-	        	},
                 'completed': function (data) {
-                    this.entity._images.extend(data['entity']['_images']);
-                    this.entity.search_cursor = this.entity._images.length;
+                    
+					// @todo complete upload logic
                 },
                 'removeImage': function (image) {
                 	image._state = 'deleted';
-                    //this.entity._images.remove(image);
                 },
                 'getImages': function () {
                     var that = this;
-
-                    if(that.entity.search_more && !that.entity.loading_new) {
-
-                        that.entity.search_cursor = that.entity._images.length;
-
-                        that.entity.loading_new = true;
-
-                        Endpoint.post('read', kind, that.entity).then(function (response) {
-                            var data = response.data;
-                            that.entity._images.extend(data['entity']['_images']);
-                            that.entity.search_more = data['search_more'];
-                            that.entity.loading_new = false;
-                        });
-
-                    }
+					 // @todo missing logic for get more images
                 },
+             
             };
             
             };
@@ -206,51 +443,72 @@ MainApp
                 'handle': function (data) {
                 	
                     var that = this;
-
-                    this.entity.search_more = data['search_more'];
-
+                    
+                    this.uploadConfig = {
+			           'args' : {
+			              'domain' : this.entity.namespace,
+			           }
+			        };
+ 
                     this.addProducts = function () {
                     	
-                        var handle = function (data) {
+                        var handle = function () {
 
                             var modalInstance = $modal.open({
                                 templateUrl: logic_template('catalog/products.html'),
                                 //windowClass: 'modal-medium',
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
-
-                                    $scope.products = data['entities'];
-
-                                    $scope.updateProduct = function (product) {
-                                        Product.update(that.entity.key, product, function (product_updated) {
-                                            update(product, product_updated);
-                                        });
+ 
+                                    $scope.manageProduct = function (product) {
+                                    	 
+                                    	 if (!product)
+                                    	 {
+                                    	 	return EntityEditor.create({
+							               		 'close' : false,
+							                	 'kind' : kind,
+							                	 'entity' : {},
+							                	 'scope' : make_product_scope(),
+							                	 'handle' : function (data)
+										         {
+										             
+										         },
+							                	 'complete' : function (entity) {
+							                	 	
+							                	 },
+							                	 'templateUrl' : logic_template('product/manage.html'),
+							                	 'args' : {
+							                	 	'domain' : that.entity.namespace,
+							                	 }
+							                });
+                                    	 }
+                                    	 else
+                                    	 {
+                                    	 	return EntityEditor.update({
+								                	 'kind' : kind,
+								                	 'entity' : product,
+								                	 'scope' : make_scope(),
+								                	 'data' : {'entity' : product},
+								                	 'handle' : function (data)
+											         {
+											             
+											         },
+								                	 'complete' : function (data)
+								                	 {
+								                	 	// @todo
+								                	 	
+								                	 	console.log(data); 
+								                	 	
+								                	 },
+								                	 'templateUrl' : logic_template('product/manage.html')
+								                });
+                                    	 }
+                                         
                                     };
-
+                                   
                                     $scope.rule = that.rule;
                                     $scope.live_entity = that.entity;
                                     $scope.entity = angular.copy(that.entity);
-
-                                    $scope.getImages = function () {
-                                        if($scope.entity.search_more && !$scope.entity.loading_new) {
-                                            $scope.entity.search_cursor = $scope.entity._images.length;
-
-                                            $scope.entity.loading_new = true;
-
-                                            Endpoint.post('read', kind, $scope.entity).then(function (response) {
-                                                var data = response.data;
-                                                var imgs = data['entity']['_images'];
-                                                var more = data['search_more'];
-                                                $scope.entity._images.extend(imgs);
-                                                $scope.live_entity._images.extend(imgs);
-                                                
-                                                $scope.live_entity.search_more = more;
-                                                $scope.entity.search_more = more;
-                                                $scope.entity.loading_new = false;
-                                            });
-
-                                        }
-                                    };
-
+ 
                                     $scope.onDrop = function (event, ui, catalog_image) {
                                         var pricetags = catalog_image.pricetags;
                                         var pricetag = pricetags[pricetags.length - 1];
@@ -304,21 +562,7 @@ MainApp
                                         pricetag['position_left'] = sizes[1];
                                     };
 
-                                    $scope.addProduct = function () {
-                                        Product.create(that.entity['key'], function (new_entity, action) {
-
-                                            if(action == 'create') {
-                                                $scope.products.push(new_entity);
-                                            } else {
-                                                angular.forEach($scope.products, function (p) {
-                                                    if(p.key == new_entity.key) {
-                                                        update(p, new_entity);
-                                                    }
-                                                });
-                                            }
-
-                                        });
-                                    };
+                                    
 
                                     $scope.save = function () {
                                     	
@@ -339,15 +583,10 @@ MainApp
                             });
 
                         };
-
-                        Endpoint.post('search', '38', {
-                            'parent': that.entity['key'],
-                            'search' : {
-                            	'filters' : [{'value' : that.entity['key'], 'operator' : '==', 'field' : 'ancestor'}],
-                            	 'order_by': {'field': 'name','operator': 'asc'}
-                            },
-                        }).success(handle);
-
+                        
+                        
+                        handle();
+  
                     };
 
                     this._do_user_admin = function (entity, action) {
@@ -439,7 +678,12 @@ MainApp
                         'scope': make_scope(),
                         'close': false,
                         'handle': function (data) {
-                            this.entity['domain'] = domain_key;
+                        	this.entity.domain = this.entity.namespace;
+                            this.uploadConfig = {
+					           'args' : {
+					              'domain' : this.entity.domain,
+					           }
+					        };
                         },
                         'complete': complete,
                         'options_after_update': make_update_scope(),
@@ -456,6 +700,12 @@ MainApp
                         'complete': complete,
                         'args': {
                             'key': entity['key'],
+                            'read_arguments' : {
+                            	'_images' : {},
+                            	'_products' : {
+                            		'_instances' : {},
+                            	},
+                            },
                         }
                     }, make_update_scope()));
                 }
