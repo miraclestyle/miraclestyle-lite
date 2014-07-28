@@ -471,7 +471,7 @@ class Category(orm.BaseExpando):
   @property
   def _is_used(self):
     line = Line.query(Line.categories == self.key).get()
-    return line != None
+    return line is not None
 
 
 class Group(orm.BaseExpando):

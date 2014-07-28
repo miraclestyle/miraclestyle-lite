@@ -308,7 +308,7 @@ class User(orm.BaseExpando):
   
   @property
   def _is_guest(self):
-    return self.key == None
+    return self.key is None
   
   @classmethod
   def set_current_user(cls, user, session=None):

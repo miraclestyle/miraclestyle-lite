@@ -15,15 +15,6 @@ class DomainUserError(Exception):
     self.message = {'domain_user': message}
 
 
-# @todo To reconsider once we implement generic set system!
-class DomainRoleSet(orm.BaseModel):
-  
-  def run(self, context):
-    context._domainrole.name = context.input.get('name')
-    context._domainrole.active = context.input.get('active')
-    context._domainrole.permissions = context.input.get('permissions')
-
-
 class DomainUserInviteSet(orm.BaseModel):
   
   def run(self, context):
@@ -41,7 +32,7 @@ class DomainUserInviteSet(orm.BaseModel):
     input_roles = orm.get_multi(context.input.get('roles'))
     roles = []
     for role in input_roles:
-      if role.key.namespace() == context.namespace:
+      if role.key_namespace == context.namespace:
         roles.append(role.key)
     context._domainuser.populate(name=context.input.get('name'), state='invited', roles=roles)
     user._use_rule_engine = False
@@ -52,12 +43,12 @@ class DomainUserInviteSet(orm.BaseModel):
 class DomainUserUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    input_roles = orm.get_multi(context.input.get('roles'))
-    roles = []
     # Avoid rogue roles.
+    input_roles = context.input.get('roles')
+    roles = []
     for role in input_roles:
-      if role.key.namespace() == context._domainuser.key_namespace:
-        roles.append(role.key)
+      if role._namespace == context._domainuser.key_namespace:
+        roles.append(role)
     context._domainuser.name = context.input.get('name')
     context._domainuser.roles = roles
 
@@ -65,7 +56,7 @@ class DomainUserUpdateSet(orm.BaseModel):
 class DomainUserRemoveSet(orm.BaseModel):
   
   def run(self, context):
-    context._user = context._domainuser._user.read() # this has to be avoided somehow
+    context._user = context._domainuser._user.read()
     context._user._use_rule_engine = False
     context._user.domains.remove(orm.Key(urlsafe=context._domainuser.key_namespace))
 

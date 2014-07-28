@@ -90,7 +90,7 @@ class UserLoginWrite(orm.BaseModel):
       entity.sessions.value.append(session)
       return session
     
-    if hasattr(context, '_identity_id') and context._identity_id != None:
+    if hasattr(context, '_identity_id') and context._identity_id is not None:
       User = context.models['0']
       Identity = context.models['64']
       entity = context._user
