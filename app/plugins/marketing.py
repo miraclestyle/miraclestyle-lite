@@ -199,8 +199,8 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
         break
     results = None
     if write_index:
-      documents.extend(document_from_entity([context._catalog], catalog_fields))
-      documents.extend(document_from_entity(templates, product_fields))
+      documents.extend([context._catalog.get_search_document()])
+      documents.extend([product.get_search_document() for product in context._catalog._products])
       results = document_write(documents, index_name=index_name, documents_per_index=max_doc)
 
 

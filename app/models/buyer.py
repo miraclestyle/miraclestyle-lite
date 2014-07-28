@@ -5,7 +5,7 @@ Created on May 18, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import orm, settings, util
+from app import orm, settings
 from app.models import auth
 from app.models.base import *
 from app.plugins.base import *
@@ -32,16 +32,14 @@ class Address(orm.BaseExpando):
     'email': orm.SuperStringProperty('10'),
     'telephone': orm.SuperStringProperty('11')
     }
- 
+  
   _virtual_fields = {
-    '_country': orm.SuperStorageStructuredProperty('15', autoload=True, 
-                                                   storage='reference', 
-                                                   storage_config={'target_field' : 'country'}, 
+    '_country': orm.SuperStorageStructuredProperty('15', autoload=True, storage='reference',
+                                                   storage_config={'target_field': 'country'},
                                                    updateable=False, deleteable=False),
-    '_region': orm.SuperStorageStructuredProperty('16', autoload=True, 
-                                                  storage='reference', 
-                                                  storage_config={'target_field' : 'region'}, 
-                                                  updateable=False, deleteable=False),
+    '_region': orm.SuperStorageStructuredProperty('16', autoload=True, storage='reference',
+                                                  storage_config={'target_field': 'region'},
+                                                  updateable=False, deleteable=False)
   }
 
 
@@ -112,7 +110,7 @@ class Addresses(orm.BaseModel):
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
+    user_key = input.get('user')
     return cls.build_key(user_key._id_str, parent=user_key)
 
 
@@ -125,12 +123,12 @@ class Collection(orm.BaseModel):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('10'),
-    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference', repeated=True, updateable=False, deleteable=False,
-                                                   storage_config={'callback' : lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
-                                                                    # this format_callback is here because inside entities there can be always Nones
-                                                                    # it is possible that we will have to make this more convinient, because we use same functionality on many places
-                                                                   'format_callback' : lambda self, entities: orm.get_async_results(entities)
-                                                                   }),
+    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference',
+                                                   repeated=True, updateable=False, deleteable=False,
+                                                   storage_config={'callback': lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
+                                                                    # This format_callback is here, because inside entities, there can always be Nones.
+                                                                    # It is possible that we will have to make this more convinient, because we use same functionality on many places.
+                                                                   'format_callback': lambda self, entities: orm.get_async_results(entities)})
     }
   
   _global_role = GlobalRole(
@@ -153,7 +151,7 @@ class Collection(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),  # @todo We need prepare_key method in order for this to work!
+            Read(),
             Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.domains': 'input.domains'}}),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec()
@@ -178,7 +176,7 @@ class Collection(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),  # @todo We need prepare_key method in order for this to work!
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_collection'}})
@@ -190,5 +188,5 @@ class Collection(orm.BaseModel):
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    user_key = input.get('user') # this could be done with kwargs.parent as well, but read plugin would have to accept the parent path to the input.user
+    user_key = input.get('user')
     return cls.build_key(user_key._id_str, parent=user_key)

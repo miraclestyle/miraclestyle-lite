@@ -67,7 +67,9 @@ class DomainRole(Role):
           plugins=[
             Context(),
             Read(),
-            DomainRoleSet(),
+            Set(cfg={'d': {'_domainrole.name': 'input.name',
+                           '_domainrole.active': 'input.active',
+                           '_domainrole.permissions': 'input.permissions'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -114,7 +116,9 @@ class DomainRole(Role):
           plugins=[
             Context(),
             Read(),
-            DomainRoleSet(),
+            Set(cfg={'d': {'_domainrole.name': 'input.name',
+                           '_domainrole.active': 'input.active',
+                           '_domainrole.permissions': 'input.permissions'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -221,8 +225,8 @@ class DomainUser(orm.BaseExpando):
     '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_user_async(),
                                                  format_callback=lambda self, value: value._primary_email),
     '_user': orm.SuperStorageStructuredProperty('0', updateable=False, deleteable=False,
-                                                 storage='reference', autoload=False, 
-                                                 storage_config={'callback' : lambda self: self._get_user_async()}),
+                                                storage='reference', autoload=False,
+                                                storage_config={'callback' : lambda self: self._get_user_async()}),
     '_records': orm.SuperRecordProperty('8')
     }
   
@@ -255,7 +259,7 @@ class DomainUser(orm.BaseExpando):
       orm.FieldPermission('8', ['state'], True, None,
                           '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")'),
       orm.FieldPermission('8', ['state'], None, True,
-                          '(action.key_id_str == "read_domains") and (user.key_id_str == entity._original.key_id_str)')
+                          'action.key_id_str == "read_domains" and user.key_id_str == entity._original.key_id_str')
       ]
     )
   
@@ -449,8 +453,8 @@ class DomainUser(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Set(cfg={'d': {'_domain': '_domainuser.namespace_entity'}}),
-            RulePrepare(),  # @todo Should run out of transaction!!!
-            RulePrepare(cfg={'path': '_domain'}),  # @todo Should run out of transaction!!!
+            RulePrepare(),
+            RulePrepare(cfg={'path': '_domain'}),
             Set(cfg={'d': {'output.entity': '_domainuser',
                            'output.domain': '_domain'}})
             ]

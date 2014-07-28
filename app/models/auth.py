@@ -209,7 +209,7 @@ class User(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_user.state': 'input.state'}, 's': {'_user.sessions': []}}), # if we reset user sessions on every sudo we will log him out
+            Set(cfg={'d': {'_user.state': 'input.state'}, 's': {'_user.sessions': []}}),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             ]
@@ -249,7 +249,8 @@ class User(orm.BaseExpando):
           )
         ]
       ),
-    orm.Action(  # We need this action in order to properly prepare entities for client side access control!
+    # We need this action in order to properly prepare entities for client side access control!
+    orm.Action(
       key=orm.Action.build_key('0', 'read_domains'),
       arguments={
         'key': orm.SuperKeyProperty(kind='0', required=True)
@@ -307,7 +308,7 @@ class User(orm.BaseExpando):
   
   @property
   def _is_guest(self):
-    return self.key == None
+    return self.key is None
   
   @classmethod
   def set_current_user(cls, user, session=None):
@@ -367,10 +368,10 @@ class Domain(orm.BaseExpando):
   name = orm.SuperStringProperty('3', required=True)
   primary_contact = orm.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
   state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = SuperImageLocalStructuredProperty(Image, '6', required=True,
-                                               process_config={'transform': True, 'width': 240, 'height': 100,
-                                                               'crop_to_fit': True, 'crop_offset_x': 0.0,
-                                                               'crop_offset_y': 0.0})
+  logo = SuperImageLocalStructuredProperty(Image, '6', required=True, process=True,
+                                           process_config={'transform': True, 'width': 240, 'height': 100,
+                                                           'crop_to_fit': True, 'crop_offset_x': 0.0,
+                                                           'crop_offset_y': 0.0})
   
   _default_indexed = False
   
@@ -411,9 +412,7 @@ class Domain(orm.BaseExpando):
       orm.FieldPermission('6', ['_records.note'], False, False,
                           'not user._root_admin'),
       orm.FieldPermission('6', ['state'], True, None,
-                          '(action.key_id_str == "sudo") and user._root_admin and (entity.state == "active" or entity.state == "su_suspended")'),
-      orm.FieldPermission('6', ['created', 'updated', 'name', 'state'], None, True,
-                          '(action.key_id_str == "read_domains")')
+                          '(action.key_id_str == "sudo") and user._root_admin and (entity.state == "active" or entity.state == "su_suspended")')
       ]
     )
   
@@ -440,7 +439,6 @@ class Domain(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('6', 'create'),
       arguments={
-        # Domain
         'domain_name': orm.SuperStringProperty(required=True),
         'domain_logo': SuperImageLocalStructuredProperty(Image, required=True)
         },
@@ -456,8 +454,6 @@ class Domain(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            # @todo Embed image uploading & processing plugin here somewhere!
-            # ive put it in setup for now, we cant put it here because entity is not created yet
             DomainCreateWrite(),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackExec(cfg=[('callback',
@@ -500,7 +496,7 @@ class Domain(orm.BaseExpando):
             Read(),
             Set(cfg={'d': {'_domain.name': 'input.name',
                            '_domain.primary_contact': 'input.primary_contact',
-                           '_domain.logo': 'input.logo'}}), # if we do this then input.logo will set domain.logo to be none!
+                           '_domain.logo': 'input.logo'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -508,9 +504,6 @@ class Domain(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            # @todo Embed image uploading & processing plugin here somewhere!
-            # ...
-            ProcessImages(),
             Write(),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
@@ -586,10 +579,14 @@ class Domain(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(cfg={'dra': {'message': 'input.message'}}),
-            RulePrepare(),  # @todo Should run out of transaction!!!
-            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
+            ]
+          ),
+        orm.PluginGroup(
+          plugins=[
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_domain'}})
             ]
           )
         ]
@@ -614,10 +611,14 @@ class Domain(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(cfg={'dra': {'message': 'input.message'}}),
-            RulePrepare(),  # @todo Should run out of transaction!!!
-            Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()
+            ]
+          ),
+        orm.PluginGroup(
+          plugins=[
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_domain'}})
             ]
           )
         ]
@@ -644,7 +645,7 @@ class Domain(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
-            RulePrepare(cfg={'skip_user_roles': True}),  # @todo Should run out of transaction!!!
+            RulePrepare(cfg={'skip_user_roles': True}),
             Set(cfg={'d': {'output.entity': '_domain'}}),
             CallbackNotify(),
             CallbackExec()

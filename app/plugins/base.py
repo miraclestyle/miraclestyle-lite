@@ -293,9 +293,9 @@ class CallbackExec(orm.BaseModel):
         static_data[key] = get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
     for callback in context._callbacks:
-      if callback[1].get('caller_user') == None:
+      if callback[1].get('caller_user') is None:
         callback[1]['caller_user'] = context.user.key_urlsafe
-      if callback[1].get('caller_action') == None:
+      if callback[1].get('caller_action') is None:
         callback[1]['caller_action'] = context.action.key_urlsafe
     callback_exec('/task/io_engine_run', context._callbacks)
     context._callbacks = []
