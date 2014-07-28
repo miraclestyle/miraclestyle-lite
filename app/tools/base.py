@@ -14,47 +14,34 @@ from app import orm
 from app.util import *
 
 
-def _rule_get_global_permissions(entity):
-  global_permissions = []
-  if entity and isinstance(entity, orm.Model):
-    if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
-      global_permissions = entity._global_role.permissions
-  return global_permissions
-
-
-def _rule_get_local_permissions(entity, user):
-  local_permissions = []
-  clean_roles_callbacks = []
-  if entity and isinstance(entity, orm.Model):
-    if user and not user._is_guest:
-      domain_user_key = orm.Key('8', user.key_id_str, namespace=entity.key_namespace)
-      domain_user = domain_user_key.get()
-      clean_roles = False
-      if domain_user and domain_user.state == 'accepted':
-        roles = orm.get_multi(domain_user.roles)
-        for role in roles:
-          if role is None:
-            clean_roles = True
-          elif role.active:
-            local_permissions.extend(role.permissions)
-        if clean_roles:
-          data = {'action_model': '8',
-                  'action_key': 'clean_roles',
-                  'key': domain_user.key.urlsafe()}
-          clean_roles_callbacks.append(('callback', data))
-  return local_permissions, clean_roles_callbacks
-
-
 def rule_prepare(entities, skip_user_roles, strict, **kwargs):
   entities = normalize(entities)
   callbacks = []
   for entity in entities:
-    global_permissions = _rule_get_global_permissions(entity)
-    local_permissions = []
-    if not skip_user_roles:
-      local_permissions, clean_roles = _rule_get_local_permissions(entity, kwargs.get('user'))
-      callbacks.extend(clean_roles)
-    entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
+    if entity and isinstance(entity, orm.Model):
+      global_permissions = []
+      local_permissions = []
+      if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
+        global_permissions = entity._global_role.permissions
+      if not skip_user_roles:
+        user = kwargs.get('user')
+        if user and not user._is_guest:
+          domain_user_key = orm.Key('8', user.key_id_str, namespace=entity.key_namespace)
+          domain_user = domain_user_key.get()
+          clean_roles = False
+          if domain_user and domain_user.state == 'accepted':
+            roles = orm.get_multi(domain_user.roles)
+            for role in roles:
+              if role is None:
+                clean_roles = True
+              elif role.active:
+                local_permissions.extend(role.permissions)
+            if clean_roles:
+              data = {'action_model': '8',
+                      'action_key': 'clean_roles',
+                      'key': domain_user.key.urlsafe()}
+              callbacks.append(('callback', data))
+      entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
   callbacks = list(set(callbacks))
   for callback in callbacks:
     callback[1]['caller_user'] = kwargs.get('user').key_urlsafe

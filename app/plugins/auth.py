@@ -22,25 +22,6 @@ def primary_contact_validator(prop, value):
     raise orm.PropertyError('invalid_domain_user')
 
 
-def new_session(model, entity):
-  Session = model
-  session_ids = [session.session_id for session in entity.sessions.value]
-  while True:
-    session_id = hashlib.md5(random_chars(30)).hexdigest()
-    if session_id not in session_ids:
-      break
-  session = Session(session_id=session_id)
-  entity.sessions.value.append(session)
-  return session
-
-
-def has_identity(entity, identity_id):
-  for identity in entity.identities.value:
-    if identity.identity == identity_id:
-      return identity
-  return False
-
-
 class OAuth2Error(Exception):
   
   def __init__(self, error):
@@ -98,18 +79,28 @@ class UserLoginInit(orm.BaseModel):
 class UserLoginWrite(orm.BaseModel):
   
   def run(self, context):
+    def new_session(entity):
+      Session = context.models['70']
+      session_ids = [session.session_id for session in entity.sessions.value]
+      while True:
+        session_id = hashlib.md5(random_chars(30)).hexdigest()
+        if session_id not in session_ids:
+          break
+      session = Session(session_id=session_id)
+      entity.sessions.value.append(session)
+      return session
+    
     if hasattr(context, '_identity_id') and context._identity_id != None:
       User = context.models['0']
       Identity = context.models['64']
-      Session = context.models['70']
       entity = context._user
       if entity._is_guest:
         entity = context.model()
         entity.emails.append(context._email)
         entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=True))
         entity.state = 'active'
-        session = new_session(Session, entity)
-        # Right now this is the only way to record this entity.
+        session = new_session(entity)
+        # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
         entity._use_rule_engine = False
         entity.write({})
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
@@ -117,14 +108,17 @@ class UserLoginWrite(orm.BaseModel):
       else:
         if context._email not in entity.emails:
           entity.emails.append(context._email)
-        used_identity = has_identity(entity, context._identity_id)
+        used_identity = False
+        for identity in entity.identities.value:
+          if identity.identity == context._identity_id:
+            identity.associated = True
+            if identity.email != context._email:
+              identity.email = context._email
+            used_identity = True
+            break
         if not used_identity:
           entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=False))
-        else:
-          used_identity.associated = True
-          if used_identity.email != context._email:
-            used_identity.email = context._email
-        session = new_session(Session, entity)
+        session = new_session(entity)
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_user(entity, session)
       context._user = entity
@@ -163,7 +157,7 @@ class UserUpdateSet(orm.BaseModel):
 class UserReadDomains():
   
   def run(self, context):
-    # We could go with this strategy perhaps!?
+    # @todo We could go with this strategy perhaps!?
     # entity = context.user
     entity_key = context.input.get('key')
     entity = entity_key.get()
@@ -174,10 +168,7 @@ class UserReadDomains():
     domains = []
     domain_users = []
     if entity.domains and len(entity.domains):
-      # fastest way is this one
-      # for every argument, there must be a set of keys that are lists e.g. iterables
       domains, domain_users = orm.get_multi_combined_clean(entity.domains, [orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
-      # merge all keys and slice them when they arrive
       rule_prepare(domains, True, False, **kwargs)
       rule_prepare(domain_users, True, False, **kwargs)
     context.output['domains'] = domains
