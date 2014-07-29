@@ -7,7 +7,7 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from app import orm, settings  # @todo settings has to GET OUT OF HERE!!!
+from app import orm
 from app.util import *
 
 
@@ -19,6 +19,7 @@ class CountryUpdateWrite(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
+    production_environment = self.cfg.get('prod_env', False)
     if not update_file_path:
       raise orm.TerminateAction()
     Country = context.models['15']
@@ -64,7 +65,7 @@ class CountryUpdateWrite(orm.BaseModel):
           if child2.text:
             dat[name] = child2.text
         to_put.append(Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
-        if i == 100 and not settings.DEVELOPMENT_SERVER:
+        if i == 100 and not production_environment:
           break
       processed_keys = {}
       processed_ids = {}
@@ -96,6 +97,6 @@ class CountryUpdateWrite(orm.BaseModel):
         processed_ids[dat['id']] = new_sub_divison
         new_sub_divison._use_rule_engine = False
         to_put.append(new_sub_divison)
-        if i == 100 and not settings.DEVELOPMENT_SERVER:
+        if i == 100 and not production_environment:
           break
       orm.put_multi(to_put)

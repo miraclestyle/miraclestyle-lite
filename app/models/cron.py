@@ -38,9 +38,16 @@ class CronConfig(orm.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             CronConfigProcessCatalogs(cfg={'page': settings.DOMAINS_PER_CRON}),
+            Write(),
             CallbackExec()
             ]
           )
         ]
       )
     ]
+  
+  # @todo Right now this will work however, once we implement other cron actions, prepare_key will be useless (see plugins/base.py Read plugin)!
+  # One way this could work with multiple actions is if we use CronConfig.data to store action specific parameters!
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    return cls.build_key('process_catalogs_key')

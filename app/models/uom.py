@@ -11,20 +11,9 @@ from app.plugins.base import *
 from app.plugins.uom import *
 
 
-class Measurement(orm.BaseModel):  # @todo Not sure about the fact that actions are hosted in child model of the structure!!?
-  
-  _kind = 18
-  
-  _use_record_engine = False
-  _use_cache = True
-  _use_memcache = True
-  
-  name = orm.SuperStringProperty('1', required=True)
-
-
 class Unit(orm.BaseExpando):
   
-  _kind = 19
+  _kind = 18
   
   _use_record_engine = False
   _use_cache = True
@@ -55,27 +44,42 @@ class Unit(orm.BaseExpando):
     'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
     'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
     }
+
+
+# @todo Thought has to be given to this construction.
+# The fact is that, it is the Unit that is being searched and used directly all the time!
+# Measurement merely serves as a constraint for unit conversions and categorization!
+# Perhaps there should be units = orm.SuperLocalStructuredProperty(Unit, '2', repeated=True).
+# By calculating expected max size of Unit (1536) with expected number of units per Measurement (512), total space occupied is 786432!
+# This fact notes that even currency measurement can be accomodated in a single measurement entity,
+# provided that there would be no more than 512 currencies at any given moment!
+class Measurement(orm.BaseModel):
+  
+  _kind = 19
+  
+  _use_record_engine = False
+  _use_cache = True
+  _use_memcache = True
+  
+  name = orm.SuperStringProperty('1', required=True)
+  
+  _virtual_fields = {
+    '_units': orm.SuperStorageStructuredProperty(Unit, storage='remote_multi')
+    }
   
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('19', [orm.Action.build_key('19', 'update_currency'),
                                   orm.Action.build_key('19', 'update_unit')], True, 'user._root_admin or user._is_taskqueue'),
       orm.ActionPermission('19', [orm.Action.build_key('19', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
-                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
-                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
-                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
-      orm.FieldPermission('19', ['name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
-                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
-                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
-                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
-                          'user._root_admin or user._is_taskqueue')
+      orm.FieldPermission('19', ['name', '_units'], False, True, 'True'),
+      orm.FieldPermission('19', ['name', '_units'], True, True, 'user._root_admin or user._is_taskqueue')
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
-      key=orm.Action.build_key('19', 'update_currency'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
+      key=orm.Action.build_key('19', 'update_currency'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
@@ -90,7 +94,7 @@ class Unit(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('19', 'update_unit'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
+      key=orm.Action.build_key('19', 'update_unit'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(

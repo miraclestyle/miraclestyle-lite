@@ -35,7 +35,7 @@ class Setup():
     if not self.config.next_operation:
       return 'execute_init'
     function = 'execute_%s' % self.config.next_operation
-    log('Running function %s' % function)  # @todo Probably to be removed?! - removed after testing
+    log('Running function %s' % function)
     return function
   
   def run(self):
@@ -45,9 +45,9 @@ class Setup():
       runner = getattr(self, self.__get_next_operation())
       if runner:
         orm.transaction(runner, xg=True)
-      time.sleep(1.5) # sleep between transactions
+      time.sleep(1.5)  # Sleep between transactions.
       if iterations < 1:
-        log('Stopped iteration after 100')  # @todo Probably to be removed?! - removed after testing
+        log('Stopped iteration after 100')
         break
 
 
@@ -73,7 +73,7 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity._use_rule_engine = False
-    entity.logo.process() # @todo i put the process
+    entity.logo.process()
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}
@@ -81,25 +81,22 @@ class DomainSetup(Setup):
   
   def execute_create_domain_role(self):
     config_input = self.config.next_operation_input
+    domain_key = config_input.get('domain_key')
+    namespace = domain_key.urlsafe()
     ActionPermission = self.context.models['79']
     FieldPermission = self.context.models['80']
     DomainRole = self.context.models['60']
-    domain_key = config_input.get('domain_key')
-    namespace = domain_key.urlsafe()
     permissions = []
     objects = ['6', '60', '8', '62', '61', '35', '38', '39', '17', '15', '16', '19']
     for obj in objects:
       obj = self.context.models.get(obj)
-      if obj is not None: # this is because we do not have all models ported yet
-        # for production it should work self.context.models[obj]
+      if obj is not None:  # This is because we do not have all models ported yet.
+        # For production it should work self.context.models[obj]
         if hasattr(obj, '_actions'):
           actions = []
           for action_instance in obj._actions:
             actions.append(action_instance.key)
-          permissions.append(ActionPermission(model=obj.get_kind(),
-                                              actions=actions,
-                                              executable=True,
-                                              condition='True'))
+          permissions.append(ActionPermission(obj.get_kind(), actions, True, 'True'))
           props = obj.get_fields()
           prop_names = []
           for prop_name, prop in props.items():
@@ -116,12 +113,11 @@ class DomainSetup(Setup):
   def execute_create_widget_step_1(self):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
+    namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
-    i = 0
+    i = 0  # @todo What is this?
     Widget = self.context.models['62']
     Filter = self.context.models['65']
-    namespace = domain_key.urlsafe()
-    
     entities = [Widget(id='system_search',
                        namespace=namespace,
                        name='Search',
@@ -184,13 +180,13 @@ class DomainSetup(Setup):
   
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
-    DomainUser = self.context.models['8']
-    user = self.config.parent_entity
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
+    DomainUser = self.context.models['8']
+    user = self.config.parent_entity
     entity = DomainUser(namespace=namespace, id=user.key_id_str,
                         name='Administrator', state='accepted',
-                        roles=[config_input.get('role_key')])  # Previous name property value was: user._primary_email
+                        roles=[config_input.get('role_key')])
     entity._use_rule_engine = False
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     user.domains.append(domain_key)

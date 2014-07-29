@@ -50,9 +50,9 @@ class Country(orm.BaseModel):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
-      key=orm.Action.build_key('15', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
+      key=orm.Action.build_key('15', 'update'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
@@ -61,7 +61,8 @@ class Country(orm.BaseModel):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE})
+            CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE,
+                                    'prod_env': settings.DEVELOPMENT_SERVER})
             ]
           )
         ]
@@ -92,8 +93,8 @@ class Country(orm.BaseModel):
             Context(),
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
-            RuleExec(), 
-            Search(cfg={'page': 1000}), # before we put -1 for no limit, but 1000 is the limit.
+            RuleExec(),
+            Search(cfg={'page': 1000}),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -129,7 +130,7 @@ class CountrySubdivision(orm.BaseModel):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
       key=orm.Action.build_key('16', 'search'),
       arguments={

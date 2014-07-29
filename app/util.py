@@ -15,10 +15,27 @@ from decimal import Decimal, ROUND_HALF_EVEN
 
 from app import settings
 
-def remove_value(values, target=None):
+
+class Meaning(object):
+  '''Class used to provide meaning for variables. E.g.:
+  Nonexistent = Meaning('Represents something that does not exist in list, dict or whatever')
+  if value is Nonexistent:
+    do stuff
+  
   '''
-    By default it will remove None. This function will never return new list
-    it will always mutate it.
+  def __init__(self, docstring=None):
+    self.__doc__ = docstring
+  
+  def __repr__(self):
+    return '<Meaning() => %s>' % self.__doc__
+
+
+Nonexistent = Meaning('Represents something that does not exist when built-in None cannot be used.')
+
+
+def remove_value(values, target=None):
+  '''By default it will remove None. This function will never return new list, it will always mutate it.
+  
   '''
   delete_values = []
   if isinstance(values, list):
@@ -48,24 +65,6 @@ def remove_value(values, target=None):
         delete_values.append(key)
     for delete_key in delete_values:
       del values[delete_key]
-    
-      
-
-class Meaning(object):
-  '''Class used to provide meaning for variables. E.g.:
-  Nonexistent = Meaning('Represents something that does not exist in list, dict or whatever')
-  if value is Nonexistent:
-    do stuff
-  
-  '''
-  def __init__(self, docstring=None):
-    self.__doc__ = docstring
-  
-  def __repr__(self):
-    return '<Meaning() => %s>' % self.__doc__
-
-
-Nonexistent = Meaning('Represents something that does not exist when built-in None cannot be used.')
 
 
 def prepare_attr(entity, field_path):

@@ -168,14 +168,18 @@ class Notification(orm.BaseExpando):
         'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': orm.SuperTextProperty(required=True),
         'active': orm.SuperBooleanProperty(),
-        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True),
+        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            NotificationSet(),
+            Set(cfg={'d': {'_notification.name': 'input.name',
+                           '_notification.action': 'input.action',
+                           '_notification.condition': 'input.condition',
+                           '_notification.active': 'input.active',
+                           '_notification.templates': 'input.templates'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -217,14 +221,18 @@ class Notification(orm.BaseExpando):
         'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': orm.SuperTextProperty(required=True),
         'active': orm.SuperBooleanProperty(),
-        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True),
+        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            NotificationSet(),
+            Set(cfg={'d': {'_notification.name': 'input.name',
+                           '_notification.action': 'input.action',
+                           '_notification.condition': 'input.condition',
+                           '_notification.active': 'input.active',
+                           '_notification.templates': 'input.templates'}}),
             RulePrepare(),
             RuleExec()
             ]
