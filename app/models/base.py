@@ -145,19 +145,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
         entities = [entities]
       mapper(entities).get_result()
     return self._property_value
-  
-  def _process_deep(self):
-    if self.has_value() and not self.has_future():  # In case value is a future we cannot proceed. Everything must be already loaded!
-      entities = self._property_value
-      if not self._property._repeated:
-        entities = [entities]
-      for entity in entities:
-        for field_key, field in entity.get_fields().items():
-          if field.is_structured:
-            value = getattr(entity, field_key, None)  # @todo Do we need 'if isinstance(value, _BaseImageProperty):' block here?
-            if value is not None and value.has_value() and hasattr(value, 'process') and callable(value.process):
-              value.process()  # Re-loop if any
-  
+ 
   def process(self):
     '''This function should be called inside a taskqueue.
     It will perform all needed operations based on the property configuration on how to process its images.
@@ -172,7 +160,6 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
         else:
           processed_entity = self._property.process(self.value)
           setattr(self._entity, self.property_name, processed_entity)
-      self._process_deep()
 
 
 class _BaseBlobProperty(object):
@@ -320,6 +307,8 @@ class _BaseImageProperty(_BaseBlobProperty):
   
   def argument_format(self, value):
     value = self._property_value_format(value)
+    if value is Nonexistent:
+      return value
     if not self._repeated:
       value = [value]
     out = []

@@ -42,6 +42,7 @@ class ProductCategory(orm.BaseModel):
         orm.PluginGroup(
           plugins=[
             Context(),
+            Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
@@ -271,7 +272,7 @@ class Catalog(orm.BaseExpando):
                           'not user._root_admin'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
                           'user._is_taskqueue or user._root_admin'),
-      orm.FieldPermission('35', ['_images'], True, None,
+      orm.FieldPermission('35', ['_images', '_products._images', '_products._instances._images'], True, None,
                           'action.key_id_str == "process_images" and (user._is_taskqueue or user._root_admin)'),
       orm.FieldPermission('35', ['cover'], True, None,
                           'action.key_id_str == "process_cover" and (user._is_taskqueue or user._root_admin)')
@@ -420,15 +421,19 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('35', 'product_upload_images'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='38', required=True),
-        '_images': SuperImageLocalStructuredProperty(Image, repeated=True)
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        'product': orm.SuperKeyProperty(kind='38', required=True),
+        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path' : '_products', 'add_config' : {'_images' : 'input._images'}}),
+            UploadImages(cfg={'target_field_path' : '_products',
+                              'key_path' : 'input.product',
+                              'add_config' : {'images' : 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -449,15 +454,19 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('35', 'product_instance_upload_images'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='39', required=True),
-        '_images': SuperImageLocalStructuredProperty(Image, repeated=True)
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        'product_instance': orm.SuperKeyProperty(kind='39', required=True),
+        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path' : '_products._instances', 'add_config' : {'_images' : 'input._images'}}),
+            UploadImages(cfg={'target_field_path' : '_products._instances', 
+                              'key_path' : 'input.product_instance',
+                              'add_config' : {'images' : 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -493,7 +502,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            ProcessImages(),
+            ProcessImages(cfg={'target_paths' : ['_images', '_products._images', '_products._instances._images']}),
             # @todo this is a problem, we cannot call recursively all process functions,
             # because properties with copy=True will copy themselves every time def process is called.
             # we will have to think some other way how we can do this, like we do with read_arguments

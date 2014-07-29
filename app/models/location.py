@@ -50,7 +50,7 @@ class Country(orm.BaseModel):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
       key=orm.Action.build_key('15', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},
@@ -129,7 +129,7 @@ class CountrySubdivision(orm.BaseModel):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
       key=orm.Action.build_key('16', 'search'),
       arguments={

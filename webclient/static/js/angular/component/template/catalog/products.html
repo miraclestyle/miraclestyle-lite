@@ -36,10 +36,10 @@
 		  </div>
 	 
 		  <ul>
-            <li class="new-pricetag" ng-repeat='product in products track by $index' data-drag="true" 
+            <li class="new-pricetag" ng-repeat='product in entity._products track by $index' data-drag="true" 
                 data-jqyoui-options="{revert: 'invalid', scope2:'new-pricetag', helper: 'clone'}" 
-                ng-model="products" ng-show="product.name" jqyoui-draggable="{index: {{$index}}, placeholder: 'keep'}">
-                <div class="just-text"><a ng-click="updateProduct(product)" href="javascript:;">{{product.name}}</a></div>
+                ng-model="entity._products" jqyoui-draggable="{index: {{$index}}, placeholder: 'keep'}">
+                <div class="just-text"><a ng-click="manageProduct(product)" href="javascript:;">{{product.name}}</a></div>
                 <div class="button pricetag">{{product.unit_price}}</div>
             </li>
           </ul>

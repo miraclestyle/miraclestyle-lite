@@ -136,7 +136,7 @@ MainApp
 		        	 	'general' : true,
 		        	 },
 		        	 'gridConfig' : function (scope)
-		            	{
+		              {
 		            		return {
 		            			margin : 10
 		            		};
@@ -144,6 +144,7 @@ MainApp
 		        	 'completed' : function (data)
 		        	 { 
 		        	 	// append new images
+		        	 	console.log(this, data);
 		        	 },
  
 		            'removeImage' : function (image)
@@ -162,7 +163,7 @@ MainApp
 		        	 },
 		        	 'manageContent' : function (content) { 
 		        	 	
-		        	 	var that = this;
+		        	 	var $parentScope = this;
 		        	 	 
 		        	 	var modalInstance = $modal.open({
 		                        templateUrl: logic_template('product/manage_content.html'),
@@ -176,7 +177,7 @@ MainApp
 		           
 		                                 if (new_content)
 		                                 {
-		                                 	that.entity.contents.push($scope.content);
+		                                 	$parentScope.child.contents.push($scope.content);
 		                                 }
 		                                 else
 		                                 {
@@ -196,8 +197,8 @@ MainApp
 		        	  },
 		        	 'manageVariant' : function (variant) {
 		        	 	
-		        	 	var that = this;
-		        	 	 
+		        	 	var $parentScope = this;
+		       
 		        	 	var modalInstance = $modal.open({
 		                        templateUrl: logic_template('product/manage_variant.html'),
 		                        controller: function ($scope, $modalInstance, RuleEngine) {
@@ -219,7 +220,7 @@ MainApp
 		                            	  
 		                                 if (new_variant)
 		                                 {
-		                                 	that.entity.variants.push(this.variant);
+		                                 	$parentScope.child.variants.push(this.variant);
 		                                 }
 		                                 else
 		                                 {
@@ -239,15 +240,12 @@ MainApp
 		        	  },
 		        	  'removeInstance' : function (instance)
 		        	  {
-		        	  	
-		        	  	  var that = this;
-		        	  	  
 		        	  	  instance._state = 'deleted';
 		        	  },
 	 
 		        	  'manageInstance' : function (instance, create)
 		        	  {
-		        	  	    var that = this;
+		        	  	    var $parentScope = this;
 		        	  	    
 		        	  	    if (!instance) instance = {'images' : [], 'contents' : []};
 		          
@@ -269,8 +267,8 @@ MainApp
 			        		  	cfg['args'] = create;
 			        		  	cfg['complete'] = function (entity)
 			        		  	{
-			        		  		angular.forEach(that.entity._instances, function (e) {
-			        		  			if (e.key == entity.key)
+			        		  		angular.forEach($parentScope.entity._instances, function (ent) {
+			        		  			if (ent.key == entity.key)
 			        		  			{
 			        		  				 create = false;
 			        		  			}
@@ -278,7 +276,7 @@ MainApp
 			        		  		
 			        		  	    if (create)
 			        		  	    {
-			        		  	    	that.entity._instances.push(entity);
+			        		  	    	$parentScope.entity._instances.push(entity);
 			        		  	    }
 			        		  		
 			        		  	};
@@ -295,7 +293,7 @@ MainApp
 		        	  'newInstance' : function ()
 		        	  {
 		        	  	
-						var that = this;
+						var $parentScope = this;
 		        	 	 
 		        	 	var modalInstance = $modal.open({
 		                        templateUrl: logic_template('product/create_instance.html'),
@@ -303,7 +301,7 @@ MainApp
 		  							
 		  							$scope.variants = [];
 		  				 
-		  							angular.forEach(that.entity.variants, function (v) {
+		  							angular.forEach($parentScope.entity.variants, function (v) {
 		 
 		  								$scope.variants.push({
 		  									'name' : v.name,
@@ -337,7 +335,7 @@ MainApp
 		        	  }, 
 		        	 _do_user_admin : function (entity, action) {
 		        	 	
-		        	 	    var that = this;
+		        	 	    var $parentScope = this;
 	
 	                        var handle = function () {
 	
@@ -346,21 +344,21 @@ MainApp
 	                                windowClass: 'modal-medium',
 	                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
 	                               
-	                                    $scope.rule = that.rule;
+	                                    $scope.rule = $parentScope.rule;
 	                                    $scope.action = action;
 	                                    $scope.log = {
 	                                        'message': '',
-	                                        'key': that.entity['key'],
-	                                        'state' : that.entity['state'],
+	                                        'key': $parentScope.entity.key,
+	                                        'state' : $parentScope.entity.state,
 	                                        'note' : '',
 	                                    };
 	
 	                                    $scope.save = function () {
 	
-	                                        Endpoint.post(action, that.entity['kind'], $scope.log)
+	                                        Endpoint.post(action, $parentScope.entity.kind, $scope.log)
 	                                            .success(function (data) {
 	
-	                                                EntityEditor.update_entity(that, data, ['_images']);
+	                                                EntityEditor.update_entity($parentScope, data, ['_images']);
 	
 	                                                $scope.cancel();
 	
@@ -392,7 +390,6 @@ MainApp
             var make_scope = function ()
             {
             	return {
-            		
             	'accordions' : {
             		'general' : true,
             		'products' : false,
@@ -413,20 +410,19 @@ MainApp
             		};
             	},
                 'datepickOptions': {
-                    'showWeeks': false,
+                   'showWeeks': false,
                 },
                 'form_info': {
                     'action': Endpoint.url
                 },
                 'completed': function (data) {
-                    
 					// @todo complete upload logic
+					this.entity._images.extend(data.entity._images);
                 },
                 'removeImage': function (image) {
                 	image._state = 'deleted';
                 },
                 'getImages': function () {
-                    var that = this;
 					 // @todo missing logic for get more images
                 },
              
@@ -442,11 +438,13 @@ MainApp
                 'scope': make_scope(),
                 'handle': function (data) {
                 	
-                    var that = this;
+                    var $parentScope = this;
                     
-                    this.uploadConfig = {
+                    $parentScope.uploadConfig = {
+                       'action' : 'prepare',
+                       'kind' : kind,
 			           'args' : {
-			              'domain' : this.entity.namespace,
+			              'domain' : $parentScope.entity.namespace,
 			           }
 			        };
  
@@ -460,24 +458,29 @@ MainApp
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
  
                                     $scope.manageProduct = function (product) {
-                                    	 
+                                      
                                     	 if (!product)
                                     	 {
                                     	 	return EntityEditor.create({
 							               		 'close' : false,
 							                	 'kind' : kind,
-							                	 'entity' : {},
+							                	 'parentScope' : $parentScope,
 							                	 'scope' : make_product_scope(),
+							                	 'get_child' : function ()
+							                	 {
+							                	 	this.child = {};
+							                	 	this.entity._products.push(this.child);
+							                	 },
 							                	 'handle' : function (data)
 										         {
-										             
+										             this.uploadConfig = $parentScope.uploadConfig;
 										         },
 							                	 'complete' : function (entity) {
-							                	 	
+							                	 	console.log(entity);
 							                	 },
 							                	 'templateUrl' : logic_template('product/manage.html'),
 							                	 'args' : {
-							                	 	'domain' : that.entity.namespace,
+							                	 	'domain' : $parentScope.entity.namespace,
 							                	 }
 							                });
                                     	 }
@@ -485,29 +488,42 @@ MainApp
                                     	 {
                                     	 	return EntityEditor.update({
 								                	 'kind' : kind,
-								                	 'entity' : product,
-								                	 'scope' : make_scope(),
-								                	 'data' : {'entity' : product},
+								                	 'scope' : make_product_scope(),
+								                	 'parentScope' : $parentScope,
+								                	 'get_child' : function ()
+								                	 {
+								                	 	var child = null;
+								                	 	angular.forEach(this.entity._products, function (prod) {
+								                	 		if (prod.key == product.key)
+								                	 		{
+								                	 			child = prod;
+								                	 		}
+								                	 	});
+								                	 	
+								                	 	this.child = child;
+								                	 },
 								                	 'handle' : function (data)
 											         {
-											             
+											             this.uploadConfig = $parentScope.uploadConfig;
 											         },
 								                	 'complete' : function (data)
-								                	 {
-								                	 	// @todo
-								                	 	
-								                	 	console.log(data); 
-								                	 	
+								                	 { 
+								                	 	console.log(data);
 								                	 },
 								                	 'templateUrl' : logic_template('product/manage.html')
 								                });
                                     	 }
                                          
                                     };
+                                    
+                                    $scope.getImages = function ()
+                                    {
+                                    	console.log(arguments);
+                                    };
                                    
-                                    $scope.rule = that.rule;
-                                    $scope.live_entity = that.entity;
-                                    $scope.entity = angular.copy(that.entity);
+                                    $scope.rule = $parentScope.rule;
+                                    $scope.live_entity = $parentScope.entity;
+                                    $scope.entity = angular.copy($parentScope.entity);
  
                                     $scope.onDrop = function (event, ui, catalog_image) {
                                         var pricetags = catalog_image.pricetags;
@@ -570,7 +586,7 @@ MainApp
 
                                         update($scope.live_entity, $scope.entity);
                                         
-                                        console.log(that, that.live_entity, $scope.live_entity);
+                                        console.log($parentScope, $parentScope.live_entity, $scope.live_entity);
 
                                         $scope.cancel();
 
@@ -583,8 +599,7 @@ MainApp
                             });
 
                         };
-                        
-                        
+                         
                         handle();
   
                     };
@@ -599,21 +614,21 @@ MainApp
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
                               
 
-                                    $scope.rule = that.rule;
+                                    $scope.rule = $parentScope.rule;
                                     $scope.action = action;
                                     $scope.log = {
                                         'message': '',
-                                        'key': that.entity['key'],
-                                        'state' : that.entity['state'],
+                                        'key': $parentScope.entity.key,
+                                        'state' : $parentScope.entity.state,
                                         'note' : '',
                                     };
 
                                     $scope.save = function () {
 
-                                        Endpoint.post(action, that.entity['kind'], $scope.log)
+                                        Endpoint.post(action, $parentScope.entity.kind, $scope.log)
                                             .success(function (data) {
 
-                                                EntityEditor.update_entity(that, data, ['_images']);
+                                                EntityEditor.update_entity($parentScope, data, ['_images']);
 
                                                 $scope.cancel();
 
@@ -668,6 +683,13 @@ MainApp
             };
             
             };
+            
+            var catalog_read_arguments = {
+                            	'_images' : {},
+                            	'_products' : {
+                            		'_instances' : {},
+                            	},
+                           };
              
             return {
 
@@ -682,7 +704,7 @@ MainApp
                             this.uploadConfig = {
 					           'args' : {
 					              'domain' : this.entity.domain,
-					           }
+					              }
 					        };
                         },
                         'complete': complete,
@@ -690,6 +712,7 @@ MainApp
                         'templateUrl': logic_template('catalog/manage.html'),
                         'args': {
                             'domain': domain_key,
+                            'read_arguments' : catalog_read_arguments,
                         }
                     });
 
@@ -699,13 +722,8 @@ MainApp
                         'entity': entity,
                         'complete': complete,
                         'args': {
-                            'key': entity['key'],
-                            'read_arguments' : {
-                            	'_images' : {},
-                            	'_products' : {
-                            		'_instances' : {},
-                            	},
-                            },
+                            'key': entity.key,
+                            'read_arguments' : catalog_read_arguments,
                         }
                     }, make_update_scope()));
                 }

@@ -189,15 +189,8 @@ MainApp
 				{
 					form = that.parents('form:first');
 				}
-				var options = resolve_defaults({
-					'kind' : scope.entity.kind,
-					'action' : 'prepare',
-					'args' : {
-						'domain' : $rootScope.nav.domain.key,
-					},
-				}, scope.$eval(attrs.uploadOnSelect));
-				 
-			 
+				var options = scope.$eval(attrs.uploadOnSelect);
+				  
 				Endpoint.post(options['action'], options['kind'], angular.extend({'upload_url' : Endpoint.url}, options['args'])).success(function (data) {
 	        	 	form.attr('action', data.upload_url).trigger('submit');
 	            });

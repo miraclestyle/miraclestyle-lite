@@ -48,6 +48,7 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
+# @todo these should be prefixed "BUCKET" instead of suffix
 DOMAIN_LOGO_BUCKET = 'universal-trail-608.appspot.com/domain_logo'
 CATALOG_IMAGE_BUCKET = 'universal-trail-608.appspot.com/catalog_image'
 PRODUCT_TEMPLATE_BUCKET = 'universal-trail-608.appspot.com/product_image'

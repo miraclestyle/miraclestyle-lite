@@ -73,7 +73,7 @@ class Unit(orm.BaseExpando):
       ]
     )
   
-  _actions = [  # @todo Do we need read action here?
+  _actions = [
     orm.Action(
       key=orm.Action.build_key('19', 'update_currency'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
       arguments={},

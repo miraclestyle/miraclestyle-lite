@@ -2,8 +2,8 @@
 	
 <input type="hidden" name="action_id" value="product_instance_upload_images" />
 <input type="hidden" name="action_model" value="35" />
-<input type="hidden" name="variant_signature" value="{{entity.variant_signature|json}}" />
-<input type="hidden" name="parent" value="{{entity.parent.key.parent.key}}" />
+<input type="hidden" name="key" value="{{entity.parent.parent.key}}" />
+<input type="hidden" name="product_instance" value="{{entity.key}}" />
 	
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">

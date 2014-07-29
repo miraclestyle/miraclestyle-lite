@@ -149,28 +149,40 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     add_config = self.cfg.get('add_config', {})
+    key_path = self.cfg.get('key_path')
+    key = None
+    if key_path:
+      key = get_attr(context, key_path)
     entity = get_attr(context, entity_path)
     target_field_path = self.cfg.get('target_field_path')
     if target_field_path:
-      found = None
       target_field_paths = target_field_path.split('.')
       last_i = len(target_field_paths)-1
-      def start(entity, target, last_i, i):
-        if isinstance(entity, orm.SuperPropertyManager):
-          entity = entity.value
-        if last_i == i:
-          found = entity
-          return entity
-        if not isinstance(entity, list):
-          entity = getattr(entity, target)
-          return entity
-        else:
+      do_entity = entity
+      entities = []
+      def start(entity, target, last_i, i, entities):
+        if isinstance(entity, list):
+          out = []
           for ent in entity:
-            start(ent, target, last_i, i)
-          return entity
+            out.append(start(ent, target, last_i, i, entities))
+          return out
+        else:
+          entity = getattr(entity, target)
+          if isinstance(entity, orm.SuperPropertyManager):
+            entity = entity.value
+          if last_i == i:
+            if isinstance(entity, list):
+              for ent in entity:
+                if (key == None or (ent.key == key)):
+                  entities.append(ent)
+            else:
+              if (key == None or (entity.key == key)):
+                entities.append(entity)
+          else:
+            return entity
       for i,target in enumerate(target_field_paths):
-        entity = start(entity, target, last_i, i)
-      entity = found
+        do_entity = start(do_entity, target, last_i, i, entities)
+    entity = entities[0]
     if entity and isinstance(entity, orm.Model):
       fields = entity.get_fields()
       for field_key, path in add_config.items():
@@ -189,12 +201,36 @@ class ProcessImages(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, orm.Model):
-      for field_key, field in entity.get_fields().items():
-        if field.is_structured:
-          value = getattr(entity, field_key, None)
-          if value is not None and value.has_value() and hasattr(value, 'process') and callable(value.process):
+    target_field_paths = self.cfg.get('target_field_paths')
+    root_entity = get_attr(context, entity_path)
+    values = []
+    if target_field_paths:
+      for full_target in target_field_paths:
+        targets = full_target.split('.')
+        last_i = len(targets)-1
+        do_entity = root_entity
+        values = []
+        def start(entity, target, last_i, i, targets, values):
+          if isinstance(entity, list):
+            out = []
+            for ent in entity:
+              out.append(start(ent, target, last_i, i, targets, values))
+            return out
+          else:
+            entity = getattr(entity, target)
+            if last_i == i:
+              if isinstance(entity, list):
+                values.extend(entity)
+              else:
+                values.append(entity)
+            else:
+              if isinstance(entity, orm.SuperPropertyManager):
+                entity = entity.value
+              return entity
+        for i,target in enumerate(targets):
+          do_entity = start(do_entity, target, last_i, i, targets, values)
+        for value in values:
+          if value is not None and hasattr(value, 'process') and callable(value.process):
             value.process()
 
 

@@ -35,7 +35,7 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
     parent = None
     dig = 0
     for i, item in enumerate(data):
-      if i == 100 and settings.DEBUG:
+      if i == 100 and not settings.DEVELOPMENT_SERVER:
         break
       new_cat = {}
       current = item.split(sep)
@@ -75,7 +75,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
       else:
         context._catalog.cover = catalog_images[0]
         context._catalog.cover.process()
-    elif context._catalog.cover.value:
+    elif catalog_cover:
       context._catalog.cover = None
       
 

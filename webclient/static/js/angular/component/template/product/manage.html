@@ -2,7 +2,9 @@
 	
 <input type="hidden" name="action_id" value="product_upload_images" />
 <input type="hidden" name="action_model" value="35" />
-<input type="hidden" name="key" value="{{entity.parent.key}}" />
+<input type="hidden" name="key" value="{{child.parent.key}}" />
+<input type="hidden" name="product" value="{{child.key}}" />
+<input type="hidden" name="read_arguments" value="{&quot;_products&quot; : {&quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.key}}&quot;]}}}" />
 	
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
@@ -18,10 +20,10 @@
 
 				<input
 			       name="product_category" 
-			       ng-required="rule.input[action].product_category.required"
-			       ng-disabled="!rule.field.product_category.writable"
+			       ng-required="rule.input[action]._products.model.product_category.required"
+			       ng-disabled="!rule.field._products.product_category.writable"
 			       ui-select2="commonSelect2Options.product_category"
-			       ng-model="entity.product_category"
+			       ng-model="child.product_category"
 			       data-placeholder="Select a product category" />
 			</div>
 		</div>
@@ -33,9 +35,9 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="name" 
-				 		ng-required="rule.input[action].name.required"
-				 	    class="text-input" type="text" ng-model="entity.name"
-				 	    ng-disabled="!rule.field.name.writable" />
+				 		ng-required="rule.input[action]._products.model.name.required"
+				 	    class="text-input" type="text" ng-model="child.name"
+				 	    ng-disabled="!rule.field._products.name.writable" />
 			</div>
 		</div>
 		</div>
@@ -47,10 +49,10 @@
 				
 				 <input
 			       name="product_uom" 
-			       ng-required="rule.input[action].product_uom.required"
-			       ng-disabled="!rule.field.product_uom.writable"
+			       ng-required="rule.input[action]._products.model.product_uom.required"
+			       ng-disabled="!rule.field._products.product_uom.writable"
 			       ui-select2="commonSelect2Options.units"
-			       ng-model="entity.product_uom"
+			       ng-model="child.product_uom"
 			       data-placeholder="Select a product unit of measure" />
 			 
 			</div>
@@ -62,9 +64,9 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="unit_price" 
-				 		ng-required="rule.input[action].unit_price.required"
-				 	    class="text-input" type="text" ng-model="entity.unit_price"
-				 	    ng-disabled="!rule.field.unit_price.writable" />
+				 		ng-required="rule.input[action]._products.model.unit_price.required"
+				 	    class="text-input" type="text" ng-model="child.unit_price"
+				 	    ng-disabled="!rule.field._products.unit_price.writable" />
 			</div>
 		</div>
 		</div>
@@ -73,9 +75,9 @@
 		<label class="form-label">Description</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <textarea ng-required="rule.input[action].description.required"
-				 		   class="text-input text-textarea" ng-model="entity.description" name="description"
-				 		   ng-disabled="!rule.field.description.writable"></textarea>
+				 <textarea ng-required="rule.input[action]._products.model.description.required"
+				 		   class="text-input text-textarea" ng-model="child.description" name="description"
+				 		   ng-disabled="!rule.field._products.description.writable"></textarea>
 			</div>
 		</div>
 		</div>
@@ -88,17 +90,17 @@
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="weight" 
-											 		ng-required="rule.input[action].weight.required"
-											 	    class="text-input" type="text" ng-model="entity.weight"
-											 	    ng-disabled="!rule.field.weight.writable" /></td>
+											 		ng-required="rule.input[action]._products.model.weight.required"
+											 	    class="text-input" type="text" ng-model="child.weight"
+											 	    ng-disabled="!rule.field._products.weight.writable" /></td>
 				 			<td class="t40 cpl10">
 			 
 								<input
 							       name="weight_uom" 
-							       ng-required="rule.input[action].weight_uom.required"
-							       ng-disabled="!rule.field.weight_uom.writable"
+							       ng-required="rule.input[action]._products.model.weight_uom.required"
+							       ng-disabled="!rule.field._products.weight_uom.writable"
 							       ui-select2="commonSelect2Options.weight"
-							       ng-model="entity.weight_uom"
+							       ng-model="child.weight_uom"
 							       data-placeholder="Select a weight unit of measure" />								 
 				 			</td>
 				 		</tr>
@@ -116,17 +118,17 @@
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="volume" 
-											 		ng-required="rule.input[action].volume.required"
-											 	    class="text-input" type="text" ng-model="entity.volume"
-											 	    ng-disabled="!rule.field.volume.writable" /></td>
+											 		ng-required="rule.input[action]._products.model.volume.required"
+											 	    class="text-input" type="text" ng-model="child.volume"
+											 	    ng-disabled="!rule.field._products.volume.writable" /></td>
 				 			<td class="t40 cpl10">
 				 	 
 								<input
 							       name="volume_uom" 
-							       ng-required="rule.input[action].volume_uom.required"
-							       ng-disabled="!rule.field.volume_uom.writable"
+							       ng-required="rule.input[action]._products.model.volume_uom.required"
+							       ng-disabled="!rule.field._products.volume_uom.writable"
 							       ui-select2="commonSelect2Options.volume"
-							       ng-model="entity.volume_uom"
+							       ng-model="child.volume_uom"
 							       data-placeholder="Select a volume unit of measure" />									 
 								 
 				 			</td>
@@ -142,9 +144,9 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="code" 
-				 		ng-required="rule.input[action].code.required"
-				 	    class="text-input" type="text" ng-model="entity.code"
-				 	    ng-disabled="!rule.field.code.writable" />
+				 		ng-required="rule.input[action]._products.model.code.required"
+				 	    class="text-input" type="text" ng-model="child.code"
+				 	    ng-disabled="!rule.field._products.code.writable" />
 			</div>
 		</div>
 		</div>
@@ -153,13 +155,12 @@
 		<label class="form-label">Availability</label>
 		<div class="form-input">
 			<div class="form-text">
- 
-				 	    
-			   <select name="availability" ng-required="rule.input[action].availability.required"
-					    ng-disabled="!rule.field.availability.writable" ui-select2 
-					    ng-model="entity.availability" data-placeholder="Select availability">
+   
+			   <select name="availability" ng-required="rule.input[action]._products.model.availability.required"
+					    ng-disabled="!rule.field._products.availability.writable" ui-select2 
+					    ng-model="child.availability" data-placeholder="Select availability">
 				    <option value=""></option>
-				    <option ng-repeat="choice in rule.input[action].availability.choices track by $index" value="{{choice}}">{{choice}}</option>
+				    <option ng-repeat="choice in rule.input[action]._products.model.availability.choices track by $index" value="{{choice}}">{{choice}}</option>
 				</select>
 				
 			</div>
@@ -171,18 +172,18 @@
 		<div class="form-input">
 			<div class="form-text">
 			   <input name="low_stock_quantity" 
-				 		ng-required="rule.input[action].low_stock_quantity.required"
-				 	    class="text-input" type="text" ng-model="entity.low_stock_quantity"
-				 	    ng-disabled="!rule.field.low_stock_quantity.writable" />
+				 		ng-required="rule.input[action]._products.model.low_stock_quantity.required"
+				 	    class="text-input" type="text" ng-model="child.low_stock_quantity"
+				 	    ng-disabled="!rule.field._products.low_stock_quantity.writable" />
 			</div>
 		</div>
 		</div>
 		
-		<div ng-show="entity.id">
+		<div ng-show="child.id">
 			<h2 class="fieldset with-button">
 				<span class="fieldset-text">Variants</span>
 				<span class="fieldset-button">
-					<button ng-show="rule.field.variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
+					<button ng-show="rule.field._products.variants.writable" ng-click="manageVariant()" type="button" class="button">Add Variant</button>
 				</span>
 			</h2>
 	 
@@ -194,10 +195,10 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="variant in entity.variants track by $index" ng-hide="variant._state == 'deleted'">
+					<tr ng-repeat="variant in child.variants track by $index" ng-hide="variant._state == 'deleted'">
 						<td>{{variant.name}}</td>
 						<td>
-							<span ng-show="rule.field.variants.writable">
+							<span ng-show="rule.field._products.variants.writable">
 							<button type="button" ng-click="removeVariant(variant)" class="button">Remove</button>
 							<button type="button" ng-click="manageVariant(variant)" class="button">Edit</button>
 							</span>
@@ -207,34 +208,34 @@
 			</table>
 			
 		</div>
-		<div ng-show="entity.id">
+		<div ng-show="child.id">
 			<h2 class="fieldset with-button">
 				<span class="fieldset-text">Images</span>
 				<span class="fieldset-button">
-					 <div ng-show="rule.field.images.writable" class="button fake-button">
+					 <div ng-show="rule.field._products.images.writable" class="button fake-button">
 					  	 <span>Add Images</span>
-					  	 <input class="upload" name="images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />
+					  	 <input class="upload" name="images" multiple upload-on-select="uploadConfig" type="file" ng-model="child._supplied_filename" />
 					 </div>
 				</span>
 			</h2>
 			
 			<div ng-show="$isUploading">Images are uploading... please wait...</div>
 			
-			<div ui-sortable="sortableOptions" ng-model="entity.images" class="clearfix grid-wrapper">
-				<div ng-repeat="image in entity.images track by $index" ng-hide="image._state == 'deleted'" uploaded-image-grid="gridConfig" class="image-image grid-item">
+			<div ui-sortable="sortableOptions" ng-model="child.images" class="clearfix grid-wrapper">
+				<div ng-repeat="image in child.images track by $index" ng-hide="image._state == 'deleted'" uploaded-image-grid="gridConfig" class="image-image grid-item">
 					<div class="img spaceout">
 						<img ng-src="{{image.serving_url}}=s360" />
 					</div>
-					<button ng-show="rule.field.images.writable" type="button" class="button" ng-click="removeImage(image)">Remove</button>
+					<button ng-show="rule.field._products.images.writable" type="button" class="button" ng-click="removeImage(image)">Remove</button>
 				</div>
 			</div>
 		</div>
 		
-		<div ng-show="entity.id">
+		<div ng-show="child.id">
 			<h2 class="fieldset with-button">
 				<span class="fieldset-text">Contents</span>
 				<span class="fieldset-button">
-					<button ng-show="rule.field.contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+					<button ng-show="rule.field._products.contents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
 				</span>
 			</h2>
 			
@@ -246,10 +247,10 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="content in entity.contents track by $index" ng-hide="content._state == 'deleted'">
+					<tr ng-repeat="content in child.contents track by $index" ng-hide="content._state == 'deleted'">
 						<td>{{content.title}}</td>
 						<td>
-							<span ng-show="rule.field.contents.writable">
+							<span ng-show="rule.field._products.contents.writable">
 							<button type="button" ng-click="removeContent(content)" class="button">Remove</button>
 							<button type="button" ng-click="manageContent(content)" class="button">Edit</button>
 							</span>
@@ -262,11 +263,11 @@
 	</div>
  
  
-	<div ng-show="entity.id" is-open="accordions.instances" accordion-group heading="Product Instances">
+	<div ng-show="child.id" is-open="accordions.instances" accordion-group heading="Product Instances">
 		 
 		 <div class="clearfix">
 			<div class="pull-right">
-				<button ng-show="rule.field._instances.writable" ng-click="newInstance()" type="button" class="button">Add Product Instance</button>
+				<button ng-show="rule.field._products._instances.writable" ng-click="newInstance()" type="button" class="button">Add Product Instance</button>
 			</div>
 		</div>
 		
@@ -278,10 +279,10 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="instance in entity._instances track by $index" ng-hide="instance._state == 'deleted'">
+				<tr ng-repeat="instance in child._instances track by $index" ng-hide="instance._state == 'deleted'">
 					<td>{{instance.code}}</td>
 					<td>
-						<span ng-show="rule.field._instances.writable">
+						<span ng-show="rule.field._products._instances.writable">
 						<button type="button" ng-click="removeInstance(instance)" class="button">Remove</button>
 						<button type="button" ng-click="manageInstance(instance)" class="button">Edit</button>
 						</span>
@@ -296,7 +297,7 @@
 </div>
 
 
-<div ng-show="rule.field._records.visible && entity.id" class="form-control">
+<div ng-show="rule.field._products._records.visible && child.id" class="form-control">
   <div ng-include="logic_template('misc/logs.html')"></div>
 </div>
  
@@ -308,12 +309,12 @@
 <div class="modal-footer">
  
     <button ng-disabled="$isUploading" type="button" 
-    		ng-click="remove()" ng-show="entity.id && rule.action['delete'].executable" busy class="button">
+    		ng-click="remove()" ng-show="child.id && rule.action['delete'].executable" busy class="button">
 		Remove
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button" 
-    		ng-click="duplicate()" ng-show="entity.id && rule.action.duplicate.executable" busy class="button">
+    		ng-click="duplicate()" ng-show="child.id && rule.action.duplicate.executable" busy class="button">
 		Duplicate
 	</button>
  

@@ -686,7 +686,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         		{
         			update($scope.entity, data['entity']);
         		}
-        	   
+  
         	   this.update_rule($scope, data);
         	},
         	
@@ -765,6 +765,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
   
             	options = resolve_options(options);
             	
+            	var $parentScope = options['parentScope'];
+            	
                 var that = this;
                  
                 var action = 'update';
@@ -787,8 +789,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
            
                 if (create)
                 {	
-                	action = (options['create_action'] ? options['create_action'] : 'create');
-                	action2 = (options['create_action2'] ? options['create_action2'] : 'prepare');
+                	action = (options['create_action'] ? options['create_action'] : ($parentScope ? 'update' : 'create'));
+                	action2 = (options['create_action2'] ? options['create_action2'] : ($parentScope ? 'read' : 'prepare'));
                 }
                  
                 args = options['args'];
@@ -806,22 +808,48 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            $scope.resolve_complete = opts['complete'];
 	                            $scope.resolve_cancel = opts['cancel'];
 	                            update($scope.options, opts);
+	                            
 	                            if (do_scope)
 	                            {
 	                            	update($scope, opts['scope']);
 	                            }
                         	};
                         	
-                        	var entity = options['entity'];
+                        	if ('update_child' in options)
+                        	{
+                        		$scope.update_child = options['update_child'];
+                        	}
                         	
-                        	update(entity, (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']));
+                        	if ('get_child' in options)
+                        	{
+                        		$scope.get_child = options['get_child'];
+                        	}
+                        	
+                        	var entity = options['entity'];
+                        	var rule = {};
+                        	
+                        	if (!$parentScope)
+                        	{
+	                        	update(entity, (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']));
+	                        	rule = RuleEngine.factory(entity);
+                        	}
+                        	else
+                        	{
+                        		entity = $parentScope.entity;
+                        	    rule = $parentScope.rule;
+                        	}
                         	
                         	$scope.options = options;
                         	$scope.container = {};
                         	 
- 							$scope.rule = RuleEngine.factory(entity);
+ 							$scope.rule = rule;
  							$scope.live_entity = entity;
                             $scope.entity = angular.copy(entity);
+                            if ($parentScope)
+                            {
+                            	$scope.get_child();
+                            }
+                     
                             $scope.action = action;
                             $scope.action2 = action2;
                         
@@ -939,14 +967,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
                 };
                 
-                if ('data' in options)
+                if (!$parentScope)
                 {
-                	handle(options['data']);
+                	if ('data' in options)
+	                {
+	                	handle(options['data']);
+	                }
+	                else
+	                {
+	                	Endpoint.post(action2, options['kind'], args).success(handle);
+	                }
                 }
                 else
                 {
-                	Endpoint.post(action2, options['kind'], args).success(handle);
+                	handle();
                 }
+                
                  
             }
 
@@ -1020,7 +1056,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		
    		'product_category' : Select2Options.factory({
    			kind : '17',
-   			filters : [{'value' : 'searchable', 'operator':'==', 'field' : 'state'}],
+   			filters : [{'value' : 'indexable', 'operator':'==', 'field' : 'state'}],
    			label : 'complete_name',
    		}),
    		 

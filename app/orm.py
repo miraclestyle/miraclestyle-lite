@@ -115,8 +115,8 @@ Key._root = property(_get_root)
 Key._search_index = property(_get_search_index)
 Key._search_unindex = property(_get_search_unindex)
 Key.entity = property(_get_entity)
-Key.namespace_entity = property(_get_namespace_entity)  # @todo Can we do this?
-Key.parent_entity = property(_get_parent_entity)  # @todo Can we do this?
+Key.namespace_entity = property(_get_namespace_entity) 
+Key.parent_entity = property(_get_parent_entity)
 
 
 #############################################
@@ -489,7 +489,7 @@ class _BaseModel(object):
   @classmethod
   def _post_get_hook(cls, key, future):
     entity = future.get_result()
-    if entity is not None and entity.key:  # @todo http://stackoverflow.com/questions/2209755/python-operation-vs-is-not
+    if entity is not None and entity.key:
       entity.make_original()
       entity._make_async_calls()
   
@@ -758,7 +758,7 @@ class _BaseModel(object):
     
     '''
     # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
-    # this is the problem with catalog dates...
+    # @todo this is the problem with catalog dates...
     if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
     if (field_key in permissions):  # @todo How this affects the outcome??
@@ -1726,8 +1726,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     limit = config.get('limit', 10)
     order = config.get('order')
     supplied_entities = config.get('entities')
+    supplied_keys = config.get('keys')
     if supplied_entities:
       entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
+      cursor = None
+    elif supplied_keys:
+      entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1759,8 +1763,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     limit = config.get('limit', 10)
     entities = []
     supplied_entities = config.get('entities')
+    supplied_keys = config.get('keys')
     if supplied_entities:
       entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
+      cursor = None
+    elif supplied_keys:
+      entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
       cursor = None
     else:
       keys = [Key(self._property.get_modelclass().get_kind(),
@@ -2152,9 +2160,9 @@ class _BaseProperty(object):
            'choices': choices,
            'default': self._default,
            'repeated': self._repeated,
-           'structured': self.is_structured,  # @todo Not sure if this is ok!?
+           'structured': self.is_structured,
            'searchable': self._searchable,
-           'search_document_field_name': self.search_document_field_name,  # @todo Rename 'searchable_name' to 'search_document_field_name'?
+           'search_document_field_name': self.search_document_field_name,
            'type': self.__class__.__name__}
     return dic
   
@@ -2316,7 +2324,11 @@ class _BaseStructuredProperty(_BaseProperty):
       field = fields.get(value_key)
       if field:
         if hasattr(field, 'argument_format'):
-          values[value_key] = field.argument_format(value)
+          val = field.argument_format(value)
+          if val is util.Nonexistent:
+            del values[value_key]
+          else:
+            values[value_key] = val
         else:
           del values[value_key]
       else:

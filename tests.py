@@ -18,13 +18,73 @@ class Tests():
     return False
   
 d = Tests()
+'''
+
 if d:
   print 'yes d'
   
 if not d:
   print 'not d'
   
+'''
   
+class Ba():
+  
+  def __repr__(self):
+    s = []
+    for k,v in self.__dict__.items():
+      s.append('%s=%s' % (k, v))
+    s = ", ".join(s)
+    return self.__class__.__name__ + '('+s+')'
+  
+class Image(Ba):
+  
+  def __init__(self, a):
+    self._other = ['1_%s' % a, '2_%s' % a, '3_%s' % a]
+    self._id = a
+  
+class Product(Ba):
+  
+  def __init__(self, b, c):
+    self._images = [Image('%s_%s' % (b, c+1)),Image('%s_%s' % (b, c+2)),Image('%s_%s' % (b, c+3))]
+    self._id = b
+  
+class Catalog(Ba):
+  
+  def __init__(self):
+    self._products = [Product(10, 20), Product(50, 100)]
+  
+do_entity = Catalog()
+  
+target_field_paths = ['_products._images._other']
+root_entity = do_entity
+entities = []
+if target_field_paths:
+  for full_target in target_field_paths:
+    targets = full_target.split('.')
+    last_i = len(targets)-1
+    def start(entity, target, last_i, i, targets, entities):
+      if isinstance(entity, list):
+        out = []
+        for ent in entity:
+          out.append(start(ent, target, last_i, i, targets, entities))
+        return out
+      else:
+        entity = getattr(entity, target)
+        if last_i == i:
+          if isinstance(entity, list):
+            entities.extend(entity)
+          else:
+            entities.append(entity)
+        else:
+          return entity
+    for i,target in enumerate(targets):
+      do_entity = start(do_entity, target, last_i, i, targets, entities)
+ 
+  
+print entities
+
+exit()
 '''
 class TestSequenceFunctions(unittest.TestCase):
 
