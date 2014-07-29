@@ -18,24 +18,18 @@ class CronConfigProcessCatalogs(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    page_size = self.cfg.get('page', 10)
-    CronConfig = context.models['83']
+    limit = self.cfg.get('page', 10)
     Domain = context.models['6']
-    config_key = CronConfig.build_key('process_catalogs_config')
-    config = config_key.get()
-    if not config:
-      config = CronConfig(key=config_key)
     cursor = None
-    if config.data.get('current_cursor') and config.data.get('current_more'):
-      cursor = Cursor(urlsafe=config.data.get('current_cursor'))
-    entities, cursor, more = Domain.query().order(Domain.created).fetch_page(page_size, start_cursor=cursor, keys_only=True)
+    if context._cronconfig.data.get('more'):
+      cursor = Cursor(urlsafe=context._cronconfig.data.get('cursor'))
+    entities, cursor, more = Domain.query().order(Domain.created).fetch_page(limit, start_cursor=cursor, keys_only=True)
     if cursor:
       cursor = cursor.urlsafe()
+    context._cronconfig.data['cursor'] = cursor
+    context._cronconfig.data['more'] = more
     for key in entities:
       data = {'action_id': 'cron',
               'action_model': '35',
               'domain': key.urlsafe()}
       context._callbacks.append(('callback', data))
-    config.data['current_cursor'] = cursor
-    config.data['current_more'] = more
-    config.put()

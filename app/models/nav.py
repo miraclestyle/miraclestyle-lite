@@ -54,7 +54,7 @@ class Widget(orm.BaseExpando):
       orm.FieldPermission('62', ['name', 'sequence', 'active', 'role', 'search_form', 'filters', '_records'], False, None,
                           'entity._is_system'),
       orm.FieldPermission('62', ['role'], False, None,
-                          '(action.key_id_str == "create" or action.key_id_str == "update") and (entity.role and entity._original.key_namespace != entity.role.entity._original.key_namespace)')
+                          '(action.key_id_str == "create" or action.key_id_str == "update") and (entity.role and entity.role._namespace != entity._original.key_namespace)')
       ]
     )
   

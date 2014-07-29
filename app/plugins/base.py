@@ -73,11 +73,10 @@ class Read(orm.BaseModel):
       entity = source.get()
       entity.read(read_arguments)
     elif hasattr(model, 'prepare_key'):
-      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)
+      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)  # @todo Perhaps, all context system wide variables should be passed to prepare_key (input, output, action, model, models, domain, namespace...)
       entity = model_key.get()
       if entity is None:
-        entity = model()
-        entity.key = model_key
+        entity = model(key=model_key)
       else:
         entity.read(read_arguments)
     else:

@@ -12,16 +12,6 @@ from google.appengine.api import mail, urlfetch
 from app import orm
 from app.util import *
 
-# @todo decomission
-class NotificationSet(orm.BaseModel):
-  
-  def run(self, context):
-    context._notification.name = context.input.get('name')
-    context._notification.action = context.input.get('action')
-    context._notification.condition = context.input.get('condition')
-    context._notification.active = context.input.get('active')
-    context._notification.templates = context.input.get('templates')
-
 
 # @todo We have to consider http://sendgrid.com/partner/google
 class NotificationMailSend(orm.BaseModel):
@@ -64,6 +54,6 @@ class NotificationInitiate(orm.BaseModel):
         if safe_eval(notification.condition, values):
           for template in notification.templates:
             callbacks = template.run(**{'caller_entity': context._caller_entity,
-                                      'caller_user': context._caller_user,
-                                      'models': context.models})
+                                        'caller_user': context._caller_user,
+                                        'models': context.models})
             context._callbacks.extend(callbacks)
