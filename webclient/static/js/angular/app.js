@@ -680,6 +680,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         				}
         			});
         		}
+        		 
+        		if ('update_child' in $scope)
+        		{
+        			$scope.update_child(data);
+        		}
+        	  
         		update($scope.entity, data['entity']);
         		
         		if ('live_entity' in $scope)
@@ -692,7 +698,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         			update($scope.entity, data['entity']);
         		}
         	 
-  
         	   this.update_rule($scope, data);
         	},
         	
@@ -817,6 +822,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            {
 	                            	$scope.get_child = opts['get_child'];
 	                            }
+	                            if (opts['update_child'])
+	                            {
+	                            	$scope.update_child = opts['update_child'];
+	                            }
+	                            $scope.update_entity = opts['update_entity'];
 	                            update($scope.options, opts);
 	                            
 	                            if (do_scope)
@@ -829,7 +839,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                        {
 	                            $scope.get_child = options['get_child'];
 	                        }
-                        	 
+	                        
+                        	if (options['update_child'])
+	                        {
+	                            $scope.update_child = options['update_child'];
+	                        }
+	                        
                         	var entity = options['entity'];
                         	var rule = {};
                         	
@@ -894,8 +909,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                         $scope.action = action;
                 					    $scope.action2 = action2;
                 					    
-                					    $scope.history['args']['key'] = entity_from_db['key'];
-                                	
+                					    if (!$parentScope)
+                					    {
+                					    	$scope.history['args']['key'] = entity_from_db['key'];
+                					    }
+                					     
                                 		if (data['errors'])
                                 		{
     
@@ -926,6 +944,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 		}
                                 	  
                                         that.update_entity($scope, {'entity' : entity_from_db});
+                                        
+                                        if ($scope.update_entity)
+                                        {
+                                        	$scope.update_entity({'entity' : entity_from_db});
+                                        }
+                                      
                       
                                         if (!data['errors'])
                                         {
@@ -939,7 +963,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                                        
 	                                        if (options['options_after_update'])
 	                                        {
-	                                        	_resolve_options(options['options_after_update'], true);
+	                                        	_resolve_options(update(options, options['options_after_update']), true);
 	                                        	$scope.resolve_handle(data);
 	                                         
 	                                        }
@@ -1071,13 +1095,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		 
    	};
    	 
-	var measurements = ['length', 'surface', 'time', 'unit', 'volume', 'weight'];
+	var measurements = ['Length', 'Surface', 'Time', 'Unit', 'Volume', 'Weight'];
 	
 	angular.forEach(measurements, function (v) {
-		$rootScope.commonSelect2Options[v] = Select2Options.factory({
+		$rootScope.commonSelect2Options[v.toLowerCase()] = Select2Options.factory({
    			kind : '19',
    			filters : [{'value' : true, 'operator':'==', 'field' : 'active'},
-   					   {'value' : ['18', v], 'operator':'==', 'field' : 'ancestor'}],
+   					   {'value' : v, 'operator':'==', 'field' : 'measurement'}],
    		    cache : v,
    		});
 	});

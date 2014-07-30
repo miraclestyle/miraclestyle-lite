@@ -522,15 +522,15 @@ class _BaseModel(object):
   def _pre_delete_hook(cls, key):
     if key:
       entity = key.get()
+      if entity is None:
+        return # already deleted, nothing we can do about it
       entity.record()
-      def delete_async():
-        for field_key, field in entity.get_fields().items():
-          # we have to check here if it has struct
-          if hasattr(field, 'is_structured') and field.is_structured:
-            value = getattr(entity, field_key, None)
-            if isinstance(value, SuperPropertyManager):
-              value.delete()
-      delete_async()
+      for field_key, field in entity.get_fields().items():
+        # we have to check here if it has struct
+        if hasattr(field, 'is_structured') and field.is_structured:
+          value = getattr(entity, field_key, None)
+          if isinstance(value, SuperPropertyManager):
+            value.delete()
   
   @classmethod
   def _post_delete_hook(cls, key, future):
@@ -558,7 +558,7 @@ class _BaseModel(object):
         else:
           setattr(self, name, value)
       else:
-        prop._set_value(self, value)
+        setattr(self, name, value)
   
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()
@@ -757,7 +757,6 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
     # @todo this is the problem with catalog dates...
     if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return

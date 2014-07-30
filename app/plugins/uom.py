@@ -138,4 +138,4 @@ class UnitUpdateWrite(orm.BaseModel):
 class UnitRemoveCurrencies(orm.BaseModel):
   
   def run(self, context):
-    context._entities = filter(lambda x: x.key.parent().id() != 'currency', context._entities)
+    context._entities = filter(lambda x: x.measurement != 'Currency', context._entities)

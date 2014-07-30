@@ -246,31 +246,23 @@ MainApp
 		        	  'manageInstance' : function (instance, create)
 		        	  {
 		        	  	    var $parentScope = this;
-		        	  	    
-		        	  	    if (!instance) instance = {'images' : [], 'contents' : []};
+		        
+		        	  	    var find_child = function(child, entity)
+		        	  	    {
+		        	  	    	var new_product = _.findWhere(entity._products, {key : $parentScope.child.key});
+		        	  	    	var new_instance = _.findWhere(new_product._instances, {key : child.key});
+		        	  	    	return new_instance;
+		        	  	    };
 		        	  	    
 		        	  	    var complete_upload = function (data) {
-		                	 	var images = null;
-		                	 	var that = this;
-		                	 	
-		                	 	angular.forEach(data.entity._products, function (prod) {
-		                	 		if (prod.key == $parentScope.child.key)
-		                	 		{
-		                	 			angular.forEach(prod._instances, function (inst) {
-		                	 				if (inst.key == that.child.key)
-		                	 				{
-		                	 					images = inst.images;
-		                	 				}
-		                	 			});
-		                	 		}
-		                	 	});
+		                	 	var images = find_child(this.child, data.entity).images;
 		                	 	
 		                	 	if (images)
 		                	 	{
 		                	 		this.child.images = images;
 		                	 	}
 				             };
-		          
+				              
 		        	  	     var cfg = {
 			                	 'kind' : kind,
 			                	 'close' : false,
@@ -278,16 +270,20 @@ MainApp
 			                	 'scope' : angular.extend(make_product_scope(), {
 			                	 	'completed' : complete_upload,
 			                	 }),
+			                 
+			                	 'update_child' : function (data) {
+							        var find = {key : $parentScope.child.key};
+			        	  	    	var new_product = _.findWhere(data.entity._products, find);
+			        	  	    	var found = _.last(new_product._instances);
+			        	  	    	update(this.child, found);
+			        	  	    	
+			        	  	    	$parentScope.child._instances = new_product._instances;
+							      },
 			                	 'get_child' : function ()
 			                	 {
-			                	 	var that = this;
-			                	 	that.child = {};
-			                	 	angular.forEach(this.entity._products, function (prod) {
-			                	 		if (prod.key == $parentScope.child.key)
-			                	 		{
-			                	 			prod._instances.push(that.child);
-			                	 		}
-		                	 		});
+			                	 	var prod = _.findWhere(this.entity._products, {key : $parentScope.child.key});
+			                	 	this.child = instance;
+			                	 	prod._instances.push(this.child);
 			                	 },
 			                	 'handle' : function (data)
 						         {
@@ -295,32 +291,31 @@ MainApp
 						         },
 			                    'templateUrl' : logic_template('product/manage_instance.html'),
 			                  };
+			                  
+			                  var update_cfg = {};
+			                  update_cfg['close'] = true;
+			        		  update_cfg['get_child'] = function ()
+			        		  {
+			        		  	  this.child = find_child(instance, this.entity);        	 	 
+			        		  };
+			        		  update_cfg['update_child'] = function (data)
+			        		  {
+			        		  	  var find = {key : $parentScope.child.key};
+			        		  	  update(this.child, find_child(this.child, data.entity));
+			        		  	  var new_product = _.findWhere(data.entity._products, find);
+			        		  	  $parentScope.child._instances = new_product._instances;
+			        		  };
 			               
 			                  if (create) {
-	           
+			                  	
+	           					cfg['options_after_update'] = update_cfg;
+	           					
 			        		  	EntityEditor.create(cfg);
 			        		  	
 			        		  }
 			        		  else
 			        		  {
-			        		  	cfg['close'] = true;
-			        		  	cfg['get_child'] = function ()
-			        		  	{
-			        		  		var that = this;
-			                	 	angular.forEach(this.entity._products, function (prod) {
-			                	 		if (prod.key == $parentScope.child.key)
-			                	 		{
-			                	 			angular.forEach(prod._instances, function (inst) {
-			                	 				if (inst.key == instance.key)
-			                	 				{
-			                	 					that.child = inst;
-			                	 				}
-			                	 			});
-			                	 		}
-		                	 		});
-								                	 	 
-			        		  	};
-			        		  	
+			        		  	update(cfg, update_cfg);
 			        		  	EntityEditor.update(cfg);
 			        		  }
 		        	   
@@ -463,6 +458,7 @@ MainApp
                 },
                 'completed': function (data) {
 					// @todo complete upload logic
+					if (!this.entity._images) this.entity._images = [];
 					this.entity._images.extend(data.entity._images);
                 },
                 'removeImage': function (image) {
@@ -505,18 +501,19 @@ MainApp
  
                                     $scope.manageProduct = function (product) {
                                     	
+                                    	var find_child = function(child, entity)
+					        	  	    { 
+					        	  	    	return _.findWhere(entity._products, {key : child.key});
+					        	  	    };
+                                    	
                                     	var complete_upload = function (data) {
-					                	 	var images = [];
-					                	 	var that = this;
-					                	 	
-					                	 	angular.forEach(data.entity._products, function (prod) {
-					                	 		if (prod.key == that.child.key)
-					                	 		{
-					                	 			images = prod.images;
-					                	 		}
-					                	 	});
-					                	 	
-					                	 	this.child.images = images;
+					              
+					                	 	this.child.images = find_child(this.child, data.entity).images;
+							             };
+							             
+							             var update_child = function(data)
+							             {
+							             	update(this.child, find_child(this.child, data.entity));
 							             };
                                       
                                     	 if (!product)
@@ -532,6 +529,12 @@ MainApp
 							                	 {
 							                	 	this.child = {};
 							                	 	this.entity._products.push(this.child);
+							                	 },
+							                	 'update_child' : function (data) {
+							                	 	
+							                	 	var found = _.last(data.entity._products);
+							        	  	    	 
+							                	 	update(this.child, found);
 							                	 },
 							                	 'handle' : function (data)
 										         {
@@ -550,17 +553,12 @@ MainApp
 								                	 'scope' : angular.extend(make_product_scope(), {
 								                	 	'completed' : complete_upload,
 								                	 }),
+								                	 'update_child' : update_child,
 								                	 'parentScope' : $scope,
 								                	 'get_child' : function ()
 								                	 {
 								                	 	var that = this;
-								                	 	angular.forEach(this.entity._products, function (ent) {
-								                	 		if (ent.key == product.key)
-								                	 		{
-								                	 			that.child = ent;
-								                	 		}
-								                	 	});
-								                	 	 
+								                	 	this.child = find_child(product, this.entity);
 								                	 },
 								                	 'handle' : function (data)
 											         {

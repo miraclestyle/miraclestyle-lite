@@ -20,6 +20,10 @@ class Reset(handler.Angular):
       kinds = ['0', '6', '83', '5', '35', '36', '62', '61', '39', '38', '60', '8', '57', '77', '10']
       namespaces = metadata.get_namespaces()
       keys_to_delete = []
+      if self.request.get('kinds'):
+        kinds = self.request.get('kinds').split(',')
+        
+      util.log('DELETE KINDS %s' % kinds)
       
       ignore = ['15', '16', '17', '18', '19']
       @orm.tasklet
