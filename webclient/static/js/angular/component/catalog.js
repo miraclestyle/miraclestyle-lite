@@ -299,6 +299,7 @@ MainApp
 			                  if (create) {
 	           
 			        		  	EntityEditor.create(cfg);
+			        		  	
 			        		  }
 			        		  else
 			        		  {

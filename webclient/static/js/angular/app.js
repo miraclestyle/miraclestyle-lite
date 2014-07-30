@@ -855,16 +855,20 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             {
                             	$scope.get_child();
                             }
+                            else
+                            {
+                            	// by default child mode does not have history
+                            	$scope.history = {
+		                            	'kind' : entity['kind'],
+		                            	'args' : {
+		                            		'key' : entity['key'],
+		                            	}
+		                        };
+                            }
                      
                             $scope.action = action;
                             $scope.action2 = action2;
-                        
-                            $scope.history = {
-	                            	'kind' : entity['kind'],
-	                            	'args' : {
-	                            		'key' : entity['key'],
-	                            	}
-	                        };
+                         
 	                         
 	                        _resolve_options(options);
 	                        

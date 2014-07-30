@@ -2155,14 +2155,16 @@ class _BaseProperty(object):
     if choices:
       choices = list(self._choices)
     dic = {'verbose_name': self._verbose_name,
+           'name' : self._name,
+           'code_name' : self._code_name,
            'required': self._required,
            'max_size': self._max_size,
            'choices': choices,
            'default': self._default,
            'repeated': self._repeated,
-           'structured': self.is_structured,
+           'is_structured': self.is_structured,
            'searchable': self._searchable,
-           'search_document_field_name': self.search_document_field_name,
+           'search_document_field_name': self._search_document_field_name,
            'type': self.__class__.__name__}
     return dic
   
@@ -2278,7 +2280,7 @@ class _BaseStructuredProperty(_BaseProperty):
     
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
-    dic['model'] = self.get_modelclass().get_fields()
+    dic['modelclass'] = self.get_modelclass().get_fields()
     other = ['_autoload', '_readable', '_updateable', '_deleteable', '_deleteable']
     for o in other:
       dic[o[1:]] = getattr(self, o)
@@ -2982,14 +2984,17 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
   
   def get_model_fields(self, **kwargs):
     parent = super(SuperRecordProperty, self).get_model_fields(**kwargs)
+    parent.update(self._modelclass2.get_fields())
+    return parent
+  
+  def initialize(self):
+    super(SuperRecordProperty, self).initialize()
     if isinstance(self._modelclass2, basestring):
       set_modelclass2 = Model._kind_map.get(self._modelclass2)
       if set_modelclass2 is None:
         raise PropertyError('Could not locate model with kind %s' % self._modelclass2)
       else:
         self._modelclass2 = set_modelclass2
-    parent.update(self._modelclass2.get_fields())
-    return parent
 
 
 #########################################

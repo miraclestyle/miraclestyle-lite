@@ -9,7 +9,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="name" 
-				 		ng-required="rule.input.update.addresses.model.name.required"
+				 		ng-required="rule.input.update.addresses.modelclass.name.required"
 				 	    class="text-input" type="text" ng-model="entity.name"
 				 	    ng-disabled="!rule.field.addresses.name.writable" />
 			</div>
@@ -21,7 +21,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="email" 
-				 		ng-required="rule.input.update.addresses.model.email.required"
+				 		ng-required="rule.input.update.addresses.modelclass.email.required"
 				 	    class="text-input" type="text" ng-model="entity.email"
 				 	    ng-disabled="!rule.field.addresses.email.writable" />
 			</div>
@@ -33,7 +33,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="telephone" 
-				 		ng-required="rule.input.update.addresses.model.telephone.required"
+				 		ng-required="rule.input.update.addresses.modelclass.telephone.required"
 				 	    class="text-input" type="text" ng-model="entity.telephone"
 				 	    ng-disabled="!rule.field.addresses.telephone.writable" />
 			</div>
@@ -44,7 +44,7 @@
 		<label class="form-label">Country</label>
 		<div class="form-input">
 			<input type="text" name="country" 
-				    ng-required="rule.input.update.addresses.model.country.required"
+				    ng-required="rule.input.update.addresses.modelclass.country.required"
 				    ng-disabled="!rule.field.addresses.country.writable"
 				    ui-select2="commonSelect2Options.country"
 					ng-model="entity.country" data-placeholder="Select a country" />
@@ -55,7 +55,7 @@
 		<label class="form-label">State / Region</label>
 		<div class="form-input">
 			<input type="text" name="region" 
-				    ng-required="rule.input.update.addresses.model.region.required"
+				    ng-required="rule.input.update.addresses.modelclass.region.required"
 				    ng-disabled="!rule.field.addresses.region.writable"
 				    ui-select2="commonSelect2Options.region"
 				    data-country="entity.country"
@@ -68,7 +68,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="city" 
-				 		ng-required="rule.input.update.addresses.model.city.required"
+				 		ng-required="rule.input.update.addresses.modelclass.city.required"
 				 	    class="text-input" type="text" ng-model="entity.city"
 				 	    ng-disabled="!rule.field.addresses.city.writable" />
 			</div>
@@ -80,7 +80,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="postal_code" 
-				 		ng-required="rule.input.update.addresses.model.postal_code.required"
+				 		ng-required="rule.input.update.addresses.modelclass.postal_code.required"
 				 	    class="text-input" type="text" ng-model="entity.postal_code"
 				 	    ng-disabled="!rule.field.addresses.postal_code.writable" />
 			</div>
@@ -92,7 +92,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="street" 
-				 		ng-required="rule.input.update.addresses.model.street.required"
+				 		ng-required="rule.input.update.addresses.modelclass.street.required"
 				 	    class="text-input" type="text" ng-model="entity.street"
 				 	    ng-disabled="!rule.field.addresses.street.writable" />
 			</div>

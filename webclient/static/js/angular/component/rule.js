@@ -8,7 +8,7 @@ MainApp.filter('permissionResolveActionName', function() {
  
        var outputs = [];
        angular.forEach(input.actions, function (value) {
-    	    outputs.push(KINDS.friendlyActionName(input.model, value));
+    	    outputs.push(KINDS.friendlyActionName(input.modelclass, value));
        });
   
        return outputs;

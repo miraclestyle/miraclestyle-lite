@@ -4,6 +4,8 @@
 <input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="key" value="{{child.parent.parent.key}}" />
 <input type="hidden" name="product_instance" value="{{child.key}}" />
+<input type="hidden" name="read_arguments" value="{&quot;_products&quot; : { &quot;_instances&quot; : &quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.key}}&quot;]}}}" />
+
 	
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
@@ -17,7 +19,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="name" 
-				 		ng-required="rule.input[action].code.required"
+				 		ng-required="rule.input[action]._products.modelclass._instances.modelclass.code.required"
 				 	    class="text-input" type="text" ng-model="child.code"
 				 	    ng-disabled="!rule.field._products._instances.code.writable" />
 			</div>
@@ -29,7 +31,7 @@
 		<div class="form-input">
 			<div class="form-text">
 				 <input name="unit_price" 
-				 		ng-required="rule.input[action].unit_price.required"
+				 		ng-required="rule.input[action]._products.modelclass._instances.modelclass.unit_price.required"
 				 	    class="text-input" type="text" ng-model="child.unit_price"
 				 	    ng-disabled="!rule.field._products._instances.unit_price.writable" />
 			</div>
@@ -40,7 +42,7 @@
 		<label class="form-label">Description</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <textarea ng-required="rule.input[action].description.required"
+				 <textarea ng-required="rule.input[action]._products.modelclass._instances.modelclass.description.required"
 				 		   class="text-input text-textarea" ng-model="child.description" name="description"
 				 		   ng-disabled="!rule.field._products._instances.description.writable"></textarea>
 			</div>
@@ -55,14 +57,14 @@
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="weight" 
-											 		ng-required="rule.input[action].weight.required"
+											 		ng-required="rule.input[action]._products.modelclass._instances.modelclass.weight.required"
 											 	    class="text-input" type="text" ng-model="child.weight"
 											 	    ng-disabled="!rule.field._products._instances.weight.writable" /></td>
 				 			<td class="t40 cpl10">
 			 
 								<input
 							       name="weight_uom" 
-							       ng-required="rule.input[action].weight_uom.required"
+							       ng-required="rule.input[action]._products.modelclass._instances.modelclass.weight_uom.required"
 							       ng-disabled="!rule.field._products._instances.weight_uom.writable"
 							       ui-select2="commonSelect2Options.weight"
 							       ng-model="child.weight_uom"
@@ -83,14 +85,14 @@
 				 	<tbody>
 				 		<tr>
 				 			<td class="t60 cpr10"><input name="volume" 
-											 		ng-required="rule.input[action].volume.required"
+											 		ng-required="rule.input[action]._products.modelclass._instances.modelclass.volume.required"
 											 	    class="text-input" type="text" ng-model="child.volume"
 											 	    ng-disabled="!rule.field._products._instances.volume.writable" /></td>
 				 			<td class="t40 cpl10">
 				 	 
 								<input
 							       name="volume_uom" 
-							       ng-required="rule.input[action].volume_uom.required"
+							       ng-required="rule.input[action]._products.modelclass._instances.modelclass.volume_uom.required"
 							       ng-disabled="!rule.field._products._instances.volume_uom.writable"
 							       ui-select2="commonSelect2Options.volume"
 							       ng-model="child.volume_uom"
@@ -103,18 +105,17 @@
 			</div>
 		</div>
 		</div>
-		 
+ 
 		<div class="form-control">
 		<label class="form-label">Availability</label>
 		<div class="form-input">
 			<div class="form-text">
- 
-				 	    
-			   <select name="availability" ng-required="rule.input[action].availability.required"
+  
+			   <select name="availability" ng-required="rule.input[action]._products.modelclass._instances.modelclass.availability.required"
 					    ng-disabled="!rule.field._products._instances.availability.writable" ui-select2 
 					    ng-model="child.availability" data-placeholder="Select availability">
 				    <option value=""></option>
-				    <option ng-repeat="choice in rule.input[action].availability.choices track by $index" value="{{choice}}">{{choice}}</option>
+				    <option ng-repeat="choice in rule.input[action]._products.modelclass._instances.modelclass.availability.choices track by $index" value="{{choice}}">{{choice}}</option>
 				</select>
 				
 			</div>
@@ -126,7 +127,7 @@
 		<div class="form-input">
 			<div class="form-text">
 			   <input name="low_stock_quantity" 
-				 		ng-required="rule.input[action].low_stock_quantity.required"
+				 		ng-required="rule.input[action]._products.modelclass._instances.modelclass.low_stock_quantity.required"
 				 	    class="text-input" type="text" ng-model="child.low_stock_quantity"
 				 	    ng-disabled="!rule.field._products._instances.low_stock_quantity.writable" />
 			</div>
