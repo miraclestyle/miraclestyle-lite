@@ -22,12 +22,10 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise orm.TerminateAction()
-    Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
-      measurements = [{'name': 'Currency', 'id': 'currency'}]
       uoms = []
       
       def __text(item, key, op=None):
@@ -62,7 +60,7 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
           else:
             grouping = []
           new_uom.update({
-            'parent': Measurement.build_key('currency'),
+            'measurement': 'Currency',
             'name': new_uom_data['name'].text,
             'code': new_uom_data['code'].text,
             'numeric_code': new_uom_data['numeric_code'].text,
@@ -83,7 +81,7 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
             'active': True
             })
           uoms.append(new_uom)
-      to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
+      to_put = [Unit(**d) for d in uoms]
       for entity in to_put:
         entity._use_rule_engine = False
       orm.put_multi(to_put)
@@ -99,20 +97,18 @@ class UnitUpdateWrite(orm.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise orm.TerminateAction()
-    Measurement = context.models['18']
     Unit = context.models['19']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
-      measurements = []
+      measurements = {}
       uoms = []
       for child in root[0]:
         if child.attrib.get('model') == 'product.uom.category':
-          the_id = child.attrib.get('id')[8:]
-          new_uom_category = {'id': the_id}
           for child2 in child:
-            new_uom_category['name'] = child2.text
-          measurements.append(new_uom_category)
+            name = child2.text
+          measurements[child.attrib.get('id')] = name
+      for child in root[0]:
         if child.attrib.get('model') == 'product.uom':
           new_uom = {'id': child.attrib.get('id')[4:]}
           new_uom_data = {}
@@ -127,13 +123,13 @@ class UnitUpdateWrite(orm.BaseModel):
           new_uom.update({'name': new_uom_data['name'].text,
                           'active': True,
                           'symbol': new_uom_data['symbol'].text,
-                          'parent': Measurement.build_key(new_uom_data['category'].attrib.get('ref')[8:]),
+                          'measurement': measurements.get(new_uom_data['category'].attrib.get('ref')),
                           'factor': Decimal(eval(new_uom_data['factor'].attrib.get('eval'))),
                           'rate': Decimal(eval(new_uom_data['rate'].attrib.get('eval'))),
                           'rounding': rounding,
                           'digits': digits})
           uoms.append(new_uom)
-      to_put = [Measurement(**d) for d in measurements] + [Unit(**d) for d in uoms]
+      to_put = [Unit(**d) for d in uoms]
       for entity in to_put:
         entity._use_rule_engine = False
       orm.put_multi(to_put)
