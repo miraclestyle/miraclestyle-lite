@@ -13,58 +13,37 @@ from app.plugins.uom import *
 
 class Unit(orm.BaseExpando):
   
-  _kind = 18
-  
-  _use_record_engine = False
-  _use_cache = True
-  _use_memcache = True
-  
-  name = orm.SuperStringProperty('1', required=True)
-  symbol = orm.SuperStringProperty('2', required=True, indexed=False)
-  rate = orm.SuperDecimalProperty('3', indexed=False)  # The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12).
-  factor = orm.SuperDecimalProperty('4', indexed=False)  # The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12).
-  rounding = orm.SuperDecimalProperty('5', indexed=False)  # Rounding Precision - digits=(12, 12).
-  digits = orm.SuperIntegerProperty('6', indexed=False)
-  active = orm.SuperBooleanProperty('7', required=True, default=True)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'code': orm.SuperStringProperty('8'),
-    'numeric_code': orm.SuperStringProperty('9'),
-    'grouping': orm.SuperIntegerProperty('10', repeated=True),
-    'decimal_separator': orm.SuperStringProperty('11'),
-    'thousands_separator': orm.SuperStringProperty('12'),
-    'positive_sign_position': orm.SuperIntegerProperty('13'),
-    'negative_sign_position': orm.SuperIntegerProperty('14'),
-    'positive_sign': orm.SuperStringProperty('15'),
-    'negative_sign': orm.SuperStringProperty('16'),
-    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
-    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
-    'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
-    'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
-    }
-
-
-# @todo Thought has to be given to this construction.
-# The fact is that, it is the Unit that is being searched and used directly all the time!
-# Measurement merely serves as a constraint for unit conversions and categorization!
-# Perhaps there should be units = orm.SuperLocalStructuredProperty(Unit, '2', repeated=True).
-# By calculating expected max size of Unit (1536) with expected number of units per Measurement (512), total space occupied is 786432!
-# This fact notes that even currency measurement can be accomodated in a single measurement entity,
-# provided that there would be no more than 512 currencies at any given moment!
-class Measurement(orm.BaseModel):
-  
   _kind = 19
   
   _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   
-  name = orm.SuperStringProperty('1', required=True)
+  measurement = orm.SuperStringProperty('1', required=True)  # By definition, once a unit is created, measurement can not be modified! @todo We can implement choices=['Currency', 'Mass'...], or we can use query projections for data presentation from this property!
+  name = orm.SuperStringProperty('2', required=True)
+  symbol = orm.SuperStringProperty('3', required=True, indexed=False)
+  rate = orm.SuperDecimalProperty('4', indexed=False)  # The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12).
+  factor = orm.SuperDecimalProperty('5', indexed=False)  # The coefficient for the formula: coef (base unit) = 1 (this unit) - digits=(12, 12).
+  rounding = orm.SuperDecimalProperty('6', indexed=False)  # Rounding Precision - digits=(12, 12).
+  digits = orm.SuperIntegerProperty('7', indexed=False)
+  active = orm.SuperBooleanProperty('8', required=True, default=True)
   
-  _virtual_fields = {
-    '_units': orm.SuperStorageStructuredProperty(Unit, storage='remote_multi')
+  _default_indexed = False
+  
+  _expando_fields = {
+    'code': orm.SuperStringProperty('9'),
+    'numeric_code': orm.SuperStringProperty('10'),
+    'grouping': orm.SuperIntegerProperty('11', repeated=True),
+    'decimal_separator': orm.SuperStringProperty('12'),
+    'thousands_separator': orm.SuperStringProperty('13'),
+    'positive_sign_position': orm.SuperIntegerProperty('14'),
+    'negative_sign_position': orm.SuperIntegerProperty('15'),
+    'positive_sign': orm.SuperStringProperty('16'),
+    'negative_sign': orm.SuperStringProperty('17'),
+    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
+    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('19', default=True),
+    'positive_separate_by_space': orm.SuperBooleanProperty('20', default=True),
+    'negative_separate_by_space': orm.SuperBooleanProperty('21', default=True)
     }
   
   _global_role = GlobalRole(
@@ -72,8 +51,15 @@ class Measurement(orm.BaseModel):
       orm.ActionPermission('19', [orm.Action.build_key('19', 'update_currency'),
                                   orm.Action.build_key('19', 'update_unit')], True, 'user._root_admin or user._is_taskqueue'),
       orm.ActionPermission('19', [orm.Action.build_key('19', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('19', ['name', '_units'], False, True, 'True'),
-      orm.FieldPermission('19', ['name', '_units'], True, True, 'user._root_admin or user._is_taskqueue')
+      orm.FieldPermission('19', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
+                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
+                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
+      orm.FieldPermission('19', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
+                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
+                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
+                          'user._root_admin or user._is_taskqueue')
       ]
     )
   
@@ -116,13 +102,13 @@ class Measurement(orm.BaseModel):
           filters={
             'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='19', repeated=True)},
             'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])},
-            'ancestor': {'operators': ['=='], 'type': orm.SuperKeyFromPathProperty(kind='18')}
+            'measurement': {'operators': ['=='], 'type': orm.SuperStringProperty()}  # @todo How do we implement selection from query results: Unit.query(projection=[Unit.measurement], distinct=True).order(Unit.measurement).fetch()
             },
           indexes=[
             {'filter': ['key']},
             {'filter': ['active'],
              'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['active', 'ancestor'],
+            {'filter': ['active', 'measurement'],
              'order_by': [['name', ['asc', 'desc']]]}
             ],
           order_by={
@@ -139,7 +125,7 @@ class Measurement(orm.BaseModel):
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
             Search(cfg={'page': 1000}),
-            UnitRemoveCurrencies(),
+            UnitRemoveCurrencies(),  # @todo This will be probably be removed!!
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -153,7 +139,7 @@ class Measurement(orm.BaseModel):
 
 class UOM(orm.BaseExpando):
   
-  _kind = 72
+  _kind = 72  # @todo Perhaps this can be 18 since Measurement is gone!?
   
   measurement = orm.SuperStringProperty('1', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
