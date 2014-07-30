@@ -257,6 +257,7 @@ class _BaseImageProperty(_BaseBlobProperty):
   def __init__(self, *args, **kwargs):
     self._process = kwargs.pop('process', None)
     self._process_config = kwargs.pop('process_config', {})
+    self._upload_format = kwargs.pop('upload_format', True)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
   
@@ -306,6 +307,8 @@ class _BaseImageProperty(_BaseBlobProperty):
     return new_value
   
   def argument_format(self, value):
+    if not self._upload_format:
+      return super(_BaseImageProperty, self).argument_format(value)
     value = self._property_value_format(value)
     if value is Nonexistent:
       return value

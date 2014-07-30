@@ -248,44 +248,78 @@ MainApp
 		        	  	    var $parentScope = this;
 		        	  	    
 		        	  	    if (!instance) instance = {'images' : [], 'contents' : []};
+		        	  	    
+		        	  	    var complete_upload = function (data) {
+		                	 	var images = null;
+		                	 	var that = this;
+		                	 	
+		                	 	angular.forEach(data.entity._products, function (prod) {
+		                	 		if (prod.key == $parentScope.child.key)
+		                	 		{
+		                	 			angular.forEach(prod._instances, function (inst) {
+		                	 				if (inst.key == that.child.key)
+		                	 				{
+		                	 					images = inst.images;
+		                	 				}
+		                	 			});
+		                	 		}
+		                	 	});
+		                	 	
+		                	 	if (images)
+		                	 	{
+		                	 		this.child.images = images;
+		                	 	}
+				             };
 		          
-		        	  	    var cfg = {
+		        	  	     var cfg = {
 			                	 'kind' : kind,
 			                	 'close' : false,
-			                	 'entity' : instance,
-			                	 'data' : {'entity' : instance},
-			                	 'scope' : angular.extend(make_product_scope(), {}),
+			                	 'parentScope' : $parentScope,
+			                	 'scope' : angular.extend(make_product_scope(), {
+			                	 	'completed' : complete_upload,
+			                	 }),
+			                	 'get_child' : function ()
+			                	 {
+			                	 	var that = this;
+			                	 	that.child = {};
+			                	 	angular.forEach(this.entity._products, function (prod) {
+			                	 		if (prod.key == $parentScope.child.key)
+			                	 		{
+			                	 			prod._instances.push(that.child);
+			                	 		}
+		                	 		});
+			                	 },
 			                	 'handle' : function (data)
-						         { 
-	  
+						         {
+						             this.uploadConfig = $parentScope.uploadConfig;
 						         },
-			                	 'templateUrl' : logic_template('product/manage_instance.html'),
-			               };
+			                    'templateUrl' : logic_template('product/manage_instance.html'),
+			                  };
 			               
-			               if (create) {
-	          
-			        		  	cfg['args'] = create;
-			        		  	cfg['complete'] = function (entity)
-			        		  	{
-			        		  		angular.forEach($parentScope.entity._instances, function (ent) {
-			        		  			if (ent.key == entity.key)
-			        		  			{
-			        		  				 create = false;
-			        		  			}
-			        		  		});
-			        		  		
-			        		  	    if (create)
-			        		  	    {
-			        		  	    	$parentScope.entity._instances.push(entity);
-			        		  	    }
-			        		  		
-			        		  	};
-			        		  	
+			                  if (create) {
+	           
 			        		  	EntityEditor.create(cfg);
 			        		  }
 			        		  else
 			        		  {
 			        		  	cfg['close'] = true;
+			        		  	cfg['get_child'] = function ()
+			        		  	{
+			        		  		var that = this;
+			                	 	angular.forEach(this.entity._products, function (prod) {
+			                	 		if (prod.key == $parentScope.child.key)
+			                	 		{
+			                	 			angular.forEach(prod._instances, function (inst) {
+			                	 				if (inst.key == instance.key)
+			                	 				{
+			                	 					that.child = inst;
+			                	 				}
+			                	 			});
+			                	 		}
+		                	 		});
+								                	 	 
+			        		  	};
+			        		  	
 			        		  	EntityEditor.update(cfg);
 			        		  }
 		        	   
@@ -301,7 +335,7 @@ MainApp
 		  							
 		  							$scope.variants = [];
 		  				 
-		  							angular.forEach($parentScope.entity.variants, function (v) {
+		  							angular.forEach($parentScope.child.variants, function (v) {
 		 
 		  								$scope.variants.push({
 		  									'name' : v.name,
@@ -319,10 +353,21 @@ MainApp
 		                            	 	variant_signature.push(d);
 		                            	 });
 		                            	 
+		                            	 var manage = false;
 		                            	 
-		                            	 //@todo fetch the dialog
+		                            	 angular.forEach($parentScope.child._instances, function (inst) {
+		                            	 	if (inst.variant_signature == variant_signature)
+		                            	 	{
+		                            	 		$parentScope.manageInstance(inst);
+		                            	 		
+		                            	 		manage = true;
+		                            	 	}
+		                            	 });
 		                            	 
-		                            	 console.log(variant_signature);
+		                            	 if (!manage)
+		                            	 {
+		                            	 	$parentScope.manageInstance({'variant_signature' : variant_signature}, 1);
+		                            	 }
 		                            	   
 		                            };
 		
@@ -458,14 +503,30 @@ MainApp
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
  
                                     $scope.manageProduct = function (product) {
+                                    	
+                                    	var complete_upload = function (data) {
+					                	 	var images = [];
+					                	 	var that = this;
+					                	 	
+					                	 	angular.forEach(data.entity._products, function (prod) {
+					                	 		if (prod.key == that.child.key)
+					                	 		{
+					                	 			images = prod.images;
+					                	 		}
+					                	 	});
+					                	 	
+					                	 	this.child.images = images;
+							             };
                                       
                                     	 if (!product)
                                     	 {
                                     	 	return EntityEditor.create({
 							               		 'close' : false,
 							                	 'kind' : kind,
-							                	 'parentScope' : $parentScope,
-							                	 'scope' : make_product_scope(),
+							                	 'parentScope' : $scope,
+							                	 'scope' : angular.extend(make_product_scope(), {
+								                	'completed' : complete_upload,
+								                 }),
 							                	 'get_child' : function ()
 							                	 {
 							                	 	this.child = {};
@@ -475,9 +536,6 @@ MainApp
 										         {
 										             this.uploadConfig = $parentScope.uploadConfig;
 										         },
-							                	 'complete' : function (entity) {
-							                	 	console.log(entity);
-							                	 },
 							                	 'templateUrl' : logic_template('product/manage.html'),
 							                	 'args' : {
 							                	 	'domain' : $parentScope.entity.namespace,
@@ -488,28 +546,25 @@ MainApp
                                     	 {
                                     	 	return EntityEditor.update({
 								                	 'kind' : kind,
-								                	 'scope' : make_product_scope(),
-								                	 'parentScope' : $parentScope,
+								                	 'scope' : angular.extend(make_product_scope(), {
+								                	 	'completed' : complete_upload,
+								                	 }),
+								                	 'parentScope' : $scope,
 								                	 'get_child' : function ()
 								                	 {
-								                	 	var child = null;
-								                	 	angular.forEach(this.entity._products, function (prod) {
-								                	 		if (prod.key == product.key)
+								                	 	var that = this;
+								                	 	angular.forEach(this.entity._products, function (ent) {
+								                	 		if (ent.key == product.key)
 								                	 		{
-								                	 			child = prod;
+								                	 			that.child = ent;
 								                	 		}
 								                	 	});
-								                	 	
-								                	 	this.child = child;
+								                	 	 
 								                	 },
 								                	 'handle' : function (data)
 											         {
 											             this.uploadConfig = $parentScope.uploadConfig;
 											         },
-								                	 'complete' : function (data)
-								                	 { 
-								                	 	console.log(data);
-								                	 },
 								                	 'templateUrl' : logic_template('product/manage.html')
 								                });
                                     	 }
@@ -523,7 +578,7 @@ MainApp
                                    
                                     $scope.rule = $parentScope.rule;
                                     $scope.live_entity = $parentScope.entity;
-                                    $scope.entity = angular.copy($parentScope.entity);
+                                    $scope.entity = angular.copy($scope.live_entity);
  
                                     $scope.onDrop = function (event, ui, catalog_image) {
                                         var pricetags = catalog_image.pricetags;
@@ -687,7 +742,8 @@ MainApp
             var catalog_read_arguments = {
                             	'_images' : {},
                             	'_products' : {
-                            		'_instances' : {},
+                            		'_instances' : {
+                            		},
                             	},
                            };
              

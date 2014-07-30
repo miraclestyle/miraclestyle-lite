@@ -757,7 +757,7 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    # util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
+    util.log('RuleWrite: %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
     # @todo this is the problem with catalog dates...
     if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
@@ -780,11 +780,11 @@ class _BaseModel(object):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
+        if child_entity is None:
+          return
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
           # @todo This is bug. None value should not be supplied on fields that are not required!
-          if child_entity is None:
-            return
           if field_value is None:
             return
           for field_value_item in field_value:

@@ -181,7 +181,7 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
             return entity
       for i,target in enumerate(target_field_paths):
         do_entity = start(do_entity, target, last_i, i, entities)
-    entity = entities[0]
+      entity = entities[0]
     if entity and isinstance(entity, orm.Model):
       fields = entity.get_fields()
       for field_key, path in add_config.items():
@@ -210,6 +210,8 @@ class ProcessImages(orm.BaseModel):
         do_entity = root_entity
         values = []
         def start(entity, target, last_i, i, targets, values):
+          if entity is None:
+            return entity
           if isinstance(entity, list):
             out = []
             for ent in entity:

@@ -566,10 +566,16 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	if (!$scope.history) return false;
  
     $scope.logs = [];
-    $scope.history.args.more = true;
+    $scope.history.more = true;
     $scope.history.args.read_arguments = {
     	'_records' : {
-    		'cursor' : null,
+    		'config' : {
+    			'cursor' : null,
+    			'order' : {
+    				'field' : 'logged',
+    				'direction' : 'desc',
+    			},
+    		},
     	},
     };
     
@@ -577,7 +583,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	  
 	var loadMore = function (that)
 	{ 
-			if (!$scope.commander.loading && $scope.history.args.more)
+			if (!$scope.commander.loading && $scope.history.more)
 			{
 				$scope.commander.loading = true;
 				
@@ -589,13 +595,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 					     $scope.logs.push(value);
 					});
  					
- 					$scope.history.args.read_arguments.cursor = data.cursor;
-					$scope.history.args.cursor = data.cursor;
-					$scope.history.args.more = data.more;
+ 					$scope.history.args.read_arguments.config.cursor = data.cursor;
+					$scope.history.more = data.more;
 					
-					if (!$scope.history.args.more)
+					if (!$scope.history.more)
 				    {
-				    	delete $scope.history.args.more;
+				    	delete $scope.history.more;
 				    }	
 					 
 					$scope.commander.loading = false;
@@ -686,6 +691,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         		{
         			update($scope.entity, data['entity']);
         		}
+        	 
   
         	   this.update_rule($scope, data);
         	},
@@ -807,6 +813,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            $scope.resolve_handle = opts['handle'];
 	                            $scope.resolve_complete = opts['complete'];
 	                            $scope.resolve_cancel = opts['cancel'];
+	                            if (opts['get_child'])
+	                            {
+	                            	$scope.get_child = opts['get_child'];
+	                            }
 	                            update($scope.options, opts);
 	                            
 	                            if (do_scope)
@@ -815,16 +825,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            }
                         	};
                         	
-                        	if ('update_child' in options)
-                        	{
-                        		$scope.update_child = options['update_child'];
-                        	}
-                        	
-                        	if ('get_child' in options)
-                        	{
-                        		$scope.get_child = options['get_child'];
-                        	}
-                        	
+                        	if (options['get_child'])
+	                        {
+	                            $scope.get_child = options['get_child'];
+	                        }
+                        	 
                         	var entity = options['entity'];
                         	var rule = {};
                         	
@@ -845,6 +850,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  							$scope.rule = rule;
  							$scope.live_entity = entity;
                             $scope.entity = angular.copy(entity);
+                            
                             if ($parentScope)
                             {
                             	$scope.get_child();
@@ -880,8 +886,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 	 		action2 = pre_action2;
                                 	 		action = pre_action;
                                 	 	}
-                                	 	
-                                	 	
+                                	 	 
                                         $scope.action = action;
                 					    $scope.action2 = action2;
                 					    
@@ -917,7 +922,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 		}
                                 	  
                                         that.update_entity($scope, {'entity' : entity_from_db});
-                                        
+                      
                                         if (!data['errors'])
                                         {
                                         	
@@ -998,7 +1003,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     }; 
     
     var active_filter = [{'value' : true, 'operator':'==', 'field' : 'active'}];
-   	
+   	$rootScope.nowJsTimestamp = new Date().getTime();
    	$rootScope.commonSelect2Options = {
    		'country' : Select2Options.factory({
    			kind : '15',

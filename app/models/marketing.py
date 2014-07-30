@@ -129,7 +129,7 @@ class ProductInstance(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('7', kind='19'),
     'volume': orm.SuperDecimalProperty('8'),
     'volume_uom': orm.SuperKeyProperty('9', kind='19'),
-    'images': SuperImageLocalStructuredProperty(Image, '10', repeated=True),
+    'images': SuperImageLocalStructuredProperty(Image, '10', upload_format=False, repeated=True),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '11', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
     }
@@ -164,7 +164,7 @@ class Product(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('9', kind='19'),
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperKeyProperty('11', kind='19'),
-    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True, upload_format=False),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '13', repeated=True),
     'variants': orm.SuperLocalStructuredProperty(ProductVariant, '14', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
@@ -206,12 +206,12 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy' : True, 'copy_name' : 'cover'}),
+    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', upload_format=False, process_config={'copy' : True, 'copy_name' : 'cover'}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
   _virtual_fields = {
-    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi_sequenced'),
+    '_images': SuperImageStorageStructuredProperty(CatalogImage, upload_format=False, storage='remote_multi_sequenced'),
     '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
     '_records': orm.SuperRecordProperty('35')
     }
@@ -272,7 +272,7 @@ class Catalog(orm.BaseExpando):
                           'not user._root_admin'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
                           'user._is_taskqueue or user._root_admin'),
-      orm.FieldPermission('35', ['_images', '_products._images', '_products._instances._images'], True, None,
+      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], True, None,
                           'action.key_id_str == "process_images" and (user._is_taskqueue or user._root_admin)'),
       orm.FieldPermission('35', ['cover'], True, None,
                           'action.key_id_str == "process_cover" and (user._is_taskqueue or user._root_admin)')
@@ -502,7 +502,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            ProcessImages(cfg={'target_paths' : ['_images', '_products._images', '_products._instances._images']}),
+            ProcessImages(cfg={'target_field_paths' : ['_images', '_products.images', '_products._instances.images']}),
             # @todo this is a problem, we cannot call recursively all process functions,
             # because properties with copy=True will copy themselves every time def process is called.
             # we will have to think some other way how we can do this, like we do with read_arguments
