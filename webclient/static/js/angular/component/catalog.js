@@ -58,7 +58,7 @@ MainApp
                     var sense = maxscroll - left;
 
                     if(sense < 200) {
-                        scope.getImages();
+                        scope.getMoreImages();
                     }
                 };
 
@@ -161,6 +161,25 @@ MainApp
 		        	 	variant._state = 'deleted';
 		        	  
 		        	 },
+		        	 'getMoreProductInstances' : function ()
+                      { 
+                      	 // this does not work
+                      	 return;
+                      	 
+						 var that = this;
+						 
+						 var out = get_property_options(that.entity, '_products', 1);
+		 
+						 if (!out._instances.more) return false;
+						 
+						 Endpoint.post('read', '35', {'key' : $parentScope.entity.key,
+						  							  'read_arguments' : {'_products' : out}
+						  							 }).success(function (data) {
+						  		 
+								that.entity._products.extend(data.entity._products);
+								update(get_property_options(that.entity, '_products'), get_property_options(data.entity, '_products'));
+						  });
+                     },
 		        	 'manageContent' : function (content) { 
 		        	 	
 		        	 	var $parentScope = this;
@@ -270,7 +289,6 @@ MainApp
 			                	 'scope' : angular.extend(make_product_scope(), {
 			                	 	'completed' : complete_upload,
 			                	 }),
-			                 
 			                	 'update_child' : function (data) {
 							        var find = {key : $parentScope.child.key};
 			        	  	    	var new_product = _.findWhere(data.entity._products, find);
@@ -464,8 +482,24 @@ MainApp
                 'removeImage': function (image) {
                 	image._state = 'deleted';
                 },
-                'getImages': function () {
-					 // @todo missing logic for get more images
+                'getMoreImages': function () {
+		 
+					 var that = this;
+					 
+					 var config = get_property_options(that.entity, '_images');
+					 
+					 if (!config.more) return false;
+					 
+					 Endpoint.post('read', '35', {'key' : that.entity.key,
+					  								'read_arguments' : {'_images' : {
+					  									'config' : config,
+					  			   }}}).success(function (data) {
+					  		 
+							that.entity._images.extend(data.entity._images);
+							update(get_property_options(that.entity, '_images'), get_property_options(data.entity, '_images'))
+					  });
+					 
+					 
                 },
              
             };
@@ -476,6 +510,7 @@ MainApp
 				
                 return {
                 	
+                
                 'kind': kind,
                 'scope': make_scope(),
                 'handle': function (data) {
@@ -498,6 +533,24 @@ MainApp
                                 templateUrl: logic_template('catalog/products.html'),
                                 //windowClass: 'modal-medium',
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                	
+                                	$scope.getMoreProducts = function ()
+                                	{ 
+											 var that = this;
+											 
+											 var config = get_property_options(that.entity, '_products');
+											 
+											 if (!config.more) return false;
+											 
+											 Endpoint.post('read', '35', {'key' : $parentScope.entity.key,
+											  								'read_arguments' : {'_products' : {
+											  									'config' : config,
+											  			   }}}).success(function (data) {
+											  		 
+													that.entity._products.extend(data.entity._products);
+													update(get_property_options(that.entity, '_products'), get_property_options(data.entity, '_products'));
+											  });
+                                	};
  
                                     $scope.manageProduct = function (product) {
                                     	
@@ -515,6 +568,25 @@ MainApp
 							             {
 							             	update(this.child, find_child(this.child, data.entity));
 							             };
+							             
+							             var update_cfg = {
+								                	 'kind' : kind,
+								                	 'scope' : angular.extend(make_product_scope(), {
+								                	 	'completed' : complete_upload,
+								                	 }),
+								                	 'update_child' : update_child,
+								                	 'parentScope' : $scope,
+								                	 'get_child' : function ()
+								                	 {
+								                	 	var that = this;
+								                	 	this.child = find_child(product, this.entity);
+								                	 },
+								                	 'handle' : function (data)
+											         {
+											             this.uploadConfig = $parentScope.uploadConfig;
+											         },
+								                	 'templateUrl' : logic_template('product/manage.html')
+								                };
                                       
                                     	 if (!product)
                                     	 {
@@ -540,40 +612,18 @@ MainApp
 										         {
 										             this.uploadConfig = $parentScope.uploadConfig;
 										         },
+										         'options_after_update' : update_cfg,
 							                	 'templateUrl' : logic_template('product/manage.html'),
-							                	 'args' : {
-							                	 	'domain' : $parentScope.entity.namespace,
-							                	 }
 							                });
                                     	 }
                                     	 else
                                     	 {
-                                    	 	return EntityEditor.update({
-								                	 'kind' : kind,
-								                	 'scope' : angular.extend(make_product_scope(), {
-								                	 	'completed' : complete_upload,
-								                	 }),
-								                	 'update_child' : update_child,
-								                	 'parentScope' : $scope,
-								                	 'get_child' : function ()
-								                	 {
-								                	 	var that = this;
-								                	 	this.child = find_child(product, this.entity);
-								                	 },
-								                	 'handle' : function (data)
-											         {
-											             this.uploadConfig = $parentScope.uploadConfig;
-											         },
-								                	 'templateUrl' : logic_template('product/manage.html')
-								                });
+                                    	 	return EntityEditor.update(update_cfg);
                                     	 }
                                          
                                     };
                                     
-                                    $scope.getImages = function ()
-                                    {
-                                    	console.log(arguments);
-                                    };
+                                    $scope.getMoreImages = $parentScope.getMoreImages;
                                    
                                     $scope.rule = $parentScope.rule;
                                     $scope.live_entity = $parentScope.entity;

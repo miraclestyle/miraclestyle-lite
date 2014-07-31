@@ -7,7 +7,7 @@ Created on Oct 10, 2013
 from google.appengine.ext.ndb import metadata
 from google.appengine.api import search
 
-from app import io, orm, util, memcache
+from app import io, orm, util, mem
 
 from webclient import handler
 
@@ -64,7 +64,7 @@ class Reset(handler.Angular):
         if not document_ids:
           break
         index.delete(document_ids)
-      memcache.flush_all()
+      mem.flush_all()
  
       
 class Endpoint(handler.Angular):

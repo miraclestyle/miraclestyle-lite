@@ -1,3 +1,14 @@
+function get_property_options(entity, path)
+{
+	var opts = entity._property_value_options;
+	var paths = path.split('.');
+	    angular.forEach(paths, function (v) {
+	    	opts = opts[v];
+	    });
+	
+	return opts.config;
+}
+
 function calculate_grider(all_canvas, max_w, min_w, margin){
  
   var loop = max_w - min_w;

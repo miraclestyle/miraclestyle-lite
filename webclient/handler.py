@@ -12,7 +12,7 @@ import importlib
 from jinja2 import FileSystemLoader
 from webapp2_extras import jinja2
 
-from app import orm, settings, util, memcache
+from app import orm, settings, util, mem
 
 from webclient import webclient_settings
 from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
@@ -246,7 +246,7 @@ class Base(webapp2.RequestHandler):
       self.after()
     finally:
       # support our memcache wrapper lib temporary variables, and release them upon request complete
-      memcache._local.__release_local__()
+      mem._local.__release_local__()
          
          
 class Blank(Base):

@@ -19,7 +19,7 @@ from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
 from google.appengine.api import search
 
-from app import memcache, util, settings
+from app import mem, util, settings
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -1277,19 +1277,19 @@ class _BaseModel(object):
   
   def write_search_document(self):
     if self._use_search_engine:
-      documents = memcache.temp_get(self.key._search_index, [])
+      documents = mem.temp_get(self.key._search_index, [])
       documents.append(self.get_search_document())
-      memcache.temp_set(self.key._search_index, documents)
+      mem.temp_set(self.key._search_index, documents)
   
   @classmethod
   def delete_search_document(cls, key):
     if cls._use_search_engine:
-      documents = memcache.temp_get(key._search_unindex, [])
+      documents = mem.temp_get(key._search_unindex, [])
       documents.append(key.urlsafe())
-      memcache.temp_set(key._search_unindex, documents)
+      mem.temp_set(key._search_unindex, documents)
   
   def write_search_index(self):
-    documents = memcache.temp_get(self.key._search_index, [])
+    documents = mem.temp_get(self.key._search_index, [])
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
@@ -1302,10 +1302,10 @@ class _BaseModel(object):
           except Exception as e:
             util.log('INDEX FAILED! ERROR: %s' % e)
             pass
-      memcache.temp_delete(self.key._search_index)
+      mem.temp_delete(self.key._search_index)
   
   def delete_search_index(self):
-    documents = memcache.temp_get(self.key._search_unindex, [])
+    documents = mem.temp_get(self.key._search_unindex, [])
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
@@ -1318,7 +1318,7 @@ class _BaseModel(object):
           except Exception as e:
             util.log('INDEX FAILED! ERROR: %s' % e)
             pass
-      memcache.temp_delete(self.key._search_unindex)
+      mem.temp_delete(self.key._search_unindex)
   
   @classmethod
   def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
@@ -1333,6 +1333,27 @@ class _BaseModel(object):
         dic[field.name] = field.value
     return dic
   
+  def _set_property_value_options(self):
+    if self is self._root:
+      def scan(value, field_key, field, value_options):
+        if isinstance(value, SuperPropertyManager):
+          options = {'config' : value.value_options}
+          value_options[field_key] = options
+          if value.has_value():
+            scan(value.value, field_key, field, options)
+        elif isinstance(value, list):
+          for val in value:
+            scan(val, field_key, field, value_options)
+        elif value is not None and isinstance(value, Model):
+          for field_key, field in value.get_fields().items():
+            val = getattr(value, field_key, None)
+            scan(val, field_key, field, value_options)
+      value_options = {}
+      for field_key, field in self.get_fields().items():
+        scan(self, field_key, field, value_options)
+      self._property_value_options = value_options
+      return self._property_value_options
+          
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
       names = [names]
@@ -1381,6 +1402,9 @@ class _BaseModel(object):
         dic[name] = value
     except Exception as e:
       util.log(e, 'exception')
+    self._set_property_value_options()
+    if hasattr(self, '_property_value_options'):
+      dic['_property_value_options'] = self._property_value_options
     return dic
 
 
@@ -1771,11 +1795,17 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       cursor = None
     else:
       keys = [Key(self._property.get_modelclass().get_kind(),
-                  str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit)]
+                  str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit + 1)]
       entities = get_multi_async(keys)
       cursor = cursor + limit
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
+    
+  def _process_read_async_remote_multi_sequenced(self):
+    entities = map(lambda x: x.get_result(), self._property_value)
+    self._property_value_options['more'] = entities[-1] is not None
+    util.remove_value(entities)
+    self._property_value = entities
   
   def _read_deep(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
@@ -1823,20 +1853,25 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     if self._property._readable:
       self.read_async(read_arguments)
       if self.has_future():
-        property_value = []
-        if isinstance(self._property_value, list):
-          get_async_results(self._property_value)
-        elif isinstance(self._property_value, Future):
-          property_value = self._property_value.get_result()
-          if isinstance(property_value, tuple):
-            cursor = property_value[1]
-            if cursor:
-              cursor = cursor.urlsafe()
-            self._property_value = property_value[0]
-            self._property_value_options['cursor'] = cursor
-            self._property_value_options['more'] = property_value[2]
-          else:
-            self._property_value = property_value
+        process_read_fn = '_process_read_async_%s' % self.storage_type
+        if hasattr(self, process_read_fn):
+          process_read_fn = getattr(self, process_read_fn)
+          process_read_fn()
+        else:
+          property_value = []
+          if isinstance(self._property_value, list):
+            get_async_results(self._property_value)
+          elif isinstance(self._property_value, Future):
+            property_value = self._property_value.get_result()
+            if isinstance(property_value, tuple):
+              cursor = property_value[1]
+              if cursor:
+                cursor = cursor.urlsafe()
+              self._property_value = property_value[0]
+              self._property_value_options['cursor'] = cursor
+              self._property_value_options['more'] = property_value[2]
+            else:
+              self._property_value = property_value
       format_callback = self._property._storage_config.get('format_callback')
       if callable(format_callback):
         self._property_value = format_callback(self._entity, self._property_value)

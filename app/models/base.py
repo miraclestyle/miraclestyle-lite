@@ -13,7 +13,7 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images
 from google.appengine.datastore.datastore_query import Cursor
 
-from app import orm, memcache, settings
+from app import orm, mem, settings
 from app.util import *
 
 
@@ -188,10 +188,10 @@ class _BaseBlobProperty(object):
   @classmethod
   def get_blobs(cls):
     # This function acts as a getter from in-memory storage.
-    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is None:
-      memcache.temp_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
-    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY)
+      mem.temp_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
+    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY)
     return blobs
   
   @classmethod

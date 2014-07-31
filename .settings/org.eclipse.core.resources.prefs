@@ -1,6 +1,6 @@
 eclipse.preferences.version=1
 encoding//app/io.py=utf-8
-encoding//app/memcache.py=utf-8
+encoding//app/mem.py=utf-8
 encoding//app/models/auth.py=utf-8
 encoding//app/models/base.py=utf-8
 encoding//app/models/buyer.py=utf-8

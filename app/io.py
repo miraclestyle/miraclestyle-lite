@@ -10,7 +10,7 @@ import cgi
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-from app import orm, util, settings, memcache
+from app import orm, util, settings, mem
 
 
 class InputError(Exception):
@@ -86,11 +86,11 @@ class Engine:
       blobs = {'delete': uploaded_blobs}
       # By default, we set that all uploaded blobs must be deleted in 'finally' phase.
       # However, we use blob specialized properties to control intermediate outcome of action.
-      memcache.temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
+      mem.temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
   
   @classmethod
   def process_blob_state(cls, state):
-    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
       # Process blobs to be saved.
       save_state_blobs = blobs.get('collect_%s' % state, None)
@@ -110,7 +110,7 @@ class Engine:
   
   @classmethod
   def process_blob_output(cls):
-    blobs = memcache.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
       save_blobs = blobs.get('collect', None)
       delete_blobs = blobs.get('delete', None)

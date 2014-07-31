@@ -595,8 +595,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 					     $scope.logs.push(value);
 					});
  					
- 					$scope.history.args.read_arguments.config.cursor = data.cursor;
-					$scope.history.more = data.more;
+ 					var config = data.entity._property_value_options._records.config;
+ 					var read_arguments_config = $scope.history.args.read_arguments._records.config;
+ 					
+ 					read_arguments_config.cursor = config.cursor;
+					$scope.history.more = config.more;
 					
 					if (!$scope.history.more)
 				    {

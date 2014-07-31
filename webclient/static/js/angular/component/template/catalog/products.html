@@ -43,6 +43,10 @@
                 <div class="button pricetag">{{product.unit_price}}</div>
             </li>
           </ul>
+          
+          <div ng-show="entity._property_value_options._products.config.more">
+			<button type="button" ng-click="getMoreProducts()" busy class="button">Load more products</button>
+		  </div>
 	 
 	   	 <div class="corner-right">
 	   	 	 <button type="button" ng-click="save()" 

@@ -18,8 +18,18 @@ class ModelInfo(handler.Base):
     # beside the content type include the cache headers in the future
     self.response.headers['Content-Type'] = 'text/javascript'
     
+    models = io.Engine.get_schema()
+    send = {}
+    for kind, model in models.items():
+      if kind:
+        try:
+          int(kind)
+          send[kind] = model
+        except:
+          pass
+    
     script = u"KINDS = {}; \n"
-    script += u'KINDS.info = %s;' % json.dumps(io.Engine.get_schema(), indent=2, cls=JSONEncoderHTML)
+    script += u'KINDS.info = %s;' % json.dumps(send, indent=2, cls=JSONEncoderHTML)
      
     self.response.write(script)
       

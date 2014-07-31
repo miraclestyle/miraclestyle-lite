@@ -76,7 +76,8 @@
 			</div>
 		</div>
 		
-		<div ng-show="entity.search_more"><button type="button" ng-click="getImages()" busy class="button">Load more images</button></div>
+		<div ng-show="entity._property_value_options._images.config.more">
+			<button type="button" ng-click="getMoreImages()" busy class="button">Load more images</button></div>
 	</div>
 	
 	<div is-open="accordions.embed" ng-show="entity.id" accordion-group heading="Embed">
