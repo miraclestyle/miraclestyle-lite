@@ -991,104 +991,6 @@ class _BaseModel(object):
         # general handler failure will result in transaction rollback!
   
   @classmethod
-  def get_datastore_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    keys = None
-    args = []
-    kwds = {}
-    filters = argument.get('filters')
-    order_by = argument.get('order_by')
-    for _filter in filters:
-      if _filter['field'] == 'ancestor':
-        kwds['ancestor'] = _filter['value']
-        continue
-      if _filter['field'] == 'key':
-        keys = _filter['value']
-        break
-      field = getattr(cls, _filter['field'])
-      op = _filter['operator']
-      value = _filter['value']
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-        args.append(field == value)
-      elif op == '!=':
-        args.append(field != value)
-      elif op == '>':
-        args.append(field > value)
-      elif op == '<':
-        args.append(field < value)
-      elif op == '>=':
-        args.append(field >= value)
-      elif op == 'IN':
-        args.append(field.IN(value))
-      elif op == 'contains':
-        letters = list(string.printable)
-        try:
-          last = letters[letters.index(value[-1].lower()) + 1]
-          args.append(field >= value)
-          args.append(field < last)
-        except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
-          args.append(field == value)
-    query = cls.query(namespace=namespace, **kwds)
-    query = query.filter(*args)
-    if order_by:
-      order_by_field = getattr(cls, order_by['field'])
-      if order_by['operator'] == 'asc':
-        query = query.order(order_by_field)
-      else:
-        query = query.order(-order_by_field)
-    if keys is not None:
-      return keys
-    else:
-      return query
-  
-  @classmethod
-  def get_search_query(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    # Query String implementation start!
-    query_string = ''
-    sort_options = None
-    filters = argument.get('filters')
-    args = []
-    for _filter in filters:
-      field = _filter['field']
-      op = _filter['operator']
-      value = _filter['value']
-      if field == 'query_string':
-        args.append(value)
-        break
-      if field == 'ancestor':
-        args.append('(' + field + '=' + value + ')')
-        continue
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
-        args.append('(' + field + '=' + value + ')')
-      elif op == '!=':
-        args.append('(NOT ' + field + '=' + value + ')')
-      elif op == '>':
-        args.append('(' + field + '>' + value + ')')
-      elif op == '<':
-        args.append('(' + field + '<' + value + ')')
-      elif op == '>=':
-        args.append('(' + field + '>=' + value + ')')
-      elif op == '<=':
-        args.append('(' + field + '<=' + value + ')')
-      elif op == 'IN':
-        args.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
-    query_string = ' AND '.join(args)
-    # Query String implementation start!
-    order_by = argument.get('order_by')
-    property_config = argument.get('property')
-    if order_by['operator'] == 'asc':
-      default_value=property_config._order_by[order_by['field']]['default_value']['asc']
-      direction = search.SortExpression.ASCENDING
-    else:
-      default_value=property_config._order_by[order_by['field']]['default_value']['desc']
-      direction = search.SortExpression.DESCENDING
-    order = search.SortExpression(expression=order_by['field'], direction=direction, default_value=default_value)
-    sort_options = search.SortOptions(expressions=[order], limit=limit)
-    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
-    options = search.QueryOptions(limit=limit, returned_fields=fields, sort_options=sort_options, cursor=cursor)
-    query = search.Query(query_string=query_string, options=options)
-    return query
-  
-  @classmethod
   def _datastore_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here?
     # this should be called datastore_search?
     query = cls.get_datastore_query(argument, namespace, limit, urlsafe_cursor, fields)
@@ -2838,6 +2740,49 @@ class SuperSearchProperty(SuperJsonProperty):
     dic['indexes'] = self._indexes
     return dic
   
+  def datastore_default_options_format(self, options):
+    for value_key, value in options.items():
+      if value_key in ['keys_only', 'produce_cursors']:
+        if not isinstance(value, bool):
+          del options[value_key]
+      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
+        if not isinstance(value, long):
+          del options[value_key]
+      elif value_key in ['start_cursor', 'end_cursor']:
+        try:
+          options[value_key] = Cursor(urlsafe=value)
+        except:
+          del options[value_key]
+      elif value_key in ['read_policy']:
+        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
+          del options[value_key]
+      else:
+        del options[value_key]
+  
+  def datastore_format(self, value):
+    value.update(self.cfg.get('static'))
+    for value_key, value in value.items():
+      if value_key in ['kind']:
+        if not isinstance(value, str):
+          raise PropertyError('kind_missing')
+      elif value_key in ['ancestor']:
+        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
+      elif value_key in ['filters']:
+        self.datastore_filters_format(value)
+      elif value_key in ['orders']:
+        self.datastore_orders_format(value)
+      elif value_key in ['projection']:
+        self.datastore_projection_format(value)
+      elif value_key in ['group_by']:
+        self.datastore_group_by_format(value)
+      elif value_key in ['default_options']:
+        self.datastore_default_options_format(value)
+      else:
+        del options[value_key]
+  
+  def search_format(self, value):
+    
+  
   def argument_format(self, value):
     value = super(SuperSearchProperty, self).argument_format(value)
     search = {'filters': value.get('filters'),
@@ -2880,6 +2825,138 @@ class SuperSearchProperty(SuperJsonProperty):
         composite_order_by = True
     assert composite_filter is True and composite_order_by is True
     return search
+  
+  def build_datastore_filters(self, value):
+    _filters = value.get('filters')
+    filters = []
+    model = Model._kind_map.get(value.get('kind'))
+    for _filter in _filters:
+      field = getattr(model, _filter['field'])
+      op = _filter['operator']
+      value = _filter['value']
+      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+        filters.append(field == value)
+      elif op == '!=':
+        filters.append(field != value)
+      elif op == '>':
+        filters.append(field > value)
+      elif op == '<':
+        filters.append(field < value)
+      elif op == '>=':
+        filters.append(field >= value)
+      elif op == 'IN':
+        filters.append(field.IN(value))
+      elif op == 'contains':
+        letters = list(string.printable)
+        try:
+          last = letters[letters.index(value[-1].lower()) + 1]
+          filters.append(field >= value)
+          filters.append(field < last)
+        except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
+          filters.append(field == value)
+    if len(filters):
+      return filters
+    else:
+      return None
+  
+  def build_datastore_orders(self, value):
+    _orders = value.get('orders')
+    orders = []
+    model = Model._kind_map.get(value.get('kind'))
+    for _order in _orders:
+      field = getattr(model, _order['field'])
+      op = _filter['operator']
+      if op == 'asc':
+        orders.append(field)
+      else:
+        orders.append(-field)
+    if len(orders):
+      return orders
+    else:
+      return None
+  
+  def build_datastore_options(self, value):
+    default_options = value.get('default_options', None)
+    if default_options:
+      return QueryOptions(**default_options)
+    else:
+      return QueryOptions()
+  
+  def build_datastore_query(self, value):
+    filters = self.build_datastore_filters(value)
+    orders = self.build_datastore_orders(value)
+    default_options = self.build_datastore_options(value)
+    return Query(kind=value.get('kind'), ancestor=value.get('ancestor', None),
+                 namespace=value.get('namespace', None), projection=value.get('projection', None),
+                 group_by=value.get('group_by', None), default_options=default_options,
+                 filters=(*filters), orders=(*orders))
+  
+  def build_search_query_string(self, value):
+    query_string = value.get('query_string', '')
+    if query_string:
+      return query_string
+    _filters = value.get('filters')
+    filters = []
+    ancestor = value.get('ancestor')
+    if ancestor:
+      filters.append('(ancestor=' + value + ')')
+    for _filter in _filters:
+      field = _filter['field']
+      op = _filter['operator']
+      value = _filter['value']
+      #if field == 'query_string':
+        #filters.append(value)
+        #break
+      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+        filters.append('(' + field + '=' + value + ')')
+      elif op == '!=':
+        filters.append('(NOT ' + field + '=' + value + ')')
+      elif op == '>':
+        filters.append('(' + field + '>' + value + ')')
+      elif op == '<':
+        filters.append('(' + field + '<' + value + ')')
+      elif op == '>=':
+        filters.append('(' + field + '>=' + value + ')')
+      elif op == '<=':
+        filters.append('(' + field + '<=' + value + ')')
+      elif op == 'IN':
+        filters.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
+    query_string = ' AND '.join(filters)
+    return query_string
+  
+  def build_search_sort_options(self, value):
+    sort_options = None
+    _orders = value.get('orders')
+    default_options = value.get('default_options', {})
+    default_order_values = self.cfg.get('default_sort_values', {})
+    orders = []
+    for _order in _orders:
+      field = _order['field']
+      op = _filter['operator']
+      default_field_values = default_order_values.get(field, {})
+      if op == 'asc':
+        direction = search.SortExpression.ASCENDING
+        default_value = default_field_values.get('asc')
+      else:
+        direction = search.SortExpression.DESCENDING
+        default_value = default_field_values.get('desc')
+      orders.append(search.SortExpression(expression=field, direction=direction, default_value=default_value))
+    sort_options = search.SortOptions(expressions=orders, limit=default_options.get('limit'))
+  
+  def build_search_query_options(self, value):
+    sort_options = self.build_search_sort_options(value)
+    default_options = value.get('default_options', {})
+    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+    options = search.QueryOptions(limit=default_options.get('limit'),
+                                  returned_fields=value.get('projection', None),
+                                  sort_options=sort_options, cursor=cursor)
+    return options
+  
+  def build_search_query(self, kind, ancestor=None, namespace=None, filters=None, orders=None, projection=None, group_by=None, default_options=None        argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+    query_string = self.build_search_query_string(value)
+    query_options = self.build_search_query_options(value)
+    query = search.Query(query_string=query_string, options=query_options)
+    return query
 
 
 class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
