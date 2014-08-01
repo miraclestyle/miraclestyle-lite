@@ -2692,12 +2692,7 @@ class SuperSearchProperty(SuperJsonProperty):
                                'keys': [key1, key2, key3]}
     
     '''
-    filters = kwargs.pop('filters', {})
-    order_by = kwargs.pop('order_by', {})
-    indexes = kwargs.pop('indexes', {})
-    self._filters = filters
-    self._order_by = order_by
-    self._indexes = indexes
+    self._cfg = kwargs.pop('cfg')
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -2706,9 +2701,7 @@ class SuperSearchProperty(SuperJsonProperty):
     
     '''
     dic = super(SuperSearchProperty, self).get_meta()
-    dic['filters'] = self._filters
-    dic['order_by'] = self._order_by
-    dic['indexes'] = self._indexes
+    dic['cfg'] = self._cfg
     return dic
   
   def old_argument_format(self, value):
@@ -2754,12 +2747,54 @@ class SuperSearchProperty(SuperJsonProperty):
     assert composite_filter is True and composite_order_by is True
     return search
   
-  def filters_format(self, values):
-    
-  
-  def orders_format(self, values):
-    
-  
+  def filters_orders_format(self, values):
+    '''
+      'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
+      'orders': [{'field': 'name', 'operator': 'asc'}],
+    '''
+    # in this function it is very important to note that we implicitly use
+    # dict[key_name] where we want, because we want to ensure that the value is present
+    # if not it will throw KeyError and fail validation due misconfiguration
+    filters = values.get('filters')
+    orders = values.get('orders')
+    filters_cfg = self._cfg['filters']
+    indexes_cfg = self._cfg['indexes']
+    filter_indexes_cfg = indexes_cfg['filters']
+    orders_indexes_cfg = indexes_cfg['orders']
+    search_arguments = self._cfg.get('search_arguments')
+    kind = search_arguments['kind']
+    keys = values.get('keys')
+    model = Model._kind_map.get(kind)
+    if not model:
+      raise PropertyError('invalid_model_kind_%s' % kind)
+    if keys is not None:
+      keys = map(lambda urlsafe: Key(urlsafe=urlsafe), keys)
+      for key in keys:
+        if key.kind() != kind:
+          raise PropertyError('invalid_key_kind')
+    else:
+      for i,_filter in enumerate(filters):
+        val = _filter['value']
+        op = _filter['operator']
+        field = _filter['field']
+        index = filter_indexes_cfg[i]
+        if index[0] != field:
+          raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
+        if op not in index[1]:
+          raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
+        # mutate the value correctly
+        field = filters[field] # returns instance of definition
+        _filter['value'] = field.argument_format(val)
+      for i,_order in enumerate(orders):
+        op = _filter['operator']
+        field = _filter['field']
+        index = orders_indexes_cfg[i]
+        if index[0] != field:
+          raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
+        if index[1] != op:
+          raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
+         
+         
   def property_list_format(self, values):
     if not isinstance(values, (tuple, list)):
       raise PropertyError('not_list')
@@ -2790,17 +2825,15 @@ class SuperSearchProperty(SuperJsonProperty):
         del values[value_key]
   
   def datastore_query_format(self, values):
-    values.update(self.cfg.get('search_arguments'))
+    values.update(self._cfg.get('search_arguments'))
     for value_key, value in values.items():
-      if value_key in ['kind']:
+      if value_key == 'kind':
         if not isinstance(value, str):
           raise PropertyError('kind_missing')
-      elif value_key in ['ancestor']:
-        values[value_key] = SuperKeyProperty(kind=self.cfg.get('ancestor_kind')).argument_format(value)
-      elif value_key in ['filters']:
-        self.filters_format(value)
-      elif value_key in ['orders']:
-        self.orders_format(value)
+      elif value_key == 'ancestor':
+        values[value_key] = SuperKeyProperty(kind=self._cfg.get('ancestor_kind')).argument_format(value)
+      elif value_key == ['filters', 'orders']:
+        self.filters_orders_format(values)
       elif value_key in ['projection', 'group_by']:
         self.property_list_format(value)
       elif value_key in ['default_options', 'options']:
@@ -2828,16 +2861,16 @@ class SuperSearchProperty(SuperJsonProperty):
         del values[value_key]
   
   def search_query_format(self, values):
-    values.update(self.cfg.get('search_arguments'))
+    values.update(self._cfg.get('search_arguments'))
     for value_key, value in values.items():
-      if value_key in ['kind']:
+      if value_key == 'kind':
         if not isinstance(value, str):
           raise PropertyError('kind_missing')
-      elif value_key in ['ancestor']:
+      elif value_key == 'ancestor':
         SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
-      elif value_key in ['filters']:
+      elif value_key == 'filters':
         self.filters_format(value)
-      elif value_key in ['orders']:
+      elif value_key == 'orders':
         self.orders_format(value)
       elif value_key in ['projection', 'group_by']:
         self.property_list_format(value)
@@ -2847,6 +2880,7 @@ class SuperSearchProperty(SuperJsonProperty):
         del values[value_key]
   
   def argument_format(self, value):
+    pass
     
   
   def build_datastore_query_filters(self, value):
@@ -2854,9 +2888,12 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = []
     model = Model._kind_map.get(value.get('kind'))
     for _filter in _filters:
-      field = getattr(model, _filter['field'])
+      field = util.get_attr(model, _filter['field'])
       op = _filter['operator']
       value = _filter['value']
+      # here we could use
+      # field._comparison(op, value)
+      # https://code.google.com/p/appengine-ndb-experiment/source/browse/ndb/model.py?r=6b3f88b663a82831e9ecee8adbad014ff774c365#831
       if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
         filters.append(field == value)
       elif op == '!=':
@@ -2939,7 +2976,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def build_search_query_sort_options(self, value):
     _orders = value.get('orders')
     options = value.get('options', {})
-    default_values = self.cfg.get('default_values', {})
+    default_values = self._cfg.get('default_values', {})
     direction = {'asc': search.SortExpression.ASCENDING, 'desc': search.SortExpression.DESCENDING}
     orders = []
     for _order in _orders:
