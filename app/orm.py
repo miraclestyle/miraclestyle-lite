@@ -2759,8 +2759,6 @@ class SuperSearchProperty(SuperJsonProperty):
     orders = values.get('orders')
     filters_cfg = self._cfg['filters']
     indexes_cfg = self._cfg['indexes']
-    filter_indexes_cfg = indexes_cfg['filters']
-    orders_indexes_cfg = indexes_cfg['orders']
     search_arguments = self._cfg.get('search_arguments')
     kind = search_arguments['kind']
     keys = values.get('keys')
@@ -2773,28 +2771,47 @@ class SuperSearchProperty(SuperJsonProperty):
         if key.kind() != kind:
           raise PropertyError('invalid_key_kind')
     else:
-      for i,_filter in enumerate(filters):
+      for _filter in filters:
         value = _filter['value']
-        op = _filter['operator']
         field = _filter['field']
-        index = filter_indexes_cfg[i]
-        if index[0] != field:
-          raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
-        if op not in index[1]:
-          raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
         # mutate the value correctly
         field = filters[field] # returns instance of definition
         _filter['value'] = field.argument_format(value)
-      for i,_order in enumerate(orders):
-        op = _filter['operator']
-        field = _filter['field']
-        index = orders_indexes_cfg[i]
-        if index[0] != field:
-          raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
-        if index[1] != op:
-          raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
-         
-         
+      # try to find a match in all indexes, we need at least one!
+      success = False
+      e = 'unknown'
+      for index in indexes_cfg:
+        try:
+          if index.get('ancestor'):
+            if not values.get('ancestor'):
+              raise PropertyError('ancestor_is_required')
+          filter_indexes_cfg = index.get('filters')
+          orders_indexes_cfg = index.get('orders')
+          for i,_filter in enumerate(filters):
+            op = _filter['operator']
+            field = _filter['field']
+            index = filter_indexes_cfg[i]
+            if index[0] != field:
+              raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
+            if op not in index[1]:
+              raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
+          for i,_order in enumerate(orders):
+            op = _filter['operator']
+            field = _filter['field']
+            index = orders_indexes_cfg[i]
+            if index[0] != field:
+              raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
+            if index[1] != op:
+              raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
+          success = True # if no exceptions were thrown, we have found our match and we can stop the loop!
+          break
+        except Exception as e: # save the "e" to use if we fail at finding index match
+           pass
+      if success is not True:
+        if isinstance(e, Exception):
+          e = e.message
+        raise PropertyError(e) # we use the "e" that was last seen
+      
   def property_list_format(self, values):
     if not isinstance(values, (tuple, list)):
       raise PropertyError('not_list')
