@@ -2774,7 +2774,7 @@ class SuperSearchProperty(SuperJsonProperty):
           raise PropertyError('invalid_key_kind')
     else:
       for i,_filter in enumerate(filters):
-        val = _filter['value']
+        value = _filter['value']
         op = _filter['operator']
         field = _filter['field']
         index = filter_indexes_cfg[i]
@@ -2784,7 +2784,7 @@ class SuperSearchProperty(SuperJsonProperty):
           raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
         # mutate the value correctly
         field = filters[field] # returns instance of definition
-        _filter['value'] = field.argument_format(val)
+        _filter['value'] = field.argument_format(value)
       for i,_order in enumerate(orders):
         op = _filter['operator']
         field = _filter['field']
@@ -2818,8 +2818,8 @@ class SuperSearchProperty(SuperJsonProperty):
           values[value_key] = Cursor(urlsafe=value)
         except:
           del values[value_key]
-      elif value_key in ['read_policy']:
-        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
+      elif value_key == 'read_policy':
+        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!? -- @reply i need to check this
           del values[value_key]
       else:
         del values[value_key]
@@ -2854,7 +2854,7 @@ class SuperSearchProperty(SuperJsonProperty):
           values[value_key] = Cursor(urlsafe=value)
         except:
           del values[value_key]
-      elif value_key in ['read_policy']:
+      elif value_key == 'read_policy':
         if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
           del values[value_key]
       else:
@@ -2888,7 +2888,7 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = []
     model = Model._kind_map.get(value.get('kind'))
     for _filter in _filters:
-      field = util.get_attr(model, _filter['field'])
+      field = util.get_attr(model, _filter['field']) # i replaced getattr because we need parsing dots
       op = _filter['operator']
       value = _filter['value']
       # here we could use
@@ -2922,7 +2922,7 @@ class SuperSearchProperty(SuperJsonProperty):
     model = Model._kind_map.get(value.get('kind'))
     for _order in _orders:
       field = getattr(model, _order['field'])
-      op = _filter['operator']
+      op = _order['operator']
       if op == 'asc':
         orders.append(field)
       else:
@@ -2981,7 +2981,7 @@ class SuperSearchProperty(SuperJsonProperty):
     orders = []
     for _order in _orders:
       field = _order['field']
-      op = _filter['operator']
+      op = _order['operator']
       default_value = default_values.get(field, {})
       orders.append(search.SortExpression(expression=field, direction=direction.get(op),
                                           default_value=default_value.get(op)))
@@ -2990,7 +2990,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def build_search_query_options(self, value):
     sort_options = self.build_search_query_sort_options(value)
     options = value.get('options', {})
-    cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+    cursor = search.Cursor(web_safe_string=urlsafe_cursor) # from where urlsafe_cursor is? @todo this is missing variable to note
     return search.QueryOptions(limit=options.get('limit'),
                                returned_fields=value.get('projection'),
                                sort_options=sort_options, cursor=options.get('cursor'))
