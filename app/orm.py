@@ -2740,50 +2740,7 @@ class SuperSearchProperty(SuperJsonProperty):
     dic['indexes'] = self._indexes
     return dic
   
-  def datastore_default_options_format(self, options):
-    for value_key, value in options.items():
-      if value_key in ['keys_only', 'produce_cursors']:
-        if not isinstance(value, bool):
-          del options[value_key]
-      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
-        if not isinstance(value, long):
-          del options[value_key]
-      elif value_key in ['start_cursor', 'end_cursor']:
-        try:
-          options[value_key] = Cursor(urlsafe=value)
-        except:
-          del options[value_key]
-      elif value_key in ['read_policy']:
-        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
-          del options[value_key]
-      else:
-        del options[value_key]
-  
-  def datastore_format(self, value):
-    value.update(self.cfg.get('static'))
-    for value_key, value in value.items():
-      if value_key in ['kind']:
-        if not isinstance(value, str):
-          raise PropertyError('kind_missing')
-      elif value_key in ['ancestor']:
-        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
-      elif value_key in ['filters']:
-        self.datastore_filters_format(value)
-      elif value_key in ['orders']:
-        self.datastore_orders_format(value)
-      elif value_key in ['projection']:
-        self.datastore_projection_format(value)
-      elif value_key in ['group_by']:
-        self.datastore_group_by_format(value)
-      elif value_key in ['default_options']:
-        self.datastore_default_options_format(value)
-      else:
-        del options[value_key]
-  
-  def search_format(self, value):
-    
-  
-  def argument_format(self, value):
+  def old_argument_format(self, value):
     value = super(SuperSearchProperty, self).argument_format(value)
     search = {'filters': value.get('filters'),
               'order_by': value.get('order_by'),
@@ -2826,7 +2783,102 @@ class SuperSearchProperty(SuperJsonProperty):
     assert composite_filter is True and composite_order_by is True
     return search
   
-  def build_datastore_filters(self, value):
+  def filters_format(self, values):
+    
+  
+  def orders_format(self, values):
+    
+  
+  def property_list_format(self, values):
+    if not isinstance(values, (tuple, list)):
+      raise PropertyError('not_list')
+    remove_values = []
+    for value in values:
+      if not isinstance(value, str):
+        remove_values.append(value)
+    for remove_value in remove_values:
+      values.remove(remove_value)
+  
+  def ndb_query_options_format(self, values):
+    for value_key, value in values.items():
+      if value_key in ['keys_only', 'produce_cursors']:
+        if not isinstance(value, bool):
+          del values[value_key]
+      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
+        if not isinstance(value, long):
+          del values[value_key]
+      elif value_key in ['start_cursor', 'end_cursor']:
+        try:
+          values[value_key] = Cursor(urlsafe=value)
+        except:
+          del values[value_key]
+      elif value_key in ['read_policy']:
+        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
+          del values[value_key]
+      else:
+        del values[value_key]
+  
+  def ndb_query_format(self, values):
+    values.update(self.cfg.get('static'))
+    for value_key, value in values.items():
+      if value_key in ['kind']:
+        if not isinstance(value, str):
+          raise PropertyError('kind_missing')
+      elif value_key in ['ancestor']:
+        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
+      elif value_key in ['filters']:
+        self.filters_format(value)
+      elif value_key in ['orders']:
+        self.orders_format(value)
+      elif value_key in ['projection', 'group_by']:
+        self.property_list_format(value)
+      elif value_key in ['default_options', 'options']:
+        self.ndb_query_options_format(value)
+      else:
+        del values[value_key]
+  
+  def search_query_options_format(self, values):
+    for value_key, value in values.items():
+      if value_key in ['keys_only', 'produce_cursors']:
+        if not isinstance(value, bool):
+          del values[value_key]
+      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
+        if not isinstance(value, long):
+          del values[value_key]
+      elif value_key in ['start_cursor', 'end_cursor']:
+        try:
+          values[value_key] = Cursor(urlsafe=value)
+        except:
+          del values[value_key]
+      elif value_key in ['read_policy']:
+        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
+          del values[value_key]
+      else:
+        del values[value_key]
+  
+  def search_query_format(self, values):
+    values.update(self.cfg.get('static'))
+    for value_key, value in values.items():
+      if value_key in ['kind']:
+        if not isinstance(value, str):
+          raise PropertyError('kind_missing')
+      elif value_key in ['ancestor']:
+        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
+      elif value_key in ['filters']:
+        self.filters_format(value)
+      elif value_key in ['orders']:
+        self.orders_format(value)
+      elif value_key in ['projection', 'group_by']:
+        self.property_list_format(value)
+      elif value_key in ['default_options', 'options']:
+        self.search_query_options_format(value)
+      else:
+        del values[value_key]
+  
+  def argument_format(self, value):
+    
+  
+  def build_ndb_query_filters(self, value):
     _filters = value.get('filters')
     filters = []
     model = Model._kind_map.get(value.get('kind'))
@@ -2854,12 +2906,9 @@ class SuperSearchProperty(SuperJsonProperty):
           filters.append(field < last)
         except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
           filters.append(field == value)
-    if len(filters):
-      return filters
-    else:
-      return None
+    return filters
   
-  def build_datastore_orders(self, value):
+  def build_ndb_query_orders(self, value):
     _orders = value.get('orders')
     orders = []
     model = Model._kind_map.get(value.get('kind'))
@@ -2870,26 +2919,19 @@ class SuperSearchProperty(SuperJsonProperty):
         orders.append(field)
       else:
         orders.append(-field)
-    if len(orders):
-      return orders
-    else:
-      return None
+    return orders
   
-  def build_datastore_options(self, value):
-    default_options = value.get('default_options', None)
-    if default_options:
-      return QueryOptions(**default_options)
-    else:
-      return QueryOptions()
+  def build_ndb_query_options(self, value):
+    default_options = value.get('default_options', {})
+    return QueryOptions(**default_options)
   
-  def build_datastore_query(self, value):
-    filters = self.build_datastore_filters(value)
-    orders = self.build_datastore_orders(value)
-    default_options = self.build_datastore_options(value)
-    return Query(kind=value.get('kind'), ancestor=value.get('ancestor', None),
-                 namespace=value.get('namespace', None), projection=value.get('projection', None),
-                 group_by=value.get('group_by', None), default_options=default_options,
-                 filters=(*filters), orders=(*orders))
+  def build_ndb_query(self, value):
+    filters = self.build_ndb_query_filters(value)
+    orders = self.build_ndb_query_orders(value)
+    default_options = self.build_ndb_query_options(value)
+    return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
+                 namespace=value.get('namespace'), projection=value.get('projection'),
+                 group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)
   
   def build_search_query_string(self, value):
     query_string = value.get('query_string', '')
@@ -2921,42 +2963,34 @@ class SuperSearchProperty(SuperJsonProperty):
         filters.append('(' + field + '<=' + value + ')')
       elif op == 'IN':
         filters.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
-    query_string = ' AND '.join(filters)
-    return query_string
+    return ' AND '.join(filters)
   
-  def build_search_sort_options(self, value):
-    sort_options = None
+  def build_search_query_sort_options(self, value):
     _orders = value.get('orders')
-    default_options = value.get('default_options', {})
-    default_order_values = self.cfg.get('default_sort_values', {})
+    options = value.get('options', {})
+    default_values = self.cfg.get('default_values', {})
+    direction = {'asc': search.SortExpression.ASCENDING, 'desc': search.SortExpression.DESCENDING}
     orders = []
     for _order in _orders:
       field = _order['field']
       op = _filter['operator']
-      default_field_values = default_order_values.get(field, {})
-      if op == 'asc':
-        direction = search.SortExpression.ASCENDING
-        default_value = default_field_values.get('asc')
-      else:
-        direction = search.SortExpression.DESCENDING
-        default_value = default_field_values.get('desc')
-      orders.append(search.SortExpression(expression=field, direction=direction, default_value=default_value))
-    sort_options = search.SortOptions(expressions=orders, limit=default_options.get('limit'))
+      default_value = default_values.get(field, {})
+      orders.append(search.SortExpression(expression=field, direction=direction.get(op),
+                                          default_value=default_value.get(op)))
+    return search.SortOptions(expressions=orders, limit=options.get('limit'))
   
   def build_search_query_options(self, value):
-    sort_options = self.build_search_sort_options(value)
-    default_options = value.get('default_options', {})
+    sort_options = self.build_search_query_sort_options(value)
+    options = value.get('options', {})
     cursor = search.Cursor(web_safe_string=urlsafe_cursor)
-    options = search.QueryOptions(limit=default_options.get('limit'),
-                                  returned_fields=value.get('projection', None),
-                                  sort_options=sort_options, cursor=cursor)
-    return options
+    return search.QueryOptions(limit=options.get('limit'),
+                               returned_fields=value.get('projection'),
+                               sort_options=sort_options, cursor=options.get('cursor'))
   
-  def build_search_query(self, kind, ancestor=None, namespace=None, filters=None, orders=None, projection=None, group_by=None, default_options=None        argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
+  def build_search_query(self, value):
     query_string = self.build_search_query_string(value)
     query_options = self.build_search_query_options(value)
-    query = search.Query(query_string=query_string, options=query_options)
-    return query
+    return search.Query(query_string=query_string, options=query_options)
 
 
 class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
