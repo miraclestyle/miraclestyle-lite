@@ -412,8 +412,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'read_arguments' : {'_images' : {}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+                               {'action_id': 'process_images', 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
             ]
           )
         ]
@@ -445,8 +445,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'read_arguments' : {'_products' : {}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+                               {'action_id': 'process_images', 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
             ]
           )
         ]
@@ -478,8 +478,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'read_arguments' : {'_products' : {'_instances' : {}}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+                               {'action_id': 'process_images', 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
             ]
           )
         ]

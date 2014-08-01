@@ -68,25 +68,25 @@ def register(*args):
   global __ROUTES
   prefix = None
   for arg in args:
-      if isinstance(arg, basestring):
-         prefix = arg
-         continue
-      if isinstance(arg, (list, tuple)):
-          if prefix:
-              if isinstance(arg, tuple):
-                 arg = list(arg)
-              try:
-                 arg[1] = '%s.%s' % (prefix, arg[1])
-              except KeyError:
-                 pass
-          arg = AngularRoute(*arg)
-      if isinstance(arg, dict):
-          if prefix:
-             arg['handler'] = '%s.%s' % (prefix, arg['handler'])
-          arg = AngularRoute(**arg)
-      if not isinstance(arg, AngularRoute):
-         raise InvalidRouteError
-      __ROUTES.append(arg)
+    if isinstance(arg, basestring):
+       prefix = arg
+       continue
+    if isinstance(arg, (list, tuple)):
+        if prefix:
+            if isinstance(arg, tuple):
+               arg = list(arg)
+            try:
+               arg[1] = '%s.%s' % (prefix, arg[1])
+            except KeyError:
+               pass
+        arg = AngularRoute(*arg)
+    if isinstance(arg, dict):
+        if prefix:
+           arg['handler'] = '%s.%s' % (prefix, arg['handler'])
+        arg = AngularRoute(**arg)
+    if not isinstance(arg, AngularRoute):
+       raise InvalidRouteError
+    __ROUTES.append(arg)
   return __ROUTES
 
  
@@ -158,15 +158,29 @@ class Base(webapp2.RequestHandler):
     self.template = {}
   
   def get_input(self):
+    special = '__body__'
     try:
       dicts = json.loads(self.request.body)
     except:
-      dicts = {}
+      if self.request.get(special):
+        dicts = json.loads(self.request.get(special))
+      else:
+        dicts = {}
     newparams = {}
     for param_key in self.request.params.keys():
+      if param_key == special:
+        continue
       value = self.request.params.getall(param_key)
       if len(value) == 1:
          value = value[0]
+      if param_key in dicts:
+        dictval = dicts.get(param_key)
+        if isinstance(dictval, list):
+          if isinstance(value, list):
+            dictval.extend(value)
+          else:
+            dictval.append(value)
+          continue
       newparams[param_key] = value
     dicts.update(newparams)
     return dicts
@@ -225,24 +239,21 @@ class Base(webapp2.RequestHandler):
     csrf = None
     csrf_cookie_value = self.request.cookies.get(webclient_settings.COOKIE_CSRF_KEY)
     if self.LOAD_CURRENT_USER:
-      
-       from app.models import auth
-      
-       auth.User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
-       current_user = auth.User.current_user()
-       current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
-       current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
-       self.template['current_user'] = current_user
-       csrf = current_user._csrf
-        
+      from app.models import auth
+      auth.User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
+      current_user = auth.User.current_user()
+      current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
+      current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
+      csrf = current_user._csrf
+      self.template['current_user'] = current_user
     if not csrf_cookie_value:
      if csrf == None:
-        csrf = util.random_chars(32)
+       csrf = util.random_chars(32)
      self.response.set_cookie(webclient_settings.COOKIE_CSRF_KEY, csrf)
     try:
       self.before()
       # Dispatch the request.
-      webapp2.RequestHandler.dispatch(self)
+      super(Base, self).dispatch()
       self.after()
     finally:
       # support our memcache wrapper lib temporary variables, and release them upon request complete
@@ -302,3 +313,4 @@ class AngularBlank(Angular):
   
   def respond(self, *args, **kwargs):
     pass
+  

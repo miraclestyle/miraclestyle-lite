@@ -402,8 +402,8 @@ class _BaseModel(object):
     self._search_documents_write = []
     self._search_documents_delete = []
     for key in self.get_fields():
-      self.add_output(key)
-  
+        self.add_output(key)
+
   def __repr__(self):
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
