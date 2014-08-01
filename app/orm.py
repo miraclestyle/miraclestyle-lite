@@ -2706,10 +2706,11 @@ class SuperSearchProperty(SuperJsonProperty):
     First you configure SuperSearchProperty with search_arguments, filters and indexes parameters.
     This configuration takes place at the property definition place.
     cfg = {
-      search_arguments: {'kind': '35'...},
-      filters: {'field1': SuperStringProperty(required=True)}},  # With this config you define expected filter value property.
-      indexes: [{'filters': [('field1', [op1, op2]), ('field2', [op1]), ('field3', [op2])], 'orders': [('field1', ['asc', 'desc'])]},
-                {'filters': [('field1', [op1]), ('field2', [op1])], 'orders': [('field1', ['asc', 'desc'])]}]
+      'search_arguments': {'kind': '35'...},
+      'ancestor_kind': '35',
+      'filters': {'field1': SuperStringProperty(required=True)}},  # With this config you define expected filter value property.
+      'indexes': [{'ancestor': True, 'filters': [('field1', [op1, op2]), ('field2', [op1]), ('field3', [op2])], 'orders': [('field1', ['asc', 'desc'])]},
+                  {'ancestor': False, 'filters': [('field1', [op1]), ('field2', [op1])], 'orders': [('field1', ['asc', 'desc'])]}]
     }
     search = SuperSearchProperty(cfg=cfg)
     
@@ -2817,13 +2818,13 @@ class SuperSearchProperty(SuperJsonProperty):
         del values[value_key]
   
   def datastore_query_format(self, values):
-    values.update(self.cfg.get('static'))
+    values.update(self.cfg.get('search_arguments'))
     for value_key, value in values.items():
       if value_key in ['kind']:
         if not isinstance(value, str):
           raise PropertyError('kind_missing')
       elif value_key in ['ancestor']:
-        values[value_key] = SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
+        values[value_key] = SuperKeyProperty(kind=self.cfg.get('ancestor_kind')).argument_format(value)
       elif value_key in ['filters']:
         self.filters_format(value)
       elif value_key in ['orders']:
@@ -2855,7 +2856,7 @@ class SuperSearchProperty(SuperJsonProperty):
         del values[value_key]
   
   def search_query_format(self, values):
-    values.update(self.cfg.get('static'))
+    values.update(self.cfg.get('search_arguments'))
     for value_key, value in values.items():
       if value_key in ['kind']:
         if not isinstance(value, str):
