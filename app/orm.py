@@ -2703,22 +2703,20 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def __init__(self, *args, **kwargs):
     '''Filters work like this:
-    First you configure SuperSearchProperty with filters, indexes and order_by parameters.
+    First you configure SuperSearchProperty with search_arguments, filters and indexes parameters.
     This configuration takes place at the property definition place.
-    filters = {'field': {'operators': ['==', '>', '<', '>=', '<=', 'contains'],  With 'operators' you define possible filter operators.
-                         'type': SuperStringProperty(required=True)}} With 'type' you define a filter value property.
+    cfg = {
+      search_arguments: {'kind': '35'...},
+      filters: {'field1': SuperStringProperty(required=True)}},  # With this config you define expected filter value property.
+      indexes: [{'filters': [('field1', [op1, op2]), ('field2', [op1]), ('field3', [op2])], 'orders': [('field1', ['asc', 'desc'])]},
+                {'filters': [('field1', [op1]), ('field2', [op1])], 'orders': [('field1', ['asc', 'desc'])]}]
+    }
+    search = SuperSearchProperty(cfg=cfg)
     
-    indexes = [{'filter': ['field1', 'field2', 'field3'], 'order_by': [['field1', ['asc', 'desc']]]},
-               {'filter': ['field1', 'field2'], 'order_by': [['field1', ['asc', 'desc']]]}]
-    
-    order_by = {'field': {'operators': ['asc', 'desc']}}
-    
-    search = SuperSearchProperty(filters=filters, indexes=indexes, order_by=order_by)
-    
-    Search values that are provided with input will be validated trough SuperSearchProperty().format() function.
+    Search values that are provided with input will be validated trough SuperSearchProperty().argument_format() function.
     Example of search values that are provided in input after processing:
-    context.output['search'] = {'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
-                                'order_by': {'field': 'name', 'operator': 'asc'}}
+    context.input['search'] = {'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
+                               'orders': [{'field': 'name', 'operator': 'asc'}]}
     
     '''
     filters = kwargs.pop('filters', {})
@@ -2799,7 +2797,7 @@ class SuperSearchProperty(SuperJsonProperty):
     for remove_value in remove_values:
       values.remove(remove_value)
   
-  def ndb_query_options_format(self, values):
+  def datastore_query_options_format(self, values):
     for value_key, value in values.items():
       if value_key in ['keys_only', 'produce_cursors']:
         if not isinstance(value, bool):
@@ -2818,14 +2816,14 @@ class SuperSearchProperty(SuperJsonProperty):
       else:
         del values[value_key]
   
-  def ndb_query_format(self, values):
+  def datastore_query_format(self, values):
     values.update(self.cfg.get('static'))
     for value_key, value in values.items():
       if value_key in ['kind']:
         if not isinstance(value, str):
           raise PropertyError('kind_missing')
       elif value_key in ['ancestor']:
-        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
+        values[value_key] = SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
       elif value_key in ['filters']:
         self.filters_format(value)
       elif value_key in ['orders']:
@@ -2833,7 +2831,7 @@ class SuperSearchProperty(SuperJsonProperty):
       elif value_key in ['projection', 'group_by']:
         self.property_list_format(value)
       elif value_key in ['default_options', 'options']:
-        self.ndb_query_options_format(value)
+        self.datastore_query_options_format(value)
       else:
         del values[value_key]
   
@@ -2878,7 +2876,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def argument_format(self, value):
     
   
-  def build_ndb_query_filters(self, value):
+  def build_datastore_query_filters(self, value):
     _filters = value.get('filters')
     filters = []
     model = Model._kind_map.get(value.get('kind'))
@@ -2908,7 +2906,7 @@ class SuperSearchProperty(SuperJsonProperty):
           filters.append(field == value)
     return filters
   
-  def build_ndb_query_orders(self, value):
+  def build_datastore_query_orders(self, value):
     _orders = value.get('orders')
     orders = []
     model = Model._kind_map.get(value.get('kind'))
@@ -2921,14 +2919,14 @@ class SuperSearchProperty(SuperJsonProperty):
         orders.append(-field)
     return orders
   
-  def build_ndb_query_options(self, value):
+  def build_datastore_query_options(self, value):  # @todo Implement 'options' builder
     default_options = value.get('default_options', {})
     return QueryOptions(**default_options)
   
-  def build_ndb_query(self, value):
-    filters = self.build_ndb_query_filters(value)
-    orders = self.build_ndb_query_orders(value)
-    default_options = self.build_ndb_query_options(value)
+  def build_datastore_query(self, value):
+    filters = self.build_datastore_query_filters(value)
+    orders = self.build_datastore_query_orders(value)
+    default_options = self.build_datastore_query_options(value)
     return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
                  namespace=value.get('namespace'), projection=value.get('projection'),
                  group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)
