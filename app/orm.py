@@ -2747,7 +2747,49 @@ class SuperSearchProperty(SuperJsonProperty):
     assert composite_filter is True and composite_order_by is True
     return search
   
-  def filters_orders_format(self, values):
+  def _clean_format(self, values):
+    allowed_arguments = ['kind', 'ancestor', 'projection',
+                         'group_by', 'options', 'default_options',
+                         'filters', 'orders', 'keys']
+    for value_key in values:
+      if value_key not in allowed_arguments:
+        del values[value_key]
+  
+  def _kind_format(self, values):
+    kind = values.get('kind')
+    model = Model._kind_map.get(kind)
+    if not model:
+      raise PropertyError('invalid_model_kind_%s' % kind)
+  
+  def _ancestor_format(self, values):
+    ancestor = values.get('ancestor')
+    if ancestor is not None:
+      values['ancestor'] = SuperKeyProperty(kind=self._cfg.get('ancestor_kind'), required=True).argument_format(ancestor)
+  
+  def _keys_format(self, values):
+    keys = values.get('keys')
+    if keys is not None:
+      values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).argument_format(keys)
+  
+  def _projection_group_by_format(self, values):
+    def list_format(list_values):
+      if not isinstance(list_values, (tuple, list)):
+        raise PropertyError('not_list')
+      remove_list_values = []
+      for value in list_values:
+        if not isinstance(value, str):
+          remove_list_values.append(value)
+      for value in remove_list_values:
+        list_values.remove(value)
+    
+    projection = values.get('projection')
+    if projection is not None:
+      list_format(projection)
+    group_by = values.get('group_by')
+    if group_by is not None:
+      list_format(group_by)
+  
+  def _filters_orders_format(self, values):
     '''
       'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
       'orders': [{'field': 'name', 'operator': 'asc'}],
@@ -2759,104 +2801,72 @@ class SuperSearchProperty(SuperJsonProperty):
     orders = values.get('orders')
     filters_cfg = self._cfg['filters']
     indexes_cfg = self._cfg['indexes']
-    search_arguments = self._cfg.get('search_arguments')
-    kind = search_arguments['kind']
-    keys = values.get('keys')
-    model = Model._kind_map.get(kind)
-    if not model:
-      raise PropertyError('invalid_model_kind_%s' % kind)
-    if keys is not None:
-      keys = map(lambda urlsafe: Key(urlsafe=urlsafe), keys)
-      for key in keys:
-        if key.kind() != kind:
-          raise PropertyError('invalid_key_kind')
-    else:
-      for _filter in filters:
-        value = _filter['value']
-        field = _filter['field']
-        # mutate the value correctly
-        field = filters[field] # returns instance of definition
-        _filter['value'] = field.argument_format(value)
-      # try to find a match in all indexes, we need at least one!
-      success = False
-      e = 'unknown'
-      for index in indexes_cfg:
-        try:
-          if index.get('ancestor'):
-            if not values.get('ancestor'):
-              raise PropertyError('ancestor_is_required')
-          filter_indexes_cfg = index.get('filters')
-          orders_indexes_cfg = index.get('orders')
-          for i,_filter in enumerate(filters):
-            op = _filter['operator']
-            field = _filter['field']
-            index = filter_indexes_cfg[i]
-            if index[0] != field:
-              raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
-            if op not in index[1]:
-              raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
-          for i,_order in enumerate(orders):
-            op = _filter['operator']
-            field = _filter['field']
-            index = orders_indexes_cfg[i]
-            if index[0] != field:
-              raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
-            if index[1] != op:
-              raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
-          success = True # if no exceptions were thrown, we have found our match and we can stop the loop!
-          break
-        except Exception as e: # save the "e" to use if we fail at finding index match
-           pass
-      if success is not True:
-        if isinstance(e, Exception):
-          e = e.message
-        raise PropertyError(e) # we use the "e" that was last seen
-      
-  def property_list_format(self, values):
-    if not isinstance(values, (tuple, list)):
-      raise PropertyError('not_list')
-    remove_values = []
-    for value in values:
-      if not isinstance(value, str):
-        remove_values.append(value)
-    for remove_value in remove_values:
-      values.remove(remove_value)
+    for _filter in filters:
+      _filter_field = _filter['field']
+      _filter_value = _filter['value']
+      field = filters_cfg[_filter_field]
+      _filter['value'] = field.argument_format(_filter_value)
+    # try to find a match in all indexes, we need at least one!
+    success = False
+    e = 'unknown'
+    for index in indexes_cfg:
+      try:
+        if index.get('ancestor'):
+          if not values.get('ancestor'):
+            raise PropertyError('ancestor_is_required')
+        filter_indexes_cfg = index.get('filters')
+        orders_indexes_cfg = index.get('orders')
+        for i,_filter in enumerate(filters):
+          op = _filter['operator']
+          field = _filter['field']
+          index = filter_indexes_cfg[i]
+          if index[0] != field:
+            raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
+          if op not in index[1]:
+            raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
+        for i,_order in enumerate(orders):
+          op = _filter['operator']
+          field = _filter['field']
+          index = orders_indexes_cfg[i]
+          if index[0] != field:
+            raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
+          if index[1] != op:
+            raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
+        success = True # if no exceptions were thrown, we have found our match and we can stop the loop!
+        break
+      except Exception as e: # save the "e" to use if we fail at finding index match
+        pass
+    if success is not True:
+      if isinstance(e, Exception):
+        e = e.message
+      raise PropertyError(e) # we use the "e" that was last seen
   
-  def datastore_query_options_format(self, values):
-    for value_key, value in values.items():
-      if value_key in ['keys_only', 'produce_cursors']:
-        if not isinstance(value, bool):
+  def _datastore_query_options_format(self, values):
+    def options_format(options_values):
+      for value_key, value in values.items():
+        if value_key in ['keys_only', 'produce_cursors']:
+          if not isinstance(value, bool):
+            del values[value_key]
+        elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
+          if not isinstance(value, long):
+            del values[value_key]
+        elif value_key in ['start_cursor', 'end_cursor']:
+          try:
+            values[value_key] = Cursor(urlsafe=value)
+          except:
+            del values[value_key]
+        elif value_key == 'read_policy':
+          if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!? -- @reply i need to check this
+            del values[value_key]
+        else:
           del values[value_key]
-      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
-        if not isinstance(value, long):
-          del values[value_key]
-      elif value_key in ['start_cursor', 'end_cursor']:
-        try:
-          values[value_key] = Cursor(urlsafe=value)
-        except:
-          del values[value_key]
-      elif value_key == 'read_policy':
-        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!? -- @reply i need to check this
-          del values[value_key]
-      else:
-        del values[value_key]
-  
-  def datastore_query_format(self, values):
-    values.update(self._cfg.get('search_arguments'))
-    for value_key, value in values.items():
-      if value_key == 'kind':
-        if not isinstance(value, str):
-          raise PropertyError('kind_missing')
-      elif value_key == 'ancestor':
-        values[value_key] = SuperKeyProperty(kind=self._cfg.get('ancestor_kind')).argument_format(value)
-      elif value_key == ['filters', 'orders']:
-        self.filters_orders_format(values)
-      elif value_key in ['projection', 'group_by']:
-        self.property_list_format(value)
-      elif value_key in ['default_options', 'options']:
-        self.datastore_query_options_format(value)
-      else:
-        del values[value_key]
+    
+    default_options = values.get('default_options')
+    if default_options is not None:
+      options_format(default_options)
+    options = values.get('options')
+    if options is not None:
+      options_format(options)
   
   def search_query_options_format(self, values):
     for value_key, value in values.items():
@@ -2877,28 +2887,15 @@ class SuperSearchProperty(SuperJsonProperty):
       else:
         del values[value_key]
   
-  def search_query_format(self, values):
-    values.update(self._cfg.get('search_arguments'))
-    for value_key, value in values.items():
-      if value_key == 'kind':
-        if not isinstance(value, str):
-          raise PropertyError('kind_missing')
-      elif value_key == 'ancestor':
-        SuperKeyProperty(kind='??').argument_format(value)  # @todo Need cfg!
-      elif value_key == 'filters':
-        self.filters_format(value)
-      elif value_key == 'orders':
-        self.orders_format(value)
-      elif value_key in ['projection', 'group_by']:
-        self.property_list_format(value)
-      elif value_key in ['default_options', 'options']:
-        self.search_query_options_format(value)
-      else:
-        del values[value_key]
-  
   def argument_format(self, value):
-    pass
-    
+    values.update(self._cfg.get('search_arguments'))
+    self._clean_format(values)
+    self._kind_format(values)
+    self._ancestor_format(values)
+    self._keys_format(values)
+    self._projection_group_by_format(values)
+    self._filters_orders_format(values)
+    self._datastore_query_options_format(values)
   
   def build_datastore_query_filters(self, value):
     _filters = value.get('filters')
