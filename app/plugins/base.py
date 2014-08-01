@@ -276,33 +276,32 @@ class Search(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    argument = context.input.get('search')
-    namespace = context.namespace
-    limit = self.cfg.get('page', 10)
-    urlsafe_cursor = context.input.get('search_cursor')
-    fields = self.cfg.get('fields', None)
-    result = context.model.search(argument, namespace, limit, urlsafe_cursor, fields)
-    if context.model._use_search_engine:
+    search_arguments = context.input.get('search')
+    search_arguments['namespace'] = context.namespace
+    result = context.model.search(search_arguments)
+    if search_arguments.get('keys'):
+      context._entities = result
+      context._cursor = None
+      context._more = False
+    elif context.model._use_search_engine:
+      context._total_matches = result.number_found
+      context._entities_count = len(result.results)
+      context._entities = map(context.model.search_document_to_dict, result.results)
+      more = False
+      cursor = result.cursor
+      if cursor is not None:
+        cursor = cursor.web_safe_string
+        more = True
+      context._cursor = cursor
+      context._more = more
+    else:
+      context._entities_count = len(result[0])
       context._entities = result[0]
       cursor = result[1]
       if cursor is not None:
         cursor = cursor.urlsafe()
       context._cursor = cursor
       context._more = result[2]
-      context._documents_count = result[3]
-      context._total_matches = result[4]
-    else:
-      if isinstance(result, tuple):
-        cursor = result[1]
-        if cursor is not None:
-          cursor = cursor.urlsafe()
-        context._entities = result[0]
-        context._cursor = cursor
-        context._more = result[2]
-      elif isinstance(result, list):
-        context._entities = result
-        context._cursor = None
-        context._more = False
 
 
 class CallbackNotify(orm.BaseModel):
