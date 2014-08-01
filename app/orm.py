@@ -2716,7 +2716,14 @@ class SuperSearchProperty(SuperJsonProperty):
     
     Search values that are provided with input will be validated trough SuperSearchProperty().argument_format() function.
     Example of search values that are provided in input after processing:
-    context.input['search'] = {'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
+    context.input['search'] = {'kind': '37'
+                               'ancestor': 'fjdkahsekuarg4wi784wnvsxiu487',
+                               'namespace': 'wjbryj4gr4y57jtgnfj5959'
+                               'projection': ['name'],
+                               'group_by': ['name'],
+                               'options': {'limit': 10000, cursor: '34987hgehevbjeriy3478dsbkjbdskhrsgkugsrkbsg'},
+                               'default_options': {'limit': 10000, cursor: '34987hgehevbjeriy3478dsbkjbdskhrsgkugsrkbsg'},
+                               'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
                                'orders': [{'field': 'name', 'operator': 'asc'}]}
     
     '''
