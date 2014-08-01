@@ -991,53 +991,17 @@ class _BaseModel(object):
         # general handler failure will result in transaction rollback!
   
   @classmethod
-  def _datastore_search(cls, argument, namespace, limit, urlsafe_cursor, fields): # some should be optional here?
-    # this should be called datastore_search?
-    query = cls.get_datastore_query(argument, namespace, limit, urlsafe_cursor, fields)
-    # Caller must be capable of differentiating possible results returned!
-    if query and hasattr(query, 'fetch_page') and callable(query.fetch_page):
-      try:
-        cursor = Cursor(urlsafe=urlsafe_cursor)
-      except:
-        cursor = Cursor()
-      return query.fetch_page(limit, start_cursor=cursor)
+  def search(cls, search_arguments):
+    if search_arguments.get('keys'):
+      return get_multi(search_arguments.get('keys'))
+    if cls._use_search_engine:
+      query = search_arguments['property'].build_search_query(search_arguments)
+      index = search.Index(name=search_arguments.get('kind'), namespace=search_arguments.get('namespace'))
+      return index.search(query)
     else:
-      if not isinstance(query, list):
-        query = [query]
-      return get_multi(query)
-  
-  @classmethod
-  def _document_search(cls, argument, namespace, limit, urlsafe_cursor, fields):
-    query = cls.get_search_query(argument, namespace, limit, urlsafe_cursor, fields)
-    index = search.Index(name=cls.get_kind(), namespace=namespace)
-    total_matches = 0
-    documents_count = 0
-    documents = []
-    search_cursor = None
-    search_more = False
-    try:
-      result = index.search(query)
-      total_matches = result.number_found
-      if len(result.results):
-        documents_count = len(result.results)
-        documents = result.results
-      if result.cursor != None:
-        search_cursor = result.cursor.web_safe_string
-        search_more = True
-      else:
-        search_cursor = None
-        search_more = False
-    except:
-      raise
-    finally:
-      return (map(cls.search_document_to_dict, documents), search_cursor, search_more, documents_count, total_matches)
-  
-  @classmethod
-  def search(cls, argument, namespace=None, limit=10, urlsafe_cursor=None, fields=None):
-    if cls._use_search_engine: # based on this flag we use different search engine
-      return cls._document_search(argument, namespace, limit, urlsafe_cursor, fields)
-    else:
-      return cls._datastore_search(argument, namespace, limit, urlsafe_cursor, fields)
+      options = search_arguments.get('options')
+      query = search_arguments['property'].build_datastore_query(search_arguments)
+      return query.fetch_page(options.get('limit'), options=options)
   
   def read(self, read_arguments=None):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
@@ -2716,15 +2680,16 @@ class SuperSearchProperty(SuperJsonProperty):
     
     Search values that are provided with input will be validated trough SuperSearchProperty().argument_format() function.
     Example of search values that are provided in input after processing:
-    context.input['search'] = {'kind': '37'
+    context.input['search'] = {'kind': '37',
                                'ancestor': 'fjdkahsekuarg4wi784wnvsxiu487',
-                               'namespace': 'wjbryj4gr4y57jtgnfj5959'
+                               'namespace': 'wjbryj4gr4y57jtgnfj5959',
                                'projection': ['name'],
                                'group_by': ['name'],
                                'options': {'limit': 10000, cursor: '34987hgehevbjeriy3478dsbkjbdskhrsgkugsrkbsg'},
                                'default_options': {'limit': 10000, cursor: '34987hgehevbjeriy3478dsbkjbdskhrsgkugsrkbsg'},
                                'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
-                               'orders': [{'field': 'name', 'operator': 'asc'}]}
+                               'orders': [{'field': 'name', 'operator': 'asc'}],
+                               'keys': [key1, key2, key3]}
     
     '''
     filters = kwargs.pop('filters', {})
