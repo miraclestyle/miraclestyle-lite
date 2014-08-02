@@ -999,7 +999,7 @@ class _BaseModel(object):
       index = search.Index(name=search_arguments.get('kind'), namespace=search_arguments.get('namespace'))
       return index.search(query)
     else:
-      options = search_arguments.get('options')
+      options = search_arguments['property'].build_datastore_query_options(search_arguments)
       query = search_arguments['property'].build_datastore_query(search_arguments)
       return query.fetch_page(options.get('limit'), options=options)
   
@@ -2789,57 +2789,85 @@ class SuperSearchProperty(SuperJsonProperty):
     if group_by is not None:
       list_format(group_by)
   
+  # @todo This is not finished. More work is required here! Testing is required!
   def _filters_orders_format(self, values):
+    ''''filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}]
+       'orders': [{'field': 'name', 'operator': 'asc'}]
+    
     '''
-      'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
-      'orders': [{'field': 'name', 'operator': 'asc'}],
-    '''
-    # in this function it is very important to note that we implicitly use
-    # dict[key_name] where we want, because we want to ensure that the value is present
-    # if not it will throw KeyError and fail validation due misconfiguration
+    def _format_filter_values(cfg_filters, input_filters):
+      for input_filter in input_filters:
+        input_field = input_filter['field']
+        input_value = input_filter['value']
+        cfg_field = cfg_filters[input_field]
+        input_filter['value'] = cfg_field.argument_format(input_value)
+    
+    def _validate(cfg_values, input_values):
+      # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
+      # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
+      # cfg_orders = [('name', ['asc'])]
+      # input_orders = [{'field': 'name', 'operator': 'asc'}]
+      cfg_op_map = {x[0]: x[1] for x in cfg_values}
+      cfg_field_map = [x[0] for x in cfg_values]
+      input_field_map = [x['field'] for x in input_values]
+      if cfg_field_map == input_field_map:
+        return all([x['operator'] in cfg_op_map[x['field']] for x in input_values])
+    
+    ancestor = values.get('ancestor')
     filters = values.get('filters')
     orders = values.get('orders')
     filters_cfg = self._cfg['filters']
     indexes_cfg = self._cfg['indexes']
-    for _filter in filters:
-      _filter_field = _filter['field']
-      _filter_value = _filter['value']
-      field = filters_cfg[_filter_field]
-      _filter['value'] = field.argument_format(_filter_value)
-    # try to find a match in all indexes, we need at least one!
     success = False
     e = 'unknown'
-    for index in indexes_cfg:
-      try:
-        if index.get('ancestor'):
-          if not values.get('ancestor'):
-            raise PropertyError('ancestor_is_required')
-        filter_indexes_cfg = index.get('filters')
-        orders_indexes_cfg = index.get('orders')
-        for i,_filter in enumerate(filters):
-          op = _filter['operator']
-          field = _filter['field']
-          index = filter_indexes_cfg[i]
-          if index[0] != field:
-            raise PropertyError('expected_filter_field_%s_%s' % (index[0], i))
-          if op not in index[1]:
-            raise PropertyError('expected_filter_operator_%s_%s' % (index[1], i))
-        for i,_order in enumerate(orders):
-          op = _filter['operator']
-          field = _filter['field']
-          index = orders_indexes_cfg[i]
-          if index[0] != field:
-            raise PropertyError('expected_order_field_%s_%s' % (index[0], i))
-          if index[1] != op:
-            raise PropertyError('expected_order_operator_%s_%s' % (index[0], i))
-        success = True # if no exceptions were thrown, we have found our match and we can stop the loop!
-        break
-      except Exception as e: # save the "e" to use if we fail at finding index match
-        pass
+    if filters is not None:
+      _format_filter_values(filters_cfg, filters)
+    if filters is not None and orders is not None:
+      for index_cfg in indexes_cfg:
+        index_cfg_filters = index_cfg.get('filters')
+        if index_cfg_filters is not None:
+          if _validate(index_cfg_filters, filters):
+            index_cfg_orders = index_cfg.get('orders')
+            if index_cfg_orders is not None:
+              if _validate(index_cfg_orders, orders):
+                if ancestor is not None:
+                  if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+                    success = True
+                    break
+                else:
+                  success = True
+                  break
+    elif filters is not None:
+      for index_cfg in indexes_cfg:
+        index_cfg_filters = index_cfg.get('filters')
+        if index_cfg_filters is not None:
+          if _validate(index_cfg_filters, filters):
+            if ancestor is not None:
+              if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+                success = True
+                break
+            else:
+              success = True
+              break
+    elif orders is not None:
+      for index_cfg in indexes_cfg:
+        index_cfg_orders = index_cfg.get('orders')
+        if index_cfg_orders is not None:
+          if _validate(index_cfg_orders, orders):
+            if ancestor is not None:
+              if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+                success = True
+                break
+            else:
+              success = True
+              break
+    else:
+      success = True
+    # @todo Fix the rest of this!
     if success is not True:
       if isinstance(e, Exception):
         e = e.message
-      raise PropertyError(e) # we use the "e" that was last seen
+      raise PropertyError(e)
   
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
@@ -2868,7 +2896,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if options is not None:
       options_format(options)
   
-  def search_query_options_format(self, values):
+  def search_query_options_format(self, values):  # @todo To rewrite!
     for value_key, value in values.items():
       if value_key in ['keys_only', 'produce_cursors']:
         if not isinstance(value, bool):
@@ -2895,6 +2923,7 @@ class SuperSearchProperty(SuperJsonProperty):
     self._keys_format(values)
     self._projection_group_by_format(values)
     self._filters_orders_format(values)
+    # @todo Here, we need splid decision to decide from datastore or search!
     self._datastore_query_options_format(values)
   
   def build_datastore_query_filters(self, value):
@@ -2902,7 +2931,7 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = []
     model = Model._kind_map.get(value.get('kind'))
     for _filter in _filters:
-      field = util.get_attr(model, _filter['field']) # i replaced getattr because we need parsing dots
+      field = util.get_attr(model, _filter['field'])
       op = _filter['operator']
       value = _filter['value']
       # here we could use
@@ -2943,14 +2972,18 @@ class SuperSearchProperty(SuperJsonProperty):
         orders.append(-field)
     return orders
   
-  def build_datastore_query_options(self, value):  # @todo Implement 'options' builder
+  def build_datastore_query_options(self, value):
+    options = value.get('options', {})
+    return QueryOptions(**options)
+  
+  def build_datastore_query_default_options(self, value):
     default_options = value.get('default_options', {})
     return QueryOptions(**default_options)
   
   def build_datastore_query(self, value):
     filters = self.build_datastore_query_filters(value)
     orders = self.build_datastore_query_orders(value)
-    default_options = self.build_datastore_query_options(value)
+    default_options = self.build_datastore_query_default_options(value)
     return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
                  namespace=value.get('namespace'), projection=value.get('projection'),
                  group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)

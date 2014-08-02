@@ -221,3 +221,27 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
                                      catalog_images=catalog_images, include_instances=False)
     entities.extend(templates)
     results = document_delete(entities, index_name=index_name, documents_per_index=max_doc)
+
+
+class CatalogSearch(orm.BaseModel):
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    index_name = self.cfg.get('index', None)
+    search_arguments = context.input.get('search')
+    query = search_arguments['property'].build_search_query(search_arguments)
+    index = search.Index(name=index_name)
+    result = index.search(query)
+    context._total_matches = result.number_found
+    context._entities_count = len(result.results)
+    context._entities = map(context.model.search_document_to_dict, result.results)
+    more = False
+    cursor = result.cursor
+    if cursor is not None:
+      cursor = cursor.web_safe_string
+      more = True
+    context._cursor = cursor
+    context._more = more
