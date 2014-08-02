@@ -2704,49 +2704,6 @@ class SuperSearchProperty(SuperJsonProperty):
     dic['cfg'] = self._cfg
     return dic
   
-  def old_argument_format(self, value):
-    value = super(SuperSearchProperty, self).argument_format(value)
-    search = {'filters': value.get('filters'),
-              'order_by': value.get('order_by'),
-              'property': self}
-    for_composite_filter = []
-    for config in search['filters']:
-      key = config.get('field')
-      _filter = self._filters.get(key)
-      if not _filter:
-        raise PropertyError('field_not_in_filter_list')
-      assert config.get('operator') in _filter['operators']
-      new_value = _filter['type'].argument_format(config.get('value'))  # Format the value based on the property type.
-      config['value'] = new_value
-      for_composite_filter.append(key)
-    for_composite_order_by = []
-    config = search['order_by']
-    if config:
-      key = config.get('field')
-      _order_by = self._order_by.get(key)
-      if not _order_by:
-        raise PropertyError('field_not_in_order_by_list')
-      assert config.get('operator') in _order_by['operators']
-      for_composite_order_by.append(key)
-      for_composite_order_by.append(config.get('operator'))
-    composite_filter = False
-    composite_order_by = False
-    for index in self._indexes:
-      if index.get('filter') == for_composite_filter:
-        composite_filter = True
-      order_by = index.get('order_by')
-      if order_by:
-        for order_by_config in order_by:
-          try:
-            if order_by_config[0] == for_composite_order_by[0] and for_composite_order_by[1] in order_by_config[1]:
-              composite_order_by = True
-          except IndexError as e:
-            pass
-      elif not config:
-        composite_order_by = True
-    assert composite_filter is True and composite_order_by is True
-    return search
-  
   def _clean_format(self, values):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
@@ -2795,75 +2752,46 @@ class SuperSearchProperty(SuperJsonProperty):
        'orders': [{'field': 'name', 'operator': 'asc'}]
     
     '''
-    def _format_filter_values(cfg_filters, input_filters):
-      for input_filter in input_filters:
-        input_field = input_filter['field']
-        input_value = input_filter['value']
-        cfg_field = cfg_filters[input_field]
-        input_filter['value'] = cfg_field.argument_format(input_value)
-    
     def _validate(cfg_values, input_values):
       # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
       # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
       # cfg_orders = [('name', ['asc'])]
       # input_orders = [{'field': 'name', 'operator': 'asc'}]
-      cfg_op_map = {x[0]: x[1] for x in cfg_values}
-      cfg_field_map = [x[0] for x in cfg_values]
-      input_field_map = [x['field'] for x in input_values]
-      if cfg_field_map == input_field_map:
-        return all([x['operator'] in cfg_op_map[x['field']] for x in input_values])
+      for i, input_value in enumerate(input_values):
+        cfg_value = cfg_values[i]
+        if input_value['field'] != cfg_value[0]:
+          raise PropertyError('expected_field_%s_%s' % (cfg_value[0], i))
+        if input_value['operator'] not in cfg_value[1]:
+          raise PropertyError('expected_operator_%s_%s' % (cfg_value[1], i))
     
     ancestor = values.get('ancestor')
     filters = values.get('filters')
     orders = values.get('orders')
-    filters_cfg = self._cfg['filters']
-    indexes_cfg = self._cfg['indexes']
+    cfg_filters = self._cfg['filters']
+    cfg_indexes = self._cfg['indexes']
     success = False
     e = 'unknown'
     if filters is not None:
-      _format_filter_values(filters_cfg, filters)
-    if filters is not None and orders is not None:
-      for index_cfg in indexes_cfg:
-        index_cfg_filters = index_cfg.get('filters')
-        if index_cfg_filters is not None:
-          if _validate(index_cfg_filters, filters):
-            index_cfg_orders = index_cfg.get('orders')
-            if index_cfg_orders is not None:
-              if _validate(index_cfg_orders, orders):
-                if ancestor is not None:
-                  if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
-                    success = True
-                    break
-                else:
-                  success = True
-                  break
-    elif filters is not None:
-      for index_cfg in indexes_cfg:
-        index_cfg_filters = index_cfg.get('filters')
-        if index_cfg_filters is not None:
-          if _validate(index_cfg_filters, filters):
-            if ancestor is not None:
-              if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
-                success = True
-                break
-            else:
-              success = True
-              break
-    elif orders is not None:
-      for index_cfg in indexes_cfg:
-        index_cfg_orders = index_cfg.get('orders')
-        if index_cfg_orders is not None:
-          if _validate(index_cfg_orders, orders):
-            if ancestor is not None:
-              if index_cfg.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
-                success = True
-                break
-            else:
-              success = True
-              break
-    else:
-      success = True
-    # @todo Fix the rest of this!
+      for input_filter in filters:
+        input_field = input_filter['field']
+        input_value = input_filter['value']
+        cfg_field = cfg_filters[input_field]
+        input_filter['value'] = cfg_field.argument_format(input_value)
+    for cfg_index in cfg_indexes:
+      try:
+        if ancestor is not None:
+          if not cfg_index.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+            raise PropertyError('ancestor_not_allowed')
+        if filters is not None:
+          cfg_index_filters = cfg_index.get('filters')
+          _validate(cfg_index_filters, filters)
+        if orders is not None:
+          cfg_index_orders = cfg_index.get('orders')
+          _validate(cfg_index_orders, orders)
+        success = True
+        break
+      except Exception as e:
+        pass
     if success is not True:
       if isinstance(e, Exception):
         e = e.message
@@ -2896,24 +2824,8 @@ class SuperSearchProperty(SuperJsonProperty):
     if options is not None:
       options_format(options)
   
-  def search_query_options_format(self, values):  # @todo To rewrite!
-    for value_key, value in values.items():
-      if value_key in ['keys_only', 'produce_cursors']:
-        if not isinstance(value, bool):
-          del values[value_key]
-      elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
-        if not isinstance(value, long):
-          del values[value_key]
-      elif value_key in ['start_cursor', 'end_cursor']:
-        try:
-          values[value_key] = Cursor(urlsafe=value)
-        except:
-          del values[value_key]
-      elif value_key == 'read_policy':
-        if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!?
-          del values[value_key]
-      else:
-        del values[value_key]
+  def search_query_options_format(self, values):  # @todo To write!
+    # cursor = search.Cursor(web_safe_string=urlsafe_cursor)
   
   def argument_format(self, value):
     values.update(self._cfg.get('search_arguments'))
@@ -3037,7 +2949,6 @@ class SuperSearchProperty(SuperJsonProperty):
   def build_search_query_options(self, value):
     sort_options = self.build_search_query_sort_options(value)
     options = value.get('options', {})
-    cursor = search.Cursor(web_safe_string=urlsafe_cursor) # from where urlsafe_cursor is? @todo this is missing variable to note
     return search.QueryOptions(limit=options.get('limit'),
                                returned_fields=value.get('projection'),
                                sort_options=sort_options, cursor=options.get('cursor'))
