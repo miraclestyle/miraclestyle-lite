@@ -2746,7 +2746,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if group_by is not None:
       list_format(group_by)
   
-  # @todo This is not finished. More work is required here! Testing is required!
+  # @todo Testing is required!
   def _filters_orders_format(self, values):
     ''''filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}]
        'orders': [{'field': 'name', 'operator': 'asc'}]
@@ -2799,33 +2799,52 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
-      for value_key, value in values.items():
+      for value_key, value in options_values.items():
         if value_key in ['keys_only', 'produce_cursors']:
           if not isinstance(value, bool):
-            del values[value_key]
-        elif value_key in ['limit', 'batch_size', 'prefetch_size', 'deadline']:
+            del options_values[value_key]
+        elif value_key == 'limit':
           if not isinstance(value, long):
-            del values[value_key]
+            raise PropertyError('limit_value_incorrect')
+        elif value_key in ['batch_size', 'prefetch_size', 'deadline']:
+          if not isinstance(value, long):
+            del options_values[value_key]
         elif value_key in ['start_cursor', 'end_cursor']:
           try:
-            values[value_key] = Cursor(urlsafe=value)
+            options_values[value_key] = Cursor(urlsafe=value)
           except:
-            del values[value_key]
+            del options_values[value_key]
         elif value_key == 'read_policy':
           if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!? -- @reply i need to check this
-            del values[value_key]
+            del options_values[value_key]
         else:
-          del values[value_key]
+          del options_values[value_key]
     
     default_options = values.get('default_options')
     if default_options is not None:
       options_format(default_options)
-    options = values.get('options')
-    if options is not None:
-      options_format(options)
+    options = values.get('options', {})
+    if 'limit' not in options.keys():
+      raise PropertyError('limit_value_missing')
+    options_format(options)
   
-  def search_query_options_format(self, values):  # @todo To write!
-    # cursor = search.Cursor(web_safe_string=urlsafe_cursor)
+  def _search_query_orders_format(self, values):  # @todo This method will implement default_value validation for search query sort options!!
+  
+  def _search_query_options_format(self, values):
+    options = values.get('options', {})
+    if 'limit' not in options.keys():
+      raise PropertyError('limit_value_missing')
+    for value_key, value in options.items():
+      if value_key == 'limit':
+        if not isinstance(value, long):
+          raise PropertyError('limit_value_incorrect')
+      elif value_key in ['cursor']:
+        try:
+          options[value_key] = search.Cursor(web_safe_string=value)
+        except:
+          del options[value_key]
+      else:
+        del options[value_key]
   
   def argument_format(self, value):
     values.update(self._cfg.get('search_arguments'))
@@ -2935,13 +2954,12 @@ class SuperSearchProperty(SuperJsonProperty):
   def build_search_query_sort_options(self, value):
     _orders = value.get('orders')
     options = value.get('options', {})
-    default_values = self._cfg.get('default_values', {})
     direction = {'asc': search.SortExpression.ASCENDING, 'desc': search.SortExpression.DESCENDING}
     orders = []
     for _order in _orders:
       field = _order['field']
       op = _order['operator']
-      default_value = default_values.get(field, {})
+      default_value = _order['default_value']
       orders.append(search.SortExpression(expression=field, direction=direction.get(op),
                                           default_value=default_value.get(op)))
     return search.SortOptions(expressions=orders, limit=options.get('limit'))
