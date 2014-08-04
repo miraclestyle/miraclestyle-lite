@@ -2697,7 +2697,6 @@ class SuperSearchProperty(SuperJsonProperty):
     kwargs.pop('order_by', None)
     kwargs.pop('filters', None)
     kwargs.pop('indexes', None)
-    
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -2713,7 +2712,7 @@ class SuperSearchProperty(SuperJsonProperty):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
                          'filters', 'orders', 'keys']
-    for value_key,value in values.items(): # dict cannot change size during iteration
+    for value_key, value in values.items():
       if value_key not in allowed_arguments:
         del values[value_key]
   
@@ -2726,7 +2725,11 @@ class SuperSearchProperty(SuperJsonProperty):
   def _ancestor_format(self, values):
     ancestor = values.get('ancestor')
     if ancestor is not None:
-      values['ancestor'] = SuperKeyProperty(kind=self._cfg.get('ancestor_kind'), required=True).argument_format(ancestor)
+      ancestor_kind = self._cfg.get('ancestor_kind')
+      if ancestor_kind is not None:
+        values['ancestor'] = SuperKeyProperty(kind=ancestor_kind, required=True).argument_format(ancestor)
+      else:
+        del values['ancestor']
   
   def _keys_format(self, values):
     keys = values.get('keys')
@@ -2785,6 +2788,7 @@ class SuperSearchProperty(SuperJsonProperty):
       try:
         if ancestor is not None:
           if not cfg_index.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+            # del values['ancestor'] We already delete values['ancestor'] in _ancestor_format() if the self._cfg.get('ancestor_kind') is not defined!
             raise PropertyError('ancestor_not_allowed')
         if filters is not None:
           cfg_index_filters = cfg_index.get('filters')
@@ -2792,18 +2796,6 @@ class SuperSearchProperty(SuperJsonProperty):
         if orders is not None:
           cfg_index_orders = cfg_index.get('orders')
           _validate(cfg_index_orders, orders, 'order')
-          """
-          # bellow code will work as we discussed
-          if filters is not None:
-            _validate(cfg_index_orders, orders, 'order')
-          else:
-            find_any_order = False
-            for order in orders:
-              for cfg_index_order in cfg_index_orders:
-                if cfg_index_order[0] == order['field'] and order['operator'] in cfg_index_order[1]:
-                  find_any_order = True
-                  break
-          """
         success = True
         break
       except Exception as e:
@@ -2820,10 +2812,10 @@ class SuperSearchProperty(SuperJsonProperty):
           if not isinstance(value, bool):
             del options_values[value_key]
         elif value_key == 'limit':
-          if not (isinstance(value, int) or isinstance(value, int)):
+          if not isinstance(value, (int, long)):
             raise PropertyError('limit_value_incorrect')
         elif value_key in ['batch_size', 'prefetch_size', 'deadline']:
-          if not isinstance(value, long):
+          if not isinstance(value, (int, long)):
             del options_values[value_key]
         elif value_key in ['start_cursor', 'end_cursor']:
           try:
@@ -2858,7 +2850,7 @@ class SuperSearchProperty(SuperJsonProperty):
       raise PropertyError('limit_value_missing')
     for value_key, value in options.items():
       if value_key == 'limit':
-        if not isinstance(value, long):
+        if not isinstance(value, (int, long)):
           raise PropertyError('limit_value_incorrect')
       elif value_key in ['cursor']:
         try:
@@ -2924,6 +2916,8 @@ class SuperSearchProperty(SuperJsonProperty):
     _orders = value.get('orders')
     orders = []
     model = Model._kind_map.get(value.get('kind'))
+    if _orders is None:
+      return orders
     for _order in _orders:
       field = getattr(model, _order['field'])
       op = _order['operator']
