@@ -82,7 +82,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			              var args = {
 			            	 "search" : {
 			            	 			 "filters": find,
-		  							     "order_by":{"field":opts['order_by'],"operator":opts['order_dir']}
+		  							     "orders": [{"field":opts['order_by'],"operator":opts['order_dir']}],
 		  							    } 
 			                };
 			                
@@ -115,25 +115,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				        		id = id.split(',');
 				        	}
 				        }
+				        
+				        var args = {  
+                           "search" : {
+                              
+                            } 
+                        };
 			          
 			            if (id != '')
 			            {
-			            	var find = [{'value' : id, 'operator': 'IN', 'field' : 'key'}];
+			            	args['search']['keys'] = id;
 			            }
 			        	else
 			        	{
-			        		var find = [];
-			        		find.extend(opts.filters);
-			        		
 			        		return;
 			        	}
 			          
-			        	var args = {  
-		            	   "search" : {
-		            		  "filters":find,
-		            	    } 
-				        };
-			        	
+			        	 
 			        	opts['args_callback']($(this), args);
 			      
 	 					Endpoint.cached_post('search_' + initial_id, opts['action'], opts['kind'], args, function (data) {
@@ -1120,12 +1118,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	'kind' : null,
     	'hide' : false,
     	'filters' : {},
-    	'order_by' : {},
     	'indexes' : [],
+    	'index_id' : null,
     	'resetFilters' : function ()
     	{
     		this.send.filters = [];
-    		this.send.order_by = {};
+    		this.send.orders = [];
     	},
     	'changeKind' : function ()
     	{
@@ -1150,42 +1148,84 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			{
     				this.hide = false;
     			}
-    			
-    			this.filters = search_argument['filters'] || {};
-    			this.order_by = search_argument['order_by'] || {};
-    			this.indexes = search_argument['indexes'] || [];
+    			var cfg = search_argument['cfg'];
+    			this.send.kind = this.kind;
+    			this.filters = cfg['filters'] || {};
+    			this.indexes = cfg['indexes'] || [];
+    			this.index_id = null;
     		 
     		}
     		
     	},
-    	'removeFilter' : function(filter)
-    	{
-    		this.send.filters.remove(filter);
+    	'changeOrderBy' : function (e) {
+    	    e.field = this.indexes[this.index_id].orders[e._index][0];
     	},
-    	'makeComposites' : function ()
+    	'makeFilters' : function ()
     	{
-    		var fields = [];
- 
-    		angular.forEach(this.filters, function (value) {
-    			fields.push(value.field);
-    		});
-    		
-    		return fields;
+    	    var that = this;
+    	    
+    	    that.send.filters = [];
+    	    that.send.orders = [];
+   
+    	    var indx = that.indexes[that.index_id];
+    	    
+    	    angular.forEach(indx.filters, function (filter) {
+                    that.send.filters.push({
+                        'field' : filter[0],
+                        'operator' : '',
+                        'value' : '',
+                   
+                    });
+                });
+                
+            if (!that.send.filters.length) that.send.filters = null;
+                
+            that.send.orders.push({
+                'field' : '',
+                'operator' : '',
+            });
+   
     	},
-    	'newFilter' : function ()
+    	'discoverIndexID' : function (search)
     	{
-    		var fields = this.makeComposites();
-    		var order_by = this.send.order_by;
-     
-    		angular.forEach(this.indexes, function (value) {
-    			 
-    		});
-    		
-    		this.send.filters.push({
-    			'field' : '',
-    			'operator' : '',
-    			'value' : '',
-    		});
+    	  
+    	    var that = this;
+    	    var filters = search['filters'];
+    	    var orders = search['orders'];
+  
+    	        angular.forEach(this.indexes, function (index, index_id) {
+    	            var got_filters = true;
+    	            
+    	            if (index.filters)
+    	            {
+    	                got_filters = false;
+    	                if (filters)
+    	                {
+    	                    angular.forEach(index.filters, function (filter) {
+                                   var gets = _.findWhere(filters, {'field' : filter[0]});
+                                   if (gets && $.inArray(gets['operator'], filter[1]) !== -1)
+                                   {
+                                       got_filters = true;
+                                       that.index_id = index_id;
+                                   }
+                             });
+    	                }
+    	                
+    	            }
+    	             
+    	              
+    	             angular.forEach(index.orders, function (order) {
+    	           
+                           var gets = _.findWhere(orders, {'field' : order[0]});
+              
+                           if (got_filters && gets && $.inArray(gets['operator'], order[1]) !== -1)
+                           {
+                               that.index_id = index_id;
+                           }
+                     });
+    	             
+    	        });
+    	   
     	},
     	'setSearch' : function (kind, search)
     	{
@@ -1222,6 +1262,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		    		}
 		    		else if (search)
 		    		{
+		    		    this.discoverIndexID(search);
 		    			this.send = search;
 		    		}
     			}
@@ -1233,7 +1274,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     		 
     	},
     	'doSearch' : function ()
-            {
+        {
             	$state.go('admin_search', {
 	                'kind': this.kind,
 	                'query': JSON.stringify({
@@ -1248,7 +1289,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	},
     	'send' : {
     		'filters' : [],
-    		'order_by' : {},
+    		'orders' : [],
     	}, 
     };
     

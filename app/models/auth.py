@@ -151,15 +151,17 @@ class User(orm.BaseExpando):
       key=orm.Action.build_key('0', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
             'search_arguments': {'kind': '0', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty()},
             'indexes': [{'ancestor': False,
-                         'orders': [('emails', ['asc', 'desc']),
-                                    ('created', ['asc', 'desc']),
-                                    ('updated', ['asc', 'desc'])]},
+                         'orders': [('emails', ['asc', 'desc'])]},
+                        {'ancestor': False,
+                         'orders': [('created', ['asc', 'desc'])]},
+                        {'ancestor': False,
+                         'orders': [('updated', ['asc', 'desc'])]},
                         {'ancestor': False,
                          'filters': [('emails', ['==', '!='])],
                          'orders': [('emails', ['asc', 'desc']),

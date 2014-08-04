@@ -993,7 +993,7 @@ class _BaseModel(object):
   @classmethod
   def search(cls, search_arguments):
     if search_arguments.get('keys'):
-      return get_multi(search_arguments.get('keys'))
+      return get_multi_clean(search_arguments.get('keys'))
     if cls._use_search_engine:
       query = search_arguments['property'].build_search_query(search_arguments)
       index = search.Index(name=search_arguments.get('kind'), namespace=search_arguments.get('namespace'))
@@ -1001,7 +1001,7 @@ class _BaseModel(object):
     else:
       options = search_arguments['property'].build_datastore_query_options(search_arguments)
       query = search_arguments['property'].build_datastore_query(search_arguments)
-      return query.fetch_page(options.get('limit'), options=options)
+      return query.fetch_page(options.limit, options=options)
   
   def read(self, read_arguments=None):  # @todo Find a way to minimize synchronous reads here!
     '''This method loads all sub-entities in async-mode, based on input details.
@@ -2692,7 +2692,12 @@ class SuperSearchProperty(SuperJsonProperty):
                                'keys': [key1, key2, key3]}
     
     '''
-    self._cfg = kwargs.pop('cfg')
+    self._cfg = kwargs.pop('cfg', {})
+    # temp
+    kwargs.pop('order_by', None)
+    kwargs.pop('filters', None)
+    kwargs.pop('indexes', None)
+    
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -2708,7 +2713,7 @@ class SuperSearchProperty(SuperJsonProperty):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
                          'filters', 'orders', 'keys']
-    for value_key in values:
+    for value_key,value in values.items(): # dict cannot change size during iteration
       if value_key not in allowed_arguments:
         del values[value_key]
   
@@ -2751,7 +2756,7 @@ class SuperSearchProperty(SuperJsonProperty):
        'orders': [{'field': 'name', 'operator': 'asc'}]
     
     '''
-    def _validate(cfg_values, input_values):
+    def _validate(cfg_values, input_values, method):
       # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
       # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
       # cfg_orders = [('name', ['asc'])]
@@ -2759,9 +2764,9 @@ class SuperSearchProperty(SuperJsonProperty):
       for i, input_value in enumerate(input_values):
         cfg_value = cfg_values[i]
         if input_value['field'] != cfg_value[0]:
-          raise PropertyError('expected_field_%s_%s' % (cfg_value[0], i))
+          raise PropertyError('expected_field_%s_%s_%s' % (method, cfg_value[0], i))
         if input_value['operator'] not in cfg_value[1]:
-          raise PropertyError('expected_operator_%s_%s' % (cfg_value[1], i))
+          raise PropertyError('expected_operator_%s_%s_%s' % (method, cfg_value[1], i))
     
     ancestor = values.get('ancestor')
     filters = values.get('filters')
@@ -2783,10 +2788,22 @@ class SuperSearchProperty(SuperJsonProperty):
             raise PropertyError('ancestor_not_allowed')
         if filters is not None:
           cfg_index_filters = cfg_index.get('filters')
-          _validate(cfg_index_filters, filters)
+          _validate(cfg_index_filters, filters, 'filter')
         if orders is not None:
           cfg_index_orders = cfg_index.get('orders')
-          _validate(cfg_index_orders, orders)
+          _validate(cfg_index_orders, orders, 'order')
+          """
+          # bellow code will work as we discussed
+          if filters is not None:
+            _validate(cfg_index_orders, orders, 'order')
+          else:
+            find_any_order = False
+            for order in orders:
+              for cfg_index_order in cfg_index_orders:
+                if cfg_index_order[0] == order['field'] and order['operator'] in cfg_index_order[1]:
+                  find_any_order = True
+                  break
+          """
         success = True
         break
       except Exception as e:
@@ -2803,7 +2820,7 @@ class SuperSearchProperty(SuperJsonProperty):
           if not isinstance(value, bool):
             del options_values[value_key]
         elif value_key == 'limit':
-          if not isinstance(value, long):
+          if not (isinstance(value, int) or isinstance(value, int)):
             raise PropertyError('limit_value_incorrect')
         elif value_key in ['batch_size', 'prefetch_size', 'deadline']:
           if not isinstance(value, long):
@@ -2830,7 +2847,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def _search_query_orders_format(self, values):
     orders = values.get('orders')
     if orders is not None:
-      for _order in _orders:
+      for _order in orders:
         default_value = _order.get('default_value')
         if not default_value or not default_value.get('asc') or not default_value.get('desc'):
           raise PropertyError('missing_default_value_for_order_%s' % _order['field'])
@@ -2851,9 +2868,9 @@ class SuperSearchProperty(SuperJsonProperty):
       else:
         del options[value_key]
   
-  def argument_format(self, value):
+  def argument_format(self, values):
+    values = super(SuperSearchProperty, self).argument_format(values)
     values.update(self._cfg.get('search_arguments'))
-    values['property'] = self
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)
@@ -2865,11 +2882,15 @@ class SuperSearchProperty(SuperJsonProperty):
       self._search_query_options_format(values)
     else:
       self._datastore_query_options_format(values)
+    values['property'] = self
+    return values
   
   def build_datastore_query_filters(self, value):
     _filters = value.get('filters')
     filters = []
     model = Model._kind_map.get(value.get('kind'))
+    if _filters is None:
+      return filters
     for _filter in _filters:
       field = util.get_attr(model, _filter['field'])
       op = _filter['operator']
