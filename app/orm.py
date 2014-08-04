@@ -2779,18 +2779,10 @@ class SuperSearchProperty(SuperJsonProperty):
     ancestor = values.get('ancestor')
     filters = values.get('filters', [])
     orders = values.get('orders', [])
-    cfg_filters = self._cfg.get('filters', [])  # todo Could there be a situation where filters are not used at all!?
+    cfg_filters = self._cfg.get('filters', {})
     cfg_indexes = self._cfg['indexes']
     success = False
     e = 'unknown'
-    if len(cfg_filters) != len(filters):
-      raise PropertyError('values_mismatch')  # @todo Write this error correctly!
-    else:
-      for input_filter in filters:  # @todo Shall we move this block inside cfg_indexes loop, before success = True expression!?
-        input_field = input_filter['field']
-        input_value = input_filter['value']
-        cfg_field = cfg_filters[input_field]
-        input_filter['value'] = cfg_field.argument_format(input_value)
     for cfg_index in cfg_indexes:
       try:
         cfg_index_ancestor = cfg_index.get('ancestor')
@@ -2801,6 +2793,11 @@ class SuperSearchProperty(SuperJsonProperty):
             raise PropertyError('ancestor_not_allowed')
         _validate(cfg_index_filters, filters, 'filter')
         _validate(cfg_index_orders, orders, 'order')
+        for input_filter in filters:
+          input_field = input_filter['field']
+          input_value = input_filter['value']
+          cfg_field = cfg_filters[input_field]
+          input_filter['value'] = cfg_field.argument_format(input_value)
         success = True
         break
       except Exception as e:
