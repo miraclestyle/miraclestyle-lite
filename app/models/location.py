@@ -71,21 +71,16 @@ class Country(orm.BaseModel):
       key=orm.Action.build_key('15', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='15', repeated=True)},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])}
-            },
-          indexes=[
-            {'filter': ['key']},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '15', 'options': {'limit': 1000}},
+                                 # 'filters': [{'field': 'active', 'value': True, 'operator': '=='}]}, @todo We could do this (in reference to the issue below) however, in that case, user will not be able to use filters!! We need some additive configuration options!!
+            'filters': {'active': orm.SuperBooleanProperty(choices=[True])},  # @todo This doesn't prevent user from viewing inactive entities (for example, if he doesn't specify any filter, and that is allowed by indexes)!!
+            'indexes': [{'filters': [('active', ['=='])],  # @todo We only allow ordering if filter on active filed is present!! See above lines for explanation!
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -94,7 +89,7 @@ class Country(orm.BaseModel):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': 1000}),
+            Search(),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -135,29 +130,27 @@ class CountrySubdivision(orm.BaseModel):
       key=orm.Action.build_key('16', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='16', repeated=True)},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])},
-            'ancestor': {'operators': ['=='], 'type': orm.SuperKeyProperty(kind='15')}
-            },
-          indexes=[
-            {'filter': ['key']},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['active', 'ancestor'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active', 'ancestor'],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'ancestor_kind': '15',
+            'search_by_keys': True,
+            'search_arguments': {'kind': '16', 'options': {'limit': settings.SEARCH_PAGE}},
+                                 # 'filters': [{'field': 'active', 'value': True, 'operator': '=='}]}, @todo We could do this (in reference to the issue below) however, in that case, user will not be able to use filters!! We need some additive configuration options!!
+            'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
+                        'active': orm.SuperBooleanProperty(choices=[True])},  # @todo This doesn't prevent user from viewing inactive entities (for example, if he doesn't specify any filter, and that is allowed by indexes)!!
+            'indexes': [{'filters': [('active', ['=='])],  # @todo We only allow ordering if filter on 'active' filed is present!! See above lines for explanation!
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'ancestor': True,
+                         'filters': [('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!=', 'contains']), ('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'ancestor': True,
+                         'filters': [('name', ['==', '!=', 'contains']), ('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]}
+                        ]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -166,7 +159,7 @@ class CountrySubdivision(orm.BaseModel):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

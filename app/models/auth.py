@@ -160,13 +160,9 @@ class User(orm.BaseExpando):
                         {'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
                         {'filters': [('emails', ['==', '!='])],
-                         'orders': [('emails', ['asc', 'desc']),
-                                    ('created', ['asc', 'desc']),
-                                    ('updated', ['asc', 'desc'])]},
+                         'orders': [('created', ['asc', 'desc'])]},
                         {'filters': [('state', ['==', '!='])],
-                         'orders': [('emails', ['asc', 'desc']),
-                                    ('created', ['asc', 'desc']),
-                                    ('updated', ['asc', 'desc'])]}]
+                         'orders': [('created', ['asc', 'desc'])]}]
             }
           )
         },
@@ -508,32 +504,20 @@ class Domain(orm.BaseExpando):
       key=orm.Action.build_key('6', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'created': {'operators': ['asc', 'desc']},
-            'updated': {'operators': ['asc', 'desc']}
-            },
-          ),
-        'cursor': orm.SuperStringProperty()
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
+          cfg={
+            'search_arguments': {'kind': '6', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty()},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('created', ['asc', 'desc'])]}]
+            }
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -542,7 +526,7 @@ class Domain(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

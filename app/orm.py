@@ -2734,7 +2734,10 @@ class SuperSearchProperty(SuperJsonProperty):
   def _keys_format(self, values):
     keys = values.get('keys')
     if keys is not None:
-      values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).argument_format(keys)
+      if self._cfg.get('search_by_keys'):
+        values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).argument_format(keys)
+      else:
+        del values['keys']
   
   def _projection_group_by_format(self, values):
     def list_format(list_values):
@@ -2764,7 +2767,9 @@ class SuperSearchProperty(SuperJsonProperty):
       # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
       # cfg_orders = [('name', ['asc'])]
       # input_orders = [{'field': 'name', 'operator': 'asc'}]
-      for i, input_value in enumerate(input_values):
+      if len(cfg_values) != len(input_values):
+        raise PropertyError('%s_values_mismatch' % method)  # @todo Write this error correctly!
+      for i, input_value in enumerate(input_values):  # @todo If input_values length is 0, and above validation passes, than there should not be any errors!?
         cfg_value = cfg_values[i]
         if input_value['field'] != cfg_value[0]:
           raise PropertyError('expected_field_%s_%s_%s' % (method, cfg_value[0], i))
@@ -2772,30 +2777,30 @@ class SuperSearchProperty(SuperJsonProperty):
           raise PropertyError('expected_operator_%s_%s_%s' % (method, cfg_value[1], i))
     
     ancestor = values.get('ancestor')
-    filters = values.get('filters')
-    orders = values.get('orders')
-    cfg_filters = self._cfg['filters']
+    filters = values.get('filters', [])
+    orders = values.get('orders', [])
+    cfg_filters = self._cfg.get('filters', [])  # todo Could there be a situation where filters are not used at all!?
     cfg_indexes = self._cfg['indexes']
     success = False
     e = 'unknown'
-    if filters is not None:
-      for input_filter in filters:
+    if len(cfg_filters) != len(filters):
+      raise PropertyError('values_mismatch')  # @todo Write this error correctly!
+    else:
+      for input_filter in filters:  # @todo Shall we move this block inside cfg_indexes loop, before success = True expression!?
         input_field = input_filter['field']
         input_value = input_filter['value']
         cfg_field = cfg_filters[input_field]
         input_filter['value'] = cfg_field.argument_format(input_value)
     for cfg_index in cfg_indexes:
       try:
+        cfg_index_ancestor = cfg_index.get('ancestor')
+        cfg_index_filters = cfg_index.get('filters', [])
+        cfg_index_orders = cfg_index.get('orders', [])
         if ancestor is not None:
-          if not cfg_index.get('ancestor'):  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
-            # del values['ancestor'] We already delete values['ancestor'] in _ancestor_format() if the self._cfg.get('ancestor_kind') is not defined!
+          if not cfg_index_ancestor:  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
             raise PropertyError('ancestor_not_allowed')
-        if filters is not None:
-          cfg_index_filters = cfg_index.get('filters')
-          _validate(cfg_index_filters, filters, 'filter')
-        if orders is not None:
-          cfg_index_orders = cfg_index.get('orders')
-          _validate(cfg_index_orders, orders, 'order')
+        _validate(cfg_index_filters, filters, 'filter')
+        _validate(cfg_index_orders, orders, 'order')
         success = True
         break
       except Exception as e:
