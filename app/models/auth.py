@@ -171,8 +171,7 @@ class User(orm.BaseExpando):
                                     ('created', ['asc', 'desc']),
                                     ('updated', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
