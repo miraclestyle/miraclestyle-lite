@@ -75,9 +75,8 @@ class Country(orm.BaseModel):
           cfg={
             'search_by_keys': True,
             'search_arguments': {'kind': '15', 'options': {'limit': 1000}},
-                                 # 'filters': [{'field': 'active', 'value': True, 'operator': '=='}]}, @todo We could do this (in reference to the issue below) however, in that case, user will not be able to use filters!! We need some additive configuration options!!
-            'filters': {'active': orm.SuperBooleanProperty(choices=[True])},  # @todo This doesn't prevent user from viewing inactive entities (for example, if he doesn't specify any filter, and that is allowed by indexes)!!
-            'indexes': [{'filters': [('active', ['=='])],  # @todo We only allow ordering if filter on active filed is present!! See above lines for explanation!
+            'filters': {'active': orm.SuperBooleanProperty(choices=[True])},
+            'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
           )
@@ -135,20 +134,18 @@ class CountrySubdivision(orm.BaseModel):
             'ancestor_kind': '15',
             'search_by_keys': True,
             'search_arguments': {'kind': '16', 'options': {'limit': settings.SEARCH_PAGE}},
-                                 # 'filters': [{'field': 'active', 'value': True, 'operator': '=='}]}, @todo We could do this (in reference to the issue below) however, in that case, user will not be able to use filters!! We need some additive configuration options!!
             'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
-                        'active': orm.SuperBooleanProperty(choices=[True])},  # @todo This doesn't prevent user from viewing inactive entities (for example, if he doesn't specify any filter, and that is allowed by indexes)!!
-            'indexes': [{'filters': [('active', ['=='])],  # @todo We only allow ordering if filter on 'active' filed is present!! See above lines for explanation!
+                        'active': orm.SuperBooleanProperty(choices=[True])},
+            'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'ancestor': True,
                          'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', '!=', 'contains']), ('active', ['=='])],
+                        {'filters': [('active', ['==']), ('name', ['==', '!=', 'contains'])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'ancestor': True,
-                         'filters': [('name', ['==', '!=', 'contains']), ('active', ['=='])],
-                         'orders': [('name', ['asc', 'desc'])]}
-                        ]
+                         'filters': [('active', ['==']), ('name', ['==', '!=', 'contains'])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
           )
         },

@@ -98,24 +98,18 @@ class Unit(orm.BaseExpando):
       key=orm.Action.build_key('19', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='19', repeated=True)},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])},
-            'measurement': {'operators': ['=='], 'type': orm.SuperStringProperty()}  # @todo How do we implement selection from query results: Unit.query(projection=[Unit.measurement], distinct=True).order(Unit.measurement).fetch()
-            },
-          indexes=[
-            {'filter': ['key']},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['active', 'measurement'],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '19', 'options': {'limit': 1000}},
+            'filters': {'measurement': orm.SuperStringProperty(),
+                        'active': orm.SuperBooleanProperty(choices=[True])},
+            'indexes': [{'filters': [('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('measurement', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -124,7 +118,7 @@ class Unit(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': 1000}),
+            Search(),
             UnitRemoveCurrencies(),  # @todo This will be probably be removed!!
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',

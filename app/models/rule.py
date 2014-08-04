@@ -164,28 +164,21 @@ class DomainRole(Role):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='60', repeated=True)},
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
-            },
-          indexes=[
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['key']},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '60', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'active': orm.SuperBooleanProperty()},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -194,7 +187,7 @@ class DomainRole(Role):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -388,28 +381,21 @@ class DomainUser(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='8', repeated=True)},
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty(choices=['invited', 'accepted'])}
-            },
-          indexes=[
-            {'filter': ['key']},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'state'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '8', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -418,7 +404,7 @@ class DomainUser(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

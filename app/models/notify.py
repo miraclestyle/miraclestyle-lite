@@ -278,33 +278,27 @@ class Notification(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'action': {'operators': ['==', '!='], 'type': orm.SuperVirtualKeyProperty(kind='56')},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
-            },
-          indexes=[
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['action'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['action', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['action', 'name', 'active'],
-             'order_by': [['name', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_arguments': {'kind': '61', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'action': orm.SuperVirtualKeyProperty(kind='56'),
+                        'active': orm.SuperBooleanProperty()},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('action', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('action', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('name', ['==', '!=']), ('action', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -313,7 +307,7 @@ class Notification(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

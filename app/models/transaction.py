@@ -156,31 +156,21 @@ class Journal(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['state', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['state', ['asc', 'desc']]]},
-            {'filter': ['name', 'state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['state', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['state', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'state': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_arguments': {'kind': '49', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=[])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('state', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -189,7 +179,7 @@ class Journal(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -420,31 +410,22 @@ class Category(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty(choices=[True])}
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['active', ['asc', 'desc']]]},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['active', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['active', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['active', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'active': {'operators': ['asc', 'desc']}
+          default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '47', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'active': orm.SuperBooleanProperty()},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('active', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -453,7 +434,7 @@ class Category(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

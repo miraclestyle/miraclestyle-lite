@@ -198,38 +198,26 @@ class Widget(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'sequence', 'operator': 'asc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'role': {'operators': ['==', '!='], 'type': orm.SuperKeyProperty(kind='60')},
-            'active': {'operators': ['==', '!='], 'type': orm.SuperBooleanProperty()}
-            },
-          indexes=[
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},
-            {'filter': ['active'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},
-            {'filter': ['role'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},
-            {'filter': ['name', 'active'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},
-            {'filter': ['role', 'active'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['sequence', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'sequence': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'sequence', 'operator': 'asc'}]},
+          cfg={
+            'search_arguments': {'kind': '62', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'role': orm.SuperKeyProperty(kind='60'),
+                        'active': orm.SuperBooleanProperty()},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('sequence', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('sequence', ['asc', 'desc'])]},
+                        {'filters': [('active', ['=='])],
+                         'orders': [('sequence', ['asc', 'desc'])]},
+                        {'filters': [('role', ['==', '!='])],
+                         'orders': [('sequence', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('name', ['==', '!='])],
+                         'orders': [('sequence', ['asc', 'desc'])]},
+                        {'filters': [('active', ['==']), ('role', ['==', '!='])],
+                         'orders': [('sequence', ['asc', 'desc'])]}]
             }
-          ),
-        'cursor': orm.SuperStringProperty()
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -238,7 +226,7 @@ class Widget(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
