@@ -152,28 +152,24 @@ class User(orm.BaseExpando):
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
-          filters={
-            'emails': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': ['emails'],
-             'order_by': [['emails', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['emails', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': [],
-             'order_by': [['emails', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'emails': {'operators': ['asc', 'desc']},
-            'created': {'operators': ['asc', 'desc']},
-            'updated': {'operators': ['asc', 'desc']}
+          cfg={
+            'search_arguments': {'kind': '0', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'emails': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty()},
+            'indexes': [{'ancestor': False,
+                         'orders': [('emails', ['asc', 'desc']),
+                                    ('created', ['asc', 'desc']),
+                                    ('updated', ['asc', 'desc'])]},
+                        {'ancestor': False,
+                         'filters': [('emails', ['==', '!='])],
+                         'orders': [('emails', ['asc', 'desc']),
+                                    ('created', ['asc', 'desc']),
+                                    ('updated', ['asc', 'desc'])]},
+                        {'ancestor': False,
+                         'filters': [('state', ['==', '!='])],
+                         'orders': [('emails', ['asc', 'desc']),
+                                    ('created', ['asc', 'desc']),
+                                    ('updated', ['asc', 'desc'])]}]
             }
           ),
         'cursor': orm.SuperStringProperty()

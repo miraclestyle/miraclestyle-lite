@@ -2746,7 +2746,6 @@ class SuperSearchProperty(SuperJsonProperty):
     if group_by is not None:
       list_format(group_by)
   
-  # @todo Testing is required!
   def _filters_orders_format(self, values):
     ''''filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}]
        'orders': [{'field': 'name', 'operator': 'asc'}]
@@ -2828,7 +2827,13 @@ class SuperSearchProperty(SuperJsonProperty):
       raise PropertyError('limit_value_missing')
     options_format(options)
   
-  def _search_query_orders_format(self, values):  # @todo This method will implement default_value validation for search query sort options!!
+  def _search_query_orders_format(self, values):
+    orders = values.get('orders')
+    if orders is not None:
+      for _order in _orders:
+        default_value = _order.get('default_value')
+        if not default_value or not default_value.get('asc') or not default_value.get('desc'):
+          raise PropertyError('missing_default_value_for_order_%s' % _order['field'])
   
   def _search_query_options_format(self, values):
     options = values.get('options', {})
@@ -2848,14 +2853,18 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def argument_format(self, value):
     values.update(self._cfg.get('search_arguments'))
+    values['property'] = self
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)
     self._keys_format(values)
     self._projection_group_by_format(values)
     self._filters_orders_format(values)
-    # @todo Here, we need splid decision to decide from datastore or search!
-    self._datastore_query_options_format(values)
+    if self._cfg.get('_use_search_engine', False):
+      self._search_query_orders_format(values)
+      self._search_query_options_format(values)
+    else:
+      self._datastore_query_options_format(values)
   
   def build_datastore_query_filters(self, value):
     _filters = value.get('filters')
