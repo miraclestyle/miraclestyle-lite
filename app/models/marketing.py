@@ -177,8 +177,8 @@ class CatalogPricetag(orm.BaseModel):
   _kind = 34
   
   product_template = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
-  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)
-  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)
+  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo See CatalogImage!
+  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo See CatalogImage!
   position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
   position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
   value = orm.SuperStringProperty('6', required=True, indexed=False)
@@ -188,7 +188,22 @@ class CatalogImage(Image):
   
   _kind = 36
   
-  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
+  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '6', repeated=True)
+  
+  ''' @todo We have a problem if we don't save image width/height! Without image width/height, client won't be able to construct
+  image serving url size parameter (=sXXX), and thus we will have to advise users on further image constrains
+  (e.g. to uplaod only portrait proportions images). Cheap solution is to rely on client to send obtained image dimensions,
+  thought this solutions isn't reliable, and is regarded as best effort!
+  In case that we decide to reincorporate backend image measurement, the correct way to do it,
+  is to extend _BaseImageProperty()._process_config with 'measure' parameters, and do the measurement.
+  
+  '''
+  _default_indexed = False
+  
+  _expando_fields = {
+    'width': orm.SuperIntegerProperty('7'),
+    'height': orm.SuperIntegerProperty('8')
+    }
 
 
 class Catalog(orm.BaseExpando):
