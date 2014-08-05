@@ -172,15 +172,11 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     max_doc = self.cfg.get('max_doc', 200)
     catalog_fields = {'created': 'created', 'updated': 'updated', 'name': 'name',
                       'publish_date': 'publish_date', 'discontinue_date': 'discontinue_date',
-                      'state': 'state', 'cover': 'cover.serving_url', 'cover_width': 'cover.width',
-                      'cover_height': 'cover.height', 'seller_name': 'namespace_entity.name',
-                      'seller_logo': 'namespace_entity.logo.serving_url',
-                      'seller_logo_width': 'namespace_entity.logo.width',
-                      'seller_logo_height': 'namespace_entity.logo.height'}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
+                      'state': 'state', 'cover': 'cover.serving_url',
+                      'seller_name': 'namespace_entity.name',
+                      'seller_logo': 'namespace_entity.logo.serving_url'}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
     product_fields = {'catalog_name': 'parent_entity.name', 'seller_name': 'namespace_entity.name',
                       'seller_logo': 'namespace_entity.logo.serving_url',
-                      'seller_logo_width': 'namespace_entity.logo.width',
-                      'seller_logo_height': 'namespace_entity.logo.height',
                       'product_category': 'product_category._urlsafe',
                       'product_category_parent_record': '_product_category.parent_record._urlsafe',
                       'product_category_name': '_product_category.name',

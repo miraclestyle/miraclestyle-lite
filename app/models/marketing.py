@@ -177,9 +177,11 @@ class CatalogPricetag(orm.BaseModel):
   _kind = 34
   
   product_template = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
-  position_top = orm.SuperFloatProperty('2', required=True, indexed=False)
-  position_left = orm.SuperFloatProperty('3', required=True, indexed=False)
-  value = orm.SuperStringProperty('4', required=True, indexed=False)
+  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)
+  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)
+  position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
+  position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
+  value = orm.SuperStringProperty('6', required=True, indexed=False)
 
 
 class CatalogImage(Image):

@@ -33,10 +33,8 @@ class Image(orm.BaseModel):
   image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
   content_type = orm.SuperStringProperty('2', required=True, indexed=False)
   size = orm.SuperFloatProperty('3', required=True, indexed=False)
-  width = orm.SuperIntegerProperty('4', indexed=False)
-  height = orm.SuperIntegerProperty('5', indexed=False)
-  gs_object_name = orm.SuperStringProperty('6', indexed=False)
-  serving_url = orm.SuperStringProperty('7', indexed=False)
+  gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)  # @todo Added required=True, is that ok?
+  serving_url = orm.SuperStringProperty('5', required=True, indexed=False)  # @todo Added required=True, is that ok?
 
 
 class Role(orm.BaseExpando):
@@ -154,7 +152,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
         entities = [entities]
       mapper(entities).get_result()
     return self._property_value
- 
+  
   def process(self):
     '''This function should be called inside a taskqueue.
     It will perform all needed operations based on the property configuration on how to process its images.
@@ -280,7 +278,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
     blob_key = None
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-    if len(config) or not new_value.width or not new_value.height:
+    if len(config):
       # @note No try block is implemented here. This code is no longer forgiving.
       # If any of the images fail to process, everything is lost/reverted, because one or more images:
       # - are no longer existant in the cloudstorage / .read();
@@ -300,8 +298,6 @@ class _BaseImageProperty(_BaseBlobProperty):
                      crop_offset_x=config.get('crop_offset_x'),
                      crop_offset_y=config.get('crop_offset_y'))
         blob = image.execute_transforms(output_encoding=image.format)
-      new_value.width = image.width
-      new_value.height = image.height
       new_value.size = len(blob)
       if len(config):
         writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
@@ -334,9 +330,10 @@ class _BaseImageProperty(_BaseBlobProperty):
       if file_info.content_type not in meta_required:
         raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
       new_image = self.get_modelclass()(**{'size': file_info.size,
-                                      'content_type': file_info.content_type,
-                                      'gs_object_name': file_info.gs_object_name,
-                                      'image': blob_info.key()})
+                                           'content_type': file_info.content_type,
+                                           'gs_object_name': file_info.gs_object_name,
+                                           'image': blob_info.key(),
+                                           'serving_url': images.get_serving_url(blob_info.key())})  # @todo Not sure if this is ok!?
       self.save_blobs_on_success(new_image.image)
       if self._process:
         new_image = self.process(new_image)
