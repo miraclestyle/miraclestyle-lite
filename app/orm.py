@@ -115,7 +115,7 @@ Key._root = property(_get_root)
 Key._search_index = property(_get_search_index)
 Key._search_unindex = property(_get_search_unindex)
 Key.entity = property(_get_entity)
-Key.namespace_entity = property(_get_namespace_entity) 
+Key.namespace_entity = property(_get_namespace_entity)
 Key.parent_entity = property(_get_parent_entity)
 
 
@@ -1121,7 +1121,7 @@ class _BaseModel(object):
       original = copy.deepcopy(self)
       self._original = original
   
-  def get_search_document(self):
+  def get_search_document(self, fields=None):
     '''Returns search document representation of the entity, based on property configurations.
     
     '''
@@ -1137,7 +1137,11 @@ class _BaseModel(object):
         doc_fields.append(search.AtomField(name='ancestor', value=self.key_parent.urlsafe()))
       for field_key, field in self.get_fields().items():
         if field._searchable:
-          doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))
+          doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
+      if fields is not None:
+        for field_key, field in fields.items():
+          if field._searchable:
+            doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
