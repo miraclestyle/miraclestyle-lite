@@ -192,49 +192,6 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
             value.add(get_attr(context, path))
 
 
-class ProcessImages(orm.BaseModel):
-  
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    target_field_paths = self.cfg.get('target_field_paths')
-    root_entity = get_attr(context, entity_path)
-    values = []
-    if target_field_paths:
-      for full_target in target_field_paths:
-        targets = full_target.split('.')
-        last_i = len(targets)-1
-        do_entity = root_entity
-        values = []
-        def start(entity, target, last_i, i, targets, values):
-          if entity is None:
-            return entity
-          if isinstance(entity, list):
-            out = []
-            for ent in entity:
-              out.append(start(ent, target, last_i, i, targets, values))
-            return out
-          else:
-            entity = getattr(entity, target)
-            if last_i == i:
-              if isinstance(entity, list):
-                values.extend(entity)
-              else:
-                values.append(entity)
-            else:
-              if isinstance(entity, orm.SuperPropertyManager):
-                entity = entity.value
-              return entity
-        for i,target in enumerate(targets):
-          do_entity = start(do_entity, target, last_i, i, targets, values)
-        for value in values:
-          if value is not None and hasattr(value, 'process') and callable(value.process):
-            value.process()
-
-
 class RulePrepare(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})

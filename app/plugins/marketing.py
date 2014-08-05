@@ -57,7 +57,7 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
         new_cat._use_record_engine = False
         write_data.append(new_cat)
     orm.put_multi(write_data)
- 
+
  
 class CatalogProcessCoverSet(orm.BaseModel):
   

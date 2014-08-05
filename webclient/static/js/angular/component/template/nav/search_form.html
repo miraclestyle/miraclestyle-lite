@@ -3,7 +3,7 @@
 <div class="form-control">
 	<label class="form-label">Kind</label>
 	<div class="form-input">
-		<select ng-change="search.changeKind()" name="search_kind" ng-required="true" ui-select2 ng-model="search.kind" data-placeholder="Select kind to search">
+		<select ng-change="search.changeKindUI()" name="search_kind" ng-required="true" ui-select2 ng-model="search.kind" data-placeholder="Select kind to search">
 			    <option></option>
 			    <option ng-repeat="(kind_key, kind) in FRIENDLY_KIND_NAMES" value="{{kind_key}}">{{kind}}</option>
 		</select>
@@ -34,7 +34,10 @@
 		 				 {{search_filter.field}}
 		 			</td>
 		 			<td class="c25 cpl10">
-		 				<select name="search_filter_op" ng-required="search.index_id != null && search.send.filters.length" ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" data-placeholder="Select operator for field">
+		 				<select name="search_filter_op" 
+		 				        ng-required="search.index_id != null && search.send.filters.length" 
+		 				        ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" 
+		 				        data-placeholder="Select operator for field">
 							    <option></option>
 							    <option ng-repeat="op in search.indexes[search.index_id].filters[$index][1] track by $index" value="{{op}}">{{op}}</option>
 						</select>

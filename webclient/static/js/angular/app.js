@@ -1148,6 +1148,11 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     		this.send.filters = [];
     		this.send.orders = [];
     	},
+    	'changeKindUI' : function ()
+    	{
+    	    this.changeKind();
+    	    this.setSearch(this.kind, undefined);  
+    	},
     	'changeKind' : function ()
     	{
     	 
@@ -1171,6 +1176,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			{
     				this.hide = false;
     			}
+    			
     			var cfg = search_argument['cfg'];
     			this.send.kind = this.kind;
     			this.filters = cfg['filters'] || {};
@@ -1191,23 +1197,21 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	    that.send.orders = [];
    
     	    var indx = that.indexes[that.index_id];
- 
-    	    
-    	    angular.forEach(indx.filters, function (filter, fi) {
+  
+    	    angular.forEach(indx.filters, function (filter, i) {
                     that.send.filters.push({
                         'field' : filter[0],
                         'operator' : filter[1][0],
                         'value' : '',
-                        '_index' : fi,
-                   
+                        '_index' : i,
                     });
                 });
    
-            angular.forEach(indx.orders, function (order, oi) {
+            angular.forEach(indx.orders, function (order, i) {
                     that.send.orders.push({
                         'field' : order[0],
                         'operator' : order[1][0],
-                        '_index' : oi,
+                        '_index' : i,
                     });
             });
    
@@ -1218,8 +1222,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	    var that = this;
     	    var filters = this.send['filters'];
     	    var orders = this.send['orders'];
-  
+     
     	        angular.forEach(this.indexes, function (index, index_id) {
+    	           
     	            var got_filters = true;
     	            
     	            if (index.filters)
@@ -1263,11 +1268,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			return;
     			
     		}
+    		
     		if (this.kind != kind)
         	{
         	 	this.kind = kind;
         	 	this.changeKind();
         	 	this.resetFilters();
+        	 	
         	}
     		
     		var kindinfo = KINDS.get(this.kind);

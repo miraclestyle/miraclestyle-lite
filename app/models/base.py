@@ -16,6 +16,15 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import orm, mem, settings
 from app.util import *
 
+# @see https://developers.google.com/appengine/docs/python/googlecloudstorageclient/retryparams_class
+default_retry_params = cloudstorage.RetryParams(initial_delay=0.2,
+                                      max_delay=5.0,
+                                      backoff_factor=2,
+                                      max_retries=5,
+                                      max_retry_period=60,
+                                      urlfetch_timeout=30)
+cloudstorage.set_default_retry_params(default_retry_params)
+
 
 class Image(orm.BaseModel):
   
@@ -257,7 +266,7 @@ class _BaseImageProperty(_BaseBlobProperty):
   def __init__(self, *args, **kwargs):
     self._process = kwargs.pop('process', None)
     self._process_config = kwargs.pop('process_config', {})
-    self._upload_format = kwargs.pop('upload_format', True)
+    self._argument_format_upload = kwargs.pop('argument_format_upload', False)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
   
@@ -307,7 +316,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     return new_value
   
   def argument_format(self, value):
-    if not self._upload_format:
+    if not self._argument_format_upload:
       return super(_BaseImageProperty, self).argument_format(value)
     value = self._property_value_format(value)
     if value is Nonexistent:

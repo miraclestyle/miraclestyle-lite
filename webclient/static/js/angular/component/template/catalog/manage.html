@@ -3,6 +3,7 @@
 <input type="hidden" name="action_id" value="catalog_upload_images" />
 <input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="key" value="{{entity.key}}" />
+ 
 	
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
@@ -55,7 +56,7 @@
 	
 	<div ng-show="entity.id" is-open="accordions.products" accordion-group heading="Products">
 		<div class="form-control clearfix mb15">
-		  <div ng-show="rule.field._images.writable" class="pull-right">
+		  <div ng-show="rule.action.catalog_upload_images.executable" class="pull-right">
 		  <button ng-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
 		  <div class="button fake-button">
 		  	 <span>Add Images</span>

@@ -54,24 +54,21 @@ class ProductCategory(orm.BaseModel):
       key=orm.Action.build_key('17', 'search'), # @todo search is very inaccurate when using 'contains' filter. so we will have to use here document search i think
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'order_by': {'field': 'name', 'operator': 'asc'}},
-          filters={
-            'key': {'operators': ['IN'], 'type': orm.SuperKeyProperty(kind='17', repeated=True)},
-            'name': {'operators': ['==', '!=', 'contains'], 'type': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()])},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': ['key']},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            {'filter': ['name', 'state'],
-             'order_by': [['name', ['asc', 'desc']]]},
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']}
+          default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '17', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['indexable'])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
           ),
-        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -129,7 +126,7 @@ class ProductInstance(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('7', kind='19'),
     'volume': orm.SuperDecimalProperty('8'),
     'volume_uom': orm.SuperKeyProperty('9', kind='19'),
-    'images': SuperImageLocalStructuredProperty(Image, '10', upload_format=False, repeated=True),
+    'images': SuperImageLocalStructuredProperty(Image, '10', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '11', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
     }
@@ -164,7 +161,7 @@ class Product(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('9', kind='19'),
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperKeyProperty('11', kind='19'),
-    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True, upload_format=False),
+    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(ProductContent, '13', repeated=True),
     'variants': orm.SuperLocalStructuredProperty(ProductVariant, '14', repeated=True),
     'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
@@ -206,12 +203,12 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', upload_format=False, process_config={'copy' : True, 'copy_name' : 'cover'}),
+    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy' : True, 'copy_name' : 'cover'}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
   _virtual_fields = {
-    '_images': SuperImageStorageStructuredProperty(CatalogImage, upload_format=False, storage='remote_multi_sequenced'),
+    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi_sequenced'),
     '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
     '_records': orm.SuperRecordProperty('35')
     }
@@ -235,8 +232,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'catalog_upload_images'),
                                   orm.Action.build_key('35', 'product_upload_images'),
                                   orm.Action.build_key('35', 'product_instance_upload_images')], False, 'entity._original.state != "unpublished"'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_images'),
-                                  orm.Action.build_key('35', 'process_cover'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_cover'),
                                   orm.Action.build_key('35', 'process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'publish'),
@@ -250,8 +246,7 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('35', [orm.Action.build_key('35', 'publish')], True, 'user._is_taskqueue and entity._original.state != "published" and entity._original._is_eligible'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'discontinue')], True, 'user._is_taskqueue and entity._original.state != "discontinued"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'sudo')], True, 'user._root_admin'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_images'),
-                                  orm.Action.build_key('35', 'process_cover'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_cover'),
                                   orm.Action.build_key('35', 'process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'index'),
@@ -272,8 +267,8 @@ class Catalog(orm.BaseExpando):
                           'not user._root_admin'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
                           'user._is_taskqueue or user._root_admin'),
-      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], True, None,
-                          'action.key_id_str == "process_images" and (user._is_taskqueue or user._root_admin)'),
+      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], False, True,
+                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
       orm.FieldPermission('35', ['cover'], True, None,
                           'action.key_id_str == "process_cover" and (user._is_taskqueue or user._root_admin)')
       ]
@@ -388,12 +383,12 @@ class Catalog(orm.BaseExpando):
           )
         ]
       ),
-    # it has to have separate upload_images because of arguments
+    # it has to have separate upload_images because of argument types
     orm.Action(
       key=orm.Action.build_key('35', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, repeated=True)
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, process=True, repeated=True),
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -412,8 +407,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
+                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe'})])
             ]
           )
         ]
@@ -423,7 +418,7 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'product': orm.SuperKeyProperty(kind='38', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
+        'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, process=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -443,10 +438,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
-            CallbackNotify(),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
+            CallbackNotify()
             ]
           )
         ]
@@ -456,7 +448,7 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'product_instance': orm.SuperKeyProperty(kind='39', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
+        'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, process=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -476,42 +468,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
-            CallbackNotify(),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_images', 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe', 'read_arguments' : 'input.read_arguments'})])
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('35', 'process_images'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True),
-        'read_arguments': orm.SuperJsonProperty(), # read arguments exists because we need to know which stuff needs to be loaded
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            ProcessImages(cfg={'target_field_paths' : ['_images', '_products.images', '_products._instances.images']}),
-            # @todo this is a problem, we cannot call recursively all process functions,
-            # because properties with copy=True will copy themselves every time def process is called.
-            # we will have to think some other way how we can do this, like we do with read_arguments
-            Write(),
-            CallbackNotify(),
-            # @todo this is also a problem, process_cover should only be called on catalog image processing
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+            CallbackNotify()
             ]
           )
         ]
@@ -574,36 +531,23 @@ class Catalog(orm.BaseExpando):
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'order_by': {'field': 'created', 'operator': 'desc'}},
-          filters={
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': [],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['name', 'state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'created': {'operators': ['asc', 'desc']},
-            'update': {'operators': ['asc', 'desc']}
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '35', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
             }
           ),
-        'cursor': orm.SuperStringProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -916,78 +860,5 @@ class Catalog(orm.BaseExpando):
   def _is_eligible(self):
     # @todo Here we implement the logic to validate if catalog publisher has funds to support catalog publishing!
     return True
-
-
-# @todo this cannot exist now because it's search will try to find by kind
-class CatalogIndex(orm.BaseExpando):
   
-  _kind = 82
   
-  _use_search_engine = True
-  
-  _default_indexed = False
-  
-  _global_role = GlobalRole(
-    permissions=[
-      orm.ActionPermission('82', [orm.Action.build_key('82', 'search')], True, 'True')
-      ]
-    )
-  
-  _actions = [
-    orm.Action(
-      key=orm.Action.build_key('82', 'search'),
-      arguments={
-        'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'kind', 'value': '35', 'operator': '=='}], 'order_by': {'field': 'created', 'operator': 'desc'}},
-          filters={
-            'query_string': {'operators': ['=='], 'type': orm.SuperStringProperty()},
-            'kind': {'operators': ['=='], 'type': orm.SuperStringProperty()},
-            'name': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()},
-            'state': {'operators': ['==', '!='], 'type': orm.SuperStringProperty()}
-            },
-          indexes=[
-            {'filter': ['kind'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['name'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]},
-            {'filter': ['name', 'state'],
-             'order_by': [['name', ['asc', 'desc']],
-                          ['created', ['asc', 'desc']],
-                          ['updated', ['asc', 'desc']]]}
-            ],
-          order_by={
-            'name': {'operators': ['asc', 'desc']},
-            'created': {'operators': ['asc', 'desc'],
-                        'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
-            'update': {'operators': ['asc', 'desc'],
-                       'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}
-            }
-          ),
-        'cursor': orm.SuperStringProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Search(),
-            Set(cfg={'d': {'output.entities': '_entities',
-                           'output.total_matches': '_total_matches',
-                           'output.documents_count': '_documents_count',
-                           'output.cursor': '_cursor',
-                           'output.more': '_more'}})
-            ]
-          )
-        ]
-      )
-    ]

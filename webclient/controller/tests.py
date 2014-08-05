@@ -183,8 +183,26 @@ class TestPossibleFieldNames(BaseTestHandler):
   def respond(self):
     for f in dir(TestKeyParentModel()):
       self.out(f, 1, before=False)
-     
-    
+      
+      
+class TestImageUrl(BaseTestHandler):
+  
+  def respond(self):
+    params = self.request.params
+    upload = params.get('upload')
+    if 'upload' in params:
+      blobinfo = blobstore.parse_blob_info(upload)
+      self.response.write(images.get_serving_url(blobinfo.key()))
+    else:
+      upload_url = blobstore.create_upload_url(self.request.path, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)
+      self.response.headers['Content-Type'] = 'text/html;charset=utf8;'
+      self.response.write("""
+      <form method="post" action="%s" enctype="multipart/form-data">
+        <input type="file" name="upload" />
+        <input type="submit" name="Upload" />
+      </form>
+      """ % upload_url)
+ 
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):
     handler.register(('/Tests/%s' % o.__name__, o))
