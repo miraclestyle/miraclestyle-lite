@@ -1202,7 +1202,7 @@ class _BaseModel(object):
   def _set_property_value_options(self):
     if self is self._root:
       def scan(value, field_key, field, value_options):
-        if isinstance(value, SuperPropertyManager):
+        if isinstance(value, SuperPropertyManager) and hasattr(value, 'value_options'):
           options = {'config' : value.value_options}
           value_options[field_key] = options
           if value.has_value():
@@ -2090,7 +2090,7 @@ class _BaseProperty(object):
   def _property_value_format(self, value):
     if value is util.Nonexistent:
       if self._default is not None:
-        value = self._default
+        value = copy.deepcopy(self._default)
       elif self._required:
         raise PropertyError('required')
       else:
@@ -2181,7 +2181,7 @@ class _BaseStructuredProperty(_BaseProperty):
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
     dic['modelclass'] = self.get_modelclass().get_fields()
-    other = ['_autoload', '_readable', '_updateable', '_deleteable', '_deleteable']
+    other = ['_autoload', '_readable', '_updateable', '_deleteable', '_storage']
     for o in other:
       dic[o[1:]] = getattr(self, o)
     return dic
@@ -2762,6 +2762,9 @@ class SuperSearchProperty(SuperJsonProperty):
        'orders': [{'field': 'name', 'operator': 'asc'}]
     
     '''
+    if 'keys' in values and self._cfg.get('search_by_keys'): # if we dont do this, code bellow will throw an errr
+      return values
+    
     def _validate(cfg_values, input_values, method):
       # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
       # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
@@ -2864,7 +2867,7 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def argument_format(self, values):
     values = super(SuperSearchProperty, self).argument_format(values)
-    values.update(self._cfg.get('search_arguments'))
+    values.update(self._cfg.get('search_arguments', {}))
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)

@@ -4,6 +4,7 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import gc
 import os
 import json
 import webapp2
@@ -15,7 +16,7 @@ from webapp2_extras import jinja2
 from app import orm, settings, util, mem
 
 from webclient import webclient_settings
-from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS
+from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS, to_json
 
 from webapp2 import Route
 
@@ -193,7 +194,7 @@ class Base(webapp2.RequestHandler):
     ent = 'application/json;charset=utf-8'
     if self.response.headers.get('Content-Type') != ent:
        self.response.headers['Content-Type'] = ent
-    self.response.write(json.dumps(data, indent=2, cls=JSONEncoderHTML))
+    self.response.write(to_json(data))
   
   @webapp2.cached_property
   def jinja2(self):

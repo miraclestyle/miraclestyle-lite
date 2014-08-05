@@ -379,13 +379,15 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
   
             $rootScope.search.doSearch = function ()
             {
-            	$state.go('app_view_search', {
-	                'domain_key': $rootScope.nav.domain.key,
-	                'kind': this.kind,
-	                'query': JSON.stringify({
-	                	'search' : this.send,
-	                })
-	            });
+                var cfg = {
+                    'domain_key': $rootScope.nav.domain.key,
+                    'kind': this.kind,
+                    'query': JSON.stringify({
+                        'search' : this.send,
+                    })
+                };
+ 
+            	$state.go('app_view_search', cfg);
             };
   
             if (!config)
@@ -405,7 +407,6 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
              
             $scope.removeItem = function (e) {
             	$scope.search.entities.remove(e);
-            	//e._state = 'deleted';
             };
  
             $scope.create = function () {
@@ -454,8 +455,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	entities.push(domain);
             });
             
-            console.log(entities);
-
+   
             $scope.apps = entities;
 
             $scope.toggleMainMenu(1);
@@ -485,15 +485,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             $scope.declineApp = function (app)
             {
             	$scope.removeFromApp(app);
-            	/*
-            	AppUser.decline(app._domain_user.key, function (data) {
-            	 
-            		if (data['entity'])
-            		{
-            		    entities.remove(app);
-  					 
-            		}
-            	});*/
+            	
             };
             
             $scope.removeFromApp = function (app)

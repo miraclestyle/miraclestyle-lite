@@ -109,9 +109,16 @@ MainApp
                 	 'kind' : '62',
                 	 'entity' : entity,
                 	 'scope' : scope,
-                	 'handle' : function (data)
-			         {
-			         },
+                	 'update_entity' : function (data)
+                      {
+                          var found = _.findWhere($rootScope.nav.menu, {key : data.entity.key});
+                       
+                          if (found)
+                          {
+                              update(found, data.entity);
+                          }
+                          
+                      },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('nav/manage.html'),
                 	 'args' : {

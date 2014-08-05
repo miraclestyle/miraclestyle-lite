@@ -12,7 +12,7 @@ angular.module('app.ui',
 	  ]
 );
 
-var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'ngUpload', 'ngStorage', 'checklist-model', 'app.ui', 'ngDragDrop'])
+var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'ngUpload', 'ngStorage', 'app.ui', 'ngDragDrop'])
 .config(['$httpProvider', '$locationProvider',
   function($httpProvider, $locationProvider) {
   	 
@@ -50,7 +50,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'filters' : [],
 				'action' : 'search',
 				'cache' : false,
-				'filter_callback' : angular.noop,
 				'args_callback' : angular.noop,
 				'select2' : {},
 				'endpoint' : {},
@@ -67,6 +66,13 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        	return Endpoint.post(opts['action'], opts['kind'], params.data, opts['endpoint']).success(params.success);
 			        },
 			        data: function (term, page) {
+			            
+			              var args = {
+                             "search" : {
+                                "filters": [],
+                                "orders": [{"field":opts['order_by'],"operator":opts['order_dir']}],
+                              } 
+                           };
 			        	 
 			        	  var find = [{'value' : term, 'operator':'contains', 'field' : opts['field']}];
 			        	  
@@ -77,15 +83,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			        	  
 			        	  find.extend(opts.filters);
 			        	  
-			        	  opts['filter_callback']($(this), find, term, page);
-			        	  
-			              var args = {
-			            	 "search" : {
-			            	 			 "filters": find,
-		  							     "orders": [{"field":opts['order_by'],"operator":opts['order_dir']}],
-		  							    } 
-			                };
-			                
+			        	  args['search']['filters'] = find;
 			              opts['args_callback']($(this), args, term, page);
 			                
 			              return args;
@@ -105,7 +103,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				        // using its formatResult renderer - that way the movie name is shown preselected
 				        var id = $(element).val();
 				        var initial_id = id;
-			          
+	 
 				        var select2 = $(element).data('select2');
 				        
 				        if (select2.opts.multiple)
@@ -159,8 +157,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				                	}
 				                	
 				                },  opts['endpoint']);
-				      
-			      
+				       
 			    },
 			    dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller}
 	   };
@@ -1024,6 +1021,37 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 
     }
 ])
+.filter('show_friendly_index_name', function () {
+    return function (input)
+    { 
+        if (!input || !$.isPlainObject(input))
+        {
+            return input;
+        }
+         
+        var out = '';
+        
+        if (input.filters)
+        {
+            out += 'Filter by ';
+            var filters = $.map(input.filters, function (filter) {
+               return filter[0];
+            });
+            
+            out += filters.join(" and ");
+            
+            if (input.orders)
+            out += ' and ';
+        }
+        
+        if (input.orders)
+        {
+             out += ' order by ' + $.map(input.orders, function (value) { return value[0]; }).join(',');
+        }
+        
+        return out;
+    };
+})
 .run(['$rootScope', '$state', 'Title', 'Select2Options', function ($rootScope, $state, Title, Select2Options) {
     
     $rootScope.ADMIN_KINDS = {
@@ -1042,7 +1070,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		'region' : Select2Options.factory({
    			kind : '16',
    			filters : active_filter,
-   		    filter_callback : function(element, filter, term, page)
+   		    args_callback : function(element, args, term, page)
    			{
    				var scope = element.scope();
    				var country = element.data('country');
@@ -1053,13 +1081,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    					
    					if (country_id && country_id.length)
    					{
-   						
-   						filter.push({
-	   						value : country_id,
-	   						operator : '==',
-	   						field : 'ancestor',
-	   					});
-   						
+   						args['search']['ancestor'] = country_id;
+   					 
    					}
    					
    				}
@@ -1068,7 +1091,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		'role' : Select2Options.factory({
    			kind : '60',
    			filters : active_filter,
-   			args_callback : function (element, args)
+   			args_callback : function (element, args, term, page)
    			{
    				args['domain'] = $rootScope.nav.domain.key;
    			}
@@ -1076,10 +1099,10 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		
    		'domain_user' : Select2Options.factory({
    			kind : '8',
-   			args_callback : function (element, args)
-   			{
-   				args['domain'] = $rootScope.nav.domain.key;
-   			}
+   			args_callback : function (element, args, term, page)
+            {
+                args['domain'] = $rootScope.nav.domain.key;
+            }
    	    }),
    
    		'units' : Select2Options.factory({
@@ -1168,30 +1191,33 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	    that.send.orders = [];
    
     	    var indx = that.indexes[that.index_id];
+ 
     	    
-    	    angular.forEach(indx.filters, function (filter) {
+    	    angular.forEach(indx.filters, function (filter, fi) {
                     that.send.filters.push({
                         'field' : filter[0],
-                        'operator' : '',
+                        'operator' : filter[1][0],
                         'value' : '',
+                        '_index' : fi,
                    
                     });
                 });
-                
-            if (!that.send.filters.length) that.send.filters = null;
-                
-            that.send.orders.push({
-                'field' : '',
-                'operator' : '',
+   
+            angular.forEach(indx.orders, function (order, oi) {
+                    that.send.orders.push({
+                        'field' : order[0],
+                        'operator' : order[1][0],
+                        '_index' : oi,
+                    });
             });
    
     	},
-    	'discoverIndexID' : function (search)
+    	'discoverIndexID' : function ()
     	{
     	  
     	    var that = this;
-    	    var filters = search['filters'];
-    	    var orders = search['orders'];
+    	    var filters = this.send['filters'];
+    	    var orders = this.send['orders'];
   
     	        angular.forEach(this.indexes, function (index, index_id) {
     	            var got_filters = true;
@@ -1199,7 +1225,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	            if (index.filters)
     	            {
     	                got_filters = false;
-    	                if (filters)
+    	                if (filters && filters.length)
     	                {
     	                    angular.forEach(index.filters, function (filter) {
                                    var gets = _.findWhere(filters, {'field' : filter[0]});
@@ -1214,13 +1240,14 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	            }
     	             
     	              
-    	             angular.forEach(index.orders, function (order) {
+    	             angular.forEach(index.orders, function (order, oi) {
     	           
                            var gets = _.findWhere(orders, {'field' : order[0]});
               
                            if (got_filters && gets && $.inArray(gets['operator'], order[1]) !== -1)
                            {
                                that.index_id = index_id;
+                               gets._index = oi;
                            }
                      });
     	             
@@ -1251,20 +1278,23 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			try
     			{
     				search_argument = kindinfo.mapped_actions['search']['arguments']['search'];	
+    			 
     			}
     			catch(e){}
     			
     			if (search_argument)
 				{
+				    
     				if (search == undefined && search_argument['default'])
 		    		{
 		    			this.send = search_argument['default'];
 		    		}
 		    		else if (search)
 		    		{
-		    		    this.discoverIndexID(search);
 		    			this.send = search;
 		    		}
+		    		
+		    		this.discoverIndexID();
     			}
     			 
     	   }else

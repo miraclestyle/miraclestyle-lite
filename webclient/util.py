@@ -9,6 +9,7 @@ import os
 import json
 import datetime
 
+from google.appengine.api import datastore_types
 from app import orm, settings
 from webclient import webclient_settings
 
@@ -27,8 +28,10 @@ def register_global(name, value):
     
     JINJA_GLOBALS[name] = value
         
-def to_json(s):
-    return json.dumps(s, indent=2, cls=JSONEncoderHTML)
+def to_json(s, **kwargs):
+    defaults = {'indent': 2, 'check_circular': False, 'cls': JSONEncoderHTML}
+    defaults.update(kwargs)
+    return json.dumps(s, **defaults)
   
 def static_dir(file_path):
     return '/webclient/static/%s' % file_path
@@ -49,28 +52,25 @@ class JSONEncoderHTML(json.JSONEncoder):
     """
     
     def default(self, o):
-        
         if isinstance(o, datetime.datetime):
            return o.strftime(settings.DATETIME_FORMAT)
-        
         if isinstance(o, orm.Key):
            return o.urlsafe()
-        
         if hasattr(o, 'get_output'):
            try:
              return o.get_output()
            except TypeError as e:
              pass
-         
         if hasattr(o, 'get_meta'):
            try:
             return o.get_meta()
            except TypeError:
             pass
-         
-        if hasattr(o, '__str__'):
-           return str(o)
-        
+        try:
+          out = str(o)
+          return out
+        except TypeError:
+          pass
         return json.JSONEncoder.default(self, o)
   
     def iterencode(self, o, _one_shot=False):

@@ -24,10 +24,8 @@ ANGULAR_MODULES = ['underscore',
                    'modal', 
                    'select2',
                    'busy', 
-                   'checklist',
                    'position',
                    'datepicker',
-          
                    'sortable',
                    'ngDragDrop',
                   ]
@@ -38,10 +36,8 @@ ANGULAR_COMPONENTS = ['home',
                       'nav',
                       'rule',
                       'notify',
-                      'product',
                       'catalog',
                       'buyer',
-                      # this goes last
                       'admin',
                       ]
 

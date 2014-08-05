@@ -135,11 +135,7 @@ MainApp.factory('Notify', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
                 	 'kind' : entity['kind'],
                 	 'entity' : entity,
                 	 'scope' : scope,
-                	 'handle' : function (data)
-			         {
-			            this.roles = data['roles'];
-			            this.users = data['users'];
-			         },
+               
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('notify/manage.html'),
                 	 'args' : {

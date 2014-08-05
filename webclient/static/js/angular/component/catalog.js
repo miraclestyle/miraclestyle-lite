@@ -121,9 +121,9 @@ MainApp
             }
         };
     })
-    .factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', 'Product', '$modal', 'Confirm',
+    .factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',
 
-        function ($rootScope, Endpoint, EntityEditor, Title, Product, $modal, Confirm) {
+        function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
 
             var kind = '35';
             
@@ -163,20 +163,29 @@ MainApp
 		        	 },
 		        	 'getMoreProductInstances' : function ()
                       { 
-                      	 // this does not work
-                      	 return;
-                      	 
+                     
 						 var that = this;
 						 
 						 var out = get_property_options(that.entity, '_products', 1);
 		 
 						 if (!out._instances.more) return false;
 						 
+						 out.config.keys = $.map(that.entity._products, function (prod) {
+						     return prod.key;
+						 });
+						 
 						 Endpoint.post('read', '35', {'key' : $parentScope.entity.key,
 						  							  'read_arguments' : {'_products' : out}
 						  							 }).success(function (data) {
-						  		 
-								that.entity._products.extend(data.entity._products);
+					 
+								angular.forEach(data.entity._products, function (prod) {
+								   var the_prod = _.findWhere(that.entity._products, {key : prod.key});
+								   if (the_prod)
+								   {
+								       the_prod._instances.extend(prod._instances);
+								   } 
+								});
+								
 								update(get_property_options(that.entity, '_products'), get_property_options(data.entity, '_products'));
 						  });
                      },
@@ -185,7 +194,7 @@ MainApp
 		        	 	var $parentScope = this;
 		        	 	 
 		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('product/manage_content.html'),
+		                        templateUrl: logic_template('catalog/product/manage_content.html'),
 		                        controller: function ($scope, $modalInstance, RuleEngine) {
 		 
 		                            $scope.content = angular.copy(content ? content : {});
@@ -219,7 +228,7 @@ MainApp
 		        	 	var $parentScope = this;
 		       
 		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('product/manage_variant.html'),
+		                        templateUrl: logic_template('catalog/product/manage_variant.html'),
 		                        controller: function ($scope, $modalInstance, RuleEngine) {
 		 
 		                            $scope.variant = angular.copy(variant ? variant : {});
@@ -307,7 +316,7 @@ MainApp
 						         {
 						             this.uploadConfig = $parentScope.uploadConfig;
 						         },
-			                    'templateUrl' : logic_template('product/manage_instance.html'),
+			                    'templateUrl' : logic_template('catalog/product/manage_instance.html'),
 			                  };
 			                  
 			                  var update_cfg = {};
@@ -344,7 +353,7 @@ MainApp
 						var $parentScope = this;
 		        	 	 
 		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('product/create_instance.html'),
+		                        templateUrl: logic_template('catalog/product/create_instance.html'),
 		                        controller: function ($scope, $modalInstance, RuleEngine) {
 		  							
 		  							$scope.variants = [];
@@ -399,7 +408,7 @@ MainApp
 	                        var handle = function () {
 	
 	                            var modalInstance = $modal.open({
-	                                templateUrl: logic_template('product/user_admin.html'),
+	                                templateUrl: logic_template('catalog/product/user_admin.html'),
 	                                windowClass: 'modal-medium',
 	                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
 	                               
@@ -475,7 +484,7 @@ MainApp
                     'action': Endpoint.url
                 },
                 'completed': function (data) {
-					// @todo complete upload logic
+					 
 					if (!this.entity._images) this.entity._images = [];
 					this.entity._images.extend(data.entity._images);
                 },
@@ -531,7 +540,6 @@ MainApp
 
                             var modalInstance = $modal.open({
                                 templateUrl: logic_template('catalog/products.html'),
-                                //windowClass: 'modal-medium',
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
                                 	
                                 	$scope.getMoreProducts = function ()
@@ -585,7 +593,7 @@ MainApp
 											         {
 											             this.uploadConfig = $parentScope.uploadConfig;
 											         },
-								                	 'templateUrl' : logic_template('product/manage.html')
+								                	 'templateUrl' : logic_template('catalog/product/manage.html')
 								                };
                                       
                                     	 if (!product)
@@ -613,7 +621,7 @@ MainApp
 										             this.uploadConfig = $parentScope.uploadConfig;
 										         },
 										         'options_after_update' : update_cfg,
-							                	 'templateUrl' : logic_template('product/manage.html'),
+							                	 'templateUrl' : logic_template('catalog/product/manage.html'),
 							                });
                                     	 }
                                     	 else
@@ -685,13 +693,9 @@ MainApp
                                     
 
                                     $scope.save = function () {
-                                    	
-                                    	console.log($scope.entity);
-
+                     
                                         update($scope.live_entity, $scope.entity);
-                                        
-                                        console.log($parentScope, $parentScope.live_entity, $scope.live_entity);
-
+                           
                                         $scope.cancel();
 
                                     };

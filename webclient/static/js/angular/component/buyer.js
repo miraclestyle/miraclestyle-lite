@@ -33,7 +33,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                                  	update(address, $scope.entity);
                                  }
                                  
-                                 $parentScope.react_on_address_update(address);
+                                 $parentScope._onAddressUpdate(address);
                                   
                                  $scope.cancel();
                             };
@@ -59,7 +59,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
   			      
     	 	},
     	 	
-    	 	'react_on_address_update' : function (updated_address)
+    	 	'_onAddressUpdate' : function (updated_address)
     	 	{
     	 		angular.forEach(this.entity.addresses, function (address) {
     	 			if (updated_address.default_billing || updated_address.default_shipping)
@@ -125,9 +125,8 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
             		
             		'removeApp' : function (app)
             		{
-            			 app._state = 'deleted';
-            			//this.entity.domains.remove(app.key);
-            			//this.entity._domains.remove(app);
+            			 this.entity.domains.remove(app.key);
+            			 this.entity._domains.remove(app);
             		}
             	};
              

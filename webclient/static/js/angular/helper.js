@@ -1,10 +1,12 @@
-function get_property_options(entity, path)
+function get_property_options(entity, path, all)
 {
 	var opts = entity._property_value_options;
 	var paths = path.split('.');
 	    angular.forEach(paths, function (v) {
 	    	opts = opts[v];
 	    });
+	    
+	if (all) return opts;
 	
 	return opts.config;
 }

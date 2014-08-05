@@ -16,7 +16,7 @@
         <div class="form-input">
             <select ng-change="search.makeFilters()" name="search_index_type" ng-required="true" ui-select2 ng-model="search.index_id" data-placeholder="Select index">
                     <option></option>
-                    <option ng-repeat="ind in search.indexes track by $index" value="{{$index}}">Filter: {{ind.filters}} Order: {{ind.orders}}</option>
+                    <option ng-repeat="ind in search.indexes track by $index" value="{{$index}}">{{ind|show_friendly_index_name}}</option>
             </select>
         </div>
  
@@ -34,13 +34,13 @@
 		 				 {{search_filter.field}}
 		 			</td>
 		 			<td class="c25 cpl10">
-		 				<select name="search_filter_op" ng-required="true" ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" data-placeholder="Select operator for field">
+		 				<select name="search_filter_op" ng-required="search.index_id != null && search.send.filters.length" ng-change="search.changeOperator()" ui-select2 ng-model="search_filter.operator" data-placeholder="Select operator for field">
 							    <option></option>
 							    <option ng-repeat="op in search.indexes[search.index_id].filters[$index][1] track by $index" value="{{op}}">{{op}}</option>
 						</select>
 		 			</td>
 		 			<td class="c25 cpl10">
-		 				<input name="search_filter_value" ng-required="true" class="text-input" type="text" ng-model="search_filter.value" />
+		 				<input name="search_filter_value" ng-required="search.index_id != null && search.send.filters.length" class="text-input" type="text" ng-model="search_filter.value" />
 		 			</td>
 		 		 
 		 		</tr>
@@ -56,19 +56,13 @@
     <div ng-repeat="order in search.send.orders track by $index">
     <div class="form-control">
     	<label class="form-label">Order by</label>
-     
-    	<div class="form-input">
-    		<select name="search_order_by" ng-change="search.changeOrderBy(order)" ng-required="true" ui-select2 ng-model="order._index" data-placeholder="Select field to order by">
-                    <option></option>
-                    <option ng-repeat="order_index in search.indexes[search.index_id].orders track by $index" value="{{$index}}">{{order_index[0]}}</option>
-            </select>
-    	</div>
+    	<div class="form-input">{{order.field}}</div>
 	</div>
 	
 	<div ng-show="order._index != null" class="form-control">
     	<label class="form-label">Direction</label>
         <div class="form-input">
-            <select name="search_order_by_dir" ng-required="true" ui-select2 ng-model="order.operator" data-placeholder="Select direction">
+            <select name="search_order_by_dir" ng-required="search.index_id != null && order._index != null" ui-select2 ng-model="order.operator" data-placeholder="Select direction">
                  <option></option>
                   <option ng-repeat="op in search.indexes[search.index_id].orders[order._index][1] track by $index" value="{{op}}">{{op}}</option>
             </select>
