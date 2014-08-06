@@ -1182,6 +1182,7 @@ class _BaseModel(object):
     if self._write_custom_indexes:
       for index_name, index_documents in self._write_custom_indexes.items():
         self.update_search_index('index', index_documents, index_name)
+      self._write_custom_indexes = {}
   
   def unindex_search_documents(self):
     documents = mem.temp_get(self.key._search_unindex, [])
@@ -1190,6 +1191,7 @@ class _BaseModel(object):
     if self._delete_custom_indexes:
       for index_name, index_documents in self._delete_custom_indexes.items():
         self.update_search_index('unindex', index_documents, index_name)
+      self._delete_custom_indexes = {}
   
   @classmethod
   def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
@@ -1639,7 +1641,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         cursor = Cursor(urlsafe=urlsafe_cursor)
       except:
         cursor = Cursor()
-      entities = query.fetch_page_async(limit, start_cursor=cursor)
+      if limit == -1:
+        entities = query.fetch_async()
+      else:
+        entities = query.fetch_page_async(limit, start_cursor=cursor)
       cursor = None
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
@@ -1658,17 +1663,20 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     entities = []
     supplied_entities = config.get('entities')
     supplied_keys = config.get('keys')
-    if supplied_entities:
-      entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
-      cursor = None
-    elif supplied_keys:
-      entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
-      cursor = None
+    if cursor == -1:
+      entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_async()
     else:
-      keys = [Key(self._property.get_modelclass().get_kind(),
-                  str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit + 1)]
-      entities = get_multi_async(keys)
-      cursor = cursor + limit
+      if supplied_entities:
+        entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
+        cursor = None
+      elif supplied_keys:
+        entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
+        cursor = None
+      else:
+        keys = [Key(self._property.get_modelclass().get_kind(),
+                    str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit + 1)]
+        entities = get_multi_async(keys)
+        cursor = cursor + limit
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
     
