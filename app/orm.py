@@ -1042,14 +1042,14 @@ class _BaseModel(object):
       record_arguments = {}
     self._record_arguments = record_arguments
     self.put()
-    self.write_search_index()
-    self.delete_search_index()
+    self.index_search_documents()
+    self.unindex_search_documents()
   
   def delete(self, record_arguments):
     if hasattr(self, 'key') and isinstance(self.key, Key):
       self._record_arguments = record_arguments
       self.key.delete()
-      self.delete_search_index()
+      self.unindex_search_documents()
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1157,37 +1157,39 @@ class _BaseModel(object):
       documents.append(key.urlsafe())
       mem.temp_set(key._search_unindex, documents)
   
-  def write_search_index(self):
-    documents = mem.temp_get(self.key._search_index, [])
+  @classmethod
+  def update_search_index(cls, operation, documents, name, namespace=None):
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
-      index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
+      index = search.Index(name=name, namespace=namespace)
       cycles = int(math.ceil(len(documents) / documents_per_index))
       for i in range(0, cycles + 1):
         documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
         if len(documents_partition):
           try:
-            index.put(documents_partition)
+            if operation == 'index':
+              index.put(documents_partition)
+            elif operation == 'unindex':
+              index.delete(documents_partition)
           except Exception as e:
             util.log('INDEX FAILED! ERROR: %s' % e)
             pass
-      mem.temp_delete(self.key._search_index)
   
-  def delete_search_index(self):
+  def index_search_documents(self):
+    documents = mem.temp_get(self.key._search_index, [])
+    self.update_search_index('index', documents, self._root.key_kind, self._root.key_namespace)
+    mem.temp_delete(self.key._search_index)
+    if self._write_custom_indexes:
+      for index_name, index_documents in self._write_custom_indexes.items():
+        self.update_search_index('index', index_documents, index_name)
+  
+  def unindex_search_documents(self):
     documents = mem.temp_get(self.key._search_unindex, [])
-    if len(documents):
-      documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
-      index = search.Index(name=self._root.key_kind, namespace=self._root.key_namespace)
-      cycles = int(math.ceil(len(documents) / documents_per_index))
-      for i in range(0, cycles + 1):
-        documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
-        if len(documents_partition):
-          try:
-            index.delete(documents_partition)
-          except Exception as e:
-            util.log('INDEX FAILED! ERROR: %s' % e)
-            pass
-      mem.temp_delete(self.key._search_unindex)
+    self.update_search_index('unindex', documents, self._root.key_kind, self._root.key_namespace)
+    mem.temp_delete(self.key._search_unindex)
+    if self._delete_custom_indexes:
+      for index_name, index_documents in self._delete_custom_indexes.items():
+        self.update_search_index('unindex', index_documents, index_name)
   
   @classmethod
   def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])

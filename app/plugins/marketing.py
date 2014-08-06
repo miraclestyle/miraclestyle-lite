@@ -165,14 +165,12 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
       self.cfg = {}
     documents = []
     index_name = self.cfg.get('index', None)
-    max_doc = self.cfg.get('max_doc', 200)
     catalog_fields = {'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
     product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      'product_category': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category'),
                       '_product_category.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
                       '_product_category.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
@@ -190,6 +188,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     if write_index:
       documents.extend([context._catalog.get_search_document(catalog_fields)])
       documents.extend([product.get_search_document(product_fields) for product in context._catalog._products])
+      context._catalog._write_custom_indexes = {index_name: documents}
 
 
 class CatalogSearchDocumentDelete(orm.BaseModel):
@@ -201,11 +200,11 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
       self.cfg = {}
     entities = []
     index_name = self.cfg.get('index', None)
-    max_doc = self.cfg.get('max_doc', 200)
-    entities.append(context._catalog)
+    entities.append(context._catalog.key)
     # catalog_images = @todo Obtain all catalog images!
     # products = @todo Obtain all catalog products!
-    entities.extend(products)
+    entities.extend([product.key for product in products])
+    context._catalog._write_custom_indexes = {index_name: entities}
 
 
 class CatalogSearch(orm.BaseModel):

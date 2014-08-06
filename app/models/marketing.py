@@ -147,13 +147,13 @@ class Product(orm.BaseExpando):
   
   _kind = 38
   
-  product_category = orm.SuperKeyProperty('1', kind='17', required=True)
-  name = orm.SuperStringProperty('2', required=True)
-  description = orm.SuperTextProperty('3', required=True)  # Soft limit 64kb.
+  product_category = orm.SuperKeyProperty('1', kind='17', required=True, searchable=True)
+  name = orm.SuperStringProperty('2', required=True, searchable=True)
+  description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
   product_uom = orm.SuperKeyProperty('4', kind='19', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
   availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
-  code = orm.SuperStringProperty('7', required=True, indexed=False)
+  code = orm.SuperStringProperty('7', required=True, indexed=False, searchable=True)
   
   _default_indexed = False
   
@@ -196,12 +196,13 @@ class Catalog(orm.BaseExpando):
   
   _kind = 35
   
-  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  name = orm.SuperStringProperty('3', required=True)
-  publish_date = orm.SuperDateTimeProperty('4', required=True)
-  discontinue_date = orm.SuperDateTimeProperty('5', required=True)
-  state = orm.SuperStringProperty('6', required=True, default='unpublished', choices=['unpublished', 'locked', 'published', 'discontinued'])
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
+  name = orm.SuperStringProperty('3', required=True, searchable=True)
+  publish_date = orm.SuperDateTimeProperty('4', required=True, searchable=True)
+  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
+  state = orm.SuperStringProperty('6', required=True, default='unpublished',
+                                  choices=['unpublished', 'locked', 'published', 'discontinued'], searchable=True)
   
   _default_indexed = False
   
@@ -714,8 +715,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            CatalogSearchDocumentWrite(cfg={'index': settings.CATALOG_INDEX,
-                                            'max_doc': settings.CATALOG_DOCUMENTS_PER_INDEX})
+            CatalogSearchDocumentWrite(cfg={'index': settings.CATALOG_INDEX})
             ]
           ),
         orm.PluginGroup(
@@ -741,8 +741,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            CatalogSearchDocumentDelete(cfg={'index': settings.CATALOG_INDEX,
-                                             'max_doc': settings.CATALOG_DOCUMENTS_PER_INDEX})
+            CatalogSearchDocumentDelete(cfg={'index': settings.CATALOG_INDEX})
             ]
           ),
         orm.PluginGroup(
