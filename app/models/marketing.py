@@ -453,7 +453,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             UploadImages(cfg={'target_field_path': '_products._instances',
                               'key_path': 'input.product_instance',
-                              'add_config': {'images' : 'input.images'}}),
+                              'add_config': {'images': 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]

@@ -1059,11 +1059,11 @@ class _BaseModel(object):
     Take a look at this example:
     class CatalogImage(Image):
     _virtual_fields = {
-    '_descriptions' : ndb.SuperStorageStructuredProperty(Descriptions, storage='multi'),
+    '_descriptions': ndb.SuperStorageStructuredProperty(Descriptions, storage='multi'),
     }
     class Catalog(ndb.BaseModel):
     _virtual_fields = {
-    '_images' : ndb.SuperStorageStructuredProperty(CatalogImage, storage='multi'),
+    '_images': ndb.SuperStorageStructuredProperty(CatalogImage, storage='multi'),
     }
     .....
     catalog = catalog_key.get()
@@ -1206,7 +1206,7 @@ class _BaseModel(object):
     if self is self._root:
       def scan(value, field_key, field, value_options):
         if isinstance(value, SuperPropertyManager) and hasattr(value, 'value_options'):
-          options = {'config' : value.value_options}
+          options = {'config': value.value_options}
           value_options[field_key] = options
           if value.has_value():
             scan(value.value, field_key, field, options)
@@ -2058,8 +2058,8 @@ class _BaseProperty(object):
     if choices:
       choices = list(self._choices)
     dic = {'verbose_name': self._verbose_name,
-           'name' : self._name,
-           'code_name' : self._code_name,
+           'name': self._name,
+           'code_name': self._code_name,
            'required': self._required,
            'max_size': self._max_size,
            'choices': choices,
@@ -2299,7 +2299,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     '''
       So basically:
       
-      argument : SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
+      argument: SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
       will allow instancing of both 51 and 21 that is provided from the input.
       
       This property should not be used for datastore. Its specifically meant for arguments.
