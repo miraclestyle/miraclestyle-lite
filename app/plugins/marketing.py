@@ -174,8 +174,12 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       '_product_category.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
                       '_product_category.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
-    # catalog_images = @todo Obtain all catalog images!
-    # products = @todo Obtain all catalog products!
+    context._catalog._images.read({'config': {'cursor': -1}})
+    product_keys = []
+    for image in context._catalog._images:
+      product_keys.extend([pricetag.product for pricetag in image.pricetags])
+    context._catalog._products.read({'config': {'keys': product_keys}})
+    context._catalog._images = []
     write_index = True
     if not len(products):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
@@ -189,6 +193,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
       documents.extend([context._catalog.get_search_document(catalog_fields)])
       documents.extend([product.get_search_document(product_fields) for product in context._catalog._products])
       context._catalog._write_custom_indexes = {index_name: documents}
+    context._catalog._products = []
 
 
 class CatalogSearchDocumentDelete(orm.BaseModel):
@@ -201,10 +206,15 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     entities = []
     index_name = self.cfg.get('index', None)
     entities.append(context._catalog.key)
-    # catalog_images = @todo Obtain all catalog images!
-    # products = @todo Obtain all catalog products!
-    entities.extend([product.key for product in products])
+    context._catalog._images.read({'config': {'cursor': -1}})
+    product_keys = []
+    for image in context._catalog._images:
+      product_keys.extend([pricetag.product for pricetag in image.pricetags])
+    context._catalog._products.read({'config': {'keys': product_keys}})
+    context._catalog._images = []
+    entities.extend([product.key for product in context._catalog._products])
     context._catalog._write_custom_indexes = {index_name: entities}
+    context._catalog._products = []
 
 
 class CatalogSearch(orm.BaseModel):

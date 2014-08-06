@@ -177,7 +177,7 @@ class CatalogPricetag(orm.BaseModel):
   
   _kind = 34
   
-  product_template = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
+  product = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
   image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
   image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
   position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
