@@ -33,8 +33,8 @@ class Image(orm.BaseModel):
   image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
   content_type = orm.SuperStringProperty('2', required=True, indexed=False)
   size = orm.SuperFloatProperty('3', required=True, indexed=False)
-  gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)  # @todo Added required=True, is that ok?
-  serving_url = orm.SuperStringProperty('5', required=True, indexed=False)  # @todo Added required=True, is that ok?
+  gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)
+  serving_url = orm.SuperStringProperty('5', required=True, indexed=False)
   
   _default_indexed = False
   
