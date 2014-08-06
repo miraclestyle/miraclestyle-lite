@@ -10,7 +10,7 @@ import cloudstorage
 import copy
 
 from google.appengine.ext import blobstore
-from google.appengine.api import images
+from google.appengine.api import images, urlfetch
 from google.appengine.datastore.datastore_query import Cursor
 
 from app import orm, mem, settings
@@ -26,7 +26,7 @@ default_retry_params = cloudstorage.RetryParams(initial_delay=0.2,
 cloudstorage.set_default_retry_params(default_retry_params)
 
 
-class Image(orm.BaseModel):
+class Image(orm.BaseExpando):
   
   _kind = 69
   
@@ -285,9 +285,12 @@ class _BaseImageProperty(_BaseBlobProperty):
     blob_key = None
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
     if config.pop('measure', True):
-      if not new_value.proportion:
+      if new_value.proportion is None:
         # do the fetch here and instantiate the image!
-        new_value.proportion = image.width / image.height
+        fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
+        image = images.Image(image_data=fetch_image.content)
+        new_value.proportion = float(image.width) / float(image.height)
+        del fetch_image, image
     if len(config):
       # @note No try block is implemented here. This code is no longer forgiving.
       # If any of the images fail to process, everything is lost/reverted, because one or more images:
@@ -308,7 +311,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                      crop_offset_x=config.get('crop_offset_x'),
                      crop_offset_y=config.get('crop_offset_y'))
         blob = image.execute_transforms(output_encoding=image.format)
-      new_value.proportion = image.width / image.height
+      new_value.proportion = float(image.width) / float(image.height)
       new_value.size = len(blob)
       if len(config):
         writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')

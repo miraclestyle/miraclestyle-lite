@@ -192,6 +192,7 @@ class TestImageUrl(BaseTestHandler):
     upload = params.get('upload')
     if 'upload' in params:
       blobinfo = blobstore.parse_blob_info(upload)
+      images.Image()
       self.response.write(images.get_serving_url(blobinfo.key()))
     else:
       upload_url = blobstore.create_upload_url(self.request.path, gs_bucket_name=settings.CATALOG_IMAGE_BUCKET)

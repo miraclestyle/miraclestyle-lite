@@ -188,7 +188,7 @@ class CatalogImage(Image):
   
   _kind = 36
   
-  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '6', repeated=True)
+  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '7', repeated=True)
 
 
 class Catalog(orm.BaseExpando):

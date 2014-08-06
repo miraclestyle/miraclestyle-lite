@@ -21,8 +21,8 @@ MainApp
                     var sizes = calculate_pricetag_position(
                         scope.pricetag.position_top,
                         scope.pricetag.position_left,
-                        scope.$parent.catalog_image.width,
-                        scope.$parent.catalog_image.height,
+                        scope.pricetag.image_width,
+                        scope.pricetag.image_height,
                         pa.width(),
                         pa.height()
                     );
@@ -78,10 +78,11 @@ MainApp
             link: function (scope, element, attr) {
 
                 if(scope.$last === true) {
+                    
+                    var that = $(element);
 
                     var resize = function () {
-                        var that = $(element);
-
+                         
                         var h = that.parents('.modal-body').height();
 
                         var master = that.parents('.overflow-master:first');
@@ -91,21 +92,13 @@ MainApp
                         master.find('.catalog-image-scroll').each(function () {
                             var img = $(this).find('.img');
                             img.height(h);
-                            var cw = $(this).data('width'),
-                                ch = $(this).data('height');
-
-                            var neww = new_width_by_height(cw, ch, h);
-
-                            img.width(neww);
-                            $(this).width(neww);
-
-                            w += neww;
-
-
+                            w += img.width();
                         });
 
                         master.width(Math.ceil(w));
                     };
+                    
+                    that.parents('.overflow-master:first').find('.catalog-image-scroll .img').load(resize);
 
                     $timeout(function () {
                         resize();
@@ -518,8 +511,7 @@ MainApp
 			var make_update_scope = function (){
 				
                 return {
-                	
-                
+                	 
                 'kind': kind,
                 'scope': make_scope(),
                 'handle': function (data) {
@@ -651,43 +643,31 @@ MainApp
                                             delete pricetag['key'];
                                         }
 
-                                        pricetag['_position_top'] = posi2.top - posi.top;
-                                        pricetag['_position_left'] = posi2.left - posi.left;
-
-                                        var sizes = calculate_pricetag_position(
-                                            pricetag['_position_top'],
-                                            pricetag['_position_left'],
-                                            target_drop.width(),
-                                            target_drop.height(),
-                                            catalog_image.width,
-                                            catalog_image.height
-                                        ); // reverse the position perspective
-
-                                        pricetag['position_top'] = sizes[0];
-                                        pricetag['position_left'] = sizes[1];
-
+                                        pricetag['position_top'] = posi2.top - posi.top;
+                                        pricetag['position_left'] = posi2.left - posi.left;
+                                        pricetag['image_width'] = target_drop.width();
+                                        pricetag['image_height'] = target_drop.height();
+                                        
+                                        pricetag._position_top = pricetag.position_top;
+                                        pricetag._position_left = pricetag.position_left;
+ 
                                         pricetag['product_template'] = pricetag['_key'];
                                         pricetag['value'] = pricetag['unit_price'];
 
                                     };
 
                                     $scope.onStop = function (event, ui, pricetag) {
-                                        pricetag['_position_top'] = ui.position.top;
-                                        pricetag['_position_left'] = ui.position.left;
-
-                                        var target = $(event.target).parents('.catalog-image-scroll:first');
-
-                                        var sizes = calculate_pricetag_position(
-                                            pricetag['_position_top'],
-                                            pricetag['_position_left'],
-                                            target.width(),
-                                            target.height(),
-                                            target.data('width'),
-                                            target.data('height')
-                                        ); // reverse the position perspective
-
-                                        pricetag['position_top'] = sizes[0];
-                                        pricetag['position_left'] = sizes[1];
+                                        
+                                         var target = $(event.target).parents('.catalog-image-scroll:first');
+                                        
+                                        pricetag['position_top'] = ui.position.top;
+                                        pricetag['position_left'] = ui.position.left;
+                                        pricetag['image_width'] = target.width();
+                                        pricetag['image_height'] = target.height();
+                                        
+                                        pricetag._position_top = pricetag.position_top;
+                                        pricetag._position_left = pricetag.position_left;
+ 
                                     };
 
                                     
@@ -811,10 +791,12 @@ MainApp
                         'handle': function (data) {
                         	this.entity.domain = this.entity.namespace;
                             this.uploadConfig = {
-					           'args' : {
-					              'domain' : this.entity.domain,
-					              }
-					        };
+                                   'action' : 'prepare',
+                                   'kind' : kind,
+                                   'args' : {
+                                      'domain' : this.entity.namespace,
+                                   }
+                                };
                         },
                         'complete': complete,
                         'options_after_update': make_update_scope(),

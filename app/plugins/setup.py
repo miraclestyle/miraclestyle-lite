@@ -62,8 +62,8 @@ class DomainSetup(Setup):
   def execute_init(self):
     config_input = self.config.configuration_input
     self.config.next_operation = 'create_domain'
-    self.config.next_operation_input = {'name': config_input.get('domain_name'),
-                                        'logo': config_input.get('domain_logo')}
+    self.config.next_operation_input = {'name': config_input.get('name'),
+                                        'logo': config_input.get('logo')}
     self.config.write()
   
   def execute_create_domain(self):
@@ -73,7 +73,6 @@ class DomainSetup(Setup):
                     state='active',
                     logo=config_input.get('logo'))
     entity._use_rule_engine = False
-    entity.logo.process()
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_domain_role'
     self.config.next_operation_input = {'domain_key': entity.key}

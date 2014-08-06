@@ -6,14 +6,14 @@
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
 	
-<div ng-form="domain_form" ng-show="step == 1">
+<div>
 <h2 class="fieldset">Application</h2>
   
     <div class="form-control">
 		<label class="form-label">Name</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input name="domain_name" ng-required="rule.input.create.domain_name.required" class="text-input" type="text" ng-model="entity.domain_name" />
+				 <input name="name" ng-required="rule.input.create.domain_name.required" class="text-input" type="text" ng-model="entity.name" />
 			</div>
 		</div>
 	</div>
@@ -22,40 +22,20 @@
 		<label class="form-label">Logo</label>
 		<div class="form-input">
 			<div class="form-text">
-				 <input create-upload-url-on-select="createUploadUrlOnSelectOptions" name="domain_logo" type="file" ng-model="entity.domain_logo" />
+				 <input create-upload-url-on-select="createUploadUrlOnSelectOptions" name="logo" type="file" ng-model="entity._logo_filename" />
 			</div>
 		</div>
 	</div>
   
 </div>
-
-
-<div ng-form="company_form" ng-show="step == 2">
-	
-	<h2 class="fieldset">Other</h2>
-    <div class="form-control">
-		<label class="form-label">Stuff</label>
-		<div class="form-input">
-			<div class="form-text">
-				 <input name="company_name" ng-required="rule.input.create.company_name.required" class="text-input" type="text" ng-model="entity.company_name" />
-			</div>
-		</div>
-	</div>
-	
-</div>
+ 
  
 </div>
 </div>
 
 <div class="modal-footer">
-     
-    <button type="button" class="button" ng-click="nextStep(step-1)" ng-show="step > 1">
-		Back
-	</button>
-	<button type="button" class="button" ng-click="nextStep(2)" ng-show="step == 1" ng-disabled="!container.main.$valid">
-		Next
-	</button>
-	<button type="submit" ng-disabled="!container.main.$valid || $isUploading" ng-show="step == 2" busy class="button">
+ 
+	<button type="submit" ng-disabled="!container.main.$valid || $isUploading" busy class="button">
 		Submit
 	</button>
 	<button type="button" class="button" ng-click="cancel()">

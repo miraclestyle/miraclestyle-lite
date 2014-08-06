@@ -356,10 +356,7 @@ class Domain(orm.BaseExpando):
   name = orm.SuperStringProperty('3', required=True)
   primary_contact = orm.SuperKeyProperty('4', kind='8', indexed=False)  # This field is required, and is handeled in update action via argument!
   state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])
-  logo = SuperImageLocalStructuredProperty(Image, '6', required=True, process=True,
-                                           process_config={'transform': True, 'width': 240, 'height': 100,
-                                                           'crop_to_fit': True, 'crop_offset_x': 0.0,
-                                                           'crop_offset_y': 0.0})
+  logo = SuperImageLocalStructuredProperty(Image, '6', required=True)
   
   _default_indexed = False
   
@@ -427,8 +424,12 @@ class Domain(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('6', 'create'),
       arguments={
-        'domain_name': orm.SuperStringProperty(required=True),
-        'domain_logo': SuperImageLocalStructuredProperty(Image, required=True)
+        'name': orm.SuperStringProperty(required=True),
+        'logo': SuperImageLocalStructuredProperty(Image, argument_format_upload=True,
+                                                         process=True,
+                                                         process_config={'measure' : False, 'transform': True, 'width': 240, 'height': 100,
+                                                           'crop_to_fit': True, 'crop_offset_x': 0.0,
+                                                           'crop_offset_y': 0.0}, required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -474,7 +475,11 @@ class Domain(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'logo': SuperImageLocalStructuredProperty(Image),
+        'logo': SuperImageLocalStructuredProperty(Image, argument_format_upload=True,
+                                                         process=True,
+                                                         process_config={'measure' : False, 'transform': True, 'width': 240, 'height': 100,
+                                                           'crop_to_fit': True, 'crop_offset_x': 0.0,
+                                                           'crop_offset_y': 0.0}, required=True),
         'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=primary_contact_validator)
         },
       _plugin_groups=[

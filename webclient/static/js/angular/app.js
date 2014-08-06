@@ -813,9 +813,22 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         	var _resolve_options = function(opts, do_scope)
                         	{
                         	 
-	                            $scope.resolve_handle = opts['handle'];
-	                            $scope.resolve_complete = opts['complete'];
-	                            $scope.resolve_cancel = opts['cancel'];
+                        	    if (opts['handle'])
+	                            {
+	                                $scope.resolve_handle = opts['handle'];
+	                            }
+	                            
+	                            if (opts['complete'])
+	                            {
+	                                $scope.resolve_complete = opts['complete'];
+	                            }
+	                            
+	                            if (opts['cancel'])
+	                            {
+	                                $scope.resolve_cancel = opts['cancel'];
+	                            }
+	                            
+	                            
 	                            if (opts['get_child'])
 	                            {
 	                            	$scope.get_child = opts['get_child'];
@@ -824,7 +837,12 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                            {
 	                            	$scope.update_child = opts['update_child'];
 	                            }
-	                            $scope.update_entity = opts['update_entity'];
+	                            
+	                            if (opts['update_entity'])
+	                            {
+	                                $scope.update_entity = opts['update_entity'];
+	                            }
+	                            
 	                            update($scope.options, opts);
 	                            
 	                            if (do_scope)
@@ -881,8 +899,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                      
                             $scope.action = action;
                             $scope.action2 = action2;
-                         
-	                         
+                          
 	                        _resolve_options(options);
 	                        
 	                        var initial_action = action;
@@ -963,7 +980,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	                                        {
 	                                        	_resolve_options(update(options, options['options_after_update']), true);
 	                                        	$scope.resolve_handle(data);
-	                                         
 	                                        }
 	                                    
 	                                        if (angular.isFunction($scope.after_save))
@@ -975,8 +991,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             };
  
                             update($scope, options['scope']);
-                            
-                            $scope.resolve_handle(data);
                              
                             $scope.cancel = function () {
                             	try
@@ -992,6 +1006,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             	}
                             	
                             };
+                            
+                            
+                            $scope.resolve_handle(data);
 
                         }
                     });
