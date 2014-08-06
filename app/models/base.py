@@ -308,6 +308,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                      crop_offset_x=config.get('crop_offset_x'),
                      crop_offset_y=config.get('crop_offset_y'))
         blob = image.execute_transforms(output_encoding=image.format)
+      new_value.proportion = image.width / image.height
       new_value.size = len(blob)
       if len(config):
         writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
