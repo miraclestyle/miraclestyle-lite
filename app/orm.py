@@ -1140,8 +1140,7 @@ class _BaseModel(object):
           doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
       if fields is not None:
         for field_key, field in fields.items():
-          if field._searchable:
-            doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
+          doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   

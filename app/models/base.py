@@ -16,13 +16,11 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import orm, mem, settings
 from app.util import *
 
+
 # @see https://developers.google.com/appengine/docs/python/googlecloudstorageclient/retryparams_class
-default_retry_params = cloudstorage.RetryParams(initial_delay=0.2,
-                                      max_delay=5.0,
-                                      backoff_factor=2,
-                                      max_retries=5,
-                                      max_retry_period=60,
-                                      urlfetch_timeout=30)
+default_retry_params = cloudstorage.RetryParams(initial_delay=0.2, max_delay=5.0,
+                                                backoff_factor=2, max_retries=5,
+                                                max_retry_period=60, urlfetch_timeout=30)
 cloudstorage.set_default_retry_params(default_retry_params)
 
 
@@ -286,7 +284,6 @@ class _BaseImageProperty(_BaseBlobProperty):
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
     if config.pop('measure', True):
       if new_value.proportion is None:
-        # do the fetch here and instantiate the image!
         fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
         image = images.Image(image_data=fetch_image.content)
         new_value.proportion = float(image.width) / float(image.height)
@@ -347,7 +344,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'content_type': file_info.content_type,
                                            'gs_object_name': file_info.gs_object_name,
                                            'image': blob_info.key(),
-                                           'serving_url': images.get_serving_url(blob_info.key())})  # @todo Not sure if this is ok!?
+                                           'serving_url': images.get_serving_url(blob_info.key())})
       self.save_blobs_on_success(new_image.image)
       if self._process:
         new_image = self.process(new_image)

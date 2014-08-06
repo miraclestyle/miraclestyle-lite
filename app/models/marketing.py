@@ -36,7 +36,7 @@ class ProductCategory(orm.BaseModel):
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('17', 'update'),  # @todo In order to warrant idempotency, this action has to produce custom key for each commited entry.
+      key=orm.Action.build_key('17', 'update'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
@@ -45,13 +45,14 @@ class ProductCategory(orm.BaseModel):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE})
+            ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
+                                            'prod_env': settings.DEVELOPMENT_SERVER})
             ]
           )
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('17', 'search'), # @todo search is very inaccurate when using 'contains' filter. so we will have to use here document search i think
+      key=orm.Action.build_key('17', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
@@ -68,7 +69,7 @@ class ProductCategory(orm.BaseModel):
                         {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -77,7 +78,7 @@ class ProductCategory(orm.BaseModel):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -139,7 +140,7 @@ class ProductInstance(orm.BaseExpando):
     return product_instance_key
   
   def instance_prepare_key(self, **kwargs):
-    self.key = self.prepare_key({'variant_signature' : self.variant_signature}, **kwargs)
+    self.key = self.prepare_key({'variant_signature': self.variant_signature}, **kwargs)
 
 
 class Product(orm.BaseExpando):
@@ -177,8 +178,8 @@ class CatalogPricetag(orm.BaseModel):
   _kind = 34
   
   product_template = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
-  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo See CatalogImage!
-  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo See CatalogImage!
+  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
+  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
   position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
   position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
   value = orm.SuperStringProperty('6', required=True, indexed=False)
@@ -205,7 +206,7 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy' : True, 'copy_name' : 'cover'}),
+    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover'}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
@@ -228,14 +229,13 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'lock'),
                                   orm.Action.build_key('35', 'discontinue'),
                                   orm.Action.build_key('35', 'log_message'),
-                                  orm.Action.build_key('35', 'duplicate')], False, 'entity._original.namespace_entity.state != "active"'),
+                                  orm.Action.build_key('35', 'duplicate')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'update'),
                                   orm.Action.build_key('35', 'lock'),
                                   orm.Action.build_key('35', 'catalog_upload_images'),
                                   orm.Action.build_key('35', 'product_upload_images'),
                                   orm.Action.build_key('35', 'product_instance_upload_images')], False, 'entity._original.state != "unpublished"'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_cover'),
-                                  orm.Action.build_key('35', 'process_duplicate'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'publish'),
                                   orm.Action.build_key('35', 'sudo'),
@@ -245,34 +245,31 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('35', [orm.Action.build_key('35', 'discontinue'),
                                   orm.Action.build_key('35', 'duplicate')], False, 'entity._original.state != "published"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'read')], True, 'entity._original.state == "published" or entity._original.state == "discontinued"'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'publish')], True, 'user._is_taskqueue and entity._original.state != "published" and entity._original._is_eligible'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'publish')], True, 'user._is_taskqueue and entity._original.state != "published" and entity._is_eligible'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'discontinue')], True, 'user._is_taskqueue and entity._original.state != "discontinued"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'sudo')], True, 'user._root_admin'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_cover'),
-                                  orm.Action.build_key('35', 'process_duplicate'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'index'),
                                   orm.Action.build_key('35', 'unindex'),
                                   orm.Action.build_key('35', 'cron')], True, 'user._is_taskqueue'),
       orm.FieldPermission('35', ['created', 'updated', 'state', 'cover'], False, None, 'True'),
-      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, False,
-                          'entity.namespace_entity.state != "active"'),
-      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], False, None,
-                          'entity.state != "unpublished"'),
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"'),
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, None,
+                          'entity._original.state != "unpublished"'),
       orm.FieldPermission('35', ['state'], True, None,
                           '(action.key_id_str == "create" and entity.state == "unpublished") or (action.key_id_str == "lock" and entity.state == "locked") or (action.key_id_str == "publish" and entity.state == "published") or (action.key_id_str == "discontinue" and entity.state == "discontinued") or (action.key_id_str == "sudo" and (entity.state == "published" or entity.state == "discontinued"))'),
-      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images'], None, True,
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', '_images', '_products'], None, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.FieldPermission('35', ['_records.note'], True, True,
                           'user._root_admin'),
       orm.FieldPermission('35', ['_records.note'], False, False,
                           'not user._root_admin'),
-      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_records'], None, True,
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], None, True,
                           'user._is_taskqueue or user._root_admin'),
-      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], False, True,
-                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
-      orm.FieldPermission('35', ['cover'], True, None,
-                          'action.key_id_str == "process_cover" and (user._is_taskqueue or user._root_admin)')
+      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], False, None,
+                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])')
       ]
     )
   
@@ -290,7 +287,6 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            # @todo this is a problem, bucket varies based on product, product instance and catalog image
             BlobURL(cfg={'bucket': settings.CATALOG_IMAGE_BUCKET}),
             Set(cfg={'d': {'output.entity': '_catalog',
                            'output.upload_url': '_blob_url'}})
@@ -356,7 +352,7 @@ class Catalog(orm.BaseExpando):
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),
-        '_products': orm.SuperLocalStructuredProperty(Product, repeated=True),
+        '_products': orm.SuperLocalStructuredProperty(Product, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -367,7 +363,8 @@ class Catalog(orm.BaseExpando):
                            '_catalog.publish_date': 'input.publish_date',
                            '_catalog.discontinue_date': 'input.discontinue_date',
                            '_catalog._images': 'input._images',
-                           '_catalog._products': 'input._products',}}),
+                           '_catalog._products': 'input._products'}}),
+            CatalogProcessCoverSet(),  # @todo Not sure if this is ok!? 'read_arguments': {'_images': {'config': {'cursor': 0, 'limit': 1}}}
             RulePrepare(),
             RuleExec()
             ]
@@ -378,26 +375,24 @@ class Catalog(orm.BaseExpando):
             Write(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+            CallbackExec()
             ]
           )
         ]
       ),
-    # it has to have separate upload_images because of argument types
     orm.Action(
       key=orm.Action.build_key('35', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, process=True, repeated=True),
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, process=True, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'add_config' : {'_images' : 'input._images'}}),
+            UploadImages(cfg={'add_config': {'_images': 'input._images'}}),
+            CatalogProcessCoverSet(),  # @todo Not sure if this is ok!? 'read_arguments': {'_images': {'config': {'cursor': 0, 'limit': 1}}}
             RulePrepare(),
             RuleExec()
             ]
@@ -408,9 +403,7 @@ class Catalog(orm.BaseExpando):
             Write(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_cover', 'read_arguments' : {'_images' : {'config' : {'cursor' : 0, 'limit' : 1}}}, 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+            CallbackExec()
             ]
           )
         ]
@@ -428,9 +421,9 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path' : '_products',
-                              'key_path' : 'input.product',
-                              'add_config' : {'images' : 'input.images'}}),
+            UploadImages(cfg={'target_field_path': '_products',
+                              'key_path': 'input.product',
+                              'add_config': {'images': 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -458,9 +451,9 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path' : '_products._instances', 
-                              'key_path' : 'input.product_instance',
-                              'add_config' : {'images' : 'input.images'}}),
+            UploadImages(cfg={'target_field_path': '_products._instances',
+                              'key_path': 'input.product_instance',
+                              'add_config': {'images' : 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -471,32 +464,6 @@ class Catalog(orm.BaseExpando):
             Write(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify()
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('35', 'process_cover'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True),
-        'read_arguments': orm.SuperJsonProperty(), # read arguments exists because we need to know how many images we want load
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            CatalogProcessCoverSet(),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            CallbackNotify(),
-            CallbackExec()
             ]
           )
         ]
@@ -527,8 +494,8 @@ class Catalog(orm.BaseExpando):
           )
         ]
       ),
+    # @todo Perhaps, we are gonna need public_search action for searching published catalogs!?
     orm.Action(
-      # this has to work both the datastore and document_search query
       key=orm.Action.build_key('35', 'search'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
@@ -549,7 +516,7 @@ class Catalog(orm.BaseExpando):
                         {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
-          ),
+          )
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -558,7 +525,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'page': settings.SEARCH_PAGE}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -594,7 +561,7 @@ class Catalog(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
@@ -629,7 +596,7 @@ class Catalog(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
@@ -664,7 +631,7 @@ class Catalog(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
@@ -701,7 +668,7 @@ class Catalog(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
@@ -862,5 +829,3 @@ class Catalog(orm.BaseExpando):
   def _is_eligible(self):
     # @todo Here we implement the logic to validate if catalog publisher has funds to support catalog publishing!
     return True
-  
-  

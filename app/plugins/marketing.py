@@ -8,7 +8,7 @@ Created on Apr 15, 2014
 import hashlib
 import datetime
 
-from app import orm, settings  # @todo settings has to GET OUT OF HERE!!!
+from app import orm
 from app.tools.base import *
 from app.util import *
 
@@ -18,10 +18,11 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
-    # this code builds leaf categories for selection with complete names, 3.8k of them
+    # This code builds leaf categories for selection with complete names, 3.8k of them.
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
+    production_environment = self.cfg.get('prod_env', False)
     if not update_file_path:
       raise orm.TerminateAction()
     Category = context.models['17']
@@ -35,7 +36,7 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
     parent = None
     dig = 0
     for i, item in enumerate(data):
-      if i == 100 and not settings.DEVELOPMENT_SERVER:
+      if i == 100 and not production_environment:
         break
       new_cat = {}
       current = item.split(sep)
@@ -58,13 +59,10 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
         write_data.append(new_cat)
     orm.put_multi(write_data)
 
- 
+
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
-    # this has to exist because it carries a lot of logic with it
-    # so we cant bluntly use Set()
-    # it also calls .process() after it copies over the image to be used for copy process
     catalog_images = context._catalog._images.value
     catalog_cover = context._catalog.cover.value
     if catalog_images and len(catalog_images):
@@ -77,7 +75,6 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover.process()
     elif catalog_cover:
       context._catalog.cover = None
-      
 
 
 class CatalogCronPublish(orm.BaseModel):
@@ -159,7 +156,6 @@ class CatalogCronDelete(orm.BaseModel):
       context._callbacks.append(('callback', data))
 
 
-# @todo To be rewriten once we finish search integration with orm.
 class CatalogSearchDocumentWrite(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -170,37 +166,32 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     documents = []
     index_name = self.cfg.get('index', None)
     max_doc = self.cfg.get('max_doc', 200)
-    catalog_fields = {'created': 'created', 'updated': 'updated', 'name': 'name',
-                      'publish_date': 'publish_date', 'discontinue_date': 'discontinue_date',
-                      'state': 'state', 'cover': 'cover.serving_url',
-                      'seller_name': 'namespace_entity.name',
-                      'seller_logo': 'namespace_entity.logo.serving_url'}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
-    product_fields = {'catalog_name': 'parent_entity.name', 'seller_name': 'namespace_entity.name',
-                      'seller_logo': 'namespace_entity.logo.serving_url',
-                      'product_category': 'product_category._urlsafe',
-                      'product_category_parent_record': '_product_category.parent_record._urlsafe',
-                      'product_category_name': '_product_category.name',
-                      'product_category_complete_name': '_product_category.complete_name',
-                      'name': 'name', 'description': 'description', 'code': 'code'}
-    catalog_images = get_catalog_images(context.models['36'], context._catalog.key)
-    templates = get_catalog_products(context.models['38'], context.models['39'],
-                                     catalog_images=catalog_images, include_instances=False, include_categories=True)
+    catalog_fields = {'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'cover.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
+    product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
+                      'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'product_category': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category'),
+                      '_product_category.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
+                      '_product_category.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
+                      '_product_category.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
+    # catalog_images = @todo Obtain all catalog images!
+    # products = @todo Obtain all catalog products!
     write_index = True
-    if not len(templates):
+    if not len(products):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
-    for template in templates:
-      if template._product_category.state != 'indexable':
+    for product in products:
+      if product._product_category.state != 'indexable':
         write_index = False
         break
     results = None
     if write_index:
-      documents.extend([context._catalog.get_search_document()])
-      documents.extend([product.get_search_document() for product in context._catalog._products])
-      results = document_write(documents, index_name=index_name, documents_per_index=max_doc)
+      documents.extend([context._catalog.get_search_document(catalog_fields)])
+      documents.extend([product.get_search_document(product_fields) for product in context._catalog._products])
 
 
-# @todo To be rewriten once we finish search integration with orm.
 class CatalogSearchDocumentDelete(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -212,11 +203,9 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     index_name = self.cfg.get('index', None)
     max_doc = self.cfg.get('max_doc', 200)
     entities.append(context._catalog)
-    catalog_images = get_catalog_images(context.models['36'], context._catalog.key)
-    templates = get_catalog_products(context.models['38'], context.models['39'],
-                                     catalog_images=catalog_images, include_instances=False)
-    entities.extend(templates)
-    results = document_delete(entities, index_name=index_name, documents_per_index=max_doc)
+    # catalog_images = @todo Obtain all catalog images!
+    # products = @todo Obtain all catalog products!
+    entities.extend(products)
 
 
 class CatalogSearch(orm.BaseModel):
