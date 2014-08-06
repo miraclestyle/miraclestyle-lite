@@ -192,7 +192,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     results = None
     if write_index:
       documents.extend([context._catalog.get_search_document(catalog_fields)])
-      documents.extend([product.get_search_document(product_fields) for product in context._catalog._products])
+      documents.extend([product.get_search_document(product_fields) for product in products])
       context._catalog._write_custom_indexes = {}
       context._catalog._write_custom_indexes[index_name] = documents
     context._catalog._products = []
@@ -213,9 +213,11 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     for image in context._catalog._images:
       product_keys.extend([pricetag.product for pricetag in image.pricetags])
     context._catalog._products.read({'config': {'keys': product_keys}})
+    products = context._catalog._products.value
     context._catalog._images = []
-    entities.extend([product.key for product in context._catalog._products])
-    context._catalog._write_custom_indexes = {index_name: entities}
+    entities.extend([product.key for product in products])
+    context._catalog._delete_custom_indexes = {}
+    context._catalog._delete_custom_indexes[index_name] = entities
     context._catalog._products = []
 
 
