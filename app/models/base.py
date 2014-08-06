@@ -35,6 +35,12 @@ class Image(orm.BaseModel):
   size = orm.SuperFloatProperty('3', required=True, indexed=False)
   gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)  # @todo Added required=True, is that ok?
   serving_url = orm.SuperStringProperty('5', required=True, indexed=False)  # @todo Added required=True, is that ok?
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'proportion': orm.SuperFloatProperty('6')
+    }
 
 
 class Role(orm.BaseExpando):
@@ -278,6 +284,10 @@ class _BaseImageProperty(_BaseBlobProperty):
       new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
     blob_key = None
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
+    if config.pop('measure', True):
+      if not new_value.proportion:
+        # do the fetch here and instantiate the image!
+        new_value.proportion = image.width / image.height
     if len(config):
       # @note No try block is implemented here. This code is no longer forgiving.
       # If any of the images fail to process, everything is lost/reverted, because one or more images:
