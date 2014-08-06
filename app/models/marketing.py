@@ -254,7 +254,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'index'),
                                   orm.Action.build_key('35', 'unindex'),
                                   orm.Action.build_key('35', 'cron')], True, 'user._is_taskqueue'),
-      orm.FieldPermission('35', ['created', 'updated', 'state', 'cover'], False, None, 'True'),
+      orm.FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, False,
                           'entity._original.namespace_entity._original.state != "active"'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, None,
@@ -269,8 +269,14 @@ class Catalog(orm.BaseExpando):
                           'not user._root_admin'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], None, True,
                           'user._is_taskqueue or user._root_admin'),
-      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], False, None,
-                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])')
+      orm.FieldPermission('35', ['_images.image', '_images.content_type', '_images.size', '_images.gs_object_name', '_images.serving_url',
+                                 '_products.images.image', '_products.images.content_type', '_products.images.size',
+                                 '_products.images.gs_object_name', '_products.images.serving_url', 
+                                 '_products._instances.images.image', '_products._instances.images.content_type', '_products._instances.images.size',
+                                 '_products._instances.images.gs_object_name', '_products._instances.images.serving_url'], False, None,
+                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
+      orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], True, None,
+                          '(action.key_id_str in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])')
       ]
     )
   
@@ -346,7 +352,7 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('35', 'update'),
+      key=orm.Action.build_key('35', 'update'), # @todo we need read_arguments almost everywhere
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'name': orm.SuperStringProperty(required=True),

@@ -389,6 +389,8 @@ class _BaseModel(object):
   _use_rule_engine = True  # All models by default respect rule engine! @todo This control property doen't respect Action control!!
   _use_search_engine = False  # Models can utilize google search services along with datastore search services.
   _parent = None
+  _write_custom_indexes = None
+  _delete_custom_indexes = None
   
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
@@ -407,9 +409,19 @@ class _BaseModel(object):
   def __repr__(self):
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
-      original = 'Yes, '
+      original = '%s, ' % self._original
     out = super(_BaseModel, self).__repr__()
-    return out.replace('%s(' % self.__class__.__name__, '%s(_original=%s' % (self.__class__.__name__, original))
+    out = out.replace('%s(' % self.__class__.__name__, '%s(_original=%s' % (self.__class__.__name__, original))
+    
+    virtual_fields = self.get_virtual_fields()
+    if virtual_fields:
+      out = out[:-1]
+      repr = []
+      for field_key, field in virtual_fields.items():
+        val = getattr(self, field_key, None)
+        repr.append('%s=%s' % (field._code_name, val))
+      out += '%s)' % ", ".join(repr)
+    return out
   
   @classmethod
   def _get_kind(cls):
@@ -612,6 +624,8 @@ class _BaseModel(object):
           continue # this is a problem, we cannot copy futures, we might have to implement flags on properties like
           # copiable=True
           # or deepcopy=True
+        else:
+          value = copy.deepcopy(value)
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
@@ -784,18 +798,17 @@ class _BaseModel(object):
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
           # @todo This is bug. None value should not be supplied on fields that are not required!
-          if field_value is None:
-            return
-          for field_value_item in field_value:
-            '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
-            http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
-            So using dict[entity.key] = entity.key maybe?
-            I'm not sure what's the overhead in using .urlsafe(), but this is something that we can look at.
-            Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
-            so anyways all the current code is fine, its just that we can take more simplification in consideration.
-            '''
-            if field_value_item.key:
-              field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
+          if field_value is not None:
+            for field_value_item in field_value:
+              '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
+              http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
+              So using dict[entity.key] = entity.key maybe?
+              I'm not sure what's the overhead in using .urlsafe(), but this is something that we can look at.
+              Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
+              so anyways all the current code is fine, its just that we can take more simplification in consideration.
+              '''
+              if field_value_item.key:
+                field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
         if not permissions[field_key]['writable']:
           if field._repeated:
             to_delete = []
@@ -1428,9 +1441,9 @@ class SuperPropertyManager(object):
     self._kwds = kwds
   
   def __repr__(self):
-    return '%s(entity=%s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
-                                                                       self._entity, self._property,
-                                                                       getattr(self, '_property_value', None), self._kwds)
+    return '%s(entity=instance of %s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
+                                                                       self._entity.__class__.__name__, self._property.__class__.__name__,
+                                                                       self.value, self._kwds)
   
   @property
   def value(self):
