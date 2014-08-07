@@ -2700,9 +2700,11 @@ class SuperSearchProperty(SuperJsonProperty):
     First you configure SuperSearchProperty with search_arguments, filters and indexes parameters.
     This configuration takes place at the property definition place.
     cfg = {
+      'use_search_engine': True,
       'search_arguments': {'kind': '35'...},
       'ancestor_kind': '35',
       'filters': {'field1': SuperStringProperty(required=True)}},  # With this config you define expected filter value property.
+      'orders': {'created': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}},  # This parameter is used for search engine default values!
       'indexes': [{'ancestor': True, 'filters': [('field1', [op1, op2]), ('field2', [op1]), ('field3', [op2])], 'orders': [('field1', ['asc', 'desc'])]},
                   {'ancestor': False, 'filters': [('field1', [op1]), ('field2', [op1])], 'orders': [('field1', ['asc', 'desc'])]}]
     }
@@ -2741,7 +2743,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def _clean_format(self, values):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
-                         'filters', 'orders', 'keys']
+                         'filters', 'orders', 'keys', 'query_string']
     for value_key, value in values.items():
       if value_key not in allowed_arguments:
         del values[value_key]
@@ -2792,9 +2794,6 @@ class SuperSearchProperty(SuperJsonProperty):
        'orders': [{'field': 'name', 'operator': 'asc'}]
     
     '''
-    if 'keys' in values and self._cfg.get('search_by_keys'): # if we dont do this, code bellow will throw an errr
-      return values
-    
     def _validate(cfg_values, input_values, method):
       # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
       # input_filters = [{'field': 'name', 'operator': '==', 'value': 'Mia'}]
@@ -2809,6 +2808,8 @@ class SuperSearchProperty(SuperJsonProperty):
         if input_value['operator'] not in cfg_value[1]:
           raise PropertyError('expected_operator_%s_%s_%s' % (method, cfg_value[1], i))
     
+    if self._cfg.get('search_by_keys') and 'keys' in values:
+      return values
     ancestor = values.get('ancestor')
     filters = values.get('filters', [])
     orders = values.get('orders', [])
@@ -2873,11 +2874,11 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def _search_query_orders_format(self, values):
     orders = values.get('orders')
+    cfg_orders = self._cfg.get('orders', {})
     if orders is not None:
       for _order in orders:
-        default_value = _order.get('default_value')
-        if not default_value or not default_value.get('asc') or not default_value.get('desc'):
-          raise PropertyError('missing_default_value_for_order_%s' % _order['field'])
+        cfg_order = cfg_orders.get(_order['field'], {})
+        _order['default_value'] = cfg_order.get('default_value', {})
   
   def _search_query_options_format(self, values):
     options = values.get('options', {})
@@ -2904,7 +2905,7 @@ class SuperSearchProperty(SuperJsonProperty):
     self._keys_format(values)
     self._projection_group_by_format(values)
     self._filters_orders_format(values)
-    if self._cfg.get('_use_search_engine', False):
+    if self._cfg.get('use_search_engine', False):
       self._search_query_orders_format(values)
       self._search_query_options_format(values)
     else:
@@ -2984,9 +2985,12 @@ class SuperSearchProperty(SuperJsonProperty):
       return query_string
     _filters = value.get('filters')
     filters = []
+    kind = values.get('kind')
+    if kind:
+      filters.append('(ancestor=' + kind + ')')
     ancestor = value.get('ancestor')
     if ancestor:
-      filters.append('(ancestor=' + value + ')')
+      filters.append('(ancestor=' + ancestor + ')')
     for _filter in _filters:
       field = _filter['field']
       op = _filter['operator']
