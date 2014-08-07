@@ -230,13 +230,16 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'lock'),
                                   orm.Action.build_key('35', 'discontinue'),
                                   orm.Action.build_key('35', 'log_message'),
-                                  orm.Action.build_key('35', 'duplicate')], False, 'entity._original.namespace_entity._original.state != "active"'),
+                                  orm.Action.build_key('35', 'catalog_duplicate'),
+                                  orm.Action.build_key('35', 'product_duplicate')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'update'),
+                                  orm.Action.build_key('35', 'product_duplicate'),
                                   orm.Action.build_key('35', 'lock'),
                                   orm.Action.build_key('35', 'catalog_upload_images'),
                                   orm.Action.build_key('35', 'product_upload_images'),
                                   orm.Action.build_key('35', 'product_instance_upload_images')], False, 'entity._original.state != "unpublished"'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_duplicate'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'catalog_process_duplicate'),
+                                  orm.Action.build_key('35', 'product_process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'publish'),
                                   orm.Action.build_key('35', 'sudo'),
@@ -244,12 +247,13 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'unindex'),
                                   orm.Action.build_key('35', 'cron')], False, 'True'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'discontinue'),
-                                  orm.Action.build_key('35', 'duplicate')], False, 'entity._original.state != "published"'),
+                                  orm.Action.build_key('35', 'catalog_duplicate')], False, 'entity._original.state != "published"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'read')], True, 'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'publish')], True, 'user._is_taskqueue and entity._original.state != "published" and entity._is_eligible'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'discontinue')], True, 'user._is_taskqueue and entity._original.state != "discontinued"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'sudo')], True, 'user._root_admin'),
-      orm.ActionPermission('35', [orm.Action.build_key('35', 'process_duplicate'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'catalog_process_duplicate'),
+                                  orm.Action.build_key('35', 'product_process_duplicate'),
                                   orm.Action.build_key('35', 'delete'),
                                   orm.Action.build_key('35', 'index'),
                                   orm.Action.build_key('35', 'unindex'),
@@ -274,9 +278,12 @@ class Catalog(orm.BaseExpando):
                                  '_products.images.gs_object_name', '_products.images.serving_url',
                                  '_products._instances.images.image', '_products._instances.images.content_type', '_products._instances.images.size',
                                  '_products._instances.images.gs_object_name', '_products._instances.images.serving_url'], False, None,
-                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
+                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
       orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], True, None,
-                          '(action.key_id_str in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])')
+                          '(action.key_id_str in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', 
+                                 '_products', '_images'], True, True,
+                          '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])'),          
       ]
     )
   
@@ -799,7 +806,7 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_duplicate', 'action_model': '35'},
+                               {'action_id': 'catalog_process_duplicate', 'action_model': '35'},
                                {'key': '_catalog.key_urlsafe'})])
             ]
           )
@@ -834,7 +841,9 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('35', 'product_duplicate'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True)
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        'product': orm.SuperKeyProperty(kind='38', required=True),
+        'read_arguments' : orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -846,8 +855,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'process_duplicate', 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe'})])
+                               {'action_id': 'product_process_duplicate', 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe', 'product' : 'input.product._urlsafe', 'read_arguments' : 'input.read_arguments'})])
             ]
           )
         ]
@@ -855,7 +864,9 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('35', 'product_process_duplicate'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='35', required=True)
+        'key': orm.SuperKeyProperty(kind='35', required=True),
+        'product': orm.SuperKeyProperty(kind='38', required=True),
+        'read_arguments' : orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -869,7 +880,9 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Duplicate(),
+            Duplicate(cfg={'target_field_path': '_products',
+                           'key_path': 'input.product'
+                          }),
             Write(),
             CallbackNotify(),
             CallbackExec()

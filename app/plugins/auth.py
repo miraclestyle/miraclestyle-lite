@@ -169,8 +169,8 @@ class UserReadDomains():
     domain_users = []
     if entity.domains and len(entity.domains):
       domains, domain_users = orm.get_multi_combined_clean(entity.domains, [orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
-      rule_prepare(domains, True, False, **kwargs)
-      rule_prepare(domain_users, True, False, **kwargs)
+      rule_prepare(domains, False, False, **kwargs)
+      rule_prepare(domain_users, False, False, **kwargs)
     context.output['domains'] = domains
     context.output['domain_users'] = domain_users
 

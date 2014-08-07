@@ -133,13 +133,23 @@ class Duplicate(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
+    target_field_path = self.cfg.get('target_field_path')
+    key_path = self.cfg.get('key_path')
+    key = None
+    if key_path:
+      key = get_attr(context, key_path)
     entity = get_attr(context, entity_path)
-    if entity and isinstance(entity, orm.Model):
-      duplicate_entity = entity.duplicate()
-      set_attr(context, save_path, duplicate_entity)
+    if target_field_path:
+      entity_to_duplicate, collection = entity_by_path(entity, target_field_path, key, True)
+      collection.append(entity_to_duplicate.duplicate())
+      duplicate_entity = entity
+    else:
+      if entity and isinstance(entity, orm.Model):
+        duplicate_entity = entity.duplicate()
+    set_attr(context, save_path, duplicate_entity)
 
 
-class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring required.
+class UploadImages(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -155,33 +165,7 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
     entity = get_attr(context, entity_path)
     target_field_path = self.cfg.get('target_field_path')
     if target_field_path:
-      target_field_paths = target_field_path.split('.')
-      last_i = len(target_field_paths)-1
-      do_entity = entity
-      entities = []
-      def start(entity, target, last_i, i, entities):
-        if isinstance(entity, list):
-          out = []
-          for ent in entity:
-            out.append(start(ent, target, last_i, i, entities))
-          return out
-        else:
-          entity = getattr(entity, target)
-          if isinstance(entity, orm.SuperPropertyManager):
-            entity = entity.value
-          if last_i == i:
-            if isinstance(entity, list):
-              for ent in entity:
-                if (key == None or (ent.key == key)):
-                  entities.append(ent)
-            else:
-              if (key == None or (entity.key == key)):
-                entities.append(entity)
-          else:
-            return entity
-      for i,target in enumerate(target_field_paths):
-        do_entity = start(do_entity, target, last_i, i, entities)
-      entity = entities[0]
+      entity = entity_by_path(entity, target_field_path, key)
     if entity and isinstance(entity, orm.Model):
       fields = entity.get_fields()
       for field_key, path in add_config.iteritems():

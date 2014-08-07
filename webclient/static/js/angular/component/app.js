@@ -455,6 +455,8 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
             	entities.push(domain);
             });
             
+            console.log(entities);
+            
    
             $scope.apps = entities;
 

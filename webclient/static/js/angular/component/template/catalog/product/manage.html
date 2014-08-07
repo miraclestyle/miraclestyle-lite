@@ -291,7 +291,7 @@
 			</tbody>
 		</table>
 		 
-		<div ng-show="entity._property_value_options._products._instances.config.more">
+		<div ng-show="entity._next_read_arguments._products._instances.config.more">
 			<button type="button" ng-click="getMoreProductInstances()" busy class="button">Load more product instances</button>
 		</div>
 		
@@ -317,7 +317,7 @@
 	</button>
 	
 	<button ng-disabled="$isUploading" type="button" 
-    		ng-click="duplicate()" ng-show="child.id && rule.action.duplicate.executable" busy class="button">
+    		ng-click="duplicate()" ng-show="child.id && rule.action.product_duplicate.executable" busy class="button">
 		Duplicate
 	</button>
  

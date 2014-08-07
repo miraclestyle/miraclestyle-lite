@@ -590,7 +590,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 					     $scope.logs.push(value);
 					});
  					
- 					var config = data.entity._property_value_options._records.config;
+ 					var config = data.entity._next_read_arguments._records.config;
  					var read_arguments_config = $scope.history.args.read_arguments._records.config;
  					
  					read_arguments_config.cursor = config.cursor;
@@ -674,6 +674,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                     read_arguments : config,
                 }).success(function (data) {
                     update(entity._read_arguments, config);
+                    update(entity._next_read_arguments, data.entity._next_read_arguments);
                     success(data);
                 });
             },

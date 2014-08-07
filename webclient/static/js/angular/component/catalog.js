@@ -103,9 +103,9 @@ MainApp
             }
         };
     })
-    .factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm',
+    .factory('Catalog', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm', '$timeout',
 
-        function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
+        function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm, $timeout) {
 
             var kind = '35';
             
@@ -353,7 +353,9 @@ MainApp
                         };
                          
                         EntityEditor.read_entity_partial($parentScope.entity, {
-                               '_products' : {},
+                               '_products' : {
+                                   '_instances' : {},
+                               },
                          }, function (data) {
                                   
                                 if (data.entity && data.entity._products)
@@ -412,7 +414,7 @@ MainApp
                     
                     this.duplicate = function()
                     {
-                    	this._do_user_admin(this.entity, 'duplicate');
+                    	this._do_user_admin(this.entity, 'catalog_duplicate');
                     };
 
                     this.publish = function () {
@@ -765,7 +767,7 @@ MainApp
                                             Endpoint.post(action, $parentScope.entity.kind, $scope.log)
                                                 .success(function (data) {
     
-                                                    EntityEditor.update_entity($parentScope, data, ['_images']);
+                                                    EntityEditor.update_entity($parentScope, data, ['_images', '_products']);
     
                                                     $scope.cancel();
     
@@ -787,7 +789,37 @@ MainApp
                         
                         duplicate : function()
                         {
-                            this._do_user_admin(this.entity, 'duplicate');
+                            var that = this;
+                            Confirm.sure(null, null, {
+                                message : 'Are you sure you want to proceed with this action?',
+                                callbacks : {
+                                    Yes : function () {
+                                
+                                         Endpoint.post('product_duplicate', that.entity.kind, {
+                                             key : that.entity.key,
+                                             product : that.child.key,
+                                             read_arguments : that.entity._read_arguments
+                                         }).success(function (data) {
+                                            if (data['entity'])
+                                            {
+                                                var modal = Confirm.notice('Duplication process started, you will be notified when its done.');
+                                                
+                                                $timeout(function () {
+                                                        try
+                                                        {
+                                                            modal.dismiss();
+                                                            
+                                                        }catch(e) {}
+                                                        
+                                                    }, 1500);
+                                                
+                                            }
+                                        });
+                                    },
+                         
+                                },
+                             
+                            });
                         },
                       
                 };
