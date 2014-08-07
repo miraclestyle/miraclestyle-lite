@@ -720,7 +720,8 @@ MainApp
                                          var manage = false;
                                          
                                          angular.forEach($parentScope.child._instances, function (inst) {
-                                            if (inst.variant_signature == variant_signature)
+                                        
+                                            if (JSON.stringify(inst.variant_signature) == JSON.stringify(variant_signature))
                                             {
                                                 $parentScope.manageInstance(inst);
                                                 
@@ -732,6 +733,8 @@ MainApp
                                          {
                                             $parentScope.manageInstance({'variant_signature' : variant_signature}, 1);
                                          }
+                                         
+                                         $scope.cancel();
                                            
                                     };
         

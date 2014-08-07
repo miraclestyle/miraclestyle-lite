@@ -797,6 +797,7 @@ class _BaseModel(object):
           if not permissions[field_key]['writable']:
             setattr(entity, field_key, field_value) # revert entire structure
           return
+         
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
           # @todo This is bug. None value should not be supplied on fields that are not required!
@@ -2226,6 +2227,16 @@ class _BaseStructuredProperty(_BaseProperty):
   def _set_value(self, entity, value):
     # __set__
     manager = self._get_value(entity)
+    """
+    current_values = manager.value
+    if self._repeated:
+      for val in list(value):
+        if val.key:
+          for i,current_value in enumerate(current_values):
+            if current_value.key == val.key:
+              current_values[i] = val
+              break
+    """
     manager.set(value)
     return super(_BaseStructuredProperty, self)._set_value(entity, value)
   
@@ -2985,7 +2996,7 @@ class SuperSearchProperty(SuperJsonProperty):
       return query_string
     _filters = value.get('filters')
     filters = []
-    kind = values.get('kind')
+    kind = value.get('kind')
     if kind:
       filters.append('(ancestor=' + kind + ')')
     ancestor = value.get('ancestor')
