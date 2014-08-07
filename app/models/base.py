@@ -290,10 +290,9 @@ class _BaseImageProperty(_BaseBlobProperty):
           try:
             fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
             break
-            time.sleep(pause)  # @todo Should this be in except block?
-            pause = pause * 2
           except Exception as e:
-            pass
+            time.sleep(pause)
+            pause = pause * 2
         image = images.Image(image_data=fetch_image.content)
         new_value.proportion = float(image.width) / float(image.height)
         del fetch_image, image
@@ -340,7 +339,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     if not self._repeated:
       value = [value]
     out = []
-    for v in value:
+    for i, v in enumerate(value):
       if not isinstance(v, cgi.FieldStorage) and not self._required:
         return Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
       # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
@@ -353,6 +352,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'content_type': file_info.content_type,
                                            'gs_object_name': file_info.gs_object_name,
                                            'image': blob_info.key(),
+                                           '_sequence' : i,
                                            'serving_url': images.get_serving_url(blob_info.key())})
       self.save_blobs_on_success(new_image.image)
       if self._process:

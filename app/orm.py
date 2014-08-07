@@ -1672,43 +1672,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
   
-  def _read_remote_multi_sequenced(self, read_arguments=None):
-    '''Remote multi sequenced storage uses sequencing technique in order to build child entity keys.
-    It then uses those keys for retreving, storing and deleting entities of those keys.
-    This technique has lowest impact on data storage and retreval, and should be used whenever possible!
-    
-    '''
-    if read_arguments is None:
-      read_arguments = {}
-    config = read_arguments.get('config', {})
-    cursor = config.get('cursor', 0)
-    limit = config.get('limit', 10)
-    entities = []
-    supplied_entities = config.get('entities')
-    supplied_keys = config.get('keys')
-    if cursor == -1:
-      entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_async()
-    else:
-      if supplied_entities:
-        entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
-        cursor = None
-      elif supplied_keys:
-        entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).argument_format(supplied_keys))
-        cursor = None
-      else:
-        keys = [Key(self._property.get_modelclass().get_kind(),
-                    str(i), parent=self._entity.key) for i in xrange(cursor, cursor + limit + 1)]
-        entities = get_multi_async(keys)
-        cursor = cursor + limit
-    self._property_value = entities
-    self._property_value_options['cursor'] = cursor
-    
-  def _process_read_async_remote_multi_sequenced(self):
-    entities = map(lambda x: x.get_result(), self._property_value)
-    self._property_value_options['more'] = entities[-1] is not None
-    util.remove_value(entities)
-    self._property_value = entities
-  
   def _read_deep(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
@@ -1819,10 +1782,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _pre_update_remote_multi(self):
     pass
-  
-  def _pre_update_remote_multi_sequenced(self):
-    pass
-  
+ 
   def _post_update_local(self):
     pass
   
@@ -1833,12 +1793,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
-    if not hasattr(self._property_value, 'instance_prepare_key'):
+    if not hasattr(self._property_value, 'prepare'):
       if self._property_value.key_parent != self._entity.key:
         key_id = self._property_value.key_id
         self._property_value.set_key(key_id, parent=self._entity.key)
     else:
-      self._property_value.instance_prepare_key(parent=self._entity.key)
+      self._property_value.prepare(parent=self._entity.key)
     # We do put eitherway
     # @todo If state is deleted, shall we delete the single storage entity?
     if self._property_value._state == 'deleted':
@@ -1852,42 +1812,19 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     delete_entities = []
     for entity in self._property_value:
-      if not hasattr(entity, 'instance_prepare_key'):
+      if not hasattr(entity, 'prepare'):
         if entity.key_parent != self._entity.key:
           key_id = entity.key_id
           entity.set_key(key_id, parent=self._entity.key)
       else:
-        entity.instance_prepare_key(parent=self._entity.key)
+        entity.prepare(parent=self._entity.key)
       if entity._state == 'deleted':
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
-  
-  def _post_update_remote_multi_sequenced(self):
-    '''Ensure that every entity has the entity ancestor by enforcing it.
-    
-    '''
-    delete_entities = []
-    last_sequence = self._property.get_modelclass().query(ancestor=self._entity.key).count()
-    for i, entity in enumerate(self._property_value):
-      if entity._state == 'deleted':
-        delete_entities.append(entity)
-        continue
-      if entity.key_id is None:
-        if not hasattr(entity, 'instance_prepare_key'):
-          entity.set_key(str(last_sequence), parent=self._entity.key)
-        else:
-          entity.instance_prepare_key(parent=self._entity.key, id=str(last_sequence))
-        last_sequence += 1
-      else:
-        entity.set_key(str(i), parent=self._entity.key)
-    for delete_entity in delete_entities:
-      self._property_value.remove(delete_entity)
-    delete_multi([entity.key for entity in delete_entities])
-    put_multi(self._property_value)
-  
+ 
   def pre_update(self):
     if self._property._updateable:
       if self.has_value():
@@ -1941,9 +1878,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _delete_remote_multi(self):
     self._delete_remote()
   
-  def _delete_remote_multi_sequenced(self):
-    self._delete_remote()
-  
   def _delete_reference(self):
     pass # nothing happens when you delete reference, we can however implement that logic too
   
@@ -1992,10 +1926,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _duplicate_remote_multi(self):
     self._duplicate_remote()
-  
-  def _duplicate_remote_multi_sequenced(self):
-    self._duplicate_remote()
-  
+ 
   def duplicate(self):
     '''Calls storage type specific duplicate function.
     
@@ -2231,8 +2162,9 @@ class _BaseStructuredProperty(_BaseProperty):
   def _set_value(self, entity, value):
     # __set__
     manager = self._get_value(entity)
-    current_values = manager.value
+    current_values = value
     if self._repeated:
+      current_values = manager.value
       if value:
         for val in value:
           if val.key:
@@ -3090,7 +3022,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     self._storage = storage
     # we use storage_config dict instead of keywords,
     # because we cannot forsee how many key-values we can invent for per-storage type
-    if self._storage in ['remote_multi', 'remote_multi_sequenced']:
+    if self._storage in ['remote_multi']:
       self._repeated = True  # Always enforce repeated on multi entity storage engine!
   
   def get_model_fields(self, **kwargs):

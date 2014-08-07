@@ -7,7 +7,7 @@ Created on May 6, 2014
 
 import datetime
 
-from app import orm, settings
+from app import orm, settings, util
 from app.models.base import *
 from app.plugins.base import *
 from app.plugins.marketing import *
@@ -139,7 +139,7 @@ class ProductInstance(orm.BaseExpando):
     product_instance_key = cls.build_key(key_id, parent=kwargs.get('parent'))
     return product_instance_key
   
-  def instance_prepare_key(self, **kwargs):
+  def prepare(self, **kwargs):
     self.key = self.prepare_key({'variant_signature': self.variant_signature}, **kwargs)
 
 
@@ -189,10 +189,24 @@ class CatalogImage(Image):
   
   _kind = 36
   
-  sequence = orm.SuperIntegerProperty('7', required=True, indexed=False)
+  sequence = orm.SuperIntegerProperty('7', required=True, indexed=True)
   pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
-
-
+  
+  def prepare(self, **kwds):
+    key_id = self.key_id
+    if key_id is None:
+      self.set_key(key_id, parent=kwds.get('parent'))
+      key = 'prepare_%s' % self.key.urlsafe()
+      sequence = mem.temp_get(key, util.Nonexistent)
+      if sequence is util.Nonexistent:
+        entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
+        if not entity:
+          sequence = 0
+        else:
+          sequence = entity.sequence
+        mem.temp_set(key, sequence)
+      self.sequence = self._sequence + sequence
+ 
 class Catalog(orm.BaseExpando):
   
   _kind = 35

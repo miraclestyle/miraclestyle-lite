@@ -70,12 +70,14 @@ class CatalogProcessCoverSet(orm.BaseModel):
       if catalog_cover:
         if catalog_cover.gs_object_name[:-6] != catalog_images[0].gs_object_name:
           context._catalog.cover = copy.deepcopy(catalog_images[0])
+          context._catalog.cover.value.sequence = 0
           context._catalog.cover.process()
       else:
         context._catalog.cover = copy.deepcopy(catalog_images[0])
+        context._catalog.cover.value.sequence = 0
         context._catalog.cover.process()
     elif catalog_cover:
-      context._catalog.cover._state = 'delete'
+      context._catalog.cover._state = 'deleted'
 
 
 class CatalogCronPublish(orm.BaseModel):

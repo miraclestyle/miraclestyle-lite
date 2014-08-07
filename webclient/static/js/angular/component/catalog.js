@@ -155,6 +155,9 @@ MainApp
 		 
 					 var that = this;
 					 
+					 that.entity._next_read_arguments._images.config['order'] = that.entity._read_arguments._images.config['order'];
+					 
+	 
 					 EntityEditor.read_entity_partial(that.entity, {
 					      '_images' : that.entity._next_read_arguments._images,
 					 }, function (data) {
@@ -244,7 +247,19 @@ MainApp
 								                	 },
 								                	 'handle' : function (data)
 											         {
-											             this.uploadConfig = $parentScope.uploadConfig;
+											             var that = this;
+											              
+											             that.uploadConfig = $parentScope.uploadConfig;
+											              
+                                                         that.sortableOptions = {
+                                                            'forcePlaceholderSize': true,
+                                                            'placeholder': 'image-image image-image-placeholder grid-item',
+                                                            'stop': function (event, ui) {
+                                                                 angular.forEach(that.child.images, function (o, i) {
+                                                                     o._sequence = i;
+                                                                 });
+                                                             }
+                                                         }; 
 											            
 											         },
 								                	 'templateUrl' : logic_template('catalog/product/manage.html')
@@ -433,12 +448,16 @@ MainApp
                     {
                     	this._do_user_admin(this.entity, 'sudo');
                     };
+                    
+                    var that = this;
 
                     this.sortableOptions = {
                         'forcePlaceholderSize': true,
                         'placeholder': 'image-image image-image-placeholder grid-item',
-                        'stop': function (e, u) {
-  							 console.log(e, u);
+                        'stop': function (event, ui) {
+  							 angular.forEach(that.entity._images, function (o, i) {
+  							     o.sequence = i;
+  							 });
                         }
                     };
 
@@ -655,7 +674,19 @@ MainApp
                                  },
                                  'handle' : function (data)
                                  {
-                                     this.uploadConfig = $parentScope.uploadConfig;
+                                     var that = this;
+                                     
+                                     that.uploadConfig = $parentScope.uploadConfig;
+                                      
+                                     that.sortableOptions = {
+                                        'forcePlaceholderSize': true,
+                                        'placeholder': 'image-image image-image-placeholder grid-item',
+                                        'stop': function (event, ui) {
+                                             angular.forEach(that.child.images, function (o, i) {
+                                                 o._sequence = i;
+                                             });
+                                         }
+                                     }; 
                                  },
                                 'templateUrl' : logic_template('catalog/product/manage_instance.html'),
                               };
@@ -664,7 +695,8 @@ MainApp
                               update_cfg['close'] = true;
                               update_cfg['get_child'] = function ()
                               {
-                                  this.child = find_child(instance, this.entity);                
+                                  this.child = find_child(instance, this.entity); 
+                                             
                               };
                               update_cfg['update_child'] = function (data)
                               {
@@ -830,7 +862,14 @@ MainApp
             };
             
             var catalog_read_arguments = {
-                            	'_images' : {},
+                            	'_images' : {
+                            	    'config' : {
+                            	        'order' : {
+                            	            'field' : 'sequence',
+                            	            'direction' : 'asc',
+                            	        },
+                            	    }
+                            	},
                            };
              
             return {
@@ -850,6 +889,7 @@ MainApp
                                       'domain' : this.entity.namespace,
                                    }
                                 };
+                                 
                         },
                         'complete': complete,
                         'options_after_update': make_update_scope(),

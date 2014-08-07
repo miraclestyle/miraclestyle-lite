@@ -1,9 +1,4 @@
 indexes:
-- kind: "36"
-  ancestor: yes
-  properties:
-  - name: "6"
-  
 - kind: "5"
   ancestor: yes
   properties:
@@ -64,11 +59,6 @@ indexes:
   properties:
   - name: "3"
   - name: "1"
-  
-- kind: "36"
-  ancestor: yes
-  properties:
-  - name: "7"
   
 - kind: "16"
   properties:
@@ -146,3 +136,14 @@ indexes:
   - name: "1"
   - name: "8"
   - name: "2"
+  
+- kind: "36"
+  ancestor: yes
+  properties:
+  - name: "7"
+    direction: desc
+ 
+- kind: "36"
+  ancestor: yes
+  properties:
+  - name: "7"
