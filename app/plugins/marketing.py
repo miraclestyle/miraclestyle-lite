@@ -76,7 +76,6 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover.process()
     elif catalog_cover:
       context._catalog.cover = None
-    print context._catalog.cover.value
 
 
 class CatalogCronPublish(orm.BaseModel):
