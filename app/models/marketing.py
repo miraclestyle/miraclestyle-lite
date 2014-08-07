@@ -282,9 +282,9 @@ class Catalog(orm.BaseExpando):
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
       orm.FieldPermission('35', ['_images', '_products.images', '_products._instances.images'], True, None,
                           '(action.key_id_str in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
-      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', 
+      orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost',
                                  '_products', '_images'], True, True,
-                          '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])'),          
+                          '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])')
       ]
     )
   
@@ -837,13 +837,12 @@ class Catalog(orm.BaseExpando):
           )
         ]
       ),
-    # @todo We are probably gonna need Duplicate plugin refactored for this operation to take place, just as in case of uploads!
     orm.Action(
       key=orm.Action.build_key('35', 'product_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'product': orm.SuperKeyProperty(kind='38', required=True),
-        'read_arguments' : orm.SuperJsonProperty()
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -856,7 +855,7 @@ class Catalog(orm.BaseExpando):
             CallbackNotify(),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'product_process_duplicate', 'action_model': '35'},
-                               {'key': '_catalog.key_urlsafe', 'product' : 'input.product._urlsafe', 'read_arguments' : 'input.read_arguments'})])
+                               {'key': '_catalog.key_urlsafe', 'product': 'input.product._urlsafe', 'read_arguments': 'input.read_arguments'})])
             ]
           )
         ]
@@ -866,7 +865,7 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'product': orm.SuperKeyProperty(kind='38', required=True),
-        'read_arguments' : orm.SuperJsonProperty()
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -881,8 +880,7 @@ class Catalog(orm.BaseExpando):
           transactional=True,
           plugins=[
             Duplicate(cfg={'target_field_path': '_products',
-                           'key_path': 'input.product'
-                          }),
+                           'key_path': 'input.product'}),
             Write(),
             CallbackNotify(),
             CallbackExec()
