@@ -8,6 +8,7 @@ Created on Jun 14, 2014
 import cgi
 import cloudstorage
 import copy
+import time
 
 from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
@@ -284,7 +285,15 @@ class _BaseImageProperty(_BaseBlobProperty):
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
     if config.pop('measure', True):
       if new_value.proportion is None:
-        fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
+        wait_until = 0.5
+        for i in xrange(4):
+          try:
+            fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
+            break
+            time.sleep(wait_until)
+            wait_until = wait_until * 2
+          except Exception as e:
+            pass
         image = images.Image(image_data=fetch_image.content)
         new_value.proportion = float(image.width) / float(image.height)
         del fetch_image, image

@@ -3,18 +3,7 @@ MainApp
         return {
             priority: -513,
             link: function (scope, element, attr) {
-                /*  
-				  ihp - Initial Horizontal Price Tag Position 
-				  ivp - Initial Vertical Price Tag Position 
-				  iiw - Initial Image Width  
-				  iih - Initial Image Height  
-				  
-				  ciw - Current Image Width  
-				  cih - Current Image Height  
-				  chp - Current Horizontal Price Tag Position  
-				  cvp - Current Vertical Price Tag Position  
-				  */
-
+  
                 var resize = function () {
                     var pa = $(element).parents('.catalog-image-scroll:first');
 
@@ -120,334 +109,7 @@ MainApp
 
             var kind = '35';
             
-            var make_product_scope = function ()
-	    	{
-	    
-		       return {
-		        	 'form_info' : {'action' : Endpoint.url},
-		        	 'accordions' : {
-		        	 	'general' : true,
-		        	 },
-		        	 'gridConfig' : function (scope)
-		              {
-		            		return {
-		            			margin : 10
-		            		};
-		             },
-		        	 'completed' : function (data)
-		        	 { 
-		        	 	// append new images
-		        	 	console.log(this, data);
-		        	 },
  
-		            'removeImage' : function (image)
-		        	 {
-		        	 	image._state = 'deleted';
-		       
-		        	 },
-		        	 'removeContent' : function (content) {
-		        	 	content._state = 'deleted';
-	 
-		        	 },
-		        	 'removeVariant' : function (variant)
-		        	 {
-		        	 	variant._state = 'deleted';
-		        	  
-		        	 },
-		        	 'getMoreProductInstances' : function ()
-                      { 
-                     
-						 var that = this;
-						 
-						 var out = get_property_options(that.entity, '_products', 1);
-		 
-						 if (!out._instances.more) return false;
-						 
-						 out.config.keys = $.map(that.entity._products, function (prod) {
-						     return prod.key;
-						 });
-						 
-						 Endpoint.post('read', '35', {'key' : $parentScope.entity.key,
-						  							  'read_arguments' : {'_products' : out}
-						  							 }).success(function (data) {
-					 
-								angular.forEach(data.entity._products, function (prod) {
-								   var the_prod = _.findWhere(that.entity._products, {key : prod.key});
-								   if (the_prod)
-								   {
-								       the_prod._instances.extend(prod._instances);
-								   } 
-								});
-								
-								update(get_property_options(that.entity, '_products'), get_property_options(data.entity, '_products'));
-						  });
-                     },
-		        	 'manageContent' : function (content) { 
-		        	 	
-		        	 	var $parentScope = this;
-		        	 	 
-		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('catalog/product/manage_content.html'),
-		                        controller: function ($scope, $modalInstance, RuleEngine) {
-		 
-		                            $scope.content = angular.copy(content ? content : {});
-		                      
-		                            var new_content = content ? false : true;
-		             
-		                            $scope.save = function () {
-		           
-		                                 if (new_content)
-		                                 {
-		                                 	$parentScope.child.contents.push($scope.content);
-		                                 }
-		                                 else
-		                                 {
-		                                 	update(content, $scope.content);
-		                                 }
-		                                 
-		                                 $scope.cancel();
-		                            };
-		
-		                            $scope.cancel = function () {
-		                                $modalInstance.dismiss('cancel');
-		                            };
-		
-		                        }
-		                    });
-		        	 	
-		        	  },
-		        	 'manageVariant' : function (variant) {
-		        	 	
-		        	 	var $parentScope = this;
-		       
-		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('catalog/product/manage_variant.html'),
-		                        controller: function ($scope, $modalInstance, RuleEngine) {
-		 
-		                            $scope.variant = angular.copy(variant ? variant : {});
-		          
-		                            if ($scope.variant && ('options' in $scope.variant))
-		                            {
-		                            	$scope.variant._options = $scope.variant.options.join("\n");
-		                            }
-		                   
-		                            var new_variant = variant ? false : true;
-		                   
-		                            $scope.save = function () {
-		                            	
-		                            	 if (!this.variant._options) this.variant._options = '';
-		                            	 
-		                            	 this.variant.options = this.variant._options.split("\n");
-		                            	  
-		                                 if (new_variant)
-		                                 {
-		                                 	$parentScope.child.variants.push(this.variant);
-		                                 }
-		                                 else
-		                                 {
-		                                 	update(variant, this.variant);
-		                                 }
-		                                 
-		                                 $scope.cancel();
-		                            };
-		
-		                            $scope.cancel = function () {
-		                                $modalInstance.dismiss('cancel');
-		                            };
-		
-		                        }
-		                    });
-		        	 	
-		        	  },
-		        	  'removeInstance' : function (instance)
-		        	  {
-		        	  	  instance._state = 'deleted';
-		        	  },
-	 
-		        	  'manageInstance' : function (instance, create)
-		        	  {
-		        	  	    var $parentScope = this;
-		        
-		        	  	    var find_child = function(child, entity)
-		        	  	    {
-		        	  	    	var new_product = _.findWhere(entity._products, {key : $parentScope.child.key});
-		        	  	    	var new_instance = _.findWhere(new_product._instances, {key : child.key});
-		        	  	    	return new_instance;
-		        	  	    };
-		        	  	    
-		        	  	    var complete_upload = function (data) {
-		                	 	var images = find_child(this.child, data.entity).images;
-		                	 	
-		                	 	if (images)
-		                	 	{
-		                	 		this.child.images = images;
-		                	 	}
-				             };
-				              
-		        	  	     var cfg = {
-			                	 'kind' : kind,
-			                	 'close' : false,
-			                	 'parentScope' : $parentScope,
-			                	 'scope' : angular.extend(make_product_scope(), {
-			                	 	'completed' : complete_upload,
-			                	 }),
-			                	 'update_child' : function (data) {
-							        var find = {key : $parentScope.child.key};
-			        	  	    	var new_product = _.findWhere(data.entity._products, find);
-			        	  	    	var found = _.last(new_product._instances);
-			        	  	    	update(this.child, found);
-			        	  	    	
-			        	  	    	$parentScope.child._instances = new_product._instances;
-							      },
-			                	 'get_child' : function ()
-			                	 {
-			                	 	var prod = _.findWhere(this.entity._products, {key : $parentScope.child.key});
-			                	 	this.child = instance;
-			                	 	prod._instances.push(this.child);
-			                	 },
-			                	 'handle' : function (data)
-						         {
-						             this.uploadConfig = $parentScope.uploadConfig;
-						         },
-			                    'templateUrl' : logic_template('catalog/product/manage_instance.html'),
-			                  };
-			                  
-			                  var update_cfg = {};
-			                  update_cfg['close'] = true;
-			        		  update_cfg['get_child'] = function ()
-			        		  {
-			        		  	  this.child = find_child(instance, this.entity);        	 	 
-			        		  };
-			        		  update_cfg['update_child'] = function (data)
-			        		  {
-			        		  	  var find = {key : $parentScope.child.key};
-			        		  	  update(this.child, find_child(this.child, data.entity));
-			        		  	  var new_product = _.findWhere(data.entity._products, find);
-			        		  	  $parentScope.child._instances = new_product._instances;
-			        		  };
-			               
-			                  if (create) {
-			                  	
-	           					cfg['options_after_update'] = update_cfg;
-	           					
-			        		  	EntityEditor.create(cfg);
-			        		  	
-			        		  }
-			        		  else
-			        		  {
-			        		  	update(cfg, update_cfg);
-			        		  	EntityEditor.update(cfg);
-			        		  }
-		        	   
-		        	  },
-		        	  'newInstance' : function ()
-		        	  {
-		        	  	
-						var $parentScope = this;
-		        	 	 
-		        	 	var modalInstance = $modal.open({
-		                        templateUrl: logic_template('catalog/product/create_instance.html'),
-		                        controller: function ($scope, $modalInstance, RuleEngine) {
-		  							
-		  							$scope.variants = [];
-		  				 
-		  							angular.forEach($parentScope.child.variants, function (v) {
-		 
-		  								$scope.variants.push({
-		  									'name' : v.name,
-		  									'options' : v.options,
-		  									'option' : null,
-		  								});
-		  							});
-		  							
-		                            $scope.save = function () {
-		                            	 
-		                            	 var variant_signature = [];
-		                            	 angular.forEach($scope.variants, function (v) {
-		                            	 	var d = {};
-		                            	 	d[v.name] = v.option;
-		                            	 	variant_signature.push(d);
-		                            	 });
-		                            	 
-		                            	 var manage = false;
-		                            	 
-		                            	 angular.forEach($parentScope.child._instances, function (inst) {
-		                            	 	if (inst.variant_signature == variant_signature)
-		                            	 	{
-		                            	 		$parentScope.manageInstance(inst);
-		                            	 		
-		                            	 		manage = true;
-		                            	 	}
-		                            	 });
-		                            	 
-		                            	 if (!manage)
-		                            	 {
-		                            	 	$parentScope.manageInstance({'variant_signature' : variant_signature}, 1);
-		                            	 }
-		                            	   
-		                            };
-		
-		                            $scope.cancel = function () {
-		                                $modalInstance.dismiss('cancel');
-		                            };
-		
-		                        }
-		                    });
-		        	  }, 
-		        	 _do_user_admin : function (entity, action) {
-		        	 	
-		        	 	    var $parentScope = this;
-	
-	                        var handle = function () {
-	
-	                            var modalInstance = $modal.open({
-	                                templateUrl: logic_template('catalog/product/user_admin.html'),
-	                                windowClass: 'modal-medium',
-	                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
-	                               
-	                                    $scope.rule = $parentScope.rule;
-	                                    $scope.action = action;
-	                                    $scope.log = {
-	                                        'message': '',
-	                                        'key': $parentScope.entity.key,
-	                                        'state' : $parentScope.entity.state,
-	                                        'note' : '',
-	                                    };
-	
-	                                    $scope.save = function () {
-	
-	                                        Endpoint.post(action, $parentScope.entity.kind, $scope.log)
-	                                            .success(function (data) {
-	
-	                                                EntityEditor.update_entity($parentScope, data, ['_images']);
-	
-	                                                $scope.cancel();
-	
-	                                            });
-	
-	                                    };
-	
-	                                    $scope.cancel = function () {
-	                                        $modalInstance.dismiss();
-	                                    };
-	                                }
-	                            });
-	
-	                        };
-	
-	                        handle();
-	
-	                    },
-	                    
-	                    duplicate : function()
-	                    {
-	                    	this._do_user_admin(this.entity, 'duplicate');
-	                    },
-		      		  
-		    	};
-	    	 
-	    	};
-
             var make_scope = function ()
             {
             	return {
@@ -479,7 +141,12 @@ MainApp
                 'completed': function (data) {
 					 
 					if (!this.entity._images) this.entity._images = [];
-					this.entity._images.extend(data.entity._images);
+					
+					if (data.entity && data.entity._images)
+					{
+					    this.entity._images.extend(data.entity._images);
+					}
+					
                 },
                 'removeImage': function (image) {
                 	image._state = 'deleted';
@@ -488,20 +155,16 @@ MainApp
 		 
 					 var that = this;
 					 
-					 var config = get_property_options(that.entity, '_images');
-					 
-					 if (!config.more) return false;
-					 
-					 Endpoint.post('read', '35', {'key' : that.entity.key,
-					  								'read_arguments' : {'_images' : {
-					  									'config' : config,
-					  			   }}}).success(function (data) {
-					  		 
-							that.entity._images.extend(data.entity._images);
-							update(get_property_options(that.entity, '_images'), get_property_options(data.entity, '_images'))
-					  });
-					 
-					 
+					 EntityEditor.read_entity_partial(that.entity, {
+					      '_images' : that.entity._next_read_arguments._images,
+					 }, function (data) {
+ 
+                            if (data.entity && data.entity._images)
+                            {
+                                that.entity._images.extend(data.entity._images);
+                            }
+					 });
+					  
                 },
              
             };
@@ -536,20 +199,18 @@ MainApp
                                 	
                                 	$scope.getMoreProducts = function ()
                                 	{ 
-											 var that = this;
-											 
-											 var config = get_property_options(that.entity, '_products');
-											 
-											 if (!config.more) return false;
-											 
-											 Endpoint.post('read', '35', {'key' : $parentScope.entity.key,
-											  								'read_arguments' : {'_products' : {
-											  									'config' : config,
-											  			   }}}).success(function (data) {
-											  		 
-													that.entity._products.extend(data.entity._products);
-													update(get_property_options(that.entity, '_products'), get_property_options(data.entity, '_products'));
-											  });
+									    var that = this;
+									    
+									    EntityEditor.read_entity_partial(that.entity, {
+                                              '_products' : that.entity._next_read_arguments._products,
+                                         }, function (data) {
+                     
+                                                if (data.entity && data.entity._products)
+                                                {
+                                                    that.entity._products.extend(data.entity._products);
+                                                }
+                                         });
+									    
                                 	};
  
                                     $scope.manageProduct = function (product) {
@@ -584,6 +245,7 @@ MainApp
 								                	 'handle' : function (data)
 											         {
 											             this.uploadConfig = $parentScope.uploadConfig;
+											            
 											         },
 								                	 'templateUrl' : logic_template('catalog/product/manage.html')
 								                };
@@ -618,7 +280,9 @@ MainApp
                                     	 }
                                     	 else
                                     	 {
-                                    	 	return EntityEditor.update(update_cfg);
+                                    	    
+                                    	    EntityEditor.update(update_cfg);
+                                    	      
                                     	 }
                                          
                                     };
@@ -688,7 +352,17 @@ MainApp
 
                         };
                          
-                        handle();
+                        EntityEditor.read_entity_partial($parentScope.entity, {
+                               '_products' : {},
+                         }, function (data) {
+                                  
+                                if (data.entity && data.entity._products)
+                                {
+                                    $parentScope.entity._products = data.entity._products;
+                                }
+                                
+                                handle();
+                         });
   
                     };
 
@@ -716,7 +390,7 @@ MainApp
                                         Endpoint.post(action, $parentScope.entity.kind, $scope.log)
                                             .success(function (data) {
 
-                                                EntityEditor.update_entity($parentScope, data, ['_images']);
+                                                EntityEditor.update_entity($parentScope, data, ['_images', '_products']);
 
                                                 $scope.cancel();
 
@@ -768,8 +442,356 @@ MainApp
 
                 },
                 'templateUrl': logic_template('catalog/manage.html'),
+              };
+            
             };
             
+            var make_product_scope = function ()
+            {
+        
+               return {
+                     'form_info' : {'action' : Endpoint.url},
+                     'accordions' : {
+                        'general' : true,
+                     },
+                     'gridConfig' : function (scope)
+                      {
+                            return {
+                                margin : 10
+                            };
+                     },
+                     'completed' : function (data)
+                     { 
+                         if (!this.child.images) this.child.images = [];
+                         
+                         if (data.entity && data.entity._products)
+                         {
+                             var images = _.findWhere(data.entity._products, {key : this.child.key}).images;
+                             this.child.images.extend(images);
+                         }
+                         
+                     },
+ 
+                    'removeImage' : function (image)
+                     {
+                        image._state = 'deleted';
+               
+                     },
+                     'removeContent' : function (content) {
+                        content._state = 'deleted';
+     
+                     },
+                     'removeVariant' : function (variant)
+                     {
+                        variant._state = 'deleted';
+                      
+                     },
+                     'getMoreProductInstances' : function (singular)
+                      { 
+                     
+                         var that = this;
+                         
+                         var read_args = that.entity._read_arguments;
+                         var new_read_args = {
+                             '_products' : {
+                                 'config' : read_args['_products']['config'],
+                                 '_instances' : (!singular ? that.entity._next_read_arguments._products._instances : that.entity._read_arguments._products._instances),
+                             }
+                         };
+                         
+                         var cf = new_read_args['_products']['config'];
+                         
+                         if (!cf)
+                         {
+                             cf = {'keys' : []};
+                             new_read_args['_products']['config'] = cf;
+                         }
+                         else
+                         {
+                             if (!cf['keys']) cf['keys'] = [];
+                              
+                         }
+                         
+                         cf['keys'].push(that.child.key);
+                         
+                     
+                         EntityEditor.read_entity_partial(that.entity, new_read_args, function (data) {
+                     
+                                if (data.entity && data.entity._products)
+                                {
+                                    var new_prod = _.findWhere(data.entity._products, {key : that.child.key});
+                                    if (new_prod)
+                                    {
+                                        that.child._instances.extend(new_prod._instances);
+                                    }
+                                }
+                          });
+                     },
+                     'manageContent' : function (content) { 
+                        
+                        var $parentScope = this;
+                         
+                        var modalInstance = $modal.open({
+                                templateUrl: logic_template('catalog/product/manage_content.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine) {
+         
+                                    $scope.content = angular.copy(content ? content : {});
+                              
+                                    var new_content = content ? false : true;
+                     
+                                    $scope.save = function () {
+                   
+                                         if (new_content)
+                                         {
+                                            $parentScope.child.contents.push($scope.content);
+                                         }
+                                         else
+                                         {
+                                            update(content, $scope.content);
+                                         }
+                                         
+                                         $scope.cancel();
+                                    };
+        
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss('cancel');
+                                    };
+        
+                                }
+                            });
+                        
+                      },
+                     'manageVariant' : function (variant) {
+                        
+                        var $parentScope = this;
+               
+                        var modalInstance = $modal.open({
+                                templateUrl: logic_template('catalog/product/manage_variant.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine) {
+         
+                                    $scope.variant = angular.copy(variant ? variant : {});
+                  
+                                    if ($scope.variant && ('options' in $scope.variant))
+                                    {
+                                        $scope.variant._options = $scope.variant.options.join("\n");
+                                    }
+                           
+                                    var new_variant = variant ? false : true;
+                           
+                                    $scope.save = function () {
+                                        
+                                         if (!this.variant._options) this.variant._options = '';
+                                         
+                                         this.variant.options = this.variant._options.split("\n");
+                                          
+                                         if (new_variant)
+                                         {
+                                            $parentScope.child.variants.push(this.variant);
+                                         }
+                                         else
+                                         {
+                                            update(variant, this.variant);
+                                         }
+                                         
+                                         $scope.cancel();
+                                    };
+        
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss('cancel');
+                                    };
+        
+                                }
+                            });
+                        
+                      },
+                      'removeInstance' : function (instance)
+                      {
+                          instance._state = 'deleted';
+                      },
+     
+                      'manageInstance' : function (instance, create)
+                      {
+                            var $parentScope = this;
+                
+                            var find_child = function(child, entity)
+                            {
+                                var new_product = _.findWhere(entity._products, {key : $parentScope.child.key});
+                                var new_instance = _.findWhere(new_product._instances, {key : child.key});
+                                return new_instance;
+                            };
+                            
+                            var complete_upload = function (data) {
+                                var images = find_child(this.child, data.entity).images;
+                                
+                                if (images)
+                                {
+                                    this.child.images = images;
+                                }
+                             };
+                              
+                             var cfg = {
+                                 'kind' : kind,
+                                 'close' : false,
+                                 'parentScope' : $parentScope,
+                                 'scope' : angular.extend(make_product_scope(), {
+                                    'completed' : complete_upload,
+                                 }),
+                                 'update_child' : function (data) {
+                                    var find = {key : $parentScope.child.key};
+                                    var new_product = _.findWhere(data.entity._products, find);
+                                    var found = _.last(new_product._instances);
+                                    update(this.child, found);
+                                    
+                                    $parentScope.child._instances = new_product._instances;
+                                  },
+                                 'get_child' : function ()
+                                 {
+                                    var prod = _.findWhere(this.entity._products, {key : $parentScope.child.key});
+                                    this.child = instance;
+                                    if (!prod._instances) prod._instances = [];
+                                    prod._instances.push(this.child);
+                                 },
+                                 'handle' : function (data)
+                                 {
+                                     this.uploadConfig = $parentScope.uploadConfig;
+                                 },
+                                'templateUrl' : logic_template('catalog/product/manage_instance.html'),
+                              };
+                              
+                              var update_cfg = {};
+                              update_cfg['close'] = true;
+                              update_cfg['get_child'] = function ()
+                              {
+                                  this.child = find_child(instance, this.entity);                
+                              };
+                              update_cfg['update_child'] = function (data)
+                              {
+                                  var find = {key : $parentScope.child.key};
+                                  update(this.child, find_child(this.child, data.entity));
+                                  var new_product = _.findWhere(data.entity._products, find);
+                                  $parentScope.child._instances = new_product._instances;
+                              };
+                           
+                              if (create) {
+                                
+                                cfg['options_after_update'] = update_cfg;
+                                
+                                EntityEditor.create(cfg);
+                                
+                              }
+                              else
+                              {
+                                update(cfg, update_cfg);
+                                EntityEditor.update(cfg);
+                              }
+                       
+                      },
+                      'newInstance' : function ()
+                      {
+                        
+                        var $parentScope = this;
+                         
+                        var modalInstance = $modal.open({
+                                templateUrl: logic_template('catalog/product/create_instance.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine) {
+                                    
+                                    $scope.variants = [];
+                         
+                                    angular.forEach($parentScope.child.variants, function (v) {
+         
+                                        $scope.variants.push({
+                                            'name' : v.name,
+                                            'options' : v.options,
+                                            'option' : null,
+                                        });
+                                    });
+                                    
+                                    $scope.save = function () {
+                                         
+                                         var variant_signature = [];
+                                         angular.forEach($scope.variants, function (v) {
+                                            var d = {};
+                                            d[v.name] = v.option;
+                                            variant_signature.push(d);
+                                         });
+                                         
+                                         var manage = false;
+                                         
+                                         angular.forEach($parentScope.child._instances, function (inst) {
+                                            if (inst.variant_signature == variant_signature)
+                                            {
+                                                $parentScope.manageInstance(inst);
+                                                
+                                                manage = true;
+                                            }
+                                         });
+                                         
+                                         if (!manage)
+                                         {
+                                            $parentScope.manageInstance({'variant_signature' : variant_signature}, 1);
+                                         }
+                                           
+                                    };
+        
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss('cancel');
+                                    };
+        
+                                }
+                            });
+                      }, 
+                     _do_user_admin : function (entity, action) {
+                        
+                            var $parentScope = this;
+    
+                            var handle = function () {
+    
+                                var modalInstance = $modal.open({
+                                    templateUrl: logic_template('catalog/product/user_admin.html'),
+                                    windowClass: 'modal-medium',
+                                    controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                   
+                                        $scope.rule = $parentScope.rule;
+                                        $scope.action = action;
+                                        $scope.log = {
+                                            'message': '',
+                                            'key': $parentScope.entity.key,
+                                            'state' : $parentScope.entity.state,
+                                            'note' : '',
+                                        };
+    
+                                        $scope.save = function () {
+    
+                                            Endpoint.post(action, $parentScope.entity.kind, $scope.log)
+                                                .success(function (data) {
+    
+                                                    EntityEditor.update_entity($parentScope, data, ['_images']);
+    
+                                                    $scope.cancel();
+    
+                                                });
+    
+                                        };
+    
+                                        $scope.cancel = function () {
+                                            $modalInstance.dismiss();
+                                        };
+                                    }
+                                });
+    
+                            };
+    
+                            handle();
+    
+                        },
+                        
+                        duplicate : function()
+                        {
+                            this._do_user_admin(this.entity, 'duplicate');
+                        },
+                      
+                };
+             
             };
             
             var catalog_read_arguments = {

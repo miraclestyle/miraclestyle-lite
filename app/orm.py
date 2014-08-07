@@ -614,7 +614,7 @@ class _BaseModel(object):
     '''
     model = self.__class__
     new_entity = model(_deepcopy=True)
-    new_entity.key = self.key
+    new_entity.key = copy.deepcopy(self.key)
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
@@ -2742,7 +2742,7 @@ class SuperSearchProperty(SuperJsonProperty):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
                          'filters', 'orders', 'keys']
-    for value_key, value in values.iteritems():
+    for value_key, value in values.items():
       if value_key not in allowed_arguments:
         del values[value_key]
   
@@ -2842,7 +2842,7 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
-      for value_key, value in options_values.iteritems():
+      for value_key, value in options_values.items():
         if value_key in ['keys_only', 'produce_cursors']:
           if not isinstance(value, bool):
             del options_values[value_key]

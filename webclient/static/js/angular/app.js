@@ -667,6 +667,16 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	};
 
         return {
+            read_entity_partial : function (entity, config, success)
+            {
+                return Endpoint.post('read', entity.kind, {
+                    key : entity.key,
+                    read_arguments : config,
+                }).success(function (data) {
+                    update(entity._read_arguments, config);
+                    success(data);
+                });
+            },
         	update_entity : function ($scope, data, exclude)
         	{
         		if (exclude)
@@ -724,8 +734,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                 
             },
             remove : function (options)
-            {
-             
+            { 
              	options = resolve_options(options);
              	var action = 'delete';
              	

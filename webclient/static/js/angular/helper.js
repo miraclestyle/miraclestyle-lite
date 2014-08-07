@@ -1,17 +1,6 @@
-function get_property_options(entity, path, all)
-{
-	var opts = entity._property_value_options;
-	var paths = path.split('.');
-	    angular.forEach(paths, function (v) {
-	    	opts = opts[v];
-	    });
-	    
-	if (all) return opts;
-	
-	return opts.config;
-}
- 
- 
+/**
+ * These are global scope helper functions and additional hacks
+ */
 function calculate_grider(all_canvas, max_w, min_w, margin){
  
   var loop = max_w - min_w;
@@ -187,7 +176,8 @@ function update()
 { 
  
     /**
-     * Updates a dict(s) based on last argument provided in argument list
+     * Updates a dict(s) based on last argument provided in argument list. e.g.
+     * update(dict1, dict2, dict3, dict_to_update_others)
      */
     
 	var objects = [];
