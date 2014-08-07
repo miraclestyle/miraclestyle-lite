@@ -271,7 +271,7 @@ class Catalog(orm.BaseExpando):
                           'user._is_taskqueue or user._root_admin'),
       orm.FieldPermission('35', ['_images.image', '_images.content_type', '_images.size', '_images.gs_object_name', '_images.serving_url',
                                  '_products.images.image', '_products.images.content_type', '_products.images.size',
-                                 '_products.images.gs_object_name', '_products.images.serving_url', 
+                                 '_products.images.gs_object_name', '_products.images.serving_url',
                                  '_products._instances.images.image', '_products._instances.images.content_type', '_products._instances.images.size',
                                  '_products._instances.images.gs_object_name', '_products._instances.images.serving_url'], False, None,
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images"])'),
@@ -352,7 +352,7 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('35', 'update'), # @todo we need read_arguments almost everywhere
+      key=orm.Action.build_key('35', 'update'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
         'name': orm.SuperStringProperty(required=True),

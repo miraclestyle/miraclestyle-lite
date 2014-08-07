@@ -16,9 +16,6 @@ Wrapper for google memcache library, combined with in-memory cache (per-request 
 
 '''
 
-def set(k, v, expire=0, **kwargs):
-  temp_set(k, v)
-  memcache.set(k, v, expire, **kwargs)
 
 def get(k, d=None, callback=None, **kwargs):
   ''''k' = identifier for cache,
@@ -33,7 +30,6 @@ def get(k, d=None, callback=None, **kwargs):
     tmp = temp_get(k, d)
   else:
     tmp = d
-  
   if tmp != d:
     return tmp
   else:
@@ -47,26 +43,31 @@ def get(k, d=None, callback=None, **kwargs):
     temp_set(k, tmp)
     return tmp
 
+
+def set(k, v, expire=0, **kwargs):
+  temp_set(k, v)
+  memcache.set(k, v, expire, **kwargs)
+
+
 def delete(k):
   temp_delete(k)
   memcache.delete(k)
 
-def tempcached(func, k=None, d=None):
-  '''Does temporary caching of the provided function.
-  Temporary caching is the one that is done inside threads using webapp2_extras.local
-  
-  '''
-  if k == None:
-    k = func.__name__
-  
-  def dec(*args, **kwargs):
-    v = temp_get(k, d)
-    if v == d:
-      v = func()
-      temp_set(k, v)
-      return v
-  
-  return dec
+
+def temp_get(k, d=None):
+  return getattr(_local, k, d)
+
+
+def temp_set(k, v):
+  setattr(_local, k, v)
+
+
+def temp_delete(k):
+  try:
+    del _local[k]
+  except:
+    pass
+
 
 def memcached(func, k=None, d=None):
   '''Decorator
@@ -88,17 +89,24 @@ def memcached(func, k=None, d=None):
   
   return dec
 
-def temp_get(k, d=None):
-  return getattr(_local, k, d)
 
-def temp_set(k, v):
-  setattr(_local, k, v)
+def tempcached(func, k=None, d=None):
+  '''Does temporary caching of the provided function.
+  Temporary caching is the one that is done inside threads using webapp2_extras.local
+  
+  '''
+  if k == None:
+    k = func.__name__
+  
+  def dec(*args, **kwargs):
+    v = temp_get(k, d)
+    if v == d:
+      v = func()
+      temp_set(k, v)
+      return v
+  
+  return dec
 
-def temp_delete(k):
-  try:
-    del _local[k]
-  except:
-    pass
 
 # Comply with memcache from google app engine. These methods will be possibly overriden in favor of above methods.
 set_servers = memcache.set_servers

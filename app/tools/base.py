@@ -52,9 +52,9 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
 def rule_exec(entity, action):
   if entity and hasattr(entity, '_action_permissions'):
     if not entity._action_permissions[action.key_urlsafe]['executable']:
-      raise orm.ActionDenied(action)  # @todo Do we use TerminateAction here?? -- no
+      raise orm.ActionDenied(action)
   else:
-    raise orm.ActionDenied(action)  # @todo Do we use TerminateAction here?? -- no
+    raise orm.ActionDenied(action)
 
 
 def callback_exec(url, callbacks):

@@ -484,7 +484,7 @@ class Domain(orm.BaseExpando):
                                                                   'width': 240, 'height': 100,
                                                                   'crop_to_fit': True, 'crop_offset_x': 0.0,
                                                                   'crop_offset_y': 0.0}),
-         'read_arguments': orm.SuperJsonProperty(),
+         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

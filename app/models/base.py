@@ -285,13 +285,13 @@ class _BaseImageProperty(_BaseBlobProperty):
     # We assume that self._process_config has at least either 'copy' or 'transform' keys!
     if config.pop('measure', True):
       if new_value.proportion is None:
-        wait_until = 0.5
+        pause = 0.5
         for i in xrange(4):
           try:
             fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
             break
-            time.sleep(wait_until)
-            wait_until = wait_until * 2
+            time.sleep(pause)  # @todo Should this be in except block?
+            pause = pause * 2
           except Exception as e:
             pass
         image = images.Image(image_data=fetch_image.content)
