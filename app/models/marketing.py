@@ -189,7 +189,8 @@ class CatalogImage(Image):
   
   _kind = 36
   
-  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '7', repeated=True)
+  sequence = orm.SuperIntegerProperty('7', required=True, indexed=False)
+  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
 
 
 class Catalog(orm.BaseExpando):
@@ -212,7 +213,7 @@ class Catalog(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi_sequenced'),
+    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi'),
     '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
     '_records': orm.SuperRecordProperty('35')
     }
