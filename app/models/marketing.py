@@ -785,7 +785,7 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('35', 'duplicate'),
+      key=orm.Action.build_key('35', 'catalog_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True)
         },
@@ -806,7 +806,54 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('35', 'process_duplicate'),
+      key=orm.Action.build_key('35', 'catalog_process_duplicate'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Duplicate(),
+            Write(),
+            CallbackNotify(),
+            CallbackExec()
+            ]
+          )
+        ]
+      ),
+    # @todo We are probably gonna need Duplicate plugin refactored for this operation to take place, just as in case of uploads!
+    orm.Action(
+      key=orm.Action.build_key('35', 'product_duplicate'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='35', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_catalog'}}),
+            CallbackNotify(),
+            CallbackExec(cfg=[('callback',
+                               {'action_id': 'process_duplicate', 'action_model': '35'},
+                               {'key': '_catalog.key_urlsafe'})])
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('35', 'product_process_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True)
         },
