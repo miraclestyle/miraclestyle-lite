@@ -385,6 +385,7 @@ class _BaseModel(object):
   
   '''
   _state = None  # This field is used by rule engine!
+  _sequence = None # Internally used for repeated properties
   _use_record_engine = True  # All models are by default recorded!
   _use_rule_engine = True  # All models by default respect rule engine! @todo This control property doen't respect Action control!!
   _use_search_engine = False  # Models can utilize google search services along with datastore search services.
@@ -397,6 +398,7 @@ class _BaseModel(object):
     if _deepcopied:
       kwargs.pop('_deepcopy')
     self._state = kwargs.pop('_state', None)
+    self._sequence = kwargs.pop('_sequence', None)
     super(_BaseModel, self).__init__(*args, **kwargs)
     if not _deepcopied:
       self.make_original()
@@ -1267,6 +1269,7 @@ class _BaseModel(object):
     dic = {}
     dic['kind'] = self.get_kind()
     dic['_state'] = self._state
+    dic['_sequence'] = self._sequence
     if self.key:
       dic['key'] = self.key.urlsafe()
       dic['id'] = self.key.id()
@@ -1614,6 +1617,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         property_value_copy = [property_value_copy]
       for i, value in enumerate(property_value_copy):
         value.set_key(str(i))
+        value._sequence = i
       self._property_value = property_value
     else:
       if self._property._repeated:
@@ -2227,18 +2231,22 @@ class _BaseStructuredProperty(_BaseProperty):
   def _set_value(self, entity, value):
     # __set__
     manager = self._get_value(entity)
-    """
     current_values = manager.value
     if self._repeated:
-      for val in list(value):
-        if val.key:
-          for i,current_value in enumerate(current_values):
-            if current_value.key == val.key:
-              current_values[i] = val
-              break
-    """
-    manager.set(value)
-    return super(_BaseStructuredProperty, self)._set_value(entity, value)
+      if value:
+        for val in value:
+          if val.key:
+            for i,current_value in enumerate(current_values):
+              if current_value.key == val.key:
+                current_values[i] = val
+                break
+          else:
+            current_values.append(val)
+        def sorting_function(val):
+          return val._sequence
+        current_values = sorted(current_values, key=sorting_function)
+    manager.set(current_values)
+    return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
   def _delete_value(self, entity):
     # __delete__
@@ -2263,6 +2271,7 @@ class _BaseStructuredProperty(_BaseProperty):
   
   def _structured_property_field_format(self, fields, values):
     _state = values.get('_state')
+    _sequence = values.get('_sequence')
     key = values.get('key')
     for value_key, value in values.items():
       field = fields.get(value_key)
@@ -2280,6 +2289,8 @@ class _BaseStructuredProperty(_BaseProperty):
     if key:
       values['key'] = Key(urlsafe=key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
+    if _sequence is not None:
+      values['_sequence'] = _sequence
   
   def _structured_property_format(self, value):
     value = self._property_value_format(value)

@@ -75,7 +75,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover = copy.deepcopy(catalog_images[0])
         context._catalog.cover.process()
     elif catalog_cover:
-      context._catalog.cover = None
+      context._catalog.cover._state = 'delete'
 
 
 class CatalogCronPublish(orm.BaseModel):

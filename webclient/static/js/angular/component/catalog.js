@@ -438,7 +438,7 @@ MainApp
                         'forcePlaceholderSize': true,
                         'placeholder': 'image-image image-image-placeholder grid-item',
                         'stop': function (e, u) {
-  							 
+  							 console.log(e, u);
                         }
                     };
 
