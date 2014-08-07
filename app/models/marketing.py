@@ -258,6 +258,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'index'),
                                   orm.Action.build_key('35', 'unindex'),
                                   orm.Action.build_key('35', 'cron')], True, 'user._is_taskqueue'),
+      orm.ActionPermission('35', [orm.Action.build_key('35', 'public_search')], True, 'True'),
       orm.FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, False,
                           'entity._original.namespace_entity._original.state != "active"'),
@@ -510,7 +511,6 @@ class Catalog(orm.BaseExpando):
           )
         ]
       ),
-    # @todo Perhaps, we are gonna need public_search action for searching published catalogs!?
     orm.Action(
       key=orm.Action.build_key('35', 'search'),
       arguments={
@@ -886,6 +886,49 @@ class Catalog(orm.BaseExpando):
             Write(),
             CallbackNotify(),
             CallbackExec()
+            ]
+          )
+        ]
+      ),
+    # @todo 'indexes' will need optimization!
+    orm.Action(
+      key=orm.Action.build_key('35', 'public_search'),
+      arguments={
+        'search': orm.SuperSearchProperty(
+          default={'kind': '35', 'orders': [{'field': 'created', 'operator': 'desc'}]},
+          cfg={
+            'use_search_engine': True,
+            'search_arguments': {'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'orders': {'created': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
+                       'updated': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
+            }
+          )
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            CatalogSearch(cfg={'index': settings.CATALOG_INDEX}),
+            #RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.total_matches': '_total_matches',
+                           'output.entities_count': '_entities_count',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
             ]
           )
         ]
