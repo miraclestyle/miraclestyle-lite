@@ -4,7 +4,7 @@
 <input type="hidden" name="action_model" value="35" />
 <input type="hidden" name="key" value="{{child.parent.parent.key}}" />
 <input type="hidden" name="product_instance" value="{{child.key}}" />
-<input type="hidden" name="read_arguments" value="{&quot;_products&quot; : { &quot;_instances&quot; : {&quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.key}}&quot;]}}}}" />
+<input type="hidden" name="read_arguments" value="{&quot;_products&quot; : { &quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.parent.key}}&quot;]}, &quot;_instances&quot; : {&quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.key}}&quot;]}}}}" />
 
 	
 <div scroll-end class="modal-body scrollable">
