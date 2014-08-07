@@ -398,7 +398,8 @@ class Domain(orm.BaseExpando):
       orm.FieldPermission('6', ['_records.note'], False, False,
                           'not user._root_admin'),
       orm.FieldPermission('6', ['state'], True, None,
-                          '(action.key_id_str == "sudo") and user._root_admin and (entity.state == "active" or entity.state == "su_suspended")')
+                          '(action.key_id_str == "sudo") and user._root_admin and (entity.state == "active" or entity.state == "su_suspended")'),
+      orm.FieldPermission('6', ['created', 'updated', 'name', 'state', 'logo'], None, True, 'entity._original.state == "active"')
       ]
     )
   

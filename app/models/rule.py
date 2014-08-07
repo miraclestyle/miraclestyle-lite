@@ -253,7 +253,7 @@ class DomainUser(orm.BaseExpando):
       orm.FieldPermission('8', ['state'], True, None,
                           '(action.key_id_str == "invite" and entity.state == "invited") or (action.key_id_str == "accept" and entity.state == "accepted")'),
       orm.FieldPermission('8', ['state'], None, True,
-                          'action.key_id_str == "read_domains" and user.key_id_str == entity._original.key_id_str')
+                          'entity._original.namespace_entity._original.state == "active" and user.key_id_str == entity._original.key_id_str')
       ]
     )
   
