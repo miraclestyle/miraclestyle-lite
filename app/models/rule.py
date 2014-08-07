@@ -109,7 +109,8 @@ class DomainRole(Role):
         'key': orm.SuperKeyProperty(kind='60', required=True),
         'name': orm.SuperStringProperty(required=True),
         'permissions': orm.SuperMultiLocalStructuredProperty(('80', '79'), repeated=True),
-        'active': orm.SuperBooleanProperty(default=True)
+        'active': orm.SuperBooleanProperty(default=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -326,7 +327,8 @@ class DomainUser(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='8', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'roles': orm.SuperKeyProperty(kind='60', repeated=True)
+        'roles': orm.SuperKeyProperty(kind='60', repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

@@ -59,9 +59,9 @@ class Engine:
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
     from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing
-    for model_kind, model in orm.Model._kind_map.items():
+    for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'get_fields'):
-        for field_key, field in model.get_fields().items():
+        for field_key, field in model.get_fields().iteritems():
           if hasattr(field, 'initialize'):
             field.initialize()
   
@@ -74,7 +74,7 @@ class Engine:
   @classmethod
   def process_blob_input(cls, input):
     uploaded_blobs = []
-    for key, value in input.items():
+    for key, value in input.iteritems():
       if isinstance(value, cgi.FieldStorage):
         if 'blob-key' in value.type_options:
           try:
@@ -218,7 +218,7 @@ class Engine:
       throw = True
       if isinstance(e.message, dict):
         # Here we handle our exceptions.
-        for key, value in e.message.items():
+        for key, value in e.message.iteritems():
           context.error(key, value)
           throw = False
       if isinstance(e, datastore_errors.Timeout):

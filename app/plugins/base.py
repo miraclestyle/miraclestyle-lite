@@ -41,9 +41,9 @@ class Set(orm.BaseModel):
       self.cfg = {}
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
-    for key, value in static_values.items():
+    for key, value in static_values.iteritems():
       set_attr(context, key, value)
-    for key, value in dynamic_values.items():
+    for key, value in dynamic_values.iteritems():
       set_value = get_attr(context, value, Nonexistent)
       if set_value is not Nonexistent:
         set_attr(context, key, set_value)
@@ -83,7 +83,6 @@ class Read(orm.BaseModel):
       entity = model()
       entity.set_key(None, parent=parent, namespace=namespace)
     entity.make_original()
-    print entity
     set_attr(context, save_path, entity)
 
 
@@ -101,7 +100,7 @@ class Write(orm.BaseModel):
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
-      for key, value in dynamic_record_arguments.items():
+      for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
       entity.write(record_arguments)
 
@@ -120,7 +119,7 @@ class Delete(orm.BaseModel):
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.user.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
-      for key, value in dynamic_record_arguments.items():
+      for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
       entity.delete(record_arguments)
 
@@ -185,7 +184,7 @@ class UploadImages(orm.BaseModel):  # @todo Renaming and possible restructuring 
       entity = entities[0]
     if entity and isinstance(entity, orm.Model):
       fields = entity.get_fields()
-      for field_key, path in add_config.items():
+      for field_key, path in add_config.iteritems():
         field = fields.get(field_key, None)
         if field and field.is_structured:
           value = getattr(entity, field_key, None)
@@ -207,7 +206,7 @@ class RulePrepare(orm.BaseModel):
     dynamic_kwargs = self.cfg.get('d', {})
     kwargs = {'user': context.user, 'action': context.action}
     kwargs.update(static_kwargs)
-    for key, value in dynamic_kwargs.items():
+    for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = get_attr(context, value)
     entities = get_attr(context, entity_path)
     rule_prepare(entities, skip_user_roles, strict, **kwargs)
@@ -283,7 +282,7 @@ class CallbackExec(orm.BaseModel):
     queues = {}
     for config in self.cfg:
       queue_name, static_data, dynamic_data = config
-      for key, value in dynamic_data.items():
+      for key, value in dynamic_data.iteritems():
         static_data[key] = get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
     for callback in context._callbacks:

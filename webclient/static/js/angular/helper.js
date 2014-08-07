@@ -10,7 +10,8 @@ function get_property_options(entity, path, all)
 	
 	return opts.config;
 }
-
+ 
+ 
 function calculate_grider(all_canvas, max_w, min_w, margin){
  
   var loop = max_w - min_w;

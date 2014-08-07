@@ -48,7 +48,7 @@ class UserLoginInit(orm.BaseModel):
     client = oauth2.Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
-    for urls_login_method, cfg in login_methods.items():
+    for urls_login_method, cfg in login_methods.iteritems():
       urls_oauth2_cfg = cfg['oauth2']
       urls_client = oauth2.Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()

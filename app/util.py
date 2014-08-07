@@ -145,7 +145,7 @@ def normalize(source):
   if isinstance(source, basestring):
     return [source]
   if isinstance(source, dict):
-    return [item for key, item in source.items()]
+    return [item for key, item in source.iteritems()]
   try:
     items = iter(source)
     return [item for item in items]

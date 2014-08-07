@@ -909,8 +909,15 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             	
                             	if (angular.isFunction($scope.pre_save))
 	                               $scope.pre_save();
+	                               
+	                            var to_save = (('save_data' in $scope) ? $scope.save_data : $scope.entity);
+	                            
+	                            if ('_read_arguments' in to_save)
+	                            {
+	                                to_save['read_arguments'] = to_save._read_arguments;
+	                            }
 	                        
-                                Endpoint.post(action, $scope.options['kind'], (('save_data' in $scope) ? $scope.save_data : $scope.entity))
+                                Endpoint.post(action, $scope.options['kind'], to_save)
                                 .success(function (data) {
                                 	
                                 	    var entity_from_db = (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']);
@@ -1030,8 +1037,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                 {
                 	handle();
                 }
-                
-                 
+              
             }
 
         };

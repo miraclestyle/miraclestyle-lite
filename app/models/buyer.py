@@ -66,7 +66,8 @@ class Addresses(orm.BaseModel):
       key=orm.Action.build_key('77', 'update'),
       arguments={
         'user': orm.SuperKeyProperty(kind='0', required=True),
-        'addresses': orm.SuperLocalStructuredProperty(Address, repeated=True)
+        'addresses': orm.SuperLocalStructuredProperty(Address, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -145,7 +146,8 @@ class Collection(orm.BaseModel):
       arguments={
         'user': orm.SuperKeyProperty(kind='0', required=True),
         'notify': orm.SuperBooleanProperty(default=True),
-        'domains': orm.SuperKeyProperty(kind='6', repeated=True)
+        'domains': orm.SuperKeyProperty(kind='6', repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

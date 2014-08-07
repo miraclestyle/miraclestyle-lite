@@ -124,7 +124,8 @@ class User(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='0', required=True),
         'primary_email': orm.SuperStringProperty(),
-        'disassociate': orm.SuperStringProperty(repeated=True)
+        'disassociate': orm.SuperStringProperty(repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -477,12 +478,13 @@ class Domain(orm.BaseExpando):
         'key': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
         'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=primary_contact_validator),
-        'logo': SuperImageLocalStructuredProperty(Image, required=True, argument_format_upload=True,
+        'logo': SuperImageLocalStructuredProperty(Image, argument_format_upload=True,
                                                   process=True,
                                                   process_config={'measure': False, 'transform': True,
                                                                   'width': 240, 'height': 100,
                                                                   'crop_to_fit': True, 'crop_offset_x': 0.0,
-                                                                  'crop_offset_y': 0.0})  # @todo What if logo is not supplied during update?
+                                                                  'crop_offset_y': 0.0}),
+         'read_arguments': orm.SuperJsonProperty(),
         },
       _plugin_groups=[
         orm.PluginGroup(

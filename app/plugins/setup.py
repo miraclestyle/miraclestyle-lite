@@ -98,7 +98,7 @@ class DomainSetup(Setup):
           permissions.append(ActionPermission(obj.get_kind(), actions, True, 'True'))
           props = obj.get_fields()
           prop_names = []
-          for prop_name, prop in props.items():
+          for prop_name, prop in props.iteritems():
             prop_names.append(prop_name)
           permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)

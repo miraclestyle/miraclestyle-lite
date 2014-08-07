@@ -140,7 +140,8 @@ class Widget(orm.BaseExpando):
         'active': orm.SuperBooleanProperty(default=True),
         'role': orm.SuperKeyProperty(kind='60', required=True),
         'search_form': orm.SuperBooleanProperty(default=True),
-        'filters': orm.SuperLocalStructuredProperty(Filter, repeated=True)
+        'filters': orm.SuperLocalStructuredProperty(Filter, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

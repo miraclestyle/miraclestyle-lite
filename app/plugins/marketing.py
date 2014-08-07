@@ -7,6 +7,7 @@ Created on Apr 15, 2014
 
 import hashlib
 import datetime
+import copy
 
 from app import orm
 from app.tools.base import *
@@ -68,13 +69,14 @@ class CatalogProcessCoverSet(orm.BaseModel):
     if catalog_images and len(catalog_images):
       if catalog_cover:
         if catalog_cover.gs_object_name[:-6] != catalog_images[0].gs_object_name:
-          context._catalog.cover = catalog_images[0]
+          context._catalog.cover = copy.deepcopy(catalog_images[0])
           context._catalog.cover.process()
       else:
-        context._catalog.cover = catalog_images[0]
+        context._catalog.cover = copy.deepcopy(catalog_images[0])
         context._catalog.cover.process()
     elif catalog_cover:
       context._catalog.cover = None
+    print context._catalog.cover.value
 
 
 class CatalogCronPublish(orm.BaseModel):

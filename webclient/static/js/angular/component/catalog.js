@@ -774,10 +774,6 @@ MainApp
             
             var catalog_read_arguments = {
                             	'_images' : {},
-                            	'_products' : {
-                            		'_instances' : {
-                            		},
-                            	},
                            };
              
             return {

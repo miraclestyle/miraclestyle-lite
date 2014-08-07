@@ -359,7 +359,8 @@ class Catalog(orm.BaseExpando):
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),
-        '_products': orm.SuperLocalStructuredProperty(Product, repeated=True)
+        '_products': orm.SuperLocalStructuredProperty(Product, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -371,7 +372,7 @@ class Catalog(orm.BaseExpando):
                            '_catalog.discontinue_date': 'input.discontinue_date',
                            '_catalog._images': 'input._images',
                            '_catalog._products': 'input._products'}}),
-            CatalogProcessCoverSet(),  # @todo Not sure if this is ok!? 'read_arguments': {'_images': {'config': {'cursor': 0, 'limit': 1}}}
+            CatalogProcessCoverSet(),
             RulePrepare(),
             RuleExec()
             ]
@@ -391,7 +392,8 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, process=True, repeated=True)
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, process=True, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -399,7 +401,7 @@ class Catalog(orm.BaseExpando):
             Context(),
             Read(),
             UploadImages(cfg={'add_config': {'_images': 'input._images'}}),
-            CatalogProcessCoverSet(),  # @todo Not sure if this is ok!? 'read_arguments': {'_images': {'config': {'cursor': 0, 'limit': 1}}}
+            CatalogProcessCoverSet(),
             RulePrepare(),
             RuleExec()
             ]

@@ -221,7 +221,8 @@ class Notification(orm.BaseExpando):
         'action': orm.SuperVirtualKeyProperty(required=True, kind='56'),
         'condition': orm.SuperTextProperty(required=True),
         'active': orm.SuperBooleanProperty(),
-        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True)
+        'templates': orm.SuperMultiLocalStructuredProperty(('58', '63'), repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

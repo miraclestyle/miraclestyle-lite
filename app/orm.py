@@ -417,7 +417,7 @@ class _BaseModel(object):
     if virtual_fields:
       out = out[:-1]
       repr = []
-      for field_key, field in virtual_fields.items():
+      for field_key, field in virtual_fields.iteritems():
         val = getattr(self, field_key, None)
         repr.append('%s=%s' % (field._code_name, val))
       out += '%s)' % ", ".join(repr)
@@ -456,7 +456,7 @@ class _BaseModel(object):
   @classmethod
   def get_fields(cls):
     fields = {}
-    for prop_key, prop in cls._properties.items():
+    for prop_key, prop in cls._properties.iteritems():
       fields[prop._code_name] = prop
     virtual_fields = cls.get_virtual_fields()
     if virtual_fields:
@@ -466,7 +466,7 @@ class _BaseModel(object):
   @classmethod
   def get_virtual_fields(cls):
     if hasattr(cls, '_virtual_fields'):
-      for prop_key, prop in cls._virtual_fields.items():
+      for prop_key, prop in cls._virtual_fields.iteritems():
         if not prop._code_name:
           prop._code_name = prop_key
         if not prop._name:
@@ -493,7 +493,7 @@ class _BaseModel(object):
     '''
     entity = self
     if entity.key and entity.key.id():
-      for field, field_instance in entity.get_fields().items():
+      for field, field_instance in entity.get_fields().iteritems():
         if isinstance(field_instance, SuperReferenceProperty) and field_instance._autoload:
           manager = field_instance._get_value(entity, internal=True)
           manager.read_async()
@@ -514,7 +514,7 @@ class _BaseModel(object):
   
   def _pre_put_hook(self):
     self.rule_write()
-    for field_key, field in self.get_fields().items():
+    for field_key, field in self.get_fields().iteritems():
       value = getattr(self, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.pre_update()
@@ -522,7 +522,7 @@ class _BaseModel(object):
   def _post_put_hook(self, future):
     entity = self
     entity.record()
-    for field_key, field in entity.get_fields().items():
+    for field_key, field in entity.get_fields().iteritems():
       value = getattr(entity, field_key, None)
       if isinstance(value, SuperPropertyManager):
         value.post_update()
@@ -537,7 +537,7 @@ class _BaseModel(object):
       if entity is None:
         return # already deleted, nothing we can do about it
       entity.record()
-      for field_key, field in entity.get_fields().items():
+      for field_key, field in entity.get_fields().iteritems():
         # we have to check here if it has struct
         if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(entity, field_key, None)
@@ -614,7 +614,7 @@ class _BaseModel(object):
     '''
     model = self.__class__
     new_entity = model(_deepcopy=True)
-    new_entity.key = copy.deepcopy(self.key)
+    new_entity.key = self.key
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
@@ -746,8 +746,8 @@ class _BaseModel(object):
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
             for child_entity_item in child_entity:
               child_fields = child_entity_item.get_fields()
-              child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.items()]))
-              for child_field_key, child_field in child_fields.items():
+              child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.iteritems()]))
+              for child_field_key, child_field in child_fields.iteritems():
                 cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
         else:
           child_entity = getattr(entity, field_key)
@@ -755,14 +755,14 @@ class _BaseModel(object):
             child_entity = child_entity.value
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
             child_fields = child_entity.get_fields()
-            child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.items()]))
-            for child_field_key, child_field in child_fields.items():
+            child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.iteritems()]))
+            for child_field_key, child_field in child_fields.iteritems():
               cls._rule_read(permissions[field_key], child_entity, child_field_key, child_field)
   
   def rule_read(self):
     if self._use_rule_engine and hasattr(self, '_field_permissions'):
       entity_fields = self.get_fields()
-      for field_key, field in entity_fields.items():
+      for field_key, field in entity_fields.iteritems():
         self._rule_read(self._field_permissions, self, field_key, field)
   
   @classmethod
@@ -793,7 +793,9 @@ class _BaseModel(object):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
-        if child_entity is None:
+        if child_entity is None and not field._required:
+          if not permissions[field_key]['writable']:
+            setattr(entity, field_key, field_value) # revert entire structure
           return
         if field._repeated:
           # field_value can be none, and below we iterate it, so that will throw an error
@@ -832,7 +834,7 @@ class _BaseModel(object):
             # If its not repeated, child_entities state will be set to modified
             child_entity._state = 'modified'
         # Here we begin the process of field drill.
-        for child_field_key, child_field in field.get_model_fields().items():
+        for child_field_key, child_field in field.get_model_fields().iteritems():
           if field._repeated:
             # They are bound dict[key_urlsafe] = item
             for i, child_entity_item in enumerate(child_entity):
@@ -853,7 +855,7 @@ class _BaseModel(object):
       if not hasattr(self, '_original'):
         raise PropertyError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
       entity_fields = self.get_fields()
-      for field_key, field in entity_fields.items():
+      for field_key, field in entity_fields.iteritems():
         field_value = getattr(self._original, field_key)
         self._rule_write(self._field_permissions, self, field_key, field, field_value)
   
@@ -864,7 +866,7 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_reset_fields(cls, field_permissions, fields):
-    for field_key, field in fields.items():
+    for field_key, field in fields.iteritems():
       if field_key not in field_permissions:
         field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
       if hasattr(field, 'is_structured') and field.is_structured:
@@ -888,7 +890,7 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_decide(cls, permissions, strict, root=True, parent_permissions=None):
-    for key, value in permissions.items():
+    for key, value in permissions.iteritems():
       if isinstance(value, dict):
         if parent_permissions:
           root = False
@@ -911,7 +913,7 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_override_local_permissions(cls, global_permissions, local_permissions):
-    for key, value in local_permissions.items():
+    for key, value in local_permissions.iteritems():
       if isinstance(value, dict):
         cls._rule_override_local_permissions(global_permissions[key], local_permissions[key])  # global_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
       else:
@@ -924,7 +926,7 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_complement_local_permissions(cls, global_permissions, local_permissions):
-    for key, value in global_permissions.items():
+    for key, value in global_permissions.iteritems():
       if isinstance(value, dict):
         cls._rule_complement_local_permissions(global_permissions[key], local_permissions[key])  # local_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
       else:
@@ -933,7 +935,7 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_compile_global_permissions(cls, global_permissions):
-    for key, value in global_permissions.items():
+    for key, value in global_permissions.iteritems():
       if isinstance(value, dict):
         cls._rule_compile_global_permissions(global_permissions[key])
       else:
@@ -1030,8 +1032,9 @@ class _BaseModel(object):
     '''
     if read_arguments is None:
       read_arguments = {}
+    self._read_arguments = read_arguments
     futures = []
-    for field_key, field in self.get_fields().items():
+    for field_key, field in self.get_fields().iteritems():
       if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
         # we only read what we're told to or if its a local storage or if its marked for autoload
         field_read_arguments = read_arguments.get(field_key, {})
@@ -1111,7 +1114,7 @@ class _BaseModel(object):
     new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
-    for field_key, field in new_entity.get_fields().items():
+    for field_key, field in new_entity.get_fields().iteritems():
       if hasattr(field, 'is_structured') and field.is_structured:
         value = getattr(new_entity, field_key, None)
         if value:
@@ -1148,11 +1151,11 @@ class _BaseModel(object):
         doc_fields.append(search.AtomField(name='namespace', value=self.key_namespace))
       if self.key_parent is not None:
         doc_fields.append(search.AtomField(name='ancestor', value=self.key_parent.urlsafe()))
-      for field_key, field in self.get_fields().items():
+      for field_key, field in self.get_fields().iteritems():
         if field._searchable:
           doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
       if fields is not None:
-        for field_key, field in fields.items():
+        for field_key, field in fields.iteritems():
           doc_fields.append(field.get_search_document_field(getattr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
@@ -1193,7 +1196,7 @@ class _BaseModel(object):
     self.update_search_index('index', documents, self._root.key_kind, self._root.key_namespace)
     mem.temp_delete(self.key._search_index)
     if self._write_custom_indexes:
-      for index_name, index_documents in self._write_custom_indexes.items():
+      for index_name, index_documents in self._write_custom_indexes.iteritems():
         self.update_search_index('index', index_documents, index_name)
       self._write_custom_indexes = {}
   
@@ -1202,7 +1205,7 @@ class _BaseModel(object):
     self.update_search_index('unindex', documents, self._root.key_kind, self._root.key_namespace)
     mem.temp_delete(self.key._search_unindex)
     if self._delete_custom_indexes:
-      for index_name, index_documents in self._delete_custom_indexes.items():
+      for index_name, index_documents in self._delete_custom_indexes.iteritems():
         self.update_search_index('unindex', index_documents, index_name)
       self._delete_custom_indexes = {}
   
@@ -1219,10 +1222,10 @@ class _BaseModel(object):
         dic[field.name] = field.value
     return dic
   
-  def _set_property_value_options(self):
+  def _set_next_read_arguments(self):
     if self is self._root:
       def scan(value, field_key, field, value_options):
-        if isinstance(value, SuperPropertyManager) and hasattr(value, 'value_options'):
+        if isinstance(value, SuperPropertyManager) and hasattr(value, 'value_options') and value.has_value():
           options = {'config': value.value_options}
           value_options[field_key] = options
           if value.has_value():
@@ -1231,14 +1234,14 @@ class _BaseModel(object):
           for val in value:
             scan(val, field_key, field, value_options)
         elif value is not None and isinstance(value, Model):
-          for field_key, field in value.get_fields().items():
+          for field_key, field in value.get_fields().iteritems():
             val = getattr(value, field_key, None)
             scan(val, field_key, field, value_options)
       value_options = {}
-      for field_key, field in self.get_fields().items():
+      for field_key, field in self.get_fields().iteritems():
         scan(self, field_key, field, value_options)
-      self._property_value_options = value_options
-      return self._property_value_options
+      self._next_read_arguments = value_options
+      return self._next_read_arguments
           
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
@@ -1288,9 +1291,11 @@ class _BaseModel(object):
         dic[name] = value
     except Exception as e:
       util.log(e, 'exception')
-    self._set_property_value_options()
-    if hasattr(self, '_property_value_options'):
-      dic['_property_value_options'] = self._property_value_options
+    self._set_next_read_arguments()
+    if hasattr(self, '_next_read_arguments'):
+      dic['_next_read_arguments'] = self._next_read_arguments
+    if hasattr(self, '_read_arguments'):
+      dic['_read_arguments'] = self._read_arguments
     return dic
 
 
@@ -1360,7 +1365,7 @@ class BaseExpando(_BaseModel, Expando):
   @classmethod
   def get_expando_fields(cls):
     if hasattr(cls, '_expando_fields'):
-      for prop_key, prop in cls._expando_fields.items():
+      for prop_key, prop in cls._expando_fields.iteritems():
         if not prop._code_name:
           prop._code_name = prop_key
       return cls._expando_fields
@@ -1414,7 +1419,7 @@ class BaseExpando(_BaseModel, Expando):
     if prop is None:
       expando_fields = self.get_expando_fields()
       if expando_fields:
-        for expando_prop_key, expando_prop in expando_fields.items():
+        for expando_prop_key, expando_prop in expando_fields.iteritems():
           if expando_prop._name == next:
             prop = expando_prop
             self._properties[expando_prop._name] = expando_prop
@@ -1640,7 +1645,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     elif supplied_keys:
-      entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
+      entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).argument_format(supplied_keys))
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1683,7 +1688,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
         cursor = None
       elif supplied_keys:
-        entities = get_multi_clean(map(lambda x: Key(urlsafe=x), supplied_keys))
+        entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).argument_format(supplied_keys))
         cursor = None
       else:
         keys = [Key(self._property.get_modelclass().get_kind(),
@@ -1712,7 +1717,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         entities = [entities]
       futures = []
       for entity in entities:
-        for field_key, field in entity.get_fields().items():
+        for field_key, field in entity.get_fields().iteritems():
           if hasattr(field, 'is_structured') and field.is_structured:
             if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
               value = getattr(entity, field_key)
@@ -2273,8 +2278,7 @@ class _BaseStructuredProperty(_BaseProperty):
     if not self._repeated:
       value = [value]
     for v in value:
-      if v is None and not self._required:
-        out.append(v)
+      if v is None and not self._required and len(value) < 2:
         continue
       provided_kind_id = v.get('kind')
       fields = self.get_model_fields(kind=provided_kind_id)
@@ -2738,7 +2742,7 @@ class SuperSearchProperty(SuperJsonProperty):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
                          'filters', 'orders', 'keys']
-    for value_key, value in values.items():
+    for value_key, value in values.iteritems():
       if value_key not in allowed_arguments:
         del values[value_key]
   
@@ -2838,7 +2842,7 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
-      for value_key, value in options_values.items():
+      for value_key, value in options_values.iteritems():
         if value_key in ['keys_only', 'produce_cursors']:
           if not isinstance(value, bool):
             del options_values[value_key]
@@ -2879,7 +2883,7 @@ class SuperSearchProperty(SuperJsonProperty):
     options = values.get('options', {})
     if 'limit' not in options.keys():
       raise PropertyError('limit_value_missing')
-    for value_key, value in options.items():
+    for value_key, value in options.iteritems():
       if value_key == 'limit':
         if not isinstance(value, (int, long)):
           raise PropertyError('limit_value_incorrect')
@@ -3290,7 +3294,7 @@ class Record(BaseExpando):
     return not (self.__class__._properties is self._properties)
   
   def _retrieve_cloned_name(self, name):
-    for _, prop in self._properties.items():
+    for _, prop in self._properties.iteritems():
       if name == prop._code_name:
         return prop._name
   
@@ -3330,7 +3334,7 @@ class Record(BaseExpando):
       kind = self.key_parent.kind()
       modelclass = self._kind_map.get(kind)
       # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
-      properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().items()])
+      properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().iteritems()])
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.
       prop = properties.get(next)
       if prop:
@@ -3341,7 +3345,7 @@ class Record(BaseExpando):
   
   def log_entity(self, entity):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
-    for _, prop in entity._properties.items():  # We do not call get_fields here because all fields that have been written are in _properties.
+    for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       if isinstance(value, SuperPropertyManager):
         value = value.value
