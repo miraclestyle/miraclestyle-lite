@@ -320,7 +320,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            BlobURL(cfg={'bucket': settings.CATALOG_IMAGE_BUCKET}),
+            BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
             Set(cfg={'d': {'output.entity': '_catalog',
                            'output.upload_url': '_blob_url'}})
             ]

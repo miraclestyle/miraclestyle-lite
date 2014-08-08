@@ -285,9 +285,11 @@ class BlobURL(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    gs_bucket_name = self.cfg.get('bucket', None)
+    gs_bucket = self.cfg.get('bucket', None)
+    sufix = self.cfg.get('sufix', '/' + context.model.__name__.lower())
     upload_url = context.input.get('upload_url')
-    if upload_url:
+    if upload_url and gs_bucket:
+      gs_bucket_name = gs_bucket + sufix
       context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       #raise orm.TerminateAction()
 

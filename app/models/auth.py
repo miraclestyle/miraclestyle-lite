@@ -416,7 +416,7 @@ class Domain(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'skip_user_roles': True}),
             RuleExec(),
-            BlobURL(cfg={'bucket': settings.DOMAIN_LOGO_BUCKET}),
+            BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
             Set(cfg={'d': {'output.entity': '_domain',
                            'output.upload_url': '_blob_url'}})
             ]
