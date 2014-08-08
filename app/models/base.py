@@ -402,7 +402,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       self.process(out)
     else:
       self.generate_serving_urls(out)
-      if not self._process_config or self._process_config.get('measure', True):
+      if self._process_config.get('measure', True):
         self.generate_measurements(out)
     map(lambda x: self.save_blobs_on_success(x.image), out)
     if not self._repeated:
