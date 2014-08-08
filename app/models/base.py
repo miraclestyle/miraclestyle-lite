@@ -162,12 +162,8 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
     '''
     if self.has_value() and not self.has_future():  # In case value is a future we cannot proceed. Everything must be already loaded!
       if isinstance(self._property, _BaseImageProperty):
-        if self._property._repeated:
-          processed_entities = map(self._property.process, self.value)
-          setattr(self._entity, self.property_name, processed_entities)
-        else:
-          processed_entity = self._property.process(self.value)
-          setattr(self._entity, self.property_name, processed_entity)
+        processed_value = self._property.process(self.value)
+        setattr(self._entity, self.property_name, processed_value)
 
 
 class _BaseBlobProperty(object):
@@ -268,48 +264,48 @@ class _BaseImageProperty(_BaseBlobProperty):
     self._argument_format_upload = kwargs.pop('argument_format_upload', False)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
-    
+  
   def generate_serving_urls(self, values):
     @orm.tasklet
-    def make(o):
-      if o.serving_url:
-        raise orm.Return(True) # exit tasklet since we already generated the serving_url
-      o.serving_url = yield images.get_serving_url_async(o.image)
+    def generate(value):
+      if value.serving_url:
+        raise orm.Return(True)
+      value.serving_url = yield images.get_serving_url_async(value.image)
       raise orm.Return(True)
-        
+    
     @orm.tasklet
     def mapper(values):
-      yield map(make, values)
+      yield map(generate, values)
       raise orm.Return()
-    # start all
-    mapper(values).get_result()
     
-  def take_measurements(self, values):
+    mapper(values).get_result()
+  
+  def generate_measurements(self, values):
     ctx = orm.get_context()
     @orm.tasklet
-    def measure(o):
-      if o.proportion is None:
+    def measure(value):
+      if value.proportion is None:
         pause = 0.5
         for i in xrange(4):
           try:
-            fetch_image = yield ctx.urlfetch('%s=s100' % o.serving_url) # http://stackoverflow.com/q/14944317/376238
+            # @todo There is a deadline parameter in urlfetch.fetch() function that defaults to 5seconds. Does ctx.urlfetch has the same deadline? If so, could this be an issue for this particular (pause) situation!?
+            fetched_image = yield ctx.urlfetch('%s=s100' % value.serving_url)  # http://stackoverflow.com/q/14944317/376238
             break
           except Exception as e:
             time.sleep(pause)
             pause = pause * 2
-        image = images.Image(image_data=fetch_image.content)
-        o.proportion = float(image.width) / float(image.height)
-        del fetch_image, image
+        image = images.Image(image_data=fetched_image.content)
+        value.proportion = float(image.width) / float(image.height)
+        del fetched_image, image
         raise orm.Return(True)
-        
+    
     @orm.tasklet
     def mapper(values):
       yield map(measure, values)
       raise orm.Return()
-    # start all
+    
     mapper(values).get_result()
-     
-     
+  
   def process(self, values):
     ''' @todo How efficient/fast is image = images.Image(filename=new_value.gs_object_name)???
     class Image(image_data=None, blob_key=None, filename=None)
@@ -318,11 +314,8 @@ class _BaseImageProperty(_BaseBlobProperty):
     image to transform. Only one of these should be provided.
     
     '''
-    single = False
-    if not isinstance(values, list):
-      values = [values]
-      single = True
-    for i,value in enumerate(values):
+    @orm.tasklet
+    def process_image(value):
       config = self._process_config
       new_value = value
       gs_object_name = new_value.gs_object_name
@@ -359,17 +352,28 @@ class _BaseImageProperty(_BaseBlobProperty):
         writable_blob.close()
         if gs_object_name != new_gs_object_name:
           new_value.gs_object_name = new_gs_object_name
-          blob_key = blobstore.create_gs_key(new_gs_object_name)
+          blob_key = blobstore.create_gs_key(new_gs_object_name)  # @todo What about create_gs_key_async() (https://developers.google.com/appengine/docs/python/blobstore/functions)!?
           new_value.image = blobstore.BlobKey(blob_key)
           new_value.serving_url = None # sets none to ensure that the url generator will create
-      values[i] = new_value # override the one that was set beforehand
+      # @todo How do we reasign new_value back to values list?
+      value = new_value
+      raise orm.Return(True)
+    
+    @orm.tasklet
+    def mapper(values):
+      yield map(process_image, values)
+      raise orm.Return()
+    
+    single = False
+    if not isinstance(values, list):
+      values = [values]
+      single = True
+    mapper(values).get_result()
     self.generate_serving_urls(values)
-    self.take_measurements(values)
     if single:
       values = values[0]
     return values
-     
-     
+  
   def argument_format(self, value):
     if not self._argument_format_upload:
       return super(_BaseImageProperty, self).argument_format(value)
@@ -392,15 +396,14 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'content_type': file_info.content_type,
                                            'gs_object_name': file_info.gs_object_name,
                                            'image': blob_info.key(),
-                                           '_sequence': i
-                                           })
+                                           '_sequence': i})
       out.append(new_image)
     if self._process:
-      self.process(out) # process will call both generate and take measurements
-    else: # otherwise we always call serving urls and measurements, if told to
+      self.process(out)
+    else:
       self.generate_serving_urls(out)
-      if not self._process_config or self._process_config.get('measure', True): # if we implicitly told that it never takes the measurement
-        self.take_measurements(out)
+      if not self._process_config or self._process_config.get('measure', True):
+        self.generate_measurements(out)
     map(lambda x: self.save_blobs_on_success(x.image), out)
     if not self._repeated:
       out = out[0]
