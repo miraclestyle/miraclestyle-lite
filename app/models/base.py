@@ -314,10 +314,9 @@ class _BaseImageProperty(_BaseBlobProperty):
         blob = image.execute_transforms(output_encoding=image.format)
       new_value.proportion = float(image.width) / float(image.height)
       new_value.size = len(blob)
-      if len(config):
-        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-        writable_blob.write(blob)
-        writable_blob.close()
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+      writable_blob.write(blob)
+      writable_blob.close()
       if gs_object_name != new_gs_object_name or new_value.serving_url is None:
         new_value.gs_object_name = new_gs_object_name
         blob_key = blobstore.create_gs_key(new_gs_object_name)
