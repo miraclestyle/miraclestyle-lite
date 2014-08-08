@@ -270,6 +270,13 @@ class _BaseImageProperty(_BaseBlobProperty):
     self._managerclass = SuperStructuredPropertyImageManager
   
   def process(self, value):
+    ''' @todo How efficient/fast is image = images.Image(filename=new_value.gs_object_name)???
+    class Image(image_data=None, blob_key=None, filename=None)
+    The Image constructor takes the data of the image to transform as a bytestring (the image_data argument)
+    or the BlobKey of a Blobstore value, or a BlobInfo object, or a Google Cloud Storage image file name of the
+    image to transform. Only one of these should be provided.
+    
+    '''
     config = self._process_config
     new_value = value
     gs_object_name = new_value.gs_object_name
@@ -308,9 +315,9 @@ class _BaseImageProperty(_BaseBlobProperty):
       if config.get('transform'):
         image.resize(config.get('width'),
                      config.get('height'),
-                     crop_to_fit=config.get('crop_to_fit'),
-                     crop_offset_x=config.get('crop_offset_x'),
-                     crop_offset_y=config.get('crop_offset_y'))
+                     crop_to_fit=config.get('crop_to_fit', False),
+                     crop_offset_x=config.get('crop_offset_x', 0.0),
+                     crop_offset_y=config.get('crop_offset_y', 0.0))
         blob = image.execute_transforms(output_encoding=image.format)
       new_value.proportion = float(image.width) / float(image.height)
       new_value.size = len(blob)

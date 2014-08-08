@@ -223,7 +223,9 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover'}),
+    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
+                                                                                  'transform': True, 'width': 240,
+                                                                                  'height': 100, 'crop_to_fit': True}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
