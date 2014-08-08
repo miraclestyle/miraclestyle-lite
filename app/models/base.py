@@ -91,10 +91,6 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
     self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
   
-  def _post_update_remote_multi_sequenced(self):
-    self._update_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi_sequenced()
-  
   def _delete_remote(self):
     cursor = Cursor()
     limit = 200

@@ -24,6 +24,7 @@ SALT = u'salt'
 HASH_BINDER = u'-'
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
+DEVELOPMENT_SERVER = False
 DEBUG = True
 DO_LOGS = True
 

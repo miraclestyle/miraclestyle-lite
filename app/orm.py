@@ -1704,6 +1704,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''
     if read_arguments is None:
       read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
     config = read_arguments.get('config', {})
     if self._property._readable:
       if (not self.has_value()) or config.get('force_read'):
@@ -1715,6 +1717,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def read(self, read_arguments=None):
     if read_arguments is None:
       read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
     if self._property._readable:
       self.read_async(read_arguments)
       if self.has_future():
@@ -2115,6 +2119,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._managerclass = kwargs.pop('managerclass', self._managerclass)
     self._autoload = kwargs.pop('autoload', self._autoload)
     self._storage_config = kwargs.pop('storage_config', {})
+    self._read_arguments = kwargs.pop('read_arguments', {})
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -2163,7 +2168,7 @@ class _BaseStructuredProperty(_BaseProperty):
     # __set__
     manager = self._get_value(entity)
     current_values = value
-    if self._repeated:
+    if self._repeated and manager.has_value():
       current_values = manager.value
       if value:
         for val in value:
@@ -3123,6 +3128,11 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     self._modelclass2 = args[0]
     args[0] = Record
     kwargs['storage'] = 'remote_multi'
+    read_arguments = kwargs.get('read_arguments', {})
+    if 'config' not in read_arguments:
+      read_arguments['config'] = {} # enforce logged and direction
+    read_arguments['config']['order'] = {'field' : 'logged', 'direction' : 'desc'}
+    kwargs['read_arguments'] = read_arguments
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
     # Implicitly state that entities cannot be updated or deleted.
     self._updateable = False

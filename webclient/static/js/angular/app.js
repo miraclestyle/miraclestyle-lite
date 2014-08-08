@@ -566,10 +566,6 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	'_records' : {
     		'config' : {
     			'cursor' : null,
-    			'order' : {
-    				'field' : 'logged',
-    				'direction' : 'desc',
-    			},
     		},
     	},
     };
@@ -581,7 +577,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 			if (!$scope.commander.loading && $scope.history.more)
 			{
 				$scope.commander.loading = true;
-				
+ 
 				Endpoint.post('read', $scope.history.kind, $scope.history.args).success(function (data) {
 					
 					$scope.commander.first = true;
@@ -595,7 +591,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
  					
  					read_arguments_config.cursor = config.cursor;
 					$scope.history.more = config.more;
-					
+ 
 					if (!$scope.history.more)
 				    {
 				    	delete $scope.history.more;

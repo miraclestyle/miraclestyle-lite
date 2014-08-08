@@ -154,10 +154,7 @@ MainApp
                 'getMoreImages': function () {
 		 
 					 var that = this;
-					 
-					 that.entity._next_read_arguments._images.config['order'] = that.entity._read_arguments._images.config['order'];
-					 
-	 
+ 
 					 EntityEditor.read_entity_partial(that.entity, {
 					      '_images' : that.entity._next_read_arguments._images,
 					 }, function (data) {
@@ -224,7 +221,7 @@ MainApp
 					        	  	    };
                                     	
                                     	var complete_upload = function (data) {
-					              
+                             
 					                	 	this.child.images = find_child(this.child, data.entity).images;
 							             };
 							             
@@ -330,7 +327,7 @@ MainApp
                                         pricetag._position_top = pricetag.position_top;
                                         pricetag._position_left = pricetag.position_left;
  
-                                        pricetag['product_template'] = pricetag['_key'];
+                                        pricetag['product'] = pricetag['_key'];
                                         pricetag['value'] = pricetag['unit_price'];
 
                                     };
@@ -862,14 +859,7 @@ MainApp
             };
             
             var catalog_read_arguments = {
-                            	'_images' : {
-                            	    'config' : {
-                            	        'order' : {
-                            	            'field' : 'sequence',
-                            	            'direction' : 'asc',
-                            	        },
-                            	    }
-                            	},
+                            	'_images' : {},
                            };
              
             return {

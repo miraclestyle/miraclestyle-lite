@@ -179,7 +179,7 @@ class CatalogPricetag(orm.BaseModel):
   
   product = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
   image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
-  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
+  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values! @answer currently it is impossible to re-position without the source width on which the x,y was placed
   position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
   position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
   value = orm.SuperStringProperty('6', required=True, indexed=False)
@@ -227,7 +227,9 @@ class Catalog(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi'),
+    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi', 
+                                                   read_arguments={'config' : {'order' : {'field' : 'sequence',
+                                                                                          'direction' : 'asc'}}}),
     '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
     '_records': orm.SuperRecordProperty('35')
     }

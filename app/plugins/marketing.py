@@ -9,6 +9,8 @@ import hashlib
 import datetime
 import copy
 
+from google.appengine.api import search
+
 from app import orm
 from app.tools.base import *
 from app.util import *
