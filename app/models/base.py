@@ -125,7 +125,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
       gs_object_name = entity.gs_object_name
       new_gs_object_name = '%s_duplicate' % entity.gs_object_name
       readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
-      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
       # Less consuming memory write, can be only used when using brute force copy.
       # There is no copy feature in cloudstorage sdk, so we have to implement our own!
       while True:
@@ -268,8 +268,49 @@ class _BaseImageProperty(_BaseBlobProperty):
     self._argument_format_upload = kwargs.pop('argument_format_upload', False)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
     self._managerclass = SuperStructuredPropertyImageManager
-  
-  def process(self, value):
+    
+  def generate_serving_urls(self, values):
+    @orm.tasklet
+    def make(o):
+      if o.serving_url:
+        raise orm.Return(True) # exit tasklet since we already generated the serving_url
+      o.serving_url = yield images.get_serving_url_async(o.image)
+      raise orm.Return(True)
+        
+    @orm.tasklet
+    def mapper(values):
+      yield map(make, values)
+      raise orm.Return()
+    # start all
+    mapper(values).get_result()
+    
+  def take_measurements(self, values):
+    ctx = orm.get_context()
+    @orm.tasklet
+    def measure(o):
+      if o.proportion is None:
+        pause = 0.5
+        for i in xrange(4):
+          try:
+            fetch_image = yield ctx.urlfetch('%s=s100' % o.serving_url) # http://stackoverflow.com/q/14944317/376238
+            break
+          except Exception as e:
+            time.sleep(pause)
+            pause = pause * 2
+        image = images.Image(image_data=fetch_image.content)
+        o.proportion = float(image.width) / float(image.height)
+        del fetch_image, image
+        raise orm.Return(True)
+        
+    @orm.tasklet
+    def mapper(values):
+      yield map(measure, values)
+      raise orm.Return()
+    # start all
+    mapper(values).get_result()
+     
+     
+  def process(self, values):
     ''' @todo How efficient/fast is image = images.Image(filename=new_value.gs_object_name)???
     class Image(image_data=None, blob_key=None, filename=None)
     The Image constructor takes the data of the image to transform as a bytestring (the image_data argument)
@@ -277,61 +318,58 @@ class _BaseImageProperty(_BaseBlobProperty):
     image to transform. Only one of these should be provided.
     
     '''
-    config = self._process_config
-    new_value = value
-    gs_object_name = new_value.gs_object_name
-    new_gs_object_name = new_value.gs_object_name
-    if config.get('copy'):
-      new_value = copy.deepcopy(value)
-      new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
-    blob_key = None
-    # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-    if config.pop('measure', True):
-      if new_value.proportion is None:
-        pause = 0.5
-        for i in xrange(4):
-          try:
-            fetch_image = urlfetch.fetch('%s=s100' % new_value.serving_url)
-            break
-          except Exception as e:
-            time.sleep(pause)
-            pause = pause * 2
-        image = images.Image(image_data=fetch_image.content)
+    single = False
+    if not isinstance(values, list):
+      values = [values]
+      single = True
+    for i,value in enumerate(values):
+      config = self._process_config
+      new_value = value
+      gs_object_name = new_value.gs_object_name
+      new_gs_object_name = new_value.gs_object_name
+      if config.get('copy'):
+        new_value = copy.deepcopy(value)
+        new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
+      blob_key = None
+      # We assume that self._process_config has at least either 'copy' or 'transform' keys!
+      if config.get('transform') or config.get('copy'):
+        # @note No try block is implemented here. This code is no longer forgiving.
+        # If any of the images fail to process, everything is lost/reverted, because one or more images:
+        # - are no longer existant in the cloudstorage / .read();
+        # - are not valid / not image exception;
+        # - failed to resize / resize could not be done;
+        # - failed to create gs key / blobstore failed for some reason;
+        # - failed to create get_serving_url / serving url service failed for some reason;
+        # - failed to write to cloudstorage / cloudstorage failed for some reason.
+        readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+        blob = readonly_blob.read()
+        readonly_blob.close()
+        image = images.Image(image_data=blob)
+        if config.get('transform'):
+          image.resize(config.get('width'),
+                       config.get('height'),
+                       crop_to_fit=config.get('crop_to_fit', False),
+                       crop_offset_x=config.get('crop_offset_x', 0.0),
+                       crop_offset_y=config.get('crop_offset_y', 0.0))
+          blob = image.execute_transforms(output_encoding=image.format)
         new_value.proportion = float(image.width) / float(image.height)
-        del fetch_image, image
-    if len(config):
-      # @note No try block is implemented here. This code is no longer forgiving.
-      # If any of the images fail to process, everything is lost/reverted, because one or more images:
-      # - are no longer existant in the cloudstorage / .read();
-      # - are not valid / not image exception;
-      # - failed to resize / resize could not be done;
-      # - failed to create gs key / blobstore failed for some reason;
-      # - failed to create get_serving_url / serving url service failed for some reason;
-      # - failed to write to cloudstorage / cloudstorage failed for some reason.
-      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
-      blob = readonly_blob.read()
-      readonly_blob.close()
-      image = images.Image(image_data=blob)
-      if config.get('transform'):
-        image.resize(config.get('width'),
-                     config.get('height'),
-                     crop_to_fit=config.get('crop_to_fit', False),
-                     crop_offset_x=config.get('crop_offset_x', 0.0),
-                     crop_offset_y=config.get('crop_offset_y', 0.0))
-        blob = image.execute_transforms(output_encoding=image.format)
-      new_value.proportion = float(image.width) / float(image.height)
-      new_value.size = len(blob)
-      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w')
-      writable_blob.write(blob)
-      writable_blob.close()
-      if gs_object_name != new_gs_object_name or new_value.serving_url is None:
-        new_value.gs_object_name = new_gs_object_name
-        blob_key = blobstore.create_gs_key(new_gs_object_name)
-        new_value.image = blobstore.BlobKey(blob_key)
-        new_value.serving_url = images.get_serving_url(new_value.image)
-        self.save_blobs_on_success(new_value.image)
-    return new_value
-  
+        new_value.size = len(blob)
+        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=new_value.content_type)
+        writable_blob.write(blob)
+        writable_blob.close()
+        if gs_object_name != new_gs_object_name:
+          new_value.gs_object_name = new_gs_object_name
+          blob_key = blobstore.create_gs_key(new_gs_object_name)
+          new_value.image = blobstore.BlobKey(blob_key)
+          new_value.serving_url = None # sets none to ensure that the url generator will create
+      values[i] = new_value # override the one that was set beforehand
+    self.generate_serving_urls(values)
+    self.take_measurements(values)
+    if single:
+      values = values[0]
+    return values
+     
+     
   def argument_format(self, value):
     if not self._argument_format_upload:
       return super(_BaseImageProperty, self).argument_format(value)
@@ -354,12 +392,16 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'content_type': file_info.content_type,
                                            'gs_object_name': file_info.gs_object_name,
                                            'image': blob_info.key(),
-                                           '_sequence': i,
-                                           'serving_url': images.get_serving_url(blob_info.key())})
-      self.save_blobs_on_success(new_image.image)
-      if self._process:
-        new_image = self.process(new_image)
+                                           '_sequence': i
+                                           })
       out.append(new_image)
+    if self._process:
+      self.process(out) # process will call both generate and take measurements
+    else: # otherwise we always call serving urls and measurements, if told to
+      self.generate_serving_urls(out)
+      if not self._process_config or self._process_config.get('measure', True): # if we implicitly told that it never takes the measurement
+        self.take_measurements(out)
+    map(lambda x: self.save_blobs_on_success(x.image), out)
     if not self._repeated:
       out = out[0]
     return out
