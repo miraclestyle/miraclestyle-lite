@@ -348,7 +348,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'content_type': file_info.content_type,
                                            'gs_object_name': file_info.gs_object_name,
                                            'image': blob_info.key(),
-                                           '_sequence' : i,
+                                           '_sequence': i,
                                            'serving_url': images.get_serving_url(blob_info.key())})
       self.save_blobs_on_success(new_image.image)
       if self._process:
