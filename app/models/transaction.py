@@ -29,7 +29,8 @@ class Journal(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperStringProperty(),
-    '__actions': orm.SuperPickleProperty(default={}, compressed=False)
+    'transaction_actions': orm.SuperPickleProperty(default={}, compressed=False),  # @todo Remote Multi storage.
+    'transaction_plugin_groups': orm.SuperPickleProperty(default={}, compressed=False)  # @todo Remote Multi storage.
     }
   
   _global_role = GlobalRole(
@@ -40,14 +41,14 @@ class Journal(orm.BaseExpando):
                                   orm.Action.build_key('49', 'delete'),
                                   orm.Action.build_key('49', 'search'),
                                   orm.Action.build_key('49', 'activate'),
-                                  orm.Action.build_key('49', 'decommission')], False, 'entity._original.namespace_entity.state != "active"'),
+                                  orm.Action.build_key('49', 'decommission')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('49', [orm.Action.build_key('49', 'update'),
-                                  orm.Action.build_key('49', 'delete')], False, 'entity._original._is_system or entity._original.state != "draft"'),
+                                  orm.Action.build_key('49', 'delete')], False, 'entity._is_system or entity._original.state != "draft"'),
       orm.ActionPermission('49', [orm.Action.build_key('49', 'activate')], False, 'entity._original.state == "active"'),
-      orm.ActionPermission('49', [orm.Action.build_key('49', 'decommission')], False, 'entity._original._is_system or entity._original.state == "decommissioned"'),
+      orm.ActionPermission('49', [orm.Action.build_key('49', 'decommission')], False, 'entity._is_system or entity._original.state == "decommissioned"'),
       orm.FieldPermission('49', ['created', 'updated', 'state'], False, None, 'True'),
       orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code'], False, False,
-                          'entity._original.namespace_entity.state != "active"'),
+                          'entity._original.namespace_entity._original.state != "active"'),
       orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code'], False, None,
                           'entity._original._is_system'),
       orm.FieldPermission('49', ['state'], True, None,
@@ -300,15 +301,15 @@ class Category(orm.BaseExpando):
                                   orm.Action.build_key('47', 'read'),
                                   orm.Action.build_key('47', 'update'),
                                   orm.Action.build_key('47', 'delete'),
-                                  orm.Action.build_key('47', 'search')], False, 'entity._original.namespace_entity.state != "active"'),
+                                  orm.Action.build_key('47', 'search')], False, 'entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('47', [orm.Action.build_key('47', 'update'),
-                                  orm.Action.build_key('47', 'delete')], False, 'entity._original._is_system'),
-      orm.ActionPermission('47', [orm.Action.build_key('47', 'delete')], False, 'entity._original._is_used'),
+                                  orm.Action.build_key('47', 'delete')], False, 'entity._is_system'),
+      orm.ActionPermission('47', [orm.Action.build_key('47', 'delete')], False, 'entity._is_used'),
       orm.FieldPermission('47', ['created', 'updated'], False, None, 'True'),
       orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name', 'active', 'description', 'balances', '_records', '_code'], False, False,
-                          'entity._original.namespace_entity.state != "active"'),
+                          'entity._original.namespace_entity._original.state != "active"'),
       orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name', 'active', 'description', 'balances', '_records', '_code'], False, None,
-                          'entity._original._is_system')
+                          'entity._is_system')
       ]
     )
   
