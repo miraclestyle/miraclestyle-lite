@@ -66,6 +66,7 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
+    # @todo before setting new cover we have to delete previous cover
     catalog_images = context._catalog._images.value
     catalog_cover = context._catalog.cover.value
     if catalog_images and len(catalog_images):

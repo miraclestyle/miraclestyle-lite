@@ -259,7 +259,6 @@ class _BaseImageProperty(_BaseBlobProperty):
   
   '''
   def __init__(self, *args, **kwargs):
-    self._process = kwargs.pop('process', None)
     self._process_config = kwargs.pop('process_config', {})
     self._argument_format_upload = kwargs.pop('argument_format_upload', False)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
@@ -268,9 +267,8 @@ class _BaseImageProperty(_BaseBlobProperty):
   def generate_serving_urls(self, values):
     @orm.tasklet
     def generate(value):
-      if value.serving_url:
-        raise orm.Return(True)
-      value.serving_url = yield images.get_serving_url_async(value.image)
+      if value.serving_url is None:
+        value.serving_url = yield images.get_serving_url_async(value.image)
       raise orm.Return(True)
     
     @orm.tasklet
@@ -306,14 +304,9 @@ class _BaseImageProperty(_BaseBlobProperty):
     mapper(values).get_result()
   
   def process(self, values):
-    ''' @todo How efficient/fast is image = images.Image(filename=new_value.gs_object_name)???
-    class Image(image_data=None, blob_key=None, filename=None)
-    The Image constructor takes the data of the image to transform as a bytestring (the image_data argument)
-    or the BlobKey of a Blobstore value, or a BlobInfo object, or a Google Cloud Storage image file name of the
-    image to transform. Only one of these should be provided.
-    
+    ''' @note
+    images.Image(filename=new_value.gs_object_name) can be used only in case of just transforming the image
     '''
-    # @todo Will we need to delete serving url (delete_serving_url(blob_key)) in some situations (duplicate)!?
     @orm.tasklet
     def process_image(value, i, values):
       config = self._process_config
@@ -324,39 +317,35 @@ class _BaseImageProperty(_BaseBlobProperty):
         new_value = copy.deepcopy(value)
         new_gs_object_name = '%s_%s' % (new_value.gs_object_name, config.get('copy_name'))
       blob_key = None
-      # We assume that self._process_config has at least either 'copy' or 'transform' keys!
-      if config.get('transform') or config.get('copy'):
-        # @note No try block is implemented here. This code is no longer forgiving.
-        # If any of the images fail to process, everything is lost/reverted, because one or more images:
-        # - are no longer existant in the cloudstorage / .read();
-        # - are not valid / not image exception;
-        # - failed to resize / resize could not be done;
-        # - failed to create gs key / blobstore failed for some reason;
-        # - failed to create get_serving_url / serving url service failed for some reason;
-        # - failed to write to cloudstorage / cloudstorage failed for some reason.
-        readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
-        blob = readonly_blob.read()
-        readonly_blob.close()
-        image = images.Image(image_data=blob)
-        if config.get('transform'):
-          image.resize(config.get('width'),
-                       config.get('height'),
-                       crop_to_fit=config.get('crop_to_fit', False),
-                       crop_offset_x=config.get('crop_offset_x', 0.0),
-                       crop_offset_y=config.get('crop_offset_y', 0.0))
-          blob = yield image.execute_transforms_async(output_encoding=image.format)
-        new_value.proportion = float(image.width) / float(image.height)
-        new_value.size = len(blob)
-        writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=new_value.content_type)
-        writable_blob.write(blob)
-        writable_blob.close()
-        if gs_object_name != new_gs_object_name:
-          new_value.gs_object_name = new_gs_object_name
-          blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
-          new_value.image = blobstore.BlobKey(blob_key)
-          new_value.serving_url = None  # @todo Not sure if we need this line at all!?
-          # @answer - we need it because if we dont set it to none, copied entries will not get a new serving url.
-          # @see self.generate_serving_urls()
+      # @note No try block is implemented here. This code is no longer forgiving.
+      # If any of the images fail to process, everything is lost/reverted, because one or more images:
+      # - are no longer existant in the cloudstorage / .read();
+      # - are not valid / not image exception;
+      # - failed to resize / resize could not be done;
+      # - failed to create gs key / blobstore failed for some reason;
+      # - failed to create get_serving_url / serving url service failed for some reason;
+      # - failed to write to cloudstorage / cloudstorage failed for some reason.
+      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+      blob = readonly_blob.read()
+      readonly_blob.close()
+      image = images.Image(image_data=blob)
+      if config.get('transform'):
+        image.resize(config.get('width'),
+                     config.get('height'),
+                     crop_to_fit=config.get('crop_to_fit', False),
+                     crop_offset_x=config.get('crop_offset_x', 0.0),
+                     crop_offset_y=config.get('crop_offset_y', 0.0))
+        blob = yield image.execute_transforms_async(output_encoding=image.format)
+      new_value.proportion = float(image.width) / float(image.height)
+      new_value.size = len(blob)
+      writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=new_value.content_type)
+      writable_blob.write(blob)
+      writable_blob.close()
+      if gs_object_name != new_gs_object_name:
+        new_value.gs_object_name = new_gs_object_name
+        blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
+        new_value.image = blobstore.BlobKey(blob_key)
+        new_value.serving_url = None
       values[i] = new_value
       raise orm.Return(True)
     
@@ -372,8 +361,6 @@ class _BaseImageProperty(_BaseBlobProperty):
       single = True
     mapper(values).get_result()
     self.generate_serving_urls(values)
-    # self.generate_measurements(values) @todo No need for for this!!! process_image() already does new_value.proportion = float(image.width) / float(image.height)!!!
-    # @answer but it doesnt if the image is not getting copied or transformed
     if single:
       values = values[0]
     return values
@@ -402,7 +389,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                            'image': blob_info.key(),
                                            '_sequence': i})
       out.append(new_image)
-    if self._process:
+    if self._process_config.get('transform') or self._process_config.get('copy'):
       self.process(out)
     else:
       self.generate_serving_urls(out)
