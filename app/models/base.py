@@ -355,6 +355,8 @@ class _BaseImageProperty(_BaseBlobProperty):
           blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
           new_value.image = blobstore.BlobKey(blob_key)
           new_value.serving_url = None  # @todo Not sure if we need this line at all!?
+          # @answer - we need it because if we dont set it to none, copied entries will not get a new serving url.
+          # @see self.generate_serving_urls()
       values[i] = new_value
       raise orm.Return(True)
     
@@ -371,6 +373,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     mapper(values).get_result()
     self.generate_serving_urls(values)
     # self.generate_measurements(values) @todo No need for for this!!! process_image() already does new_value.proportion = float(image.width) / float(image.height)!!!
+    # @answer but it doesnt if the image is not getting copied or transformed
     if single:
       values = values[0]
     return values
