@@ -132,7 +132,7 @@ class Engine:
     model_key = input.get('action_model')
     action_model_schema = input.get('action_model_schema')
     model = orm.Model._kind_map.get(model_key)
-    if not action_model_schema:
+    if action_model_schema is None:
       context.model = model
     else:
       context.model = model(_model_schema=action_model_schema)
