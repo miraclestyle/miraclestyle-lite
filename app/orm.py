@@ -3151,6 +3151,69 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
         raise PropertyError('Could not locate model with kind %s' % self._modelclass2)
       else:
         self._modelclass2 = set_modelclass2
+        
+        
+class SuperMultiPropertyStorageProperty(SuperJsonProperty):
+  
+  '''
+    Incoming data is:
+    as non repeated e.g.
+    {
+      'field' : 'json',
+      'config' : {
+        'required' : True,
+      },
+    }
+    
+    as repeated: e.g.
+    
+    [{
+      'field' : 'json',
+      'config' : {
+        'required' : True,
+      },
+    }]
+  '''
+  
+  def __init__(self, *args, **kwargs):
+    self._cfg = kwargs.pop('cfg')
+    super(SuperMultiPropertyStorageProperty).__init__(*args, **kwargs)
+  
+  def argument_format(self, value):
+    value = super(SuperMultiPropertyStorageProperty, self).argument_format(value)
+    if value is util.Nonexistent:
+      return value
+    if not self._repeated:
+      value = [value]
+    out = []
+    for v in value:
+      field = v.get('field')
+      supplied_kwds = v.get('config')
+      definition = self._cfg.get(field)
+      if definition is None:
+        raise PropertyError('no_definition_found')
+      kwds = {}
+      kwd_definitions = definition[2]
+      for key, value in supplied_kwds.iteritems():
+        kwd_definition = kwd_definitions[key]
+        if isinstance(kwd_definition, dict):
+          found_any = False
+          for k, v in kwd_definition.iteritems():
+            if k == value:
+              found_any = True
+              value = v[1]
+          if not found_any:
+            raise PropertyError('keyword_value_malformed')
+        elif isinstance(kwd_definition, Property):
+          value = kwd_definition.argument_format(value)
+        elif callable(kwd_definition):
+          value = kwd_definition(self, value)
+        kwds[key] = value
+      out.append(definition[1](**kwds))
+    if not self._repeated:
+      return out[0]
+    else:
+      return out
 
 
 #########################################

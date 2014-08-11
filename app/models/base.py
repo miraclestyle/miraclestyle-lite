@@ -276,7 +276,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     @orm.tasklet
     def mapper(values):
       yield map(generate, values)
-      raise orm.Return()
+      raise orm.Return(True)
     
     mapper(values).get_result()
   
@@ -301,7 +301,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     @orm.tasklet
     def mapper(values):
       yield map(measure, values)
-      raise orm.Return()
+      raise orm.Return(True)
     
     mapper(values).get_result()
   
@@ -314,7 +314,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     
     '''
     @orm.tasklet
-    def process_image(value):
+    def process_image(value, i, values):
       config = self._process_config
       new_value = value
       gs_object_name = new_value.gs_object_name
@@ -343,7 +343,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                        crop_to_fit=config.get('crop_to_fit', False),
                        crop_offset_x=config.get('crop_offset_x', 0.0),
                        crop_offset_y=config.get('crop_offset_y', 0.0))
-          blob = image.execute_transforms(output_encoding=image.format)
+          blob = yield image.execute_transforms_async(output_encoding=image.format)
         new_value.proportion = float(image.width) / float(image.height)
         new_value.size = len(blob)
         writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=new_value.content_type)
@@ -351,17 +351,17 @@ class _BaseImageProperty(_BaseBlobProperty):
         writable_blob.close()
         if gs_object_name != new_gs_object_name:
           new_value.gs_object_name = new_gs_object_name
-          blob_key = blobstore.create_gs_key(new_gs_object_name)  # @todo What about create_gs_key_async() (https://developers.google.com/appengine/docs/python/blobstore/functions)!?
+          blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
           new_value.image = blobstore.BlobKey(blob_key)
           new_value.serving_url = None # sets none to ensure that the url generator will create
-      # @todo How do we reasign new_value back to values list?
-      value = new_value
+      values[i] = new_value
       raise orm.Return(True)
     
     @orm.tasklet
     def mapper(values):
-      yield map(process_image, values)
-      raise orm.Return()
+      for i, val in enumerate(values):
+        yield process_image(val, i, values)
+      raise orm.Return(True)
     
     single = False
     if not isinstance(values, list):
@@ -369,6 +369,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       single = True
     mapper(values).get_result()
     self.generate_serving_urls(values)
+    self.generate_measurements(values)
     if single:
       values = values[0]
     return values

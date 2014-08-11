@@ -7,6 +7,17 @@ Created on Jul 8, 2014
 import unittest
 import random
 
+def yielder(a):
+  yield a
+
+def foo(aa):
+   yield map(yielder, aa)
+
+z = [1,2,3,4]    
+t = foo(z)
+print t
+  
+  
 class Tests():
 
   def __nonzero__(self):

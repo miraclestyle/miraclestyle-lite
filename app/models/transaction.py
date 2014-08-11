@@ -11,6 +11,47 @@ from app.models.base import *
 from app.plugins.base import *
 from app.plugins.transaction import *
 
+__name_definition = orm.SuperStringProperty(max_size=20)
+__kind_definition = orm.SuperStringProperty(max_size=10) # we can determine also choices to be orm.Model._kind_map.keys() however not so sure about journal and entry ids
+
+__default_journal_field_keywords_definition = {'repeated' : {'True' : ('True', True),
+                                                             'False' : ('False', False)},
+                                               'required' : {'True' : ('True', True),
+                                                             'False' : ('False', False)},
+                                               'name' : __name_definition}
+
+'''
+  Format used for it is:
+  (System field name, (Friendly Field Name, Field instance to work with,
+    {Field keyword argument name :  {
+                                      'choice' : (Friendly Name, outcome),
+                                    }
+                                    or instance of property which .argument_format will be called upon and retrieve the outcome
+                                    or callback to format the outcome})
+'''
+JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
+                                          ('int', ('Integer', orm.SuperIntegerProperty, __default_journal_field_keywords_definition)),
+                                          ('decimal', ('Decimal', orm.SuperDecimalProperty, __default_journal_field_keywords_definition)),
+                                          ('float', ('Float', orm.SuperFloatProperty, __default_journal_field_keywords_definition)),
+                                          ('datetime', ('DateTime', orm.SuperDateTimeProperty, {'required' : {'True' : ('True', True),
+                                                                                                              'False' : ('False', False)},
+                                                                                                'auto_now' : {'True' : ('True', True),
+                                                                                                              'False' : ('False', False)},
+                                                                                                'auto_now_add' : {'True' : ('True', True),
+                                                                                                              'False' : ('False', False)},
+                                                                                                'name' : __name_definition})),
+                                          ('bool', ('Boolean', orm.SuperBooleanProperty, __default_journal_field_keywords_definition)),
+                                          ('reference', ('Reference', orm.SuperKeyProperty, {'repeated' : {'True' : ('True', True),
+                                                                                                           'False' : ('False', False)},
+                                                                                             'required' : {'True' : ('True', True),
+                                                                                                           'False' : ('False', False)},
+                                                                                             'kind' : __kind_definition,
+                                                                                             'name' : __name_definition})),
+                                          ('text', ('Text', orm.SuperTextProperty, __default_journal_field_keywords_definition)),
+                                          ('json', ('JSON', orm.SuperJsonProperty, {'required' : {'True' : ('True', True),
+                                                                                                  'False' : ('False', False)},
+                                                                                    'kind' : __kind_definition,
+                                                                                    'name' : __name_definition}))])
 
 # @todo sequencing counter is missing, and has to be determined how to solve that!
 class Journal(orm.BaseExpando):
@@ -28,9 +69,9 @@ class Journal(orm.BaseExpando):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
-    '_code': orm.SuperStringProperty(),
-    'transaction_actions': orm.SuperPickleProperty(default={}, compressed=False),  # @todo Remote Multi storage.
-    'transaction_plugin_groups': orm.SuperPickleProperty(default={}, compressed=False)  # @todo Remote Multi storage.
+    '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
+    '_transaction_actions': orm.SuperStorageStructuredProperty('56', storage='remote_multi'),
+    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty('52', storage='remote_multi'),
     }
   
   _global_role = GlobalRole(
@@ -103,8 +144,8 @@ class Journal(orm.BaseExpando):
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
         'name': orm.SuperStringProperty(required=True),
-        'entry_fields': orm.SuperJsonProperty(required=True),
-        'line_fields': orm.SuperJsonProperty(required=True)
+        'entry_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
+        'line_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -255,6 +296,12 @@ class Journal(orm.BaseExpando):
       )
     ]
   
+  @classmethod
+  def prepare_key(cls, input, **kwargs): # this is called in Read() plugin only
+    code = input.get('code')
+    product_instance_key = cls.build_key(code, namespace=kwargs.get('domain').urlsafe()) # @todo possible prefix?
+    return product_instance_key
+  
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
@@ -292,7 +339,7 @@ class Category(orm.BaseExpando):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('47'),
-    '_code': orm.SuperStringProperty()
+    '_code': orm.SuperComputedProperty(lambda self: self.key_id_str)
     }
   
   _global_role = GlobalRole(
@@ -446,6 +493,12 @@ class Category(orm.BaseExpando):
       )
     ]
   
+  @classmethod
+  def prepare_key(cls, input, **kwargs): # this is called in Read() plugin only
+    code = input.get('code')
+    product_instance_key = cls.build_key(code, namespace=kwargs.get('domain').urlsafe()) # @todo possible prefix?
+    return product_instance_key
+  
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
@@ -461,6 +514,51 @@ class Group(orm.BaseExpando):
   _kind = 48
   
   _default_indexed = False
+  
+
+class Line(orm.BaseExpando):
+  
+  _kind = 51
+  
+  # ancestor Entry (namespace Domain)
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
+  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
+  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
+  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
+  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
+  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  journal = orm.SuperKeyProperty('1', kind=Journal, required=True)  # delete
+  company = orm.SuperKeyProperty('2', kind='44', required=True)  # delete
+  state = orm.SuperIntegerProperty('3', required=True)  # delete
+  date = orm.SuperDateTimeProperty('4', required=True)  # delete
+  sequence = orm.SuperIntegerProperty('5', required=True)  # @todo Can we sequence Line.id()?
+  categories = orm.SuperKeyProperty('6', kind=Category, repeated=True)
+  debit = orm.SuperDecimalProperty('7', required=True, indexed=False)  # debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
+  credit = orm.SuperDecimalProperty('8', required=True, indexed=False)  # credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  uom = orm.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
+  # Expando
+  # neki upiti na Line zahtevaju "join" sa Entry poljima
+  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+  
+  def get_kind(self):  # @todo Do we need this?
+    return 'l_%s' % self.parent_entity.journal.id()
+  
+  def get_actions(self):  # @todo Do we need this?
+    journal_actions = orm.Action.query(orm.Action.active == True,
+                                       ancestor=self.parent_entity.journal).fetch()
+    actions = {}
+    for action in journal_actions:
+      actions[action.key.urlsafe()] = action
+    return actions
+  
+  def get_fields(self):  # @todo Do we need this?
+    fields = super(Line, self).get_fields()
+    journal = self.parent_entity.journal.get()
+    expando_line_fields = {}
+    for line_field_key, line_field in journal.line_fields.items():
+      expando_line_fields['l_%s' % line_field_key] = line_field
+    fields.update(expando_line_fields)
+    return fields
 
 
 class Entry(orm.BaseExpando):
@@ -522,48 +620,3 @@ class Entry(orm.BaseExpando):
     for action in journal_actions:
       actions[action.key.urlsafe()] = action
     return actions
-
-
-class Line(orm.BaseExpando):
-  
-  _kind = 51
-  
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
-  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
-  journal = orm.SuperKeyProperty('1', kind=Journal, required=True)  # delete
-  company = orm.SuperKeyProperty('2', kind='44', required=True)  # delete
-  state = orm.SuperIntegerProperty('3', required=True)  # delete
-  date = orm.SuperDateTimeProperty('4', required=True)  # delete
-  sequence = orm.SuperIntegerProperty('5', required=True)  # @todo Can we sequence Line.id()?
-  categories = orm.SuperKeyProperty('6', kind=Category, repeated=True)
-  debit = orm.SuperDecimalProperty('7', required=True, indexed=False)  # debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = orm.SuperDecimalProperty('8', required=True, indexed=False)  # credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
-  uom = orm.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
-  # Expando
-  # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
-  
-  def get_kind(self):  # @todo Do we need this?
-    return 'l_%s' % self.parent_entity.journal.id()
-  
-  def get_actions(self):  # @todo Do we need this?
-    journal_actions = orm.Action.query(orm.Action.active == True,
-                                       ancestor=self.parent_entity.journal).fetch()
-    actions = {}
-    for action in journal_actions:
-      actions[action.key.urlsafe()] = action
-    return actions
-  
-  def get_fields(self):  # @todo Do we need this?
-    fields = super(Line, self).get_fields()
-    journal = self.parent_entity.journal.get()
-    expando_line_fields = {}
-    for line_field_key, line_field in journal.line_fields.items():
-      expando_line_fields['l_%s' % line_field_key] = line_field
-    fields.update(expando_line_fields)
-    return fields
