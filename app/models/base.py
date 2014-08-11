@@ -288,7 +288,6 @@ class _BaseImageProperty(_BaseBlobProperty):
         pause = 0.5
         for i in xrange(4):
           try:
-            # @todo There is a deadline parameter in urlfetch.fetch() function that defaults to 5seconds. Does ctx.urlfetch has the same deadline? If so, could this be an issue for this particular (pause) situation!?
             fetched_image = yield ctx.urlfetch('%s=s100' % value.serving_url)  # http://stackoverflow.com/q/14944317/376238
             break
           except Exception as e:
