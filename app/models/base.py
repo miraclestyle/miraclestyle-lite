@@ -313,6 +313,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     image to transform. Only one of these should be provided.
     
     '''
+    # @todo Will we need to delete serving url (delete_serving_url(blob_key)) in some situations (duplicate)!?
     @orm.tasklet
     def process_image(value, i, values):
       config = self._process_config
@@ -353,14 +354,14 @@ class _BaseImageProperty(_BaseBlobProperty):
           new_value.gs_object_name = new_gs_object_name
           blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
           new_value.image = blobstore.BlobKey(blob_key)
-          new_value.serving_url = None # sets none to ensure that the url generator will create
+          new_value.serving_url = None  # @todo Not sure if we need this line at all!?
       values[i] = new_value
       raise orm.Return(True)
     
     @orm.tasklet
     def mapper(values):
-      for i, val in enumerate(values):
-        yield process_image(val, i, values)
+      for i, v in enumerate(values):
+        yield process_image(v, i, values)
       raise orm.Return(True)
     
     single = False
@@ -369,7 +370,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       single = True
     mapper(values).get_result()
     self.generate_serving_urls(values)
-    self.generate_measurements(values)
+    # self.generate_measurements(values) @todo No need for for this!!! process_image() already does new_value.proportion = float(image.width) / float(image.height)!!!
     if single:
       values = values[0]
     return values

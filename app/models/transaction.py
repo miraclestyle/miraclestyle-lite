@@ -11,14 +11,13 @@ from app.models.base import *
 from app.plugins.base import *
 from app.plugins.transaction import *
 
-__name_definition = orm.SuperStringProperty(max_size=20)
-__kind_definition = orm.SuperStringProperty(max_size=10) # we can determine also choices to be orm.Model._kind_map.keys() however not so sure about journal and entry ids
 
-__default_journal_field_keywords_definition = {'repeated' : {'True' : ('True', True),
-                                                             'False' : ('False', False)},
-                                               'required' : {'True' : ('True', True),
-                                                             'False' : ('False', False)},
-                                               'name' : __name_definition}
+__name_definition = orm.SuperStringProperty(max_size=20)
+__kind_definition = orm.SuperStringProperty(max_size=10)  # We can determine also choices to be orm.Model._kind_map.keys() however not so sure about journal and entry ids.
+
+__default_journal_field_keywords_definition = {'repeated': {'True': ('True', True), 'False': ('False', False)},
+                                               'required': {'True': ('True', True), 'False': ('False', False)},
+                                               'name': __name_definition}
 
 '''
   Format used for it is:
@@ -33,25 +32,26 @@ JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringP
                                           ('int', ('Integer', orm.SuperIntegerProperty, __default_journal_field_keywords_definition)),
                                           ('decimal', ('Decimal', orm.SuperDecimalProperty, __default_journal_field_keywords_definition)),
                                           ('float', ('Float', orm.SuperFloatProperty, __default_journal_field_keywords_definition)),
-                                          ('datetime', ('DateTime', orm.SuperDateTimeProperty, {'required' : {'True' : ('True', True),
-                                                                                                              'False' : ('False', False)},
-                                                                                                'auto_now' : {'True' : ('True', True),
-                                                                                                              'False' : ('False', False)},
-                                                                                                'auto_now_add' : {'True' : ('True', True),
-                                                                                                              'False' : ('False', False)},
-                                                                                                'name' : __name_definition})),
+                                          ('datetime', ('DateTime', orm.SuperDateTimeProperty, {'required': {'True': ('True', True),
+                                                                                                             'False': ('False', False)},
+                                                                                                'auto_now': {'True': ('True', True),
+                                                                                                             'False': ('False', False)},
+                                                                                                'auto_now_add': {'True': ('True', True),
+                                                                                                                 'False': ('False', False)},
+                                                                                                'name': __name_definition})),
                                           ('bool', ('Boolean', orm.SuperBooleanProperty, __default_journal_field_keywords_definition)),
-                                          ('reference', ('Reference', orm.SuperKeyProperty, {'repeated' : {'True' : ('True', True),
-                                                                                                           'False' : ('False', False)},
-                                                                                             'required' : {'True' : ('True', True),
-                                                                                                           'False' : ('False', False)},
-                                                                                             'kind' : __kind_definition,
-                                                                                             'name' : __name_definition})),
+                                          ('reference', ('Reference', orm.SuperKeyProperty, {'repeated': {'True': ('True', True),
+                                                                                                          'False': ('False', False)},
+                                                                                             'required': {'True': ('True', True),
+                                                                                                          'False': ('False', False)},
+                                                                                             'kind': __kind_definition,
+                                                                                             'name': __name_definition})),
                                           ('text', ('Text', orm.SuperTextProperty, __default_journal_field_keywords_definition)),
-                                          ('json', ('JSON', orm.SuperJsonProperty, {'required' : {'True' : ('True', True),
-                                                                                                  'False' : ('False', False)},
-                                                                                    'kind' : __kind_definition,
-                                                                                    'name' : __name_definition}))])
+                                          ('json', ('JSON', orm.SuperJsonProperty, {'required': {'True': ('True', True),
+                                                                                                 'False': ('False', False)},
+                                                                                    'kind': __kind_definition,
+                                                                                    'name': __name_definition}))])
+
 
 # @todo sequencing counter is missing, and has to be determined how to solve that!
 class Journal(orm.BaseExpando):
@@ -71,7 +71,7 @@ class Journal(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
     '_transaction_actions': orm.SuperStorageStructuredProperty('56', storage='remote_multi'),
-    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty('52', storage='remote_multi'),
+    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty('52', storage='remote_multi')
     }
   
   _global_role = GlobalRole(
@@ -88,10 +88,10 @@ class Journal(orm.BaseExpando):
       orm.ActionPermission('49', [orm.Action.build_key('49', 'activate')], False, 'entity._original.state == "active"'),
       orm.ActionPermission('49', [orm.Action.build_key('49', 'decommission')], False, 'entity._is_system or entity._original.state == "decommissioned"'),
       orm.FieldPermission('49', ['created', 'updated', 'state'], False, None, 'True'),
-      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code'], False, False,
+      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code', '_transaction_actions', '_transaction_plugin_groups'], False, False,
                           'entity._original.namespace_entity._original.state != "active"'),
-      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code'], False, None,
-                          'entity._original._is_system'),
+      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code', '_transaction_actions', '_transaction_plugin_groups'], False, None,
+                          'entity._is_system'),
       orm.FieldPermission('49', ['state'], True, None,
                           '(action.key_id_str == "activate" and entity.state == "active") or (action.key_id_str == "decommission" and entity.state == "decommissioned")')
       ]
@@ -256,7 +256,7 @@ class Journal(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_journal'}})
             ]
           )
@@ -288,7 +288,7 @@ class Journal(orm.BaseExpando):
           ),
         orm.PluginGroup(
           plugins=[
-            RulePrepare(),  # @todo Should run out of transaction!!!
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_journal'}})
             ]
           )
@@ -297,10 +297,9 @@ class Journal(orm.BaseExpando):
     ]
   
   @classmethod
-  def prepare_key(cls, input, **kwargs): # this is called in Read() plugin only
+  def prepare_key(cls, input, **kwargs):
     code = input.get('code')
-    product_instance_key = cls.build_key(code, namespace=kwargs.get('domain').urlsafe()) # @todo possible prefix?
-    return product_instance_key
+    return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
   
   @property
   def _is_system(self):
@@ -494,10 +493,9 @@ class Category(orm.BaseExpando):
     ]
   
   @classmethod
-  def prepare_key(cls, input, **kwargs): # this is called in Read() plugin only
+  def prepare_key(cls, input, **kwargs):
     code = input.get('code')
-    product_instance_key = cls.build_key(code, namespace=kwargs.get('domain').urlsafe()) # @todo possible prefix?
-    return product_instance_key
+    return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
   
   @property
   def _is_system(self):
@@ -508,13 +506,6 @@ class Category(orm.BaseExpando):
     line = Line.query(Line.categories == self.key).get()
     return line is not None
 
-
-class Group(orm.BaseExpando):
-  
-  _kind = 48
-  
-  _default_indexed = False
-  
 
 class Line(orm.BaseExpando):
   
@@ -620,3 +611,10 @@ class Entry(orm.BaseExpando):
     for action in journal_actions:
       actions[action.key.urlsafe()] = action
     return actions
+
+
+class Group(orm.BaseExpando):
+  
+  _kind = 48
+  
+  _default_indexed = False
