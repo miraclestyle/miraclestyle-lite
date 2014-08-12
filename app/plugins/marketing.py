@@ -182,8 +182,8 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       '_product_category.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
     context._catalog._images.read({'config': {'cursor': -1}})
     product_keys = []
-    for image in context._catalog._images:
-      product_keys.extend([pricetag.product for pricetag in image.pricetags])
+    for image in context._catalog._images.value:
+      product_keys.extend([pricetag.product for pricetag in image.pricetags.value])
     context._catalog._products.read({'config': {'keys': product_keys}})
     products = context._catalog._products.value
     context._catalog._images = []
@@ -216,8 +216,8 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     entities.append(context._catalog.key)
     context._catalog._images.read({'config': {'cursor': -1}})
     product_keys = []
-    for image in context._catalog._images:
-      product_keys.extend([pricetag.product for pricetag in image.pricetags])
+    for image in context._catalog._images.value:
+      product_keys.extend([pricetag.product for pricetag in image.pricetags.value])
     context._catalog._products.read({'config': {'keys': product_keys}})
     products = context._catalog._products.value
     context._catalog._images = []

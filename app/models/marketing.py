@@ -850,6 +850,7 @@ class Catalog(orm.BaseExpando):
           transactional=True,
           plugins=[
             Duplicate(),
+            Set(cfg={'s': {'_catalog.state': 'unpublished'}}),
             Write(),
             CallbackNotify(),
             CallbackExec()
