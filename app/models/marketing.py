@@ -429,7 +429,8 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'add_config': {'_images': 'input._images'}}),
+            UploadImages(cfg={'path': '_catalog._images',
+                              'images_path': 'input._images'}),
             CatalogProcessCoverSet(),
             RulePrepare(),
             RuleExec()
@@ -450,7 +451,6 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'product_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'product': orm.SuperKeyProperty(kind='38', required=True),
         'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
@@ -459,9 +459,8 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path': '_products',
-                              'key_path': 'input.product',
-                              'add_config': {'images': 'input.images'}}),
+            UploadImages(cfg={'path': '_catalog._products.value.0.images',
+                              'images_path': 'input.images'}),
             RulePrepare(),
             RuleExec()
             ]
@@ -480,7 +479,6 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'product_instance_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'product_instance': orm.SuperKeyProperty(kind='39', required=True),
         'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
@@ -489,9 +487,8 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'target_field_path': '_products._instances',
-                              'key_path': 'input.product_instance',
-                              'add_config': {'images': 'input.images'}}),
+            UploadImages(cfg={'path': '_catalog._products.value.0._instances.value.0.images',
+                              'images_path': 'input.images'}),
             RulePrepare(),
             RuleExec()
             ]
@@ -887,7 +884,6 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'product_process_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'product': orm.SuperKeyProperty(kind='38', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -902,8 +898,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Duplicate(cfg={'target_field_path': '_products',
-                           'key_path': 'input.product'}),
+            Duplicate(cfg={'copy_path': '_products.value.0'}),
             Write(),
             CallbackNotify(),
             CallbackExec()

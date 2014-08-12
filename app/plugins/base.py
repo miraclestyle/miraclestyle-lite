@@ -146,15 +146,13 @@ class Duplicate(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    target_field_path = self.cfg.get('target_field_path')
-    key_path = self.cfg.get('key_path')
-    key = None
-    if key_path:
-      key = get_attr(context, key_path)
+    child_entity_path = self.cfg.get('copy_path')
     entity = get_attr(context, entity_path)
-    if target_field_path:
-      entity_to_duplicate, collection = entity_by_path(entity, target_field_path, key, True)
-      collection.append(entity_to_duplicate.duplicate())
+    if child_entity_path:
+      child_entity = get_attr(entity, child_entity_path)
+      parent_entity_path = ".".join(child_entity_path.split('.')[:-1])
+      parent_entity = get_attr(entity, parent_entity_path)
+      parent_entity.append(child_entity.duplicate())
       duplicate_entity = entity
     else:
       if entity and isinstance(entity, orm.Model):
@@ -170,23 +168,10 @@ class UploadImages(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    add_config = self.cfg.get('add_config', {})
-    key_path = self.cfg.get('key_path')
-    key = None
-    if key_path:
-      key = get_attr(context, key_path)
-    entity = get_attr(context, entity_path)
-    target_field_path = self.cfg.get('target_field_path')
-    if target_field_path:
-      entity = entity_by_path(entity, target_field_path, key)
-    if entity and isinstance(entity, orm.Model):
-      fields = entity.get_fields()
-      for field_key, path in add_config.iteritems():
-        field = fields.get(field_key, None)
-        if field and field.is_structured:
-          value = getattr(entity, field_key, None)
-          if value is not None and hasattr(value, 'add') and callable(value.add):
-            value.add(get_attr(context, path))
+    images_path = self.cfg.get('images_path')
+    manager = get_attr(context, entity_path)
+    if manager is not None and hasattr(manager, 'add') and callable(manager.add):
+      manager.add(get_attr(context, images_path))
 
 
 class RulePrepare(orm.BaseModel):

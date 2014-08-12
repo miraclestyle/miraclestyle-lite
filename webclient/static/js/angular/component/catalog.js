@@ -828,11 +828,13 @@ MainApp
                                 message : 'Are you sure you want to proceed with this action?',
                                 callbacks : {
                                     Yes : function () {
-                                
+                                           
+                                         var dd = angular.copy(that.entity._read_arguments);
+                                         dd['_products']['config'] = {'keys' : [that.child.key]};
                                          Endpoint.post('product_duplicate', that.entity.kind, {
                                              key : that.entity.key,
                                              product : that.child.key,
-                                             read_arguments : that.entity._read_arguments
+                                             read_arguments : dd,
                                          }).success(function (data) {
                                             if (data['entity'])
                                             {
