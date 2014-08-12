@@ -26,7 +26,7 @@ __default_journal_field_keywords_definition = {'repeated': {'True': ('True', Tru
                                       'choice' : (Friendly Name, outcome),
                                     }
                                     or instance of property which .argument_format will be
-                                     called upon and retrieve the outcome
+                                    called upon and retrieve the outcome
                                     or callback to format the outcome})
 '''
 JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
@@ -84,15 +84,25 @@ class Journal(orm.BaseExpando):
                                   orm.Action.build_key('49', 'search'),
                                   orm.Action.build_key('49', 'activate'),
                                   orm.Action.build_key('49', 'decommission')], False, 'entity._original.namespace_entity._original.state != "active"'),
-      orm.ActionPermission('49', [orm.Action.build_key('49', 'update'),
-                                  orm.Action.build_key('49', 'delete')], False, 'entity._is_system or entity._original.state != "draft"'),
+      orm.ActionPermission('49', [orm.Action.build_key('49', 'delete')], False, 'entity._original.state != "draft"'),
       orm.ActionPermission('49', [orm.Action.build_key('49', 'activate')], False, 'entity._original.state == "active"'),
-      orm.ActionPermission('49', [orm.Action.build_key('49', 'decommission')], False, 'entity._is_system or entity._original.state == "decommissioned"'),
+      orm.ActionPermission('49', [orm.Action.build_key('49', 'decommission')], False, 'entity._is_system or entity._original.state != "active"'),
       orm.FieldPermission('49', ['created', 'updated', 'state'], False, None, 'True'),
-      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code', '_transaction_actions', '_transaction_plugin_groups'], False, False,
+      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records',
+                                 '_code', '_transaction_actions', '_transaction_plugin_groups'], False, False,
                           'entity._original.namespace_entity._original.state != "active"'),
-      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records', '_code', '_transaction_actions', '_transaction_plugin_groups'], False, None,
+      orm.FieldPermission('49', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records',
+                                 '_code'], False, None,
+                          'entity._original.state != "draft"'),
+      orm.FieldPermission('49', ['_transaction_actions',
+                                 '_transaction_plugin_groups.name',
+                                 '_transaction_plugin_groups.subscriptions',
+                                 '_transaction_plugin_groups.active',
+                                 '_transaction_plugin_groups.sequence',
+                                 '_transaction_plugin_groups.transactional'], False, None,
                           'entity._is_system'),
+      orm.FieldPermission('49', ['_transaction_plugin_groups.plugins'], False, None,
+                          'entity._is_system and entity._original._transaction_plugin_groups.name != "User Plugins"'),  # @todo Missing index between _transaction_plugin_groups and name!
       orm.FieldPermission('49', ['state'], True, None,
                           '(action.key_id_str == "activate" and entity.state == "active") or (action.key_id_str == "decommission" and entity.state == "decommissioned")')
       ]
@@ -111,8 +121,7 @@ class Journal(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': '_journal',
-                           'output.available_fields': '_available_fields'}})
+            Set(cfg={'d': {'output.entity': '_journal'}})
             ]
           )
         ]
@@ -128,11 +137,9 @@ class Journal(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            JournalFields(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': '_journal',
-                           'output.available_fields': '_available_fields'}})
+            Set(cfg={'d': {'output.entity': '_journal'}})
             ]
           )
         ]
@@ -153,7 +160,12 @@ class Journal(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            JournalUpdateSet(),
+            Set(cfg={'s': {'_journal.state': 'draft'},  # @todo Do we handle this like this!?
+                     'd': {'_journal.name': 'input.name',
+                           '_journal.entry_fields': 'input.entry_fields',
+                           '_journal.line_fields': 'input.line_fields',
+                           '_journal._transaction_actions': 'input._transaction_actions',
+                           '_journal._transaction_plugin_groups': 'input._transaction_plugin_groups'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -353,9 +365,11 @@ class Category(orm.BaseExpando):
                                   orm.Action.build_key('47', 'delete')], False, 'entity._is_system'),
       orm.ActionPermission('47', [orm.Action.build_key('47', 'delete')], False, 'entity._is_used'),
       orm.FieldPermission('47', ['created', 'updated'], False, None, 'True'),
-      orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name', 'active', 'description', 'balances', '_records', '_code'], False, False,
+      orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name',
+                                 'active', 'description', 'balances', '_records', '_code'], False, False,
                           'entity._original.namespace_entity._original.state != "active"'),
-      orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name', 'active', 'description', 'balances', '_records', '_code'], False, None,
+      orm.FieldPermission('47', ['created', 'updated', 'parent_record', 'name', 'complete_name',
+                                 'active', 'description', 'balances', '_records', '_code'], False, None,
                           'entity._is_system')
       ]
     )
@@ -411,7 +425,7 @@ class Category(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            CategoryUpdateSet(),
+            CategoryUpdateSet(),  # @todo Unless we decide to implement that complete_name handling property, this will stay.
             RulePrepare(),
             RuleExec()
             ]

@@ -25,7 +25,9 @@ regarding OpenERP journals is that the initial journal code is used for defining
 sequencing pattern, and the pattern doesn't change on subseqent code changes however,
 it can be changed with user intervention in sequence configuration.
 In OpenERP, journals can have up to 5 characters of code length.
- 
+
+
+
 There was Specialized Category Read plugin that can be handeled by base Read plugin.
 
 code = '47_%s' % context.input.get('_code')  # @todo Not sure if we need to salt key id here?
