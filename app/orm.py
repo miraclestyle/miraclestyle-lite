@@ -3175,6 +3175,11 @@ class SuperMultiPropertyStorageProperty(SuperJsonProperty):
   def __init__(self, *args, **kwargs):
     self._cfg = kwargs.pop('cfg')
     super(SuperMultiPropertyStorageProperty).__init__(*args, **kwargs)
+    
+  def get_meta(self):
+    dic = super(SuperMultiPropertyStorageProperty, self).get_meta()
+    dic['cfg'] = self._cfg
+    return dic
   
   def argument_format(self, value):
     value = super(SuperMultiPropertyStorageProperty, self).argument_format(value)
