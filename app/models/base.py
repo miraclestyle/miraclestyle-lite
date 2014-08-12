@@ -304,7 +304,7 @@ class _BaseImageProperty(_BaseBlobProperty):
   
   def process(self, values):
     ''' @note
-    images.Image(filename=new_value.gs_object_name) can be used only in case of just transforming the image
+    This method is primarily used for images' transformation and copying.
     '''
     @orm.tasklet
     def process_image(value, i, values):
