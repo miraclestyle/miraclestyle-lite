@@ -154,6 +154,8 @@ MainApp
                 'getMoreImages': function () {
 		 
 					 var that = this;
+					 
+					 if (!that.entity._next_read_arguments._images.config.more) return false;
  
 					 EntityEditor.read_entity_partial(that.entity, {
 					      '_images' : that.entity._next_read_arguments._images,

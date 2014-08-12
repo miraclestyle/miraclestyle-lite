@@ -171,6 +171,7 @@ function logic_template(file)
 {
 	return '/webclient/static/js/angular/component/template/' + file;
 }
+ 
 
 function update()
 { 

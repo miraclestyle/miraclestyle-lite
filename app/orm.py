@@ -414,7 +414,6 @@ class _BaseModel(object):
       original = '%s, ' % self._original
     out = super(_BaseModel, self).__repr__()
     out = out.replace('%s(' % self.__class__.__name__, '%s(_original=%s' % (self.__class__.__name__, original))
-    
     virtual_fields = self.get_virtual_fields()
     if virtual_fields:
       out = out[:-1]
@@ -776,12 +775,12 @@ class _BaseModel(object):
     # @todo this is the problem with catalog dates...
     if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
-    if (field_key in permissions):  # @todo How this affects the outcome??
+    if (field_key in permissions):  # @todo How this affects the outcome?? @answer it means that the rule engine will only run on fields that have specification in permissions
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
-            util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
+            #util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
             setattr(entity, field_key, field_value)
           except TypeError as e:
             util.log('--RuleWrite: setattr error: %s' % e)
@@ -1108,7 +1107,7 @@ class _BaseModel(object):
     fetch keys (that need to be copied) who would be sent to other tasks that could carry out the
     duplication on per-entity basis, and signaling complete when the last entity gets copied.
     So in this case, example above would only duplicate data that is on the root entity itself, while the
-    multi, multi sequenced and single entity will be resolved by only retrieving keys and sending them to
+    multi and single entity will be resolved by only retrieving keys and sending them to
     multiple tasks that could duplicate them in paralel.
     That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
     
@@ -1546,7 +1545,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
     # so in that case we always call self.read() to mutate the list properly when needed
     if self.storage_type == 'local': # it happens only on local props
-      self._read_local() # recursion is present if we call .read()
+      self._read_local() # recursion is present if we call .read() at return self.value
     return super(SuperStructuredPropertyManager, self).value
   
   @property
@@ -1559,12 +1558,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   @property
   def storage_type(self):
-    '''Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi', 'remote_multi_sequenced' values stored.
+    '''Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi' values stored.
     'local' is a structured value stored in a parent entity.
     'remote_single' is a single child (fan-out) entity of the parent entity.
-    'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.
-    'remote_multi_sequenced' is exactly as the above, however, their id-s represent sequenced numberes, and they are usually accessed via get_multi.
-    
+    'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.    
     '''
     return self._property._storage  # @todo Prehaps _storage rename to _storage_type
   
@@ -3214,6 +3211,9 @@ class SuperMultiPropertyStorageProperty(SuperJsonProperty):
       return out[0]
     else:
       return out
+
+class SuperHierarchyStringPath(SuperTextProperty):
+  pass
 
 
 #########################################

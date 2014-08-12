@@ -665,8 +665,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
         return {
             read_entity_partial : function (entity, config, success)
             {
-                if (config.more)
-                {
+   
                     return Endpoint.post('read', entity.kind, {
                         key : entity.key,
                         read_arguments : config,
@@ -675,7 +674,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         update(entity._next_read_arguments, data.entity._next_read_arguments);
                         success(data);
                     });
-                }
+          
                 
             },
         	update_entity : function ($scope, data, exclude)

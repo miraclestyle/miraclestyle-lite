@@ -25,7 +25,8 @@ __default_journal_field_keywords_definition = {'repeated': {'True': ('True', Tru
     {Field keyword argument name :  {
                                       'choice' : (Friendly Name, outcome),
                                     }
-                                    or instance of property which .argument_format will be called upon and retrieve the outcome
+                                    or instance of property which .argument_format will be
+                                     called upon and retrieve the outcome
                                     or callback to format the outcome})
 '''
 JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
@@ -108,7 +109,6 @@ class Journal(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            JournalFields(),
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_journal',
@@ -140,12 +140,13 @@ class Journal(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('49', 'update'),
       arguments={
-        #'key': orm.SuperKeyProperty(kind='49', required=True),
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
         'name': orm.SuperStringProperty(required=True),
         'entry_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
-        'line_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS)
+        'line_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
+        '_transaction_actions': orm.SuperLocalStructuredProperty('56', repeated=True),
+        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty('52', repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -298,7 +299,7 @@ class Journal(orm.BaseExpando):
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    code = input.get('code')
+    code = input.get('_code')
     return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
   
   @property
@@ -398,7 +399,6 @@ class Category(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('47', 'update'),
       arguments={
-        #'key': orm.SuperKeyProperty(kind='47', required=True),
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.CategoryUpdateRead() plugin!
         'parent_record': orm.SuperKeyProperty(kind='47'),
@@ -494,7 +494,7 @@ class Category(orm.BaseExpando):
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    code = input.get('code')
+    code = input.get('_code')
     return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
   
   @property

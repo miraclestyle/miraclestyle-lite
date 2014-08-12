@@ -17,7 +17,6 @@ from google.appengine.datastore.datastore_query import Cursor
 from app import orm, mem, settings
 from app.util import *
 
-
 # @see https://developers.google.com/appengine/docs/python/googlecloudstorageclient/retryparams_class
 default_retry_params = cloudstorage.RetryParams(initial_delay=0.2, max_delay=5.0,
                                                 backoff_factor=2, max_retries=5,

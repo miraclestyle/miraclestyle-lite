@@ -11,21 +11,6 @@ from app import orm
 from app.util import *
 
 
-class JournalFields(orm.BaseModel):
-  
-  def run(self, context):
-    journal_fields = collections.OrderedDict([('String', orm.SuperStringProperty),
-                                              ('Integer', orm.SuperIntegerProperty),
-                                              ('Decimal', orm.SuperDecimalProperty),
-                                              ('Float', orm.SuperFloatProperty),
-                                              ('DateTime', orm.SuperDateTimeProperty),
-                                              ('Boolean', orm.SuperBooleanProperty),
-                                              ('Reference', orm.SuperKeyProperty),
-                                              ('Text', orm.SuperTextProperty),
-                                              ('JSON', orm.SuperJsonProperty)])
-    context._available_fields = journal_fields.keys()
-
-
 '''
 There was Specialized Journal Read plugin that can be handeled by base Read plugin.
 
@@ -40,39 +25,7 @@ regarding OpenERP journals is that the initial journal code is used for defining
 sequencing pattern, and the pattern doesn't change on subseqent code changes however,
 it can be changed with user intervention in sequence configuration.
 In OpenERP, journals can have up to 5 characters of code length.
-'''
-
-
-# @todo This has to be resolved once we solve this input set strategy.
-class JournalUpdateSet(orm.BaseModel):
-  
-  def run(self, context):
-    
-    def build_field(model, field):
-      return model(name=field.get('name'),
-                   verbose_name=field.get('verbose_name'),
-                   required=field.get('required'),
-                   repeated=field.get('repeated'),
-                   indexed=field.get('indexed'),
-                   default=field.get('default'),
-                   choices=field.get('choices'))
-    
-    input_entry_fields = context.input.get('entry_fields')
-    input_line_fields = context.input.get('line_fields')
-    entry_fields = []
-    line_fields = []
-    for field in input_entry_fields:
-      model = __JOURNAL_FIELDS.get(field.get('type'))
-      entry_fields.append(build_field(model, field))
-    for field in input_line_fields:
-      model = __JOURNAL_FIELDS.get(field.get('type'))
-      line_fields.append(build_field(model, field))
-    context._journal.name = context.input.get('name')
-    context._journal.entry_fields = entry_fields
-    context._journal.line_fields = line_fields
-
-
-'''
+ 
 There was Specialized Category Read plugin that can be handeled by base Read plugin.
 
 code = '47_%s' % context.input.get('_code')  # @todo Not sure if we need to salt key id here?
@@ -94,5 +47,6 @@ class CategoryUpdateSet(orm.BaseModel):
     context._category.name = context.input.get('name')
     context._category.active = context.input.get('active')
     context._category.description = context.input.get('description')
+    # @todo make complete name could be replaced by custom property
     complete_name = orm.make_complete_name(context.entities[context.model.get_kind()], 'name', parent_property='parent_record')
     context._category.complete_name = complete_name
