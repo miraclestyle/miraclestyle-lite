@@ -172,19 +172,19 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     documents = []
     index_name = self.cfg.get('index', None)
     catalog_fields = {'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      'cover.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
+                      'namespace_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
     product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'namespace_entity.logo.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      '_product_category.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
-                      '_product_category.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
-                      '_product_category.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
+                      'namespace_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      '_product_category.value.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
+                      '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
+                      '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
     context._catalog._images.read({'config': {'cursor': -1}})
     product_keys = []
     for image in context._catalog._images.value:
       product_keys.extend([pricetag.product for pricetag in image.pricetags.value])
-    context._catalog._products.read({'config': {'keys': product_keys}})
+    context._catalog._products.read({'_product_category': {}, 'config': {'keys': product_keys}})
     products = context._catalog._products.value
     context._catalog._images = []
     write_index = True
@@ -192,7 +192,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
     for product in products:
-      if product._product_category.state != 'indexable':
+      if product._product_category.value.state != 'indexable':
         write_index = False
         break
     results = None

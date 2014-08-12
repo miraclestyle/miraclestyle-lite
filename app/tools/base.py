@@ -66,7 +66,7 @@ def callback_exec(url, callbacks):
     for callback in callbacks:
       if callback and isinstance(callback, (list, tuple)) and len(callback) == 2:
         queue_name, data = callback
-        if data and data.get('caller_user') and data.get('caller_action'):
+        if data:
           if queue_name not in queues:
             queues[queue_name] = []
           queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))

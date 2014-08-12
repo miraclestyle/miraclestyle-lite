@@ -48,6 +48,19 @@ class Set(orm.BaseModel):
       if set_value is not Nonexistent:
         set_attr(context, key, set_value)
 
+class Del(orm.BaseModel):
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    static_values = self.cfg.get('s', [])
+    dynamic_values = self.cfg.get('d', [])
+    for key in static_values:
+      del_attr(context, key)
+    for key in dynamic_values:
+      del_attr(context, key)
 
 class Read(orm.BaseModel):
   

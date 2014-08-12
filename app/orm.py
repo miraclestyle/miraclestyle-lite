@@ -12,6 +12,7 @@ import json
 import copy
 import collections
 import string
+import time
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
@@ -600,7 +601,10 @@ class _BaseModel(object):
       prop = virtual_fields.get(name)
       if prop:
         prop._delete_value(self)
-    return super(_BaseModel, self).__delattr__(name)
+    try:
+      return super(_BaseModel, self).__delattr__(name)
+    except:
+      pass
   
   def __deepcopy__(self, memo):
     '''This hook for deepcopy will only instance a new entity that has the same properties
@@ -1122,7 +1126,7 @@ class _BaseModel(object):
         if value:
            value.duplicate() # call duplicate for every structured field
     if new_entity.key:
-      new_entity.set_key('%s_duplicate' % self.key_id, parent=self.key_parent, namespace=self.key_namespace)
+      new_entity.set_key('%s_duplicate_%s' % (self.key_id, time.time()), parent=self.key_parent, namespace=self.key_namespace)
       # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
       # prepare_duplicate_key()
       # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that
@@ -1927,6 +1931,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _duplicate_remote_multi(self):
     self._duplicate_remote()
+    
+  def _duplicate_reference(self):
+    pass
  
   def duplicate(self):
     '''Calls storage type specific duplicate function.
@@ -2495,7 +2502,10 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       value = ' '.join(map(lambda v: v.urlsafe(), value))
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
-      value = value.urlsafe()
+      try:
+        value = value.urlsafe()
+      except:
+        value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
 
 

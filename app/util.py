@@ -110,6 +110,21 @@ def set_attr(entity, field_path, value):
       return None
   else:
     setattr(entity, last_field, value)
+    
+def del_attr(entity, field_path):
+  result = prepare_attr(entity, field_path)
+  if result == Nonexistent:
+    return None
+  entity, last_field = result
+  if isinstance(entity, dict):
+    del entity[last_field]
+  elif isinstance(entity, list):
+    try:
+      del entity[int(last_field)]
+    except:
+      return None
+  else:
+    delattr(entity, last_field)
 
 
 def get_attr(entity, field_path, default_value=None):

@@ -169,7 +169,8 @@ class Product(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi')
+    '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi'),
+    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference'),
     }
 
 
@@ -194,8 +195,8 @@ class CatalogImage(Image):
   
   def prepare(self, **kwds):
     key_id = self.key_id
+    self.set_key(key_id, parent=kwds.get('parent'))
     if key_id is None:
-      self.set_key(key_id, parent=kwds.get('parent'))
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, util.Nonexistent)
       if sequence is util.Nonexistent:
@@ -850,8 +851,8 @@ class Catalog(orm.BaseExpando):
           transactional=True,
           plugins=[
             Duplicate(),
-            Set(cfg={'s': {'_catalog.created': None,
-                           '_catalog.state': 'unpublished'}}),
+            Set(cfg={'s': {'_catalog.state': 'unpublished'}}),
+            Del(cfg={'s': ('_catalog.created',)}),
             Write(),
             CallbackNotify(),
             CallbackExec()
