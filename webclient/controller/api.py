@@ -5,7 +5,7 @@ Created on Oct 10, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from google.appengine.ext.ndb import metadata
-from google.appengine.api import search
+from google.appengine.api import search, datastore
 
 from app import io, orm, util, mem
 
@@ -54,7 +54,8 @@ class Reset(handler.Angular):
      orm.Future.wait_all(futures)
   
    if keys_to_delete:
-      orm.delete_multi(keys_to_delete)
+      datastore.Delete([key.to_old_key() for key in keys_to_delete])
+    
    # empty catalog index!
    index = search.Index(name='catalogs')
    while True:
