@@ -138,8 +138,8 @@ class CatalogCronDelete(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
-    catalog_unpublished_life = self.cfg.get('unpublished_life', 180)
-    catalog_discontinued_life = self.cfg.get('discontinued_life', 7)
+    catalog_unpublished_life = self.cfg.get('unpublished_life', 7)
+    catalog_discontinued_life = self.cfg.get('discontinued_life', 180)
     Catalog = context.models['35']
     catalogs = []
     locked_catalogs = []
