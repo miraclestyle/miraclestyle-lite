@@ -183,7 +183,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     context._catalog._images.read({'config': {'cursor': -1}})
     product_keys = []
     for image in context._catalog._images.value:
-      product_keys.extend([pricetag.product for pricetag in image.pricetags.value])
+      product_keys.extend([pricetag.product._urlsafe for pricetag in image.pricetags.value])
     context._catalog._products.read({'_product_category': {}, 'config': {'keys': product_keys}})
     products = context._catalog._products.value
     context._catalog._images = []
@@ -217,7 +217,7 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     context._catalog._images.read({'config': {'cursor': -1}})
     product_keys = []
     for image in context._catalog._images.value:
-      product_keys.extend([pricetag.product for pricetag in image.pricetags.value])
+      product_keys.extend([pricetag.product._urlsafe for pricetag in image.pricetags.value])
     context._catalog._products.read({'config': {'keys': product_keys}})
     products = context._catalog._products.value
     context._catalog._images = []
