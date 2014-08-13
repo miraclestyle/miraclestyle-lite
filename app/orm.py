@@ -793,19 +793,25 @@ class _BaseModel(object):
       else:
         child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
         if isinstance(child_entity, SuperPropertyManager):
+          if not child_entity.has_value(): # child entity was not loaded at all, we can skip its validation since user did not supply any value to it
+            return
           child_entity = child_entity.value
         if isinstance(field_value, SuperPropertyManager):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if child_entity is None and not field._required:
+          # if supplied value from user was none, and this field was not required and if user does not have permission
+          # to override it into None, we must revert it completely
+          # this is because if we put None on properties that are not required
           if not permissions[field_key]['writable']:
+            util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
             setattr(entity, field_key, field_value) # revert entire structure
           return
          
         if field._repeated:
-          # field_value can be none, and below we iterate it, so that will throw an error
-          # @todo This is bug. None value should not be supplied on fields that are not required!
+          # field_value can be none, and below we iterate it
+          # @note field_value can be None. In that case field_value_mapping will remain empty dict
           if field_value is not None:
             for field_value_item in field_value:
               '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
