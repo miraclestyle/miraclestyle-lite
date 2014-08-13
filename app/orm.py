@@ -784,7 +784,7 @@ class _BaseModel(object):
       if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
           try:
-            #util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
+            util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
             setattr(entity, field_key, field_value)
           except TypeError as e:
             util.log('--RuleWrite: setattr error: %s' % e)
@@ -1503,7 +1503,7 @@ class SuperPropertyManager(object):
     return entities
   
   def has_value(self):
-    return self.value is not None
+    return hasattr(self, '_property_value')
   
   def has_future(self):
     value = self.value

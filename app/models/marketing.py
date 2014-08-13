@@ -421,7 +421,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, argument_format_upload=True, repeated=True),
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -451,7 +451,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'product_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, repeated=True),
+        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -479,7 +479,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('35', 'product_instance_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='35', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, argument_format_upload=True, repeated=True),
+        'images': SuperImageLocalStructuredProperty(Image, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
