@@ -170,7 +170,7 @@ class Product(orm.BaseExpando):
   
   _virtual_fields = {
     '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi'),
-    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference'),
+    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference')
     }
 
 
@@ -848,8 +848,7 @@ class Catalog(orm.BaseExpando):
           transactional=True,
           plugins=[
             Duplicate(),
-            Set(cfg={'s': {'_catalog.state': 'unpublished'}}),
-            Del(cfg={'s': ('_catalog.created',)}),
+            Set(cfg={'s': {'_catalog.state': 'unpublished'}, 'rm': ['_catalog.created']}),
             Write(),
             CallbackNotify(),
             CallbackExec()

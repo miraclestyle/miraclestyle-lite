@@ -110,7 +110,8 @@ def set_attr(entity, field_path, value):
       return None
   else:
     setattr(entity, last_field, value)
-    
+
+
 def del_attr(entity, field_path):
   result = prepare_attr(entity, field_path)
   if result == Nonexistent:
@@ -181,6 +182,22 @@ def sort_by_list(unsorted_list, sorting_list, field):
       ii = total
     return ii
   return (sorted(unsorted_list, key=sorting_function), to_delete)
+
+
+def merge_dicts(a, b, path=None):
+  if path is None:
+    path = []
+  for key in b:
+    if key in a:
+      if isinstance(a[key], dict) and isinstance(b[key], dict):
+        merge_dicts(a[key], b[key], path + [str(key)])
+      elif a[key] == b[key]:
+        pass
+      else:
+        raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+    else:
+      a[key] = b[key]
+  return a
 
 
 def make_complete_name(entity, name_property, parent_property=None, separator=None):
@@ -304,18 +321,3 @@ def log(message, level=None):
     level = 'info'
   if settings.DO_LOGS:
     getattr(logging, level)(message)
-    
-def merge_dicts(a, b, path=None):
-    "merges b into a"
-    if path is None: path = []
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge_dicts(a[key], b[key], path + [str(key)])
-            elif a[key] == b[key]:
-                pass # same leaf value
-            else:
-                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
-        else:
-            a[key] = b[key]
-    return a
