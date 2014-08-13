@@ -477,10 +477,9 @@ class Domain(orm.BaseExpando):
         'key': orm.SuperKeyProperty(kind='6', required=True),
         'name': orm.SuperStringProperty(required=True),
         'primary_contact': orm.SuperKeyProperty(required=True, kind='8', validator=primary_contact_validator),
-        'logo': SuperImageLocalStructuredProperty(Image,
-                                                  process_config={'measure': False, 'transform': True,
-                                                                  'width': 240, 'height': 100,
-                                                                  'crop_to_fit': True}),
+        'logo': SuperImageLocalStructuredProperty(Image, process_config={'measure': False, 'transform': True,
+                                                                         'width': 240, 'height': 100,
+                                                                         'crop_to_fit': True}),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
