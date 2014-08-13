@@ -54,6 +54,17 @@ JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringP
                                                                                     'name': __name_definition}))])
 
 
+class TransactionAction(orm.Action):
+  
+  arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
+  
+  
+class TransactionPluginGroup(orm.PluginGroup):
+  
+  # first arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3')
+  plugins = orm.SuperPluginStorageProperty([], '6', required=True, default=[], compressed=False)
+
+
 # @todo sequencing counter is missing, and has to be determined how to solve that!
 class Journal(orm.BaseExpando):
   
@@ -71,8 +82,8 @@ class Journal(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
-    '_transaction_actions': orm.SuperStorageStructuredProperty('56', storage='remote_multi'),
-    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty('52', storage='remote_multi')
+    '_transaction_actions': orm.SuperStorageStructuredProperty(orm.Action, storage='remote_multi'),
+    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(orm.PluginGroup, storage='remote_multi')
     }
   
   _global_role = GlobalRole(
@@ -150,10 +161,10 @@ class Journal(orm.BaseExpando):
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
         'name': orm.SuperStringProperty(required=True),
-        'entry_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
-        'line_fields': orm.SuperMultiPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
-        '_transaction_actions': orm.SuperLocalStructuredProperty('56', repeated=True),
-        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty('52', repeated=True)
+        'entry_fields': orm.SuperPicklePropertyMaker(required=True, cfg=JOURNAL_FIELDS),
+        'line_fields': orm.SuperPicklePropertyMaker(required=True, cfg=JOURNAL_FIELDS),
+        '_transaction_actions': orm.SuperLocalStructuredProperty(orm.Action, repeated=True),
+        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty(orm.PluginGroup, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -478,6 +489,8 @@ class Category(orm.BaseExpando):
             'filters': {'name': orm.SuperStringProperty(),
                         'active': orm.SuperBooleanProperty()},
             'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
                         {'orders': [('active', ['asc', 'desc'])]},
                         {'filters': [('name', ['==', '!='])],
                          'orders': [('name', ['asc', 'desc'])]},

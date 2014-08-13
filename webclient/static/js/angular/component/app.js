@@ -86,6 +86,43 @@ SEARCH_KIND_CONFIG = {
 				    }]
     },
     
+    '49': {
+        'title' : 'Journals',
+        'add_new' : 'New Journal',
+        'service' : 'Journal',
+        'fields' : [{
+                    'label': 'Name',
+                    'key': 'name'
+                    }, 
+                    {
+                    'label': 'Created',
+                    'key': 'created'
+                    },
+                    {
+                    'label': 'State',
+                    'key': 'state'
+                    }]
+    },
+    
+   '47': {
+        'title' : 'Category',
+        'add_new' : 'New Category',
+        'service' : 'Category',
+        'fields' : [{
+                    'label': 'Name',
+                    'key': 'name'
+                    }, 
+                    {
+                    'label': 'Created',
+                    'key': 'created'
+                    },
+                    {
+                    'label': 'State',
+                    'key': 'state'
+                    }]
+    },
+    
+    
     'default': {
     	'title' : 'No data specified for this kind',
     	'add_new' : 'N/A',

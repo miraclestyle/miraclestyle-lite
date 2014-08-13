@@ -862,9 +862,9 @@ MainApp
              
             };
             
-            var catalog_read_arguments = {
-                            	'_images' : {},
-                           };
+            var read_arguments = {
+               '_images' : {},
+            };
              
             return {
 
@@ -890,7 +890,7 @@ MainApp
                         'templateUrl': logic_template('catalog/manage.html'),
                         'args': {
                             'domain': domain_key,
-                            'read_arguments' : catalog_read_arguments,
+                            'read_arguments' : read_arguments,
                         }
                     });
 
@@ -901,7 +901,7 @@ MainApp
                         'complete': complete,
                         'args': {
                             'key': entity.key,
-                            'read_arguments' : catalog_read_arguments,
+                            'read_arguments' : read_arguments,
                         }
                     }, make_update_scope()));
                 }

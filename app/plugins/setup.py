@@ -86,7 +86,7 @@ class DomainSetup(Setup):
     FieldPermission = self.context.models['80']
     DomainRole = self.context.models['60']
     permissions = []
-    objects = ['6', '60', '8', '62', '61', '35', '38', '39', '17', '15', '16', '19']
+    objects = ['6', '60', '8', '62', '61', '35', '38', '39', '17', '15', '16', '19', '49', '47']
     for obj in objects:
       obj = self.context.models.get(obj)
       if obj is not None:  # This is because we do not have all models ported yet.
@@ -161,6 +161,12 @@ class DomainSetup(Setup):
                        role=role_key,
                        search_form=False,
                        filters=[Filter(name='Menu Widgets', model='62')]),
+                Widget(id='system_transaction',
+                       namespace=namespace,
+                       name='Transactions',
+                       role=role_key,
+                       search_form=False,
+                       filters=[Filter(name='Journals', model='49'), Filter(name='Category', model='47')]),
                 Widget(id='system_notifications',
                        namespace=namespace,
                        name='Notifications',

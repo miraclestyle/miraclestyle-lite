@@ -1129,6 +1129,15 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    			}
    		}),
    		
+   		'transaction_category' : Select2Options.factory({
+            kind : '47',
+            filters : {'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+            args_callback : function (element, args, term, page)
+            {
+                args['domain'] = $rootScope.nav.domain.key;
+            }
+        }),
+   		
    		'domain_user' : Select2Options.factory({
    			kind : '8',
    			args_callback : function (element, args, term, page)

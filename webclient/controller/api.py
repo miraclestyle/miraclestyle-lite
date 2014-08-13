@@ -15,7 +15,7 @@ class Reset(handler.Angular):
  
   def respond(self):
    models = io.Engine.get_schema()
-   kinds = ['0', '6', '83', '5', '35', '36', '62', '61', '39', '38', '60', '8', '57', '77', '10']
+   kinds = ['0', '6', '83', '5', '35', '36', '62', '61', '39', '38', '60', '8', '57', '77', '10', '49', '47']
    namespaces = metadata.get_namespaces()
    keys_to_delete = []
    if self.request.get('kinds'):

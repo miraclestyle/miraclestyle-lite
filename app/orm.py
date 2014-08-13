@@ -2298,7 +2298,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
       argument: SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
       will allow instancing of both 51 and 21 that is provided from the input.
       
-      This property should not be used for datastore. Its specifically meant for arguments.
+      This property should not be used for datastore. Its specifically used for arguments.
       Currently we do not have the code that would allow this to be saved in datastore:
       
       Entity.images
@@ -2312,8 +2312,8 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
             => Image
             => Image
             => Image
-      In order to support different instances in the repeated list we would also need to store KIND. But i dont
-      see that this is going to be needed.
+      In order to support different instances in the repeated list we would also need to store KIND and implement 
+      additional logic that will load proper model based on protobuff.
     '''
     args = list(args)
     if isinstance(args[0], (tuple, list)):
@@ -2697,10 +2697,6 @@ class SuperSearchProperty(SuperJsonProperty):
     
     '''
     self._cfg = kwargs.pop('cfg', {})
-    # temp
-    kwargs.pop('order_by', None)
-    kwargs.pop('filters', None)
-    kwargs.pop('indexes', None)
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -3166,11 +3162,13 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
         self._modelclass2 = set_modelclass2
         
         
-class SuperMultiPropertyStorageProperty(SuperJsonProperty):
+class SuperPropertyStorageProperty(SuperPickleProperty):
   
   '''
+    This property is used to store instances of properties to datastore.
+    
     Incoming data is:
-    as non repeated e.g.
+    as non repeated:
     {
       'field' : 'json',
       'config' : {
@@ -3178,7 +3176,7 @@ class SuperMultiPropertyStorageProperty(SuperJsonProperty):
       },
     }
     
-    as repeated: e.g.
+    as repeated: 
     
     [{
       'field' : 'json',
@@ -3189,16 +3187,16 @@ class SuperMultiPropertyStorageProperty(SuperJsonProperty):
   '''
   
   def __init__(self, *args, **kwargs):
-    self._cfg = kwargs.pop('cfg')
-    super(SuperMultiPropertyStorageProperty).__init__(*args, **kwargs)
+    self._cfg = kwargs.pop('cfg', None)
+    super(SuperPropertyStorageProperty, self).__init__(*args, **kwargs)
     
   def get_meta(self):
-    dic = super(SuperMultiPropertyStorageProperty, self).get_meta()
+    dic = super(SuperPropertyStorageProperty, self).get_meta()
     dic['cfg'] = self._cfg
     return dic
   
   def argument_format(self, value):
-    value = super(SuperMultiPropertyStorageProperty, self).argument_format(value)
+    value = super(SuperPropertyStorageProperty, self).argument_format(value)
     if value is util.Nonexistent:
       return value
     if not self._repeated:
@@ -3232,8 +3230,62 @@ class SuperMultiPropertyStorageProperty(SuperJsonProperty):
       return out[0]
     else:
       return out
+    
+    
+class SuperPluginStorageProperty(SuperPickleProperty):
+  
+  _kinds = None
+  
+  def __init__(self, *args, **kwargs):
+    args = list(args)
+    if isinstance(args[0], (tuple, list)):
+      self._kinds = args[0]
+    if isinstance(args[0], basestring):
+      self._kinds = (args[0],)
+    args = args[1:]
+    super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
+  
+  # this is retarded but we cannot subclass _BaseStructuredProperty, it has too much shit in it
+  # because of that, we call its format functions directly
+  def _structured_property_field_format(self, fields, values):
+    return SuperMultiLocalStructuredProperty._structured_property_field_format(self, fields, values)
+  
+  def argument_format(self, value):
+    return SuperMultiLocalStructuredProperty.argument_format(self, value)
 
-class SuperHierarchyStringPath(SuperTextProperty):
+  def get_modelclass(self, kind):
+    if self._kinds and kind:
+      if kind:
+        _kinds = []
+        for other in self._kinds:
+          if isinstance(other, Model):
+            _the_kind = other.get_kind()
+          else:
+            _the_kind = other
+          _kinds.append(_the_kind)
+        if kind not in _kinds:
+          raise PropertyError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
+        model = Model._kind_map.get(kind)
+        return model
+  
+  def get_model_fields(self, **kwargs):
+    return self.get_modelclass(**kwargs).get_fields()
+
+  def get_meta(self):
+    out = super(SuperPluginStorageProperty, self).get_meta()
+    out['kinds'] = self._kinds
+    return out  
+ 
+ 
+class _BaseTextCompletePathProperty(object):
+  pass
+ 
+ 
+class SuperTextCompletePathProperty(_BaseTextCompletePathProperty, SuperTextProperty):
+  pass
+
+
+class SuperStringCompletePathProperty(_BaseTextCompletePathProperty, SuperTextProperty):
   pass
 
 
