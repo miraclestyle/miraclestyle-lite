@@ -2655,7 +2655,7 @@ class SuperDecimalProperty(SuperStringProperty):
       return search.NumberField(name=self.search_document_field_name, value=value)
   
   def _validate(self, value):
-    if not isinstance(value, (decimal.Decimal)):
+    if not isinstance(value, decimal.Decimal):
       raise PropertyError('expected_decimal')  # Perhaps, here should be some other type of exception?
   
   def _to_base_type(self, value):
