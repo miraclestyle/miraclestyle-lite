@@ -110,15 +110,15 @@ SEARCH_KIND_CONFIG = {
         'service' : 'Category',
         'fields' : [{
                     'label': 'Name',
-                    'key': 'name'
+                    'key': 'complete_name'
                     }, 
                     {
                     'label': 'Created',
                     'key': 'created'
                     },
                     {
-                    'label': 'State',
-                    'key': 'state'
+                    'label': 'Active',
+                    'key': 'active'
                     }]
     },
     

@@ -50,5 +50,5 @@ class CategoryUpdateSet(orm.BaseModel):
     context._category.active = context.input.get('active')
     context._category.description = context.input.get('description')
     # @todo make complete name could be replaced by custom property
-    complete_name = orm.make_complete_name(context.entities[context.model.get_kind()], 'name', parent_property='parent_record')
+    complete_name = make_complete_name(context._category, 'name', parent_property='parent_record')
     context._category.complete_name = complete_name

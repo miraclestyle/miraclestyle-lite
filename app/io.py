@@ -6,6 +6,7 @@ Created on Dec 17, 2013
 '''
 
 import cgi
+import inspect
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
@@ -61,7 +62,11 @@ class Engine:
     from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction
     for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'get_fields'):
-        for field_key, field in model.get_fields().iteritems():
+        try:
+          fields = model.get_fields()
+        except TypeError: # now Line and entry throw an error because get_fields is instance method
+          continue
+        for field_key, field in fields.iteritems():
           if hasattr(field, 'initialize'):
             field.initialize()
   

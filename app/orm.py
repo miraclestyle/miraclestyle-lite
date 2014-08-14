@@ -3274,19 +3274,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   def get_meta(self):
     out = super(SuperPluginStorageProperty, self).get_meta()
     out['kinds'] = self._kinds
-    return out  
- 
- 
-class _BaseTextCompletePathProperty(object):
-  pass
- 
- 
-class SuperTextCompletePathProperty(_BaseTextCompletePathProperty, SuperTextProperty):
-  pass
-
-
-class SuperStringCompletePathProperty(_BaseTextCompletePathProperty, SuperTextProperty):
-  pass
+    return out
 
 
 #########################################

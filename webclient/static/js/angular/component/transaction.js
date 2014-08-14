@@ -194,13 +194,8 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
               
                return EntityEditor.create({
                      'kind' : '47',
-                     'entity' : {
-                        'domain' : domain_key,
-                     },
+                     'entity' : {'domain' : domain_key},
                      'scope' : scope,
-                     'handle' : function (data)
-                     {
-                     },
                      'complete' : complete,
                      'templateUrl' : logic_template('transaction/category/manage.html'),
                      'args' : {
@@ -221,7 +216,8 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             },
             update: function (entity, complete)
             {
-             
+                
+ 
                 return EntityEditor.update({
                      'kind' : '47',
                      'entity' : entity,

@@ -161,10 +161,10 @@ class Journal(orm.BaseExpando):
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
         'name': orm.SuperStringProperty(required=True),
-        'entry_fields': orm.SuperPicklePropertyMaker(required=True, cfg=JOURNAL_FIELDS),
-        'line_fields': orm.SuperPicklePropertyMaker(required=True, cfg=JOURNAL_FIELDS),
-        '_transaction_actions': orm.SuperLocalStructuredProperty(orm.Action, repeated=True),
-        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty(orm.PluginGroup, repeated=True)
+        'entry_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
+        'line_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
+        '_transaction_actions': orm.SuperLocalStructuredProperty(TransactionAction, repeated=True),
+        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty(TransactionPluginGroup, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -422,10 +422,40 @@ class Category(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('47', 'update'),
+      key=orm.Action.build_key('47', 'create'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.CategoryUpdateRead() plugin!
+        'parent_record': orm.SuperKeyProperty(kind='47'),
+        'name': orm.SuperStringProperty(required=True),
+        'active': orm.SuperBooleanProperty(required=True, default=True),
+        'description': orm.SuperTextProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            CategoryUpdateSet(),  # @todo Unless we decide to implement that complete_name handling property, this will stay.
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_category'}}),
+            CallbackNotify(),
+            CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'update'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='47', required=True),
         'parent_record': orm.SuperKeyProperty(kind='47'),
         'name': orm.SuperStringProperty(required=True),
         'active': orm.SuperBooleanProperty(required=True, default=True),
@@ -522,7 +552,7 @@ class Category(orm.BaseExpando):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     code = input.get('_code')
-    return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
+    return cls.build_key(code, namespace=kwargs.get('namespace'))  # @todo Possible prefix?
   
   @property
   def _is_system(self):
@@ -530,6 +560,8 @@ class Category(orm.BaseExpando):
   
   @property
   def _is_used(self):
+    if self.key.id() is None:
+      return False
     line = Line.query(Line.categories == self.key).get()
     return line is not None
 

@@ -38,6 +38,7 @@ ANGULAR_COMPONENTS = ['home',
                       'notify',
                       'catalog',
                       'buyer',
+                      'transaction',
                       'admin',
                       ]
 

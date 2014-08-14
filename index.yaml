@@ -147,3 +147,8 @@ indexes:
   ancestor: yes
   properties:
   - name: "7"
+
+- kind: "47"
+  properties:
+  - name: "6"
+  - name: "4"
