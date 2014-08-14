@@ -57,11 +57,11 @@ JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringP
 class TransactionAction(orm.Action):
   
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
-  
-  
+
+
 class TransactionPluginGroup(orm.PluginGroup):
   
-  # first arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3')
+  # First arg is list of plugin kind ids that user can create (e.g. ['1', '2', '3']).
   plugins = orm.SuperPluginStorageProperty([], '6', required=True, default=[], compressed=False)
 
 
@@ -368,11 +368,13 @@ class Category(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('47', [orm.Action.build_key('47', 'prepare'),
+                                  orm.Action.build_key('47', 'create'),
                                   orm.Action.build_key('47', 'read'),
                                   orm.Action.build_key('47', 'update'),
                                   orm.Action.build_key('47', 'delete'),
                                   orm.Action.build_key('47', 'search')], False, 'entity._original.namespace_entity._original.state != "active"'),
-      orm.ActionPermission('47', [orm.Action.build_key('47', 'update'),
+      orm.ActionPermission('47', [orm.Action.build_key('47', 'create'),
+                                  orm.Action.build_key('47', 'update'),
                                   orm.Action.build_key('47', 'delete')], False, 'entity._is_system'),
       orm.ActionPermission('47', [orm.Action.build_key('47', 'delete')], False, 'entity._is_used'),
       orm.FieldPermission('47', ['created', 'updated'], False, None, 'True'),
@@ -390,24 +392,6 @@ class Category(orm.BaseExpando):
       key=orm.Action.build_key('47', 'prepare'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': '_category'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'read'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='47', required=True),
-        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -448,6 +432,24 @@ class Category(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_category'}}),
             CallbackNotify(),
             CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'read'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='47', required=True),
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_category'}})
             ]
           )
         ]
@@ -562,8 +564,9 @@ class Category(orm.BaseExpando):
   def _is_used(self):
     if self.key.id() is None:
       return False
+    category = self.query(self.parent_record == self.key).get()
     line = Line.query(Line.categories == self.key).get()
-    return line is not None
+    return (category is not None) or (line is not None)
 
 
 class Line(orm.BaseExpando):
