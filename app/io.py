@@ -64,7 +64,7 @@ class Engine:
       if hasattr(model, 'get_fields'):
         try:
           fields = model.get_fields()
-        except TypeError: # now Line and entry throw an error because get_fields is instance method
+        except TypeError:  # Now, line and entry throw an error because get_fields is instance method.
           continue
         for field_key, field in fields.iteritems():
           if hasattr(field, 'initialize'):
