@@ -1,0 +1,55 @@
+<form ng-submit="save()" name="container.main">
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+    <h2 class="fieldset">
+         <span class="fieldset-text">General</span>
+     </h2>
+     
+    <div class="form-control">
+        <label class="form-label">Kind</label>
+        <div class="form-input">
+            <select name="type" ng-required="true" ng-change="collectVitalData()" ui-select2 ng-model="plugin.kind" data-placeholder="Select kind">
+                  
+                    <option ng-repeat="k in kinds" value="{{k}}">{{FRIENDLY_KIND_NAMES[k]}}</option>
+            </select>
+        </div>
+    </div>
+  
+    <div ng-show="plugin.kind != null" class="form-control">
+         
+        <div ng-repeat="(field_name, field_config) in fields">
+              
+             <div class="form-control">
+                <label class="form-label">{{field_name}}</label>
+                <div class="form-input">
+                     <div>
+                         <input name="cfg_{{field_name}}" class="text-input" type="text" ng-model="plugin[field_name]" />
+                     </div>
+                     <div class="field-config">
+                         {{field_config}}
+                     </div>
+                </div>
+            </div>
+             
+        </div>
+        
+    </div>
+      
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+ 
+    <button class="button">
+        Save
+    </button>
+    <button type="button" class="button" ng-click="cancel()">
+        Cancel
+    </button>
+</div>
+
+
+</form>

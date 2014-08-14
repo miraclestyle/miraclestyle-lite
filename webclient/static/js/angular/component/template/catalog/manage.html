@@ -57,7 +57,7 @@
 	<div ng-show="entity.id" is-open="accordions.products" accordion-group heading="Products">
 		<div class="form-control clearfix mb15">
 		  <div class="pull-right">
-		  <button ng-show="entity._images.length" ng-click="addProducts()" type="button" class="button">Add Products</button>	
+		  <button ng-show="entity._images.length && rule.action.update.executable" ng-click="addProducts()" type="button" class="button">Add Products</button>	
 		  <div ng-show="rule.action.catalog_upload_images.executable" class="button fake-button">
 		  	 <span>Add Images</span>
 		  	 <input class="upload" name="_images" multiple upload-on-select="uploadConfig" type="file" ng-model="entity._supplied_filename" />

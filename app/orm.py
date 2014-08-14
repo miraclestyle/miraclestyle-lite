@@ -18,7 +18,7 @@ from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
 from google.appengine.ext import blobstore
-from google.appengine.api import search
+from google.appengine.api import search, datastore_errors
 
 from app import mem, util, settings
 
@@ -438,6 +438,17 @@ class _BaseModel(object):
         raise TypeError('Invalid _kind %s, for %s.' % (cls._kind, cls.__name__))
       return str(cls._kind)
     return cls.__name__
+  
+  def _check_initialized(self):
+    """Internal helper to check for uninitialized properties.
+
+    Raises:
+      BadValueError if it finds any.
+    """
+    baddies = self._find_uninitialized()
+    if baddies:
+      raise datastore_errors.BadValueError(
+        'Entity %s has uninitialized properties: %s' % (self, ', '.join(baddies)))  
   
   @classmethod
   def get_kind(cls):
@@ -1132,7 +1143,8 @@ class _BaseModel(object):
         if value:
            value.duplicate() # call duplicate for every structured field
     if new_entity.key:
-      new_entity.set_key('%s_duplicate_%s' % (self.key_id, time.time()), parent=self.key_parent, namespace=self.key_namespace)
+      # '%s_duplicate_%s' % (self.key_id, time.time())
+      new_entity.set_key(None, parent=self.key_parent, namespace=self.key_namespace)
       # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
       # prepare_duplicate_key()
       # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that
@@ -2019,7 +2031,7 @@ class _BaseProperty(object):
   _value_filters = None
   _searchable = None
   _search_document_field_name = None
-  
+ 
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
@@ -2350,7 +2362,12 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
-  pass
+  
+  def argument_format(self, value):
+    value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
+    return value
 
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
@@ -3126,6 +3143,13 @@ class SuperReferenceProperty(SuperKeyProperty):
       return manager
     else:
       return manager.read()
+    
+  def get_output(self):
+    dic = super(SuperReferenceProperty, self).get_meta()
+    other = ['_target_field', '_readable', '_updateable', '_deleteable',  '_autoload',  '_store_key']
+    for o in other:
+      dic[o[1:]] = getattr(self, o)
+    return dic
 
 
 class SuperRecordProperty(SuperStorageStructuredProperty):
@@ -3165,9 +3189,9 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
 class SuperPropertyStorageProperty(SuperPickleProperty):
   
   '''
-    This property is used to store instances of properties to datastore.
+    This property is used to store instances of properties to the datastore pickled.
     
-    Incoming data is:
+    Incoming data should be formatted:
     as non repeated:
     {
       'field' : 'json',
@@ -3199,9 +3223,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
     value = super(SuperPropertyStorageProperty, self).argument_format(value)
     if value is util.Nonexistent:
       return value
-    if not self._repeated:
-      value = [value]
-    out = []
+    out = collections.OrderedDict()
     for v in value:
       field = v.get('field')
       supplied_kwds = v.get('config')
@@ -3210,26 +3232,27 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
         raise PropertyError('no_definition_found')
       kwds = {}
       kwd_definitions = definition[2]
-      for key, value in supplied_kwds.iteritems():
+      for key, the_value in supplied_kwds.iteritems():
         kwd_definition = kwd_definitions[key]
         if isinstance(kwd_definition, dict):
           found_any = False
           for k, v in kwd_definition.iteritems():
-            if k == value:
+            if k == the_value:
               found_any = True
-              value = v[1]
+              the_value = v[1]
           if not found_any:
             raise PropertyError('keyword_value_malformed')
         elif isinstance(kwd_definition, Property):
-          value = kwd_definition.argument_format(value)
+          the_value = kwd_definition.argument_format(value)
         elif callable(kwd_definition):
-          value = kwd_definition(self, value)
-        kwds[key] = value
-      out.append(definition[1](**kwds))
-    if not self._repeated:
-      return out[0]
-    else:
-      return out
+          the_value = kwd_definition(self, value)
+        if key == 'name':
+          pass # @todo property name user prefix is needed here
+        kwds[key] = the_value
+      prop = definition[1](**kwds)
+      out[field] = prop
+    out._created_with = value # @todo this wont be needed if we figure the client side problem
+    return out
     
     
 class SuperPluginStorageProperty(SuperPickleProperty):
@@ -3245,13 +3268,50 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     args = args[1:]
     super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
   
-  # this is retarded but we cannot subclass _BaseStructuredProperty, it has too much shit in it
-  # because of that, we call its format functions directly
-  def _structured_property_field_format(self, fields, values):
-    return SuperMultiLocalStructuredProperty._structured_property_field_format(self, fields, values)
-  
+  # this is retarded, subclassing _BaseStructuredProperty, it has too much shit in it
+  # we could try and make structured property field format class functions or public functions i dont know
   def argument_format(self, value):
-    return SuperMultiLocalStructuredProperty.argument_format(self, value)
+    return self._structured_property_format(value)
+  
+  def _structured_property_field_format(self, fields, values):
+    _state = values.get('_state')
+    _sequence = values.get('_sequence')
+    key = values.get('key')
+    for value_key, value in values.items():
+      field = fields.get(value_key)
+      if field:
+        if hasattr(field, 'argument_format'):
+          val = field.argument_format(value)
+          if val is util.Nonexistent:
+            del values[value_key]
+          else:
+            values[value_key] = val
+        else:
+          del values[value_key]
+      else:
+        del values[value_key]
+    if key:
+      values['key'] = Key(urlsafe=key)
+    values['_state'] = _state  # Always keep track of _state for rule engine!
+    if _sequence is not None:
+      values['_sequence'] = _sequence
+  
+  def _structured_property_format(self, value):
+    value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
+    out = []
+    for v in value:
+      if v is None and not self._required and len(value) < 2:
+        continue
+      provided_kind_id = v.get('kind')
+      fields = self.get_model_fields(kind=provided_kind_id)
+      v.pop('class_', None) # never allow class_ or any read-only property to be set for that matter.
+      self._structured_property_field_format(fields, v)
+      modelclass = self.get_modelclass(kind=provided_kind_id)
+      entity = modelclass(**v)
+      out.append(entity)
+    return out
 
   def get_modelclass(self, kind):
     if self._kinds and kind:

@@ -233,36 +233,36 @@ MainApp
 							             };
 							             
 							             var update_cfg = {
-								                	 'kind' : kind,
-								                	 'scope' : angular.extend(make_product_scope(), {
-								                	 	'completed' : complete_upload,
-								                	 }),
-								                	 'update_child' : update_child,
-								                	 'parentScope' : $scope,
-								                	 'get_child' : function ()
-								                	 {
-								                	 	var that = this;
-								                	 	this.child = find_child(product, this.entity);
-								                	 },
-								                	 'handle' : function (data)
-											         {
-											             var that = this;
-											              
-											             that.uploadConfig = $parentScope.uploadConfig;
-											              
-                                                         that.sortableOptions = {
-                                                            'forcePlaceholderSize': true,
-                                                            'placeholder': 'image-image image-image-placeholder grid-item',
-                                                            'stop': function (event, ui) {
-                                                                 angular.forEach(that.child.images, function (o, i) {
-                                                                     o._sequence = i;
-                                                                 });
-                                                             }
-                                                         }; 
-											            
-											         },
-								                	 'templateUrl' : logic_template('catalog/product/manage.html')
-								                };
+    					                	 'kind' : kind,
+    					                	 'scope' : angular.extend(make_product_scope(), {
+    					                	 	'completed' : complete_upload,
+    					                	 }),
+    					                	 'update_child' : update_child,
+    					                	 'parentScope' : $scope,
+    					                	 'get_child' : function ()
+    					                	 {
+    					                	 	var that = this;
+    					                	 	this.child = find_child(product, this.entity);
+    					                	 },
+    					                	 'handle' : function (data)
+    								         {
+    								             var that = this;
+    								              
+    								             that.uploadConfig = $parentScope.uploadConfig;
+    								              
+                                                 that.sortableOptions = {
+                                                    'forcePlaceholderSize': true,
+                                                    'placeholder': 'image-image image-image-placeholder grid-item',
+                                                    'stop': function (event, ui) {
+                                                         angular.forEach(that.child.images, function (o, i) {
+                                                             o._sequence = i;
+                                                         });
+                                                     }
+                                                 }; 
+    								            
+    								         },
+    					                	 'templateUrl' : logic_template('catalog/product/manage.html')
+								         };
                                       
                                     	 if (!product)
                                     	 {

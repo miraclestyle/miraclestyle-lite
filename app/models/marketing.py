@@ -196,7 +196,7 @@ class CatalogImage(Image):
   def prepare(self, **kwds):
     key_id = self.key_id
     self.set_key(key_id, parent=kwds.get('parent'))
-    if key_id is None:
+    if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, util.Nonexistent)
       if sequence is util.Nonexistent:

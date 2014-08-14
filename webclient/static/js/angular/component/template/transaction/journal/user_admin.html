@@ -1,0 +1,43 @@
+<form name="container.main" ng-submit="save()">
+<div class="modal-body">
+<div class="modal-body-inner">
+ 
+    <div class="form-control">
+        <label class="form-label"></label>
+        <div class="form-input">
+            
+            <div ng-show="action=='activate'">
+             Activate text warning<br />
+            </div>
+            
+            <div ng-show="action=='decommission'">
+             Decommission text warning<br />
+            </div>
+         
+        </div>
+    </div>   
+ 
+   
+    <div class="form-control">
+        <label class="form-label">Message</label>
+        <div class="form-input">
+            <textarea ng-required="rule.input[action].message.required" class="text-input text-textarea" ng-model="log.message" name="message"></textarea>
+        </div>
+    </div>   
+ 
+       
+</div>
+</div>
+
+<div class="modal-footer">
+  
+    <button type="submit" busy class="button">
+        Save
+    </button>
+    <button type="button" class="button" ng-click="cancel()">
+        Cancel
+    </button>
+    
+</div>
+
+</form>

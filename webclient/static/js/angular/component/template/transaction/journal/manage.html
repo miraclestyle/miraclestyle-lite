@@ -1,0 +1,197 @@
+<form name="container.main" ng-submit="save()">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+  
+<div accordion>
+   <div is-open="accordions.general" accordion-group heading="General">
+       
+    <div class="form-control">
+        <label class="form-label">Code</label>
+        <div class="form-input">
+            <div class="form-text">
+                 <input ng-disabled="!rule.field._code.writable" name="_code" ng-required="rule.input[action]._code.required" class="text-input" type="text" ng-model="entity._code" />
+            </div>
+        </div>
+    </div>
+ 
+    
+    <div class="form-control">
+        <label class="form-label">Name</label>
+        <div class="form-input">
+            <div class="form-text">
+                 <input ng-disabled="!rule.field.name.writable" name="name" ng-required="rule.input[action].name.required" class="text-input" type="text" ng-model="entity.name" />
+            </div>
+        </div>
+    </div>
+    
+    <div>
+            <h2 class="fieldset with-button">
+                <span class="fieldset-text">Entry Fields</span>
+                <span class="fieldset-button">
+                    <button ng-show="rule.field.entry_fields.writable" ng-click="manageEntryField()" type="button" class="button">Add Entry Field</button>
+                </span>
+            </h2>
+     
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Config</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="entry_field in entity.entry_fields track by $index" ng-hide="entry_field._state == 'deleted'">
+                        <td>{{entry_field.field}}</td>
+                        <td>{{entry_field.config}}</td>
+                        <td>
+                            <span ng-show="rule.field.entry_fields.writable">
+                            <button type="button" ng-click="removeEntryField(entry_field)" class="button">Remove</button>
+                            <button type="button" ng-click="manageEntryField(entry_field)" class="button">Edit</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+        
+        <div>
+            <h2 class="fieldset with-button">
+                <span class="fieldset-text">Line Fields</span>
+                <span class="fieldset-button">
+                    <button ng-show="rule.field.line_fields.writable" ng-click="manageLineField()" type="button" class="button">Add Line Field</button>
+                </span>
+            </h2>
+     
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Config</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="line_field in entity.line_fields track by $index" ng-hide="line_field._state == 'deleted'">
+                        <td>{{line_field.field}}</td>
+                        <td>{{line_field.config}}</td>
+                        <td>
+                            <span ng-show="rule.field.line_fields.writable">
+                            <button type="button" ng-click="removeLineField(line_field)" class="button">Remove</button>
+                            <button type="button" ng-click="manageLineField(line_field)" class="button">Edit</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+        
+    </div>
+    
+    
+    <div ng-show="entity.id" is-open="accordions.actions" accordion-group heading="Actions">
+        
+        
+        <div class="form-control clearfix mb15">
+          <div class="pull-right">
+          <button ng-show="rule.field._transaction_actions.writable" ng-click="manageAction()" type="button" class="button">Add Action</button>  
+          </div>
+        </div>
+ 
+        <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="ac in entity._transaction_actions track by $index" ng-hide="ac._state == 'deleted'">
+                        <td>{{ac.name}}</td>
+                        <td>{{ac.active}}</td>
+                        <td>
+                            <span ng-show="rule.field._transaction_actions.writable">
+                            <button type="button" ng-click="removeAction(ac)" class="button">Remove</button>
+                            <button type="button" ng-click="manageAction(ac)" class="button">Edit</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        
+        <div ng-show="entity._next_read_arguments._transaction_actions.config.more">
+            <button type="button" ng-click="getMoreActions()" busy class="button">Load more actions</button></div>
+        
+    </div>
+    <div ng-show="entity.id" is-open="accordions.plugin_groups" accordion-group heading="Plugin Groups">
+    
+        <div class="form-control clearfix mb15">
+          <div class="pull-right">
+          <button ng-show="rule.field._transaction_plugin_groups.writable" ng-click="managePluginGroup()" type="button" class="button">Add Plugin Group</button>  
+          </div>
+        </div>
+ 
+        <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Transactional</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="pg in entity._transaction_plugin_groups track by $index" ng-hide="pg._state == 'deleted'">
+                        <td>{{pg.name}}</td>
+                        <td>{{pg.transactional}}</td>
+                        <td>{{pg.active}}</td>
+                        <td>
+                            <span ng-show="rule.field._transaction_plugin_groups.writable">
+                            <button type="button" ng-click="removePluginGroup(pg)" class="button">Remove</button>
+                            <button type="button" ng-click="managePluginGroup(pg)" class="button">Edit</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        
+        <div ng-show="entity._next_read_arguments._transaction_plugin_groups.config.more">
+            <button type="button" ng-click="getMorePluginGroups()" busy class="button">Load more plugin groups</button></div>
+    
+    </div>
+    
+    </div>
+ 
+    <div ng-show="rule.field._records.visible && history && entity.id" class="form-control">
+        <div ng-include="logic_template('misc/logs.html')"></div>
+    </div>   
+     
+
+</div>
+ 
+  
+</div>
+
+<div class="modal-footer">
+    
+    <button ng-click="decommission()" ng-show="rule.action.decommission.executable" busy type="button" class="button">
+        Decomission
+    </button>
+    
+    <button ng-click="activate()" ng-show="rule.action.activate.executable" type="button" busy class="button">
+        Activate
+    </button>
+    
+    <button ng-show="rule.action[action].executable" busy class="button">
+        Save
+    </button>
+    <button type="button" class="button" ng-click="cancel()">
+        Cancel
+    </button>
+</div>
+
+
+</form>

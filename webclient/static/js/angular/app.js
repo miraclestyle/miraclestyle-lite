@@ -51,7 +51,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 				'action' : 'search',
 				'cache' : false,
 				'args_callback' : angular.noop,
-				'select2' : {},
+				'select2' : {'allowClear' : true},
 				'endpoint' : {},
 			};
 			

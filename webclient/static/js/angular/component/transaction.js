@@ -1,8 +1,18 @@
-MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm', '$timeout',
+MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
+    return {
+        link : function (scope, element, attr)
+        {
+            console.log(scope.config, scope.field, element);
+        } 
+    };
+}])
+.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$modal', 'Confirm', '$timeout',
 
         function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm, $timeout) {
 
             var kind = '49';
+            var action_kind = '84';
+            var plugin_group_kind = '85';
              
             var make_scope = function ()
             {
@@ -24,15 +34,148 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     'removeLineField': function (field) {
                         this.entity.line_fields.remove(field);
                     },
+                     
+                    'manageField': function (field, thing, config, what) {
+                        var $parentScope = this;
+                         
+                        var modalInstance = $modal.open({
+                                templateUrl: logic_template('transaction/manage_field.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine) {
+                                     
+                                    $scope.field = angular.copy(field ? field : {'config' : {}, 'field' : null});
+                
+                                    var new_content = field ? false : true;
+                          
+                                    $scope.config = config;
+            
+                                    $scope.save = function () {
+                   
+                                         if (new_content)
+                                         {
+                                            
+                                            if (!thing[what])
+                                            {
+                                               thing[what] = [];
+                                                
+                                            }
+                                            
+                                            thing[what].push($scope.field);
+                                         }
+                                         else
+                                         {
+                                            update(field, $scope.field);
+                                         }
+                                         
+                                         $scope.cancel();
+                                    };
+        
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss('cancel');
+                                    };
+        
+                                }
+                            });
+                    },
                     
                     'manageEntryField': function (field) {
-                       
+                       var info = KINDS.get(kind);
+                       var config = info['mapped_actions'][this.action]['arguments']['entry_fields']['cfg'];
+                       this.manageField(field, this.entity, config, 'entry_fields');
                     },
                     
                     'manageLineField': function (field) {
-                       
-                    },
+                       var info = KINDS.get(kind);
+                       var config = info['mapped_actions'][this.action]['arguments']['line_fields']['cfg'];
+                       this.manageField(field, this.entity, config, 'line_fields');
+                    }
                };
+            };
+            
+            var make_action_scope = function ()
+            {
+                var outer_scope = make_scope();
+                return {
+                    'manageField' : outer_scope.manageField,
+                    'manageArgument' : function (arg)
+                    {
+                        var info = KINDS.get(action_kind);
+                        var config = info.fields['arguments']['cfg'];
+                        console.log(info, config);
+                        return this.manageField(arg, this.child, config, 'arguments');
+                    },
+                    
+                    'removeArgument' : function (arg)
+                    {
+                        this.child.arguments.remove(arg);
+                    }
+                };
+            };
+            
+            var make_plugin_group_scope = function ()
+            {
+                return {
+                    'managePlugin' : function (plg)
+                    {
+                        var $parentScope = this;
+                         
+                        var modalInstance = $modal.open({
+                                templateUrl: logic_template('transaction/journal/manage_plugin_group_plugin.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine) {
+                                     
+                                    $scope.plugin = angular.copy(plg ? plg : {});
+                                    $scope.fields = {};
+                                    
+                                    var new_content = plg ? false : true;
+                                    
+                                    var info = KINDS.get(plugin_group_kind);
+                                    
+                                    $scope.kinds = info.fields['plugins']['kinds'];
+                                    
+                                    var thing = $parentScope.child;
+                                    var what = 'plugins';
+                                    
+                                    $scope.collectVitalData = function ()
+                                    {
+                                         var info = KINDS.get($scope.plugin.kind);
+                                         $scope.fields = info.fields;
+                                         
+                                    };
+                                    
+                                    if ($scope.plugin.kind) $scope.collectVitalData();
+            
+                                    $scope.save = function () {
+                   
+                                         if (new_content)
+                                         {
+                                            
+                                            if (!thing[what])
+                                            {
+                                               thing[what] = [];
+                                                
+                                            }
+                                            
+                                            thing[what].push($scope.plugin);
+                                         }
+                                         else
+                                         {
+                                            update(plg, $scope.plugin);
+                                         }
+                                         
+                                         $scope.cancel();
+                                    };
+        
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss('cancel');
+                                    };
+        
+                                }
+                            });
+                    },
+                    'removePlugin' : function (plg)
+                    {
+                        plg._state = 'deleted';
+                    }
+                };
             };
             
             var make_update_scope = function (){
@@ -44,15 +187,118 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                 'handle': function (data) {
                     
                     var $parentScope = this;
-             
+         
                     this.manageAction = function(action)
                     {
-                        
+                         var find_child = function(child, entity)
+                        { 
+                            return _.findWhere(entity._transaction_actions, {key : child.key});
+                        };
+                         
+                         var update_child = function(data)
+                         {
+                            update(this.child, find_child(this.child, data.entity));
+                         };
+                         
+                         var update_cfg = {
+                             'kind' : kind,
+                             'scope' : make_action_scope(),
+                             'update_child' : update_child,
+                             'parentScope' : $parentScope,
+                             'get_child' : function ()
+                             {
+                                var that = this;
+                                this.child = find_child(action, this.entity);
+                             },
+                             'templateUrl' : logic_template('transaction/journal/manage_action.html')
+                        };
+                      
+                         if (!action)
+                         {
+                            return EntityEditor.create({
+                                 'close' : false,
+                                 'kind' : kind,
+                                 'parentScope' : $parentScope,
+                                 'scope' : make_action_scope(),
+                                 'get_child' : function ()
+                                 {
+                                    this.child = {};
+                                    this.entity._transaction_actions.push(this.child);
+                                 },
+                                 'update_child' : function (data) {
+                                    
+                                    var found = _.last(data.entity._transaction_actions);
+                                     
+                                    update(this.child, found);
+                                 },
+                                 'options_after_update' : update_cfg,
+                                 'templateUrl' : logic_template('transaction/journal/manage_action.html'),
+                            });
+                         }
+                         else
+                         {
+                            EntityEditor.update(update_cfg);
+                         }
                     };
                     
                     this.managePluginGroup = function (plugin_group)
                     {
-                        
+                         var find_child = function(child, entity)
+                        { 
+                            return _.findWhere(entity._transaction_plugin_groups, {key : child.key});
+                        };
+                         
+                         var update_child = function(data)
+                         {
+                            update(this.child, find_child(this.child, data.entity));
+                         };
+                         
+                         var actions = {};
+                         
+                         angular.forEach($parentScope.entity._transaction_actions, function (a) {
+                            actions[a.key] = a.name; 
+                         });
+                         
+             
+                         var update_cfg = {
+                             'kind' : kind,
+                             'scope' : $.extend(make_plugin_group_scope(), {'actions' : actions}),
+                             'update_child' : update_child,
+                             'parentScope' : $parentScope,
+                             'get_child' : function ()
+                             {
+                                var that = this;
+                                this.child = find_child(plugin_group, this.entity);
+                             },
+                             'templateUrl' : logic_template('transaction/journal/manage_plugin_group.html')
+                        };
+                      
+                         if (!plugin_group)
+                         {
+                            return EntityEditor.create({
+                                 'close' : false,
+                                 'kind' : kind,
+                                 'parentScope' : $parentScope,
+                                 'scope' : $.extend(make_plugin_group_scope(), {'actions' : actions}),
+                                 'get_child' : function ()
+                                 {
+                                    this.child = {};
+                                    this.entity._transaction_plugin_groups.push(this.child);
+                                 },
+                                 'update_child' : function (data) {
+                                    
+                                    var found = _.last(data.entity._transaction_plugin_groups);
+                                     
+                                    update(this.child, found);
+                                 },
+                                 'options_after_update' : update_cfg,
+                                 'templateUrl' : logic_template('transaction/journal/manage_plugin_group.html'),
+                            });
+                         }
+                         else
+                         {
+                            EntityEditor.update(update_cfg);
+                         }
                     };
 
                     this._do_user_admin = function (entity, action) {
@@ -63,8 +309,7 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                                 templateUrl: logic_template('transaction/journal/user_admin.html'),
                                 windowClass: 'modal-medium',
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
-                              
-
+                               
                                     $scope.rule = $parentScope.rule;
                                     $scope.action = action;
                                     $scope.log = {
@@ -79,7 +324,7 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                                         Endpoint.post(action, $parentScope.entity.kind, $scope.log)
                                             .success(function (data) {
 
-                                                EntityEditor.update_entity($parentScope, data, ['_images', '_products']);
+                                                EntityEditor.update_entity($parentScope, data, ['_transaciton_actions', '_transaction_plugin_groups']);
 
                                                 $scope.cancel();
 
@@ -98,11 +343,7 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                         handle();
 
                     };
-                    
-                    this.duplicate = function()
-                    {
-                        this._do_user_admin(this.entity, 'duplicate');
-                    };
+ 
 
                     this.activate = function () {
                         this._do_user_admin(this.entity, 'activate');
@@ -111,16 +352,7 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                     this.decommission = function () {
                         this._do_user_admin(this.entity, 'decommission');
                     };
-
-                    this.remove = function () {
-                        this._do_user_admin(this.entity, 'delete');
-                    };
-                    
-                    this.sudo = function ()
-                    {
-                        this._do_user_admin(this.entity, 'sudo');
-                    };
-      
+  
                     this.sortableOptions = {
                         'forcePlaceholderSize': true,
                         'placeholder': 'image-image image-image-placeholder grid-item'
@@ -139,6 +371,17 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
             };
     
             return {
+                
+                remove : function (entity, complete)
+                {
+                   
+                   return EntityEditor.remove({
+                      'kind' : kind,
+                      'entity' : entity,
+                      'complete' : complete,
+                   });
+             
+                },
 
                 create: function (domain_key, complete) {
                     return EntityEditor.create({
@@ -159,7 +402,7 @@ MainApp.factory('Journal', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '
                         },
                         'complete': complete,
                         'options_after_update': make_update_scope(),
-                        'templateUrl': logic_template('catalog/manage.html'),
+                        'templateUrl': logic_template('transaction/journal/manage.html'),
                         'args': {
                             'domain': domain_key,
                             'read_arguments' : read_arguments,

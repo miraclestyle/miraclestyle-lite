@@ -29,6 +29,7 @@ __default_journal_field_keywords_definition = {'repeated': {'True': ('True', Tru
                                     called upon and retrieve the outcome
                                     or callback to format the outcome})
 '''
+# @todo this needs intensive work to perfectly configure every keyword based on the field.
 JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
                                           ('int', ('Integer', orm.SuperIntegerProperty, __default_journal_field_keywords_definition)),
                                           ('decimal', ('Decimal', orm.SuperDecimalProperty, __default_journal_field_keywords_definition)),
@@ -50,19 +51,34 @@ JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringP
                                           ('text', ('Text', orm.SuperTextProperty, __default_journal_field_keywords_definition)),
                                           ('json', ('JSON', orm.SuperJsonProperty, {'required': {'True': ('True', True),
                                                                                                  'False': ('False', False)},
-                                                                                    'kind': __kind_definition,
                                                                                     'name': __name_definition}))])
 
 
 class TransactionAction(orm.Action):
   
+  _kind = 84
+  
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
+  
+  @classmethod
+  def build_key(cls, *args, **kwargs):
+    new_args = [cls._get_kind()]
+    new_args.extend(args)
+    return orm.Key(*new_args, **kwargs)
+  
+  # @todo this is temporary, we will have to make algo on the client side to format this for itself
+  def get_output(self):
+    dic = super(TransactionAction, self).get_output()
+    dic['arguments'] = getattr(self.arguments, '_created_with', [])
+    return dic
   
   
 class TransactionPluginGroup(orm.PluginGroup):
   
-  # first arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3')
-  plugins = orm.SuperPluginStorageProperty([], '6', required=True, default=[], compressed=False)
+  _kind = 85
+  
+  subscriptions = orm.SuperKeyProperty('2', kind='84', repeated=True)
+  plugins = orm.SuperPluginStorageProperty(('0',), '6', required=True, default=[], compressed=False) # first arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3')
 
 
 # @todo sequencing counter is missing, and has to be determined how to solve that!
@@ -82,8 +98,8 @@ class Journal(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
-    '_transaction_actions': orm.SuperStorageStructuredProperty(orm.Action, storage='remote_multi'),
-    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(orm.PluginGroup, storage='remote_multi')
+    '_transaction_actions': orm.SuperStorageStructuredProperty(TransactionAction, storage='remote_multi'),
+    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(TransactionPluginGroup, storage='remote_multi')
     }
   
   _global_role = GlobalRole(
@@ -156,10 +172,42 @@ class Journal(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('49', 'update'),
+      key=orm.Action.build_key('49', 'create'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
         '_code': orm.SuperStringProperty(required=True, max_size=64),  # Regarding max_size, take a look at the transaction.JournalUpdateRead() plugin!
+        'name': orm.SuperStringProperty(required=True),
+        'entry_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
+        'line_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_journal.state': 'draft'},
+                     'd': {'_journal.name': 'input.name',
+                           '_journal.entry_fields': 'input.entry_fields',
+                           '_journal.line_fields': 'input.line_fields'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_journal'}}),
+            CallbackNotify(),
+            CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('49', 'update'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='49', required=True),
         'name': orm.SuperStringProperty(required=True),
         'entry_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
         'line_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
@@ -171,8 +219,7 @@ class Journal(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_journal.state': 'draft'},  # @todo Do we handle this like this!?
-                     'd': {'_journal.name': 'input.name',
+            Set(cfg={'d': {'_journal.name': 'input.name',
                            '_journal.entry_fields': 'input.entry_fields',
                            '_journal.line_fields': 'input.line_fields',
                            '_journal._transaction_actions': 'input._transaction_actions',
@@ -323,11 +370,17 @@ class Journal(orm.BaseExpando):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     code = input.get('_code')
-    return cls.build_key(code, namespace=kwargs.get('domain').urlsafe())  # @todo Possible prefix?
+    return cls.build_key(code, namespace=kwargs.get('namespace'))  # @todo Possible prefix?
   
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
+  
+  def get_output(self):
+    dic = super(Journal, self).get_output()
+    dic['entry_fields'] = getattr(self.entry_fields, '_created_with', [])
+    dic['line_fields'] = getattr(self.line_fields, '_created_with', [])
+    return dic
 
 
 class CategoryBalance(orm.BaseModel):
