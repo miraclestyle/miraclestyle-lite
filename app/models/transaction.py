@@ -29,7 +29,7 @@ __default_journal_field_keywords_definition = {'repeated': {'True': ('True', Tru
                                     called upon and retrieve the outcome
                                     or callback to format the outcome})
 '''
-# @todo this needs intensive work to perfectly configure every keyword based on the field.
+# @todo This needs intensive work to perfectly configure every keyword based on the field.
 JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
                                           ('int', ('Integer', orm.SuperIntegerProperty, __default_journal_field_keywords_definition)),
                                           ('decimal', ('Decimal', orm.SuperDecimalProperty, __default_journal_field_keywords_definition)),
@@ -59,26 +59,26 @@ class TransactionAction(orm.Action):
   _kind = 84
   
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
-
+  
   @classmethod
   def build_key(cls, *args, **kwargs):
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return orm.Key(*new_args, **kwargs)
   
-  # @todo this is temporary, we will have to make algo on the client side to format this for itself
+  # @todo This is temporary, we will have to make algo on the client side to format this for itself.
   def get_output(self):
     dic = super(TransactionAction, self).get_output()
     dic['arguments'] = getattr(self.arguments, '_created_with', [])
     return dic
-  
-  
+
+
 class TransactionPluginGroup(orm.PluginGroup):
   
   _kind = 85
   
   subscriptions = orm.SuperKeyProperty('2', kind='84', repeated=True)
-  plugins = orm.SuperPluginStorageProperty(('0',), '6', required=True, default=[], compressed=False) # first arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3')
+  plugins = orm.SuperPluginStorageProperty(('0',), '6', required=True, default=[], compressed=False)  # First arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3').
 
 
 # @todo sequencing counter is missing, and has to be determined how to solve that!
@@ -105,6 +105,7 @@ class Journal(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('49', [orm.Action.build_key('49', 'prepare'),
+                                  orm.Action.build_key('49', 'create'),
                                   orm.Action.build_key('49', 'read'),
                                   orm.Action.build_key('49', 'update'),
                                   orm.Action.build_key('49', 'delete'),
@@ -154,24 +155,6 @@ class Journal(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('49', 'read'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='49', required=True),
-        'read_arguments': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': '_journal'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
       key=orm.Action.build_key('49', 'create'),
       arguments={
         'domain': orm.SuperKeyProperty(kind='6', required=True),
@@ -200,6 +183,24 @@ class Journal(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_journal'}}),
             CallbackNotify(),
             CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('49', 'read'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='49', required=True),
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_journal'}})
             ]
           )
         ]
