@@ -42,8 +42,8 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="entry_field in entity.entry_fields track by $index" ng-hide="entry_field._state == 'deleted'">
-                        <td>{{entry_field.field}}</td>
-                        <td>{{entry_field.config}}</td>
+                        <td>{{entry_field.type}}</td>
+                        <td>{{entry_field}}</td>
                         <td>
                             <span ng-show="rule.field.entry_fields.writable">
                             <button type="button" ng-click="removeEntryField(entry_field)" class="button">Remove</button>
@@ -74,8 +74,8 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="line_field in entity.line_fields track by $index" ng-hide="line_field._state == 'deleted'">
-                        <td>{{line_field.field}}</td>
-                        <td>{{line_field.config}}</td>
+                        <td>{{line_field.type}}</td>
+                        <td>{{line_field}}</td>
                         <td>
                             <span ng-show="rule.field.line_fields.writable">
                             <button type="button" ng-click="removeLineField(line_field)" class="button">Remove</button>

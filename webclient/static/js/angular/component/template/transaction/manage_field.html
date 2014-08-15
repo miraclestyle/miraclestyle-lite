@@ -9,26 +9,26 @@
     <div class="form-control">
         <label class="form-label">Type</label>
         <div class="form-input">
-            <select name="type" ng-required="true" ui-select2 ng-model="field.field" data-placeholder="Select field type">
+            <select name="type" ng-change="getTheField()" ng-required="true" ui-select2 ng-model="field.type" data-placeholder="Select field type">
  
-                    <option ng-repeat="(k,v) in config" value="{{k}}">{{v[0]}}</option>
+                    <option ng-repeat="v in config" value="{{v[0].type}}">{{v[0].type}}</option>
             </select>
         </div>
     </div>
   
-    <div ng-show="field.field" class="form-control">
+    <div ng-show="the_field" class="form-control">
          
-        <div ng-repeat="(field_name, field_config) in config[field.field][2]">
+        <div ng-repeat="(field_name, field_value) in the_field">
               
              <div class="form-control">
                 <label class="form-label">{{field_name}}</label>
                 <div class="form-input">
                      <div>
-                         <input name="cfg_{{field_name}}" ng-required="true" class="text-input" type="text" ng-model="field.config[field_name]" />
+                         <input name="cfg_{{field_name}}" ng-required="required_fields[field_name]" class="text-input" type="text" ng-model="field[field_name]" />
                      </div>
                      <div class="field-config">
                  
-                         {{field_config}}
+                         {{field_value}}
                      </div>
                 </div>
             </div>

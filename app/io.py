@@ -161,7 +161,7 @@ class Engine:
     input_error = {}
     for key, argument in context.action.arguments.items():
       value = input.get(key, util.Nonexistent)
-      if argument and hasattr(argument, 'argument_format'):
+      if argument and hasattr(argument, 'value_format'):
         try:
           value = argument.value_format(value)
           if value is util.Nonexistent:

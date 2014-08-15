@@ -2019,7 +2019,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   def delete(self):
     self._property_value = None
 
-PROPERTY_MANAGERS.append(SuperStructuredPropertyManager, SuperReferencePropertyManager)
+PROPERTY_MANAGERS.extend((SuperStructuredPropertyManager, SuperReferencePropertyManager))
 
 #########################################################
 ########## Superior properties implementation! ##########
@@ -2062,7 +2062,30 @@ class _BaseProperty(object):
            'searchable': self._searchable,
            'search_document_field_name': self._search_document_field_name,
            'type': self.__class__.__name__}
+    if hasattr(self, '_compressed'):
+      dic['compressed'] = self._compressed
     return dic
+  
+  def property_keywords_format(self, kwds, skip_kwds):
+    limits = {'name': 20, 'code_name': 20, 'verbose_name': 50, 'search_document_field_name': 20}
+    for k, v in kwds.items():
+      if k in skip_kwds:
+        v = getattr(self, k, None)
+      else:
+        if k in ('name', 'verbose_name', 'search_document_field_name'):
+          v = unicode(v)
+          if len(v) > limits[k]:
+            raise PropertyError('property_%s_too_long' % k)
+        elif k in ('indexed', 'required', 'repeated', 'searchable'):
+          v = bool(v)
+        elif k == 'choices':
+          if not isinstance(v, list):
+            raise Property('expected_list_for_choices')
+        elif k == 'default':
+          v = self.value_format(v) # default value must be acceptable by property value format standards
+        elif k == 'max_size':
+          v = int(v)
+      kwds[k] = v
   
   def _property_value_validate(self, value):
     if self._max_size:
@@ -2187,6 +2210,21 @@ class _BaseStructuredProperty(_BaseProperty):
       dic[o[1:]] = getattr(self, o)
     return dic
   
+  def property_keywords_format(self, kwds, skip_kwds):
+    super(_BaseStructuredProperty, self).property_keywords_format(kwds, skip_kwds)
+    if 'modelclass' not in skip_kwds:
+      model = Model._kind_map.get(kwds['modelclass_kind'])
+      if model is None:
+        raise PropertyError('invalid_kind')
+      kwds['modelclass'] = model
+    if 'managerclass' not in skip_kwds:
+      possible_managers = dict((manager.__name__, manager) for manager in PROPERTY_MANAGERS)
+      if kwds['managerclass'] not in possible_managers:
+        raise PropertyError('invalid_manager_supplied')
+      else:
+        kwds['managerclass'] = possible_managers.get(kwds['managerclass'])
+      
+  
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
   
@@ -2239,7 +2277,7 @@ class _BaseStructuredProperty(_BaseProperty):
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
-        if hasattr(field, 'argument_format'):
+        if hasattr(field, 'value_format'):
           val = field.value_format(value)
           if val is util.Nonexistent:
             del values[value_key]
@@ -2363,6 +2401,11 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     out = super(SuperMultiLocalStructuredProperty, self).get_meta()
     out['kinds'] = self._kinds
     return out
+  
+  def property_keywords_format(self, kwds, skip_kwds):
+    super(SuperMultiLocalStructuredProperty, self).property_keywords_format(kwds, skip_kwds)
+    if 'kinds' not in skip_kwds:
+      kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
@@ -2398,6 +2441,18 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
+    
+  def get_meta(self):
+    dic = super(SuperDateTimeProperty, self).get_meta()
+    dic['auto_now'] = self._auto_now
+    dic['auto_now_add'] = self._auto_now_add
+    return dic
+  
+  def property_keywords_format(self, kwds, skip_kwds):
+    super(SuperDateTimeProperty, self).property_keywords_format(kwds, skip_kwds)
+    for kwd in ('auto_now', 'auto_now_add'):
+      if kwd not in skip_kwds:
+        kwds[kwd] = bool(kwds[kwd])
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
@@ -3192,23 +3247,30 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
   '''
     This property is used to store instances of properties to the datastore pickled.
     
-    Incoming data should be formatted:
-    as non repeated:
+    Incoming data should be formatted exactly as properties get_output function e.g.
     {
-      'field' : 'json',
-      'config' : {
-        'required' : True,
-      },
+      "searchable": null, 
+      "repeated": false, 
+      "code_name": "serving_url", 
+      "search_document_field_name": null, 
+      "max_size": null, 
+      "name": "serving_url", # note the friendly name used, this is intentional since all the names will be user-supplied 
+      "default": null, 
+      "type": "SuperStringProperty", 
+      "required": true, 
+      "is_structured": false, 
+      "choices": null, 
+      "verbose_name": null
     }
     
-    as repeated: 
+    the config should be a list of property instances like so:
     
-    [{
-      'field' : 'json',
-      'config' : {
-        'required' : True,
-      },
-    }]
+    JOURNAL_FIELDS = ((orm.SuperStringProperty(default_keyword_here=True, default_keyword2=False...), 
+                          (... list of kwargs that cannot be set by user...),
+                               (... kwargs that are implicitly required -- by default
+                                 all kwargs found in property are required.)),  ... ))
+ 
+    
   '''
   
   def __init__(self, *args, **kwargs):
@@ -3221,38 +3283,40 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
     return dic
   
   def value_format(self, value):
+    bogus_kwds = ('type', 'is_structured', 'code_name') # list of kwds who exist, but cannot be set as in __init__
     value = super(SuperPropertyStorageProperty, self).value_format(value)
     if value is util.Nonexistent:
       return value
     out = collections.OrderedDict()
-    for v in value:
-      field = v.get('field')
-      supplied_kwds = v.get('config')
-      definition = self._cfg.get(field)
-      if definition is None:
-        raise PropertyError('no_definition_found')
-      kwds = {}
-      kwd_definitions = definition[2]
-      for key, the_value in supplied_kwds.iteritems():
-        kwd_definition = kwd_definitions[key]
-        if isinstance(kwd_definition, dict):
-          found_any = False
-          for k, v in kwd_definition.iteritems():
-            if k == the_value:
-              found_any = True
-              the_value = v[1]
-          if not found_any:
-            raise PropertyError('keyword_value_malformed')
-        elif isinstance(kwd_definition, Property):
-          the_value = kwd_definition.value_format(value)
-        elif callable(kwd_definition):
-          the_value = kwd_definition(self, value)
-        if key == 'name':
-          pass # @todo property name user prefix is needed here
-        kwds[key] = the_value
-      prop = definition[1](**kwds)
-      out[field] = prop
-    out._created_with = value # @todo this wont be needed if we figure the client side problem
+    def gets(c, i, d=None):
+      try:
+        return c[i]
+      except IndexError:
+        return d
+    for kwds in value:
+      field_type = kwds.get('type')
+      field = None
+      skip_kwargs = None
+      required_kwargs = None
+      for cfg in self._cfg:
+        the_field = cfg[0]
+        skip_kwargs = gets(cfg, 1, ())
+        required_kwargs = gets(cfg, 2, None)
+        if the_field.__class__.__name__ == field_type: # we compare with __name__ since type in get output is always Class.__name___
+          field = the_field
+          break
+      if field is None:
+        raise PropertyError('invalid_field_type_provided')
+      if required_kwargs is None:
+        required_kwargs = tuple(field.get_meta().keys())
+      for name in required_kwargs:
+        if name not in kwds and name not in bogus_kwds:
+          raise PropertyError('missing_keyword_%s' % name)
+      kwds['name'] = kwds.get('name') # @todo prefix for name
+      field.property_keywords_format(kwds, skip_kwargs)
+      for bogus in bogus_kwds:
+        kwds.pop(bogus, None)
+      out[kwds['name']] = field.__class__(**kwds)
     return out
     
     
@@ -3281,7 +3345,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
-        if hasattr(field, 'argument_format'):
+        if hasattr(field, 'value_format'):
           val = field.value_format(value)
           if val is util.Nonexistent:
             del values[value_key]
@@ -3336,6 +3400,11 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     out = super(SuperPluginStorageProperty, self).get_meta()
     out['kinds'] = self._kinds
     return out
+  
+  def property_keywords_format(self, kwds, skip_kwds):
+    super(SuperPluginStorageProperty, self).property_keywords_format(kwds, skip_kwds)
+    if 'kinds' not in skip_kwds:
+      kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
 
 
 #########################################

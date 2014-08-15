@@ -11,48 +11,14 @@ from app.models.base import *
 from app.plugins.base import *
 from app.plugins.transaction import *
 
+defaults1 = ()
+defaults2 = ('required',)
 
-__name_definition = orm.SuperStringProperty(max_size=20)
-__kind_definition = orm.SuperStringProperty(max_size=10)  # We can determine also choices to be orm.Model._kind_map.keys() however not so sure about journal and entry ids.
-
-__default_journal_field_keywords_definition = {'repeated': {'True': ('True', True), 'False': ('False', False)},
-                                               'required': {'True': ('True', True), 'False': ('False', False)},
-                                               'name': __name_definition}
-
-'''
-  Format used for it is:
-  (System field name, (Friendly Field Name, Field instance to work with,
-    {Field keyword argument name :  {
-                                      'choice' : (Friendly Name, outcome),
-                                    }
-                                    or instance of property which .argument_format will be
-                                    called upon and retrieve the outcome
-                                    or callback to format the outcome})
-'''
-# @todo This needs intensive work to perfectly configure every keyword based on the field.
-JOURNAL_FIELDS = collections.OrderedDict([('string', ('String', orm.SuperStringProperty, __default_journal_field_keywords_definition)),
-                                          ('int', ('Integer', orm.SuperIntegerProperty, __default_journal_field_keywords_definition)),
-                                          ('decimal', ('Decimal', orm.SuperDecimalProperty, __default_journal_field_keywords_definition)),
-                                          ('float', ('Float', orm.SuperFloatProperty, __default_journal_field_keywords_definition)),
-                                          ('datetime', ('DateTime', orm.SuperDateTimeProperty, {'required': {'True': ('True', True),
-                                                                                                             'False': ('False', False)},
-                                                                                                'auto_now': {'True': ('True', True),
-                                                                                                             'False': ('False', False)},
-                                                                                                'auto_now_add': {'True': ('True', True),
-                                                                                                                 'False': ('False', False)},
-                                                                                                'name': __name_definition})),
-                                          ('bool', ('Boolean', orm.SuperBooleanProperty, __default_journal_field_keywords_definition)),
-                                          ('reference', ('Reference', orm.SuperKeyProperty, {'repeated': {'True': ('True', True),
-                                                                                                          'False': ('False', False)},
-                                                                                             'required': {'True': ('True', True),
-                                                                                                          'False': ('False', False)},
-                                                                                             'kind': __kind_definition,
-                                                                                             'name': __name_definition})),
-                                          ('text', ('Text', orm.SuperTextProperty, __default_journal_field_keywords_definition)),
-                                          ('json', ('JSON', orm.SuperJsonProperty, {'required': {'True': ('True', True),
-                                                                                                 'False': ('False', False)},
-                                                                                    'name': __name_definition}))])
-
+JOURNAL_FIELDS = ((orm.SuperStringProperty(), defaults1, defaults2), (orm.SuperTextProperty(), defaults1, defaults2), 
+                  (orm.SuperIntegerProperty(), defaults1, defaults2), (orm.SuperFloatProperty(), defaults1, defaults2),
+                  (orm.SuperDecimalProperty(), defaults1, defaults2), (orm.SuperBooleanProperty(), defaults1, defaults2),
+                  (orm.SuperJsonProperty(), defaults1, defaults2), (orm.SuperKeyProperty(), defaults1, defaults2),
+                  (orm.SuperDateTimeProperty(), defaults1, defaults2))
 
 class TransactionAction(orm.Action):
   
@@ -65,13 +31,6 @@ class TransactionAction(orm.Action):
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return orm.Key(*new_args, **kwargs)
-  
-  # @todo This is temporary, we will have to make algo on the client side to format this for itself.
-  def get_output(self):
-    dic = super(TransactionAction, self).get_output()
-    dic['arguments'] = getattr(self.arguments, '_created_with', [])
-    return dic
-
 
 class TransactionPluginGroup(orm.PluginGroup):
   
@@ -376,12 +335,6 @@ class Journal(orm.BaseExpando):
   @property
   def _is_system(self):
     return self.key_id_str.startswith('system_')
-  
-  def get_output(self):
-    dic = super(Journal, self).get_output()
-    dic['entry_fields'] = getattr(self.entry_fields, '_created_with', [])
-    dic['line_fields'] = getattr(self.line_fields, '_created_with', [])
-    return dic
 
 
 class CategoryBalance(orm.BaseModel):

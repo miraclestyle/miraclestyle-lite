@@ -42,11 +42,51 @@ MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
                                 templateUrl: logic_template('transaction/manage_field.html'),
                                 controller: function ($scope, $modalInstance, RuleEngine) {
                                      
-                                    $scope.field = angular.copy(field ? field : {'config' : {}, 'field' : null});
+                                    $scope.field = angular.copy(field ? field : {});
                 
                                     var new_content = field ? false : true;
+                                    
+                                    $scope.the_field = null;
+                                    
                           
                                     $scope.config = config;
+                                    
+                                    $scope.getTheField = function ()
+                                    {
+                                       angular.forEach(config, function (field) {
+                                          if (field[0].type == $scope.field.type)
+                                          {
+                                              var copied_field = angular.copy(field[0]);
+                                              
+                                              angular.forEach(['code_name', 'type', 'is_structured'], function (bogus) {
+                                                 if (bogus in copied_field)
+                                                 {
+                                                     delete copied_field[bogus]; 
+                                                 }
+                                                 
+                                              });
+                                              
+                                              $scope.the_field = copied_field;
+                                              var requireds = {};
+                                              if (field[2])
+                                              {
+                                                  angular.forEach(field, function (k) {
+                                                     requireds[k] = true; 
+                                                  });
+                                              }
+                                              else
+                                              {
+                                                  angular.forEach($scope.the_field, function (v, k) {
+                                                     requireds[k] = true; 
+                                                  });
+                                              }
+                                              
+                                              $scope.required_fields = requireds;
+                                          } 
+                                       });
+                                    };
+                                    
+                                    if ($scope.field.type) $scope.getTheField();
             
                                     $scope.save = function () {
                    
