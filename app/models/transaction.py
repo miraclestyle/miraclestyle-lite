@@ -14,11 +14,13 @@ from app.plugins.transaction import *
 defaults1 = ()
 defaults2 = ('required',)
 
-JOURNAL_FIELDS = ((orm.SuperStringProperty(), defaults1, defaults2), (orm.SuperTextProperty(), defaults1, defaults2), 
+
+JOURNAL_FIELDS = ((orm.SuperStringProperty(), defaults1, defaults2), (orm.SuperTextProperty(), defaults1, defaults2),
                   (orm.SuperIntegerProperty(), defaults1, defaults2), (orm.SuperFloatProperty(), defaults1, defaults2),
                   (orm.SuperDecimalProperty(), defaults1, defaults2), (orm.SuperBooleanProperty(), defaults1, defaults2),
                   (orm.SuperJsonProperty(), defaults1, defaults2), (orm.SuperKeyProperty(), defaults1, defaults2),
                   (orm.SuperDateTimeProperty(), defaults1, defaults2))
+
 
 class TransactionAction(orm.Action):
   
@@ -31,6 +33,7 @@ class TransactionAction(orm.Action):
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return orm.Key(*new_args, **kwargs)
+
 
 class TransactionPluginGroup(orm.PluginGroup):
   

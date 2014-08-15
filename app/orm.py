@@ -422,7 +422,7 @@ class _BaseModel(object):
       for field_key, field in virtual_fields.iteritems():
         val = getattr(self, field_key, None)
         repr.append('%s=%s' % (field._code_name, val))
-      out += '%s)' % ", ".join(repr)
+      out += '%s)' % ', '.join(repr)
     return out
   
   @classmethod
@@ -3212,7 +3212,7 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     read_arguments = kwargs.get('read_arguments', {})
     if 'config' not in read_arguments:
       read_arguments['config'] = {} # enforce logged and direction
-    read_arguments['config']['order'] = {'field' : 'logged', 'direction' : 'desc'}
+    read_arguments['config']['order'] = {'field': 'logged', 'direction': 'desc'}
     kwargs['read_arguments'] = read_arguments
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
     # Implicitly state that entities cannot be updated or deleted.
@@ -3268,7 +3268,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
     return dic
   
   def value_format(self, value):
-    bogus_kwds = ('type', 'is_structured', 'code_name') # list of kwds who exist, but cannot be set as in __init__
+    bogus_kwds = ('type', 'is_structured', 'code_name')  # List of kwds which exist, but can not be set as in __init__.
     value = super(SuperPropertyStorageProperty, self).value_format(value)
     if value is util.Nonexistent:
       return value
