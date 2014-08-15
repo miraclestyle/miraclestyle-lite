@@ -24,9 +24,11 @@ class Widget(orm.BaseExpando):
   
   _kind = 62
   
-  name = orm.SuperStringProperty('1', required=True)
-  sequence = orm.SuperIntegerProperty('2', required=True)
-  active = orm.SuperBooleanProperty('3', required=True, default=True)
+  _use_search_engine = True  # @todo This is extra added for testing functions of google seach!
+  
+  name = orm.SuperStringProperty('1', required=True, searchable=True)  # @todo This is extra added for testing functions of google seach!
+  sequence = orm.SuperIntegerProperty('2', required=True, searchable=True)  # @todo This is extra added for testing functions of google seach!
+  active = orm.SuperBooleanProperty('3', required=True, default=True, searchable=True)  # @todo This is extra added for testing functions of google seach!
   role = orm.SuperKeyProperty('4', kind='60', required=True)
   search_form = orm.SuperBooleanProperty('5', required=True, indexed=False, default=True)
   filters = orm.SuperLocalStructuredProperty(Filter, '6', repeated=True)
@@ -201,10 +203,13 @@ class Widget(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'sequence', 'operator': 'asc'}]},
           cfg={
+            'use_search_engine': True,  # @todo This is extra added for testing functions of google seach!
             'search_arguments': {'kind': '62', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(),
                         'role': orm.SuperKeyProperty(kind='60'),
                         'active': orm.SuperBooleanProperty()},
+            'orders': {'name': {'default_value': {'asc': 'a', 'desc': 'z'}},  # @todo This is extra added for testing functions of google seach!
+                       'sequence': {'default_value': {'asc': 0, 'desc': 1000000}}},  # @todo This is extra added for testing functions of google seach!
             'indexes': [{'orders': [('name', ['asc', 'desc'])]},
                         {'orders': [('sequence', ['asc', 'desc'])]},
                         {'filters': [('name', ['==', '!='])],

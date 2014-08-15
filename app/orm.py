@@ -1232,7 +1232,7 @@ class _BaseModel(object):
       self._delete_custom_indexes = {}
   
   @classmethod
-  def search_document_to_dict(document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
+  def search_document_to_dict(cls, document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
     # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
     if document and isinstance(document, search.Document):
       dic = {}
@@ -3023,7 +3023,7 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = []
     kind = value.get('kind')
     if kind:
-      filters.append('(ancestor=' + kind + ')')
+      filters.append('(kind=' + kind + ')')
     ancestor = value.get('ancestor')
     if ancestor:
       filters.append('(ancestor=' + ancestor + ')')
